@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.openapi.editor.Document
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.declarative.impl.views.IndentedDeclarativeHintView
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction
@@ -30,11 +32,12 @@ class DeclarativeInlayHintsPass(
   private val isPreview: Boolean,
   private val isProviderDisabled: Boolean = false
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
-  private val sinks = ArrayList<InlayTreeSinkImpl>()
+  private lateinit var preprocessedInlayData: PreprocessedInlayData
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val ownCollectors = ArrayList<CollectionInfo<OwnBypassCollector>>()
     val sharedCollectors = ArrayList<CollectionInfo<SharedBypassCollector>>()
+    val sinks = ArrayList<InlayTreeSinkImpl>()
     for (providerInfo in providerInfos) {
       val provider = providerInfo.provider
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider)) {
@@ -58,6 +61,8 @@ class DeclarativeInlayHintsPass(
         collector.collectFromElement(element, sink)
       }
     }
+
+    preprocessedInlayData = preprocessCollectedInlayData(sinks.flatMap { it.finish() }, document)
   }
 
   private data class CollectionInfo<T>(
@@ -65,8 +70,19 @@ class DeclarativeInlayHintsPass(
     val collector: T
   )
 
+  @ApiStatus.Internal
+  class PreprocessedInlayData internal constructor(
+    internal val inline: List<InlayData>,
+    internal val endOfLine: List<InlayData>,
+    internal val aboveLine: List<InlayData>
+  ) {
+    companion object {
+      val EMPTY = PreprocessedInlayData(emptyList(), emptyList(), emptyList())
+    }
+  }
+
   override fun doApplyInformationToEditor() {
-    applyInlayData(editor, myFile.project, inlayDatas = sinks.flatMap { it.finish() }, passSourceId)
+    applyInlayData(editor, myFile.project, preprocessedInlayData, passSourceId)
   }
 
   companion object {
@@ -75,7 +91,7 @@ class DeclarativeInlayHintsPass(
 
     @RequiresEdt
     @ApiStatus.Internal
-    fun applyInlayData(editor: Editor, project: Project, inlayDatas: List<InlayData>, sourceId: String) {
+    fun applyInlayData(editor: Editor, project: Project, preprocessedInlayData: PreprocessedInlayData, sourceId: String) {
       val inlayModel = editor.inlayModel
       val document = editor.document
       val existingInlineElements = inlayModel
@@ -99,50 +115,55 @@ class DeclarativeInlayHintsPass(
         inlaysAtOffset.add(eolElement)
       }
       for (blockElement in existingBlockElements) {
-        val inlaysAtOffset = offsetToExistingBlockElements.computeIfAbsent(blockElement.offset, IntFunction { SmartList() })
-        inlaysAtOffset.add(blockElement)
+        val inlaysAtLine = offsetToExistingBlockElements.computeIfAbsent(blockElement.offset, IntFunction { SmartList() })
+        inlaysAtLine.add(blockElement)
       }
       val storage = InlayHintsUtils.getTextMetricStorage(editor)
-      for (inlayData in inlayDatas) {
+
+      fun ensureConsistentSourceId(inlayData: InlayData) {
         if (inlayData.sourceId != sourceId) {
           throw IllegalStateException("Inconsistent sourceId=$sourceId, inlayData=$inlayData")
         }
-        when (val position = inlayData.position) {
-          is EndOfLinePosition -> {
-            val lineEndOffset = editor.document.getLineEndOffset(position.line)
-            val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
-            if (!updated) {
-              val renderer = DeclarativeInlayRenderer(inlayData, storage, inlayData.providerId, sourceId)
-              val properties = InlayProperties()
-                .priority(position.priority)
-                .relatesToPrecedingText(true)
-                .disableSoftWrapping(false)
-              val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, properties, renderer)
-              if (inlay != null) {
-                renderer.initInlay(inlay)
-              }
-            }
+      }
+      for (inlayData in preprocessedInlayData.endOfLine) {
+        ensureConsistentSourceId(inlayData)
+        val position = inlayData.position as EndOfLinePosition
+        val lineEndOffset = editor.document.getLineEndOffset(position.line)
+        val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
+        if (!updated) {
+          val renderer = DeclarativeInlayRenderer(inlayData, storage, inlayData.providerId, sourceId)
+          val properties = InlayProperties()
+            .priority(position.priority)
+            .relatesToPrecedingText(true)
+            .disableSoftWrapping(false)
+          val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, properties, renderer)
+          if (inlay != null) {
+            renderer.initInlay(inlay)
           }
-          is InlineInlayPosition -> {
-            val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
-            if (!updated) {
-              val renderer = DeclarativeInlayRenderer(inlayData, storage, inlayData.providerId, sourceId)
-              val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
-              if (inlay != null) {
-                renderer.initInlay(inlay)
-              }
-            }
+        }
+      }
+      for (inlayData in preprocessedInlayData.inline) {
+        ensureConsistentSourceId(inlayData)
+        val position = inlayData.position as InlineInlayPosition
+        val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
+        if (!updated) {
+          val renderer = DeclarativeInlayRenderer(inlayData, storage, inlayData.providerId, sourceId)
+          val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
+          if (inlay != null) {
+            renderer.initInlay(inlay)
           }
-          is AboveLineIndentedPosition -> {
-            val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingBlockElements, inlayData, position.offset)
-            if (!updated) {
-              val (_, anchorOffset) = IndentedDeclarativeHintView.calcIndentAnchorOffset(position.offset, document)
-              val renderer = DeclarativeIndentedBlockInlayRenderer(inlayData, storage, inlayData.providerId, sourceId, anchorOffset)
-              val inlay = inlayModel.addBlockElement(position.offset, false, true, position.verticalPriority, renderer)
-              if (inlay != null) {
-                renderer.initInlay(inlay)
-              }
-            }
+        }
+      }
+      for (inlayData in preprocessedInlayData.aboveLine) {
+        ensureConsistentSourceId(inlayData)
+        val position = inlayData.position as AboveLineIndentedPosition
+        val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingBlockElements, inlayData, position.offset)
+        if (!updated) {
+          val (_, anchorOffset) = IndentedDeclarativeHintView.calcIndentAnchorOffset(position.offset, document)
+          val renderer = DeclarativeIndentedBlockInlayRenderer(inlayData, storage, inlayData.providerId, sourceId, anchorOffset)
+          val inlay = inlayModel.addBlockElement(position.offset, false, true, position.verticalPriority, renderer)
+          if (inlay != null) {
+            renderer.initInlay(inlay)
           }
         }
       }
@@ -181,6 +202,20 @@ class DeclarativeInlayHintsPass(
         }
       }
       return false
+    }
+
+    /**
+     * [document] must be unchanged from when [inlayData] were collected
+     */
+    @ApiStatus.Internal
+    @RequiresReadLock
+    fun preprocessCollectedInlayData(inlayData: List<InlayData>, document: Document): PreprocessedInlayData {
+      val positionToInlayData = inlayData.groupBy { it.position::class.java }
+      return PreprocessedInlayData(
+        positionToInlayData[InlineInlayPosition::class.java] ?: emptyList(),
+        positionToInlayData[EndOfLinePosition::class.java] ?: emptyList(),
+        positionToInlayData[AboveLineIndentedPosition::class.java] ?: emptyList(),
+      )
     }
   }
 

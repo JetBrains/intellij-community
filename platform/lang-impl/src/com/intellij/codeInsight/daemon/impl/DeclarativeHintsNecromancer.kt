@@ -6,13 +6,12 @@ import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass.PreprocessedInlayData
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
-import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -77,18 +76,20 @@ private class DeclarativeHintsNecromancer(
         initZombiePointers(recipe.project, recipe.file, inlayData.tree)
       }
       val inlayDataMap = readActionBlocking {
-        zombie.limbs().filter {
-          settings.isProviderEnabled(it.providerId) ?: true
-        }
-      }.groupBy { it.sourceId }
+        if (!recipe.isValid()) return@readActionBlocking emptyMap<String, PreprocessedInlayData>()
+        zombie.limbs()
+          .filter { settings.isProviderEnabled(it.providerId) ?: true }
+          .groupBy { it.sourceId }
+          .mapValues { (_, inlayDataList) -> DeclarativeInlayHintsPass.preprocessCollectedInlayData(inlayDataList, recipe.document) }
+      }
       if (inlayDataMap.isNotEmpty()) {
         val editor = recipe.editorSupplier()
         withContext(Dispatchers.EDT) {
           if (recipe.isValid(editor)) {
             //maybe readaction
             writeIntentReadAction {
-              inlayDataMap.forEach { (sourceId, inlayDataList) ->
-                DeclarativeInlayHintsPass.applyInlayData(editor, recipe.project, inlayDataList, sourceId)
+              inlayDataMap.forEach { (sourceId, preparedInlayData) ->
+                DeclarativeInlayHintsPass.applyInlayData(editor, recipe.project, preparedInlayData, sourceId)
               }
               DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
               FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)
