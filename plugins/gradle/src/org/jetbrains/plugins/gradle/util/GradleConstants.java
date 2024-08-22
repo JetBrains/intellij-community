@@ -19,13 +19,19 @@ public final class GradleConstants {
   @NotNull @NonNls public static final String KOTLIN_DSL_SCRIPT_EXTENSION = "gradle.kts";
   @NotNull @NonNls public static final String SETTINGS_FILE_NAME = "settings.gradle";
   @NotNull @NonNls public static final String KOTLIN_DSL_SETTINGS_FILE_NAME = "settings.gradle.kts";
+  @NotNull @NonNls public static final String DECLARATIVE_EXTENSION = "gradle.dcl";
+  @NotNull @NonNls public static final String DECLARATIVE_SCRIPT_NAME = "build.gradle.dcl";
+  @NotNull @NonNls public static final String DECLARATIVE_SETTINGS_FILE_NAME = "settings.gradle.dcl";
 
-  @NonNls public static final String @NotNull [] BUILD_FILE_EXTENSIONS = {EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION};
+
+  @NonNls public static final String @NotNull [] BUILD_FILE_EXTENSIONS = {EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION, DECLARATIVE_EXTENSION};
 
   @NotNull public static final Set<String> KNOWN_GRADLE_FILES = Set.of(DEFAULT_SCRIPT_NAME,
-                                                                                           KOTLIN_DSL_SCRIPT_NAME,
-                                                                                           SETTINGS_FILE_NAME,
-                                                                                           KOTLIN_DSL_SETTINGS_FILE_NAME);
+                                                                       KOTLIN_DSL_SCRIPT_NAME,
+                                                                       DECLARATIVE_SCRIPT_NAME,
+                                                                       SETTINGS_FILE_NAME,
+                                                                       KOTLIN_DSL_SETTINGS_FILE_NAME,
+                                                                       DECLARATIVE_SETTINGS_FILE_NAME);
 
   @NotNull @NonNls public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
 
