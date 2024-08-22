@@ -12,7 +12,9 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.VisualizationBundle"
 
-object VisualizationBundle : DynamicBundle(BUNDLE) {
+object VisualizationBundle {
+  private val bundle = DynamicBundle(VisualizationBundle::class.java, BUNDLE)
+
   @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = bundle.getMessage(key, *params)
 }
