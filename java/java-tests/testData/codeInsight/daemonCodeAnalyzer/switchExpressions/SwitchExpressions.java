@@ -12,7 +12,7 @@ class SwitchExpressions {
 
     System.out.println(switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different case kinds used in the switch">case 1:</error> yield "lone";
+      <error descr="Different 'case' kinds used in 'switch'">case 1:</error> yield "lone";
     });
 
     System.out.println(
