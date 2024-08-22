@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
+import com.intellij.psi.PsiEnumConstant
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.UUnaryExpression
 import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.UastPrefixOperator
@@ -50,8 +52,9 @@ internal object FirKotlinUastConstantEvaluator {
         // By reaching here, we assume that AA's regular [evaluate] doesn't return
         // any meaningful value because it's not really compile-time constant.
         // However, for some cases, we can still evaluate if operands are const-like,
-        // e.g., local final variable with constant initializer.
+        // e.g., local final variable with constant initializer, enum constant, etc.
         return when (uExpression) {
+            is UReferenceExpression -> uExpression.resolve() as? PsiEnumConstant
             is UUnaryExpression -> evaluateConstLike(uExpression)
             is UPolyadicExpression -> evaluateConstLike(uExpression)
             else -> null
