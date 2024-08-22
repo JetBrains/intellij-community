@@ -71,7 +71,7 @@ import kotlin.math.min
 open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
   myHelper.project, GlobalSearchScope.allScope(myHelper.project), true, true), LanguageConsoleView {
   private val consoleExecutionEditor = ConsoleExecutionEditor(myHelper)
-  override val historyViewer: EditorEx
+  final override val historyViewer: EditorEx
   private val myPanel: JPanel = ConsoleEditorsPanel(this)
   private val myScrollBar: JScrollBar = JBScrollBar(Adjustable.HORIZONTAL)
   private val myMergedScrollBarModel: MergedHorizontalScrollBarModel
