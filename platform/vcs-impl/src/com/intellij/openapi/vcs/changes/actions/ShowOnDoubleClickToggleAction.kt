@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -21,7 +20,7 @@ internal sealed class ShowOnDoubleClickToggleAction(private val isEditorPreview:
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     // Make the action behave as "Option" in "ShowOnDoubleClick" group.
-    val newState = if (ActionPlaces.isPopupPlace(e.place) || state) isEditorPreview else !isEditorPreview
+    val newState = if (e.isFromContextMenu || state) isEditorPreview else !isEditorPreview
 
     val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
     if (isCommitToolwindowShown) {

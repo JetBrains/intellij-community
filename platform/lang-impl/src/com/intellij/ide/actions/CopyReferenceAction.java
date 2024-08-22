@@ -69,7 +69,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     e.getPresentation().setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(enabled);
     }
     else {

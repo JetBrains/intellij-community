@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -39,7 +38,7 @@ public class WeighingNewActionGroup extends WeighingActionGroup implements DumbA
       e.getPresentation().setTextWithMnemonic(prev);
     }
 
-    if (isPopupGroup() && ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (isPopupGroup() && e.isFromContextMenu()) {
       Presentation p = e.getPresentation();
       p.setText(ActionsBundle.message("group.WeighingNewGroup.text.popup"));
       p.setPerformGroup(true);

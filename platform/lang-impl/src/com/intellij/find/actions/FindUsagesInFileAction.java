@@ -115,7 +115,7 @@ public final class FindUsagesInFileAction extends AnAction implements PossiblyDu
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     boolean enabled = isEnabled(dataContext);
-    presentation.setVisible(enabled || !ActionPlaces.isPopupPlace(event.getPlace()));
+    presentation.setVisible(enabled || !event.isFromContextMenu());
     presentation.setEnabled(enabled);
   }
 }

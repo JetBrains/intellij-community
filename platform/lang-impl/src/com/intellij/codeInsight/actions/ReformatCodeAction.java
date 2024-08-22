@@ -257,7 +257,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
   public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     boolean available = isActionAvailable(event);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       presentation.setEnabledAndVisible(available);
     }
     else {

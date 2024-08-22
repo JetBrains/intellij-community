@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -35,7 +34,7 @@ public class MarkObjectAction extends XDebuggerActionBase {
         }
       }
     }
-    presentation.setVisible(!hidden && (!ActionPlaces.isPopupPlace(event.getPlace()) || enabled));
+    presentation.setVisible(!hidden && (!event.isFromContextMenu() || enabled));
     presentation.setEnabled(enabled);
   }
 

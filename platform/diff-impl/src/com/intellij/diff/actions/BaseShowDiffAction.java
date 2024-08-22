@@ -11,7 +11,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.BlankDiffWindowUtil;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -30,7 +29,7 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
     presentation.setEnabled(canShow);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       presentation.setVisible(canShow);
     }
   }

@@ -71,6 +71,6 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
 
   private static boolean isInvokedFromNewSubMenu(@NotNull AnAction action, @NotNull AnActionEvent e) {
     return NewActionGroup.isActionInNewPopupMenu(action) &&
-           (ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.isPopupPlace(e.getPlace()));
+           (e.isFromMainMenu() || e.isFromContextMenu());
   }
 }

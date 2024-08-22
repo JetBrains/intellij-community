@@ -44,7 +44,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
   public void update(@NotNull AnActionEvent event) {
     final boolean enabled = isEnabled(event);
     event.getPresentation().setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       event.getPresentation().setVisible(enabled);
     }
   }

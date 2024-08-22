@@ -95,7 +95,7 @@ final class ValidateXmlAction extends AnAction {
     }
 
     presentation.setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       presentation.setVisible(enabled);
     }
   }

@@ -4,7 +4,6 @@ package com.intellij.ide.browsers.actions
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,7 +25,7 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
       presentation.icon = it.icon
     }
 
-    if (ActionPlaces.isPopupPlace(e.place)) {
+    if (e.isFromContextMenu) {
       presentation.isVisible = presentation.isEnabled
     }
   }

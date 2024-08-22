@@ -33,11 +33,9 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
   public void update(@NotNull AnActionEvent event) {
     boolean toEnable = getPlace(event) != null;
 
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    event.getPresentation().setEnabled(toEnable);
+    if (event.isFromContextMenu()) {
       event.getPresentation().setVisible(toEnable);
-    }
-    else {
-      event.getPresentation().setEnabled(toEnable);
     }
   }
 

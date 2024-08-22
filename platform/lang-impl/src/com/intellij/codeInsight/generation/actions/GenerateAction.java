@@ -44,7 +44,7 @@ public final class GenerateAction extends DumbAwareAction {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     boolean enabled = project != null && editor != null &&
                       !ActionGroupUtil.isGroupEmpty(getGroup(), event);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       event.getPresentation().setEnabledAndVisible(enabled);
     }
     else {

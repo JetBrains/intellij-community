@@ -2096,7 +2096,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         super.update(e);
         var presentation = e.getPresentation();
         presentation.setEnabledAndVisible(ApplicationManager.getApplication().isUnitTestMode());
-        if (ActionPlaces.isPopupPlace(e.getPlace())) {
+        if (e.isFromContextMenu()) {
           presentation.setIcon(null);
         }
         var pane = getCurrentProjectViewPane(e);

@@ -5,7 +5,6 @@ package com.intellij.testIntegration;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -26,7 +25,7 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
-    if (TestFinderHelper.getFinders().size() == 0) {
+    if (TestFinderHelper.getFinders().isEmpty()) {
       return;
     }
 
@@ -42,7 +41,7 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
     if (TestFinderHelper.findSourceElement(element) == null) return;
 
     presentation.setEnabledAndVisible(true);
-    boolean useShortName = ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.isPopupPlace(e.getPlace());
+    boolean useShortName = e.isFromMainMenu() || e.isFromContextMenu();
     if (TestFinderHelper.isTest(element)) {
       presentation.setText(useShortName ? ActionsBundle.messagePointer("action.GotoTestSubject.MainMenu.text") : ActionsBundle.messagePointer("action.GotoTestSubject.text"));
       presentation.setDescription(ActionsBundle.messagePointer("action.GotoTestSubject.description"));

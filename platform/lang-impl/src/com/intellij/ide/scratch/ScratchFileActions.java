@@ -90,7 +90,7 @@ public final class ScratchFileActions {
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
-        ActionPlaces.isPopupPlace(place) && e.getData(LangDataKeys.IDE_VIEW) != null);
+        e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
 
       e.getPresentation().setEnabledAndVisible(enabled);
       updatePresentationTextAndIcon(e, e.getPresentation());

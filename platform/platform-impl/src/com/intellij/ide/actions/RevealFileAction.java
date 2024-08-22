@@ -82,7 +82,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     e.getPresentation().setEnabledAndVisible(
       isSupported() &&
       getFile(e) != null &&
-      (!ActionPlaces.isPopupPlace(e.getPlace()) ||
+      (!e.isFromContextMenu() ||
        editor == null ||
        !editor.getSelectionModel().hasSelection() ||
        EditorUtil.contextMenuInvokedOutsideOfSelection(e)));

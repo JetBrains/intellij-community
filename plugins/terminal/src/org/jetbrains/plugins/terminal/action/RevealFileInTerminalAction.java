@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.action;
 
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -34,7 +33,7 @@ public final class RevealFileInTerminalAction extends DumbAwareAction {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return project != null && !LightEdit.owns(project) && getSelectedFile(e) != null &&
-           (!ActionPlaces.isPopupPlace(e.getPlace()) || editor == null || !editor.getSelectionModel().hasSelection());
+           (!e.isFromContextMenu() || editor == null || !editor.getSelectionModel().hasSelection());
   }
 
   @Nullable

@@ -81,13 +81,13 @@ public class CompileAction extends CompileActionBase {
     }
     else {
       files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace()) && !ActionPlaces.isPopupPlace(e.getPlace())) {
+      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace()) && !e.isFromContextMenu()) {
         module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
       }
     }
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
-      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
+      presentation.setVisible(!e.isFromContextMenu());
       return;
     }
 

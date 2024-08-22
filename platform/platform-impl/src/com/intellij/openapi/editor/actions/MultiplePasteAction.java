@@ -90,11 +90,9 @@ public final class MultiplePasteAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final boolean enabled = isEnabled(e);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    e.getPresentation().setEnabled(enabled);
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(enabled);
-    }
-    else {
-      e.getPresentation().setEnabled(enabled);
     }
   }
 

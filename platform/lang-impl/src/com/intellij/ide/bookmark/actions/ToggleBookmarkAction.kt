@@ -48,7 +48,7 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction() {
         else -> null
       }
       text = when {
-        !ActionPlaces.isPopupPlace(event.place) -> ActionsBundle.message("action.ToggleBookmark.text")
+        !event.isFromContextMenu -> ActionsBundle.message("action.ToggleBookmark.text")
         type != null -> BookmarkBundle.message("bookmark.delete.action.text")
         else -> BookmarkBundle.message("bookmark.add.action.text")
       }

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -26,7 +25,7 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
     val review = vm?.submittableReview?.value
     e.presentation.isEnabledAndVisible = review != null
 
-    if (ActionPlaces.isPopupPlace(e.place) && !e.place.contains("gitlab", true)) {
+    if (e.isFromContextMenu && !e.place.contains("gitlab", true)) {
       e.presentation.text = CollaborationToolsBundle.message("review.start.submit.action")
       return
     }

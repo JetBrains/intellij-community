@@ -4,7 +4,10 @@ package com.intellij.platform.execution.dashboard.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,7 +31,7 @@ final class GroupConfigurationsAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(e.getProject() != null && !getTargets(e).isEmpty());
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       presentation.setText(getTemplatePresentation().getText() + "...");
     }
   }

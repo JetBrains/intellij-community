@@ -58,11 +58,10 @@ class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, 
     DataContext dataContext = e.getDataContext();
     VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      presentation.setVisible(isEnabled(vFile, window));
-    }
-    else {
-      presentation.setEnabled(isEnabled(vFile, window));
+    boolean enabled = isEnabled(vFile, window);
+    presentation.setEnabled(enabled);
+    if (e.isFromContextMenu()) {
+      presentation.setVisible(enabled);
     }
   }
 

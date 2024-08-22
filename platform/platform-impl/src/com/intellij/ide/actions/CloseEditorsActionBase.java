@@ -72,11 +72,9 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     presentation.setText(getPresentationText(inSplitter));
     Project project = event.getData(CommonDataKeys.PROJECT);
     boolean enabled = (project != null && isActionEnabled(project, event));
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    presentation.setEnabled(enabled);
+    if (event.isFromContextMenu()) {
       presentation.setVisible(enabled);
-    }
-    else {
-      presentation.setEnabled(enabled);
     }
   }
 

@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.services.ServiceViewContributor
 import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -29,7 +28,7 @@ class OpenInToolWindowAction : DumbAwareAction() {
     val enabled = project != null && contributor != null && isExclusionAllowed(contributor, project)
 
     e.presentation.isEnabled = enabled
-    e.presentation.isVisible = enabled || !ActionPlaces.isPopupPlace(e.place)
+    e.presentation.isVisible = enabled || !e.isFromContextMenu
   }
 
   override fun actionPerformed(e: AnActionEvent) {

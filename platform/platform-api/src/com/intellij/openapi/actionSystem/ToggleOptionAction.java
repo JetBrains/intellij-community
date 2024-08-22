@@ -62,7 +62,7 @@ public class ToggleOptionAction extends ToggleAction {
       if (description != null) {
         presentation.setDescription(description);
       }
-      if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      if (event.isFromContextMenu()) {
         presentation.setIcon(null);
       }
     }

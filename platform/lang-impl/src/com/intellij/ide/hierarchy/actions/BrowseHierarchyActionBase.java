@@ -102,7 +102,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     }
     else {
       boolean enabled = isEnabled(e);
-      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      if (e.isFromContextMenu()) {
         e.getPresentation().setVisible(enabled);
       }
       else {

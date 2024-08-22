@@ -20,7 +20,7 @@ internal abstract class NodeMoveAction(val next: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent): Unit = with(event.presentation) {
     isEnabled = process(event, next, false)
     isVisible = isEnabled ||
-                !ActionPlaces.isPopupPlace(event.place) ||
+                !event.isFromContextMenu ||
                 process(event, !next, false)
   }
 

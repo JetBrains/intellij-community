@@ -3,7 +3,6 @@ package com.intellij.platform.execution.dashboard.actions
 
 import com.intellij.execution.dashboard.actions.RunDashboardActionUtils
 import com.intellij.execution.ui.ConsoleView
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,7 +25,7 @@ class ClearConsoleAction : DumbAwareAction() {
       size > 0
     }.isNotEmpty
     presentation.isEnabled = enabled
-    presentation.isVisible = enabled || !ActionPlaces.isPopupPlace(e.place)
+    presentation.isVisible = enabled || !e.isFromContextMenu
   }
 
   override fun actionPerformed(e: AnActionEvent) {

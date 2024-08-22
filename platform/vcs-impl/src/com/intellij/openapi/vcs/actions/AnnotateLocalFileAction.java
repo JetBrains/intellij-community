@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,7 +156,7 @@ public final class AnnotateLocalFileAction {
         List<EventPair<?>> eventData = new ArrayList<>();
         String place = e.getPlace();
         eventData.add(EventFields.ActionPlace.with(place));
-        eventData.add(ActionsEventLogGroup.CONTEXT_MENU.with(ActionPlaces.isPopupPlace(place)));
+        eventData.add(ActionsEventLogGroup.CONTEXT_MENU.with(e.isFromContextMenu()));
         activity.finished(() -> eventData);
       }
 

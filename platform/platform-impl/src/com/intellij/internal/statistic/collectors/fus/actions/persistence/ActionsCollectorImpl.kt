@@ -232,7 +232,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       data.add(EventFields.InputEvent.with(from(event)))
       val place = event.place
       data.add(EventFields.ActionPlace.with(place))
-      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(ActionPlaces.isPopupPlace(place)))
+      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu))
       return data
     }
 
