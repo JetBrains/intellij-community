@@ -579,5 +579,17 @@
     <extensionPoint name="recentProjectsBranchesProvider"
                     interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="applicationSettings"
+                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
+                    dynamic="true">
+      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
+    </extensionPoint>
+    <extensionPoint name="projectSettings"
+                    beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
+                    area="IDEA_PROJECT"
+                    dynamic="true">
+      <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
