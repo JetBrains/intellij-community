@@ -43,22 +43,27 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     fail("No exception was thrown");
   }
 
+  // PY-34626 
   public void testInnerFunc() {
     doTest("extracted");
   }
 
+  // PY-34626 
   public void testInnerFuncWithVar() {
     doTest("extracted");
   }
 
+  // PY-34626
   public void testInnerFuncWithExtVar() {
     doTest("extracted");
   }
 
+  // PY-34626
   public void testInnerFuncRecursive() {
     doTest("extracted");
   }
 
+  // PY-34626
   public void testInnerFuncCombined() {
     doTest("extracted");
   }

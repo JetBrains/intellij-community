@@ -9,5 +9,3 @@ class Test:
         def extracted():
             y = self.x
             return y
-
-        pass

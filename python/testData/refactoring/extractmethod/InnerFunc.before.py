@@ -5,4 +5,3 @@ class Test:
         def func():
             <selection>y = self.x</selection>
             return y
-        pass

@@ -3,5 +3,3 @@ class Test:
         def func(b):
             <selection>x = self.method(b)</selection>
             return x
-
-        return 0

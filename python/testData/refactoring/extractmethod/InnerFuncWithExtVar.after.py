@@ -7,5 +7,3 @@ class Test:
         def extracted():
             y = x * 2
             return y
-
-        pass

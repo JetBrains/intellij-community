@@ -3,5 +3,3 @@ class Test:
         def func(x):
             <selection>y = x * 2</selection>
             return y
-
-        pass
