@@ -36,6 +36,9 @@ public class AnActionEvent implements PlaceProvider {
 
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
+  /** @deprecated Use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} or
+   * {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
+  @Deprecated(forRemoval = true)
   public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
@@ -87,6 +90,18 @@ public class AnActionEvent implements PlaceProvider {
     return event;
   }
 
+  public static @NotNull AnActionEvent createEvent(@NotNull AnAction action,
+                                                   @NotNull DataContext dataContext,
+                                                   @Nullable Presentation presentation,
+                                                   @NotNull String place,
+                                                   @NotNull ActionUiKind uiKind,
+                                                   @Nullable InputEvent event) {
+    Presentation p = presentation == null ? action.getTemplatePresentation().clone() : presentation;
+    AnActionEvent result = createEvent(dataContext, p, place, uiKind, event);
+    result.setInjectedContext(action.isInInjectedContext());
+    return result;
+  }
+
   public static @NotNull AnActionEvent createEvent(@NotNull DataContext dataContext,
                                                    @Nullable Presentation presentation,
                                                    @NotNull String place,
@@ -106,25 +121,26 @@ public class AnActionEvent implements PlaceProvider {
     return createFromAnAction(action, event, place, context);
   }
 
+  /** @deprecated use {@link #createEvent(AnAction, DataContext, Presentation, String, ActionUiKind, InputEvent)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromAnAction(@NotNull AnAction action,
                                                           @Nullable InputEvent event,
                                                           @NotNull String place,
                                                           @NotNull DataContext dataContext) {
-    int modifiers = event == null ? 0 : event.getModifiers();
-    Presentation presentation = action.getTemplatePresentation().clone();
-    AnActionEvent anActionEvent = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(), modifiers);
-    anActionEvent.setInjectedContext(action.isInInjectedContext());
-    return anActionEvent;
+    return createEvent(action, dataContext, null, place, ActionUiKind.NONE, event);
   }
 
+  /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromDataContext(@NotNull String place,
                                                              @Nullable Presentation presentation,
                                                              @NotNull DataContext dataContext) {
-    return new AnActionEvent(null, dataContext, place, presentation == null ? new Presentation() : presentation,
-                             ActionManager.getInstance(), 0);
+    return createEvent(dataContext, presentation, place, ActionUiKind.NONE, null);
   }
 
 
+  /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@Nullable InputEvent event,
                                                             @NotNull String place,
                                                             @Nullable Presentation presentation,
