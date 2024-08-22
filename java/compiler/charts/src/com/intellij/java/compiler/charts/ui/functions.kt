@@ -1,47 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import java.awt.*
+import com.intellij.util.JBHiDPIScaledImage
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
+import java.awt.image.BufferedImage
 import kotlin.math.hypot
-
-fun Graphics2D.withColor(color: Color, block: Graphics2D.() -> Unit): Graphics2D {
-  val oldColor = this.color
-  this.color = color
-  block()
-  this.color = oldColor
-  return this
-}
-
-fun Graphics2D.withFont(font: Font, block: Graphics2D.() -> Unit): Graphics2D {
-  val oldFont = this.font
-  this.font = font
-  block()
-  this.font = oldFont
-  return this
-}
-
-fun Graphics2D.withAntialiasing(block: Graphics2D.() -> Unit): Graphics2D {
-  setupAntialiasing(this)
-
-  val old = getRenderingHint(RenderingHints.KEY_ANTIALIASING)
-
-  setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-  block()
-
-  setRenderingHint(RenderingHints.KEY_ANTIALIASING, old)
-  return this
-}
-
-fun Graphics2D.withStroke(stroke: Stroke, block: Graphics2D.() -> Unit): Graphics2D {
-  val oldStroke = this.stroke
-  this.stroke = stroke
-  block()
-  this.stroke = oldStroke
-  return this
-}
 
  fun <E> MutableSet<E>.getAndClean(): MutableSet<E> {
   val result = HashSet(this)
@@ -110,10 +74,10 @@ internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
   curveTo(cx0, cy0, cx1, cy1, x2, y2)
 }
 
-internal fun Graphics2D.setupRenderingHints() {
-  setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-  setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-}
+internal fun BufferedImage.height(): Double = if (this is JBHiDPIScaledImage)
+  height * 1 / scale
+else
+  height.toDouble()
 
 private fun Double.orZero() = if (this.isNaN()) 0.0 else this
 

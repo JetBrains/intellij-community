@@ -8,16 +8,19 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
 import java.awt.BasicStroke
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.geom.Line2D
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
+import kotlin.math.min
 
 interface ChartComponent {
-  fun background(g2d: Graphics2D, settings: ChartSettings)
-  fun component(g2d: Graphics2D, settings: ChartSettings)
+  fun background(g2d: ChartGraphics, settings: ChartSettings)
+  fun component(g2d: ChartGraphics, settings: ChartSettings)
+  fun width(settings: ChartSettings): Int
+  fun height(): Double
 }
 
 class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : ChartComponent {
@@ -51,10 +54,34 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
     lateinit var color: (Int) -> Color
   }
 
-  override fun background(g2d: Graphics2D, settings: ChartSettings) {
+  override fun width(settings: ChartSettings): Int {
+    model.putAll(state.model.getAndClean())
+    var start = clip.x + clip.width
+    var end = clip.x
+
+    for ((_, events) in model.asSequence().filter {
+      inViewport(it.value.filterIsInstance<StartEvent>().firstOrNull()?.target?.time,
+                 it.value.filterIsInstance<FinishEvent>().firstOrNull()?.target?.time,
+                 settings,
+                 zoom,
+                 clip)
+    }) {
+      val startEvent = events.filterIsInstance<StartEvent>().firstOrNull()
+      if (startEvent != null) {
+        val rect = getRectangle(startEvent, events.filterIsInstance<FinishEvent>().firstOrNull(), settings)
+        start = min(rect.x, start)
+        end = max(rect.x + rect.width, end)
+      }
+    }
+    return if (start < end) (end - clip.x).toInt() else 0
+  }
+
+  override fun height(): Double = clip.height
+
+  override fun background(g2d: ChartGraphics, settings: ChartSettings) {
     model.putAll(state.model.getAndClean())
     g2d.withColor(settings.background) {
-      fill(this@ChartProgress.clip)
+      fill(clip)
     }
     for (row in 0 until state.threads) {
       val cell = Rectangle2D.Double(clip.x, height * row + clip.y, clip.width, height)
@@ -64,20 +91,18 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
     }
   }
 
-  override fun component(g2d: Graphics2D, settings: ChartSettings) {
+  override fun component(g2d: ChartGraphics, settings: ChartSettings) {
     settings.mouse.clear()
 
     g2d.withAntialiasing {
       model.putAll(state.model.getAndClean())
-      drawChart(model, settings, g2d)
+      drawChart(model, settings)
     }
   }
 
-  private fun Graphics2D.drawChart(
+  private fun ChartGraphics.drawChart(
     data: MutableMap<EventKey, List<Event>>,
-    settings: ChartSettings,
-    g2d: Graphics2D,
-  ) {
+    settings: ChartSettings) {
     for ((key, events) in data.asSequence()
       .filter { state.filter.test(it.key) }
       .filter {
@@ -85,7 +110,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
                    it.value.filterIsInstance<FinishEvent>().firstOrNull()?.target?.time,
                    settings,
                    zoom,
-                   this@ChartProgress.clip)
+                   clip)
       }
       .filter { !isSmall(it.value) }) {
       val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: continue
@@ -106,10 +131,10 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
       withColor(if (selected == key) block.selected(start) else block.outline(start)) { // module border
         draw(rect)
       }
-      (g2d.create() as Graphics2D).withColor(settings.font.color) {
+      create().withColor(settings.font.color) {
         withFont(UIUtil.getLabelFont(settings.font.size)) { // name
           clip(rect)
-          drawString(" ${start.target.name}", rect.x.toFloat(), (rect.y + (this@ChartProgress.height - block.padding * 2) / 2 + fontMetrics.ascent / 2).toFloat())
+          drawString(" ${start.target.name}", rect.x.toFloat(), (rect.y + (height - block.padding * 2) / 2 + fontMetrics().ascent / 2).toFloat())
         }
       }
     }
@@ -145,31 +170,34 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     lateinit var border: JBColor
   }
 
-  override fun background(g2d: Graphics2D, settings: ChartSettings) {
+  override fun background(g2d: ChartGraphics, settings: ChartSettings) {
     model.addAll(state.model.getAndClean())
     g2d.withColor(settings.background) {
-      fill(this@ChartUsage.clip)
+      fill(clip)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(0.0, this@ChartUsage.clip.y, this@ChartUsage.clip.width, this@ChartUsage.clip.y))
+      draw(Line2D.Double(0.0, clip.y, clip.width, clip.y))
     }
   }
 
-  override fun component(g2d: Graphics2D, settings: ChartSettings) {
+  override fun component(g2d: ChartGraphics, settings: ChartSettings) {
     model.addAll(state.model.getAndClean())
     drawUsageChart(model, settings, g2d)
   }
 
+  override fun width(settings: ChartSettings): Int = 0
+  override fun height(): Double = clip.height
+
   private fun drawUsageChart(data: NavigableSet<StatisticData>,
                              settings: ChartSettings,
-                             g2d: Graphics2D): Boolean {
+                             g2d: ChartGraphics): Boolean {
     if (data.isEmpty()) return true
     val path = path(data, settings)
     g2d.withStroke(BasicStroke(USAGE_BORDER)) {
-      withColor(this@ChartUsage.color.border) {
+      withColor(color.border) {
         draw(path)
       }
-      withColor(this@ChartUsage.color.background) {
+      withColor(color.background) {
         fill(path)
       }
     }
@@ -180,7 +208,7 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     val neighborhood = DoubleArray(8) { Double.NaN }
     val border = 5
     val height = clip.height - border
-    val x0 = this@ChartUsage.clip.x
+    val x0 = clip.x
     val y0 = clip.y + height + border
 
     val path = Path2D.Double()
@@ -247,31 +275,31 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
 
   internal lateinit var clip: Rectangle2D
 
-  override fun background(g2d: Graphics2D, settings: ChartSettings) {
+  override fun background(g2d: ChartGraphics, settings: ChartSettings) {
     g2d.withColor(settings.background) {
-      fill(this@ChartAxis.clip)
+      fill(clip)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(this@ChartAxis.clip.x, this@ChartAxis.clip.y, this@ChartAxis.clip.x + this@ChartAxis.clip.width, this@ChartAxis.clip.y))
+      draw(Line2D.Double(clip.x, clip.y, clip.x + clip.width, clip.y))
     }
   }
 
-  override fun component(g2d: Graphics2D, settings: ChartSettings) {
+  override fun component(g2d: ChartGraphics, settings: ChartSettings) {
     g2d.withAntialiasing {
       val size = UIUtil.getFontSize(settings.font.size) + padding
 
-      val from = (this@ChartAxis.clip.x.toInt() / distance).toInt() * distance
-      val to = from + this@ChartAxis.clip.width.toInt() + this@ChartAxis.clip.x.toInt() % distance
+      val from = (clip.x.toInt() / distance).toInt() * distance
+      val to = from + clip.width.toInt() + clip.x.toInt() % distance
 
       withColor(COLOR_LINE) {
         for (x in from..to step distance) {
           // big axis
-          withStroke(BasicStroke(1.5F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, this@ChartAxis.stroke, 0.0f)) {
-            draw(Line2D.Double(x.toDouble(), 0.0, x.toDouble(), this@ChartAxis.clip.y))
+          withStroke(BasicStroke(1.5F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, stroke, 0.0f)) {
+            draw(Line2D.Double(x.toDouble(), 0.0, x.toDouble(), clip.y))
           }
           for (x1 in x..x + distance step distance / count) {
             // additional axis
-            draw(Line2D.Double(x1.toDouble(), this@ChartAxis.clip.y, x1.toDouble(), this@ChartAxis.clip.y + (size / 2)))
+            draw(Line2D.Double(x1.toDouble(), clip.y, x1.toDouble(), clip.y + (size / 2)))
           }
         }
       }
@@ -285,10 +313,13 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
         withFont(UIUtil.getLabelFont(settings.font.size)) {
           for (x in from..to step distance) {
             val time = Formats.formatDuration((TimeUnit.NANOSECONDS.toMillis(zoom.toDuration(x)) / trim) * trim)
-            drawString(time, x + padding, (this@ChartAxis.clip.y + size).toInt())
+            drawString(time, x + padding, (clip.y + size).toInt())
           }
         }
       }
     }
   }
+
+  override fun width(settings: ChartSettings): Int = 0
+  override fun height(): Double = clip.height
 }

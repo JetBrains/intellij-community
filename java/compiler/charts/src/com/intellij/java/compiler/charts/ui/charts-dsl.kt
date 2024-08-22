@@ -7,24 +7,21 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.Even
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil.FontSize
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import javax.swing.JLabel
 import javax.swing.JPopupMenu
-import javax.swing.JViewport
 import kotlin.math.max
 import kotlin.math.min
 
-fun charts(vm: CompilationChartsViewModel, zoom: Zoom, viewport: JViewport, init: Charts.() -> Unit): Charts {
-  return Charts(vm, zoom, viewport).apply(init)
+fun charts(vm: CompilationChartsViewModel, zoom: Zoom, init: Charts.() -> Unit): Charts {
+  return Charts(vm, zoom).apply(init)
 }
 
-class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom, private val viewport: JViewport) {
+class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom) {
   private val model: DataModel = DataModel(this)
-  internal var area: Rectangle2D.Double = Rectangle2D.Double(viewport.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
   internal val progress: ChartProgress = ChartProgress(zoom, model.chart)
   internal lateinit var usage: ChartUsage
   internal lateinit var axis: ChartAxis
@@ -46,16 +43,14 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
     axis = ChartAxis(zoom).apply(init)
   }
 
-  fun draw(g2d: Graphics2D, init: Charts.() -> Unit) {
-    init()
+  fun draw(g2d: ChartGraphics, init: Charts.(Double, Double) -> Unit) {
+    init(max(zoom.toPixels(MaxSize(progress, settings).width), width().toDouble()),
+         axis.clip.run { y + height })
 
     val components = listOf(progress, usage, axis)
     components.forEach { it.background(g2d, settings) }
     components.forEach { it.component(g2d, settings) }
   }
-
-  fun width(): Double =  max(zoom.toPixels(MaxSize(progress, settings).width), area.width)
-  fun height(): Double = axis.clip.run { y + height }
 
   fun update(init: Charts.() -> Unit) {
     init()
@@ -63,13 +58,19 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
 
   fun model(function: DataModel.() -> Unit): Charts {
     model.function()
-
-    area = Rectangle2D.Double(viewport.viewPosition.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
     settings.duration.from = min(model.chart.start, model.usage.start)
     settings.duration.to = max(model.chart.end, model.usage.end)
+    return this
+  }
 
+  fun width(): Int {
+    return listOf(progress, usage, axis).maxOfOrNull { it.width(settings) } ?: 0
+  }
+
+  fun height(): Double = listOf(progress, usage, axis).sumOf { it.height() }
+
+  fun clips(area: Rectangle2D.Double) {
     val size = MaxSize(progress, settings)
-
     progress.clip = Rectangle2D.Double(area.x,
                                        0.0,
                                        area.width,
@@ -82,7 +83,6 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
                                    progress.clip.height + usage.clip.height,
                                    progress.clip.width,
                                    axis.height)
-    return this
   }
 }
 

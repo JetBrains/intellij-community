@@ -8,10 +8,13 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemorySta
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.geom.Rectangle2D
+import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
@@ -36,6 +39,8 @@ class CompilationChartsDiagramsComponent(
   var cpuMemory = MEMORY
   private val mouseAdapter: CompilationChartsMouseAdapter
   private val charts: Charts
+  private val images: MutableMap<Int, BufferedImage> = HashMap()
+  private val imageRequestCount: MutableMap<Int, Int> = HashMap()
 
   private val focusableEmptyButton = JButton().apply {
     preferredSize = Dimension(0, 0)
@@ -66,7 +71,7 @@ class CompilationChartsDiagramsComponent(
     addMouseWheelListener { e ->
       if (e.isControlDown) {
         zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
-        smartDraw()
+        smartDraw(true)
       }
       else {
         e.component.parent.dispatchEvent(e)
@@ -76,7 +81,7 @@ class CompilationChartsDiagramsComponent(
     mouseAdapter = CompilationChartsMouseAdapter(vm, this)
     addMouseListener(mouseAdapter)
 
-    charts = charts(vm, zoom, viewport) {
+    charts = charts(vm, zoom) {
       progress {
         height = ROW_HEIGHT
 
@@ -116,7 +121,11 @@ class CompilationChartsDiagramsComponent(
       .scheduleWithFixedDelay({ smartDraw() }, 0, 1, TimeUnit.SECONDS)
   }
 
-  internal fun smartDraw() {
+  internal fun smartDraw(clean: Boolean = false) {
+    if (clean) {
+      images.clear()
+      imageRequestCount.clear()
+    }
     // todo check new data
     // todo check viewport position
     // todo check zoom
@@ -135,13 +144,17 @@ class CompilationChartsDiagramsComponent(
         model = stats[cpuMemory]!!
         maximum = cpuMemory.max(vm.statistics)
       }
-    }.draw(g2d) {
-      val size = Dimension(width().toInt(), height().toInt())
-      if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
-        this@CompilationChartsDiagramsComponent.preferredSize = size
-        this@CompilationChartsDiagramsComponent.revalidate()
+    }
+
+    buffered(ChartGraphics(g2d, 0, 0)) { img ->
+      charts.draw(img) { width, height ->
+        val size = Dimension(width.toInt(), height.toInt())
+        if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
+          this@CompilationChartsDiagramsComponent.preferredSize = size
+          this@CompilationChartsDiagramsComponent.revalidate()
+        }
+        img.setupRenderingHints()
       }
-      g2d.setupRenderingHints()
     }
   }
 
@@ -154,5 +167,43 @@ class CompilationChartsDiagramsComponent(
   override fun addNotify() {
     super.addNotify()
     setFocus()
+  }
+
+  private fun buffered(
+    g2d: ChartGraphics,
+    draw: (ChartGraphics) -> Unit,
+  ) {
+    val start: Int = viewport.viewPosition.x / BUFFERED_IMAGE_WIDTH_PX
+    val end: Int = (viewport.viewPosition.x + viewport.width) / BUFFERED_IMAGE_WIDTH_PX + 1
+
+    for (index in start..end) {
+      charts.clips(Rectangle2D.Double((index * BUFFERED_IMAGE_WIDTH_PX).toDouble(), viewport.y.toDouble(),
+                                      BUFFERED_IMAGE_WIDTH_PX.toDouble(), this.height.toDouble()))
+
+      val area = Rectangle2D.Double((index * BUFFERED_IMAGE_WIDTH_PX).toDouble(), viewport.y.toDouble(),
+                                    BUFFERED_IMAGE_WIDTH_PX.toDouble(), charts.height())
+
+      val image = images[index]
+      if (image != null && image.height() == area.height) {
+        g2d.moveTo(area.x, area.y).drawImage(image, this)
+      }
+      else {
+        if (charts.width() < area.width) {
+          draw(g2d)
+        }
+        else {
+          val counter = imageRequestCount.compute(index) { _, v -> (v ?: 0) + 1 } ?: 1
+          if (counter < IMAGE_CACHE_ACTIVATION_COUNT) {
+            draw(g2d)
+          } else {
+            val img = UIUtil.createImage(this, area.width.toInt(), area.height.toInt(), BufferedImage.TYPE_INT_ARGB)
+            images[index] = img
+            val chartGraphics = ChartGraphics(img.createGraphics(), -area.x, -area.y)
+            draw(chartGraphics)
+            g2d.moveTo(area.x, area.y).drawImage(img, this)
+          }
+        }
+      }
+    }
   }
 }
