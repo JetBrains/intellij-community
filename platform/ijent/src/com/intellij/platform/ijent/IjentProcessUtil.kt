@@ -19,8 +19,8 @@ fun getIjentGrpcArgv(
 ): List<String> {
   val debuggingLogLevel = when {
     LOG.isTraceEnabled &&
-    (ApplicationManager.getApplication()?.isUnitTestMode == true || System.getProperty("ijent.trace.grpc") == "true") ->
-      "trace-with-grpc"
+    (ApplicationManager.getApplication()?.isUnitTestMode == true || System.getProperty("ijent.trace.all") == "true") ->
+      "trace-all"
 
     LOG.isTraceEnabled -> "trace"
     LOG.isDebugEnabled -> "debug"
