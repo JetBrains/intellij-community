@@ -88,7 +88,7 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
       chain.setWindowTitle(requestFactory.getTitle(baseFile));
     }
     else {
-      chain.setWindowTitle(requestFactory.getTitle(file1, file2));
+      chain.setWindowTitle(requestFactory.getTitleForComparison(file1, file2));
     }
     return chain;
   }

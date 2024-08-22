@@ -97,8 +97,13 @@ a:com.intellij.diff.DiffRequestFactory
 - a:createTextMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
 - a:getContentTitle(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:getInstance():com.intellij.diff.DiffRequestFactory
+- a:getTitle(com.intellij.openapi.vcs.FilePath):java.lang.String
 - a:getTitle(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- a:getTitle(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getTitle(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getTitleForComparison(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath):java.lang.String
+- a:getTitleForComparison(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getTitleForModification(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath):java.lang.String
+- a:getTitleForModification(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.diff.DiffRequestPanel
 - com.intellij.openapi.Disposable
 - a:getComponent():javax.swing.JComponent

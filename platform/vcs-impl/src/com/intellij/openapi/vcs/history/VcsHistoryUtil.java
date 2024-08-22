@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffRequestFactoryImpl;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-
-import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 
 public final class VcsHistoryUtil {
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
@@ -74,13 +72,7 @@ public final class VcsHistoryUtil {
     FilePath path1 = getRevisionPath(revision1);
     FilePath path2 = getRevisionPath(revision2);
 
-    String title;
-    if (path1 != null && path2 != null) {
-      title = DiffRequestFactoryImpl.getTitle(path1, path2, DIFF_TITLE_RENAME_SEPARATOR);
-    }
-    else {
-      title = DiffRequestFactoryImpl.getContentTitle(path);
-    }
+    String title = path1 != null || path2 != null ? DiffRequestFactory.getInstance().getTitleForModification(path1, path2) : null;
 
     DiffContent diffContent1 = loadContentForDiff(project, path, revision1);
     DiffContent diffContent2 = loadContentForDiff(project, path, revision2);

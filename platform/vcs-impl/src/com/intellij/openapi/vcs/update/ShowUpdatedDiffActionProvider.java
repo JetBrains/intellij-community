@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffRequestFactoryImpl;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
@@ -174,7 +174,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
           content2 = contentFactory.createFromBytes(myProject, bytes2, myFilePath);
         }
 
-        String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);
+        String title = DiffRequestFactory.getInstance().getTitle(myFilePath);
         return new SimpleDiffRequest(title,
                                      content1,
                                      content2,

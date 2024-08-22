@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
@@ -379,7 +378,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   public static @NotNull @Nls String getRequestTitle(@NotNull Change change) {
     FilePath bPath = ChangesUtil.getBeforePath(change);
     FilePath aPath = ChangesUtil.getAfterPath(change);
-    return DiffRequestFactoryImpl.getTitle(bPath, aPath, DIFF_TITLE_RENAME_SEPARATOR);
+    return DiffRequestFactory.getInstance().getTitleForModification(bPath, aPath);
   }
 
   public static @NotNull @Nls String getRevisionTitle(@Nullable ContentRevision revision, @NotNull @Nls String defaultValue) {

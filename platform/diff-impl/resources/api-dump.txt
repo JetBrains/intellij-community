@@ -2746,6 +2746,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,java.util.List,Z):V
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[]):V
 - s:addNotification(com.intellij.diff.util.DiffNotificationProvider,com.intellij.openapi.util.UserDataHolder):V
+- s:addTitleCustomizers(com.intellij.diff.merge.MergeRequest,java.util.List):com.intellij.diff.merge.MergeRequest
 - s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,java.util.List):com.intellij.diff.requests.DiffRequest
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,com.intellij.openapi.editor.Document,I,I):V
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,java.util.List):V

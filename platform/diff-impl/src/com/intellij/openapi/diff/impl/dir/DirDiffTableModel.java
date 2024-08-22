@@ -428,7 +428,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         myTarget instanceof VirtualFileDiffElement) {
       VirtualFile srcFile = ((VirtualFileDiffElement)mySource).getValue();
       VirtualFile trgFile = ((VirtualFileDiffElement)myTarget).getValue();
-      return DiffRequestFactory.getInstance().getTitle(srcFile, trgFile);
+      return DiffRequestFactory.getInstance().getTitleForComparison(srcFile, trgFile);
     }
     return IdeBundle.message("diff.dialog.title", mySource.getPresentablePath(), myTarget.getPresentablePath());
   }

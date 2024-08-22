@@ -3,7 +3,7 @@ package git4idea.index
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffContentFactoryEx
-import com.intellij.diff.DiffRequestFactoryImpl
+import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.contents.DiffContent
@@ -49,7 +49,6 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.Nls
 import java.io.IOException
-import java.util.*
 
 fun createTwoSidesDiffRequestProducer(project: Project,
                                       statusNode: GitFileStatusNode,
@@ -417,11 +416,10 @@ private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean = sta
 
 @Nls
 private fun getTitle(status: GitFileStatus, kind: NodeKind): String {
-  return DiffRequestFactoryImpl.getTitle(status.path, kind.origPath(status),
-                                         DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
+  return DiffRequestFactory.getInstance().getTitleForModification(status.path, kind.origPath(status))
 }
 
 @Nls
 private fun getTitle(status: GitFileStatus): String {
-  return DiffRequestFactoryImpl.getTitle(status.path, status.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
+  return DiffRequestFactory.getInstance().getTitleForModification(status.path, status.origPath)
 }
