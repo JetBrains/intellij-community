@@ -263,6 +263,8 @@ public abstract class ActionPlaces {
 
   private static final String POPUP_PREFIX = "popup@";
 
+  /** @deprecated Use {@link AnActionEvent#getUiKind()} or {@link AnActionEvent#isFromContextMenu()} instead */
+  @Deprecated
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
   }

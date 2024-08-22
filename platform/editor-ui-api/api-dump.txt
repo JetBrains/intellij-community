@@ -1248,6 +1248,7 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - f:getUpdateSession():com.intellij.openapi.actionSystem.UpdateSession
 - f:isFromActionToolbar():Z
 - f:isFromContextMenu():Z
+- f:isFromMainMenu():Z
 - f:isInInjectedContext():Z
 - f:setInjectedContext(Z):V
 - f:setUpdateSession(com.intellij.openapi.actionSystem.UpdateSession):V

@@ -259,15 +259,19 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /**
-   * @deprecated This method returns {@code true} for both main menu and context menu invocations.
-   * Use {@link #getUiKind()} instead.
-   *
    * @see #getUiKind()
    * @see ActionUiKind#POPUP
    */
-  @Deprecated(forRemoval = true)
   public final boolean isFromContextMenu() {
-    return myUiKind instanceof ActionUiKind.Popup;
+    return myUiKind instanceof ActionUiKind.Popup o && !o.isMainMenu();
+  }
+
+  /**
+   * @see #getUiKind()
+   * @see ActionUiKind#POPUP
+   */
+  public final boolean isFromMainMenu() {
+    return myUiKind instanceof ActionUiKind.Popup o && o.isMainMenu();
   }
 
   /**
