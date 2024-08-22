@@ -42,7 +42,11 @@ import java.io.InputStream
 
 @Deprecated(
     "Use the IconKey-based API instead",
-    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, colorFilter, modifier, hints)"),
+    ReplaceWith(
+        "key = Icon(PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
+            "colorFilter = colorFilter, modifier = modifier, hints)",
+        "org.jetbrains.jewel.ui.icon.PathIconKey",
+    ),
 )
 @Composable
 public fun Icon(
@@ -66,7 +70,11 @@ public fun Icon(
 
 @Deprecated(
     "Use the IconKey-based API instead",
-    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, colorFilter, modifier, hint)"),
+    ReplaceWith(
+        "key = Icon(PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
+            "colorFilter = colorFilter, modifier = modifier, hint = hint)",
+        "org.jetbrains.jewel.ui.icon.PathIconKey",
+    ),
 )
 @Composable
 public fun Icon(
@@ -90,7 +98,11 @@ public fun Icon(
 
 @Deprecated(
     "Use the IconKey-based API instead",
-    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, tint, modifier, hints)"),
+    ReplaceWith(
+        "Icon(key = PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
+            "tint = tint, modifier = modifier, hints = hints)",
+        "org.jetbrains.jewel.ui.icon.PathIconKey",
+    ),
 )
 @Composable
 public fun Icon(
@@ -114,7 +126,11 @@ public fun Icon(
 
 @Deprecated(
     "Use the IconKey-based API instead",
-    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, tint, modifier, hints)"),
+    ReplaceWith(
+        "Icon(key = PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
+            "tint = tint, modifier = modifier, hint = hint)",
+        "org.jetbrains.jewel.ui.icon.PathIconKey",
+    ),
 )
 @Composable
 public fun Icon(

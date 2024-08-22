@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import icons.IdeSampleIconKeys
 import icons.JewelIcons
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.medium
@@ -107,10 +108,9 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
             compose {
                 Icon(
-                    "icons/jewel-tool-window.svg",
-                    null,
-                    this@SwingComparisonTabPanel.javaClass,
-                    Modifier.border(1.dp, Color.Red),
+                    key = IdeSampleIconKeys.jewelToolWindow,
+                    contentDescription = null,
+                    modifier = Modifier.border(1.dp, Color.Red),
                 )
             }
         }.layout(RowLayout.PARENT_GRID)
