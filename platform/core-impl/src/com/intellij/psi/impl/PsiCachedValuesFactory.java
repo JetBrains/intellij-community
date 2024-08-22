@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -37,7 +38,8 @@ public final class PsiCachedValuesFactory implements CachedValuesFactory {
                                                        boolean trackValue) {
     if (preferHardRefsForPsiCachedValue
         && userDataHolder instanceof PsiElement
-        && !(userDataHolder instanceof PsiFile)) { // PsiFile cache may outlive the loaded content of file
+        && !(userDataHolder instanceof StubBasedPsiElement) // StubBasedPsiElement cache may outlive the loaded content of a file
+        && !(userDataHolder instanceof PsiFile)) {
       return new PsiCachedValueImpl.Direct<>(myManager, provider, trackValue);
     }
 
@@ -56,7 +58,8 @@ public final class PsiCachedValuesFactory implements CachedValuesFactory {
                                                                                        boolean trackValue) {
     if (preferHardRefsForPsiCachedValue
         && userDataHolder instanceof PsiElement
-        && !(userDataHolder instanceof PsiFile)) { // PsiFile cache may outlive the loaded content of file
+        && !(userDataHolder instanceof StubBasedPsiElement) // StubBasedPsiElement cache may outlive the loaded content of a file
+        && !(userDataHolder instanceof PsiFile)) {
       return new PsiParameterizedCachedValue.Direct<>(myManager, provider, trackValue);
     }
 
