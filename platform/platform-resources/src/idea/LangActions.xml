@@ -1248,77 +1248,26 @@
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
-    <group id="TouchBar" searchable="false">
-      <group id="TouchBarEditorSearch">
-        <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
-        <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
-        <action id="EditorSearchSession.ToggleRegex" class="com.intellij.find.editorHeaderActions.ToggleRegex"/>
-        <separator text="type.large"/>
-        <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
-        <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
-        <group id="TouchBarEditorSearch_ctrl">
-          <reference id="EditorSearchSession.ToggleMatchCase"/>
-          <reference id="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
-        </group>
-      </group>
-      <group id="TouchBarDefault">
-        <reference ref="RunConfiguration"/>
-        <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
-        <reference ref="Stop"/>
-        <separator text="type.small"/>
-        <separator text="type.large"/>
-        <group id="TouchBarDefaultOptionalGroup" />
-        <group id="TouchBarDefault_ctrl">
-          <separator/>
-        </group>
-        <group id="TouchBarDefault_alt">
-          <separator/>
-        </group>
-        <group id="TouchBarDefault_cmd">
-          <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
-          <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
-          <reference ref="Back"/>
-          <reference ref="Forward"/>
-          <separator text="type.large"/>
-          <reference ref="ToggleBookmark"/>
-          <reference ref="ToggleLineBreakpoint"/>
-        </group>
-        <group id="TouchBarDefault_cmd.alt">
-          <separator/>
-        </group>
-        <group id="TouchBarDefault_shift">
-          <separator/>
-        </group>
-      </group>
-      <group id="TouchBarDebug">
-        <reference ref="Rerun"/>
-        <reference ref="Resume"/>
-        <reference ref="Pause"/>
-        <reference ref="Stop"/>
-        <separator text="type.small"/>
-        <reference ref="XDebugger.MuteBreakpoints"/>
-        <separator text="type.flexible"/>
-        <group id="TouchBarDebug.StepButtons" compact="true">
-          <reference ref="StepOver"/>
-          <reference ref="StepInto"/>
-          <reference ref="StepOut"/>
-        </group>
-        <separator text="type.small"/>
-        <group id="TouchBarDebug_alt">
-          <reference ref="ViewBreakpoints"/>
-          <separator text="type.flexible"/>
-          <group id="TouchBarDebug.ForceStepButtons" compact="true">
-            <reference ref="RunToCursor"/>
-            <reference ref="ForceStepOver"/>
-            <reference ref="ForceStepInto"/>
-            <reference ref="SmartStepInto"/>
-          </group>
-          <separator text="type.small"/>
-        </group>
+    <!--region TouchBar-->
+    <group id="TouchBarEditorSearch">
+      <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
+      <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
+      <action id="EditorSearchSession.ToggleRegex" class="com.intellij.find.editorHeaderActions.ToggleRegex"/>
+      <separator text="type.large"/>
+      <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
+      <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
+      <group id="TouchBarEditorSearch_ctrl">
+        <reference id="EditorSearchSession.ToggleMatchCase"/>
+        <reference id="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
       </group>
 
-      <add-to-group group-id="Other.KeymapGroup"/>
+      <add-to-group group-id="TouchBar" anchor="first"/>
     </group>
+
+    <reference id="ToggleBookmark">
+      <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
+    </reference>
+    <!--endregion-->
 
     <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction">
       <add-to-group group-id="MaintenanceGroup"/>

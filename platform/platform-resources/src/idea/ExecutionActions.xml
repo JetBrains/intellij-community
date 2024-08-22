@@ -180,5 +180,48 @@
     <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow">
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
+
+    <!--region TouchBar -->
+    <group id="TouchBarDebug">
+      <reference ref="Rerun"/>
+      <reference ref="Resume"/>
+      <reference ref="Pause"/>
+      <reference ref="Stop"/>
+      <separator text="type.flexible"/>
+      <group id="TouchBarDebug.StepButtons" compact="true">
+        <reference ref="StepOver"/>
+        <reference ref="StepInto"/>
+        <reference ref="StepOut"/>
+      </group>
+      <separator text="type.small"/>
+      <group id="TouchBarDebug_alt">
+        <reference ref="ViewBreakpoints"/>
+        <separator text="type.flexible"/>
+        <group id="TouchBarDebug.ForceStepButtons" compact="true">
+          <reference ref="RunToCursor"/>
+          <reference ref="ForceStepOver"/>
+          <reference ref="ForceStepInto"/>
+          <reference ref="SmartStepInto"/>
+        </group>
+        <separator text="type.small"/>
+      </group>
+
+      <add-to-group group-id="TouchBar" anchor="last"/>
+    </group>
+
+    <group id="TouchBarDefaultExecution">
+      <reference ref="RunConfiguration"/>
+      <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
+      <reference ref="Stop"/>
+      <separator text="type.small"/>
+      <separator text="type.large"/>
+
+      <add-to-group group-id="TouchBarDefault" anchor="first"/>
+    </group>
+
+    <reference id="ToggleLineBreakpoint">
+      <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
+    </reference>
+    <!--endregion-->
   </actions>
 </idea-plugin>

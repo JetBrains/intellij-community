@@ -164,6 +164,12 @@
       <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
     </group>
 
+    <group id="XDebugger.Touchbar.Debug">
+      <separator text="type.small"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+      <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Stop"/>
+    </group>
+
     <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
       <separator/>
       <reference ref="EvaluateExpression"/>

@@ -1032,6 +1032,33 @@
       <reference ref="ReopenClosedTab"/>
     </group>
 
+    <group id="TouchBar" searchable="false">
+      <group id="TouchBarDefault">
+        <group id="TouchBarDefaultOptionalGroup" />
+        <group id="TouchBarDefault_ctrl">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_alt">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_cmd">
+          <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
+          <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
+          <reference ref="Back"/>
+          <reference ref="Forward"/>
+          <separator text="type.large"/>
+        </group>
+        <group id="TouchBarDefault_cmd.alt">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_shift">
+          <separator/>
+        </group>
+      </group>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <group id="WelcomeScreen.QuickStart.EmptyState">
     </group>
 
