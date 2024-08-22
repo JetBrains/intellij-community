@@ -433,7 +433,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         if (elementToRename != null && isRenamerFactoryApplicable(renamerFactory, elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<>();
           final AutomaticRenamer renamer =
-            ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.prepare.additional.searcher"), () -> renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>()));
+            ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.prepare.additional.searcher"), 
+                                          () -> renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>()));
           if (renamer.hasAnythingToRename()) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
@@ -461,11 +462,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                 }
               }
             };
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename);
-            } else {
-              ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
-            }
+            ApplicationManager.getApplication().invokeLater(
+              () -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
           }
         }
       }
