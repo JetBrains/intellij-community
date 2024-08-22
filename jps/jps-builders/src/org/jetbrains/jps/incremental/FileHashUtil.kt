@@ -4,11 +4,9 @@ package org.jetbrains.jps.incremental
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -42,20 +40,20 @@ fun getFileHash(file: Path, hash: HashStream64): Long {
   }
 }
 
-internal fun pathHashCode(path: String?, hash: HashStream64) {
-  if (path.isNullOrEmpty()) {
+/** path must be absolute ([Path.toAbsolutePath]), normalized ([Path.normalize]) and system-independent */
+internal fun normalizedPathHashCode(path: String, hash: HashStream64) {
+  if (path.isEmpty()) {
     hash.putInt(0)
     return
   }
 
-  val canonical = FileUtilRt.toCanonicalPath(path, File.separatorChar, true)
-  val length = canonical.length
+  val length = path.length
   if (ProjectStamps.PORTABLE_CACHES || SystemInfoRt.isFileSystemCaseSensitive) {
-    hash.putChars(canonical)
+    hash.putChars(path)
   }
   else {
     for (offset in 0 until length) {
-      hash.putChar(StringUtilRt.toLowerCase(canonical[offset]))
+      hash.putChar(StringUtilRt.toLowerCase(path[offset]))
     }
   }
 

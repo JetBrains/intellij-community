@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.ResourcesTarget;
@@ -15,8 +16,11 @@ import java.io.FileFilter;
 import java.nio.file.Path;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class ResourceRootDescriptor extends BuildRootDescriptor {
-  private final @NotNull File myRoot;
+  private final @NotNull File root;
+  // absolute and normalized
+  public final @NotNull Path rootFile;
   private final @NotNull ResourcesTarget myTarget;
   private final @NotNull String myPackagePrefix;
   private final @NotNull Set<Path> myExcludes;
@@ -40,7 +44,8 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
                                 @NotNull Set<Path> excludes,
                                 @NotNull FileFilter filterForExcludedPatterns) {
     myPackagePrefix = packagePrefix;
-    myRoot = root;
+    this.root = root;
+    this.rootFile = root.toPath().toAbsolutePath().normalize();
     myTarget = target;
     myExcludes = excludes;
     myFilterForExcludedPatterns = filterForExcludedPatterns;
@@ -48,7 +53,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull File getRootFile() {
-    return myRoot;
+    return root;
   }
 
   @Override
@@ -74,7 +79,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public String toString() {
-    return "ResourceRootDescriptor{target='" + myTarget + '\'' + ", root=" + myRoot + '}';
+    return "ResourceRootDescriptor{target='" + myTarget + '\'' + ", root=" + root + '}';
   }
 
   @Override
@@ -84,6 +89,6 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull String getRootId() {
-    return FileUtil.toSystemIndependentName(myRoot.getPath());
+    return FileUtil.toSystemIndependentName(root.getPath());
   }
 }

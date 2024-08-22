@@ -1645,7 +1645,7 @@ org.jetbrains.jps.builders.BuildRootIndex
 - a:getRootFilter(org.jetbrains.jps.builders.BuildRootDescriptor):java.io.FileFilter
 - a:getTargetRoots(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.CompileContext):java.util.List
 - a:getTempTargetRoots(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.CompileContext):java.util.List
-- a:isDirectoryAccepted(java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor):Z
+- a:isDirectoryAccepted(java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor):Z
 - a:isFileAccepted(java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor):Z
 a:org.jetbrains.jps.builders.BuildTarget
 - p:<init>(org.jetbrains.jps.builders.BuildTargetType):V
@@ -1737,10 +1737,6 @@ f:org.jetbrains.jps.builders.impl.BuildTargetChunk
 a:org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
 - <init>():V
 - a:isExcludedFromCompilation(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.model.module.JpsModuleSourceRoot):Z
-f:org.jetbrains.jps.builders.java.FilteredResourceRootDescriptor
-- org.jetbrains.jps.builders.java.ResourceRootDescriptor
-- <init>(java.io.File,org.jetbrains.jps.incremental.ResourcesTarget,java.lang.String,java.util.Set,java.io.FileFilter):V
-- createFileFilter():java.io.FileFilter
 a:org.jetbrains.jps.builders.java.JavaBuilderExtension
 - <init>():V
 - getCompilableModuleTypes():java.util.Set
@@ -1778,29 +1774,19 @@ c:org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 - f:isGeneratedSources:Z
 - f:isTemp:Z
 - f:root:java.io.File
+- f:rootFile:java.nio.file.Path
 - f:target:org.jetbrains.jps.incremental.ModuleBuildTarget
 - <init>(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set):V
 - <init>(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):V
 - canUseFileCache():Z
 - createFileFilter():java.io.FileFilter
+- s:createJavaSourceRootDescriptor(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 - getExcludedRoots():java.util.Set
 - getPackagePrefix():java.lang.String
 - getRootFile():java.io.File
 - getRootId():java.lang.String
 - getTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
 - isGenerated():Z
-c:org.jetbrains.jps.builders.java.ResourceRootDescriptor
-- org.jetbrains.jps.builders.BuildRootDescriptor
-- pf:myFilterForExcludedPatterns:java.io.FileFilter
-- <init>(java.io.File,org.jetbrains.jps.incremental.ResourcesTarget,java.lang.String,java.util.Set):V
-- <init>(java.io.File,org.jetbrains.jps.incremental.ResourcesTarget,java.lang.String,java.util.Set,java.io.FileFilter):V
-- canUseFileCache():Z
-- createFileFilter():java.io.FileFilter
-- getExcludedRoots():java.util.Set
-- getPackagePrefix():java.lang.String
-- getRootFile():java.io.File
-- getRootId():java.lang.String
-- getTarget():org.jetbrains.jps.incremental.ResourcesTarget
 f:org.jetbrains.jps.builders.java.ResourcesTargetType
 - org.jetbrains.jps.builders.ModuleBasedBuildTargetType
 - sf:ALL_TYPES:java.util.List
@@ -2212,17 +2198,11 @@ f:org.jetbrains.jps.incremental.GlobalContextKey
 - com.intellij.openapi.util.Key
 - <init>(java.lang.String):V
 - s:create(java.lang.String):org.jetbrains.jps.incremental.GlobalContextKey
-a:org.jetbrains.jps.incremental.JVMModuleBuildTarget
-- org.jetbrains.jps.builders.ModuleBasedTarget
-- <init>(org.jetbrains.jps.builders.ModuleBasedBuildTargetType,org.jetbrains.jps.model.module.JpsModule):V
-- p:computeRootExcludes(java.io.File,org.jetbrains.jps.indices.ModuleExcludeIndex):java.util.Set
-- findRootDescriptor(java.lang.String,org.jetbrains.jps.builders.BuildRootIndex):org.jetbrains.jps.builders.BuildRootDescriptor
-- getId():java.lang.String
 org.jetbrains.jps.incremental.MessageHandler
 - sf:DEAF:org.jetbrains.jps.incremental.MessageHandler
 - a:processMessage(org.jetbrains.jps.incremental.messages.BuildMessage):V
 f:org.jetbrains.jps.incremental.ModuleBuildTarget
-- org.jetbrains.jps.incremental.JVMModuleBuildTarget
+- org.jetbrains.jps.builders.ModuleBasedTarget
 - sf:REBUILD_ON_DEPENDENCY_CHANGE:java.lang.Boolean
 - <init>(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.builders.java.JavaModuleBuildTargetType):V
 - computeDependencies(org.jetbrains.jps.builders.BuildTargetRegistry,org.jetbrains.jps.builders.TargetOutputIndex):java.util.Collection
@@ -2266,7 +2246,7 @@ f:org.jetbrains.jps.incremental.RebuildRequestedException
 - <init>(java.lang.Throwable):V
 - fillInStackTrace():java.lang.Throwable
 f:org.jetbrains.jps.incremental.ResourcesTarget
-- org.jetbrains.jps.incremental.JVMModuleBuildTarget
+- org.jetbrains.jps.builders.ModuleBasedTarget
 - <init>(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.builders.java.ResourcesTargetType):V
 - computeDependencies(org.jetbrains.jps.builders.BuildTargetRegistry,org.jetbrains.jps.builders.TargetOutputIndex):java.util.Collection
 - computeRootDescriptors(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.indices.IgnoredFileIndex,org.jetbrains.jps.builders.storage.BuildDataPaths):java.util.List

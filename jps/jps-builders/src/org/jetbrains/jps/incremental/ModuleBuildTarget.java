@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.jps.incremental.FileHashUtilKt.getFileHash;
-import static org.jetbrains.jps.incremental.FileHashUtilKt.pathHashCode;
+import static org.jetbrains.jps.incremental.FileHashUtilKt.normalizedPathHashCode;
 
 /**
  * Describes a step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module.
@@ -185,12 +185,11 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
     List<JavaSourceRootDescriptor> roots = pd.getBuildRootIndex().getTargetRoots(this, null);
     for (JavaSourceRootDescriptor root : roots) {
-      File file = root.getRootFile();
-      String path = relativizer.toRelative(file.getPath());
+      String path = relativizer.toRelative(root.rootFile.toString());
       if (logBuilder != null) {
-        logBuilder.append(path).append("\n");
+        logBuilder.append(path).append('\n');
       }
-      pathHashCode(path, hash);
+      normalizedPathHashCode(path, hash);
     }
     hash.putInt(roots.size());
 
@@ -278,7 +277,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
     Collection<Path> roots = enumerator.classes().getPaths();
     for (Path file : roots) {
-      String path = relativizer.toRelative(file.toAbsolutePath().toString());
+      String path = relativizer.toRelative(file.toAbsolutePath().normalize().toString());
       getContentHash(file, hash);
       if (logBuilder != null) {
         logBuilder.append(path);
@@ -286,7 +285,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
         logBuilder.append(": ").append(hash.getAsLong());
         logBuilder.append("\n");
       }
-      pathHashCode(path, hash);
+      normalizedPathHashCode(path, hash);
     }
     hash.putInt(roots.size());
   }

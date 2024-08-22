@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.resources;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nls;
@@ -25,8 +24,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance(ResourcesBuilder.class);
-
   private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<>());
 
   public ResourcesBuilder() {
@@ -104,7 +101,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
     StringBuilder targetPath = new StringBuilder();
     targetPath.append(FileUtil.toCanonicalPath(outputRoot.getPath()));
-    if (prefix.length() > 0) {
+    if (!prefix.isEmpty()) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);

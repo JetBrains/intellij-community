@@ -495,18 +495,19 @@ f:com.intellij.util.containers.FList
 - size():I
 - without(java.lang.Object):com.intellij.util.containers.FList
 f:com.intellij.util.containers.FileCollectionFactory
-- <init>():V
-- s:createCanonicalFileLinkedSet():java.util.Set
-- s:createCanonicalFileMap():java.util.Map
-- s:createCanonicalFileMap(I):java.util.Map
-- s:createCanonicalFileMap(java.util.Map):java.util.Map
-- s:createCanonicalFilePathLinkedMap():java.util.Map
-- s:createCanonicalFilePathSet():java.util.Set
-- s:createCanonicalFileSet():java.util.Set
-- s:createCanonicalFileSet(java.util.Collection):java.util.Set
-- s:createCanonicalPathLinkedMap():java.util.Map
-- s:createCanonicalPathSet():java.util.Set
-- s:createCanonicalPathSet(java.util.Collection):java.util.Set
+- sf:INSTANCE:com.intellij.util.containers.FileCollectionFactory
+- sf:createCanonicalFileLinkedSet():java.util.Set
+- sf:createCanonicalFileMap():java.util.Map
+- sf:createCanonicalFileMap(I):java.util.Map
+- sf:createCanonicalFileMap(java.util.Map):java.util.Map
+- sf:createCanonicalFilePathLinkedMap():java.util.Map
+- sf:createCanonicalFilePathSet():java.util.Set
+- sf:createCanonicalFileSet():java.util.Set
+- sf:createCanonicalFileSet(java.util.Collection):java.util.Set
+- sf:createCanonicalPathLinkedMap():java.util.Map
+- sf:createCanonicalPathMap():java.util.Map
+- sf:createCanonicalPathSet():java.util.Set
+- sf:createCanonicalPathSet(java.util.Collection):java.util.Set
 com.intellij.util.containers.HashingStrategy
 - s:canonical():com.intellij.util.containers.HashingStrategy
 - s:caseInsensitive():com.intellij.util.containers.HashingStrategy

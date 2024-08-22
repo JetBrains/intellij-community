@@ -3,10 +3,8 @@ package org.jetbrains.jps.incremental;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.TargetOutputIndex;
@@ -32,10 +30,9 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.jps.incremental.FileHashUtilKt.pathHashCode;
+import static org.jetbrains.jps.incremental.FileHashUtilKt.normalizedPathHashCode;
 
 /**
  * Describes a step of compilation process which copies resource's files from source and resource roots of a Java module.
@@ -54,7 +51,8 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
 
   @Override
   public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
-    return ContainerUtil.createMaybeSingletonList(getOutputDir());
+    File element = getOutputDir();
+    return element == null ? List.of() : List.of(element);
   }
 
   @Override
@@ -69,7 +67,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
 
   @Override
   public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
-    return Collections.emptyList();
+    return List.of();
   }
 
   @Override
@@ -83,7 +81,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     FileFilter filterForExcludedPatterns = index.getModuleFileFilterHonorExclusionPatterns(myModule);
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
       if (!isExcludedFromCompilation(excludedRootProviders, sourceRoot)) {
-        final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
+        String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
         Path rootFile = sourceRoot.getPath();
         roots.add(new FilteredResourceRootDescriptor(rootFile.toFile(), this, packagePrefix, computeRootExcludes(rootFile, index),
                                                      filterForExcludedPatterns));
@@ -117,17 +115,18 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor projectDescriptor, @NotNull PrintWriter out) {
     HashStream64 hash = Hashing.komihash5_0().hashStream();
-    BuildRootIndex rootIndex = pd.getBuildRootIndex();
-    PathRelativizerService relativizer = pd.dataManager.getRelativizer();
-    List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
+    PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
+
+    List<ResourceRootDescriptor> roots = projectDescriptor.getBuildRootIndex().getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
-      String path = relativizer.toRelative(root.getRootFile().getAbsolutePath());
-      pathHashCode(path, hash);
+      String path = relativizer.toRelative(root.rootFile.toString());
+      normalizedPathHashCode(path, hash);
       hash.putString(root.getPackagePrefix());
     }
     hash.putInt(roots.size());
+
     out.write(Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
   }
 }

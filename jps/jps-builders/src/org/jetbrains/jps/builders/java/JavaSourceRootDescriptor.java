@@ -19,6 +19,8 @@ import java.util.Set;
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   private final FileFilter myFilterForExcludedPatterns;
   public final @NotNull File root;
+  // absolute and normalized
+  public final @NotNull Path rootFile;
   public final @NotNull ModuleBuildTarget target;
   public final boolean isGeneratedSources;
   public final boolean isTemp;
@@ -77,6 +79,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
                                    @NotNull FileFilter filterForExcludedPatterns,
                                    boolean ignored) {
     this.root = root;
+    rootFile = root.toPath().toAbsolutePath().normalize();
     this.target = target;
     this.isGeneratedSources = isGenerated;
     this.isTemp = isTemp;
@@ -89,7 +92,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public String toString() {
     return "RootDescriptor{" +
            "target='" + target + '\'' +
-           ", root=" + root +
+           ", root=" + rootFile +
            ", generated=" + isGeneratedSources +
            '}';
   }
@@ -105,7 +108,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull String getRootId() {
-    return FileUtilRt.toSystemIndependentName(root.getPath());
+    return FileUtilRt.toSystemIndependentName(rootFile.toString());
   }
 
   @Override

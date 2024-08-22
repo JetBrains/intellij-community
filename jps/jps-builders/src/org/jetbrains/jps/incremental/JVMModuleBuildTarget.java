@@ -3,8 +3,12 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -16,10 +20,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Base class for build targets which produce *.class files and copies resources from Java modules. <strong>It isn't supposed to be used from
- * plugins.</strong>
+ * Base class for build targets which produce *.class files and copy resources from Java modules.
+ * It isn't supposed to be used from plugins.</strong>
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extends ModuleBasedTarget<R> {
   public JVMModuleBuildTarget(@NotNull ModuleBasedBuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
     super(targetType, module);
@@ -47,9 +52,7 @@ public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extend
 
   @Override
   public R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
-    List<R> descriptors = rootIndex.getRootDescriptors(
-      new File(rootId), Collections.singletonList((BuildTargetType<? extends JVMModuleBuildTarget<R>>)getTargetType()), null
-    );
+    List<R> descriptors = rootIndex.getRootDescriptors(new File(rootId), List.of(getTargetType()), null);
     return descriptors.isEmpty() ? null : descriptors.get(0);
   }
 }
