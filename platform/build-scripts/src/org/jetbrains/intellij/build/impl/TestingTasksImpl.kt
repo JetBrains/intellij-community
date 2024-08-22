@@ -13,6 +13,8 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
@@ -35,7 +37,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.regex.Pattern
-import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readLines
 
@@ -220,7 +221,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           excludedRootPaths.add(context.getModuleTestsOutputDir(module))
         }
       }
-      val excludedRoots = excludedRootPaths.replaceWithArchivedIfNeededLP().filter(Files::exists).map(Path::toString)
+      val excludedRoots = replaceWithArchivedIfNeededLP(excludedRootPaths).filter(Files::exists).map(Path::toString)
 
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
@@ -363,19 +364,19 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (moduleInfoFile != null) {
       val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
       val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), HashSet(testRoots))
-      modulePath = pair.first.path.toList().replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter)
-      testClasspath = pair.second.toList().replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter)
+      modulePath = replaceWithArchivedIfNeededLF(pair.first.path.toList()).mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = replaceWithArchivedIfNeededLF(pair.second.toList()).mapNotNull(toExistingAbsolutePathConverter)
     }
     else {
       modulePath = null
-      testClasspath = testRoots.replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = replaceWithArchivedIfNeededLF(testRoots).mapNotNull(toExistingAbsolutePathConverter)
     }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
       .toMutableList()
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, testRoots.replaceWithArchivedIfNeededLF().mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
+    Files.writeString(classpathFile, replaceWithArchivedIfNeededLF(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
@@ -426,18 +427,22 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private fun List<File>.replaceWithArchivedIfNeededLF(): List<File> {
+  private suspend fun replaceWithArchivedIfNeededLF(files: List<File>): List<File> {
     if (context is ArchivedCompilationContext) {
-      return context.replaceWithCompressedIfNeededLF(this)
+      return context.replaceWithCompressedIfNeededLF(files)
     }
-    return this
+    else {
+      return files
+    }
   }
 
-  private fun List<Path>.replaceWithArchivedIfNeededLP(): List<Path> {
+  private suspend fun replaceWithArchivedIfNeededLP(paths: List<Path>): List<Path> {
     if (context is ArchivedCompilationContext) {
-      return context.replaceWithCompressedIfNeededLP(this)
+      return context.replaceWithCompressedIfNeededLP(paths)
     }
-    return this
+    else {
+      return paths
+    }
   }
 
   private suspend fun getRuntimeExecutablePath(): Path {
@@ -616,40 +621,42 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
   }
 
-  private fun loadTestsSkippedInHeadlessEnvironment(): List<Pair<String, String>> {
-    val classpath = context.project.modules.asSequence()
+  private suspend fun loadTestsSkippedInHeadlessEnvironment(): List<Pair<String, String>> {
+    val classpath = context.project.modules
       .flatMap { context.getModuleRuntimeClasspath(module = it, forTests = true) }
       .distinct()
       .map { Path.of(it) }
-      .toList()
     val classloader = UrlClassLoader.build().files(classpath).get()
     val testAnnotation = classloader.loadClass("com.intellij.testFramework.SkipInHeadlessEnvironment")
-    return context.project.modules.parallelStream()
-      .flatMap { module ->
-        val root = context.getModuleTestsOutputDir(module)
-        if (Files.exists(root)) {
-          @Suppress("SSBasedInspection")
-          Files.walk(root).use { stream ->
-            stream
-              .filter { it.toString().endsWith("Test.class") }
-              .map { root.relativize(it).toString() }
-              .filter {
-                val className = FileUtilRt.getNameWithoutExtension(it).replace('/', '.')
-                val testClass = classloader.loadClass(className)
-                !Modifier.isAbstract(testClass.modifiers) &&
-                testClass.annotations.any { annotation -> testAnnotation.isAssignableFrom(annotation.javaClass) }
-              }
-              .map { Pair(it, module.name) }.toList()
-          }.stream()
-        }
-        else {
-          Stream.empty()
+
+    return coroutineScope {
+      context.project.modules.map { module ->
+        async {
+          val root = context.getModuleTestsOutputDir(module)
+          if (Files.exists(root)) {
+            Files.walk(root).use { stream ->
+              stream
+                .filter { it.toString().endsWith("Test.class") }
+                .map { root.relativize(it).toString() }
+                .filter {
+                  val className = FileUtilRt.getNameWithoutExtension(it).replace('/', '.')
+                  val testClass = classloader.loadClass(className)
+                  !Modifier.isAbstract(testClass.modifiers) &&
+                  testClass.annotations.any { annotation -> testAnnotation.isAssignableFrom(annotation.javaClass) }
+                }
+                .map { Pair(it, module.name) }
+                .toList()
+            }
+          }
+          else {
+            emptyList()
+          }
         }
       }
-      .toList()
+    }.flatMap { it.getCompleted() }
   }
 
-  private fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
+  private suspend fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
     val root = context.getModuleTestsOutputDir(context.findRequiredModule(mainModule))
     val testClasses = Files.walk(root).use { stream ->
       stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
@@ -664,12 +671,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     return testClasses
   }
 
-  private fun runInBatchMode(mainModule: String,
-                             systemProperties: Map<String, String>,
-                             jvmArgs: List<String>,
-                             envVariables: Map<String, String>,
-                             bootstrapClasspath: List<String>,
-                             testClasspath: List<String>) {
+  private suspend fun runInBatchMode(
+    mainModule: String,
+    systemProperties: Map<String, String>,
+    jvmArgs: List<String>,
+    envVariables: Map<String, String>,
+    bootstrapClasspath: List<String>,
+    testClasspath: List<String>,
+  ) {
     val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes!!))
     val testClasses = getTestClassesForModule(mainModule = mainModule, filteringPattern = pattern)
 
@@ -696,14 +705,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
         // Run JUnit 4 and 5 whole test classes separately
         if (options.isDedicatedTestRuntime != "false" && jUnit4And5TestMethods.isNotEmpty()) {
-          val exitCode = runJUnit5Engine(systemProperties = systemProperties,
-                                         jvmArgs = jvmArgs,
-                                         envVariables = envVariables,
-                                         bootstrapClasspath = bootstrapClasspath,
-                                         modulePath = null,
-                                         testClasspath = testClasspath,
-                                         suiteName = qName,
-                                         methodName = null)
+          val exitCode = runJUnit5Engine(
+            systemProperties = systemProperties,
+            jvmArgs = jvmArgs,
+            envVariables = envVariables,
+            bootstrapClasspath = bootstrapClasspath,
+            modulePath = null,
+            testClasspath = testClasspath,
+            suiteName = qName,
+            methodName = null
+          )
           noTests = exitCode == NO_TESTS_ERROR
         }
         // Run JUnit 4 and 5 test methods separately if any
@@ -711,7 +722,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           for (method in jUnit4And5TestMethods) {
             val exitCode = runJUnit5Engine(
               systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
-              qName, method)
+              qName, method
+            )
             noTests = noTests && exitCode == NO_TESTS_ERROR
           }
         }
@@ -767,7 +779,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
         .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes ?: "")
-        .blockingUse {
+        .use {
           runInBatchMode(
             mainModule = mainModule,
             systemProperties = systemProperties,

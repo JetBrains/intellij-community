@@ -15,7 +15,7 @@ import java.util.logging.Logger
 object JdkDownloader {
   fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     return runBlocking(Dispatchers.IO) {
-      getJdkHome(communityRoot, jdkBuildNumber, variation, infoLog)
+      getJdkHome(communityRoot = communityRoot, jdkBuildNumber = jdkBuildNumber, variation = variation, infoLog = infoLog)
     }
   }
 

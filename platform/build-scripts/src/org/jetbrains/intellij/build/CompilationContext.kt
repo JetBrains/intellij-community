@@ -50,12 +50,9 @@ interface CompilationContext {
 
   suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
 
-  fun getModuleTestsOutputDir(module: JpsModule): Path
+  suspend fun getModuleTestsOutputDir(module: JpsModule): Path
 
-  @Deprecated("Use getModuleTestsOutputDir instead", replaceWith = ReplaceWith("getModuleTestsOutputDir(module)"))
-  fun getModuleTestsOutputPath(module: JpsModule): String
-
-  fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
+  suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
   fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
 

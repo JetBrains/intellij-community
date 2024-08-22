@@ -317,29 +317,20 @@ class CompilationContextImpl private constructor(
     return Path.of(JpsPathUtil.urlToPath(url))
   }
 
-  override fun getModuleTestsOutputDir(module: JpsModule): Path {
+  override suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(module, true)
-    check(url != null) {
+    requireNotNull(url) {
       "Output directory for ${module.name} isn\'t set"
     }
     return Path.of(JpsPathUtil.urlToPath(url))
   }
 
-  @Deprecated("Use getModuleTestsOutputDir instead", replaceWith = ReplaceWith("getModuleTestsOutputDir(module)"))
-  override fun getModuleTestsOutputPath(module: JpsModule): String {
-    val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, true)
-    check(outputDirectory != null) {
-      "Output directory for ${module.name} isn\'t set"
-    }
-    return outputDirectory.absolutePath
-  }
-
-  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
+  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
       // if a project requires different SDKs, they all shouldn't be added to test classpath
       .also { if (forTests) it.withoutSdk() }
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
-    return enumerator.classes().roots.map { it.absolutePath }
+    return enumerator.classes().paths.map { it.toString() }
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {
@@ -510,7 +501,7 @@ internal suspend fun cleanOutput(
 
 private fun printEnvironmentDebugInfo() {
   // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
-  // don't write it to debug log file!
+  // don't write it to a debug log file!
   val env = System.getenv()
   for (key in env.keys.sorted()) {
     println("ENV $key = ${env[key]}")
