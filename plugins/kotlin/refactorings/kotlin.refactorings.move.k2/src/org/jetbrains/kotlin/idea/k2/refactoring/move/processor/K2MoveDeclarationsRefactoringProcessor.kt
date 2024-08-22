@@ -72,11 +72,9 @@ class K2MoveDeclarationsRefactoringProcessor(
                 val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
                 val oldToNewMap = elementsToMove.moveInto(targetFile)
                 moveDescriptor.source.elements.forEach(PsiElement::deleteSingle)
+                sourceFiles.filter { it.declarations.isEmpty() }.forEach { it.delete() }
                 @Suppress("UNCHECKED_CAST")
                 retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
-                for (sourceFile in sourceFiles) {
-                    if (sourceFile.declarations.isEmpty()) sourceFile.delete()
-                }
                 oldToNewMap.values
             }
         }
