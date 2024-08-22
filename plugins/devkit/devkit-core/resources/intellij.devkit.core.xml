@@ -504,7 +504,6 @@
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.FlushQueue"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.LaterInvocator"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ModalityKt"/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.RwLockHolder"/>
     <stacktrace.fold substring="at com.intellij.openapi.command.WriteCommandAction"/>
     <stacktrace.fold substring="at com.intellij.openapi.command.impl.CoreCommandProcessor.executeCommand("/>
     <stacktrace.fold substring="at com.intellij.openapi.progress.ContextKt.prepareThreadContext"/>

@@ -21,10 +21,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.RunFirst;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,14 +32,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.intellij.openapi.application.RuntimeFlagsKt.isNewLockEnabled;
-import static org.junit.Assume.assumeFalse;
 
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -434,20 +435,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException, ExecutionException, InterruptedException {
-    assumeFalse(isNewLockEnabled());
-    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
-        try {
-          ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
-        }
-        catch (Throwable e) {
-          exception = e;
-        }
-    });
-    joinWithTimeout(thread);
-    assertNotNull(exception);
-  }
-
   public void testRunProcessWithProgressFromPooledThread() throws Throwable {
     Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
@@ -467,33 +454,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     pumpEventsFor(500, TimeUnit.MILLISECONDS);
     joinWithTimeout(thread);
     if (exception != null) throw exception;
-  }
-
-  public void testRWLockPerformance() throws Throwable {
-    pumpEventsFor(2, TimeUnit.SECONDS);
-    int readIterations = 200_000_000;
-    ThreadingAssertions.assertEventDispatchThread();
-    ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
-    final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-    //noinspection Convert2Lambda
-    List<Callable<Void>> callables = Collections.nCopies(numOfThreads, new Callable<>() {
-      @Override
-      public Void call() {
-        for (int r = 0; r < readIterations; r++) {
-          ReadMostlyRWLock.Reader reader = lock.startRead();
-          assertNotNull(reader);
-          lock.endRead(reader);
-        }
-        return null;
-      }
-    });
-
-    Benchmark.newBenchmark("RWLock/unlock", ()-> {
-      ThreadingAssertions.assertEventDispatchThread();
-      assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
-      List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);
-      ConcurrencyUtil.getAll(futures);
-    }).start();
   }
 
   private static void pumpEventsFor(int timeOut, @NotNull TimeUnit unit) throws Throwable {

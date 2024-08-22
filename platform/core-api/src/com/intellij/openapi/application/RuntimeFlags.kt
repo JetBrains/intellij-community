@@ -3,12 +3,7 @@ package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
 
-private const val ENABLE_NEW_LOCK_PROPERTY = "idea.enable.new.lock"
 private const val COROUTINE_WIL_PROPERTY = "ide.coroutine.write.intent.lock"
-
-@get:ApiStatus.Internal
-val isNewLockEnabled: Boolean
-  get() = System.getProperty(ENABLE_NEW_LOCK_PROPERTY, "true").toBoolean()
 
 /**
  * - `false` means log an exception and proceed.
