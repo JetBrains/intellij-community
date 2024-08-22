@@ -122,7 +122,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
-    myAnchor = anchor;
+    if (this.myAnchor != anchor) {
+      myAnchor = anchor;
+      invalidate();
+    }
   }
 
   @Override

@@ -38,7 +38,10 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
 
   @Override
   public void setAnchor(@Nullable JComponent anchor) {
-    this.myAnchor = anchor;
+    if (this.myAnchor != anchor) {
+      this.myAnchor = anchor;
+      invalidate();
+    }
   }
 
   @Override
