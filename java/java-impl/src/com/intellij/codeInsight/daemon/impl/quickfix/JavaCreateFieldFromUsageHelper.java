@@ -25,7 +25,7 @@ public final class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHe
                                     Object expectedTypes,
                                     PsiClass targetClass,
                                     Editor editor,
-                                    PsiElement context,
+                                    @Nullable PsiElement context,
                                     boolean createConstantField,
                                     boolean isScrollToTemplate,
                                     @NotNull PsiSubstitutor substitutor) {
