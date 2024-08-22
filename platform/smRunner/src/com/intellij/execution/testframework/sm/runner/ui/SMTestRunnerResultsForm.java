@@ -254,7 +254,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myConsoleView.clear();
     ProcessHandler handler = myTestsRootNode.getHandler();
     if (handler instanceof BaseOSProcessHandler) {
-      handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLine() + "\n", ProcessOutputTypes.SYSTEM);
+      handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLineForLog() + "\n", ProcessOutputTypes.SYSTEM);
     }
   }
 

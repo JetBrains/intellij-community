@@ -240,7 +240,7 @@ public final class ScriptRunnerUtil {
                                              @Nullable String commandLine) {
     if (processHandler.isProcessTerminated()) {
       if (commandLine == null && processHandler instanceof BaseProcessHandler) {
-        commandLine = ((BaseProcessHandler<?>)processHandler).getCommandLine();
+        commandLine = ((BaseProcessHandler<?>)processHandler).getCommandLineForLog();
       }
       LOG.warn("Process '" + commandLine + "' is already terminated!");
       return;
