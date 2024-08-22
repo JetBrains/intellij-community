@@ -10798,8 +10798,8 @@ c:com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 c:com.intellij.openapi.actionSystem.impl.MoreActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - <init>():V
-- <init>(Z):V
-- b:<init>(Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.impl.MouseGestureManager
 - <init>():V
 - add(com.intellij.openapi.wm.IdeFrame):V

@@ -24,7 +24,6 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -131,14 +130,10 @@ public final class RunDashboardServiceViewContributor
       public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
         @NotNull AnActionEvent e,
         @NotNull List<? extends @NotNull AnAction> visibleChildren) {
-        MoreActionGroup more = ContainerUtil.findInstance(visibleChildren, MoreActionGroup.class);
-        ActionGroup newMore = more == null ? null : getServicesMoreActionGroup(more, descriptor);
-        if (newMore != null) e.getUpdateSession().presentation(newMore);
         return visibleChildren.stream().filter(
             o -> !(o instanceof StopAction) &&
                  !(o instanceof FakeRerunAction) &&
                  !(o instanceof ExecutorAction))
-          .map(o -> o == more ? newMore : o)
           .toList();
       }
     };
@@ -157,26 +152,6 @@ public final class RunDashboardServiceViewContributor
       }
     }
     return result;
-  }
-
-  private static @NotNull ActionGroup getServicesMoreActionGroup(MoreActionGroup contentGroup, RunContentDescriptor descriptor) {
-    if (descriptor == null) return contentGroup;
-
-    Content content = descriptor.getAttachedContent();
-    if (content == null) return contentGroup;
-
-    ActionGroup moreGroup = content.getUserData(MORE_ACTION_GROUP_KEY);
-    if (moreGroup == null) {
-      moreGroup = new ActionGroupWrapper(contentGroup) {
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          super.update(e);
-          e.getPresentation().setIcon(AllIcons.Actions.MoreHorizontal);
-        }
-      };
-      content.putUserData(MORE_ACTION_GROUP_KEY, moreGroup);
-    }
-    return moreGroup;
   }
 
   private static ActionGroup getPopupActions() {
