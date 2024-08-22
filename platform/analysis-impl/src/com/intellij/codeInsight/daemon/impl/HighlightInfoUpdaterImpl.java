@@ -633,9 +633,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
    *  - followed by all other elements
    */
   @NotNull
-  static List<? extends PsiElement> sortByPsiElementFertility(@NotNull PsiFile psiFile,
-                                                              @NotNull LocalInspectionToolWrapper toolWrapper,
-                                                              @NotNull List<? extends PsiElement> elements) {
+  synchronized List<? extends PsiElement> sortByPsiElementFertility(@NotNull PsiFile psiFile,
+                                                                    @NotNull LocalInspectionToolWrapper toolWrapper,
+                                                                    @NotNull List<? extends PsiElement> elements) {
     String toolId = toolWrapper.getShortName();
     Map<Object, ToolHighlights> map = getData(psiFile);
     if (map.isEmpty()) return elements;
