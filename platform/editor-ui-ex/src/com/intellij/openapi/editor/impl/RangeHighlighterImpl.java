@@ -82,7 +82,7 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
     registerInTree(start, end, greedyToLeft, greedyToRight, layer);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("RangeHighlighterImpl: create " + this +" ("+getTextRange().substring(getDocument().getText())+")");
+      LOG.debug("RangeHighlighterImpl: create " + this);
     }
   }
 
