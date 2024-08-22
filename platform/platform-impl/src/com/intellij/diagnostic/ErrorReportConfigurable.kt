@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -9,7 +9,6 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.objectSerializer
@@ -22,8 +21,6 @@ import kotlinx.serialization.Serializable
 internal class ErrorReportConfigurable {
   companion object {
     private const val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
-
-    fun getInstance(): ErrorReportConfigurable = service<ErrorReportConfigurable>()
 
     @RequiresBackgroundThread
     fun getCredentials(): Credentials? {
@@ -51,23 +48,12 @@ internal class ErrorReportConfigurable {
     private fun getCredentialsState(): CredentialsState = lastCredentialsState ?: credentialsState(getCredentials())
   }
 
-  // this will be injected by ComponentManager (a client will request it from a coroutine scope as a service)
-  private val settingDescriptorFactory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
-
-  private val settingDescriptor = settingDescriptorFactory.settingDescriptor(
-    key = "ideErrorReporter.developerList",
-    serializer = settingDescriptorFactory.objectSerializer<DeveloperList>(),
-  ) {
-    tags = listOf(CacheTag)
-  }
-
-  suspend fun getDeveloperList(): DeveloperList {
-    //todo get service from injected coroutine scope
-    return serviceAsync<SettingsController>().getItem(settingDescriptor) ?: DeveloperList()
-  }
-
-  suspend fun setDeveloperList(updatedDevelopers: DeveloperList) {
-    serviceAsync<SettingsController>().setItem(settingDescriptor, updatedDevelopers)
+  fun clear() {
+    val factory = settingDescriptorFactory(PluginManagerCore.CORE_ID)
+    val descriptor = factory.settingDescriptor(key = "ideErrorReporter.developerList", factory.objectSerializer<DeveloperList>()) {
+      tags = listOf(CacheTag)
+    }
+    service<SettingsController>().setItem(descriptor, value = null)
   }
 }
 
@@ -75,13 +61,8 @@ private data class CredentialsState(val userName: String?, val isFulfilled: Bool
 
 private fun credentialsState(credentials: Credentials?) = CredentialsState(credentials?.userName ?: "", credentials.isFulfilled())
 
-// 24 hours
-private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000
-
 @Serializable
-internal data class DeveloperList(@JvmField val developers: List<Developer> = emptyList(), @JvmField val timestamp: Long = 0) {
-  fun isUpToDateAt(): Boolean = timestamp != 0L && (System.currentTimeMillis() - timestamp) < UPDATE_INTERVAL
-}
+internal data class DeveloperList(@JvmField val developers: List<Developer> = emptyList(), @JvmField val timestamp: Long = 0)
 
 @Serializable
 internal data class Developer(@JvmField val id: Int, @JvmField val displayText: String) {

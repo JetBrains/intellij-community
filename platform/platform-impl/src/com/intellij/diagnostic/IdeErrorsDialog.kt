@@ -2,7 +2,6 @@
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
-import com.intellij.diagnostic.ITNProxy.fetchDevelopers
 import com.intellij.diagnostic.MessagePool.TooManyErrorsException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -22,7 +21,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -46,7 +44,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBInsets
@@ -59,7 +56,6 @@ import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
-import java.net.SocketTimeoutException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
@@ -71,21 +67,22 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
 
-open class IdeErrorsDialog @JvmOverloads internal constructor(
+open class IdeErrorsDialog internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
   defaultMessage: LogMessage?,
-  private var updateControlsJob: Job = SupervisorJob()
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiCompatibleDataProvider {
+  @Suppress("KotlinConstantConditions")
   private val myAssigneeVisible: Boolean =
-    (ApplicationManager.getApplication().isInternal || PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) &&
+    false && // disabling the Assignee field for now (the corresponding endpoint is no longer available) todo [r.sh]
+    PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID)) &&
     Registry.`is`("ea.enable.developers.list", true)
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
   private var myIndex: Int
   private var myLastIndex = -1
-  private var myDevListTimestamp: Long = 0
   private val myLoadingDeveloperListJob: Job?
+  private var myUpdateControlsJob: Job = SupervisorJob()
 
   private lateinit var myCountLabel: JLabel
   private lateinit var myInfoLabel: JTextComponent
@@ -98,8 +95,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private lateinit var myPrivacyNotice: PrivacyNotice
   private lateinit var myAssigneeCombo: ComboBox<Developer>
   private lateinit var myCredentialLabel: JTextComponent
-
-  private lateinit var loadingDecorator: LoadingDecorator
+  private lateinit var myLoadingDecorator: LoadingDecorator
 
   init {
     title = DiagnosticBundle.message("error.list.title")
@@ -107,7 +103,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     @Suppress("LeakingThis")
     init()
     setCancelButtonText(CommonBundle.message("close.action.name"))
-    myLoadingDeveloperListJob = if (myAssigneeVisible) loadDevelopersList() else null
+    myLoadingDeveloperListJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
+      service<ErrorReportConfigurable>().clear()
+    }
     val rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "")
     myAcceptedNotices = Collections.synchronizedSet(LinkedHashSet(rawValue.split(ACCEPTED_NOTICES_SEPARATOR)))
     updateMessages()
@@ -115,30 +113,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     updateControls()
     @Suppress("LeakingThis")
     myMessagePool.addListener(this)
-  }
-
-  private fun loadDevelopersList(): Job = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-    runCatching {
-      val configurable = serviceAsync<ErrorReportConfigurable>()
-      val developers = configurable.getDeveloperList()
-      setDevelopers(developers)
-      if (developers.isUpToDateAt()) {
-        return@launch
-      }
-
-      val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
-      withContext(Dispatchers.EDT) {
-        configurable.setDeveloperList(updatedDevelopers)
-        setDevelopers(updatedDevelopers)
-      }
-    }.onFailure { e ->
-      when (e) {
-        is CancellationException -> throw e
-        is SocketTimeoutException -> LOG.warn(e.toString())
-        is HttpRequests.HttpStatusException -> LOG.warn(e.toString())
-        else -> LOG.warn(e)
-      }
-    }
   }
 
   private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {
@@ -169,13 +143,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
           myPrivacyNotice.setPrivacyPolicy(notice)
         }
       }
-    }
-  }
-
-  private fun setDevelopers(developers: DeveloperList) {
-    UIUtil.invokeLaterIfNeeded {
-      myAssigneeCombo.model = CollectionComboBoxModel(developers.developers)
-      myDevListTimestamp = developers.timestamp
     }
   }
 
@@ -237,7 +204,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   private fun enableOkButtonIfReady() {
     val cluster = selectedCluster()
-    isOKActionEnabled = cluster.canSubmit() && !cluster.detailsText.isNullOrBlank() && updateControlsJob.isCompleted
+    isOKActionEnabled = cluster.canSubmit() && !cluster.detailsText.isNullOrBlank() && myUpdateControlsJob.isCompleted
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -345,8 +312,8 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER)
     rootPanel.add(bottomRow, BorderLayout.SOUTH)
 
-    loadingDecorator = LoadingDecorator(rootPanel, disposable, 100, useMinimumSize = true)
-    return loadingDecorator.component
+    myLoadingDecorator = LoadingDecorator(rootPanel, disposable, 100, useMinimumSize = true)
+    return myLoadingDecorator.component
   }
 
   private fun scrollPane(component: JComponent, width: Int, height: Int): JScrollPane =
@@ -387,7 +354,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   override fun dispose() {
     myMessagePool.removeListener(this)
     myLoadingDeveloperListJob?.cancel()
-    updateControlsJob.cancel()
+    myUpdateControlsJob.cancel()
     super.dispose()
   }
 
@@ -409,9 +376,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   @RequiresEdt
   private fun updateControls() {
-    loadingDecorator.startLoading(false)
-    updateControlsJob.cancel(null)
-    updateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+    myLoadingDecorator.startLoading(false)
+    myUpdateControlsJob.cancel(null)
+    myUpdateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       val cluster = selectedCluster()
       val submitter = cluster.submitter
       cluster.messages.forEach { it.isRead = true }
@@ -424,9 +391,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
       isOKActionEnabled = cluster.canSubmit()
       setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
       setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
-      loadingDecorator.stopLoading()
+      myLoadingDecorator.stopLoading()
     }
-    updateControlsJob.invokeOnCompletion {
+    myUpdateControlsJob.invokeOnCompletion {
       enableOkButtonIfReady()
     }
   }
@@ -600,7 +567,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     val submitter = cluster.submitter ?: return false
     val message = cluster.first
     message.isAssigneeVisible = myAssigneeVisible
-    message.devListTimestamp = myDevListTimestamp
     message.isSubmitting = true
 
     service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
@@ -914,8 +880,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   }
 
   companion object {
-    private val LOG = Logger.getInstance(IdeErrorsDialog::class.java)
-
     private const val STACKTRACE_ATTACHMENT = "stacktrace.txt"
     private const val ACCEPTED_NOTICES_KEY = "exception.accepted.notices"
     private const val ACCEPTED_NOTICES_SEPARATOR = ":"

@@ -2063,7 +2063,6 @@ c:com.intellij.diagnostic.IdeErrorsDialog
 - sf:CURRENT_TRACE_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:Companion:com.intellij.diagnostic.IdeErrorsDialog$Companion
 - sf:ERROR_HANDLER_EP:com.intellij.openapi.extensions.ExtensionPointName
-- <init>(com.intellij.diagnostic.MessagePool,com.intellij.openapi.project.Project,com.intellij.diagnostic.LogMessage):V
 - sf:confirmDisablePlugins(com.intellij.openapi.project.Project,java.util.List):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent

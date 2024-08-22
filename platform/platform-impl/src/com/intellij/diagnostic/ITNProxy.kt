@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.Developer.Companion.NULL
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.security.CompositeX509TrustManager
 import com.intellij.util.io.DigestUtil.sha1
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.NetUtils
 import com.intellij.util.net.ssl.CertificateUtil
 import kotlinx.coroutines.*
@@ -37,7 +35,6 @@ import java.security.KeyStore
 import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.*
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.*
 
@@ -56,7 +53,6 @@ internal object ITNProxy {
 
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
   private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
@@ -86,23 +82,6 @@ internal object ITNProxy {
     template["app.product.code"] = build.productCode
     template["app.build.number"] = buildNumberWithAllDetails
     template
-  }
-
-  suspend fun fetchDevelopers(): List<Developer> {
-    val context = currentCoroutineContext()
-    return HttpRequests.request(DEVELOPERS_LIST_URL).connectTimeout(3000).connect { request: HttpRequests.Request ->
-      val developers: MutableList<Developer> = ArrayList()
-      developers.add(NULL)
-      for (line in request.reader.lines()) {
-        val i = line.indexOf('\t')
-        if (i == -1) throw IOException("Protocol error")
-        val id = line.substring(0, i).toInt()
-        val name = line.substring(i + 1)
-        developers.add(Developer(id, name))
-        context.ensureActive()
-      }
-      developers
-    }
   }
 
   @JvmRecord
