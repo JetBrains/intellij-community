@@ -111,14 +111,14 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   public Iterable<Path> getRootDirectories() {
     Map<String, Path> rootDirectories = new LinkedHashMap<>();
     for (Path root : myLocalFS.getRootDirectories()) {
-      rootDirectories.put(root.toString(), root);
+      rootDirectories.put(root.toString(), new MultiRoutingFsPath(this, root));
     }
     // Some of the backend file systems may override the roots.
     // However, it's important to check that they override only the registered paths.
     for (Backend backend : myBackends.get()) {
       for (Path candidate : backend.fileSystem.getRootDirectories()) {
         if (backend.matchRoot(candidate.toString())) {
-          rootDirectories.put(candidate.toString(), candidate);
+          rootDirectories.put(candidate.toString(), new MultiRoutingFsPath(this, candidate));
           break;
         }
       }
