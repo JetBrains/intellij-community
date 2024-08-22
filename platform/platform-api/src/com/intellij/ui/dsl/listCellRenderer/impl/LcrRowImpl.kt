@@ -265,21 +265,6 @@ private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendere
     return result
   }
 
-  // Support disabled combobox color. Can be reworked later
-  override fun setForeground(fg: Color?) {
-    super.setForeground(fg)
-
-    @Suppress("SENSELESS_COMPARISON")
-    if (cellsPanel == null) {
-      // Called while initialization
-      return
-    }
-
-    for (component in cellsPanel.components) {
-      component.foreground = fg
-    }
-  }
-
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
       accessibleContext = object : AccessibleJPanel() {
