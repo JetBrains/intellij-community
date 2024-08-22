@@ -609,6 +609,7 @@
                     serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.actions.ReaderModeSettingsImpl" client="all"/>
+    <projectSettings service="com.intellij.codeInsight.actions.ReaderModeSettingsImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.PlatformIdeService"
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
@@ -811,6 +812,8 @@
                         serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl"/>
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
+
+    <applicationSettings service="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.SaveAndSyncHandler" preload="notHeadless"
                         serviceImplementation="com.intellij.configurationStore.SaveAndSyncHandlerImpl"

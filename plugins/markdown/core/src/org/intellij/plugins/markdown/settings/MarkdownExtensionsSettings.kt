@@ -22,6 +22,10 @@ class MarkdownExtensionsSettings: SimplePersistentStateComponent<MarkdownExtensi
     return state.enabledExtensions[extensionsId] == true
   }
 
+  override fun noStateLoaded() {
+    loadState(State())
+  }
+
   @ApiStatus.Experimental
   fun interface ChangeListener {
     /**

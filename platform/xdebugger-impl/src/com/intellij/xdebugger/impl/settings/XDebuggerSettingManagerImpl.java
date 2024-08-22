@@ -82,6 +82,11 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   }
 
   @Override
+  public void noStateLoaded() {
+    loadState(new SettingsState());
+  }
+
+  @Override
   public void dispose() {
   }
 

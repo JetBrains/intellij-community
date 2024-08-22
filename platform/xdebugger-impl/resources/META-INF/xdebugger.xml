@@ -33,6 +33,7 @@
 
     <applicationService serviceInterface="com.intellij.xdebugger.settings.XDebuggerSettingsManager"
                         serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
+    <applicationSettings service="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>

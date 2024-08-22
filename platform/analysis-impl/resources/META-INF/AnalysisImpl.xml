@@ -29,7 +29,10 @@
                             order="last"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManagerEx"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings" client="all"/>
+    <applicationSettings service="com.intellij.codeInsight.CodeInsightSettings"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.BaseCompletionService"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"

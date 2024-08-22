@@ -202,6 +202,12 @@
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings" />
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings" />
 
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownPreviewSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings"/>
+
+    <projectSettings service="org.intellij.plugins.markdown.settings.MarkdownSettings"/>
+
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <stripTrailingSpacesFilterFactory implementation="org.intellij.plugins.markdown.editor.MarkdownStripTrailingSpacesFilterFactory"/>

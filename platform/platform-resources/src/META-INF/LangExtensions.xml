@@ -734,6 +734,7 @@
                             implementationClass="com.intellij.codeInsight.completion.ReferenceBasedCompletionContributor"/>
 
     <applicationService serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
+    <applicationSettings service="com.intellij.execution.console.ConsoleFoldingSettings"/>
 
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
 

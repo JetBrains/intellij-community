@@ -19,6 +19,10 @@ internal class MarkdownPreviewSettings: SimplePersistentStateComponent<MarkdownP
     application.messageBus.syncPublisher(ChangeListener.TOPIC).settingsChanged(this)
   }
 
+  override fun noStateLoaded() {
+    loadState(State())
+  }
+
   fun interface ChangeListener {
     fun settingsChanged(settings: MarkdownPreviewSettings)
 
