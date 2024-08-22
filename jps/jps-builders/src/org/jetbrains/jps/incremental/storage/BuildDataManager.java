@@ -27,6 +27,7 @@ import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -133,7 +134,7 @@ public final class BuildDataManager {
 
   @ApiStatus.Internal
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
-    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
+    return new SourceToOutputMappingImpl(getSourceToOutputMapRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_FILE_NAME).toFile(), myRelativizer);
   }
 
   public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
@@ -314,7 +315,7 @@ public final class BuildDataManager {
     }
   }
 
-  public void closeSourceToOutputStorages(Collection<? extends BuildTargetChunk> chunks) throws IOException {
+  public void closeSourceToOutputStorages(Collection<BuildTargetChunk> chunks) throws IOException {
     IOException ex = null;
     for (BuildTargetChunk chunk : chunks) {
       for (BuildTarget<?> target : chunk.getTargets()) {
@@ -341,8 +342,8 @@ public final class BuildDataManager {
     return new File(myDataPaths.getTargetDataRoot(target), SRC_TO_OUTPUT_STORAGE);
   }
 
-  private File getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
-    return new File(myDataPaths.getTargetDataRoot(targetType, targetId), SRC_TO_OUTPUT_STORAGE);
+  private Path getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
+    return myDataPaths.getTargetDataRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_STORAGE);
   }
 
   private File getSourceToFormsRoot() {

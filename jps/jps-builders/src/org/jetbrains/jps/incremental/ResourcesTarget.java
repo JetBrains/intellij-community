@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.dynatrace.hash4j.hashing.HashSink;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -114,6 +115,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
+  @ApiStatus.Internal
   public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
     PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
 

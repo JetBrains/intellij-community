@@ -6,6 +6,7 @@ import com.dynatrace.hash4j.hashing.HashStream64;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,6 +174,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
+  @ApiStatus.Internal
   public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
     JpsModule module = getModule();
     PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
@@ -230,7 +232,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       return;
     }
 
-    Path configurationTextFile = projectDescriptor.getTargetsState().getDataPaths().getTargetDataRoot(this).toPath().resolve("config.dat.debug.txt");
+    Path configurationTextFile = projectDescriptor.getTargetsState().getDataPaths().getTargetDataRootDir(this).resolve("config.dat.debug.txt");
     @NonNls String oldText;
     try {
       oldText = Files.readString(configurationTextFile);

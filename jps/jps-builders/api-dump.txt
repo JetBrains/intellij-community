@@ -1829,7 +1829,8 @@ f:org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 org.jetbrains.jps.builders.storage.BuildDataPaths
 - a:getDataStorageRoot():java.io.File
 - a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTarget):java.io.File
-- a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):java.io.File
+- a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):java.nio.file.Path
+- a:getTargetDataRootDir(org.jetbrains.jps.builders.BuildTarget):java.nio.file.Path
 - a:getTargetTypeDataRoot(org.jetbrains.jps.builders.BuildTargetType):java.io.File
 - a:getTargetsDataRoot():java.io.File
 org.jetbrains.jps.builders.storage.SourceToOutputMapping
@@ -2211,7 +2212,6 @@ f:org.jetbrains.jps.incremental.ModuleBuildTarget
 - getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
 - getPresentableName():java.lang.String
 - isTests():Z
-- writeConfiguration(org.jetbrains.jps.cmdline.ProjectDescriptor,java.io.PrintWriter):V
 a:org.jetbrains.jps.incremental.ModuleLevelBuilder
 - org.jetbrains.jps.incremental.Builder
 - p:<init>(org.jetbrains.jps.incremental.BuilderCategory):V
@@ -2255,7 +2255,6 @@ f:org.jetbrains.jps.incremental.ResourcesTarget
 - getPresentableName():java.lang.String
 - isCompiledBeforeModuleLevelBuilders():Z
 - isTests():Z
-- writeConfiguration(org.jetbrains.jps.cmdline.ProjectDescriptor,java.io.PrintWriter):V
 f:org.jetbrains.jps.incremental.StopBuildException
 - org.jetbrains.jps.incremental.ProjectBuildException
 - <init>():V

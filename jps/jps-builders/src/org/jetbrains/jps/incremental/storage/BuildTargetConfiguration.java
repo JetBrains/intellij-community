@@ -117,11 +117,11 @@ public final class BuildTargetConfiguration {
   }
 
   private Path getConfigFile() {
-    return myTargetsState.getDataPaths().getTargetDataRoot(target).toPath().resolve("config.dat");
+    return myTargetsState.getDataPaths().getTargetDataRootDir(target).resolve("config.dat");
   }
 
   private Path getNonexistentOutputsFile() {
-    return myTargetsState.getDataPaths().getTargetDataRoot(target).toPath().resolve("nonexistent-outputs.dat");
+    return myTargetsState.getDataPaths().getTargetDataRootDir(target).resolve("nonexistent-outputs.dat");
   }
 
   private @NotNull String getCurrentState(@NotNull ProjectDescriptor pd) {
@@ -167,7 +167,7 @@ public final class BuildTargetConfiguration {
   public boolean outputRootWasDeleted(CompileContext context) throws IOException {
     List<String> nonexistentOutputRoots = new ArrayList<>();
 
-    final Collection<File> targetRoots = target.getOutputRoots(context);
+    Collection<File> targetRoots = target.getOutputRoots(context);
     synchronized (ALL_DELETED_ROOTS_KEY) {
       Set<File> allDeletedRoots = ALL_DELETED_ROOTS_KEY.get(context);
       for (File outputRoot : targetRoots) {
