@@ -82,11 +82,11 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     private var incomingOutgoingIcon: NodeIcon? = null
 
     override fun customizeCellRenderer(tree: JTree,
-                                       value: Any?,
-                                       selected: Boolean,
-                                       expanded: Boolean,
-                                       leaf: Boolean,
-                                       row: Int,
+      value: Any?,
+      selected: Boolean,
+      expanded: Boolean,
+      leaf: Boolean,
+      row: Int,
                                        hasFocus: Boolean) {
       if (value !is BranchTreeNode) return
       val descriptor = value.getNodeDescriptor()
@@ -548,15 +548,23 @@ private class BranchesFilteringSpeedSearch(private val tree: FilteringBranchesTr
     val bestMatch = bestMatch
     if (bestMatch == null) {
       super.updateSelection()
-      return
+    }
+    else {
+      val selectionText = tree.getText(selection?.getNodeDescriptor())
+      val selectionMatchingDegree = if (selectionText != null) matcher.matchingDegree(selectionText) else Int.MIN_VALUE
+      if (selectionMatchingDegree < bestMatch.matchingDegree) {
+        select(bestMatch.node)
+      }
     }
 
-    val selectionText = tree.getText(selection?.getNodeDescriptor())
-
-    val selectionMatchingDegree = if (selectionText != null) matcher.matchingDegree(selectionText) else Int.MIN_VALUE
-    if (selectionMatchingDegree < bestMatch.matchingDegree) {
-      select(bestMatch.node)
+    if (!enteredPrefix.isNullOrBlank()) {
+      scrollToSelected()
     }
+  }
+
+  private fun scrollToSelected() {
+    val innerTree = tree.tree
+    innerTree.selectionPath?.let { TreeUtil.scrollToVisible(innerTree, it, false) }
   }
 
   override fun onUpdatePattern(text: String?) {
