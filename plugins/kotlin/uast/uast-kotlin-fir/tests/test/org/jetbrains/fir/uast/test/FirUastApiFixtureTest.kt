@@ -181,4 +181,8 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testLocalPropertyInitializerEvaluate_Numeric() {
         checkLocalPropertyInitializerEvaluation_Numeric(myFixture)
     }
+
+    fun testEnumAsAnnotationAttributeValueEvaluation() {
+        checkEnumAsAnnotationAttributeValueEvaluation(myFixture)
+    }
 }

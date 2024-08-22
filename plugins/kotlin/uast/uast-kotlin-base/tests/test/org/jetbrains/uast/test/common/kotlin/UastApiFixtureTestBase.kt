@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
@@ -1573,6 +1574,75 @@ interface UastApiFixtureTestBase {
                     val eval = node.evaluate()
                     TestCase.assertEquals(node.sourcePsi?.text, 42, eval)
                     return super.visitBinaryExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkEnumAsAnnotationAttributeValueEvaluation(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                import java.lang.annotation.Retention;
+                import java.lang.annotation.RetentionPolicy;
+
+                @Retention(RetentionPolicy.CLASS)
+                public @interface JavaAnnotation {
+
+                  int intValue() default 0;
+
+                  AnnotationEnum enumValue() default AnnotationEnum.DEFAULT;
+
+                  enum AnnotationEnum {
+                    DEFAULT,
+                    EXPECTED_VALUE,
+                  }
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "test.kt",
+            """
+                @Retention(AnnotationRetention.BINARY)
+                annotation class KotlinAnnotation(
+                  val intValue: Int = 0,
+                  val enumValue: AnnotationEnum = AnnotationEnum.DEFAULT
+                ) {
+                  enum class AnnotationEnum {
+                    DEFAULT,
+                    EXPECTED_VALUE
+                  }
+                }
+                
+                @JavaAnnotation(enumValue = JavaAnnotation.AnnotationEnum.EXPECTED_VALUE)
+                interface LiteralEnumValueFromJavaDependency
+
+                @KotlinAnnotation(enumValue = KotlinAnnotation.AnnotationEnum.EXPECTED_VALUE)
+                interface LiteralEnumValueFromKotlinDependency
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitClass(node: UClass): Boolean {
+                    if (node.name?.startsWith("LiteralEnumValueFrom") != true)
+                        return super.visitClass(node)
+
+                    val anno = node.findAnnotation("JavaAnnotation") ?: node.findAnnotation("KotlinAnnotation")
+                    TestCase.assertNotNull(anno)
+                    val enumValue = anno!!.findAttributeValue("enumValue")
+                    TestCase.assertNotNull(enumValue)
+                    val eval = enumValue!!.evaluate()
+                    TestCase.assertNotNull(eval)
+                    if (eval is Pair<*, *>) {
+                        // K1
+                        TestCase.assertEquals("EXPECTED_VALUE", eval.second.toString())
+                    } else {
+                        // K2
+                        TestCase.assertEquals("EXPECTED_VALUE", (eval as PsiEnumConstant).name)
+                    }
+
+                    return super.visitClass(node)
                 }
             }
         )
