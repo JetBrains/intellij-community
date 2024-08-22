@@ -3654,6 +3654,7 @@ f:com.intellij.codeInsight.completion.LookupElementProximityWeigher
 - weigh(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionLocation):java.lang.Comparable
 f:com.intellij.codeInsight.completion.ReferenceBasedCompletionContributor
 - com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V
 f:com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction

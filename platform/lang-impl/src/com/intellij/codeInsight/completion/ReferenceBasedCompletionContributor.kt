@@ -6,9 +6,10 @@ import com.intellij.model.psi.PsiCompletableReference
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 
-class ReferenceBasedCompletionContributor : CompletionContributor() {
+class ReferenceBasedCompletionContributor : CompletionContributor(), DumbAware {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (parameters.completionType != CompletionType.BASIC) {
