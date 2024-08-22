@@ -5,6 +5,7 @@ import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -24,6 +25,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   public ArtifactBuildTarget(@NotNull JpsArtifact artifact) {
     super(ArtifactBuildTargetType.INSTANCE, artifact);

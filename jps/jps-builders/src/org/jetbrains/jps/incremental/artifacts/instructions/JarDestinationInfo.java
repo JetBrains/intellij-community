@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class JarDestinationInfo extends DestinationInfo {
   private static final Logger LOG = Logger.getInstance(JarDestinationInfo.class);
   private final String myPathInJar;
@@ -18,7 +19,7 @@ public final class JarDestinationInfo extends DestinationInfo {
   }
 
   private static String appendPathInJar(String outputPath, String pathInJar) {
-    LOG.assertTrue(outputPath.length() > 0 && outputPath.charAt(outputPath.length() - 1) != '/');
+    LOG.assertTrue(!outputPath.isEmpty() && outputPath.charAt(outputPath.length() - 1) != '/');
     return outputPath + "!/" + pathInJar;
   }
 
