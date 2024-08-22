@@ -45,7 +45,10 @@ class RepairUtilityBuilder {
 
     suspend fun bundle(context: BuildContext, os: OsFamily, arch: JvmArchitecture, distributionDir: Path) {
       context.executeStep(spanBuilder("bundle repair-utility").setAttribute("os", os.osName), REPAIR_UTILITY_BUNDLE_STEP) {
-        if (!canBinariesBeBuilt(context)) return@executeStep
+        if (!canBinariesBeBuilt(context)) {
+          return@executeStep
+        }
+
         val cache = getBinaryCache(context).await()
         val binary = findBinary(os, arch)
         val path = cache.get(binary)

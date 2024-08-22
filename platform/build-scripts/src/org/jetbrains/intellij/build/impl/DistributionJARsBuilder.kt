@@ -478,7 +478,7 @@ private suspend fun validatePlugins(context: BuildContext, pluginSpecs: Collecti
         continue
       }
       launch {
-        validatePlugin(path, context, span)
+        validatePlugin(path = path, context = context, span = span)
       }
     }
   }
@@ -1255,7 +1255,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
           .setAttribute("input", source.toString())
           .setAttribute("outputFile", target.toString())
           .setAttribute("optimizedZip", optimized)
-          .useWithScope {
+          .use {
             archivePlugin(optimized = optimized, target = target, compress = compress, source = source, context = context)
           }
         if (withBlockMap) {

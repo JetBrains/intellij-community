@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.toList
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.io.File
 import java.io.InputStream
@@ -49,7 +50,7 @@ suspend fun runJava(mainClass: String,
     .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", "$timeout")
-    .useWithScope(Dispatchers.IO) { span ->
+    .use(Dispatchers.IO) { span ->
       val toDelete = ArrayList<Path>(3)
       var process: Process? = null
       try {

@@ -238,7 +238,6 @@ internal class DistributionForOsTaskResult(
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
   return context.executeStep(spanBuilder("build OS-specific distributions"), BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP) {
-
     setLastModifiedTime(context.paths.distAllDir, context)
 
     if (context.isMacCodeSignEnabled) {
@@ -445,7 +444,7 @@ private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPlugi
   compilationTasks.buildProjectArtifacts(artifactNames)
 }
 
-suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope {
+suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").use {
   context.checkDistributionBuildNumber()
   checkProductProperties(context as BuildContextImpl)
   copyDependenciesFile(context)
@@ -473,7 +472,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       return@coroutineScope
     }
 
-    val contentReport = spanBuilder("build platform and plugin JARs").useWithScope {
+    val contentReport = spanBuilder("build platform and plugin JARs").use {
       val contentReport = buildDistribution(state = distributionState, context)
       if (context.productProperties.buildSourcesArchive) {
         buildSourcesArchive(contentReport, context)

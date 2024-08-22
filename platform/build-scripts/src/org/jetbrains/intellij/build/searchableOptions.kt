@@ -4,8 +4,9 @@
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -72,7 +73,7 @@ internal suspend fun buildSearchableOptions(
     // bundled maven is also downloaded during traverseUI execution in an external process,
     // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
     // so it's pre-downloaded with proper synchronization
-    coroutineScope {
+    withContext(Dispatchers.IO) {
       launch {
         BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
       }

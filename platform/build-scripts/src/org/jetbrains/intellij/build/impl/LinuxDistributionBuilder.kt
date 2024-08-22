@@ -83,7 +83,7 @@ class LinuxDistributionBuilder(
     updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
     context.executeStep(spanBuilder("Build Linux artifacts").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildArtifactWithoutRuntime) {
-        launch {
+        launch(Dispatchers.IO) {
           context.executeStep(
             spanBuilder("Build Linux .tar.gz without bundled Runtime")
               .setAttribute("arch", arch.name)
@@ -110,7 +110,7 @@ class LinuxDistributionBuilder(
       ) { _ ->
         buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix(arch))
       }
-      launch {
+      launch(Dispatchers.IO) {
         if (arch == JvmArchitecture.x64) {
           buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch)
         }
@@ -121,7 +121,7 @@ class LinuxDistributionBuilder(
       }
 
       if (tarGzPath != null ) {
-        context.executeStep(spanBuilder("bundle repair utility"), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP) {
+        context.executeStep(spanBuilder("bundle repair utility"), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, Dispatchers.IO) {
           val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
           try {
             unTar(tarGzPath, tempTar)
@@ -183,7 +183,7 @@ class LinuxDistributionBuilder(
 
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
-      .useWithScope {
+      .use(Dispatchers.IO) {
         val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = runtimeDir != null, arch).keys
         tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)
