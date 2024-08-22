@@ -2,7 +2,7 @@
   <id>com.intellij.jsonpath</id>
   <name>JSONPath</name>
   <vendor>JetBrains</vendor>
-  <category>JavaScript Frameworks and Tools</category>
+  <category>Languages</category>
   <description><![CDATA[
     <p>Provides JSONPath language for injected code fragments and dedicated Evaluate JSONPath tool window.</p>
     <p>Go to menu <b>Edit - Find - Evaluate JSONPath Expression...</b> to evaluate expressions with a snippet or JSON file.</p>
