@@ -1125,18 +1125,8 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
  */
 internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>, context: BuildContext) {
   result.addAll(enabledPluginModules)
-  val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
-    enabledPluginModules
-  }
-  else {
-    enabledPluginModules.toHashSet()
-  }
-
-  for (plugin in product.pluginLayouts) {
-    if (!enabledPluginModuleSet.contains(plugin.mainModule)) {
-      continue
-    }
-
+  val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
+  for (plugin in pluginLayouts) {
     plugin.includedModules.mapTo(result) { it.moduleName }
     result.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(context.findRequiredModule(plugin.mainModule)))
   }
