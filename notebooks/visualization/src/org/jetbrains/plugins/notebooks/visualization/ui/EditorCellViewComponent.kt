@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
 
-abstract class EditorCellViewComponent {
+abstract class EditorCellViewComponent : Disposable {
   protected var parent: EditorCellViewComponent? = null
 
   private val children = mutableListOf<EditorCellViewComponent>()
@@ -20,8 +22,8 @@ abstract class EditorCellViewComponent {
     child.parent = null
   }
 
-  fun dispose() {
-    children.forEach { it.dispose() }
+  override fun dispose() {
+    children.forEach { Disposer.dispose(it) }
     doDispose()
   }
 
