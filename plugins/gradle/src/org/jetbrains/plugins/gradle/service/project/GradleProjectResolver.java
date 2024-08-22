@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -623,6 +624,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       for (GradleBuildParticipant buildParticipant : executionSettings.getExecutionWorkspace().getBuildParticipants()) {
         executionSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
+    }
+    if (Registry.is("gradle.daemon.experimental.dependency.resolver", false)) {
+      executionSettings.withArgument("-Didea.experimental.gradle.dependency.resolver=true");
     }
 
     GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();

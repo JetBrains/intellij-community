@@ -219,6 +219,8 @@
                  description="Sets the expected serialization format for the collected traces"/>
     <registryKey key="gradle.daemon.opentelemetry.folder" defaultValue=""
                  description="Sets the target folder for the collected telemetry"/>
+    <registryKey key="gradle.daemon.experimental.dependency.resolver" defaultValue="false"
+                 description="Use ArtifactView to resolve Javadoc/Sources"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
