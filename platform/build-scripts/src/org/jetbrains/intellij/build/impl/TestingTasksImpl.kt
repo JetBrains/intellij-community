@@ -429,7 +429,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isRunningInBatchMode) {
       messages.info("Running tests from $mainModule matched by '${options.batchTestIncludes}' pattern.")
     }
-    else {
+    else if (!testPatterns.isNullOrEmpty()) {
+      messages.info("Starting tests from patterns '${testPatterns}' from classpath of module '${mainModule}'")
+    } else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
     if (options.bucketsCount > 1) {
