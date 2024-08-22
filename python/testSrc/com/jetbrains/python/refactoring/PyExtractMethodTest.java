@@ -44,27 +44,27 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   // PY-34626 
-  public void testInnerFunc() {
+  public void testMethodInnerFunc() {
     doTest("extracted");
   }
 
   // PY-34626 
-  public void testInnerFuncWithVar() {
+  public void testMethodInnerFuncWithOwnParam() {
     doTest("extracted");
   }
 
   // PY-34626
-  public void testInnerFuncWithExtVar() {
+  public void testMethodInnerFuncWithMethodParam() {
     doTest("extracted");
   }
 
   // PY-34626
-  public void testInnerFuncRecursive() {
+  public void testMethodInnerFuncRecursive() {
     doTest("extracted");
   }
 
   // PY-34626
-  public void testInnerFuncCombined() {
+  public void testMethodInnerFuncCombined() {
     doTest("extracted");
   }
 
