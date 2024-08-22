@@ -82,7 +82,7 @@ class ActionUpdaterTest {
     group.add(DefaultActionGroup(DefaultActionGroup(
       newAction(ActionUpdateThread.BGT) { it.presentation.isEnabledAndVisible = false })))
     val presentations = PresentationFactory()
-    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
+    val actions = expandActionGroup(group, presentations)
     assertEmpty(actions)
     assertFalse(presentations.getPresentation(group).isEnabled)
   }
@@ -439,7 +439,8 @@ class ActionUpdaterTest {
 
   private fun expandActionGroup(actionGroup: ActionGroup,
                                 presentationFactory: PresentationFactory = PresentationFactory()): List<AnAction?> {
-    return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
+    return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT,
+                                   ActionPlaces.UNKNOWN, ActionUiKind.NONE)
   }
 
   private fun newAction(updateThread: ActionUpdateThread, update: (AnActionEvent) -> Unit): AnAction =

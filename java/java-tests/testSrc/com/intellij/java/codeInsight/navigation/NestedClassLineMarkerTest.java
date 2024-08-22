@@ -7,10 +7,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -188,7 +185,7 @@ public class NestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCa
     assertNotNull(group);
     PresentationFactory factory = new PresentationFactory();
     List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
-      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN), action -> {
+      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE), action -> {
       String text = factory.getPresentation(action).getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
     });

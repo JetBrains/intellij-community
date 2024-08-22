@@ -213,7 +213,7 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     AnActionEvent event = TestActionEvent.createTestEvent();
     PresentationFactory factory = new PresentationFactory();
     List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
-      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN), action -> {
+      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE), action -> {
       String text = factory.getPresentation(action).getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
     });

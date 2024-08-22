@@ -298,17 +298,6 @@ object Utils {
     deferred.await()
   }
 
-  @Deprecated("Use [expandActionGroup(group, presentationFactory, context, place, uiKind)] instead")
-  @JvmStatic
-  fun expandActionGroup(group: ActionGroup,
-                        presentationFactory: PresentationFactory,
-                        context: DataContext,
-                        place: String): List<AnAction> {
-    return expandActionGroup(
-      group, presentationFactory, context, place,
-      if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE)
-  }
-
   /**
    * The preferred way to synchronously expand a group while pumping EDT intended for synchronous clients
    */

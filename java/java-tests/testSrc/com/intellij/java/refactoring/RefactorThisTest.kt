@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring
 
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -9,6 +10,8 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.refactoring.actions.*
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
+import com.intellij.testFramework.LightJavaCodeInsightTestCase.assertFalse
+import com.intellij.testFramework.LightJavaCodeInsightTestCase.assertTrue
 import org.jetbrains.annotations.NonNls
 
 class RefactorThisTest: LightJavaCodeInsightTestCase() {
@@ -189,7 +192,9 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     val group = DefaultActionGroup()
     val dataContext = (editor as EditorEx).dataContext
     action.fillActions(project, group, dataContext)
-    return Utils.expandActionGroup(group, PresentationFactory(), dataContext, ActionPlaces.REFACTORING_QUICKLIST)
+    return Utils.expandActionGroup(
+      group, PresentationFactory(), dataContext,
+      ActionPlaces.REFACTORING_QUICKLIST, ActionUiKind.POPUP)
   }
 
 }
