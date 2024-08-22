@@ -266,7 +266,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   @Throws(IOException::class)
-  suspend fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
+  internal suspend fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
     if (param.isEmpty()) {
       return emptyList()
     }
