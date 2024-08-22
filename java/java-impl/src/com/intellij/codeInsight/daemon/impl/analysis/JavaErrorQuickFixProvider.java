@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,6 +31,27 @@ public final class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
     if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
       registrar.add(new AddExceptionToCatchFix(false).asIntention());
       registrar.add(new AddFinallyFix((PsiTryStatement)parent).asIntention());
+    }
+    if (parent instanceof PsiSwitchLabelStatementBase && description.equals(JavaPsiBundle.message("expected.colon.or.arrow"))) {
+      PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(parent, PsiSwitchBlock.class);
+      if (switchBlock != null && switchBlock.getBody() != null) {
+        boolean isOld = false;
+        boolean isRule = false;
+        for (@NotNull PsiElement child : switchBlock.getBody().getChildren()) {
+          if (child instanceof PsiSwitchLabeledRuleStatement) {
+            isRule = true;
+          }
+          if (child instanceof PsiSwitchLabelStatement && !PsiTreeUtil.isAncestor(child, parent, false)) {
+            isOld = true;
+          }
+        }
+        if (isOld) {
+          info.registerFix(new InsertMissingTokenFix(":", true), null, null, null, null);
+        }
+        if (isRule) {
+          info.registerFix(new InsertMissingTokenFix(" ->", true), null, null, null, null);
+        }
+      }
     }
     if (parent instanceof PsiSwitchLabeledRuleStatement && description.equals(JavaPsiBundle.message("expected.switch.rule"))) {
       IntentionAction action =

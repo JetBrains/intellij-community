@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -111,6 +112,13 @@ public class SwitchBlockHighlightingModel {
       }
       else if (element instanceof PsiStatement statement) {
         if (enhancedLabels) {
+          //let's not highlight twice
+          if (statement instanceof PsiSwitchLabelStatement labelStatement &&
+              labelStatement.getChildren().length != 0 &&
+              labelStatement.getChildren()[labelStatement.getChildren().length - 1] instanceof PsiErrorElement errorElement &&
+              errorElement.getErrorDescription().startsWith(JavaPsiBundle.message("expected.colon.or.arrow"))) {
+            break;
+          }
           alien = statement;
           break;
         }
