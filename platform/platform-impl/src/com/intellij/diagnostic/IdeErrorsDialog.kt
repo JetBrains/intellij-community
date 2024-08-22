@@ -46,6 +46,7 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.URLUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
@@ -55,6 +56,7 @@ import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
 import java.net.SocketTimeoutException
+import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
 import java.util.*
@@ -518,17 +520,23 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.isVisible = true
       val vendor = plugin.vendor
-      var vendorUrl = plugin.vendorUrl
+      var vendorUrl = plugin.vendorUrl?.let {
+        when {
+          isValidUrl(it) -> it
+          !it.contains(URLUtil.SCHEME_SEPARATOR) -> ("${URLUtil.HTTPS_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${it}").takeIf(::isValidUrl)
+          else -> null
+        }
+      }
       if (vendorUrl.isNullOrBlank()) {
         val vendorEmail = plugin.vendorEmail
         if (!vendorEmail.isNullOrBlank()) {
-          vendorUrl = "mailto:" + vendorEmail.removePrefix("mailto:")
+          vendorUrl = ("mailto:" + vendorEmail.removePrefix("mailto:")).takeIf(::isValidUrl)
         }
       }
-      if (!vendor.isNullOrEmpty() && !vendorUrl.isNullOrEmpty()) {
+      if (!vendor.isNullOrEmpty() && vendorUrl != null) {
         myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
       }
-      else if (!vendorUrl.isNullOrBlank()) {
+      else if (vendorUrl != null) {
         myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
       }
       else {
@@ -543,6 +551,8 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
       loadPrivacyNoticeText(submitter)
     }
   }
+
+  private fun isValidUrl(url: String): Boolean = runCatching { URL(url) }.isSuccess
 
   private fun updateDetails(cluster: MessageCluster) {
     val message = cluster.first
