@@ -108,18 +108,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
           else {
             component = (EditorComponentImpl)target;
           }
-          DataContext dataContext = DataManager.getInstance().getDataContext(component);
+          DataContext dataContext = CustomizedDataContext.withSnapshot(
+            DataManager.getInstance().getDataContext(component),
+            sink -> sink.set(CommonDataKeys.PROJECT, context.getProject()));
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_dialog_shown"), dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
-            manager.show(tabId.get(), "",
-                         new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
-                                           0) {
-                           @Override
-                           public Project getProject() {
-                             return context.getProject();
-                           }
-                         });
+            AnActionEvent event = AnActionEvent.createEvent(
+              dataContext, null, ActionPlaces.EDITOR_POPUP, ActionUiKind.POPUP, null);
+            manager.show(tabId.get(), "", event);
             attachSearchListeners(manager.getCurrentlyShownUI());
             return null;
           });

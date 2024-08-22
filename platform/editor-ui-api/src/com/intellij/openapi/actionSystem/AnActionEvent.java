@@ -79,7 +79,7 @@ public class AnActionEvent implements PlaceProvider {
     myUiKind = uiKind;
   }
 
-  public @NotNull AnActionEvent withDataContext(@NotNull DataContext dataContext) {
+  public final @NotNull AnActionEvent withDataContext(@NotNull DataContext dataContext) {
     if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(dataContext, myPresentation, myPlace, myUiKind, myInputEvent,
                                             myModifiers, myActionManager);
@@ -165,14 +165,14 @@ public class AnActionEvent implements PlaceProvider {
    * <li> Tests
    * </ul>
    */
-  public @Nullable InputEvent getInputEvent() {
+  public final @Nullable InputEvent getInputEvent() {
     return myInputEvent;
   }
 
   /**
    * @return Project from the context of this event.
    */
-  public @Nullable Project getProject() {
+  public final @Nullable Project getProject() {
     return getData(CommonDataKeys.PROJECT);
   }
 
@@ -190,14 +190,14 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @return the data context instance.
    */
-  public @NotNull DataContext getDataContext() {
+  public final @NotNull DataContext getDataContext() {
     return myPresentation.isPreferInjectedPsi() ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
   /**
    * @see #getRequiredData(DataKey)
    */
-  public @Nullable <T> T getData(@NotNull DataKey<T> key) {
+  public final @Nullable <T> T getData(@NotNull DataKey<T> key) {
     return getDataContext().getData(key);
   }
 
@@ -225,9 +225,9 @@ public class AnActionEvent implements PlaceProvider {
    * </pre>
    * @see #getData(DataKey)
    */
-  public @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
+  public final @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
-    assert data != null : key.getName() + " is missing";
+    if (data == null) throw new AssertionError(key.getName() + " is missing");
     return data;
   }
 
@@ -239,14 +239,14 @@ public class AnActionEvent implements PlaceProvider {
    * @see com.intellij.openapi.actionSystem.ActionPlaces
    */
   @Override
-  public @NotNull @NonNls String getPlace() {
+  public final @NotNull @NonNls String getPlace() {
     return myPlace;
   }
 
   /**
    * Returns the kind of UI for which the event is created - a toolbar, a menu, a popup.
    */
-  public @NotNull ActionUiKind getUiKind() {
+  public final @NotNull ActionUiKind getUiKind() {
     return myUiKind;
   }
 
@@ -254,7 +254,7 @@ public class AnActionEvent implements PlaceProvider {
    * @see #getUiKind()
    * @see ActionUiKind#TOOLBAR
    */
-  public boolean isFromActionToolbar() {
+  public final boolean isFromActionToolbar() {
     return myUiKind instanceof ActionUiKind.Toolbar;
   }
 
@@ -266,7 +266,7 @@ public class AnActionEvent implements PlaceProvider {
    * @see ActionUiKind#POPUP
    */
   @Deprecated(forRemoval = true)
-  public boolean isFromContextMenu() {
+  public final boolean isFromContextMenu() {
     return myUiKind instanceof ActionUiKind.Popup;
   }
 
@@ -276,7 +276,7 @@ public class AnActionEvent implements PlaceProvider {
    *
    * @return the presentation instance.
    */
-  public @NotNull Presentation getPresentation() {
+  public final @NotNull Presentation getPresentation() {
     return myPresentation;
   }
 
@@ -286,19 +286,19 @@ public class AnActionEvent implements PlaceProvider {
    * @return the modifier keys.
    */
   @JdkConstants.InputEventMask
-  public int getModifiers() {
+  public final int getModifiers() {
     return myModifiers;
   }
 
-  public @NotNull ActionManager getActionManager() {
+  public final @NotNull ActionManager getActionManager() {
     return myActionManager;
   }
 
-  public void setInjectedContext(boolean worksInInjected) {
+  public final void setInjectedContext(boolean worksInInjected) {
     myPresentation.setPreferInjectedPsi(worksInInjected);
   }
 
-  public boolean isInInjectedContext() {
+  public final boolean isInInjectedContext() {
     return myPresentation.isPreferInjectedPsi();
   }
 
@@ -306,11 +306,11 @@ public class AnActionEvent implements PlaceProvider {
     visitor.visitEvent(this);
   }
 
-  public @NotNull UpdateSession getUpdateSession() {
+  public final @NotNull UpdateSession getUpdateSession() {
     return myUpdateSession;
   }
 
-  public void setUpdateSession(@NotNull UpdateSession updateSession) {
+  public final void setUpdateSession(@NotNull UpdateSession updateSession) {
     myUpdateSession = updateSession;
   }
 
