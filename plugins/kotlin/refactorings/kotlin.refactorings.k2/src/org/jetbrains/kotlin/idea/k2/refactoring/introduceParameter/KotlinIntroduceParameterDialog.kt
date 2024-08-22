@@ -69,6 +69,9 @@ class KotlinIntroduceParameterDialog(
 
         nameField.addDataChangedListener { validateButtons() }
         typeField.addDataChangedListener { validateButtons() }
+        if (lambdaExtractionDescriptor != null) {
+            typeField.isEnabled = false
+        }
     }
 
     override fun getPreferredFocusedComponent() = nameField.focusableComponent
@@ -224,7 +227,7 @@ class KotlinIntroduceParameterDialog(
                                     runWriteAction {
                                         extractionResult = Generator.generateDeclaration(
                                             ExtractionGeneratorConfiguration(
-                                                lambdaExtractionDescriptor,
+                                                lambdaExtractionDescriptor.copy(suggestedNames = listOf(chosenName)),
                                                 options
                                             ), null
                                         )
