@@ -29,6 +29,12 @@ internal abstract class KotlinObjectExtensionRegistrationInspectionTestBase : Pl
       }
     """.trimIndent())
     myFixture.addClass("""
+      package com.intellij.openapi.extensions;
+      public @interface SupportsKotlinObjects {
+        String value() default "";
+      }
+    """.trimIndent())
+    myFixture.addClass("""
       package com.intellij.openapi.options;
       import com.intellij.util.xmlb.annotations.*;
       @Tag("configurable")
@@ -55,7 +61,9 @@ internal abstract class KotlinObjectExtensionRegistrationInspectionTestBase : Pl
     """.trimIndent())
     myFixture.addClass("""
       package com.intellij.openapi.fileTypes.impl;
+      import com.intellij.openapi.extensions.SupportsKotlinObjects;
       import com.intellij.util.xmlb.annotations.*;
+      @SupportsKotlinObjects("fieldName")
       public final class FileTypeBean {
         @Attribute("implementationClass") public String implementationClass;
         @Attribute("fieldName") public String fieldName;
@@ -127,6 +135,28 @@ internal abstract class KotlinObjectExtensionRegistrationInspectionTestBase : Pl
       public final class IntentionActionBean {
         @Tag public String className;
         @Tag public String language;
+      }
+    """.trimIndent())
+    myFixture.addClass("""
+      public abstract class CustomExtensionTypeBase {
+      }
+    """.trimIndent())
+    myFixture.addClass("""
+      import com.intellij.openapi.extensions.SupportsKotlinObjects;
+      import com.intellij.util.xmlb.annotations.*;
+      @SupportsKotlinObjects
+      public final class CustomKotlinObjectAwareOptionalFieldBean {
+        @Attribute("implementationClass") public String implementationClass;
+        @Attribute("fieldName") public String fieldName;
+      }
+    """.trimIndent())
+    myFixture.addClass("""
+      import com.intellij.openapi.extensions.SupportsKotlinObjects;
+      import com.intellij.util.xmlb.annotations.*;
+      @SupportsKotlinObjects("fieldName")
+      public final class CustomKotlinObjectAwareMandatoryFieldBean {
+        @Attribute("implementationClass") public String implementationClass;
+        @Attribute("fieldName") public String fieldName;
       }
     """.trimIndent())
     setPluginXml("extensionPointsDeclarations.xml")

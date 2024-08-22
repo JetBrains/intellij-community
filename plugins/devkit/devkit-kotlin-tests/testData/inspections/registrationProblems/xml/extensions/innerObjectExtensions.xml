@@ -50,6 +50,18 @@
     <projectService serviceImplementation="ServicesOuterClass$MyProjectService"/>
     <moduleService serviceImplementation="ServicesOuterClass$MyModuleService"/>
 
+    <!-- Custom bean: -->
+    <!-- INCORRECT: fieldName is mandatory -->
+    <customWithMandatoryField implementationClass="<error descr="Extension class is a Kotlin object">CustomExtensionOuterClass$SingletonCustomExtension</error>"/>
+    <!-- CORRECT: fieldName is provided -->
+    <customWithMandatoryField implementationClass="CustomExtensionOuterClass$SingletonCustomExtension" fieldName="INSTANCE"/>
+    <!-- CORRECT: fieldName is optional -->
+    <customWithOptionalField implementationClass="CustomExtensionOuterClass$SingletonCustomExtension"/>
+    <!-- CORRECT: regular class -->
+    <customWithMandatoryField implementationClass="CustomExtensionOuterClass$MyCustomExtension"/>
+    <!-- CORRECT: regular class -->
+    <customWithOptionalField implementationClass="CustomExtensionOuterClass$MyCustomExtension"/>
+
   </extensions>
 
 </idea-plugin>

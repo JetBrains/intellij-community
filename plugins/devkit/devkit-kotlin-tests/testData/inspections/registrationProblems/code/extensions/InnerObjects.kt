@@ -60,3 +60,7 @@ class ServicesOuterClass {
     fun any() = "any"
   }
 }
+
+class OuterCustomExtension {
+  object <error descr="Kotlin object registered as extension">CustomExtension</error> : CustomExtensionTypeBase()
+}

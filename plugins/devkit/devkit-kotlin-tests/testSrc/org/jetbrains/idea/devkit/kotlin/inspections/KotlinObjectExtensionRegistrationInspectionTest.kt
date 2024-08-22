@@ -14,6 +14,7 @@ internal class KotlinObjectExtensionRegistrationInspectionTest : KotlinObjectExt
   fun testSingletonObjectExtensionsRegistered() {
     myFixture.testHighlighting("singletonObjectExtensions.xml",
                                "Configurables.kt",
+                               "CustomExtensions.kt",
                                "FileTypes.kt",
                                "IntentionActions.kt",
                                "Services.kt")
@@ -22,6 +23,7 @@ internal class KotlinObjectExtensionRegistrationInspectionTest : KotlinObjectExt
   fun testInnerObjectExtensionsRegistered() {
     myFixture.testHighlighting("innerObjectExtensions.xml",
                                "InnerConfigurables.kt",
+                               "InnerCustomExtensions.kt",
                                "InnerFileTypes.kt",
                                "InnerIntentionActions.kt",
                                "InnerServices.kt")
@@ -30,6 +32,7 @@ internal class KotlinObjectExtensionRegistrationInspectionTest : KotlinObjectExt
   fun testCompanionObjectExtensionsRegistered() {
     myFixture.testHighlighting("companionObjectExtensions.xml",
                                "CompanionObjectConfigurables.kt",
+                               "CompanionObjectCustomExtension.kt",
                                "CompanionObjectFileTypes.kt",
                                "CompanionObjectIntentionActions.kt",
                                "CompanionObjectServices.kt")

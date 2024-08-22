@@ -24,6 +24,9 @@
     <projectService serviceImplementation="MyCompanionObjectProjectService$WithName"/>
     <moduleService serviceImplementation="MyCompanionObjectModuleService$Companion"/>
 
+    <!-- Custom bean: -->
+    <customWithMandatoryField implementationClass="CompanionObjectCustomWithMandatoryField$Companion"/>
+
   </extensions>
 
 </idea-plugin>

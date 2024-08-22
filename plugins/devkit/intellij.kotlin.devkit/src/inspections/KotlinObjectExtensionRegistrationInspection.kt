@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.IntellijInternalApi
@@ -79,8 +80,21 @@ class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 }
 
 private fun Extension.isAllowed(): Boolean {
-  return allowedObjectRules.any { it.test(this) }
+  return supportsKotlinObjects()
+         || allowedObjectRules.any { it.test(this) }
          || this.extensionPoint?.effectiveQualifiedName == "com.intellij.statistics.counterUsagesCollector"
+}
+
+private fun Extension.supportsKotlinObjects(): Boolean {
+  val beanClass = extensionPoint?.beanClass?.value ?: return false
+  val supportsAnnotation = AnnotationUtil.findAnnotation(beanClass, "com.intellij.openapi.extensions.SupportsKotlinObjects") ?: return false
+  val xmlAttributeName = AnnotationUtil.getStringAttributeValue(supportsAnnotation, null) ?: return false
+  if (xmlAttributeName.isBlank()) {
+    return true
+  }
+
+  val xmlAttribute = DevKitDomUtil.getAttribute(this, xmlAttributeName)
+  return xmlAttribute != null && DomUtil.hasXml(xmlAttribute)
 }
 
 private val allowedObjectRules = listOf(

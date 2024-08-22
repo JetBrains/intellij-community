@@ -161,3 +161,13 @@ fun any() {
 private fun takeSerializable(@Suppress("UNUSED_PARAMETER") serializable: Serializable) {
   // any
 }
+
+class CompanionObjectCustomWithOptionalField {
+  companion object : CustomExtensionTypeBase() {
+  }
+}
+
+class CompanionObjectCustomWithMandatoryField {
+  companion object : CustomExtensionTypeBase() {
+  }
+}

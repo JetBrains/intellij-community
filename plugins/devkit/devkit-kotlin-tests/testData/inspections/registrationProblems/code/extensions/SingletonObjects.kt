@@ -51,3 +51,5 @@ object <error descr="Kotlin object registered as extension">MyProjectSingletonSe
 object <error descr="Kotlin object registered as extension">MyModuleSingletonService</error> {
   fun any() = "any"
 }
+
+object <error descr="Kotlin object registered as extension">CustomExtension</error> : CustomExtensionTypeBase()

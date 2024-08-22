@@ -83,3 +83,8 @@ class MyCompanionObjectModuleService {
     fun any() = "any"
   }
 }
+
+class CompanionObjectCustomWithMandatoryField {
+  companion <error descr="Kotlin object registered as extension">object</error> : CustomExtensionTypeBase() {
+  }
+}

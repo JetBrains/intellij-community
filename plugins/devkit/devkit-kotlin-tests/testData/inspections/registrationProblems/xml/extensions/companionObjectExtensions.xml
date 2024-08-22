@@ -22,6 +22,8 @@
     <projectService serviceImplementation="<error descr="Extension class is a Kotlin object">MyCompanionObjectProjectService$WithName</error>" testServiceImplementation="<error descr="Extension class is a Kotlin object">MyCompanionObjectProjectService$WithName</error>" headlessImplementation="<error descr="Extension class is a Kotlin object">MyCompanionObjectProjectService$WithName</error>"/>
     <moduleService serviceImplementation="<error descr="Extension class is a Kotlin object">MyCompanionObjectModuleService$Companion</error>" testServiceImplementation="<error descr="Extension class is a Kotlin object">MyCompanionObjectModuleService$Companion</error>" headlessImplementation="<error descr="Extension class is a Kotlin object">MyCompanionObjectModuleService$Companion</error>"/>
 
+    <!-- Custom bean: -->
+    <customWithMandatoryField implementationClass="<error descr="Extension class is a Kotlin object">MyCompanionObjectCustomExtension$Companion</error>"/>
   </extensions>
 
 </idea-plugin>

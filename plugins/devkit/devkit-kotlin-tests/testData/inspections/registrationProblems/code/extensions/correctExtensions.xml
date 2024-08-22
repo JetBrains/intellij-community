@@ -42,5 +42,9 @@
     <projectService serviceImplementation="ServicesOuterClass$MyProjectService"/>
     <moduleService serviceImplementation="ServicesOuterClass$MyModuleService"/>
 
+    <!-- Custom bean: -->
+    <customWithOptionalField implementationClass="CompanionObjectCustomWithOptionalField"/>
+    <customWithMandatoryField implementationClass="CompanionObjectCustomWithMandatoryField" fieldName="INSTANCE"/>
+
   </extensions>
 </idea-plugin>

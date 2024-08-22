@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.openapi.extensions.SupportsKotlinObjects;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * "groupId" and "version" fields are deprecated.
  */
+@SupportsKotlinObjects
 public final class CounterUsageCollectorEP {
   /**
    * @deprecated Please use {@link CounterUsageCollectorEP#implementationClass} and {@link CounterUsagesCollector#getGroup()}.

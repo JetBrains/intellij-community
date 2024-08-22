@@ -22,6 +22,9 @@
     <projectService serviceImplementation="MyProjectSingletonService"/>
     <moduleService serviceImplementation="MyModuleSingletonService"/>
 
+    <!-- Custom bean: -->
+    <customWithMandatoryField implementationClass="CustomExtension"/>
+
   </extensions>
 
 </idea-plugin>

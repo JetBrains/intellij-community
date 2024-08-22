@@ -31,5 +31,15 @@
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
+    <extensionPoint name="customWithOptionalField"
+                    beanClass="CustomKotlinObjectAwareOptionalFieldBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="CustomExtensionType"/>
+    </extensionPoint>
+    <extensionPoint name="customWithMandatoryField"
+                    beanClass="CustomKotlinObjectAwareMandatoryFieldBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="CustomExtensionType"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

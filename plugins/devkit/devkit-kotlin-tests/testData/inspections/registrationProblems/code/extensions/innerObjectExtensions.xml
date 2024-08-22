@@ -21,6 +21,9 @@
     <projectService serviceImplementation="ServicesOuterClass$MyProjectSingletonService"/>
     <moduleService serviceImplementation="ServicesOuterClass$MyModuleSingletonService"/>
 
+    <!-- Custom bean: -->
+    <customWithMandatoryField implementationClass="OuterCustomExtension$CustomExtension"/>
+
   </extensions>
 
 </idea-plugin>
