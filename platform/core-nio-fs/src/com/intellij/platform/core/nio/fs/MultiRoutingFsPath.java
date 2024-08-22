@@ -187,6 +187,12 @@ final class MultiRoutingFsPath implements Path {
     else if (path instanceof MultiRoutingFsPath) {
       return (MultiRoutingFsPath)path;
     }
+    else if (path == myDelegate /* intentional reference comparison */) {
+      // Some methods like `toAbsolutePath` return the same instance if the path is already absolute.
+      // Some other methods like `getFileName` don't declare such an intention in their documentation
+      // but deduplicate paths in their default implementations.
+      return this;
+    }
     else {
       return new MultiRoutingFsPath(myFileSystem, path);
     }

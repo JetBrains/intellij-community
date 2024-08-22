@@ -1,14 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs
 
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.net.URI
+import java.nio.file.FileSystems
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 class MultiRoutingFsPathTest {
+  @Test
+  fun `toAbsolutePath returns the same instance if isAbsolute`() {
+    val fs = MultiRoutingFileSystemProvider(FileSystems.getDefault().provider()).getFileSystem(URI("file:/"))
+    val sampleAbsolutePath = fs.rootDirectories.first().listDirectoryEntries().first()
+
+    sampleAbsolutePath.isAbsolute.shouldBe(true)
+    (sampleAbsolutePath.toAbsolutePath() === sampleAbsolutePath).shouldBe(true)
+  }
+
   @Nested
   inner class `everything must return MultiRoutingFsPath` {
     val fs = MultiRoutingFileSystemProvider(defaultSunNioFs.provider()).getFileSystem(URI("file:/"))
