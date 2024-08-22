@@ -60,6 +60,11 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/externalDestructuringUsage/externalDestructuringUsage.test");
     }
 
+    @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
+    public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
+    }
+
     @TestMetadata("kotlin/internalReferences/internalReferences.test")
     public void testKotlin_internalReferences_InternalReferences() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/internalReferences/internalReferences.test");
