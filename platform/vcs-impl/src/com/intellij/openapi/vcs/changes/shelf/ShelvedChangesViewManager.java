@@ -47,6 +47,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.ModalityUiUtil;
@@ -690,6 +691,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
 
+    private final @NotNull Wrapper myMainPanelContent = new Wrapper();
+    private final @NotNull JPanel myShelvePanel;
     private final @NotNull JScrollPane myTreeScrollPane;
     private final ShelfTree myTree;
 
@@ -719,12 +722,14 @@ public class ShelvedChangesViewManager implements Disposable {
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new MyToggleDetailsAction());
 
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, true);
       toolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
 
-      setContent(myTreeScrollPane);
-      setToolbar(toolbar.getComponent());
+      myShelvePanel = JBUI.Panels.simplePanel(myTreeScrollPane)
+        .addToTop(toolbar.getComponent());
+      myMainPanelContent.setContent(myShelvePanel);
+      setContent(myMainPanelContent);
 
       myEditorDiffPreview = new ShelveEditorDiffPreview();
       Disposer.register(this, myEditorDiffPreview);
@@ -749,7 +754,6 @@ public class ShelvedChangesViewManager implements Disposable {
 
     private void updatePanelLayout() {
       boolean isVertical = ChangesViewContentManager.isToolWindowTabVertical(myProject, SHELF);
-      setVertical(isVertical);
 
       boolean hasSplitterPreview = !isVertical;
       //noinspection DoubleNegation
@@ -816,8 +820,8 @@ public class ShelvedChangesViewManager implements Disposable {
         myProcessor = new MyShelvedPreviewProcessor(myProject, myTree, false);
         mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
 
-        mySplitterComponent.setFirstComponent(myTreeScrollPane);
-        ShelfToolWindowPanel.this.setContent(mySplitterComponent);
+        mySplitterComponent.setFirstComponent(myShelvePanel);
+        myMainPanelContent.setContent(mySplitterComponent);
       }
 
       @Override
@@ -825,7 +829,7 @@ public class ShelvedChangesViewManager implements Disposable {
         Disposer.dispose(myProcessor);
 
         if (!ShelfToolWindowPanel.this.myDisposed) {
-          ShelfToolWindowPanel.this.setContent(myTreeScrollPane);
+          myMainPanelContent.setContent(myShelvePanel);
         }
       }
 
