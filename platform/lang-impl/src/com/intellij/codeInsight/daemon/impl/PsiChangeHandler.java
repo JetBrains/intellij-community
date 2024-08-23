@@ -132,7 +132,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     for (Change change : toUpdate) {
       PsiElement element = change.psiElement();
       boolean whiteSpaceOptimizationAllowed = change.whiteSpaceOptimizationAllowed();
-      if (change.referenceWasChanged()) {
+      if (change.referenceWasChanged() && !"Rust".equals(element.getLanguage().getID())) {
         myFileStatusMap.markAllFilesDirty(change);
       }
       updateByChange(element, document, whiteSpaceOptimizationAllowed);
