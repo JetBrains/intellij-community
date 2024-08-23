@@ -13,7 +13,6 @@ use {
     std::io::Read,
     std::path::{Path, PathBuf},
     std::process::Command,
-    winresource::WindowsResource,
 };
 
 #[cfg(target_os = "windows")]
@@ -34,11 +33,14 @@ fn main() {
     #[cfg(target_os = "windows")]
     {
         cargo!("rerun-if-changed=build.rs");
-        link_cef().expect("Failed to link with CEF");
+        /* Android Studio: no cef
+         link_cef().expect("Failed to link with CEF");
+        Android Studio: no cef */
         embed_metadata().expect("Failed to embed metadata");
     }
 }
 
+/* Android Studio: no cef
 #[cfg(target_os = "windows")]
 fn link_cef() -> Result<()> {
     let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
@@ -258,6 +260,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
 
     Ok(())
 }
+Android Studio: no cef */
 
 #[cfg(target_os = "windows")]
 fn get_file_name(path: &Path) -> Result<String> {
@@ -278,15 +281,15 @@ fn embed_metadata() -> Result<()> {
     let manifest_relative_path = "resources/windows/WinLauncher.manifest";
     assert_exists_and_file(&cargo_root.join(manifest_relative_path))?;
     cargo!("rerun-if-changed={manifest_relative_path}");
-    cargo!("rustc-link-arg-bins=/MANIFEST:EMBED");
-    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_path}");
 
     let icon_relative_path = "resources/windows/WinLauncher.ico";
     assert_exists_and_file(&cargo_root.join(icon_relative_path))?;
 
-    let mut res = WindowsResource::new();
-    res.set_icon_with_id(icon_relative_path, "2000");  // see `resources/windows/resource.h`
-    res.compile().context("Failed to embed resources")
+    let rc_relative_path = "resources/windows/WinLauncher.rc";
+    assert_exists_and_file(&cargo_root.join(rc_relative_path))?;
+    embed_resource::compile(rc_relative_path, embed_resource::NONE);
+
+    Ok(())
 }
 
 #[cfg(target_os = "windows")]

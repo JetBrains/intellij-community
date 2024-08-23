@@ -66,5 +66,12 @@ if errorlevel 1 (
 )
 @echo native_win.cmd time: %time%
 
+@echo "Building xplat-launcher.exe"
+call %SCRIPT_DIR%build-win-xplat-launcher.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
+if errorlevel 1 (
+  set /A EXITCODE=EXITCODE+1
+)
+@echo native_win.cmd time: %time%
+
 @echo "All Done!"
 exit /b %EXITCODE%

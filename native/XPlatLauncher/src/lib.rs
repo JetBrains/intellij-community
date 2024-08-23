@@ -282,6 +282,7 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn Lau
     }
 }
 
+/* Android Studio: no cef
 #[cfg(target_os = "windows")]
 fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     debug!("** Initializing CEF sandbox");
@@ -308,6 +309,7 @@ fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<
 }
 
 #[cfg(not(target_os = "windows"))]
+Android Studio: no cef */
 fn init_cef_sandbox(_jre_home: &Path, _sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     Ok(None)
 }
@@ -328,6 +330,7 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
 
+    /* Android Studio: no cef
     #[cfg(target_os = "windows")]
     {
         if let Some(cef_sandbox) = _cef_sandbox {
@@ -335,6 +338,7 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
             vm_options.push(jvm_property!("jcef.sandbox.cefVersion", env!("CEF_VERSION")));
         }
     }
+    Android Studio: no cef */
 
     Ok(vm_options)
 }

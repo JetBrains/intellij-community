@@ -19,18 +19,20 @@ if not exist %OUT_DIR% (mkdir %OUT_DIR%)
 cd %OUT_DIR%
 set OUT_DIR=%CD%
 
-if exist restarter rmdir /s /q restarter
-mkdir restarter
+if exist xplat-launcher rmdir /s /q xplat-launcher
+mkdir xplat-launcher
 
 @rem if BUILD_ID is a number, pass it to cmake via BUILD_NUMBER
 @rem BUILD_NUMBER is also set by ab/, so always override
 IF 1%BUILD_ID% EQU +1%BUILD_ID% (set BUILD_NUMBER=%BUILD_ID%) else (set BUILD_NUMBER=)
 
-pushd  %TOP%tools\idea\native\restarter
+pushd  %TOP%tools\idea\native\XPlatLauncher
 set PATH=%VS140COMNTOOLS%;C:\tools\msys64\mingw64\bin;%PATH%
 
+@set RUST_LOG=debug
 %RUSTC% --version
-%CARGO% build -v --locked --release --target-dir %OUT_DIR%\restarter
+%CARGO% build -v --locked --release --target-dir %OUT_DIR%\xplat-launcher
+dir /b /a /s
 
 cd %OUT_DIR%
 dir /b /a /s
@@ -38,4 +40,4 @@ dir /b /a /s
 popd
 
 if not exist %DIST_DIR% (mkdir %DIST_DIR%)
-xcopy /f /y  %OUT_DIR%\restarter\Release\restarter.exe %DIST_DIR%
+copy /y  %OUT_DIR%\xplat-launcher\release\xplat-launcher.exe %DIST_DIR%\launcher.exe
