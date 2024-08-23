@@ -40,6 +40,7 @@ dependencies {
 intellijPlatform {
     pluginConfiguration { name = "Jewel Demo" }
     buildSearchableOptions = false
+    autoReload = false
 }
 
 tasks {
