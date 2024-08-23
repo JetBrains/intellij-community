@@ -66,8 +66,6 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   internal val packagingScope = PyPackageCoroutine.getIoScope(project)
 
-  private var selectedPackage: DisplayablePackage? = null
-
   private val searchTextField: SearchTextField
   private val searchAlarm: SingleAlarm
 
@@ -138,7 +136,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
 
   override fun uiDataSnapshot(sink: DataSink) {
-    sink[PyPackagesUiComponents.SELECTED_PACKAGE_DATA_CONTEXT] = selectedPackage
+    sink[PyPackagesUiComponents.SELECTED_PACKAGE_DATA_CONTEXT] = descriptionController.selectedPackage.get()
     super.uiDataSnapshot(sink)
   }
 
@@ -329,10 +327,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   fun packageSelected(selectedPackage: DisplayablePackage) {
     descriptionController.setPackage(pyPackage = selectedPackage)
-    val service = project.service<PyPackagingToolWindowService>()
-    descriptionController.setPackage(selectedPackage)
 
-    this.selectedPackage = selectedPackage
+    val service = project.service<PyPackagingToolWindowService>()
     packagingScope.launch {
       val packageDetails = service.detailsForPackage(selectedPackage)
 
@@ -371,6 +367,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       splitter?.firstComponent = leftPanel
       splitter?.repaint()
     }
+  }
+
+  fun selectPackageName(name: String) {
+    this.packageListController.selectPackage(name)
   }
 
   companion object {

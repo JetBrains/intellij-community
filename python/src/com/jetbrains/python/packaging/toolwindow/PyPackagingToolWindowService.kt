@@ -102,17 +102,20 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun installPackage(specification: PythonPackageSpecification) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     val result = manager.installPackage(specification)
+    toolWindowPanel?.selectPackageName(specification.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
   }
 
   suspend fun deletePackage(selectedPackage: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
     val result = manager.uninstallPackage(selectedPackage.instance)
+    toolWindowPanel?.selectPackageName(selectedPackage.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
 
   suspend fun updatePackage(specification: PythonPackageSpecification) {
     val result = manager.updatePackage(specification)
+    toolWindowPanel?.selectPackageName(specification.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
   }
 

@@ -43,7 +43,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(
 ) : JBTable(model) {
   private val scope = PyPackageCoroutine.getIoScope(project)
 
-  private var lastSelectedRow = -1
+  private var lastSelectedElement: DisplayablePackage? = null
   internal var hoveredColumn = -1
 
   @Suppress("UNCHECKED_CAST")
@@ -111,11 +111,14 @@ internal class PyPackagesTable<T : DisplayablePackage>(
     })
 
     selectionModel.addListSelectionListener {
-      if (selectedRow != -1 && selectedRow != lastSelectedRow) {
-        lastSelectedRow = selectedRow
-        tablesView.requestSelection(this)
-        val pkg = model.items[selectedRow]
-        if (pkg !is ExpandResultNode) controller.packageSelected(pkg)
+      tablesView.requestSelection(this)
+      val pkg = model.items.getOrNull(selectedRow)
+      lastSelectedElement = pkg
+      if (pkg != null && pkg !is ExpandResultNode) {
+        controller.packageSelected(pkg)
+      }
+      else {
+        controller.setEmpty()
       }
     }
 
@@ -194,8 +197,15 @@ internal class PyPackagesTable<T : DisplayablePackage>(
     return PyPaginationAwareRenderer()
   }
 
+  fun selectPackage(pkg: DisplayablePackage) {
+    val index = items.indexOf(pkg)
+    if (index != -1) {
+      setRowSelectionInterval(index, index)
+    }
+  }
+
   override fun clearSelection() {
-    lastSelectedRow = -1
+    lastSelectedElement = null
     super.clearSelection()
   }
 

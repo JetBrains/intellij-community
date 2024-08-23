@@ -33,4 +33,8 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
   fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>) {
     tablesView.resetSearch(installed, repos)
   }
+
+  fun selectPackage(name: String) {
+    tablesView.selectPackage(name)
+  }
 }

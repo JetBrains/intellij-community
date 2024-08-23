@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.toolwindow.details
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.newui.OneLineProgressIndicator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
@@ -11,6 +12,7 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.isNotNull
+import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -52,7 +54,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   val service = project.service<PyPackagingToolWindowService>()
 
-  private val selectedPackage = AtomicProperty<DisplayablePackage?>(null)
+  internal val selectedPackage = AtomicProperty<DisplayablePackage?>(null)
   private val isManagement = AtomicBooleanProperty(false)
 
   private val selectedPackageDetails = AtomicProperty<PythonPackageDetails?>(null)
@@ -64,12 +66,12 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val installActionButton = JBOptionButton(null, emptyArray())
 
-  private val installAction = wrapAction(message("action.PyInstallPackage.text")) {
+  private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
     installSelectedPackage()
   }
 
 
-  private val installWithOptionAction: Action = wrapAction(message("action.PyChangeInstallWithOption.text")) {
+  private val installWithOptionAction: Action = wrapAction(message("action.PyChangeInstallWithOption.text"), message("progress.text.installing")) {
     val pkg = selectedPackage.get() ?: return@wrapAction
     val details = selectedPackageDetails.get() ?: return@wrapAction
     withContext(Dispatchers.EDT) {
@@ -82,13 +84,16 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val versionSelector = JBComboBoxLabel()
 
-  private val progressBar: JProgressBar = JProgressBar(JProgressBar.HORIZONTAL).apply {
-    maximumSize.width = 200
-    minimumSize.width = 200
-    preferredSize.width = 200
-    isVisible = false
-    isIndeterminate = true
-  }
+  private val progressEnabledProperty = AtomicBooleanProperty(false)
+
+  private val progressIndicatorComponent = JPanel()
+  //private val progressBar: JProgressBar = JProgressBar(JProgressBar.HORIZONTAL).apply {
+  //  maximumSize.width = 200
+  //  minimumSize.width = 200
+  //  preferredSize.width = 200
+  //  isVisible = false
+  //  isIndeterminate = true
+  //}
 
   private val htmlPanel: JCEFHtmlPanel = PyPackagingJcefHtmlPanel(project).also { panel ->
     Disposer.register(this, panel)
@@ -120,10 +125,9 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val rightPanel = panel {
     row {
-      cell(progressBar).gap(RightGap.SMALL)
+      cell(progressIndicatorComponent).gap(RightGap.SMALL).visibleIf(progressEnabledProperty)
 
       versionSelector.apply {
-
         versionSelector.text = packageVersionProperty.get()
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent?) {
@@ -143,19 +147,20 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
         versionSelector.text = it
       }
       val comboBox = cell(versionSelector)
-      comboBox.enabledIf(isManagement).gap(RightGap.SMALL)
+      comboBox.enabledIf(isManagement.and(progressEnabledProperty.not())).gap(RightGap.SMALL)
+      comboBox.visibleIf(progressEnabledProperty.not())
 
       installActionButton.action = installAction
       installActionButton.options = arrayOf(installWithOptionAction)
-      cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement))
+      cell(installActionButton).visibleIf(selectedPackage.transform { it is InstallablePackage }.and(isManagement).and(progressEnabledProperty.not()))
         .gap(RightGap.SMALL)
 
       button(message("action.PyDeletePackage.text")) {
-        wrapInvokeOp {
+        wrapInvokeOp(progressText = message("python.toolwindow.packages.deleting.text")) {
           val pyPackage = selectedPackage.get() as? InstalledPackage ?: return@wrapInvokeOp
           project.service<PyPackagingToolWindowService>().deletePackage(pyPackage)
         }
-      }.visibleIf(selectedPackage.transform { it is InstalledPackage }.and(isManagement))
+      }.visibleIf(selectedPackage.transform { it is InstalledPackage }.and(isManagement).and(progressEnabledProperty.not()))
         .gap(RightGap.SMALL)
     }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE)
   }
@@ -213,16 +218,32 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private fun calculateVersionText() = (selectedPackage.get() as? InstalledPackage)?.currentVersion?.presentableText ?: latestText
 
 
-  private fun wrapAction(@Nls text: String, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
+  private fun wrapAction(@Nls text: String, @Nls progressText: String, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
     override fun actionPerformed(e: ActionEvent) {
-      wrapInvokeOp(actionPerformed)
+      wrapInvokeOp(progressText, actionPerformed)
     }
   }
 
-  private fun wrapInvokeOp(actionPerformed: suspend () -> Unit) {
-    PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
-      actionPerformed()
+  private fun wrapInvokeOp(@Nls progressText: String, actionPerformed: suspend () -> Unit) {
+    progressEnabledProperty.set(true)
+    val progressIndicator = OneLineProgressIndicator(true, true)
+    progressIndicator.text = progressText
+    progressIndicatorComponent.removeAll()
+    progressIndicatorComponent.add(progressIndicator.component, BorderLayout.CENTER)
+
+    val job = PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
+      try {
+        progressIndicator.start()
+        actionPerformed()
+      }
+      finally {
+        progressEnabledProperty.set(false)
+        progressIndicator.stop()
+      }
+    }
+
+    progressIndicator.setCancelRunnable {
+      job.cancel()
     }
   }
-
 }

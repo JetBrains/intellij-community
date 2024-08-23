@@ -112,6 +112,14 @@ class PyPackagingTablesView(private val project: Project,
     invalidRepositories.forEach { container.add(it.value) }
   }
 
+  fun selectPackage(packageName: String) {
+    val repos = listOf(installedPackages) + repositories
+    for (repo in repos) {
+      val pyPackage = repo.items.firstOrNull { it.name == packageName } ?: continue
+      repo.table.selectPackage(pyPackage)
+    }
+  }
+
   private fun selectPackage(matchData: PyPackagesViewData) {
     val tableWithMatch = findTableForRepo(matchData.repository)!!.table
     val exactMatch = matchData.exactMatch
