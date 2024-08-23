@@ -1579,7 +1579,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testModificationInsideCodeBlockDoesNotRehighlightWholeFile() {
-    configureByText(JavaFileType.INSTANCE, "class X { int f = \"error\"; int f() { int gg<caret> = 11; return 0;} }");
+    configureByText(JavaFileType.INSTANCE, """
+      class X {
+        int f = "error";
+        int f() {
+          return 11<caret>;
+        }
+      }""");
     HighlightInfo error = assertOneElement(highlightErrors());
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", error.getDescription());
 
