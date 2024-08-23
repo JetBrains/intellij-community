@@ -265,7 +265,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   }
 
   @RequiresEdt
-  protected void scrollToLine(@NotNull Side side, int line) {
+  public void scrollToLine(@NotNull Side side, int line) {
     LineCol otherCol = transferPosition(side, new LineCol(line));
     DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
 

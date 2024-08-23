@@ -144,7 +144,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   //
 
   @RequiresEdt
-  protected void scrollToLine(int line) {
+  public void scrollToLine(int line) {
     DiffUtil.scrollEditor(getEditor(), line, false);
   }
 

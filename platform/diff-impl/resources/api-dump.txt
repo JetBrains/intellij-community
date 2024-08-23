@@ -1179,6 +1179,8 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - p:performRediff(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:processContextHints():V
 - replaceChange(com.intellij.diff.tools.fragmented.UnifiedDiffChange,com.intellij.diff.util.Side):V
+- scrollToChange(com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):Z
+- scrollToLine(com.intellij.diff.util.Side,I):V
 - transferLineFromOneside(I):com.intellij.openapi.util.Pair
 - transferLineFromOneside(com.intellij.diff.util.Side,I):I
 - transferLineFromOnesideStrict(com.intellij.diff.util.Side,I):I
@@ -1349,7 +1351,6 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:createPopupActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:createUi(com.intellij.diff.tools.simple.SimpleDiffChange):com.intellij.diff.tools.simple.SimpleDiffChangeUi
-- p:doScrollToChange(com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):Z
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
 - getDiffChanges():java.util.List
 - getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
@@ -1373,6 +1374,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:performRediff(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:processContextHints():V
 - replaceChange(com.intellij.diff.tools.simple.SimpleDiffChange,com.intellij.diff.util.Side):V
+- scrollToChange(com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 c:com.intellij.diff.tools.simple.SimpleDiffViewer$ModifierProvider
@@ -2260,7 +2262,7 @@ a:com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 - p:installEditorListeners():V
 - p:onDispose():V
 - p:onInit():V
-- p:scrollToLine(I):V
+- scrollToLine(I):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pa:com.intellij.diff.tools.util.side.OnesideTextDiffViewer$MyInitialScrollPositionHelper
 - com.intellij.diff.tools.util.base.InitialScrollPositionSupport$TwosideInitialScrollHelper
@@ -2422,7 +2424,7 @@ a:com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 - p:onDispose():V
 - p:onDocumentChange(com.intellij.openapi.editor.event.DocumentEvent):V
 - p:onInit():V
-- p:scrollToLine(com.intellij.diff.util.Side,I):V
+- scrollToLine(com.intellij.diff.util.Side,I):V
 - transferPosition(com.intellij.diff.util.Side,com.intellij.diff.util.LineCol):com.intellij.diff.util.LineCol
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pa:com.intellij.diff.tools.util.side.TwosideTextDiffViewer$MyInitialScrollPositionHelper

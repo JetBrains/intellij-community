@@ -10,11 +10,9 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
+import com.intellij.diff.tools.simple.SimpleDiffViewer
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer
-import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.LineCol
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
@@ -71,19 +69,9 @@ class ComputingDiffRequestProcessor(project: Project, cs: CoroutineScope, privat
     val v = this
     val (side, line) = loc
     when (v) {
-      is OnesideTextDiffViewer -> {
-        DiffUtil.scrollEditor(v.editor, line, false)
-      }
-      is TwosideTextDiffViewer -> {
-        val otherCol = v.transferPosition(side, LineCol(line))
-        DiffUtil.moveCaret(v.getEditor(side.other()), otherCol.line)
-        DiffUtil.scrollEditor(v.getEditor(side), line, false)
-        v.currentSide = side
-      }
-      is UnifiedDiffViewer -> {
-        val onesideLine = v.transferLineToOneside(side, line)
-        DiffUtil.scrollEditor(v.editor, onesideLine, 0, false)
-      }
+      is OnesideTextDiffViewer -> v.scrollToLine(line)
+      is SimpleDiffViewer -> v.scrollToLine(side, line)
+      is UnifiedDiffViewer -> v.scrollToLine(side, line)
     }
   }
 

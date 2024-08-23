@@ -318,16 +318,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @RequiresEdt
-  protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
+  public boolean scrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     SimpleDiffChange targetChange = scrollToPolicy.select(getNonSkippedDiffChanges());
     if (targetChange == null) targetChange = scrollToPolicy.select(getDiffChanges());
     if (targetChange == null) return false;
 
-    doScrollToChange(targetChange, false);
+    scrollToChange(targetChange, false);
     return true;
   }
 
-  private void doScrollToChange(@NotNull SimpleDiffChange change, final boolean animated) {
+  private void scrollToChange(@NotNull SimpleDiffChange change, final boolean animated) {
     final int line1 = change.getStartLine(Side.LEFT);
     final int line2 = change.getStartLine(Side.RIGHT);
     final int endLine1 = change.getEndLine(Side.LEFT);
@@ -484,7 +484,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     @Override
     protected void scrollToChange(@NotNull SimpleDiffChange change) {
-      doScrollToChange(change, true);
+      SimpleDiffViewer.this.scrollToChange(change, true);
     }
   }
 
@@ -844,12 +844,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected boolean doScrollToChange() {
       if (myScrollToChange == null) return false;
-      return SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
+      return scrollToChange(myScrollToChange);
     }
 
     @Override
     protected boolean doScrollToFirstChange() {
-      return SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      return scrollToChange(ScrollToPolicy.FIRST_CHANGE);
     }
 
     @Override
