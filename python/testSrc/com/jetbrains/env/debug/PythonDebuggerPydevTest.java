@@ -17,8 +17,8 @@ import org.junit.Test;
 import java.util.Set;
 
 /**
- * The test case for running pure Python tests that are not involve the IDE.
- * It should be used only locally. On TeamCity Python tests should be run separately with `pytest`.
+ * Test case for running pure Python tests that do not involve the IDE.
+ * This should only be used locally. On TeamCity, Python tests should be run separately using `pytest`.
  */
 public class PythonDebuggerPydevTest extends PyEnvTestCase {
   @Test
