@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
-class GradleDependencySourcesImportingTest : GradleDependencySourcesImportingTestCase() {
+class GradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDependencyImportingTestCase() {
 
   @Test
   fun testDependencyPoliciesWorksWithGenericProjects() {
@@ -16,10 +16,14 @@ class GradleDependencySourcesImportingTest : GradleDependencySourcesImportingTes
       addTestImplementationDependency(DEPENDENCY)
       withIdeaPlugin()
       withPrefix {
-        settings.ideaPluginValue?.let<Boolean, Unit> { downloadSources ->
+        if (settings.isIdeaPluginRequired()) {
           call("idea.module") {
-            assign("downloadJavadoc", false)
-            assign("downloadSources", downloadSources)
+            settings.pluginDownloadSourcesValue?.run {
+              assign("downloadSources", this)
+            }
+            settings.pluginDownloadJavadocValue?.run {
+              assign("downloadJavadoc", this)
+            }
           }
         }
       }
@@ -47,10 +51,14 @@ class GradleDependencySourcesImportingTest : GradleDependencySourcesImportingTes
     importProject {
       withIdeaPlugin()
       withPrefix {
-        settings.ideaPluginValue?.let<Boolean, Unit> { downloadSources ->
+        if (settings.isIdeaPluginRequired()) {
           call("idea.module") {
-            assign("downloadJavadoc", false)
-            assign("downloadSources", downloadSources)
+            settings.pluginDownloadSourcesValue?.run {
+              assign("downloadSources", this)
+            }
+            settings.pluginDownloadJavadocValue?.run {
+              assign("downloadJavadoc", this)
+            }
           }
         }
       }

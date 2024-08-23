@@ -15,7 +15,7 @@ import org.junit.Assume
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 
-abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCase() {
+abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestCase() {
 
   @Parameter(1)
   lateinit var settings: TestScenario
@@ -33,9 +33,9 @@ abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCas
 
     val gradleSystemSettings = GradleSystemSettings.getInstance()
     gradleSystemSettings.gradleVmOptions = null
-    gradleSystemSettings.isDownloadSources = settings.ideaSettingsValue
-    if (settings.forceFlagValue != null) {
-      gradleSystemSettings.gradleVmOptions = "-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceFlagValue}"
+    gradleSystemSettings.isDownloadSources = settings.ideaDownloadSourcesValue
+    if (settings.forceDownloadSourcesFlagValue != null) {
+      gradleSystemSettings.gradleVmOptions = "-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceDownloadSourcesFlagValue}"
     }
   }
 
@@ -56,23 +56,35 @@ abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCas
     val (groupId, artifactId, version) = dependency.split(":")
     val coordinates = UnifiedCoordinates(groupId, artifactId, version)
     val components = GradleLocalCacheHelper.findArtifactComponents(
-      coordinates, gradleUserHome, setOf(LibraryPathType.BINARY, LibraryPathType.SOURCE)
+      coordinates, gradleUserHome, setOf(LibraryPathType.BINARY, LibraryPathType.SOURCE, LibraryPathType.DOC)
     )
     assertThat(components[LibraryPathType.BINARY]).isNotEmpty()
+
     if (settings.sourcesExpected) {
       assertThat(components[LibraryPathType.SOURCE]).isNotEmpty()
     }
     else {
       assertThat(components[LibraryPathType.SOURCE]).isNull()
     }
+
+    if (settings.javadocExpected) {
+      assertThat(components[LibraryPathType.DOC]).isNotEmpty()
+    }
+    else {
+      assertThat(components[LibraryPathType.DOC]).isNull()
+    }
   }
 
   data class TestScenario(
-    val ideaPluginValue: Boolean?,
-    val ideaSettingsValue: Boolean,
-    val forceFlagValue: Boolean?,
-    val sourcesExpected: Boolean
+    val pluginDownloadSourcesValue: Boolean?,
+    val ideaDownloadSourcesValue: Boolean,
+    val forceDownloadSourcesFlagValue: Boolean?,
+    val sourcesExpected: Boolean,
+    val pluginDownloadJavadocValue: Boolean?,
+    val javadocExpected: Boolean,
   )
+
+  fun TestScenario.isIdeaPluginRequired(): Boolean = pluginDownloadJavadocValue != null || pluginDownloadSourcesValue != null
 
   companion object {
 
@@ -80,13 +92,62 @@ abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCas
     private const val DEPENDENCY_CACHE_PATH = "caches/modules-2/files-2.1/junit/junit/4.12/"
 
     private val testCaseMatrix: List<TestScenario> = listOf(
-      TestScenario(ideaPluginValue = true, ideaSettingsValue = true, forceFlagValue = true, sourcesExpected = true),
-      TestScenario(ideaPluginValue = true, ideaSettingsValue = true, forceFlagValue = false, sourcesExpected = false),
-      TestScenario(ideaPluginValue = true, ideaSettingsValue = false, forceFlagValue = null, sourcesExpected = true),
-      TestScenario(ideaPluginValue = false, ideaSettingsValue = true, forceFlagValue = null, sourcesExpected = false),
-      TestScenario(ideaPluginValue = false, ideaSettingsValue = true, forceFlagValue = true, sourcesExpected = true),
-      TestScenario(ideaPluginValue = null, ideaSettingsValue = true, forceFlagValue = null, sourcesExpected = true),
-      TestScenario(ideaPluginValue = null, ideaSettingsValue = false, forceFlagValue = null, sourcesExpected = false),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = true,
+        sourcesExpected = true,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = false,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = false,
+        forceDownloadSourcesFlagValue = null,
+        sourcesExpected = true,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = false,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = null,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = false,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = true,
+        sourcesExpected = true,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = null,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = null,
+        sourcesExpected = true,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = null,
+        ideaDownloadSourcesValue = false,
+        forceDownloadSourcesFlagValue = null,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = false,
+        javadocExpected = false
+      )
     )
 
     @JvmStatic
