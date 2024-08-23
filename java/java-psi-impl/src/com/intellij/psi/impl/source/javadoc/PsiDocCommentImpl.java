@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 
 public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDocComment, JavaTokenType, Constants {
   private static final Logger LOG = Logger.getInstance(PsiDocCommentImpl.class);
+  private static final String LEADING_TOKEN = "*";
+  private static final String LEADING_TOKEN_MARKDOWN = "///";
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = count -> count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];
@@ -121,7 +123,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return WS_PATTERN.matcher(docCommentData.getText()).matches();
   }
 
-  private static void addNewLineToTag(CompositeElement tag, PsiFile psiFile, PsiManager manager) {
+  private void addNewLineToTag(CompositeElement tag, PsiFile psiFile, PsiManager manager) {
     LOG.assertTrue(tag != null && tag.getElementType() == DOC_TAG);
     ASTNode current = tag.getLastChildNode();
     while (current != null && current.getElementType() == DOC_COMMENT_DATA && isWhitespaceCommentData(current)) {
@@ -130,9 +132,9 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
 
     CharTable charTable = SharedImplUtil.findCharTableByTree(tag);
-    if (JavaFileCodeStyleFacade.forContext(psiFile).isJavaDocLeadingAsterisksEnabled()) {
+    if (JavaFileCodeStyleFacade.forContext(psiFile).isJavaDocLeadingAsterisksEnabled() || isMarkdownComment()) {
       tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, manager));
-      tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", charTable, manager));
+      tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, getLeadingToken(), charTable, manager));
       tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, manager));
     }
     else {
@@ -164,9 +166,9 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
           CharTable charTable = SharedImplUtil.findCharTableByTree(this);
           PsiManager psiManager = getManager();
 
-          if (JavaFileCodeStyleFacade.forContext(getContainingFile()).isJavaDocLeadingAsterisksEnabled()) {
+          if (JavaFileCodeStyleFacade.forContext(getContainingFile()).isJavaDocLeadingAsterisksEnabled() || isMarkdownComment()) {
             TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, psiManager);
-            TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", charTable, psiManager);
+            TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, getLeadingToken(), charTable, psiManager);
             TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, psiManager);
             newLine.getTreeParent().addChild(leadingAsterisk);
             newLine.getTreeParent().addChild(commentData);
@@ -265,6 +267,10 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
       if (current.textContains('\n')) return false;
     }
     return true;
+  }
+
+  private String getLeadingToken() {
+    return isMarkdownComment() ? LEADING_TOKEN_MARKDOWN : LEADING_TOKEN;
   }
 
   @Override

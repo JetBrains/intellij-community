@@ -1838,4 +1838,98 @@ public class Test {
         """.trimIndent()
     )
   }
+
+  fun testMarkdownAlignment(){
+    doTextTest("""
+      /// Oh hello there
+        /// I'm misaligned on purpose
+          /// Think you can fix me ?
+      public class Main {}
+    """.trimIndent(), """
+      /// Oh hello there
+      /// I'm misaligned on purpose
+      /// Think you can fix me ?
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownSpacing(){
+    doTextTest("""
+      ///I'm stuck to the leading slashes !
+      public class Main {}
+    """.trimIndent(), """
+      /// I'm stuck to the leading slashes !
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownSpacing2() {
+    doTextTest("""
+      ///
+      ///     Purposefully misaaligned stuff
+      public class Main {}
+    """.trimIndent(), """
+      /// Purposefully misaaligned stuff
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoTagInsert() {
+    doTextTest("""
+    /// Method blabla bla
+    /// 
+    /// @param toto imagine
+    /// 
+    /// @param titi      imagine 2
+    /// @return The processed value.
+    /// @throws RuntimeException yeah catch this
+    /// @see RuntimeException
+    public class Main {
+    }
+    """.trimIndent(),
+               """
+    /// Method blabla bla
+    ///
+    /// @param toto imagine
+    /// @param titi imagine 2
+    /// @return The processed value.
+    /// @throws RuntimeException yeah catch this
+    /// @see RuntimeException
+    public class Main {
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownRemoveSpaces() {
+    doTextTest("""
+    public class Main {
+      /// Method blabla bla 
+      ///  
+      /// @param toto  imagine
+      /// @param titi      imagine 2
+      /// @return The processed value.
+      /// @throws RuntimeException     yeah catch this
+      /// @see RuntimeException
+      boolean toto(int toto, int titi) {
+        return true;
+      }
+    }
+    """.trimIndent(), """
+      public class Main {
+          /// Method blabla bla
+          ///
+          /// @param toto imagine
+          /// @param titi imagine 2
+          /// @return The processed value.
+          /// @throws RuntimeException yeah catch this
+          /// @see RuntimeException
+          boolean toto(int toto, int titi) {
+              return true;
+          }
+      }
+    """.trimIndent())
+  }
 }
