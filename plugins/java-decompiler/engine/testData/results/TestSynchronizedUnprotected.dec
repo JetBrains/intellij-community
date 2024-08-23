@@ -23,14 +23,30 @@ public final class TestSynchronizedUnprotected {
 
 class 'pkg/TestSynchronizedUnprotected' {
    method 'test ()V' {
+      0      15
       3      15
       5      16
+      6      16
       7      16
       8      17
+      9      17
+      a      17
+      b      17
       c      17
+      d      17
+      e      17
       f      18
+      10      18
+      11      18
       12      18
       15      20
+      16      20
+      17      20
+      18      20
+      19      20
+      1a      20
+      1b      20
+      1c      20
    }
 }
 

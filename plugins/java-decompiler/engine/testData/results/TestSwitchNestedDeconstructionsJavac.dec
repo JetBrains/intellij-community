@@ -55,7 +55,7 @@ public class TestSwitchNestedDeconstructionsJavac {
       }
 
       System.out.println("1");// 53
-   }
+   }// 46
 
    public static void testNestedLevel2(Object o) {
       switch (o) {// 57
@@ -107,11 +107,11 @@ public class TestSwitchNestedDeconstructionsJavac {
       switch (o) {// 94
          case R1(R1(String var5)) when var5.hashCode() == 5 -> System.out.println("123456789");// 95 96
          case R1(String var6) when var6.hashCode() == 3 -> System.out.println("3");// 98 99
-         default -> System.out.println("3");// 101
+         default -> System.out.println("3");
       }
 
       System.out.println("1");// 103
-   }
+   }// 101
 
    public static void testDoubleLongCase(Object o) {
       switch (o) {// 107
@@ -141,8 +141,8 @@ public class TestSwitchNestedDeconstructionsJavac {
             }
             break;
          default:
-            System.out.println(o);
-            break;// 133
+            System.out.println(o);// 133
+            break;
       }
 
       switch (o) {// 136
@@ -191,10 +191,10 @@ public class TestSwitchNestedDeconstructionsJavac {
                System.out.println("10");// 171 172
                return;// 180
             case R2(String var8, Number var9):
-               System.out.println(o);// 174 175
+               System.out.println(o);// 174 175 177
                return;
             default:
-               System.out.println(o);// 177
+               System.out.println(o);
                return;
          }
       }
@@ -233,271 +233,700 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
    }
 
    method 'testNestedSwitches (Ljava/lang/Object;)V' {
+      0      7
       10      7
+      9b      8
+      9c      8
       9d      8
+      9e      8
+      9f      8
       a0      8
+      a1      8
       a2      8
+      ab      9
+      ac      9
       ad      9
+      ae      9
+      af      9
       b0      9
       b1      9
       b4      10
+      b5      10
+      b6      10
+      b7      10
       b8      10
+      b9      10
+      ba      10
+      c5      14
+      c6      14
       c7      14
+      c8      14
+      c9      14
       ca      14
       cb      14
+      d4      15
+      d5      15
       d6      15
+      d7      15
+      d8      15
       d9      15
       da      15
       dd      16
+      de      16
+      df      16
+      e0      16
       e1      16
+      e2      16
+      e3      16
+      eb      20
+      ec      20
       ed      20
+      ee      20
+      ef      20
       f0      20
+      f1      20
       f2      20
+      fb      21
+      fc      21
       fd      21
+      fe      21
+      ff      21
       100      21
       101      21
       104      22
+      105      22
+      106      22
+      107      22
       108      22
+      109      22
+      10a      22
+      122      26
+      123      26
       124      26
+      125      26
+      126      26
       127      26
+      128      26
       129      26
+      132      27
+      133      27
       134      27
+      135      27
+      136      27
       137      27
       138      27
       13b      28
+      13c      28
+      13d      28
+      13e      28
       13f      28
+      140      28
+      141      28
+      166      33
+      167      33
       168      33
+      169      33
+      16a      33
       16b      33
       16c      33
       16f      34
+      170      34
+      171      34
+      172      34
       173      34
+      174      34
+      175      34
       17c      39
+      17d      39
+      17e      39
+      17f      39
       180      39
+      181      39
+      182      39
       197      13
    }
 
    method 'testStringString (Ljava/lang/Object;)V' {
+      0      45
       10      45
+      53      47
+      54      47
+      55      47
+      56      47
+      57      47
+      58      47
+      59      47
+      5a      47
       5b      47
+      5c      47
       5d      47
+      5e      47
+      5f      47
       63      48
+      64      48
+      65      48
       66      48
+      67      48
       68      48
+      69      48
+      6a      48
       6e      52
+      6f      52
+      70      52
       71      52
+      72      52
       73      52
+      74      52
+      75      52
       76      53
       79      56
+      7a      56
+      7b      56
       7c      56
+      7d      56
       7e      56
+      7f      56
+      80      56
       81      57
+      82      57
+      83      57
+      84      57
+      85      57
+      86      57
+      87      57
+      88      57
+      89      57
+      8a      57
+      8b      57
+      8c      57
+      8d      57
+      8e      57
+      8f      57
+      90      57
+      91      57
    }
 
    method 'testNestedLevel2 (Ljava/lang/Object;)V' {
+      0      60
       10      60
+      70      61
+      71      61
       72      61
+      73      61
+      74      61
       75      61
+      76      61
       77      61
+      80      62
+      81      62
       82      62
+      83      62
+      84      62
       85      62
+      86      62
       87      62
       8a      63
+      8b      63
+      8c      63
+      8d      63
       8e      63
+      8f      63
+      90      63
+      c3      67
+      c4      67
       c5      67
+      c6      67
+      c7      67
       c8      67
+      c9      67
       ca      67
+      d3      68
+      d4      68
       d5      68
+      d6      68
+      d7      68
       d8      68
       d9      68
       dc      69
+      dd      69
+      de      69
+      df      69
       e0      69
+      e1      69
+      e2      69
       ee      74
+      ef      74
+      f0      74
+      f1      74
       f2      74
+      f3      74
+      f4      74
       109      66
    }
 
    method 'testNumberString (Ljava/lang/Object;)V' {
+      0      80
       10      80
+      74      81
+      75      81
       76      81
+      77      81
+      78      81
       79      81
+      7a      81
       7b      81
+      84      82
+      85      82
       86      82
+      87      82
+      88      82
       89      82
+      8a      82
       8b      82
       8e      83
+      8f      83
+      90      83
+      91      83
       92      83
+      93      83
+      94      83
+      b4      87
+      b5      87
       b6      87
+      b7      87
+      b8      87
       b9      87
+      ba      87
       bb      87
+      c4      88
+      c5      88
       c6      88
+      c7      88
+      c8      88
       c9      88
+      ca      88
       cb      88
       ce      89
+      cf      89
+      d0      89
+      d1      89
       d2      89
+      d3      89
+      d4      89
+      e9      93
+      ea      93
       eb      93
+      ec      93
+      ed      93
       ee      93
+      ef      93
       f0      93
+      f9      94
+      fa      94
       fb      94
+      fc      94
+      fd      94
       fe      94
       ff      94
       102      95
+      103      95
+      104      95
+      105      95
       106      95
+      107      95
+      108      95
       114      100
+      115      100
+      116      100
+      117      100
       118      100
+      119      100
+      11a      100
       12f      86
    }
 
    method 'test2DeepDeconstruction (Ljava/lang/Object;)V' {
+      0      106
       10      106
+      71      107
+      72      107
       73      107
+      74      107
+      75      107
       76      107
       77      107
       80      107
+      81      107
+      82      107
       83      107
+      84      107
       85      107
+      86      107
+      87      107
+      92      108
+      93      108
       94      108
+      95      108
+      96      108
       97      108
       98      108
       a1      108
+      a2      108
+      a3      108
       a4      108
+      a5      108
       a6      108
+      a7      108
+      a8      108
       b1      109
+      b2      109
+      b3      109
       b4      109
+      b5      109
       b6      109
+      b7      109
+      b8      109
       bc      112
+      bd      112
+      be      112
       bf      112
+      c0      112
       c1      112
+      c2      112
+      c3      112
       c4      113
+      c5      113
+      c6      113
+      c7      113
+      c8      113
+      c9      113
+      ca      113
+      cb      113
+      cc      113
+      cd      113
+      ce      113
+      cf      113
+      d0      113
+      d1      113
+      d2      113
+      d3      113
+      d4      113
    }
 
    method 'testDoubleLongCase (Ljava/lang/Object;)V' {
+      0      116
       10      116
+      9b      117
+      9c      117
       9d      117
+      9e      117
+      9f      117
       a0      117
       a1      117
+      aa      118
+      ab      118
       ac      118
+      ad      118
+      ae      118
       af      118
       b0      118
       b3      119
+      b4      119
+      b5      119
+      b6      119
       b7      119
+      b8      119
+      b9      119
+      c4      122
+      c5      122
       c6      122
+      c7      122
+      c8      122
       c9      122
       ca      122
+      d3      123
+      d4      123
       d5      123
+      d6      123
+      d7      123
       d8      123
       d9      123
       dc      124
+      dd      124
+      de      124
+      df      124
       e0      124
+      e1      124
+      e2      124
+      ea      127
+      eb      127
       ec      127
+      ed      127
+      ee      127
       ef      127
       f0      127
+      f9      128
+      fa      128
       fb      128
+      fc      128
+      fd      128
       fe      128
       ff      128
       102      129
+      103      129
+      104      129
+      105      129
       106      129
+      107      129
+      108      129
+      120      132
+      121      132
       122      132
+      123      132
+      124      132
       125      132
       126      132
+      12f      133
+      130      133
       131      133
+      132      133
+      133      133
       134      133
       135      133
       138      134
+      139      134
+      13a      134
+      13b      134
       13c      134
+      13d      134
+      13e      134
+      163      138
+      164      138
       165      138
+      166      138
+      167      138
       168      138
       169      138
       16c      139
+      16d      139
+      16e      139
+      16f      139
       170      139
+      171      139
+      172      139
       179      143
+      17a      143
+      17b      143
+      17c      143
       17d      143
+      17e      143
+      17f      143
       180      144
+      183      147
       193      147
+      21b      148
+      21c      148
       21d      148
+      21e      148
+      21f      148
       220      148
       221      148
+      22a      149
+      22b      149
       22c      149
+      22d      149
+      22e      149
       22f      149
       230      149
       233      150
+      234      150
+      235      150
+      236      150
       237      150
+      238      150
+      239      150
+      244      154
+      245      154
       246      154
+      247      154
+      248      154
       249      154
       24a      154
+      253      155
+      254      155
       255      155
+      256      155
+      257      155
       258      155
       259      155
       25c      156
+      25d      156
+      25e      156
+      25f      156
       260      156
+      261      156
+      262      156
+      26a      160
+      26b      160
       26c      160
+      26d      160
+      26e      160
       26f      160
       270      160
+      279      161
+      27a      161
       27b      161
+      27c      161
+      27d      161
       27e      161
       27f      161
       282      162
+      283      162
+      284      162
+      285      162
       286      162
+      287      162
+      288      162
+      2a0      166
+      2a1      166
       2a2      166
+      2a3      166
+      2a4      166
       2a5      166
       2a6      166
+      2af      167
+      2b0      167
       2b1      167
+      2b2      167
+      2b3      167
       2b4      167
       2b5      167
       2b8      168
+      2b9      168
+      2ba      168
+      2bb      168
       2bc      168
+      2bd      168
+      2be      168
+      2e3      173
+      2e4      173
       2e5      173
+      2e6      173
+      2e7      173
       2e8      173
       2e9      173
       2ec      174
+      2ed      174
+      2ee      174
+      2ef      174
       2f0      174
+      2f1      174
+      2f2      174
       2f9      179
+      2fa      179
+      2fb      179
+      2fc      179
       2fd      179
+      2fe      179
+      2ff      179
       314      153
    }
 
    method 'testTryWithDoubleDo (Ljava/lang/Object;Ljava/lang/Object;)V' {
       0      186
+      1      186
+      2      186
       3      186
+      4      186
       5      186
       b      187
+      c      188
       1e      188
       81      190
+      82      190
+      83      190
+      84      190
+      85      190
+      86      190
+      87      190
+      88      190
+      89      190
       8a      190
+      8b      190
+      8c      190
       8d      190
+      8e      190
       b2      193
+      b3      193
+      b4      193
+      b5      193
+      b6      193
+      b7      193
+      b8      193
+      b9      193
+      ba      193
+      bb      193
+      bc      193
+      bd      193
       be      193
       ce      196
+      cf      196
+      d0      196
+      d1      196
       d2      196
+      d3      196
+      d4      196
       e9      191
    }
 }
 
 class 'pkg/TestSwitchNestedDeconstructionsJavac$R1' {
    method '<init> (Ljava/lang/Object;)V' {
+      4      205
+      5      205
       6      205
+      7      205
+      8      205
       9      206
    }
 
    method 'o ()Ljava/lang/Object;' {
+      0      209
       1      209
+      2      209
+      3      209
       4      209
    }
 }
 
 class 'pkg/TestSwitchNestedDeconstructionsJavac$R2' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      4      215
+      5      215
       6      215
+      7      215
+      8      215
+      9      216
+      a      216
       b      216
+      c      216
+      d      216
       e      217
    }
 
    method 'o ()Ljava/lang/Object;' {
+      0      220
       1      220
+      2      220
+      3      220
       4      220
    }
 
    method 'o2 ()Ljava/lang/Object;' {
+      0      224
       1      224
+      2      224
+      3      224
       4      224
    }
 }
@@ -523,6 +952,7 @@ Lines mapping:
 40 <-> 40
 42 <-> 14
 45 <-> 46
+46 <-> 58
 47 <-> 48
 48 <-> 49
 51 <-> 53
@@ -553,7 +983,7 @@ Lines mapping:
 96 <-> 108
 98 <-> 109
 99 <-> 109
-101 <-> 110
+101 <-> 114
 103 <-> 113
 107 <-> 117
 108 <-> 118
@@ -570,7 +1000,7 @@ Lines mapping:
 125 <-> 135
 129 <-> 139
 130 <-> 140
-133 <-> 145
+133 <-> 144
 136 <-> 148
 137 <-> 149
 138 <-> 150
@@ -595,12 +1025,11 @@ Lines mapping:
 172 <-> 191
 174 <-> 194
 175 <-> 194
-177 <-> 197
+177 <-> 194
 180 <-> 192
 183 <-> 225
 Not mapped:
 35
-46
 54
 97
 100

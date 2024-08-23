@@ -70,8 +70,12 @@ class 'pkg/TestDebugSymbols' {
       2      13
       3      13
       6      16
+      7      16
+      8      16
       a      16
+      b      17
       c      17
+      d      17
       e      17
       11      19
    }

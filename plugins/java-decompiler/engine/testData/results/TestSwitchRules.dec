@@ -41,47 +41,88 @@ public class TestSwitchRules {
 class 'pkg/TestSwitchRules' {
    method 'main ([Ljava/lang/String;)V' {
       0      4
+      1      4
       2      4
+      3      4
+      4      4
       5      5
+      6      5
       7      5
+      8      5
+      9      5
       a      6
+      b      6
       c      6
+      d      6
+      e      6
       f      7
    }
 
    method 'test1 (Ljava/lang/String;)V' {
+      0      10
       3e      10
       58      11
+      59      11
+      5a      11
       5b      11
+      5c      11
       5d      11
+      5e      11
+      5f      11
       63      12
+      64      12
+      65      12
       66      12
+      67      12
       68      12
+      69      12
+      6a      12
       6e      13
+      6f      13
+      70      13
       71      13
+      72      13
       73      13
       76      16
    }
 
    method 'test2 (Ljava/lang/String;)V' {
+      0      19
       3e      19
       5b      22
+      5c      22
+      5d      22
       5e      22
+      5f      22
       60      22
+      61      22
+      62      22
       66      21
+      67      21
+      68      21
       69      21
+      6a      21
       6b      21
       6e      25
    }
 
    method 'test3 (Ljava/lang/String;)V' {
+      0      28
       3e      28
       58      31
+      59      31
+      5a      31
       5b      31
+      5c      31
       5d      31
+      5e      31
+      5f      31
       60      32
       63      34
+      64      34
+      65      34
       66      34
+      67      34
       68      34
       6b      37
    }

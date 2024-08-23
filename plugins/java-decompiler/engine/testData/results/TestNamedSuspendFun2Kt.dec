@@ -63,7 +63,7 @@ public final class TestNamedSuspendFun2Kt {
          int x;
          label452: {
             Object var2 = var3.data;
-            var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();// 2
+            var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();
             Object var22;
             boolean var10001;
             switch (var3.label) {
@@ -107,7 +107,7 @@ public final class TestNamedSuspendFun2Kt {
                      throw ((SuccessOrFailure.Failure)var2).exception;
                   }
 
-                  return 1;// 11
+                  return 1;// 2 3 8 9 11
                case 3:
                   if (var2 instanceof SuccessOrFailure.Failure) {
                      throw ((SuccessOrFailure.Failure)var2).exception;
@@ -119,15 +119,15 @@ public final class TestNamedSuspendFun2Kt {
                      throw ((SuccessOrFailure.Failure)var2).exception;
                   }
 
-                  throw var1;// 9
+                  throw var1;
                default:
                   throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
 
             while(true) {
                try {
-                  var3.label = 1;// 5
-                  var22 = bar(var3);
+                  var3.label = 1;
+                  var22 = bar(var3);// 5
                } catch (Throwable var17) {
                   var10000 = var17;
                   var10001 = false;
@@ -168,7 +168,7 @@ public final class TestNamedSuspendFun2Kt {
       var1 = var10000;
       var3.L$0 = var1;
       var3.label = 4;
-      if (bar(var3) == var4) {// 8
+      if (bar(var3) == var4) {
          return var4;
       } else {
          throw var1;
@@ -183,121 +183,288 @@ public final class TestNamedSuspendFun2Kt {
 
 class 'TestNamedSuspendFun2Kt$foo2$1' {
    method 'invokeSuspend (Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      36
+      1      36
       2      36
+      3      36
+      4      36
+      5      37
       a      37
+      b      37
       d      37
+      e      37
+      f      37
+      10      38
       11      38
+      12      38
+      13      38
       14      38
    }
 
    method '<init> (Lkotlin/coroutines/Continuation;)V' {
+      1      42
       2      42
+      3      42
+      4      42
       5      43
    }
 }
 
 class 'TestNamedSuspendFun2Kt' {
    method 'foo2 (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;' {
+      0      47
       1      47
+      2      47
+      3      47
       4      47
+      7      48
       8      48
+      9      48
+      a      48
       b      48
+      c      49
       d      49
+      e      49
+      f      49
       10      49
+      11      49
       12      49
       13      49
+      16      50
       18      50
+      19      50
+      1a      50
       1b      50
+      1c      50
       1d      50
       1e      50
+      1f      50
+      20      50
       21      51
+      28      55
       2c      55
+      2d      64
       2e      64
+      2f      64
+      30      64
       31      64
       32      65
+      33      65
+      34      65
       35      65
+      36      65
+      37      68
       38      68
+      39      68
+      3a      68
       3b      68
+      5c      70
       5e      70
+      5f      70
+      60      70
       61      70
       64      71
+      65      71
+      66      71
       67      71
+      68      71
+      69      71
       6a      71
+      6d      129
+      6e      128
       6f      128
       70      128
+      71      128
+      72      128
       73      129
+      77      136
+      78      136
       79      136
+      7c      137
+      7d      137
       7e      137
+      7f      76
       81      76
+      82      76
+      83      76
       84      76
       87      77
+      88      77
+      89      77
       8a      77
+      8b      77
+      8c      77
       8d      77
+      8f      80
       90      88
+      91      88
+      92      88
       93      88
+      94      88
+      95      88
       96      88
+      97      89
       98      89
+      9b      160
+      9c      158
+      9d      158
       9e      158
+      9f      158
+      a0      158
+      a1      159
       a2      159
       a3      159
+      a4      159
+      a5      159
       a6      160
+      a7      160
+      a8      160
+      aa      160
+      ab      160
       ac      160
+      af      161
+      b0      161
       b1      161
+      b2      104
       b3      104
+      b4      104
+      b5      104
       b6      104
+      b7      105
       b9      105
+      ba      105
+      bb      105
       bc      105
       bf      106
+      c0      106
+      c1      106
       c2      106
+      c3      106
+      c4      106
       c5      106
       c9      109
+      ca      109
+      cb      109
+      cc      99
+      cd      98
       ce      98
       cf      98
+      d0      98
+      d1      98
       d2      99
+      d3      99
+      d4      99
+      d5      109
+      d6      99
+      d7      99
       d8      99
+      d9      109
+      da      109
+      db      100
+      dc      100
       dd      100
-      e0      111
-      e3      111
-      e6      112
-      e9      112
-      ec      112
-      f3      167
-      f7      168
-      fb      169
-      fc      169
-      ff      170
-      105      170
-      10a      171
-      10c      116
-      10f      116
-      112      116
-      115      117
-      118      117
-      11b      118
-      11e      118
-      121      118
-      126      121
+      de      109
+      df      109
+      e0      109
+      e1      109
+      e2      109
+      e3      109
+      e4      109
+      e5      109
+      e6      109
+      e7      109
+      e8      109
+      e9      109
+      ea      109
+      eb      109
+      ec      109
+      ed      109
+      ee      109
+      ef      109
+      f0      109
+      f1      109
+      f2      109
+      f3      109
+      f4      109
+      f5      109
+      f6      109
+      f7      109
+      f8      109
+      f9      109
+      fa      109
+      fb      109
+      fc      109
+      fd      109
+      fe      109
+      ff      109
+      100      109
+      101      109
+      102      109
+      103      109
+      104      109
+      105      109
+      106      109
+      107      109
+      108      109
+      109      109
+      10a      109
+      10b      109
+      10c      109
+      10d      109
+      10e      109
+      10f      109
+      110      109
+      111      109
+      112      109
+      113      109
+      114      109
+      115      109
+      116      109
+      117      109
+      118      109
+      119      109
+      11a      109
+      11b      109
+      11c      109
+      11d      109
+      11e      109
+      11f      109
+      120      109
+      121      109
+      122      109
+      123      109
+      124      109
+      125      109
+      126      109
+      127      109
+      128      109
+      129      109
       12a      109
       12b      109
+      12c      109
+      12d      109
       133      123
+      134      123
       138      123
    }
 
    method 'bar (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;' {
       0      179
       1      179
+      2      179
+      3      179
       4      179
    }
 }
 
 Lines mapping:
-2 <-> 66
-5 <-> 129
+2 <-> 110
+3 <-> 110
+5 <-> 130
 6 <-> 89
-8 <-> 171
-9 <-> 122
+8 <-> 110
+9 <-> 110
 11 <-> 110
 14 <-> 180
 Not mapped:
-3
 4

@@ -830,8 +830,6 @@ public abstract class Statement implements IMatchable {
           ((Statement)obj).getOffset(values);
         } else if (obj instanceof Exprent) {
           ((Exprent)obj).getBytecodeRange(values);
-        } else {
-          System.out.println("WTF?" + obj.getClass());
         }
       }
     }

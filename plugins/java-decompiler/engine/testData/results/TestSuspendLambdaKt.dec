@@ -88,13 +88,19 @@ public final class TestSuspendLambdaKt {
 class 'pkg/TestSuspendLambdaKt' {
    method 'getSl1 ()Lkotlin/jvm/functions/Function1;' {
       0      27
+      1      27
+      2      27
       3      27
    }
 
    method '<clinit> ()V' {
       4      83
       8      83
+      9      83
+      a      83
       b      83
+      c      83
+      d      83
       e      84
    }
 }
@@ -102,43 +108,85 @@ class 'pkg/TestSuspendLambdaKt' {
 class 'pkg/TestSuspendLambdaKt$sl1$1' {
    method 'invokeSuspend (Ljava/lang/Object;)Ljava/lang/Object;' {
       0      52
+      1      52
+      2      52
       3      52
+      4      53
       5      53
+      6      53
+      7      53
       8      53
+      1c      55
       1e      55
+      1f      55
+      20      55
       21      55
       24      56
+      25      56
+      26      56
       27      56
+      28      56
+      29      56
       2a      56
       2c      59
+      2d      59
       2e      59
       2f      60
+      30      60
+      31      60
+      32      60
       33      60
+      34      60
+      35      60
       36      61
+      37      61
+      38      61
       39      61
       3e      63
+      3f      63
       43      63
    }
 
    method '<init> (Lkotlin/coroutines/Continuation;)V' {
       1      68
+      2      68
       3      68
+      4      68
+      5      68
       6      69
    }
 
    method 'create (Lkotlin/coroutines/Continuation;)Lkotlin/coroutines/Continuation;' {
+      0      73
       1      73
+      2      73
       3      73
+      4      73
+      5      73
+      a      74
       e      74
+      f      75
       10      75
    }
 
    method 'invoke (Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      79
+      1      79
       2      79
+      3      79
+      4      79
       5      79
+      6      79
+      7      79
       8      79
+      9      79
+      a      79
       b      79
+      c      79
+      d      79
       e      79
+      f      79
+      10      79
       11      79
    }
 }

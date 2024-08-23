@@ -18,15 +18,12 @@ class 'TestMethodReferenceSameName' {
       1      4
       2      4
       3      4
-      5      5
-      6      5
-      7      5
-      e      6
-      f      6
-      10      6
-      11      6
-      12      6
-      13      7
+      e      5
+      f      5
+      10      5
+      11      5
+      12      5
+      13      6
    }
 }
 

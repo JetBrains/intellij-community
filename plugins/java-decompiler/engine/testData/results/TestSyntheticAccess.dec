@@ -4,16 +4,6 @@ class TestSyntheticAccess {
    private static int s;
    private int i;
 
-   private class Assigner {
-      void assignI(int var1) {
-         TestSyntheticAccess.this.i = var1;// 32
-      }// 33
-
-      void assignS(int var1) {
-         TestSyntheticAccess.s = var1;// 36
-      }// 37
-   }
-
    private class Incrementer {
       void orI() {
          TestSyntheticAccess.this.i = TestSyntheticAccess.this.i | 1;// 10
@@ -35,86 +25,102 @@ class TestSyntheticAccess {
          TestSyntheticAccess.s--;// 26
       }// 27
    }
-}
 
-class 'pkg/TestSyntheticAccess$Assigner' {
-   method 'assignI (I)V' {
-      1      8
-      2      8
-      3      8
-      4      8
-      5      8
-      9      9
-   }
+   private class Assigner {
+      void assignI(int var1) {
+         TestSyntheticAccess.this.i = var1;// 32
+      }// 33
 
-   method 'assignS (I)V' {
-      0      12
-      2      12
-      3      12
-      4      12
-      5      13
+      void assignS(int var1) {
+         TestSyntheticAccess.s = var1;// 36
+      }// 37
    }
 }
 
 class 'pkg/TestSyntheticAccess$Incrementer' {
    method 'orI ()V' {
-      1      18
-      2      18
-      3      18
-      4      18
-      5      18
-      6      18
-      7      18
-      b      18
-      d      18
-      11      19
+      1      8
+      2      8
+      3      8
+      5      8
+      6      8
+      7      8
+      8      8
+      9      8
+      a      8
+      b      8
+      d      8
+      e      8
+      f      8
+      11      9
    }
 
    method 'incrementI ()V' {
-      1      22
-      2      22
-      3      22
-      4      22
-      7      22
-      8      23
+      1      12
+      2      12
+      3      12
+      4      12
+      5      12
+      6      12
+      8      13
    }
 
    method 'decrementI ()V' {
-      1      26
-      2      26
-      3      26
-      4      26
-      6      26
-      8      27
+      1      16
+      2      16
+      3      16
+      4      16
+      5      16
+      6      16
+      8      17
    }
 
    method 'incrementS ()V' {
-      0      30
-      1      30
-      2      30
-      4      30
+      0      20
+      1      20
+      2      20
+      4      21
    }
 
    method 'decrementS ()V' {
-      0      34
+      0      24
+      1      24
+      2      24
+      4      25
+   }
+}
+
+class 'pkg/TestSyntheticAccess$Assigner' {
+   method 'assignI (I)V' {
+      1      30
+      2      30
+      3      30
+      5      30
+      6      30
+      7      30
+      9      31
+   }
+
+   method 'assignS (I)V' {
       1      34
       2      34
-      4      35
+      3      34
+      5      35
    }
 }
 
 Lines mapping:
-10 <-> 19
-11 <-> 20
-14 <-> 23
-15 <-> 24
-18 <-> 27
-19 <-> 28
-22 <-> 31
-23 <-> 32
-26 <-> 35
-27 <-> 36
-32 <-> 9
-33 <-> 10
-36 <-> 13
-37 <-> 14
+10 <-> 9
+11 <-> 10
+14 <-> 13
+15 <-> 14
+18 <-> 17
+19 <-> 18
+22 <-> 21
+23 <-> 22
+26 <-> 25
+27 <-> 26
+32 <-> 31
+33 <-> 32
+36 <-> 35
+37 <-> 36

@@ -35,13 +35,23 @@ public class MemberDeclarationTypeAnnotations<@A P extends @B Number & @F Serial
 class 'typeAnnotations/MemberDeclarationTypeAnnotations' {
    method 'lambda$new$0 (Ljava/lang/String;)V' {
       0      10
+      1      10
+      2      10
+      3      10
       4      10
+      5      10
+      6      10
       7      11
    }
 
    method 'lambda$new$1 (Ljava/lang/String;Ljava/lang/String;)V' {
       0      13
+      1      13
+      2      13
+      3      13
       4      13
+      5      13
+      6      13
       7      14
    }
 
@@ -52,12 +62,16 @@ class 'typeAnnotations/MemberDeclarationTypeAnnotations' {
    method 'foo ([Ljava/lang/Number;)Ljava/lang/Number;' {
       0      22
       1      22
+      2      22
+      3      22
       4      22
    }
 
    method 'bar ([Ljava/lang/Object;)Ljava/lang/Number;' {
       0      27
       1      27
+      2      27
+      3      27
       4      27
    }
 

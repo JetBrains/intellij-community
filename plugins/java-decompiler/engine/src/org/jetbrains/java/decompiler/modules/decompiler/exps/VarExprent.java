@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.annotations.NotNull;
@@ -38,17 +38,23 @@ public class VarExprent extends Exprent {
   private int version = 0;
   private boolean classDef = false;
   private boolean stack = false;
+  private final boolean isFromStore;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
     this(index, varType, processor, null);
   }
 
   public VarExprent(int index, VarType varType, VarProcessor processor, BitSet bytecode) {
+    this(index, varType, processor, bytecode, false);
+  }
+
+  public VarExprent(int index, VarType varType, VarProcessor processor, BitSet bytecode, boolean fromStore) {
     super(EXPRENT_VAR);
     this.index = index;
     this.varType = varType;
     this.processor = processor;
     this.addBytecodeOffsets(bytecode);
+    this.isFromStore = fromStore;
   }
 
   @Override
@@ -68,7 +74,7 @@ public class VarExprent extends Exprent {
 
   @Override
   public Exprent copy() {
-    VarExprent var = new VarExprent(index, getVarType(), processor, bytecode);
+    VarExprent var = new VarExprent(index, getVarType(), processor, bytecode, isFromStore);
     var.setDefinition(definition);
     var.setVersion(version);
     var.setClassDef(classDef);
@@ -126,7 +132,11 @@ public class VarExprent extends Exprent {
     if (attr != null && processor != null) {
       Integer origIndex = processor.getVarOriginalIndex(index);
       if (origIndex != null) {
-        String name = attr.getName(origIndex, bytecode == null ? -1 : bytecode.nextSetBit(0));
+        int offset = bytecode == null ? -1 : bytecode.nextSetBit(0);
+        if (bytecode != null && isFromStore) {
+          offset = bytecode.previousSetBit(bytecode.size()) + 1;
+        }
+        String name = attr.getName(origIndex, offset);
         if (name != null && TextUtil.isValidIdentifier(name, method.getBytecodeVersion())) {
           return name;
         }

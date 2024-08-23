@@ -20,19 +20,32 @@ public final class TestFieldSingleAccess {
 
 class 'pkg/TestFieldSingleAccess' {
    method 'test ()V' {
+      0      6
       1      6
+      2      6
+      3      6
       5      7
       8      8
+      9      8
+      a      8
       c      8
       f      11
    }
 
    method 'test1 ()V' {
+      0      14
       1      14
+      2      14
+      3      14
       6      14
       7      15
+      8      15
+      9      15
       a      15
+      b      15
       c      15
+      d      15
+      e      15
       19      17
    }
 }

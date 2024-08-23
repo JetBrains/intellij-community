@@ -14,7 +14,7 @@ public class TestInstanceofWithPattern {
    }// 14
 
    void typePattern2(Object str) {
-      if (!(str instanceof String s)) {// 17
+      if (!(str instanceof String s)) {// 17 21
          System.out.println("no");// 18
       } else {
          if (s.length() > 3) {// 22
@@ -89,102 +89,255 @@ public class TestInstanceofWithPattern {
 
 class 'decompiler/TestInstanceofWithPattern' {
    method 'typePattern1 (Ljava/lang/Object;)V' {
+      0      7
       3      7
+      4      7
+      5      7
       6      7
+      d      7
       e      8
+      f      8
+      10      8
+      11      8
       12      8
+      13      8
+      14      8
       18      10
+      19      10
+      1a      10
       1b      10
+      1c      10
       1d      10
       20      13
    }
 
    method 'typePattern2 (Ljava/lang/Object;)V' {
+      0      16
       1      16
+      2      16
+      3      16
       4      16
       7      17
+      8      17
+      9      17
       a      17
+      b      17
       c      17
+      d      17
+      e      17
       f      26
+      14      16
+      15      19
       16      19
+      17      19
+      18      19
       19      19
       1a      19
       1d      20
+      1e      20
+      1f      20
+      20      20
       21      20
+      22      20
+      23      20
+      27      21
       28      21
+      29      21
       2a      21
+      2b      21
+      2c      21
       2d      21
       30      22
+      31      22
+      32      22
+      33      22
       34      22
+      35      22
+      36      22
+      37      22
+      38      22
       39      22
       3c      26
    }
 
    method 'typePatternInBinaryExpr (Ljava/lang/Object;)V' {
+      0      29
       3      29
+      4      29
+      5      29
       6      29
+      d      29
+      e      30
       f      30
+      10      30
+      11      30
       12      30
       13      30
+      16      30
       17      30
+      18      30
       19      30
+      1a      30
+      1b      30
       1c      30
       1f      31
+      20      31
+      21      31
+      22      31
       23      31
+      24      31
+      25      31
       29      36
+      2a      36
+      2b      36
       2c      36
+      2d      36
       2e      36
       31      32
    }
 
    method 'returnInstanceof (Ljava/lang/Object;)Ljava/lang/String;' {
+      0      40
       3      40
+      4      40
+      5      40
       6      40
+      d      40
+      e      41
       f      41
+      10      41
+      11      41
       12      41
+      13      41
       14      41
+      17      42
       18      42
       19      42
+      1a      42
       1b      42
+      1c      42
+      1d      42
       1e      42
+      1f      42
+      20      42
+      21      42
+      22      42
       23      42
+      24      46
       27      46
+      28      46
+      29      46
       2a      46
+      31      46
+      32      47
       33      47
+      34      47
+      35      47
+      36      47
+      37      47
       38      47
+      39      48
       3c      48
+      3d      48
+      3e      48
       3f      48
+      46      48
+      47      49
       48      49
+      49      49
+      4a      49
+      4b      49
+      4c      49
       4d      49
+      4e      49
+      4f      49
+      50      49
+      51      49
       52      49
+      53      51
       54      51
+      55      51
+      56      51
       57      51
    }
 
    method 'complex (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/String;' {
+      0      58
       5      58
+      6      58
+      7      58
       8      58
+      10      58
+      11      58
+      12      59
+      13      59
       14      59
+      15      59
       16      59
+      17      59
+      18      59
       19      59
+      1c      62
+      1d      62
       1e      62
+      1f      65
       24      65
+      25      65
+      26      65
       27      65
+      2f      65
+      30      66
       31      66
+      32      66
+      33      66
       34      66
       38      68
+      39      69
       3e      69
+      3f      69
+      40      69
       41      69
+      49      69
+      4a      69
+      4b      70
+      4c      70
       4d      70
+      4e      70
       4f      70
+      50      70
+      51      70
       52      70
+      55      73
+      56      73
       57      73
+      58      73
+      59      73
+      5a      73
+      5b      73
       5c      73
+      5d      76
       62      76
+      63      76
+      64      76
       65      76
+      6d      76
+      6e      76
+      6f      77
       70      77
+      71      77
+      72      77
+      73      78
+      74      78
       75      78
+      76      78
+      77      78
+      78      78
+      79      78
       7a      78
+      7b      78
+      7c      78
+      7d      78
+      7e      78
       7f      78
    }
 
@@ -202,6 +355,7 @@ Lines mapping:
 17 <-> 17
 18 <-> 18
 19 <-> 27
+21 <-> 17
 22 <-> 20
 23 <-> 21
 24 <-> 22
@@ -231,5 +385,4 @@ Lines mapping:
 70 <-> 78
 77 <-> 86
 Not mapped:
-21
 72

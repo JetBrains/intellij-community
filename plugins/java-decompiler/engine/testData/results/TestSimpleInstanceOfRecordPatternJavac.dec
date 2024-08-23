@@ -5,12 +5,12 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(Object s1)) {// 9
+      if (o instanceof R(Object s1)) {
          System.out.println(s1);// 10
       }
 
       System.out.println("1");// 12
-   }
+   }// 9
 
    public static void tryInstanceOfTest1(Object o) {
       int a = 1;// 16
@@ -29,16 +29,16 @@ public class TestSimpleInstanceOfRecordPatternJavac {
 
    public static void negativeInstanceOfTest1(Object o) {
       if (o instanceof R(Object s1)) {// 29
-         if (s1.hashCode() == 1) {// 31
+         if (s1.hashCode() == 1) {// 30 31
             System.out.println(s1);// 32
             System.out.println("1");// 33
          }
 
       }
-   }// 30 35
+   }// 35
 
    public static void instanceOfTest2(Object o) {
-      if (o instanceof R(String s1)) {// 38
+      if (o instanceof R(String s1)) {
          System.out.println(s1);// 39
          if (s1.hashCode() == 1) {// 40
             System.out.println("1");// 41
@@ -46,10 +46,10 @@ public class TestSimpleInstanceOfRecordPatternJavac {
       }
 
       System.out.println("5");// 44
-   }
+   }// 38
 
    public static void instanceOfTest3(Object o) {
-      if (o instanceof R(String s1)) {// 48
+      if (o instanceof R(String s1)) {
          if (s1.isEmpty()) {// 49
             System.out.println("111");// 50
             System.out.println("111");// 51
@@ -60,10 +60,10 @@ public class TestSimpleInstanceOfRecordPatternJavac {
 
       System.out.println("s222222222222");// 56
       System.out.println("s222222222222");// 57
-   }
+   }// 48
 
    public static void instanceOfTest4(Object o) {
-      if (o.hashCode() == 1 && o instanceof R(String s1)) {// 61 62
+      if (o.hashCode() == 1 && o instanceof R(String s1)) {// 61
          if (o instanceof R(String var4)) {// 63
             if (s1.isEmpty()) {// 64
                System.out.println("111");// 65
@@ -76,43 +76,43 @@ public class TestSimpleInstanceOfRecordPatternJavac {
 
       System.out.println("s222222222222");// 73
       System.out.println("s222222222222");// 74
-   }
+   }// 62
 
    public static void instanceOfTestDouble1(Object o, Object o2) {
       if (o instanceof R(Object r)) {// 78
          System.out.println(r);// 79
       }
 
-      if (o2 instanceof R(Object r)) {// 82
+      if (o2 instanceof R(Object r)) {
          System.out.println(r);// 83
       }
 
       System.out.println("s2222222");// 85
-   }
+   }// 82
 
    public static void instanceOfTestDouble2(Object o, Object o2) {
       if (o instanceof R(Object s1)) {// 89
          System.out.println(s1);// 90
       }
 
-      if (o2 instanceof R(String r)) {// 93
+      if (o2 instanceof R(String r)) {
          System.out.println(r);// 94
       }
 
       System.out.println("2222222");// 96
-   }
+   }// 93
 
    public static void instanceOfTestDoubleNegate2(Object o, Object o2) {
       if (o instanceof R(Object s1)) {// 100
-         System.out.println(s1);// 103
+         System.out.println(s1);// 101 103
          if (o2 instanceof R(String r)) {// 105
-            System.out.println(r);// 108
+            System.out.println(r);// 106 108
             System.out.println("2222222");// 110
             return;
          }
 
       }
-   }// 101 106
+   }
 
    static record R(Object o) {
       R(Object o) {
@@ -131,181 +131,469 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
    }
 
    method 'instanceOfTest1 (Ljava/lang/Object;)V' {
+      0      7
       1      7
+      2      7
+      3      7
       4      7
       13      8
+      14      8
+      15      8
+      16      8
       17      8
       1a      11
+      1b      11
+      1c      11
       1d      11
+      1e      11
       1f      11
+      20      11
+      21      11
       22      12
+      23      12
+      24      12
+      25      12
+      26      12
+      27      12
+      28      12
+      29      12
+      2a      12
+      2b      12
+      2c      12
+      2d      12
+      2e      12
+      2f      12
+      30      12
+      31      12
+      32      12
    }
 
    method 'tryInstanceOfTest1 (Ljava/lang/Object;)V' {
       0      15
       1      15
+      2      18
       3      18
+      4      18
+      5      18
       6      18
       22      19
       39      21
+      3a      22
       3b      22
+      3c      22
+      3d      22
       3e      22
       5b      23
       6f      27
    }
 
    method 'negativeInstanceOfTest1 (Ljava/lang/Object;)V' {
+      0      30
       1      30
+      2      30
+      3      30
       4      30
-      16      37
+      13      31
+      14      31
+      15      31
+      16      31
       17      31
       18      31
+      19      31
+      1a      31
       1b      31
       1f      32
+      20      32
+      21      32
+      22      32
       23      32
+      24      32
+      25      32
       26      33
+      27      33
+      28      33
       29      33
+      2a      33
       2b      33
       3f      37
    }
 
    method 'instanceOfTest2 (Ljava/lang/Object;)V' {
+      0      40
       1      40
+      2      40
+      3      40
       4      40
       1d      41
+      1e      41
+      1f      41
+      20      41
       21      41
+      22      41
+      23      41
+      24      42
       25      42
+      26      42
+      27      42
       28      42
       29      42
       2c      43
+      2d      43
+      2e      43
       2f      43
+      30      43
       31      43
       34      47
+      35      47
+      36      47
       37      47
+      38      47
       39      47
+      3a      47
+      3b      47
       3c      48
+      3d      48
+      3e      48
+      3f      48
+      40      48
+      41      48
+      42      48
+      43      48
+      44      48
+      45      48
+      46      48
+      47      48
+      48      48
+      49      48
+      4a      48
+      4b      48
+      4c      48
    }
 
    method 'instanceOfTest3 (Ljava/lang/Object;)V' {
+      0      51
       1      51
+      2      51
+      3      51
       4      51
+      1d      52
       1e      52
+      1f      52
+      20      52
       21      52
       24      53
+      25      53
+      26      53
       27      53
+      28      53
       29      53
+      2a      53
+      2b      53
       2c      54
+      2d      54
+      2e      54
       2f      54
+      30      54
       31      54
+      32      54
+      33      54
       34      55
+      35      55
+      36      55
       37      55
+      38      55
       39      55
+      3a      55
+      3b      55
       3c      56
+      3d      56
+      3e      56
       3f      56
+      40      56
       41      56
       44      60
+      45      60
+      46      60
       47      60
+      48      60
       49      60
+      4a      60
+      4b      60
       4c      61
+      4d      61
+      4e      61
       4f      61
+      50      61
       51      61
+      52      61
+      53      61
       54      62
+      55      62
+      56      62
+      57      62
+      58      62
+      59      62
+      5a      62
+      5b      62
+      5c      62
+      5d      62
+      5e      62
+      5f      62
+      60      62
+      61      62
+      62      62
+      63      62
+      64      62
    }
 
    method 'instanceOfTest4 (Ljava/lang/Object;)V' {
+      0      65
       1      65
+      2      65
+      3      65
       4      65
       5      65
+      8      65
       9      65
+      a      65
+      b      65
       c      65
+      25      66
       26      66
+      27      66
+      28      66
       29      66
+      46      67
       47      67
+      48      67
+      49      67
       4a      67
       4d      68
+      4e      68
+      4f      68
       50      68
+      51      68
       52      68
+      53      68
+      54      68
       55      69
+      56      69
+      57      69
       58      69
+      59      69
       5a      69
+      5b      69
+      5c      69
       5d      70
+      5e      70
+      5f      70
       60      70
+      61      70
       62      70
+      63      70
+      64      70
       65      71
+      66      71
+      67      71
       68      71
+      69      71
       6a      71
       6d      76
+      6e      76
+      6f      76
       70      76
+      71      76
       72      76
+      73      76
+      74      76
       75      77
+      76      77
+      77      77
       78      77
+      79      77
       7a      77
+      7b      77
+      7c      77
       7d      78
+      7e      78
+      7f      78
+      80      78
+      81      78
+      82      78
+      83      78
+      84      78
+      85      78
+      86      78
+      87      78
+      88      78
+      89      78
+      8a      78
+      8b      78
+      8c      78
+      8d      78
    }
 
    method 'instanceOfTestDouble1 (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      81
       1      81
+      2      81
+      3      81
       4      81
       15      82
+      16      82
+      17      82
+      18      82
       19      82
+      1c      85
       1d      85
+      1e      85
+      1f      85
       20      85
       31      86
+      32      86
+      33      86
+      34      86
       35      86
       38      89
+      39      89
+      3a      89
       3b      89
+      3c      89
       3d      89
+      3e      89
+      3f      89
       40      90
+      41      90
+      42      90
+      43      90
+      44      90
+      45      90
+      46      90
+      47      90
+      48      90
+      49      90
+      4a      90
+      4b      90
+      4c      90
+      4d      90
+      4e      90
+      4f      90
+      50      90
    }
 
    method 'instanceOfTestDouble2 (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      93
       1      93
+      2      93
+      3      93
       4      93
       15      94
+      16      94
+      17      94
+      18      94
       19      94
+      1c      97
       1d      97
+      1e      97
+      1f      97
       20      97
       3c      98
+      3d      98
+      3e      98
+      3f      98
       40      98
       43      101
+      44      101
+      45      101
       46      101
+      47      101
       48      101
+      49      101
+      4a      101
       4b      102
+      4c      102
+      4d      102
+      4e      102
+      4f      102
+      50      102
+      51      102
+      52      102
+      53      102
+      54      102
+      55      102
+      56      102
+      57      102
+      58      102
+      59      102
+      5a      102
+      5b      102
    }
 
    method 'instanceOfTestDoubleNegate2 (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      105
       1      105
+      2      105
+      3      105
       4      105
       15      106
-      18      114
+      16      106
+      17      106
+      18      106
+      19      106
+      1a      106
+      1b      106
       1c      106
+      1d      107
+      1e      107
+      1f      107
       20      107
       21      107
+      22      107
+      23      107
       42      108
-      45      114
+      43      108
+      44      108
+      45      108
+      46      108
+      47      108
+      48      108
       49      108
       4a      109
+      4b      109
+      4c      109
       4d      109
+      4e      109
+      4f      109
       50      109
+      51      109
       52      110
+      53      110
+      54      110
    }
 }
 
 class 'pkg/TestSimpleInstanceOfRecordPatternJavac$R' {
    method '<init> (Ljava/lang/Object;)V' {
+      4      118
+      5      118
       6      118
+      7      118
+      8      118
       9      119
    }
 
    method 'o ()Ljava/lang/Object;' {
+      0      122
       1      122
+      2      122
+      3      122
       4      122
    }
 }
 
 Lines mapping:
 6 <-> 5
-9 <-> 8
+9 <-> 13
 10 <-> 9
 12 <-> 12
 16 <-> 16
@@ -316,17 +604,17 @@ Lines mapping:
 23 <-> 24
 26 <-> 28
 29 <-> 31
-30 <-> 38
+30 <-> 32
 31 <-> 32
 32 <-> 33
 33 <-> 34
 35 <-> 38
-38 <-> 41
+38 <-> 49
 39 <-> 42
 40 <-> 43
 41 <-> 44
 44 <-> 48
-48 <-> 52
+48 <-> 63
 49 <-> 53
 50 <-> 54
 51 <-> 55
@@ -335,7 +623,7 @@ Lines mapping:
 56 <-> 61
 57 <-> 62
 61 <-> 66
-62 <-> 66
+62 <-> 79
 63 <-> 67
 64 <-> 68
 65 <-> 69
@@ -346,19 +634,19 @@ Lines mapping:
 74 <-> 78
 78 <-> 82
 79 <-> 83
-82 <-> 86
+82 <-> 91
 83 <-> 87
 85 <-> 90
 89 <-> 94
 90 <-> 95
-93 <-> 98
+93 <-> 103
 94 <-> 99
 96 <-> 102
 100 <-> 106
-101 <-> 115
+101 <-> 107
 103 <-> 107
 105 <-> 108
-106 <-> 115
+106 <-> 109
 108 <-> 109
 110 <-> 110
 113 <-> 123

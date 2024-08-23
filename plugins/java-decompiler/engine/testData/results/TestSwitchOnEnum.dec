@@ -63,21 +63,39 @@ class 'pkg/TestSwitchOnEnum' {
 
 class 'pkg/TestSwitchOnEnum$Example' {
    method 'test (Lpkg/TestSwitchOnEnum$Example$A;Lpkg/TestSwitchOnEnum$Example$B;)V' {
+      3      20
       8      20
       24      22
+      25      22
+      26      22
       27      22
+      28      22
       29      22
+      2a      22
+      2b      22
       2c      23
       2f      25
+      30      25
+      31      25
       32      25
+      33      25
       34      25
+      3a      28
       3f      28
       58      30
+      59      30
+      5a      30
       5b      30
+      5c      30
       5d      30
+      5e      30
+      5f      30
       60      31
       63      33
+      64      33
+      65      33
       66      33
+      67      33
       68      33
       6b      36
    }

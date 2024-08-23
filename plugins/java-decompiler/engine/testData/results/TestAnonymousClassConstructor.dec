@@ -65,34 +65,16 @@ class TestAnonymousClassConstructor {
       System.out.println("n(): " + s);// 53
    }// 54
 
-   class InnerPrivate {
-      private InnerPrivate(long a, int b) {
-         TestAnonymousClassConstructor.n(a + "+" + b);// 64
-      }// 65
-   }
-
    class InnerPrivateString {
       private InnerPrivateString(String s) {
          TestAnonymousClassConstructor.n(s);// 58
       }// 59
    }
 
-   class InnerPublic {
-      public InnerPublic(long a, int b) {
-         TestAnonymousClassConstructor.n(a + "+" + b);// 88
-      }// 89
-   }
-
-   class InnerPublicString {
-      public InnerPublicString(String s) {
-         TestAnonymousClassConstructor.n(s);// 82
-      }// 83
-   }
-
-   static class InnerStaticPrivate {
-      private InnerStaticPrivate(long a, int b) {
-         TestAnonymousClassConstructor.n(a + "+" + b);// 76
-      }// 77
+   class InnerPrivate {
+      private InnerPrivate(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 64
+      }// 65
    }
 
    static class InnerStaticPrivateString {
@@ -101,16 +83,34 @@ class TestAnonymousClassConstructor {
       }// 71
    }
 
-   static class InnerStaticPublic {
-      public InnerStaticPublic(long a, int b) {
-         TestAnonymousClassConstructor.n(a + "+" + b);// 100
-      }// 101
+   static class InnerStaticPrivate {
+      private InnerStaticPrivate(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 76
+      }// 77
+   }
+
+   class InnerPublicString {
+      public InnerPublicString(String s) {
+         TestAnonymousClassConstructor.n(s);// 82
+      }// 83
+   }
+
+   class InnerPublic {
+      public InnerPublic(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 88
+      }// 89
    }
 
    static class InnerStaticPublicString {
       public InnerStaticPublicString(String s) {
          TestAnonymousClassConstructor.n(s);// 94
       }// 95
+   }
+
+   static class InnerStaticPublic {
+      public InnerStaticPublic(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 100
+      }// 101
    }
 }
 
@@ -216,109 +216,109 @@ class 'pkg/TestAnonymousClassConstructor' {
    }
 }
 
-class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
-   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
-      10      69
-      14      69
-      15      69
-      19      69
-      1a      69
-      1e      69
-      1f      69
-      20      69
-      21      69
-      22      69
-      23      69
-      24      70
-   }
-}
-
 class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
    method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
-      9      75
-      a      75
-      b      75
-      c      75
-      d      76
+      9      69
+      a      69
+      b      69
+      c      69
+      d      70
    }
 }
 
-class 'pkg/TestAnonymousClassConstructor$InnerPublic' {
+class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
    method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
-      10      81
-      14      81
-      15      81
-      19      81
-      1a      81
-      1e      81
-      1f      81
-      20      81
-      21      81
-      22      81
-      23      81
-      24      82
-   }
-}
-
-class 'pkg/TestAnonymousClassConstructor$InnerPublicString' {
-   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
-      9      87
-      a      87
-      b      87
-      c      87
-      d      88
-   }
-}
-
-class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivate' {
-   method '<init> (JI)V' {
-      b      93
-      f      93
-      10      93
-      14      93
-      18      93
-      19      93
-      1a      93
-      1b      93
-      1c      93
-      1d      93
-      1e      94
+      10      75
+      14      75
+      15      75
+      19      75
+      1a      75
+      1e      75
+      1f      75
+      20      75
+      21      75
+      22      75
+      23      75
+      24      76
    }
 }
 
 class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
    method '<init> (Ljava/lang/String;)V' {
-      4      99
-      5      99
-      6      99
-      7      99
-      8      100
+      4      81
+      5      81
+      6      81
+      7      81
+      8      82
    }
 }
 
-class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivate' {
    method '<init> (JI)V' {
-      b      105
-      f      105
-      10      105
-      14      105
-      18      105
-      19      105
-      1a      105
-      1b      105
-      1c      105
-      1d      105
-      1e      106
+      b      87
+      f      87
+      10      87
+      14      87
+      18      87
+      19      87
+      1a      87
+      1b      87
+      1c      87
+      1d      87
+      1e      88
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerPublicString' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
+      9      93
+      a      93
+      b      93
+      c      93
+      d      94
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerPublic' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
+      10      99
+      14      99
+      15      99
+      19      99
+      1a      99
+      1e      99
+      1f      99
+      20      99
+      21      99
+      22      99
+      23      99
+      24      100
    }
 }
 
 class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
    method '<init> (Ljava/lang/String;)V' {
-      4      111
-      5      111
-      6      111
-      7      111
-      8      112
+      4      105
+      5      105
+      6      105
+      7      105
+      8      106
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
+   method '<init> (JI)V' {
+      b      111
+      f      111
+      10      111
+      14      111
+      18      111
+      19      111
+      1a      111
+      1b      111
+      1c      111
+      1d      111
+      1e      112
    }
 }
 
@@ -349,22 +349,22 @@ Lines mapping:
 50 <-> 62
 53 <-> 65
 54 <-> 66
-58 <-> 76
-59 <-> 77
-64 <-> 70
-65 <-> 71
-70 <-> 100
-71 <-> 101
-76 <-> 94
-77 <-> 95
-82 <-> 88
-83 <-> 89
-88 <-> 82
-89 <-> 83
-94 <-> 112
-95 <-> 113
-100 <-> 106
-101 <-> 107
+58 <-> 70
+59 <-> 71
+64 <-> 76
+65 <-> 77
+70 <-> 82
+71 <-> 83
+76 <-> 88
+77 <-> 89
+82 <-> 94
+83 <-> 95
+88 <-> 100
+89 <-> 101
+94 <-> 106
+95 <-> 107
+100 <-> 112
+101 <-> 113
 Not mapped:
 57
 63

@@ -52,62 +52,126 @@ public class TestJava11StringConcatEmptyAffix {
 
 class 'java11/TestJava11StringConcatEmptyAffix' {
    method 'testEmptyPrefixInt (I)Ljava/lang/String;' {
+      0      4
       1      4
+      2      4
+      3      4
+      4      4
+      5      4
       6      4
    }
 
    method 'testEmptyPrefixString (Ljava/lang/String;)Ljava/lang/String;' {
+      0      8
       1      8
+      2      8
+      3      8
+      4      8
+      5      8
       6      8
    }
 
    method 'testPrefixInt (I)Ljava/lang/String;' {
+      0      12
       1      12
+      2      12
+      3      12
+      4      12
+      5      12
       6      12
    }
 
    method 'testPrefixString (Ljava/lang/String;)Ljava/lang/String;' {
+      0      16
       1      16
+      2      16
+      3      16
+      4      16
+      5      16
       6      16
    }
 
    method 'testIntEmptySuffix (I)Ljava/lang/String;' {
+      0      20
       1      20
+      2      20
+      3      20
+      4      20
+      5      20
       6      20
    }
 
    method 'testStringEmptySuffix (Ljava/lang/String;)Ljava/lang/String;' {
+      0      24
       1      24
+      2      24
+      3      24
+      4      24
+      5      24
       6      24
    }
 
    method 'testIntSuffix (I)Ljava/lang/String;' {
+      0      28
       1      28
+      2      28
+      3      28
+      4      28
+      5      28
       6      28
    }
 
    method 'testStringSuffix (Ljava/lang/String;)Ljava/lang/String;' {
+      0      32
       1      32
+      2      32
+      3      32
+      4      32
+      5      32
       6      32
    }
 
    method 'testIntInt (II)Ljava/lang/String;' {
+      0      36
+      1      36
       2      36
+      3      36
+      4      36
+      5      36
+      6      36
       7      36
    }
 
    method 'testIntIntSuffix (II)Ljava/lang/String;' {
+      0      40
+      1      40
       2      40
+      3      40
+      4      40
+      5      40
+      6      40
       7      40
    }
 
    method 'testIntString (ILjava/lang/String;)Ljava/lang/String;' {
+      0      44
+      1      44
       2      44
+      3      44
+      4      44
+      5      44
+      6      44
       7      44
    }
 
    method 'testStringInt (ILjava/lang/String;)Ljava/lang/String;' {
+      0      48
+      1      48
       2      48
+      3      48
+      4      48
+      5      48
+      6      48
       7      48
    }
 }

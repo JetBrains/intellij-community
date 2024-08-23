@@ -26,11 +26,18 @@ class 'TestEmptyBlocks' {
       5      6
       6      9
       7      9
+      8      9
       9      9
       a      9
       d      9
+      e      9
+      f      9
       1a      12
+      1b      12
+      1c      12
       2a      15
+      2b      15
+      2c      15
       2d      15
       30      18
    }

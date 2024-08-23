@@ -17,18 +17,32 @@ public record TestRecordVararg(int x, int[]... y) {
 
 class 'records/TestRecordVararg' {
    method '<init> (I[[I)V' {
+      4      4
+      5      4
       6      4
+      7      4
+      8      4
+      9      5
+      a      5
       b      5
+      c      5
+      d      5
       e      6
    }
 
    method 'x ()I' {
+      0      9
       1      9
+      2      9
+      3      9
       4      9
    }
 
    method 'y ()[[I' {
+      0      13
       1      13
+      2      13
+      3      13
       4      13
    }
 }

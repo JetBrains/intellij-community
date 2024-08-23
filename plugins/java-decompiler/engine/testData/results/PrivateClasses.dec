@@ -32,16 +32,16 @@ class PrivateClasses {
          }
 
          (new CapturingLocalR1(42)).toString();// 40
-         Callable<String> c1 = new Callable<String>() {
+         Callable<String> c1 = new Callable<String>() {// 42
             public String call() {
                return null;// 45
             }
-         };// 42
-         Callable<String> c2 = new Callable<String>() {
+         };
+         Callable<String> c2 = new Callable<String>() {// 49
             public String call() {
                return s;// 52
             }
-         };// 49
+         };
          ((String)c1.call() + (String)c2.call()).length();// 56
       }// 57
    };
@@ -76,16 +76,16 @@ class PrivateClasses {
          }
 
          (new CapturingLocalR1(42)).toString();// 92
-         Callable<String> c1 = new Callable<String>() {
+         Callable<String> c1 = new Callable<String>() {// 94
             public String call() {
                return null;// 97
             }
-         };// 94
-         Callable<String> c2 = new Callable<String>() {
+         };
+         Callable<String> c2 = new Callable<String>() {// 101
             public String call() {
                return s;// 104
             }
-         };// 101
+         };
          ((String)c1.call() + (String)c2.call()).length();// 108
       }// 109
    };
@@ -118,16 +118,16 @@ class PrivateClasses {
       }
 
       (new CapturingLocalM1(42)).toString();// 140
-      Callable<String> c1 = new Callable<String>() {
+      Callable<String> c1 = new Callable<String>() {// 142
          public String call() {
             return null;// 145
          }
-      };// 142
-      Callable<String> c2 = new Callable<String>() {
+      };
+      Callable<String> c2 = new Callable<String>() {// 149
          public String call() {
             return s;// 152
          }
-      };// 149
+      };
       ((String)c1.call() + (String)c2.call()).length();// 156
    }// 157
 
@@ -159,16 +159,16 @@ class PrivateClasses {
       }
 
       (new CapturingLocalM2(42)).toString();// 187
-      Callable<String> c1 = new Callable<String>() {
+      Callable<String> c1 = new Callable<String>() {// 189
          public String call() {
             return null;// 192
          }
-      };// 189
-      Callable<String> c2 = new Callable<String>() {
+      };
+      Callable<String> c2 = new Callable<String>() {// 196
          public String call() {
             return s;// 199
          }
-      };// 196
+      };
       ((String)c1.call() + (String)c2.call()).length();// 203
    }// 204
 
@@ -179,26 +179,46 @@ class PrivateClasses {
 
 class 'pkg/PrivateClasses$1$1NonCapturingLocalR1' {
    method '<init> (Lpkg/PrivateClasses$1;Ljava/lang/String;)V' {
+      9      11
+      a      11
       b      11
+      c      11
+      d      11
       e      12
    }
 
    method 'toString ()Ljava/lang/String;' {
+      0      15
       1      15
+      2      15
+      3      15
       4      15
    }
 }
 
 class 'pkg/PrivateClasses$1$1CapturingLocalR1' {
    method '<init> (Lpkg/PrivateClasses$1;ILjava/lang/String;)V' {
+      e      25
+      f      25
       10      25
+      11      25
+      12      25
       13      26
    }
 
    method 'toString ()Ljava/lang/String;' {
+      8      29
+      9      29
+      a      29
       e      29
+      f      29
+      13      29
       14      29
+      15      29
+      16      29
       1a      29
+      1b      29
+      1c      29
       1d      29
    }
 }
@@ -212,6 +232,9 @@ class 'pkg/PrivateClasses$1$1' {
 
 class 'pkg/PrivateClasses$1$2' {
    method 'call ()Ljava/lang/String;' {
+      1      41
+      2      41
+      3      41
       4      41
    }
 }
@@ -219,44 +242,89 @@ class 'pkg/PrivateClasses$1$2' {
 class 'pkg/PrivateClasses$1' {
    method 'run ()V' {
       0      5
+      1      5
       2      5
+      8      19
       c      19
+      d      19
+      e      19
       15      33
+      16      33
       1b      33
-      27      38
-      31      43
+      1c      33
+      1d      33
+      27      34
+      31      39
+      39      44
       3a      44
+      3b      44
+      3c      44
+      3d      44
+      3e      44
       3f      44
+      40      44
+      41      44
+      45      44
       46      44
+      47      44
+      48      44
+      49      44
+      4a      44
       4b      44
+      4c      44
+      4d      44
       51      44
+      52      44
+      53      44
       54      44
+      55      44
+      56      44
       58      45
    }
 }
 
 class 'pkg/PrivateClasses$2$1NonCapturingLocalR2' {
    method '<init> (Lpkg/PrivateClasses$2;Ljava/lang/String;)V' {
+      9      55
+      a      55
       b      55
+      c      55
+      d      55
       e      56
    }
 
    method 'toString ()Ljava/lang/String;' {
+      0      59
       1      59
+      2      59
+      3      59
       4      59
    }
 }
 
 class 'pkg/PrivateClasses$2$1CapturingLocalR1' {
    method '<init> (Lpkg/PrivateClasses$2;ILjava/lang/String;)V' {
+      e      69
+      f      69
       10      69
+      11      69
+      12      69
       13      70
    }
 
    method 'toString ()Ljava/lang/String;' {
+      8      73
+      9      73
+      a      73
       e      73
+      f      73
+      13      73
       14      73
+      15      73
+      16      73
       1a      73
+      1b      73
+      1c      73
       1d      73
    }
 }
@@ -270,6 +338,9 @@ class 'pkg/PrivateClasses$2$1' {
 
 class 'pkg/PrivateClasses$2$2' {
    method 'call ()Ljava/lang/String;' {
+      1      85
+      2      85
+      3      85
       4      85
    }
 }
@@ -277,44 +348,89 @@ class 'pkg/PrivateClasses$2$2' {
 class 'pkg/PrivateClasses$2' {
    method 'run ()V' {
       0      49
+      1      49
       2      49
+      8      63
       c      63
+      d      63
+      e      63
       15      77
+      16      77
       1b      77
-      27      82
-      31      87
+      1c      77
+      1d      77
+      27      78
+      31      83
+      39      88
       3a      88
+      3b      88
+      3c      88
+      3d      88
+      3e      88
       3f      88
+      40      88
+      41      88
+      45      88
       46      88
+      47      88
+      48      88
+      49      88
+      4a      88
       4b      88
+      4c      88
+      4d      88
       51      88
+      52      88
+      53      88
       54      88
+      55      88
+      56      88
       58      89
    }
 }
 
 class 'pkg/PrivateClasses$1NonCapturingLocalM1' {
    method '<init> (Ljava/lang/String;)V' {
+      4      97
+      5      97
       6      97
+      7      97
+      8      97
       9      98
    }
 
    method 'toString ()Ljava/lang/String;' {
+      0      101
       1      101
+      2      101
+      3      101
       4      101
    }
 }
 
 class 'pkg/PrivateClasses$1CapturingLocalM1' {
    method '<init> (ILjava/lang/String;)V' {
+      9      111
+      a      111
       b      111
+      c      111
+      d      111
       e      112
    }
 
    method 'toString ()Ljava/lang/String;' {
+      8      115
+      9      115
+      a      115
       e      115
+      f      115
+      13      115
       14      115
+      15      115
+      16      115
       1a      115
+      1b      115
+      1c      115
       1d      115
    }
 }
@@ -328,64 +444,135 @@ class 'pkg/PrivateClasses$3' {
 
 class 'pkg/PrivateClasses$4' {
    method 'call ()Ljava/lang/String;' {
+      1      127
+      2      127
+      3      127
       4      127
    }
 }
 
 class 'pkg/PrivateClasses' {
    method 'm1 (Ljava/lang/String;)V' {
+      4      105
       8      105
+      9      105
+      a      105
       10      119
+      11      119
       16      119
-      21      124
-      2a      129
+      17      119
+      18      119
+      21      120
+      2a      125
+      32      130
       33      130
+      34      130
+      35      130
+      36      130
+      37      130
       38      130
+      39      130
+      3a      130
+      3e      130
       3f      130
+      40      130
+      41      130
+      42      130
+      43      130
       44      130
+      45      130
+      46      130
       4a      130
+      4b      130
+      4c      130
       4d      130
+      4e      130
+      4f      130
       51      131
    }
 
    method 'm2 (Ljava/lang/String;)V' {
+      5      146
       9      146
+      a      146
+      b      146
       12      160
+      13      160
       18      160
-      24      165
-      2e      170
+      19      160
+      1a      160
+      24      161
+      2e      166
+      36      171
       37      171
+      38      171
+      39      171
+      3a      171
+      3b      171
       3c      171
+      3d      171
+      3e      171
+      42      171
       43      171
+      44      171
+      45      171
+      46      171
+      47      171
       48      171
+      49      171
+      4a      171
       4e      171
+      4f      171
+      50      171
       51      171
+      52      171
+      53      171
       55      172
    }
 }
 
 class 'pkg/PrivateClasses$1NonCapturingLocalM2' {
    method '<init> (Lpkg/PrivateClasses;Ljava/lang/String;)V' {
+      9      138
+      a      138
       b      138
+      c      138
+      d      138
       e      139
    }
 
    method 'toString ()Ljava/lang/String;' {
+      0      142
       1      142
+      2      142
+      3      142
       4      142
    }
 }
 
 class 'pkg/PrivateClasses$1CapturingLocalM2' {
    method '<init> (Lpkg/PrivateClasses;ILjava/lang/String;)V' {
+      e      152
+      f      152
       10      152
+      11      152
+      12      152
       13      153
    }
 
    method 'toString ()Ljava/lang/String;' {
+      8      156
+      9      156
+      a      156
       e      156
+      f      156
+      13      156
       14      156
+      15      156
+      16      156
       1a      156
+      1b      156
+      1c      156
       1d      156
    }
 }
@@ -399,6 +586,9 @@ class 'pkg/PrivateClasses$5' {
 
 class 'pkg/PrivateClasses$6' {
    method 'call ()Ljava/lang/String;' {
+      1      168
+      2      168
+      3      168
       4      168
    }
 }
@@ -413,9 +603,9 @@ Lines mapping:
 35 <-> 30
 39 <-> 20
 40 <-> 34
-42 <-> 39
+42 <-> 35
 45 <-> 37
-49 <-> 44
+49 <-> 40
 52 <-> 42
 56 <-> 45
 57 <-> 46
@@ -428,9 +618,9 @@ Lines mapping:
 87 <-> 74
 91 <-> 64
 92 <-> 78
-94 <-> 83
+94 <-> 79
 97 <-> 81
-101 <-> 88
+101 <-> 84
 104 <-> 86
 108 <-> 89
 109 <-> 90
@@ -442,9 +632,9 @@ Lines mapping:
 135 <-> 116
 139 <-> 106
 140 <-> 120
-142 <-> 125
+142 <-> 121
 145 <-> 123
-149 <-> 130
+149 <-> 126
 152 <-> 128
 156 <-> 131
 157 <-> 132
@@ -456,9 +646,9 @@ Lines mapping:
 182 <-> 157
 186 <-> 147
 187 <-> 161
-189 <-> 166
+189 <-> 162
 192 <-> 164
-196 <-> 171
+196 <-> 167
 199 <-> 169
 203 <-> 172
 204 <-> 173

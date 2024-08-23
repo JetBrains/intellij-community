@@ -7,10 +7,10 @@ public class TestSwitchPatternWithExpression {
       String var11;
       switch (i) {
          case A(String a):
-            var11 = a;
-            break;// 20
+            var11 = a;// 20
+            break;
          case B(String a):
-            var11 = a;
+            var11 = a;// 21
             break;
       }
 
@@ -33,7 +33,7 @@ public class TestSwitchPatternWithExpression {
             var16 = a;
             break;// 38
          case AA(B(String a)):
-            var16 = a;
+            var16 = a;// 39
       }
 
       return var16;// 37
@@ -43,29 +43,29 @@ public class TestSwitchPatternWithExpression {
       String var17;
       switch (i) {// 44
          case AA(A(String a)):
-            var17 = a;
-            break;// 45
+            var17 = a;// 45
+            break;
          case AA(B(String a)):
             var17 = a;
       }
 
-      String aa = var17;// 46
+      String aa = var17;
       System.out.println(aa + "1");// 48
-      return;
+      return;// 46
    }
 
    private static String getX4(I i) {
       String var12;
       switch (i) {// 52
          case A(String a):
-            var12 = a;
-            break;// 53
+            var12 = a;// 53
+            break;
          case B(String a):
-            var12 = a;
+            var12 = a;// 54
             break;
       }
 
-      String string = var12;// 54
+      String string = var12;
       return string;// 56
    }
 
@@ -73,16 +73,16 @@ public class TestSwitchPatternWithExpression {
       String var12;
       switch (i) {// 60
          case A(String a):
-            var12 = a;
-            break;// 61
+            var12 = a;// 61
+            break;
          case B(String a):
             var12 = a;
             break;
       }
 
-      String string = var12;// 62
+      String string = var12;
       System.out.println(string + "2");// 64
-   }
+   }// 62
 
    private static String getX5(I i) {
       String var12;
@@ -91,11 +91,11 @@ public class TestSwitchPatternWithExpression {
             var12 = a + "1";// 69
             break;
          case B(String a):
-            var12 = a;
+            var12 = a;// 70
             break;
       }
 
-      String string = var12;// 70
+      String string = var12;
       return string;// 72
    }
 
@@ -110,20 +110,20 @@ public class TestSwitchPatternWithExpression {
             break;
       }
 
-      String string = var12;// 78
+      String string = var12;
       System.out.println(string + "2");// 80
-   }
+   }// 78
 
    private static String getX3(I i) {
       String var11;
       switch (i) {
          case A(String a):
             System.out.println(a);// 86
-            var11 = a;
-            break;// 87
+            var11 = a;// 87
+            break;
          case B(String a):
             System.out.println(a);// 90
-            var11 = a;
+            var11 = a;// 91
             break;
       }
 
@@ -135,8 +135,8 @@ public class TestSwitchPatternWithExpression {
       switch (i) {
          case A(String a):
             System.out.println(a);// 100
-            var11 = a;
-            break;// 101
+            var11 = a;// 101
+            break;
          case B(String a):
             System.out.println(a);// 104
             var11 = a + "1";// 105
@@ -153,8 +153,8 @@ public class TestSwitchPatternWithExpression {
             System.out.println(a);// 113
             System.out.println(a);// 114
             System.out.println(a + "1");// 115
-            var11 = a;
-            break;// 116
+            var11 = a;// 116
+            break;
          case B(String a):
             System.out.println(a);// 119
             var11 = a + "1";// 120
@@ -212,113 +212,305 @@ public class TestSwitchPatternWithExpression {
 class 'TestSwitchPatternWithExpression' {
    method 'main ([Ljava/lang/String;)V' {
       4      2
+      5      2
       a      3
    }
 
    method 'getX (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      7
       10      7
+      45      9
+      46      9
       47      10
+      5b      12
       5d      16
    }
 
    method 'getX8 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      20
       10      20
+      45      22
+      46      22
       47      22
+      59      24
+      5a      24
       5b      24
    }
 
    method 'getX0 (LTestSwitchPatternWithExpression$AA;)Ljava/lang/String;' {
+      0      30
       10      30
+      6e      32
+      6f      32
       70      33
+      85      35
+      86      35
       8f      38
    }
 
    method 'getX11 (LTestSwitchPatternWithExpression$AA;)V' {
+      0      43
       10      43
+      72      45
+      73      45
       74      46
+      89      48
+      8a      48
       93      51
       94      52
+      95      52
+      96      52
+      97      52
       98      52
+      99      52
+      9a      52
+      9b      52
+      9c      52
       9d      52
+      9e      52
+      9f      52
       a0      53
+      a1      53
+      a2      53
+      a3      53
+      a4      53
+      a5      53
+      a6      53
+      a7      53
+      a8      53
+      a9      53
+      aa      53
+      ab      53
+      ac      53
+      ad      53
+      ae      53
+      af      53
+      b0      53
    }
 
    method 'getX4 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      58
       10      58
+      47      60
+      48      60
       49      61
+      5d      63
       5f      67
+      60      68
       61      68
    }
 
    method 'getX10 (LTestSwitchPatternWithExpression$I;)V' {
+      0      73
       10      73
+      47      75
+      48      75
       49      76
+      5d      78
       5f      82
       60      83
+      61      83
+      62      83
+      63      83
       64      83
+      65      83
+      66      83
+      67      83
+      68      83
       69      83
+      6a      83
+      6b      83
       6c      84
+      6d      84
+      6e      84
+      6f      84
+      70      84
+      71      84
+      72      84
+      73      84
+      74      84
+      75      84
+      76      84
+      77      84
+      78      84
+      79      84
+      7a      84
+      7b      84
+      7c      84
    }
 
    method 'getX5 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      88
       10      88
+      47      90
+      48      90
       49      90
+      4a      90
+      4b      90
+      4c      90
+      4d      90
       4e      91
+      62      93
       64      97
+      65      98
       66      98
    }
 
    method 'getX9 (LTestSwitchPatternWithExpression$I;)V' {
+      0      103
       10      103
+      47      105
+      48      105
       49      105
+      4a      105
+      4b      105
+      4c      105
+      4d      105
       4e      106
+      62      108
       64      112
       65      113
+      66      113
+      67      113
+      68      113
       69      113
+      6a      113
+      6b      113
+      6c      113
+      6d      113
       6e      113
+      6f      113
+      70      113
       71      114
+      72      114
+      73      114
+      74      114
+      75      114
+      76      114
+      77      114
+      78      114
+      79      114
+      7a      114
+      7b      114
+      7c      114
+      7d      114
+      7e      114
+      7f      114
+      80      114
+      81      114
    }
 
    method 'getX3 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      118
       10      118
       45      120
+      46      120
+      47      120
+      48      120
+      49      120
       4a      120
+      4b      120
+      4c      120
+      4d      121
+      4e      121
       4f      122
       63      124
+      64      124
+      65      124
+      66      124
+      67      124
       68      124
+      69      124
+      6a      124
+      6b      125
       6d      129
    }
 
    method 'getX6 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      134
       10      134
       45      136
+      46      136
+      47      136
+      48      136
+      49      136
       4a      136
+      4b      136
+      4c      136
+      4d      137
+      4e      137
       4f      138
       63      140
+      64      140
+      65      140
+      66      140
+      67      140
       68      140
+      69      140
+      6a      140
+      6b      141
+      6c      141
       6d      141
       72      145
    }
 
    method 'getX7 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      150
       10      150
       45      152
+      46      152
+      47      152
+      48      152
+      49      152
       4a      152
+      4b      152
+      4c      152
       4d      153
+      4e      153
+      4f      153
+      50      153
+      51      153
       52      153
+      53      153
+      54      153
       55      154
+      56      154
+      57      154
+      58      154
+      59      154
       5a      154
+      5b      154
+      5c      154
+      5d      154
+      5e      154
       5f      154
+      60      154
+      61      154
+      62      155
+      63      155
       64      156
       78      158
+      79      158
+      7a      158
+      7b      158
+      7c      158
       7d      158
+      7e      158
+      7f      158
+      80      159
+      81      159
       82      159
       87      163
    }
 
    method 'getX2 (LTestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
+      0      167
       10      167
+      3b      169
+      3c      169
       3d      169
+      4f      171
+      50      171
       51      171
       59      173
    }
@@ -326,36 +518,57 @@ class 'TestSwitchPatternWithExpression' {
 
 class 'TestSwitchPatternWithExpression$A' {
    method '<init> (Ljava/lang/String;)V' {
+      4      179
+      5      179
       6      179
+      7      179
+      8      179
       9      180
    }
 
    method 'a ()Ljava/lang/String;' {
+      0      183
       1      183
+      2      183
+      3      183
       4      183
    }
 }
 
 class 'TestSwitchPatternWithExpression$B' {
    method '<init> (Ljava/lang/String;)V' {
+      4      189
+      5      189
       6      189
+      7      189
+      8      189
       9      190
    }
 
    method 'a ()Ljava/lang/String;' {
+      0      193
       1      193
+      2      193
+      3      193
       4      193
    }
 }
 
 class 'TestSwitchPatternWithExpression$AA' {
    method '<init> (LTestSwitchPatternWithExpression$I;)V' {
+      4      199
+      5      199
       6      199
+      7      199
+      8      199
       9      200
    }
 
    method 'i ()LTestSwitchPatternWithExpression$I;' {
+      0      203
       1      203
+      2      203
+      3      203
       4      203
    }
 }
@@ -367,46 +580,49 @@ Lines mapping:
 15 <-> 3
 16 <-> 4
 19 <-> 17
-20 <-> 11
+20 <-> 10
+21 <-> 13
 26 <-> 21
 28 <-> 23
 31 <-> 25
 37 <-> 39
 38 <-> 34
+39 <-> 36
 44 <-> 44
-45 <-> 47
-46 <-> 52
+45 <-> 46
+46 <-> 54
 48 <-> 53
 52 <-> 59
-53 <-> 62
-54 <-> 68
+53 <-> 61
+54 <-> 64
 56 <-> 69
 60 <-> 74
-61 <-> 77
-62 <-> 83
+61 <-> 76
+62 <-> 85
 64 <-> 84
 68 <-> 89
 69 <-> 91
-70 <-> 98
+70 <-> 94
 72 <-> 99
 76 <-> 104
 77 <-> 106
-78 <-> 113
+78 <-> 115
 80 <-> 114
 84 <-> 130
 86 <-> 121
-87 <-> 123
+87 <-> 122
 90 <-> 125
+91 <-> 126
 98 <-> 146
 100 <-> 137
-101 <-> 139
+101 <-> 138
 104 <-> 141
 105 <-> 142
 111 <-> 164
 113 <-> 153
 114 <-> 154
 115 <-> 155
-116 <-> 157
+116 <-> 156
 119 <-> 159
 120 <-> 160
 126 <-> 168
@@ -414,16 +630,13 @@ Lines mapping:
 130 <-> 172
 132 <-> 174
 Not mapped:
-21
 27
 30
-39
 49
 65
 81
 85
 89
-91
 99
 103
 112

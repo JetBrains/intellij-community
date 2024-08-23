@@ -68,81 +68,113 @@ public class TestInvertedFloatComparison {
 
 class 'pkg/TestInvertedFloatComparison' {
    method 'less (DD)Z' {
+      0      4
+      1      4
       2      4
       b      4
    }
 
    method 'less (II)Z' {
+      0      8
+      1      8
       2      8
       a      8
    }
 
    method 'notLess (DD)Z' {
+      0      12
+      1      12
       2      12
       b      12
    }
 
    method 'notLess (II)Z' {
+      0      16
+      1      16
       2      16
       a      16
    }
 
    method 'greater (DD)Z' {
+      0      20
+      1      20
       2      20
       b      20
    }
 
    method 'greater (II)Z' {
+      0      24
+      1      24
       2      24
       a      24
    }
 
    method 'notGreater (DD)Z' {
+      0      28
+      1      28
       2      28
       b      28
    }
 
    method 'notGreater (II)Z' {
+      0      32
+      1      32
       2      32
       a      32
    }
 
    method 'lessEqual (DD)Z' {
+      0      36
+      1      36
       2      36
       b      36
    }
 
    method 'lessEqual (II)Z' {
+      0      40
+      1      40
       2      40
       a      40
    }
 
    method 'notLessEqual (DD)Z' {
+      0      44
+      1      44
       2      44
       b      44
    }
 
    method 'notLessEqual (II)Z' {
+      0      48
+      1      48
       2      48
       a      48
    }
 
    method 'greaterEqual (DD)Z' {
+      0      52
+      1      52
       2      52
       b      52
    }
 
    method 'greaterEqual (II)Z' {
+      0      56
+      1      56
       2      56
       a      56
    }
 
    method 'notGreaterEqual (DD)Z' {
+      0      60
+      1      60
       2      60
       b      60
    }
 
    method 'notGreaterEqual (II)Z' {
+      0      64
+      1      64
       2      64
       a      64
    }

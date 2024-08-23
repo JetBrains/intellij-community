@@ -15,7 +15,7 @@ public class TestAccessReplace {
 
    public class Inner {
       public Inner(String b) {
-         TestAccessReplace.fooS();// 25
+         TestAccessReplace.fooS();// 26
          TestAccessReplace.this.foo();// 27
          TestAccessReplace.fooSParams(1L, 2L);// 28
          TestAccessReplace.this.fooParams(1L, 2L);// 29
@@ -43,22 +43,28 @@ class 'pkg/TestAccessReplace' {
 
 class 'pkg/TestAccessReplace$Inner' {
    method '<init> (Lpkg/TestAccessReplace;Ljava/lang/String;)V' {
-      0      17
-      1      17
-      2      17
-      3      18
-      4      19
-      5      20
+      9      17
+      a      17
+      b      17
       c      18
+      d      18
+      e      18
+      f      18
       10      19
       11      19
       12      19
       13      19
+      14      19
+      15      19
+      16      19
       17      20
       18      20
       19      20
       1a      20
       1b      20
+      1c      20
+      1d      20
+      1e      20
       1f      21
    }
 }
@@ -68,10 +74,10 @@ Lines mapping:
 20 <-> 8
 21 <-> 11
 22 <-> 14
-25 <-> 18
+26 <-> 18
 27 <-> 19
 28 <-> 20
 29 <-> 21
 30 <-> 22
 Not mapped:
-26
+25

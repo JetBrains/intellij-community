@@ -42,36 +42,63 @@ public class SwitchOnStatic {
 class 'SwitchOnStatic' {
    method 'main ([Ljava/lang/String;)V' {
       0      2
+      1      2
+      2      2
       3      3
+      4      3
+      5      3
       6      4
+      7      4
+      8      4
       9      5
    }
 
    method 'staticStringSelector ()V' {
       0      8
+      1      8
+      2      8
       3e      8
       58      9
+      59      9
+      5a      9
       5b      9
+      5c      9
       5d      9
+      5e      9
+      5f      9
       63      10
+      64      10
+      65      10
       66      10
+      67      10
       68      10
       6b      13
    }
 
    method 'getStaticStringSelector ()Ljava/lang/String;' {
       0      16
+      1      16
       2      16
    }
 
    method 'staticIntSelector ()V' {
       0      20
+      1      20
+      2      20
       3      20
       1c      21
+      1d      21
+      1e      21
       1f      21
+      20      21
       21      21
+      22      21
+      23      21
       27      22
+      28      22
+      29      22
       2a      22
+      2b      22
       2c      22
       2f      25
    }
@@ -83,13 +110,24 @@ class 'SwitchOnStatic' {
 
    method 'staticIntSelectorNotInlined ()V' {
       0      32
+      1      32
+      2      32
       3      32
+      4      33
       5      33
       20      34
+      21      34
+      22      34
       23      34
+      24      34
       25      34
+      26      34
+      27      34
       2b      35
+      2c      35
+      2d      35
       2e      35
+      2f      35
       30      35
       33      38
    }

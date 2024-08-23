@@ -22,7 +22,7 @@ public class TestSwitchSimpleReferencesJavac {
       switch (r2) {// 21
          case "first" -> System.out.println("1");// 23
          case "second" -> System.out.println("2");// 26
-         case String s -> System.out.println(s);// 29
+         case String s -> System.out.println(s);// 28 29
       }
 
    }// 31
@@ -32,7 +32,7 @@ public class TestSwitchSimpleReferencesJavac {
          case null -> System.out.println("null");// 42
          case "first" -> System.out.println("1");// 36
          case "second" -> System.out.println("2");// 39
-         case String s -> System.out.println(s);// 45
+         case String s -> System.out.println(s);// 44 45
       }
 
    }// 47
@@ -88,21 +88,21 @@ public class TestSwitchSimpleReferencesJavac {
    }// 99
 
    private static void testEnum(Numbers r2) {
-      switch (r2) {
+      switch (r2) {// 106
          case null -> System.out.println("null");// 113
          case FIRST -> { }
          case SECOND -> System.out.println("2");// 110
-         default -> throw new MatchException((String)null, (Throwable)null);// 106
+         default -> throw new MatchException((String)null, (Throwable)null);
       }
 
    }// 115
 
    private static void testEnum2(Numbers r2) {
-      switch (r2) {
+      switch (r2) {// 118
          case null -> System.out.println("null");// 125
          case FIRST -> { }
          case SECOND -> System.out.println("2");// 122
-         default -> throw new MatchException((String)null, (Throwable)null);// 118
+         default -> throw new MatchException((String)null, (Throwable)null);
       }
 
    }// 127
@@ -112,7 +112,7 @@ public class TestSwitchSimpleReferencesJavac {
          case null -> System.out.println("null");// 137
          case FIRST -> { }
          case SECOND -> System.out.println("2");// 134
-         case Numbers n -> System.out.println(n);// 140
+         case Numbers n -> System.out.println(n);// 139 140
       }
 
    }// 142
@@ -146,162 +146,305 @@ public class TestSwitchSimpleReferencesJavac {
 
 class 'pkg/TestSwitchSimpleReferencesJavac' {
    method 'testString (Ljava/lang/String;)V' {
+      0      4
       b      4
       28      6
+      29      6
+      2a      6
       2b      6
+      2c      6
       2d      6
+      2e      6
+      2f      6
       30      7
       33      9
+      34      9
+      35      9
       36      9
+      37      9
       38      9
       3b      11
+      3c      11
+      3d      11
       3e      11
+      3f      11
       40      11
+      41      11
+      42      11
       43      12
       46      15
+      47      15
+      48      15
       49      15
+      4a      15
       4b      15
       4e      18
    }
 
    method 'testString2 (Ljava/lang/String;)V' {
+      0      21
       10      21
       2c      22
+      2d      22
+      2e      22
       2f      22
+      30      22
       31      22
+      32      22
+      33      22
       37      23
+      38      23
+      39      23
       3a      23
+      3b      23
       3c      23
+      3d      23
+      3e      23
+      43      24
       44      24
+      45      24
+      46      24
+      47      24
       48      24
       4b      27
    }
 
    method 'testString3 (Ljava/lang/String;)V' {
+      0      30
       b      30
       24      32
+      25      32
+      26      32
       27      32
+      28      32
       29      32
+      2a      32
+      2b      32
       2f      33
+      30      33
+      31      33
       32      33
+      33      33
       34      33
+      35      33
+      36      33
       3a      31
+      3b      31
+      3c      31
       3d      31
+      3e      31
       3f      31
+      40      31
+      41      31
+      46      34
       47      34
+      48      34
+      49      34
+      4a      34
       4b      34
       4e      37
    }
 
    method 'testByte (Ljava/lang/Byte;)V' {
+      0      40
       b      40
       27      44
+      28      44
+      29      44
       2a      44
+      2b      44
       2c      44
+      2d      44
+      2e      44
       2f      45
       32      48
+      33      48
+      34      48
       35      48
+      36      48
       37      48
       3a      51
    }
 
    method 'testChar (Ljava/lang/Character;)V' {
+      0      54
       b      54
       24      57
+      25      57
+      26      57
       27      57
+      28      57
       29      57
+      2a      57
+      2b      57
       2c      58
       2f      61
+      30      61
+      31      61
       32      61
+      33      61
       34      61
       37      64
    }
 
    method 'testInt (Ljava/lang/Integer;)V' {
+      0      67
       b      67
       27      71
+      28      71
+      29      71
       2a      71
+      2b      71
       2c      71
+      2d      71
+      2e      71
       2f      72
       32      75
+      33      75
+      34      75
       35      75
+      36      75
       37      75
       3a      78
    }
 
    method 'testInt2 (Ljava/lang/Integer;)V' {
+      0      81
       1      81
+      2      81
+      3      81
       4      81
       23      83
+      24      83
+      25      83
       26      83
+      27      83
       28      83
+      29      83
+      2a      83
       2e      84
+      2f      84
+      30      84
       31      84
+      32      84
       33      84
       36      87
    }
 
    method 'testEnum (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
+      0      90
       b      90
       28      94
       29      94
       2d      94
       31      93
+      32      93
+      33      93
       34      93
+      35      93
       36      93
+      37      93
+      38      93
       3c      91
+      3d      91
+      3e      91
       3f      91
+      40      91
       41      91
       44      97
    }
 
    method 'testEnum2 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
+      0      100
       b      100
       28      104
       29      104
       2d      104
       31      103
+      32      103
+      33      103
       34      103
+      35      103
       36      103
+      37      103
+      38      103
       3c      101
+      3d      101
+      3e      101
       3f      101
+      40      101
       41      101
       44      107
    }
 
    method 'testEnum3 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
+      0      110
       b      110
       27      113
+      28      113
+      29      113
       2a      113
+      2b      113
       2c      113
+      2d      113
+      2e      113
       32      111
+      33      111
+      34      111
       35      111
+      36      111
       37      111
+      38      111
+      39      111
+      3e      114
       3f      114
+      40      114
+      41      114
+      42      114
       43      114
       46      117
    }
 
    method 'testEnum4 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
+      0      120
       1      120
+      2      120
+      3      120
       4      120
       23      122
+      24      122
+      25      122
       26      122
+      27      122
       28      122
+      29      122
+      2a      122
       2e      123
+      2f      123
+      30      123
       31      123
+      32      123
       33      123
       36      126
    }
 
    method 'testEnum5 (Lpkg/TestSwitchSimpleReferencesJavac$Numbers;)V' {
+      0      129
       b      129
       24      131
+      25      131
+      26      131
       27      131
+      28      131
       29      131
+      2a      131
+      2b      131
       2c      132
       2f      135
+      30      135
+      31      135
       32      135
+      33      135
       34      135
       37      138
    }
@@ -319,12 +462,14 @@ Lines mapping:
 21 <-> 22
 23 <-> 23
 26 <-> 24
+28 <-> 25
 29 <-> 25
 31 <-> 28
 34 <-> 31
 36 <-> 33
 39 <-> 34
 42 <-> 32
+44 <-> 35
 45 <-> 35
 47 <-> 38
 51 <-> 41
@@ -346,17 +491,18 @@ Lines mapping:
 94 <-> 84
 97 <-> 85
 99 <-> 88
-106 <-> 95
+106 <-> 91
 110 <-> 94
 113 <-> 92
 115 <-> 98
-118 <-> 105
+118 <-> 101
 122 <-> 104
 125 <-> 102
 127 <-> 108
 130 <-> 111
 134 <-> 114
 137 <-> 112
+139 <-> 115
 140 <-> 115
 142 <-> 118
 145 <-> 121
@@ -371,11 +517,9 @@ Lines mapping:
 Not mapped:
 24
 27
-28
 37
 40
 43
-44
 53
 79
 92
@@ -387,6 +531,5 @@ Not mapped:
 132
 135
 138
-139
 147
 150

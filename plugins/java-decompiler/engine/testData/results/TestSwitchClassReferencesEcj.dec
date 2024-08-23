@@ -42,61 +42,137 @@ public class TestSwitchClassReferencesEcj {
 
 class 'pkg/TestSwitchClassReferencesEcj' {
    method 'testObject (Ljava/lang/Object;)V' {
+      0      4
       10      4
+      30      5
       31      5
+      32      5
+      33      5
       34      5
+      35      5
       36      5
+      37      5
+      38      5
+      40      6
+      41      6
       42      6
+      43      6
+      44      6
       45      6
+      46      6
       47      6
+      48      6
+      49      6
       50      7
+      51      7
+      52      7
       54      7
       57      10
    }
 
    method 'testObject2 (Ljava/lang/Object;)V' {
+      0      13
       b      13
+      2c      15
       2d      15
+      2e      15
+      2f      15
       30      15
+      31      15
       32      15
+      33      15
+      34      15
+      3c      16
+      3d      16
       3e      16
+      3f      16
+      40      16
       41      16
+      42      16
       43      16
+      44      16
+      45      16
       4c      17
+      4d      17
+      4e      17
       50      17
+      51      17
+      52      17
       56      14
+      57      14
+      58      14
       59      14
+      5a      14
       5b      14
       5e      20
    }
 
    method 'testObject3 (Ljava/lang/Object;)V' {
+      0      23
       b      23
+      28      25
       29      25
+      2a      25
+      2b      25
       2c      25
+      2d      25
       2e      25
+      2f      25
+      30      25
+      38      26
+      39      26
       3a      26
+      3b      26
+      3c      26
       3d      26
+      3e      26
       3f      26
+      40      26
+      41      26
       45      24
+      46      24
+      47      24
       48      24
+      49      24
       4a      24
+      4b      24
+      4c      24
       50      27
+      51      27
+      52      27
       53      27
+      54      27
       55      27
       58      30
    }
 
    method 'testObject4 (Ljava/lang/Object;)V' {
+      0      33
       10      33
+      2c      34
       2d      34
+      2e      34
+      2f      34
       30      34
+      31      34
       32      34
+      33      34
+      34      34
+      3c      35
+      3d      35
       3e      35
+      3f      35
+      40      35
       41      35
+      42      35
       43      35
+      44      35
+      45      35
       49      36
+      4a      36
+      4b      36
       4c      36
+      4d      36
       4e      36
       51      39
    }

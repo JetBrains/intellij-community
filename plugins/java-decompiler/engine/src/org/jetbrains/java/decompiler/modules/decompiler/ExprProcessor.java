@@ -346,7 +346,7 @@ public class ExprProcessor {
           if (offsets != null) { //TODO: Figure out why this nulls in some cases
             offsets.set(offset, offset + instr.length);
           }
-          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets);
+          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets, true);
           exprList.add(new AssignmentExprent(left, value, offsets));
           break;
         }

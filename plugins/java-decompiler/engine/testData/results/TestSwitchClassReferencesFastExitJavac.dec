@@ -4,21 +4,21 @@ public class TestSwitchClassReferencesFastExitJavac {
    public static void testObject(Object o) {
       label15:
       while(true) {
-         int i = 0;// 8
+         int i = 0;
 
          while(i < o.hashCode()) {
             switch (o) {// 9
-               case String var4:
+               case String var4:// 10
                   System.out.println("s");// 11
                   System.exit(0);// 12
-                  ++i;// 13
+                  ++i;// 13 14 15 16 17 18 19
                   break;
                case Integer var5:
-                  System.out.println("ii");// 15
-                  continue label15;// 16
+                  System.out.println("ii");
+                  continue label15;
                default:
-                  System.out.println("s");// 18
-                  return;// 19
+                  System.out.println("s");
+                  return;// 8
             }
          }
       }
@@ -27,21 +27,21 @@ public class TestSwitchClassReferencesFastExitJavac {
    public static void testObject2(Object o) {
       label15:
       while(true) {
-         int i = 0;// 28
+         int i = 0;
 
          while(i < o.hashCode()) {
             switch (o) {// 29
-               case String var4:
+               case String var4:// 30
                   System.out.println("s");// 31
                   System.exit(0);// 32
-                  ++i;// 33
+                  ++i;// 33 35 36 37 39 40 41
                   break;
                case Integer var5:
-                  System.out.println("ii");// 36
-                  continue label15;// 37
+                  System.out.println("ii");
+                  continue label15;
                default:
-                  System.out.println("s");// 40
-                  return;// 41
+                  System.out.println("s");
+                  return;// 28
             }
          }
       }
@@ -52,75 +52,169 @@ class 'pkg/TestSwitchClassReferencesFastExitJavac' {
    method 'testObject (Ljava/lang/Object;)V' {
       0      6
       1      6
+      2      8
+      3      8
       4      8
+      5      8
+      6      8
       7      8
+      a      9
       1a      9
+      38      10
+      39      10
       3a      11
+      3b      11
+      3c      11
       3d      11
+      3e      11
       3f      11
+      40      11
+      41      11
       42      12
       43      12
+      44      12
+      45      12
       46      13
-      4f      16
-      52      16
-      54      16
-      57      17
-      5d      19
-      60      19
-      62      19
-      65      20
+      47      13
+      48      13
+      49      13
+      4a      13
+      4b      13
+      4c      13
+      4d      13
+      4e      13
+      4f      13
+      50      13
+      51      13
+      52      13
+      53      13
+      54      13
+      55      13
+      56      13
+      57      13
+      58      13
+      59      13
+      5a      13
+      5b      13
+      5c      13
+      5d      13
+      5e      13
+      5f      13
+      60      13
+      61      13
+      62      13
+      63      13
+      64      13
+      65      13
+      66      13
+      67      13
+      68      20
+      69      20
+      6a      20
       6b      14
+      6c      20
+      6d      20
+      6e      20
+      6f      20
+      70      20
    }
 
    method 'testObject2 (Ljava/lang/Object;)V' {
       0      29
       1      29
+      2      31
+      3      31
       4      31
+      5      31
+      6      31
       7      31
+      a      32
       1a      32
+      38      33
+      39      33
       3a      34
+      3b      34
+      3c      34
       3d      34
+      3e      34
       3f      34
+      40      34
+      41      34
       42      35
       43      35
+      44      35
+      45      35
       46      36
-      4f      39
-      52      39
-      54      39
-      57      40
-      5d      42
-      60      42
-      62      42
-      65      43
+      47      36
+      48      36
+      49      36
+      4a      36
+      4b      36
+      4c      36
+      4d      36
+      4e      36
+      4f      36
+      50      36
+      51      36
+      52      36
+      53      36
+      54      36
+      55      36
+      56      36
+      57      36
+      58      36
+      59      36
+      5a      36
+      5b      36
+      5c      36
+      5d      36
+      5e      36
+      5f      36
+      60      36
+      61      36
+      62      36
+      63      36
+      64      36
+      65      36
+      66      36
+      67      36
+      68      43
+      69      43
+      6a      43
       6b      37
+      6c      43
+      6d      43
+      6e      43
+      6f      43
+      70      43
    }
 }
 
 Lines mapping:
-8 <-> 7
+8 <-> 21
 9 <-> 10
+10 <-> 11
 11 <-> 12
 12 <-> 13
 13 <-> 14
-15 <-> 17
-16 <-> 18
-18 <-> 20
-19 <-> 21
-28 <-> 30
+14 <-> 14
+15 <-> 14
+16 <-> 14
+17 <-> 14
+18 <-> 14
+19 <-> 14
+28 <-> 44
 29 <-> 33
+30 <-> 34
 31 <-> 35
 32 <-> 36
 33 <-> 37
-36 <-> 40
-37 <-> 41
-40 <-> 43
-41 <-> 44
+35 <-> 37
+36 <-> 37
+37 <-> 37
+39 <-> 37
+40 <-> 37
+41 <-> 37
 Not mapped:
-10
-14
-17
 23
-30
-35
-39
 46

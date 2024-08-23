@@ -42,40 +42,73 @@ public class TestTryCatchFinallyJsrRet {
 class 'pkg/TestTryCatchFinallyJsrRet' {
    method 'test1 (Ljava/lang/String;)V' {
       0      5
+      1      5
+      2      5
       3      5
+      4      5
       5      5
       f      8
+      10      8
+      11      8
       12      8
+      13      8
       14      8
       1a      9
       21      12
+      22      12
       23      12
+      24      12
+      25      12
+      26      12
+      27      12
+      28      12
       29      12
+      2a      12
       35      15
    }
 
    method 'foo (I)I' {
+      0      18
       1      18
       2      18
       c      19
+      d      20
       e      20
       f      20
+      12      21
       13      21
       1b      23
    }
 
    method 'test (Ljava/lang/String;)I' {
+      0      29
       1      29
+      2      29
+      3      29
       4      29
       a      31
       b      32
+      c      32
+      d      32
       15      32
+      16      32
       1e      32
+      1f      32
+      20      32
       21      32
+      22      32
+      23      32
       2a      34
       2b      34
+      2c      34
+      2d      34
+      2e      34
+      2f      34
       30      34
-      37      37
+      31      34
+      37      30
+      38      30
+      39      30
       3a      30
    }
 }
