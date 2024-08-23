@@ -241,6 +241,24 @@ class PyTypeHintsInspection : PyInspection() {
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
 
+      val returnType = myTypeEvalContext.getReturnType(node);
+      if (returnType is PyNarrowedType) {
+        val parameters = node.getParameters(myTypeEvalContext)
+        if (parameters.size == 0) {
+          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.has.zero.arguments"))
+        }
+        else if (returnType.typeIs) {
+          val parameter = parameters[0]
+          val parameterType = parameter.getType(myTypeEvalContext)
+          if (!PyTypeChecker.match(parameterType, returnType.narrowedType, myTypeEvalContext)) {
+            registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.does.not.match",
+                                                 PythonDocumentationProvider.getTypeName(returnType.narrowedType, myTypeEvalContext),
+                                                 PythonDocumentationProvider.getTypeName(parameterType, myTypeEvalContext)))
+          }
+        }
+      }
+
+
       checkTypeCommentAndParameters(node)
     }
 
