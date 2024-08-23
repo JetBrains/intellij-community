@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
@@ -40,7 +40,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getTemplateUrl() {
-    return EVENT_LOG_SETTINGS_URL_TEMPLATE;
+    final String regionUrl = StatisticsRegionUrlMapperService.Companion.getInstance().mapUrl(EVENT_LOG_SETTINGS_URL_TEMPLATE);
+    return regionUrl == null ? EVENT_LOG_SETTINGS_URL_TEMPLATE : regionUrl;
   }
 
   @NotNull

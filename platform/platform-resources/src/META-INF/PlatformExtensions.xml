@@ -888,6 +888,8 @@
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvider"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
 
+    <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionUrlMapperService"
+                        serviceImplementation="com.intellij.ide.StatisticsRegionUrlMapperServiceImpl"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator"/>
     <statistics.validation.customValidationRuleFactory implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory"/>
