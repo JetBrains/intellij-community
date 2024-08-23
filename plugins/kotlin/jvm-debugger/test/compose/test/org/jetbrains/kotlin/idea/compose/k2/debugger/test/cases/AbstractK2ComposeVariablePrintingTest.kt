@@ -6,35 +6,33 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.K2ComposeTestProperties.COMPOSE_RUNTIME_MAVEN_COORDINATES
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.composeCompilerJars
+import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COMPOSE_RUNTIME_MAVEN_COORDINATES
+import org.jetbrains.kotlin.idea.compose.k2.test.composeCompilerJars
+import org.jetbrains.kotlin.idea.compose.k2.test.googleMavenRepository
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinVariablePrintingTest
 
 abstract class AbstractK2ComposeVariablePrintingTest : AbstractK2IdeK2CodeKotlinVariablePrintingTest() {
-    override fun setUpModule() {
-        super.setUpModule()
-    }
+  override fun setUpModule() {
+    super.setUpModule()
+  }
 
-    override fun createDebuggerTestCompilerFacility(
-        testFiles: TestFiles,
-        jvmTarget: JvmTarget,
-        compileConfig: TestCompileConfiguration
-    ): DebuggerTestCompilerFacility {
-        val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
+  override fun createDebuggerTestCompilerFacility(
+      testFiles: TestFiles,
+      jvmTarget: JvmTarget,
+      compileConfig: TestCompileConfiguration,
+  ): DebuggerTestCompilerFacility {
+    val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
-        facility.addCompilerPlugin(composeCompilerJars)
-        addMavenDependency(facility, "maven(${COMPOSE_RUNTIME_MAVEN_COORDINATES})")
+    facility.addCompilerPlugin(composeCompilerJars)
+    addMavenDependency(facility, "maven(${COMPOSE_RUNTIME_MAVEN_COORDINATES})")
 
-        return facility
-    }
+    return facility
+  }
 
-    /*
-    Downloading the compose runtime requires also specifying the Google repository.
-     */
-    override fun jarRepositories(): List<RemoteRepositoryDescription> = listOf(
-        RemoteRepositoryDescription.MAVEN_CENTRAL, RemoteRepositoryDescription(
-            "google", "Google Maven Repository",
-            "https://cache-redirector.jetbrains.com/dl.google.com.android.maven2"
-        )
-    )
+  /*
+  Downloading the compose runtime requires also specifying the Google repository.
+   */
+  override fun jarRepositories(): List<RemoteRepositoryDescription> = listOf(
+    RemoteRepositoryDescription.MAVEN_CENTRAL, googleMavenRepository
+  )
 }

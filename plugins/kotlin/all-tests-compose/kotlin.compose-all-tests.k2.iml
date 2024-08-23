@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="kotlin.tests-compose" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.compose.k2" scope="RUNTIME" />
   </component>
 </module>

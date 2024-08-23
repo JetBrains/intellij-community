@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.android.compose-ide-plugin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.compose-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.android.streaming" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.tests-compose" scope="TEST" />
   </component>
 </module>
