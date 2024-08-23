@@ -40,5 +40,5 @@ fun XDebugProcessDebuggeeInForeground.start(session: XDebugSession, bringAfterMs
   })
 }
 
-private fun isEnabled() = Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume.supported").asBoolean() ||
+private fun isEnabled() = Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume.supported").asBoolean() &&
                           Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume").asBoolean()
