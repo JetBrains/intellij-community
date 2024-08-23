@@ -85,6 +85,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflictWithinDefaultImports.kt");
             }
 
+            @TestMetadata("ClassesFromDefaultImportsDoNotConflictWithJavaUtilImport.kt")
+            public void testClassesFromDefaultImportsDoNotConflictWithJavaUtilImport() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/ClassesFromDefaultImportsDoNotConflictWithJavaUtilImport.kt");
+            }
+
             @TestMetadata("ConflictWithAnnotation.kt")
             public void testConflictWithAnnotation() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/ConflictWithAnnotation.kt");

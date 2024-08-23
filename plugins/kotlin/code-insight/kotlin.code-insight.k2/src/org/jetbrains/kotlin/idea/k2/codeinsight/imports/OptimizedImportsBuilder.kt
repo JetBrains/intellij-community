@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
@@ -80,7 +81,11 @@ internal class OptimizedImportsBuilder(
                 symbols.asSequence()
                     .filter { it is ImportableKaClassLikeSymbol }
                     .map { importSymbolWithMapping(it) }
-                    .filterTo(classNamesToCheck) { needExplicitImport(it) }
+                    .filterTo(classNamesToCheck) {
+                        // TODO reconsider this after KTIJ-30991 is fixed
+                        //needExplicitImport(it)
+                        true
+                    }
 
                 if (fqNames.all { needExplicitImport(it) }) {
                     importsToGenerate.add(starImportPath)
@@ -95,7 +100,13 @@ internal class OptimizedImportsBuilder(
             val foundClassifiers = hierarchicalScope.findClassifiers(fqName.shortName()).firstOrNull()
             val singleFoundClassifier = foundClassifiers?.singleOrNull()
 
-            if (singleFoundClassifier?.importableFqName != fqName) {
+
+            val singleFoundClassifierFqName = singleFoundClassifier?.let {
+                // TODO reconsider this after KTIJ-30991 is fixed
+                importSymbolWithMapping(it)
+            }
+
+            if (singleFoundClassifierFqName != fqName) {
                 // add explicit import if failed to import with * (or from current package)
                 importsToGenerate.add(ImportPath(fqName, false))
 
@@ -131,6 +142,12 @@ internal class OptimizedImportsBuilder(
 
     private fun KaSession.importSymbolWithMapping(symbol: ImportableKaSymbol): FqName {
         val importableName = symbol.run { computeImportableName() }
+
+        return findCorrespondingKotlinFqName(importableName) ?: importableName
+    }
+
+    private fun KaSession.importSymbolWithMapping(symbol: KaClassifierSymbol): FqName? {
+        val importableName = symbol.importableFqName ?: return null
 
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }

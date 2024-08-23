@@ -85,6 +85,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflictWithinDefaultImports.kt");
             }
 
+            @TestMetadata("ClassesFromDefaultImportsDoNotConflictWithJavaUtilImport.kt")
+            public void testClassesFromDefaultImportsDoNotConflictWithJavaUtilImport() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassesFromDefaultImportsDoNotConflictWithJavaUtilImport.kt");
+            }
+
             @TestMetadata("ConflictWithAnnotation.kt")
             public void testConflictWithAnnotation() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ConflictWithAnnotation.kt");
