@@ -2,16 +2,14 @@
 package org.jetbrains.intellij.build.impl.compilation.cache
 
 import com.dynatrace.hash4j.hashing.Hashing
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.google.gson.stream.JsonReader
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.java.ResourcesTargetType
 import org.jetbrains.jps.cache.model.BuildTargetState
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
 import java.nio.file.Files
 import java.nio.file.Path
-
-private val SOURCES_STATE_TYPE = object : TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.type
 
 private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
 private const val IDENTIFIER = "\$BUILD_DIR\$"
@@ -20,7 +18,6 @@ private const val PRODUCTION = "production"
 private const val TEST = "test"
 
 internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDirectory: Path) {
-  private val gson: Gson = Gson()
   @JvmField
   val sourceStateFile: Path = dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
 
@@ -28,8 +25,14 @@ internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesO
     return getProductionCompilationOutputs(sourceStateFile) + getTestsCompilationOutputs(sourceStateFile)
   }
 
-  internal fun parseSourcesStateFile(json: String = Files.readString(sourceStateFile)): Map<String, Map<String, BuildTargetState>> {
-    return gson.fromJson(json, SOURCES_STATE_TYPE)
+  internal fun parseSourcesStateFile(json: String): Map<String, Map<String, BuildTargetState>> {
+    return BuildTargetSourcesState.readJson(JsonReader(json.reader()))
+  }
+
+  internal fun parseSourcesStateFile(): Map<String, Map<String, BuildTargetState>> {
+    return Files.newBufferedReader(sourceStateFile).use {
+      BuildTargetSourcesState.readJson(JsonReader(it))
+    }
   }
 
   private fun getProductionCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>): List<CompilationOutput> {

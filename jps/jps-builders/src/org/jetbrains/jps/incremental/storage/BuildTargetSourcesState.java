@@ -376,7 +376,6 @@ public final class BuildTargetSourcesState implements BuildListener {
     return JpsPathUtil.urlToFile(url).getAbsolutePath();
   }
 
-  @VisibleForTesting
   public static @NotNull Map<String, Map<String, BuildTargetState>> readJson(JsonReader reader) throws IOException {
     reader.beginObject();
     Map<String, Map<String, BuildTargetState>> result = new HashMap<>();

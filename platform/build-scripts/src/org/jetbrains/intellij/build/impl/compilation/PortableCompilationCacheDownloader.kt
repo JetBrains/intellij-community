@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.cache.model.BuildTargetState
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -118,7 +117,7 @@ internal class PortableCompilationCacheDownloader(
         }
       }
 
-      val sourcesState = getSourcesState(lastCachedCommit)
+      val sourcesState = sourcesStateProcessor.parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$lastCachedCommit"))
       val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
       total = outputs.size
       spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
@@ -133,10 +132,6 @@ internal class PortableCompilationCacheDownloader(
     reportStatisticValue("jps-cache:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
     reportStatisticValue("jps-cache:downloaded:bytes", totalDownloadedBytes.toString())
     reportStatisticValue("jps-cache:downloaded:count", total.toString())
-  }
-
-  private suspend fun getSourcesState(commitHash: String): Map<String, Map<String, BuildTargetState>> {
-    return sourcesStateProcessor.parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$commitHash"))
   }
 
   private suspend fun downloadAndUnpackJpsCache(commitHash: String, totalBytes: AtomicLong) {
