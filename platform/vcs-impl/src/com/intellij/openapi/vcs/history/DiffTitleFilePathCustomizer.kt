@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.history
 
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -13,6 +14,9 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.ui.components.JBLabel
 import com.intellij.vcsUtil.VcsUtil
 
+/**
+ * @see [DiffUtil.addTitleCustomizers]
+ */
 object DiffTitleFilePathCustomizer {
   private val EMPTY_CUSTOMIZER = DiffEditorTitleCustomizer { null }
 

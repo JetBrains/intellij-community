@@ -257,7 +257,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     }
 
     SimpleDiffRequest request = createSimpleRequest(myProject, myChange, context, indicator);
-    request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, createTitleCustomizers());
+    DiffUtil.addTitleCustomizers(request, createTitleCustomizers());
 
     DiffRequest localRequest = createLocalChangeListRequest(myProject, myChange, request);
     if (localRequest != null) return localRequest;
