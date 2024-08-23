@@ -714,10 +714,10 @@ public class NestedClassProcessor {
     }
     else {
       eq = true;
-      if (fObj.fieldKey.length() == 0) {
+      if (fObj.fieldKey.isEmpty()) {
         fObj.fieldKey = sObj.fieldKey;
       }
-      else if (sObj.fieldKey.length() == 0) {
+      else if (sObj.fieldKey.isEmpty()) {
         if (both) {
           sObj.fieldKey = fObj.fieldKey;
         }

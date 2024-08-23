@@ -49,6 +49,7 @@ public interface IFernflowerPreferences {
 
   String DUMP_ORIGINAL_LINES = "__dump_original_lines__";
   String UNIT_TEST_MODE = "__unit_test_mode__";
+  String DOTS_FOLDER = "dsf";
 
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_UNX = "\n";

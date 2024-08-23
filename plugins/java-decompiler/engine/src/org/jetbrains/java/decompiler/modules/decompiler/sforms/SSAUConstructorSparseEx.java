@@ -84,26 +84,26 @@ public class SSAUConstructorSparseEx {
 
     setCatchMaps(root, dgraph, flatthelper);
 
-    int itteration = 1;
+    int iteration = 1;
     HashSet<String> updated = new HashSet<>();
     do {
       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
-      ssaStatements(dgraph, updated, false, mt, itteration++);
+      ssaStatements(dgraph, updated, false, mt, iteration++);
       cancellationManager.checkCanceled();
       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
     while (!updated.isEmpty());
 
 
-    ssaStatements(dgraph, updated, true, mt, itteration++);
+    ssaStatements(dgraph, updated, true, mt, iteration);
 
     ssuversions.initDominators();
   }
 
-  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars, StructMethod mt, int itteration) {
+  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars, StructMethod mt, int iteration) {
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
-    DotExporter.toDotFile(dgraph, mt, "ssauStatements_" + itteration);
+    DotExporter.toDotFile(dgraph, mt, "ssauStatements_" + iteration);
 
     for (DirectNode node : dgraph.nodes) {
 
