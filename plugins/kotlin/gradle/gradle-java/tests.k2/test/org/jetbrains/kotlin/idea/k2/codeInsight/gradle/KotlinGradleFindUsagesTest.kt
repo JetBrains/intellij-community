@@ -7,12 +7,14 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
+import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_COMPOSITE_BUILD_FIXTURE
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KMP_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -116,31 +118,31 @@ class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
     fun testClassFromBuildSrcUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
+}
 
-    private fun verifyFindUsages(gradleVersion: GradleVersion) {
-        test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
-            val mainFileContent = mainTestDataFile
-            var mainFile = mainTestDataPsiFile
-            val noExpectedFindUsages =
-                InTextDirectivesUtils.isDirectiveDefined(mainFileContent.content, "// \"NO-EXPECTED-FIND_USAGE\"")
-            val expectedFindUsageFileAndText =
-                InTextDirectivesUtils.findListWithPrefixes(mainFileContent.content, "// \"EXPECTED-FIND_USAGE-FILE_TEXT\": ")
+fun AbstractGradleCodeInsightTest.verifyFindUsages(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder = GRADLE_KMP_KOTLIN_FIXTURE) {
+    test(gradleVersion, builder) {
+        val mainFileContent = mainTestDataFile
+        val mainFile = mainTestDataPsiFile
+        val noExpectedFindUsages =
+            InTextDirectivesUtils.isDirectiveDefined(mainFileContent.content, "// \"NO-EXPECTED-FIND_USAGE\"")
+        val expectedFindUsageFileAndText =
+            InTextDirectivesUtils.findListWithPrefixes(mainFileContent.content, "// \"EXPECTED-FIND_USAGE-FILE_TEXT\": ")
 
-            codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
-            assertTrue("<caret> is not present") {
-                val caretOffset = runReadAction { codeInsightFixture.caretOffset }
-                caretOffset != 0
-            }
-            runInEdtAndWait {
-                val elementAtCaret = fixture.elementAtCaret
-                val usagesPsi = ReferencesSearch.search(elementAtCaret).findAll()
-                val usages = usagesPsi.map { "${it.element.containingFile.name} ${it.element.text}" }
+        codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
+        assertTrue("<caret> is not present") {
+            val caretOffset = runReadAction { codeInsightFixture.caretOffset }
+            caretOffset != 0
+        }
+        runInEdtAndWait {
+            val elementAtCaret = fixture.elementAtCaret
+            val usagesPsi = ReferencesSearch.search(elementAtCaret).findAll()
+            val usages = usagesPsi.map { "${it.element.containingFile.name} ${it.element.text}" }
 
-                if (usages.isNotEmpty()) {
-                    assertEquals(expectedFindUsageFileAndText, usages.sorted())
-                } else {
-                    assertTrue(noExpectedFindUsages, "no expected find usages, but theses were found: $usages")
-                }
+            if (noExpectedFindUsages) {
+                assertTrue(usages.isEmpty(), "no expected find usages, but theses were found: $usages")
+            } else {
+                assertEquals(expectedFindUsageFileAndText, usages.sorted())
             }
         }
     }

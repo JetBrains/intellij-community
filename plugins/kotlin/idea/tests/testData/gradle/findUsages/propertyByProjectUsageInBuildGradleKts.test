@@ -14,5 +14,3 @@ tasks.register("printProp") {
 //FILE: gradle.properties
 myProperty=someValue
 
-// FILE: settings.gradle.kts
-

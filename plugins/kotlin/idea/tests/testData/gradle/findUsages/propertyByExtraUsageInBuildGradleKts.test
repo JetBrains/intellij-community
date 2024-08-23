@@ -11,5 +11,3 @@ tasks.register("task") {
     emailNotification
 }
 
-// FILE: settings.gradle.kts
-

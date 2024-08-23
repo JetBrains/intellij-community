@@ -13,5 +13,3 @@ tasks.register("person") {
     Person("Sam", 35)
 }
 
-// FILE: settings.gradle.kts
-

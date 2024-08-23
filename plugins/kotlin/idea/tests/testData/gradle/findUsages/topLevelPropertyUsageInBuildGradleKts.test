@@ -12,5 +12,3 @@ tasks.register<Copy>("copy") {
     into(dest)
 }
 
-// FILE: settings.gradle.kts
-

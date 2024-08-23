@@ -5,5 +5,3 @@ test_lib<caret>rary-version = "1.0.5"
 
 // FILE: build.gradle.kts
 val myVersion = libs.versions.test.library.version
-
-// FILE: settings.gradle.kts

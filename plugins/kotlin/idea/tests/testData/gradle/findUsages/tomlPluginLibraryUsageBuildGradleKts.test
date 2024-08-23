@@ -16,5 +16,3 @@ repositories {
 }
 dependencies {
 }
-
-// FILE: settings.gradle.kts

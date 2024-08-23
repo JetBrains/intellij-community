@@ -134,6 +134,60 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
     }
 
     companion object {
+        val GRADLE_COMPOSITE_BUILD_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("GradleKotlinFixture")
+                includeBuild("not-build-src")
+            }
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withPlugin("some-custom-plugin")
+            }
+            withFile(
+                "not-build-src/src/main/kotlin/utils.kt",
+                """
+                    import org.gradle.api.Plugin
+                    import org.gradle.api.Project
+
+                    class SomeCustomPlugin: Plugin<Project> {
+                        override fun apply(target: Project) {
+                            // no-op
+                        }
+                    }
+
+                    const val kotlinStdLib = "..."
+                """.trimIndent()
+            )
+            withSettingsFile(useKotlinDsl = true, relativeModulePath = "not-build-src") {
+                addCode("""
+                    pluginManagement {
+                        repositories {
+                            gradlePluginPortal()
+                        }
+                    }
+                """.trimIndent())
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "not-build-src", useKotlinDsl = true) {
+                withPrefix {
+                    code("""
+                        plugins {
+                            id("java-gradle-plugin")
+                            `kotlin-dsl`
+                        }
+                    """.trimIndent())
+                }
+                withMavenCentral()
+                withPostfix {
+                    code("""
+                        gradlePlugin {
+                            plugins.register("some-custom-plugin") {
+                                id = "some-custom-plugin"
+                                implementationClass = "SomeCustomPlugin"
+                            }
+                        }
+                    """.trimIndent())
+                }
+            }
+        }
         val GRADLE_KMP_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")

@@ -8,5 +8,3 @@ repositories {
     mavenCentral()
 }
 
-// FILE: settings.gradle.kts
-

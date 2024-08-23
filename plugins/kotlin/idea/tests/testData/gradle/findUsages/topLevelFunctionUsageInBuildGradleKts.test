@@ -14,5 +14,3 @@ fun pri<caret>nt() {
     println("someValue")
 }
 
-// FILE: settings.gradle.kts
-
