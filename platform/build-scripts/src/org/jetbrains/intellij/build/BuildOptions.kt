@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
@@ -67,6 +66,8 @@ data class BuildOptions(
         add(MAC_SIGN_STEP)
         add(MAC_NOTARIZE_STEP)
       }
+      // repair utility is unbundled for all IDEs
+      add(REPAIR_UTILITY_BUNDLE_STEP)
     },
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
