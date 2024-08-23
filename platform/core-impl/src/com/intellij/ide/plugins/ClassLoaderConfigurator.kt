@@ -86,48 +86,9 @@ class ClassLoaderConfigurator(
     checkPackagePrefixUniqueness(module)
 
     val isMain = module.moduleName == null
-    val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
-    sortDependenciesInPlace(dependencies)
 
     if (isMain) {
-      if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
-        setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
-        return true
-      }
-
-      var files = module.jarFiles
-      if (files == null) {
-        if (!module.isUseIdeaClassLoader) {
-          log.error("jarFiles is not set for $module")
-        }
-        files = emptyList()
-      }
-
-      var libDirectories = Collections.emptyList<Path>()
-      val libDir = module.path.resolve("lib")
-      if (Files.exists(libDir)) {
-        libDirectories = Collections.singletonList(libDir)
-      }
-
-      val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
-      val pluginClassPath = ClassPath(/* files = */ files,
-                                      /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
-                                      /* resourceFileFactory = */ resourceFileFactory,
-                                      /* mimicJarUrlConnection = */ mimicJarUrlConnection)
-      val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
-      val existing = mainToClassPath.put(module.pluginId, mainInfo)
-      if (existing != null) {
-        log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}", module.pluginId))
-      }
-
-      val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
-        configureUsingIdeaClassloader(mainInfo.files, module)
-      }
-      else {
-        createPluginClassLoader(module = module, mainInfo = mainInfo, dependencies = dependencies)
-      }
-      module.pluginClassLoader = mainDependentClassLoader
-      configureDependenciesInOldFormat(module, mainDependentClassLoader)
+      configureMainPluginModule(module)
     }
     else {
       if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null) {
@@ -135,6 +96,7 @@ class ClassLoaderConfigurator(
       }
 
       assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
+      val dependencies = getSortedDependencies(module)
       // if the module depends on an unavailable plugin, it will not be loaded
       if (dependencies.any { it.pluginClassLoader == null }) {
         return false
@@ -182,6 +144,53 @@ class ClassLoaderConfigurator(
     }
 
     return true
+  }
+
+  private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
+    val dependencies = pluginSet.moduleGraph.getDependencies(module).toTypedArray()
+    sortDependenciesInPlace(dependencies)
+    return dependencies
+  }
+
+  private fun configureMainPluginModule(module: IdeaPluginDescriptorImpl) {
+    if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
+      setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
+      return
+    }
+
+    var files = module.jarFiles
+    if (files == null) {
+      if (!module.isUseIdeaClassLoader) {
+        log.error("jarFiles is not set for $module")
+      }
+      files = emptyList()
+    }
+
+    var libDirectories = Collections.emptyList<Path>()
+    val libDir = module.path.resolve("lib")
+    if (Files.exists(libDir)) {
+      libDirectories = Collections.singletonList(libDir)
+    }
+
+    val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
+    val pluginClassPath = ClassPath(/* files = */ files,
+                                    /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
+                                    /* resourceFileFactory = */ resourceFileFactory,
+                                    /* mimicJarUrlConnection = */ mimicJarUrlConnection)
+    val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
+    val existing = mainToClassPath.put(module.pluginId, mainInfo)
+    if (existing != null) {
+      log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}", module.pluginId))
+    }
+
+    val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
+      configureUsingIdeaClassloader(mainInfo.files, module)
+    }
+    else {
+      createPluginClassLoader(module = module, mainInfo = mainInfo, dependencies = getSortedDependencies(module))
+    }
+    module.pluginClassLoader = mainDependentClassLoader
+    configureDependenciesInOldFormat(module, mainDependentClassLoader)
   }
 
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
