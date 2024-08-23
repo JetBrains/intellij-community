@@ -20,9 +20,7 @@ import kotlinx.serialization.modules.contextual
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -95,13 +93,14 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
     return result
   }
 
-  protected open fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanElement>>) {
+  protected open fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanData>>) {
     index.get(parent.spanId)?.forEach {
+      val span = toSpanElement(it)
       if (parent.isWarmup) {
-        it.isWarmup = true
+        span.isWarmup = true
       }
-      result.add(it)
-      processChild(result = result, parent = it, index = index)
+      result.add(span)
+      processChild(result = result, parent = span, index = index)
     }
   }
 
@@ -133,12 +132,12 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
     return jsonData
   }
 
-  private fun getParentToSpanMap(spans: List<SpanData>): Object2ObjectLinkedOpenHashMap<String, MutableSet<SpanElement>> {
-    val indexParentToChild = Object2ObjectLinkedOpenHashMap<String, MutableSet<SpanElement>>()
+  private fun getParentToSpanMap(spans: List<SpanData>): Object2ObjectLinkedOpenHashMap<String, MutableSet<SpanData>> {
+    val indexParentToChild = Object2ObjectLinkedOpenHashMap<String, MutableSet<SpanData>>()
     for (span in spans) {
       val parentSpanId = span.getParentSpanId()
       if (parentSpanId != null) {
-        indexParentToChild.computeIfAbsent(parentSpanId, Object2ObjectFunction { ObjectLinkedOpenHashSet() }).add(toSpanElement(span))
+        indexParentToChild.computeIfAbsent(parentSpanId, Object2ObjectFunction { ObjectLinkedOpenHashSet() }).add(span)
       }
     }
     return indexParentToChild
