@@ -92,6 +92,7 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
     private const val DEPENDENCY_CACHE_PATH = "caches/modules-2/files-2.1/junit/junit/4.12/"
 
     private val testCaseMatrix: List<TestScenario> = listOf(
+      // sources tests
       TestScenario(
         pluginDownloadSourcesValue = true,
         ideaDownloadSourcesValue = true,
@@ -147,6 +148,40 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
         sourcesExpected = false,
         pluginDownloadJavadocValue = false,
         javadocExpected = false
+      ),
+
+      // javadoc tests
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = true,
+        sourcesExpected = true,
+        pluginDownloadJavadocValue = true,
+        javadocExpected = true
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = true,
+        forceDownloadSourcesFlagValue = false,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = true,
+        javadocExpected = true
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = true,
+        ideaDownloadSourcesValue = false,
+        forceDownloadSourcesFlagValue = null,
+        sourcesExpected = true,
+        pluginDownloadJavadocValue = true,
+        javadocExpected = true
+      ),
+      TestScenario(
+        pluginDownloadSourcesValue = false,
+        ideaDownloadSourcesValue = false,
+        forceDownloadSourcesFlagValue = false,
+        sourcesExpected = false,
+        pluginDownloadJavadocValue = true,
+        javadocExpected = true
       )
     )
 
