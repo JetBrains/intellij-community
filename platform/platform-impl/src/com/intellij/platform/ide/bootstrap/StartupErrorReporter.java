@@ -22,10 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,7 +86,7 @@ public final class StartupErrorReporter {
 
     message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.appendix.jre", jreDetails()));
 
-    showError(title, message.toString()); //NON-NLS
+    showError(title, message.toString(), t); //NON-NLS
   }
 
   private static @NlsSafe String jreDetails() {
@@ -101,8 +98,12 @@ public final class StartupErrorReporter {
     return jre + ' ' + arch + " (" + vendor + ")\n" + home;
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message) {
+    showError(title, message, null);
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message, @Nullable Throwable error) {
     System.err.println();
     System.err.println("**" + title + "**");
     System.err.println();
@@ -142,7 +143,7 @@ public final class StartupErrorReporter {
       var choice = JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
       switch (choice) {
         case 1 -> cleanStart();
-        case 2 -> reportProblem(title, message);
+        case 2 -> reportProblem(title, message, error);
       }
     }
     catch (Throwable t) {
@@ -162,7 +163,10 @@ public final class StartupErrorReporter {
     }
   }
 
-  private static void reportProblem(String title, String message) {
+  private static void reportProblem(String title, String message, @Nullable Throwable error) {
+    if (error != null) {
+      title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
+    }
     try {
       var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
@@ -236,7 +240,7 @@ public final class StartupErrorReporter {
         PluginManagerCore.getLogger().error(t);
       }
       catch (Throwable ignore) { }
-      // workaround for SOE on parsing PAC file (JRE-247)
+      // workaround for SOE on parsing a PAC file (JRE-247)
       if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
         return;
       }
