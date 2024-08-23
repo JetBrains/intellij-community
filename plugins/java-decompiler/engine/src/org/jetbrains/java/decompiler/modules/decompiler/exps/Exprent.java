@@ -105,6 +105,10 @@ public class Exprent implements IMatchable {
     throw new RuntimeException("not implemented");
   }
 
+  public TextBuffer toJava() {
+    return toJava(0, BytecodeMappingTracer.DUMMY);
+  }
+
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     throw new RuntimeException("not implemented");
   }

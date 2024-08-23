@@ -437,6 +437,10 @@ public abstract class Statement implements IMatchable {
     return false;
   }
 
+  public TextBuffer toJava() {
+    return toJava(0, BytecodeMappingTracer.DUMMY);
+  }
+
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     throw new RuntimeException("not implemented");
   }

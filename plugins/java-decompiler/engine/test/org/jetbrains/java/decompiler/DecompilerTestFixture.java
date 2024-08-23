@@ -31,6 +31,7 @@ public class DecompilerTestFixture {
   private Path tempDir;
   private Path targetDir;
   private TestConsoleDecompiler decompiler;
+  private boolean cleanup = true;
 
   public void setUp(Map<String, String> customOptions) throws IOException {
     setUp(customOptions, null);
@@ -69,7 +70,7 @@ public class DecompilerTestFixture {
 
   public void tearDown() throws IOException {
     try {
-      if (tempDir != null) {
+      if (tempDir != null && cleanup) {
         deleteRecursively(tempDir);
       }
     }
@@ -92,6 +93,14 @@ public class DecompilerTestFixture {
 
   public ConsoleDecompiler getDecompiler() {
     return decompiler;
+  }
+
+  public void setCleanup(boolean value) {
+    this.cleanup = value;
+  }
+
+  public boolean getCleanup() {
+    return cleanup;
   }
 
   private static boolean isTestDataDir(Path dir) {
