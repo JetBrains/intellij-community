@@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
@@ -71,6 +72,8 @@ public class SSAUConstructorSparseEx {
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
+    DotExporter.toDotFile(dgraph, mt, "ssauSplitVariables");
+    
     List<Integer> setInit = new ArrayList<>();
     for (int i = 0; i < 64; i++) {
       setInit.add(i);
@@ -81,27 +84,27 @@ public class SSAUConstructorSparseEx {
 
     setCatchMaps(root, dgraph, flatthelper);
 
-    //		try {
-    //			DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
-    //		} catch(Exception ex) {ex.printStackTrace();}
-
+    int itteration = 1;
     HashSet<String> updated = new HashSet<>();
     do {
       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
-      ssaStatements(dgraph, updated, false);
+      ssaStatements(dgraph, updated, false, mt, itteration++);
       cancellationManager.checkCanceled();
       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
     while (!updated.isEmpty());
 
 
-    ssaStatements(dgraph, updated, true);
+    ssaStatements(dgraph, updated, true, mt, itteration++);
 
     ssuversions.initDominators();
   }
 
-  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars) {
+  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars, StructMethod mt, int itteration) {
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+
+    DotExporter.toDotFile(dgraph, mt, "ssauStatements_" + itteration);
+
     for (DirectNode node : dgraph.nodes) {
 
       updated.remove(node.id);

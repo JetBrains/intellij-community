@@ -17,6 +17,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.Statemen
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
@@ -53,9 +54,7 @@ public class SSAConstructorSparseEx {
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
-    // try {
-    // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
-    // } catch(Exception ex) {ex.printStackTrace();}
+    DotExporter.toDotFile(dgraph, mt, "ssaSplitVariables");
 
     List<Integer> setInit = new ArrayList<>();
     for (int i = 0; i < 64; i++) {
@@ -68,21 +67,20 @@ public class SSAConstructorSparseEx {
 
     setCatchMaps(root, dgraph, flatthelper);
 
+    int itteration = 1;
     HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
       cancellationManager.checkCanceled();
-      ssaStatements(dgraph, updated);
+      ssaStatements(dgraph, updated, mt, itteration++);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
     while (!updated.isEmpty());
   }
 
-  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated) {
+  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, StructMethod mt, int itteration) {
 
-    // try {
-    // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr1_my.dot"));
-    // } catch(Exception ex) {ex.printStackTrace();}
+    DotExporter.toDotFile(dgraph, mt, "ssaStatements_" + itteration, outVarVersions);
 
     for (DirectNode node : dgraph.nodes) {
 

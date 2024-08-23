@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
@@ -261,6 +262,7 @@ public class NestedClassProcessor {
       // iterate enclosing class
       for (MethodWrapper method : node.getWrapper().getMethods()) {
         if (method.root != null) { // neither abstract, nor native
+          DotExporter.toDotFile(method.getOrBuildGraph(), method.methodStruct, "computeLocalVars");
           method.getOrBuildGraph().iterateExprents(exprent -> {
             List<Exprent> lst = exprent.getAllExprents(true);
             lst.add(exprent);

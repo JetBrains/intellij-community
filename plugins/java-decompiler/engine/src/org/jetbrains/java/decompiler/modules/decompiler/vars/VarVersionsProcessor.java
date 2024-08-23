@@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
 import java.util.*;
@@ -35,6 +36,8 @@ public class VarVersionsProcessor {
 
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph graph = flattenHelper.buildDirectGraph(root);
+
+    DotExporter.toDotFile(graph, method, "setVarVersions");
 
     mergePhiVersions(ssa, graph);
 
