@@ -1771,6 +1771,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/missingReceiver.kt");
             }
 
+            @TestMetadata("nestedReceivers.kt")
+            public void testNestedReceivers() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/nestedReceivers.kt");
+            }
+
             @TestMetadata("paramAsExplicitInvoke.kt")
             public void testParamAsExplicitInvoke() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/paramAsExplicitInvoke.kt");

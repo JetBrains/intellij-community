@@ -6,7 +6,7 @@
 class A {
     val a = 1
 
-    fun B.foo() = i(this@A, this@B)
+    fun B.foo() = i(this@A, this@foo)
 }
 
 private fun i(a1: A, b1: B): Int = a1.a + b1.b

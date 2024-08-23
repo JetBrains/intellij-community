@@ -78,6 +78,7 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 
 /**
  * Represents a parameter candidate as it's original declaration and a reference in code.
@@ -221,7 +222,7 @@ private fun ExtractionData.registerParameter(
         return
     }
 
-    val thisSymbol = (receiverSymbol as? KaReceiverParameterSymbol)?.type?.expandedSymbol ?: receiverSymbol
+    val thisSymbol = (receiverSymbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: receiverSymbol
     val hasThisReceiver = thisSymbol != null
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression
 
@@ -328,7 +329,10 @@ private fun ExtractionData.calculateArgumentText(
 ): String {
     var argumentText =
         if (hasThisReceiver && extractThis) {
-            val label = elementToExtract.name?.let { "@$it" } ?: ""
+            val label = when {
+                elementToExtract is KtFunctionLiteral -> elementToExtract.findLabelAndCall().first
+                else -> elementToExtract.name
+            }?.let { "@$it" } ?: ""
             "this$label"
         } else {
             val argumentExpr = argExpr.getQualifiedExpressionForSelectorOrThis()
