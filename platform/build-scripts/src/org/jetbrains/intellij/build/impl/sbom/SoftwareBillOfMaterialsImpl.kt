@@ -153,6 +153,7 @@ internal class SoftwareBillOfMaterialsImpl(
 
   override suspend fun generate() {
     val skipReason = when {
+      true -> "IJI-2177"
       !context.shouldBuildDistributions() -> "No distribution was built"
       documentNamespace == null -> "Document namespace isn't specified"
       context.productProperties.sbomOptions.creator == null -> "Document creator isn't specified"
