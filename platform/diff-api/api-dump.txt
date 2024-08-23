@@ -576,9 +576,11 @@ f:com.intellij.openapi.ListSelection
 - s:createAt(java.util.List,I):com.intellij.openapi.ListSelection
 - s:createSingleton(java.lang.Object):com.intellij.openapi.ListSelection
 - s:empty():com.intellij.openapi.ListSelection
+- equals(java.lang.Object):Z
 - getExplicitSelection():java.util.List
 - getList():java.util.List
 - getSelectedIndex():I
+- hashCode():I
 - isEmpty():Z
 - isExplicitSelection():Z
 - map(com.intellij.util.NullableFunction):com.intellij.openapi.ListSelection
