@@ -191,9 +191,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
     PsiElement element = getTargetElement();
     assertInPlaceRenameAllowedFor(element);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
-    }, null, null);
+    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
 
     checkResultByFile();
   }
