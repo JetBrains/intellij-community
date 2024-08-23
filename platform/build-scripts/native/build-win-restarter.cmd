@@ -27,7 +27,7 @@ mkdir restarter
 IF 1%BUILD_ID% EQU +1%BUILD_ID% (set BUILD_NUMBER=%BUILD_ID%) else (set BUILD_NUMBER=)
 
 pushd  %TOP%tools\idea\native\restarter
-set PATH=%VS140COMNTOOLS%;%PATH%
+set PATH=%VS140COMNTOOLS%;C:\tools\msys64\mingw64\bin;%PATH%
 
 @set RUST_LOG=debug
 %RUSTC% --version
