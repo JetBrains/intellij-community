@@ -52,13 +52,13 @@ internal fun toSpanElement(span: SpanData): SpanElement {
   )
 }
 
-val cache = ConcurrentHashMap<String, String>()
+private val cache = ConcurrentHashMap<String, String>()
 
 /**
  * OT has a very verbose format with a lot of string duplication.
  * Using cache, we can save about 30% of memory required to parse JSON.
  */
-class CachedStringSerializer : KSerializer<String> {
+private class CachedStringSerializer : KSerializer<String> {
   private val delegate = String.serializer()
 
   override val descriptor: SerialDescriptor = delegate.descriptor
