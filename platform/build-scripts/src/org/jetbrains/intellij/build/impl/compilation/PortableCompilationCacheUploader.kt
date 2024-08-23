@@ -249,14 +249,11 @@ private class Uploader(serverUrl: String, @JvmField val authHeader: String) {
         /**
          * FIXME dirty workaround for unreliable [serverUrl]
          */
-        /**
-         * FIXME dirty workaround for unreliable [serverUrl]
-         */
         httpClient.get(url, authHeader) {
           it.peekBody(byteCount = 1)
         }
       }
-      catch (ignored: Exception) {
+      catch (_: Exception) {
         return@use false
       }
 
