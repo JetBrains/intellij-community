@@ -49,14 +49,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
     val distState = createDistributionBuilderState(pluginsToPublish = pluginsToPublish, context = context)
-    val compilationTasks = CompilationTasks.create(context = context)
-    distState.getModulesForPluginsToPublish() + listOf(
-      "intellij.idea.community.build.tasks",
-      "intellij.platform.images.build",
-      "intellij.tools.launcherGenerator"
-    ).let {
-      compilationTasks.compileModules(moduleNames = it)
-    }
+    context.compileModules(null)
 
     buildProjectArtifacts(
       platform = distState.platform,
@@ -344,7 +337,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
 
 private suspend fun compileAllModulesAndCreateDistributionState(context: BuildContext): DistributionBuilderState {
   // compile all
-  CompilationTasks.create(context).compileModules(null)
+  context.compileModules(null)
 
   val productLayout = context.productProperties.productLayout
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)

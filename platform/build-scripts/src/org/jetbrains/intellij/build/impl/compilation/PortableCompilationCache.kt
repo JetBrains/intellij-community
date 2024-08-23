@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -69,7 +68,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   /**
    * Download the latest available [PortableCompilationCache],
-   * [org.jetbrains.intellij.build.CompilationTasks.resolveProjectDependencies]
+   * [resolveProjectDependencies]
    * and perform incremental compilation if necessary.
    *
    * If rebuild is forced, an incremental compilation flag has to be set to false; otherwise backward-refs won't be created.
@@ -96,16 +95,15 @@ class PortableCompilationCache(private val context: CompilationContext) {
     else {
       -1
     }
-    CompilationTasks.create(context).resolveProjectDependencies()
     context.options.incrementalCompilation = !forceRebuild
     // compilation is executed unconditionally here even if the exact commit cache is downloaded
     // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
-    CompiledClasses.compile(availableCommitDepth = availableCommitDepth, context = context)
+    doCompile(availableCommitDepth = availableCommitDepth, context = context)
     isAlreadyUpdated = true
     context.options.incrementalCompilation = true
   }
 
-  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && CompiledClasses.isIncrementalCompilationDataAvailable(context)
+  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && isIncrementalCompilationDataAvailable(context)
 
   /**
    * @return updated [successMessage]

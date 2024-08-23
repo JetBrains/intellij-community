@@ -65,6 +65,8 @@ interface CompilationContext {
 
   @ApiStatus.Internal
   suspend fun prepareForBuild()
+
+  suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 }
 
 interface CompilationTasks {

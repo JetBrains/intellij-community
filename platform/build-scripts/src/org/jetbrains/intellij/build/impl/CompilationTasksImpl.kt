@@ -3,24 +3,14 @@ package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 
 internal class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
-  private val compileMutex = Mutex()
-
   override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
-    resolveProjectDependencies()
-    spanBuilder("compile modules").use {
-      compileMutex.withLock {
-        CompiledClasses.reuseOrCompile(context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
-      }
-    }
+    context.compileModules(moduleNames, includingTestsInModules)
   }
 
   override suspend fun buildProjectArtifacts(artifactNames: Set<String>) {
@@ -30,7 +20,7 @@ internal class CompilationTasksImpl(private val context: CompilationContext) : C
 
     val jps = JpsCompilationRunner(context)
     if (!context.options.useCompiledClassesFromProjectOutput) {
-      compileModules(jps.getModulesIncludedInArtifacts(artifactNames))
+      context.compileModules(jps.getModulesIncludedInArtifacts(artifactNames))
     }
 
     spanBuilder("build project artifacts")
@@ -41,28 +31,25 @@ internal class CompilationTasksImpl(private val context: CompilationContext) : C
   }
 
   override suspend fun resolveProjectDependencies() {
-    if (context.compilationData.projectDependenciesResolved) {
-      Span.current().addEvent("project dependencies are already resolved")
-    }
-    else {
-      spanBuilder("resolve project dependencies").use {
-        JpsCompilationRunner(context).resolveProjectDependencies()
-      }
-    }
+    resolveProjectDependencies(context)
   }
 
   override suspend fun generateRuntimeModuleRepository() {
-    if (context.compilationData.runtimeModuleRepositoryGenerated) {
-      Span.current().addEvent("runtime module repository is already generated")
-    }
-    else {
-      spanBuilder("generate runtime module repository").use {
-        JpsCompilationRunner(context).generateRuntimeModuleRepository()
-      }
-    }
+    generateRuntimeModuleRepository(context)
   }
 
   override suspend fun compileAllModulesAndTests() {
-    compileModules(moduleNames = null, includingTestsInModules = null)
+    context.compileModules(moduleNames = null, includingTestsInModules = null)
+  }
+}
+
+internal suspend fun generateRuntimeModuleRepository(context: CompilationContext) {
+  if (context.compilationData.runtimeModuleRepositoryGenerated) {
+    Span.current().addEvent("runtime module repository is already generated")
+  }
+  else {
+    spanBuilder("generate runtime module repository").use {
+      JpsCompilationRunner(context).generateRuntimeModuleRepository()
+    }
   }
 }

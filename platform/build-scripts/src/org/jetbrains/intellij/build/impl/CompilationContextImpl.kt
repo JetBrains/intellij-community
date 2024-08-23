@@ -16,6 +16,8 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.*
@@ -24,8 +26,7 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
-import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
-import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.impl.compilation.*
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
@@ -193,7 +194,7 @@ class CompilationContextImpl private constructor(
       val model = loadProject(
         projectHome = projectHome,
         kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT),
-        isCompilationRequired = CompiledClasses.isCompilationRequired(options),
+        isCompilationRequired = isCompilationRequired(options),
       )
 
       val buildPaths = customBuildPaths ?: computeBuildPaths(buildOut = options.outRootDir ?: buildOutputRootEvaluator(model.project), options = options, projectHome = projectHome)
@@ -206,7 +207,7 @@ class CompilationContextImpl private constructor(
 
       val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
       /**
-       * [defineJavaSdk] may be skipped using [CompiledClasses.isCompilationRequired]
+       * [defineJavaSdk] may be skipped using [isCompilationRequired]
        * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
        */
       spanBuilder("define JDK").use {
@@ -244,7 +245,7 @@ class CompilationContextImpl private constructor(
   }
 
   override suspend fun prepareForBuild() {
-    CompiledClasses.checkOptions(this)
+    checkCompilationOptions(this)
 
     val logDir = paths.logDir
     if (options.compilationLogEnabled) {
@@ -283,6 +284,17 @@ class CompilationContextImpl private constructor(
       Span.current().addEvent("skip output cleaning", Attributes.of(
         AttributeKey.stringKey("dir"), "${paths.buildOutputDir}",
       ))
+    }
+  }
+
+  private val compileMutex = Mutex()
+
+  override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+    spanBuilder("resolve dependencies and compile modules").use { span ->
+      compileMutex.withLock {
+        resolveProjectDependencies(this@CompilationContextImpl)
+        reuseOrCompile(context = this@CompilationContextImpl, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span)
+      }
     }
   }
 
@@ -458,7 +470,7 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
 
 internal suspend fun cleanOutput(
   compilationContext: CompilationContext,
-  keepCompilationState: Boolean = CompiledClasses.keepCompilationState(compilationContext.options),
+  keepCompilationState: Boolean = keepCompilationState(compilationContext.options),
 ) {
   val compilationState = setOf(
     compilationContext.compilationData.dataStorageRoot,
@@ -485,9 +497,9 @@ internal suspend fun cleanOutput(
       for (path in pathsToBeCleanedStream) {
         val pathToBeCleaned = outDir.relativize(path)
         span.addEvent("delete", Attributes.of(AttributeKey.stringKey("dir"), "$pathToBeCleaned"))
-        outputDirectoriesToKeep.forEach {
-          check(!it.startsWith(path)) {
-            val outputDirectoryToKeep = outDir.relativize(it)
+        for (outputDirToKeep in outputDirectoriesToKeep) {
+          check(!outputDirToKeep.startsWith(path)) {
+            val outputDirectoryToKeep = outDir.relativize(outputDirToKeep)
             "'$outputDirectoryToKeep' is going to be cleaned together with '$pathToBeCleaned'. " +
             "Please configure a different location for '$outputDirectoryToKeep'"
           }
@@ -529,4 +541,15 @@ private fun getSourceRootsWithPrefixes(module: JpsModule, forTests: Boolean): Se
       }
       Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
     }
+}
+
+internal suspend fun resolveProjectDependencies(context: CompilationContext) {
+  if (context.compilationData.projectDependenciesResolved) {
+    Span.current().addEvent("project dependencies are already resolved")
+  }
+  else {
+    spanBuilder("resolve project dependencies").use {
+      JpsCompilationRunner(context).resolveProjectDependencies()
+    }
+  }
 }
