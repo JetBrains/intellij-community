@@ -11,4 +11,5 @@ interface VirtualFile {
   fun findFileByRelativePath(relPath: String): VirtualFile?
 
   fun delete(requestor: Any?)
+  fun createChildData(requestor: Any, name: String): VirtualFile
 }
