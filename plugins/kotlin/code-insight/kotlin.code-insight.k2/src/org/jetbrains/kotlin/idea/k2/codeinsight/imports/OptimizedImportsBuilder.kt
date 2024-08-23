@@ -88,11 +88,11 @@ internal class OptimizedImportsBuilder(
             }
         }
 
-        val importingScopeContext = buildScopeContextByImports(file, importsToGenerate.filter { it.isAllUnder })
-        val importingScopes = HierarchicalScope.run { createFrom(importingScopeContext) }
+        val importingScopes = buildImportingScopes(file, importsToGenerate.filter { it.isAllUnder })
+        val hierarchicalScope = HierarchicalScope.run { createFrom(importingScopes) }
 
         for (fqName in classNamesToCheck) {
-            val foundClassifiers = importingScopes.findClassifiers(fqName.shortName()).firstOrNull()
+            val foundClassifiers = hierarchicalScope.findClassifiers(fqName.shortName()).firstOrNull()
             val singleFoundClassifier = foundClassifiers?.singleOrNull()
 
             if (singleFoundClassifier?.importableFqName != fqName) {

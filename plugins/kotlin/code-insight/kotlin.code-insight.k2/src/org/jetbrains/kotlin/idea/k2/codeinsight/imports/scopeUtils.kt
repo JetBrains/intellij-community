@@ -2,20 +2,37 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 
-internal fun KaSession.buildScopeContextByImports(originalFile: KtFile, importsToGenerate: Collection<ImportPath>): KaScopeContext {
-    val fileWithImports = buildFileWithImports(originalFile, importsToGenerate)
+internal fun KaSession.buildImportingScopes(originalFile: KtFile, imports: Collection<ImportPath>): List<KaScopeWithKind> {
+    val fileWithImports = buildFileWithImports(originalFile, imports)
 
-    return fileWithImports.importingScopeContext
+    return fileWithImports.importingScopeContext.scopes.map { originalScope ->
+
+        // we have to add this scope by hand, because buildFileWithImports builds a file without a package
+        val fixedPackageScope = if (originalScope.kind is KaScopeKind.PackageMemberScope) {
+            findPackageScope(originalFile)?.let { KaScopeWithKindImpl(it, originalScope.kind) }
+        } else {
+            null
+        }
+
+        fixedPackageScope ?: originalScope
+    }
 }
 
+private fun KaSession.findPackageScope(file: KtFile): KaScope? =
+    findPackage(file.packageFqName)?.packageScope
+
+/**
+ * N.B. The resulting file DOES NOT have a package declaration.
+ */
 private fun buildFileWithImports(
     originalFile: KtFile,
     importsToGenerate: Collection<ImportPath>
