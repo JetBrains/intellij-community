@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
-class GradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDependencyImportingTestCase() {
+open class GradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDependencyImportingTestCase() {
 
   @Test
   fun testDependencyPoliciesWorksWithGenericProjects() {
