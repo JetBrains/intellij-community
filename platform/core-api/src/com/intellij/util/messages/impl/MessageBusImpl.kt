@@ -50,16 +50,20 @@ open class MessageBusImpl : MessageBus {
 
   @JvmField
   internal val publisherCache: ConcurrentMap<Topic<*>, Any> = ConcurrentHashMap()
+
   @JvmField
   internal val subscribers: ConcurrentLinkedQueue<MessageHandlerHolder> = ConcurrentLinkedQueue<MessageHandlerHolder>()
 
   // caches subscribers for this bus and its children or parents, depending on the topic's broadcast policy
   @JvmField
   internal val subscriberCache: ConcurrentMap<Topic<*>, Array<Any?>> = ConcurrentHashMap()
+
   @JvmField
   internal val parentBus: CompositeMessageBus?
+
   @JvmField
   internal val rootBus: RootBus
+
   @JvmField
   internal val owner: MessageBusOwner
 
@@ -67,6 +71,7 @@ open class MessageBusImpl : MessageBus {
 
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
+
   @JvmField
   internal var messageDeliveryListeners: MutableSet<MessageDeliveryListener> = ConcurrentHashMap.newKeySet()
 
@@ -123,7 +128,7 @@ open class MessageBusImpl : MessageBus {
     return connection
   }
 
-  override fun <L  : Any> syncPublisher(topic: Topic<L>): L {
+  override fun <L : Any> syncPublisher(topic: Topic<L>): L {
     if (isDisposed) {
       PluginException.logPluginError(LOG, "Already disposed: $this", null, topic.javaClass)
     }
@@ -463,8 +468,10 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Thro
   }
 }
 
-internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
-                                        @JvmField protected val bus: MessageBusImpl) : InvocationHandler {
+internal open class MessagePublisher<L>(
+  @JvmField protected val topic: Topic<L>,
+  @JvmField protected val bus: MessageBusImpl,
+) : InvocationHandler {
   final override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
     if (method.declaringClass == Any::class.java) {
       return EventDispatcher.handleObjectMethod(proxy, args, method.name)
@@ -504,13 +511,15 @@ internal open class MessagePublisher<L>(@JvmField protected val topic: Topic<L>,
 }
 
 @Internal
-internal fun executeOrAddToQueue(topic: Topic<*>,
-                                 method: Method,
-                                 args: Array<Any?>?,
-                                 handlers: Array<Any?>,
-                                 jobQueue: MessageQueue?,
-                                 prevError: Throwable?,
-                                 bus: MessageBusImpl): Throwable? {
+internal fun executeOrAddToQueue(
+  topic: Topic<*>,
+  method: Method,
+  args: Array<Any?>?,
+  handlers: Array<Any?>,
+  jobQueue: MessageQueue?,
+  prevError: Throwable?,
+  bus: MessageBusImpl,
+): Throwable? {
   val methodHandle = MethodHandleCache.compute(method, args)
   if (jobQueue == null) {
     var error = prevError
@@ -670,13 +679,15 @@ private fun deliverImmediately(connection: MessageBusConnectionImpl, jobs: Deque
   return newJobs
 }
 
-private fun invokeListener(methodHandle: MethodHandle,
-                           methodName: String,
-                           args: Array<Any?>?,
-                           topic: Topic<*>,
-                           handler: Any,
-                           messageDeliveryListeners: Set<MessageDeliveryListener>,
-                           prevError: Throwable?): Throwable? {
+private fun invokeListener(
+  methodHandle: MethodHandle,
+  methodName: String,
+  args: Array<Any?>?,
+  topic: Topic<*>,
+  handler: Any,
+  messageDeliveryListeners: Set<MessageDeliveryListener>,
+  prevError: Throwable?,
+): Throwable? {
   try {
     //println("${topic.displayName} ${topic.isImmediateDelivery}: $methodName(${args.contentToString()})")
     if (handler is MessageHandler) {

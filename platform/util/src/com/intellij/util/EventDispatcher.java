@@ -31,7 +31,8 @@ public final class EventDispatcher<T extends EventListener> {
     return new EventDispatcher<>(listenerClass, null);
   }
 
-  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass,
+                                                                             @NotNull Map<String, Object> methodReturnValues) {
     assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
     return new EventDispatcher<>(listenerClass, methodReturnValues);
   }
@@ -54,7 +55,7 @@ public final class EventDispatcher<T extends EventListener> {
     }
     for (Method method : declared) {
       assert method.getReturnType().equals(void.class) :
-        "Method "+method+" returns "+method.getReturnType()+" and yet you didn't specify what its proxy should return";
+        "Method " + method + " returns " + method.getReturnType() + " and yet you didn't specify what its proxy should return";
     }
   }
 
