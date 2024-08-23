@@ -10,25 +10,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 final class UnscrambleAction extends AnAction implements DumbAware {
   static {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new UnscrambleListener());
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) return;
-    String message = e.getData(IdeErrorsDialog.CURRENT_TRACE_KEY);
-    if (message != null) {
-      AnalyzeStacktraceUtil.addConsole(project, null, JavaBundle.message("unscramble.unscrambled.stacktrace.tab"), message);
-    }
-    else {
-      new UnscrambleDialog(project).show();
-    }
   }
 
   @Override
@@ -39,5 +25,19 @@ final class UnscrambleAction extends AnAction implements DumbAware {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    var project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+
+    var message = e.getData(IdeErrorsDialog.CURRENT_TRACE_KEY);
+    if (message != null) {
+      AnalyzeStacktraceUtil.addConsole(project, null, JavaBundle.message("unscramble.unscrambled.stacktrace.tab"), message);
+    }
+    else {
+      new UnscrambleDialog(project).show();
+    }
   }
 }

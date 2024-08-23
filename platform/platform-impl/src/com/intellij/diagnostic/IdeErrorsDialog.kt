@@ -69,8 +69,8 @@ import javax.swing.text.JTextComponent
 open class IdeErrorsDialog internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
-  defaultMessage: LogMessage?,
-) : DialogWrapper(myProject, true), MessagePoolListener, UiCompatibleDataProvider {
+  defaultMessage: LogMessage?
+) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   @Suppress("KotlinConstantConditions")
   private val myAssigneeVisible: Boolean =
     false && // disabling the Assignee field for now (the corresponding endpoint is no longer available) todo [r.sh]
@@ -656,8 +656,7 @@ open class IdeErrorsDialog internal constructor(
     }
   }
 
-  private inner class AnalyzeAction(analyze: AnAction) : AbstractAction(ActionsBundle.actionText(
-    ActionManager.getInstance().getId(analyze))) {
+  private inner class AnalyzeAction(analyze: AnAction) : AbstractAction(ActionsBundle.actionText(ActionManager.getInstance().getId(analyze))) {
     private val myAnalyze: AnAction
 
     init {
@@ -667,7 +666,7 @@ open class IdeErrorsDialog internal constructor(
 
     override fun actionPerformed(e: ActionEvent) {
       val ctx = DataManager.getInstance().getDataContext(e.source as Component)
-      val event = AnActionEvent.createFromAnAction(myAnalyze, null, ActionPlaces.UNKNOWN, ctx)
+      val event = AnActionEvent.createEvent(myAnalyze, ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
       myAnalyze.actionPerformed(event)
       doCancelAction()
     }
@@ -883,11 +882,9 @@ open class IdeErrorsDialog internal constructor(
     private const val ACCEPTED_NOTICES_SEPARATOR = ":"
     private const val DISABLE_PLUGIN_URL = "#disable"
     private const val LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION"
-    @JvmField
-    val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
 
-    @JvmField
-    val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
+    @JvmField val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
+    @JvmField val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
 
     @JvmStatic
     fun confirmDisablePlugins(project: Project?, pluginsToDisable: List<IdeaPluginDescriptor>) {
