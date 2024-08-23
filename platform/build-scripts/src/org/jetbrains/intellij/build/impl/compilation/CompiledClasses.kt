@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -211,9 +210,6 @@ internal suspend fun doCompile(
       }
     }
     context.messages.buildStatus(status)
-  }
-  catch (e: CancellationException) {
-    throw e
   }
   catch (e: Exception) {
     retryCompilation(context = context, runner = runner, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, e = e)
