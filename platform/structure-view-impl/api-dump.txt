@@ -15,6 +15,17 @@ a:com.intellij.ide.structureView.StructureViewFactoryEx
 - a:isActionActive(java.lang.String):Z
 - a:runWhenInitialized(java.lang.Runnable):V
 - a:setActiveAction(java.lang.String,Z):V
+f:com.intellij.ide.structureView.StructureViewState
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.ide.structureView.StructureViewState$Companion
+- <init>():V
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewState
+- f:getShowLogicalStructure():Z
+- getState():com.intellij.ide.structureView.StructureViewState
+- loadState(com.intellij.ide.structureView.StructureViewState):V
+- f:setShowLogicalStructure(Z):V
+f:com.intellij.ide.structureView.StructureViewState$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewState
 com.intellij.ide.structureView.StructureViewWrapper
 - a:selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
 c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
@@ -45,6 +56,59 @@ a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 - isSearchInLocationString():Z
 - isValid():Z
 - navigate(Z):V
+com.intellij.ide.structureView.logical.ContainerElementsProvider
+- com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- a:getContainerName():java.lang.String
+a:com.intellij.ide.structureView.logical.ConvertElementsProvider
+- com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- sf:Companion:com.intellij.ide.structureView.logical.ConvertElementsProvider$Companion
+- <init>():V
+- a:convert(java.lang.Object):java.lang.Object
+- getElements(java.lang.Object):java.util.List
+f:com.intellij.ide.structureView.logical.ConvertElementsProvider$Companion
+- f:convert(java.lang.Object):kotlin.sequences.Sequence
+com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+- a:forLogicalModelClass():java.lang.Class
+- a:getElements(java.lang.Object):java.util.List
+f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getProviders(java.lang.Object):kotlin.sequences.Sequence
+com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
+- sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
+- a:getModelClass():java.lang.Class
+- a:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
+f:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
+f:com.intellij.ide.structureView.logical.impl.LogicalGrouper
+- com.intellij.ide.util.treeView.smartTree.Grouper
+- <init>():V
+- getName():java.lang.String
+- getPresentation():com.intellij.ide.util.treeView.smartTree.ActionPresentation
+- group(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection):java.util.Collection
+f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
+- sf:Companion:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Companion
+- <init>(com.intellij.openapi.project.Project):V
+- f:getLogicalStructureBuilder(com.intellij.psi.PsiFile):com.intellij.ide.structureView.StructureViewBuilder
+f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
+com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement
+- com.intellij.ide.structureView.StructureViewTreeElement
+- a:getLogicalAssembledModel():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElementsKt
+- sf:createViewTreeElement(com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel):com.intellij.ide.structureView.StructureViewTreeElement
+f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+- <init>(com.intellij.openapi.project.Project,java.lang.Object):V
+- f:getChildren():java.util.List
+- f:getChildrenGrouped():java.util.List
+- f:getModel():java.lang.Object
+- f:getProject():com.intellij.openapi.project.Project
+com.intellij.ide.structureView.logical.model.LogicalStructureModel
+- a:getName():java.lang.String
+com.intellij.ide.structureView.logical.model.PsiRepresentingLogicalStructureModel
+- com.intellij.ide.structureView.logical.model.LogicalStructureModel
+- a:getPsiElement():com.intellij.psi.PsiElement
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider

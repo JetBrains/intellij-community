@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.logical
+package com.intellij.ide.structureView.logical
 
 abstract class ConvertElementsProvider<P, C> : LogicalStructureElementsProvider<P, C> {
   abstract fun convert(p: P): C?

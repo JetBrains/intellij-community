@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.logical.impl
+package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
@@ -17,7 +17,7 @@ class LogicalGrouper: Grouper {
 
   override fun getPresentation(): ActionPresentation {
     return object : ActionPresentation {
-      override fun getText(): String = "Logical"
+      override fun getText(): String = name
 
       override fun getDescription(): String = ""
 
@@ -25,7 +25,7 @@ class LogicalGrouper: Grouper {
     }
   }
 
-  override fun getName(): String = "Logical"
+  override fun getName(): String = "Logical Type"
 
   override fun group(parent: AbstractTreeNode<*>, children: MutableCollection<TreeElement>): Collection<Group> {
     val structureElement = parent.value as? LogicalStructureViewTreeElement<*> ?: return emptyList()

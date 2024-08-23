@@ -120,8 +120,8 @@
 
     <extensionPoint name="lang.structureViewExtension" interface="com.intellij.ide.structureView.StructureViewExtension" dynamic="true"/>
 
-    <extensionPoint name="lang.logicalStructureElementsProvider" interface="com.intellij.ide.logical.LogicalStructureElementsProvider" dynamic="true"/>
-    <extensionPoint name="lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
+    <extensionPoint name="lang.logicalStructureElementsProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureElementsProvider" dynamic="true"/>
+    <extensionPoint name="lang.logicalStructureTreeElementProvider" interface="com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider" dynamic="true"/>
 
     <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.surroundWith.SurroundDescriptor"/>

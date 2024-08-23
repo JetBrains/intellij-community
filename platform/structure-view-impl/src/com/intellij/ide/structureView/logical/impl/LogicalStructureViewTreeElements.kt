@@ -1,12 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.logical.impl
+package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
-import com.intellij.ide.logical.LogicalStructureTreeElementProvider
-import com.intellij.ide.logical.model.LogicalStructureAssembledModel
-import com.intellij.ide.logical.model.LogicalStructureModel
-import com.intellij.ide.logical.model.PsiRepresentingLogicalStructureModel
-import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
+import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.util.treeView.smartTree.TreeElement

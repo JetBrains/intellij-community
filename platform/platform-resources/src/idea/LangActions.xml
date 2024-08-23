@@ -1034,6 +1034,8 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="StructureViewToolbar"/>
+
     <group id="StructureViewPopupMenu">
       <reference ref="EditSource"/>
       <separator/>

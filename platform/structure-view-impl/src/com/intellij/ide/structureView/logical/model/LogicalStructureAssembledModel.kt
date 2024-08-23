@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.logical.model
+package com.intellij.ide.structureView.logical.model
 
-import com.intellij.ide.logical.ContainerElementsProvider
-import com.intellij.ide.logical.ConvertElementsProvider
-import com.intellij.ide.logical.LogicalStructureElementsProvider
+import com.intellij.ide.structureView.logical.ContainerElementsProvider
+import com.intellij.ide.structureView.logical.ConvertElementsProvider
+import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 import com.intellij.openapi.project.Project
 
 class LogicalStructureAssembledModel<T>(
