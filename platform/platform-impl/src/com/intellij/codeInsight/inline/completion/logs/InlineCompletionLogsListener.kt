@@ -25,6 +25,9 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     container.add(REQUEST_ID with event.request.requestId)
     container.addAsync {
       readAction {
+        if (!event.request.file.isValid) {
+          return@readAction emptyList()
+        }
         InlineCompletionContextLogs.getFor(event.request)
       }
     }
