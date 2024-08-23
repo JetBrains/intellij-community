@@ -112,6 +112,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -125,7 +126,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Deque<VirtualMachineData> myStashedVirtualMachines = new LinkedList<>();
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
-  protected final EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
+  protected final List<DebugProcessListener> myDebugProcessListeners = new CopyOnWriteArrayList<>(); // propagate exceptions from listeners
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -183,7 +184,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         reloadRenderers();
       }
     }, disposable);
-    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
+    addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void paused(@NotNull SuspendContext suspendContext) {
         boolean isSuspendAll = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
@@ -692,7 +693,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myConnection.setDebuggerAddress(listeningAddress);
       myConnection.setApplicationAddress(listeningAddress);
 
-      myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+      myDebugProcessListeners.forEach(it -> it.connectorIsReady());
 
       return connector.accept(myArguments);
     }
@@ -713,7 +714,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private VirtualMachine attachConnector(AttachingConnector connector)
     throws IOException, IllegalConnectorArgumentsException, CantRunException {
-    myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+    myDebugProcessListeners.forEach(it -> it.connectorIsReady());
     try {
       return connector.attach(myArguments);
     }
@@ -816,17 +817,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable) {
-    myDebugProcessDispatcher.addListener(listener, parentDisposable);
+    addDebugProcessListener(listener);
+    Disposer.register(parentDisposable, () -> removeDebugProcessListener(listener));
   }
 
   @Override
   public void addDebugProcessListener(DebugProcessListener listener) {
-    myDebugProcessDispatcher.addListener(listener);
+    myDebugProcessListeners.add(listener);
   }
 
   @Override
   public void removeDebugProcessListener(DebugProcessListener listener) {
-    myDebugProcessDispatcher.removeListener(listener);
+    myDebugProcessListeners.remove(listener);
   }
 
   public void addProcessListener(ProcessListener processListener) {
@@ -991,7 +993,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           DebuggerUtils.cleanupAfterProcessFinish(this);
           myState.compareAndSet(State.DETACHING, State.DETACHED);
           try {
-            myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
+            myDebugProcessListeners.forEach(it -> it.processDetached(this, closedByUser));
           }
           finally {
             callback.accept(vmData);
@@ -2136,7 +2138,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
       resumeAction();
-      myDebugProcessDispatcher.getMulticaster().resumed(suspendContext);
+
+      myDebugProcessListeners.forEach(it -> it.resumed(suspendContext));
     }
 
     protected void resumeAction() {
@@ -2180,7 +2183,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       getVirtualMachineProxy().suspend();
       logThreads();
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
-      myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
+      myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
 
       myDebuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
         @Override
@@ -2266,7 +2269,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         mySuspendManager.freezeThread(myThread);
         SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_EVENT_THREAD, 0);
         suspendContext.setThread(myThread.getThreadReference());
-        myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
+        myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
       }
     }
   }
@@ -2480,12 +2483,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     semaphore.down();
 
     final AtomicBoolean connectorIsReady = new AtomicBoolean(false);
-    myDebugProcessDispatcher.addListener(new DebugProcessListener() {
+    addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void connectorIsReady() {
         connectorIsReady.set(true);
         semaphore.up();
-        myDebugProcessDispatcher.removeListener(this);
+        removeDebugProcessListener(this);
       }
     });
 
@@ -2518,7 +2521,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   processHandler != null && (processHandler.isProcessTerminating() || processHandler.isProcessTerminated());
 
                 try {
-                  myDebugProcessDispatcher.getMulticaster().attachException(null, e, myConnection);
+                  myDebugProcessListeners.forEach(it -> it.attachException(null, e, myConnection));
                 }
                 catch (Exception ex) {
                   LOG.debug(ex);

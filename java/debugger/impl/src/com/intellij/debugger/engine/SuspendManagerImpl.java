@@ -354,7 +354,7 @@ public class SuspendManagerImpl implements SuspendManager {
     if (pushPaused) {
       pushPausedContext(suspendContext);
     }
-    myDebugProcess.myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
+    myDebugProcess.myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
   }
 
   @Override

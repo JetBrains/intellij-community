@@ -394,14 +394,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
                                    event -> {
                                      ThreadReference thread = ((ThreadStartEvent)event).thread();
                                      machineProxy.threadStarted(thread);
-                                     myDebugProcessDispatcher.getMulticaster().threadStarted(this, thread);
+                                     myDebugProcessListeners.forEach(it -> it.threadStarted(this, thread));
                                    });
 
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadDeathRequest()),
                                    event -> {
                                      ThreadReference thread = ((ThreadDeathEvent)event).thread();
                                      machineProxy.threadStopped(thread);
-                                     myDebugProcessDispatcher.getMulticaster().threadStopped(this, thread);
+                                     myDebugProcessListeners.forEach(it -> it.threadStopped(this, thread));
                                    });
       }
 
@@ -436,7 +436,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }, true, disposable);
 
-      myDebugProcessDispatcher.getMulticaster().processAttached(this);
+      myDebugProcessListeners.forEach(it -> it.processAttached(this));
 
       if (canBeModified) {
         createStackCapturingBreakpoints();
@@ -466,7 +466,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       if (!canBeModified) {
-        myDebugProcessDispatcher.getMulticaster().paused(getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0));
+        SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
+        myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
         UIUtil.invokeLaterIfNeeded(() -> XDebugSessionTab.showFramesView(session));
       }
     }
