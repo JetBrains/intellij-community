@@ -8139,6 +8139,7 @@ c:com.intellij.ui.components.JBLabel
 - setIconTextGap(I):V
 - setIconWithAlignment(javax.swing.Icon,I,I):V
 - setText(java.lang.String):V
+- setToolTipText(java.lang.String):V
 - setVerticalTextPosition(I):V
 - updateUI():V
 - withBorder(javax.swing.border.Border):com.intellij.ui.components.JBLabel
