@@ -253,11 +253,11 @@ public class StructMethod extends StructMember {
         }
       }
 
-      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops);
+      i++;
+
+      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops, i - offset);
 
       instructions.addWithKey(instr, offset);
-
-      i++;
     }
 
     // initialize exception table

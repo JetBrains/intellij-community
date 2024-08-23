@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -812,6 +813,40 @@ public abstract class Statement implements IMatchable {
   public String toString() {
     return Integer.toString(id);
   }
+
+  //TODO: Cleanup/cache?
+  public void getOffset(BitSet values) {
+    if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null)
+      values.or(((DummyExitStatement)this).bytecode);
+    if (this.getExprents() != null) {
+      for (Exprent e : this.getExprents()) {
+        e.getBytecodeRange(values);
+      }
+    } else {
+      for (Object obj : this.getSequentialObjects()) {
+        if (obj == null) {
+          //Humm? Skip it
+        } else if (obj instanceof Statement) {
+          ((Statement)obj).getOffset(values);
+        } else if (obj instanceof Exprent) {
+          ((Exprent)obj).getBytecodeRange(values);
+        } else {
+          System.out.println("WTF?" + obj.getClass());
+        }
+      }
+    }
+  }
+
+  private StartEndPair endpoints;
+  public StartEndPair getStartEndRange() {
+    if (endpoints == null) {
+      BitSet set = new BitSet();
+      getOffset(set);
+      endpoints = new StartEndPair(set.nextSetBit(0), set.length() - 1);
+    }
+    return endpoints;
+  }
+
 
   // *****************************************************************************
   // IMatchable implementation

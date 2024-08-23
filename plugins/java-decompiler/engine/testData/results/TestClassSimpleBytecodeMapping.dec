@@ -49,8 +49,13 @@ public class TestClassSimpleBytecodeMapping {
 class 'pkg/TestClassSimpleBytecodeMapping$1' {
    method 'run ()V' {
       0      7
+      1      7
+      2      7
       3      7
+      4      7
       5      7
+      6      7
+      7      7
       8      8
    }
 }
@@ -58,40 +63,77 @@ class 'pkg/TestClassSimpleBytecodeMapping$1' {
 class 'pkg/TestClassSimpleBytecodeMapping' {
    method 'test ()I' {
       0      4
+      1      4
+      2      4
       3      4
+      4      4
       5      4
+      6      4
+      7      4
+      8      5
       11      5
+      12      5
+      13      5
+      14      10
       15      10
+      16      10
       17      10
+      18      10
+      19      10
       1a      11
+      1b      11
+      1c      11
       1d      11
       1e      11
       1f      11
       22      12
+      23      12
+      24      12
       25      12
+      26      12
       27      12
+      28      12
+      29      12
       2a      13
       2b      13
       2c      15
+      2d      15
+      2e      15
       2f      15
+      30      15
       31      15
+      32      15
+      33      15
       34      16
       35      16
    }
 
    method 'test2 (Ljava/lang/String;)V' {
+      0      22
       1      22
+      2      22
+      3      22
       10      23
       11      24
+      12      24
+      13      24
       15      24
       23      26
       24      26
+      25      26
+      26      26
       27      26
+      28      26
       2e      29
    }
 
    method 'run (Ljava/lang/Runnable;)V' {
+      0      32
       1      32
+      2      32
+      3      32
+      4      32
+      5      32
       6      33
    }
 }
@@ -99,8 +141,13 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
 class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
    method 'print ()V' {
       0      37
+      1      37
+      2      37
       3      37
+      4      37
       5      37
+      6      37
+      7      37
       8      38
    }
 }
@@ -108,8 +155,13 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
 class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
    method 'print ()V' {
       0      43
+      1      43
+      2      43
       3      43
+      4      43
       5      43
+      6      43
+      7      43
       8      44
    }
 }

@@ -42,20 +42,32 @@ class 'pkg/TestClassVar' {
    method 'testFieldSSAU ()V' {
       0      7
       1      7
+      2      7
       3      7
+      4      7
       5      7
       8      9
+      9      9
+      a      9
       b      9
+      1e      11
       1f      11
       20      11
+      21      11
+      22      11
       26      12
+      27      12
+      28      12
       29      12
       2e      7
       34      18
    }
 
    method 'testFieldSSAU1 ()Ljava/lang/Long;' {
+      4      21
       6      21
+      7      21
+      8      21
       b      21
       f      21
       13      21
@@ -64,17 +76,29 @@ class 'pkg/TestClassVar' {
    method 'testComplexPropagation ()V' {
       0      25
       1      25
+      2      27
       3      27
+      4      27
       5      27
+      8      29
       9      29
+      a      29
       b      29
+      c      29
       d      29
+      10      29
       11      29
       14      29
-      1c      32
-      1f      33
-      22      33
-      28      37
+      15      29
+      16      29
+      1a      33
+      1b      33
+      1c      33
+      1f      34
+      20      34
+      21      34
+      22      34
+      28      38
    }
 }
 

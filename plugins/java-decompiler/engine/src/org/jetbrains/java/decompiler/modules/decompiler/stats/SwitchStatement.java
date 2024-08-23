@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
@@ -294,6 +295,17 @@ public final class SwitchStatement extends Statement {
     first = stats.get(0);
     defaultEdge = first.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
     sortEdgesAndNodes();
+  }
+
+  @Override
+  public StartEndPair getStartEndRange() {
+    StartEndPair[] sepairs = new StartEndPair[caseStatements.size() + 1];
+    int i = 0;
+    sepairs[i++] = super.getStartEndRange();
+    for (Statement st : caseStatements) {
+      sepairs[i++] = st.getStartEndRange();
+    }
+    return StartEndPair.join(sepairs);
   }
 
   public void sortEdgesAndNodes() {

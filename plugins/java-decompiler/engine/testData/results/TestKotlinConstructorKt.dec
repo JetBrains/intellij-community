@@ -16,12 +16,12 @@ import kotlin.collections.CollectionsKt;
 public final class TestKotlinConstructorKt {
    private static final List<Mapping> foo(Collection<String> list) {
       Iterable $receiver$iv = (Iterable)list;// 2
-      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));// 10
-      Iterator var4 = $receiver$iv.iterator();// 11
+      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));
+      Iterator var4 = $receiver$iv.iterator();// 10 11
 
       while(var4.hasNext()) {
          Object item$iv$iv = var4.next();
-         String it = (String)item$iv$iv;// 12
+         String it = (String)item$iv$iv;
          Mapping var10000 = new Mapping;
          if (it == null) {// 3
             throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
@@ -29,7 +29,7 @@ public final class TestKotlinConstructorKt {
 
          var10000.<init>((String)it);
          Mapping var11 = var10000;
-         destination$iv$iv.add(var11);
+         destination$iv$iv.add(var11);// 12
       }
 
       return CollectionsKt.toList((Iterable)((List)destination$iv$iv));// 4 13
@@ -38,29 +38,84 @@ public final class TestKotlinConstructorKt {
 
 class 'TestKotlinConstructorKt' {
    method 'foo (Ljava/util/Collection;)Ljava/util/List;' {
+      0      17
       1      17
+      2      17
+      3      17
       4      17
+      6      19
+      c      18
       d      18
+      e      18
       f      18
+      10      18
+      11      18
       15      18
+      16      18
+      17      18
       18      18
       1b      19
+      1c      19
+      1d      19
+      1e      19
+      1f      19
       20      19
+      21      19
+      22      21
+      23      21
       24      21
+      25      21
+      26      21
+      27      21
+      28      21
+      2c      22
+      2d      22
       2e      22
+      2f      22
+      30      22
+      31      22
+      32      22
       33      22
+      34      22
+      35      31
+      36      23
+      37      23
       38      23
+      39      23
+      3a      23
       3b      23
+      3c      23
+      43      25
+      44      25
       46      25
       4d      26
+      4e      26
       52      26
       53      29
+      54      29
+      55      29
       56      29
+      57      29
+      58      29
       59      30
+      5a      30
+      5d      31
+      5e      31
       5f      31
+      60      31
+      61      31
+      62      31
+      63      31
+      68      34
       69      34
+      6a      34
+      6b      34
       6c      34
+      6d      34
+      6e      34
       6f      34
+      70      34
+      71      34
       72      34
    }
 }
@@ -69,7 +124,7 @@ Lines mapping:
 2 <-> 18
 3 <-> 26
 4 <-> 35
-10 <-> 19
+10 <-> 20
 11 <-> 20
-12 <-> 24
+12 <-> 32
 13 <-> 35

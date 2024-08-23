@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -96,5 +97,11 @@ public class AnnotationExprent extends Exprent {
     return className.equals(ann.className) &&
            parNames.equals(ann.parNames) &&
            parValues.equals(ann.parValues);
+  }
+  
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, parValues);
+    measureBytecode(values);
   }
 }

@@ -16,7 +16,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class Exprent implements IMatchable {
+public abstract class Exprent implements IMatchable {
   public static final int MULTIPLE_USES = 1;
   public static final int SIDE_EFFECTS_FREE = 2;
   public static final int BOTH_FLAGS = 3;
@@ -38,7 +38,7 @@ public class Exprent implements IMatchable {
 
   public final int type;
   public final int id;
-  public Set<Integer> bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
+  public BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
 
   public Exprent(int type) {
     this.type = type;
@@ -115,14 +115,31 @@ public class Exprent implements IMatchable {
 
   public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
 
-  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
-    if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
+  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
+    if (bytecodeOffsets != null) {
       if (bytecode == null) {
-        bytecode = new HashSet<>(bytecodeOffsets);
+        bytecode = new BitSet();
       }
-      else {
-        bytecode.addAll(bytecodeOffsets);
-      }
+      bytecode.or(bytecodeOffsets);
+    }
+  }
+
+  public abstract void getBytecodeRange(BitSet values);
+
+  protected void measureBytecode(BitSet values) {
+    if (bytecode != null)
+      values.or(bytecode);
+  }
+
+  protected static void measureBytecode(BitSet values, Exprent exprent) {
+    if (exprent != null)
+      exprent.getBytecodeRange(values);
+  }
+
+  protected static void measureBytecode(BitSet values, List<? extends Exprent> list) {
+    if (list != null && !list.isEmpty()) {
+      for (Exprent e : list)
+        e.getBytecodeRange(values);
     }
   }
 

@@ -271,7 +271,15 @@ public class ExprProcessor {
     for (int i = 0; i < seq.length(); i++) {
       Instruction instr = seq.getInstr(i);
       Integer offset = block.getOriginalOffset(i);
-      Set<Integer> offsets = offset >= 0 ? Set.of(offset) : null;
+      BitSet offsets = null;
+      if (offset >= 0) {
+        offsets = new BitSet();
+        offsets.set(offset);
+        int end_offset = block.getOriginalOffset(i+1);
+        if (end_offset > offset) {
+          offsets.set(offset, end_offset);
+        }
+      }
 
       switch (instr.opcode) {
         case CodeConstants.opc_aconst_null:
@@ -312,7 +320,7 @@ public class ExprProcessor {
         case CodeConstants.opc_fload:
         case CodeConstants.opc_dload:
         case CodeConstants.opc_aload:
-          pushEx(stack, exprList, new VarExprent(instr.operand(0), varTypes[instr.opcode - CodeConstants.opc_iload], varProcessor, offset));
+          pushEx(stack, exprList, new VarExprent(instr.operand(0), varTypes[instr.opcode - CodeConstants.opc_iload], varProcessor, offsets));
           break;
         case CodeConstants.opc_iaload:
         case CodeConstants.opc_laload:
@@ -335,7 +343,10 @@ public class ExprProcessor {
         case CodeConstants.opc_astore: {
           Exprent value = stack.pop();
           int varIndex = instr.operand(0);
-          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, nextMeaningfulOffset(block, i));
+          if (offsets != null) { //TODO: Figure out why this nulls in some cases
+            offsets.set(offset, offset + instr.length);
+          }
+          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets);
           exprList.add(new AssignmentExprent(left, value, offsets));
           break;
         }
@@ -397,7 +408,7 @@ public class ExprProcessor {
           pushEx(stack, exprList, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, offsets));
           break;
         case CodeConstants.opc_iinc: {
-          VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor);
+          VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, offsets);
           int type = instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD;
           List<Exprent> operands = Arrays.asList(varExpr.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null));
           exprList.add(new AssignmentExprent(varExpr, new FunctionExprent(type, operands, offsets), offsets));

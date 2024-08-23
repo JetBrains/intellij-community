@@ -21,6 +21,8 @@ public class TestAnonymousSignature {
 class 'pkg/TestAnonymousSignature$1' {
    method 'size ()I' {
       1      9
+      2      9
+      3      9
       4      9
    }
 }
@@ -35,9 +37,17 @@ class 'pkg/TestAnonymousSignature$2' {
 class 'pkg/TestAnonymousSignature' {
    method 'main ([Ljava/lang/String;)V' {
       0      7
+      1      7
+      2      7
       a      7
+      b      7
+      c      7
       d      12
+      e      12
+      f      12
       17      12
+      18      12
+      19      12
       1a      17
    }
 }

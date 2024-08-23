@@ -16,16 +16,26 @@ public class TestSynchronizedMapping {
 
 class 'pkg/TestSynchronizedMapping' {
    method 'test (I)I' {
+      0      4
       3      4
       4      5
+      5      5
+      6      5
       8      6
       12      8
+      13      8
+      14      8
       15      8
    }
 
    method 'test2 (Ljava/lang/String;)V' {
       0      12
+      1      12
+      2      12
+      3      12
       4      12
+      5      12
+      6      12
       7      13
    }
 }

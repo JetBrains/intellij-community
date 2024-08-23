@@ -12,20 +12,39 @@ public class TestStringLiterals {
 class 'pkg/TestStringLiterals' {
    method 'main ([Ljava/lang/String;)V' {
       0      4
+      1      4
       2      4
       9      5
+      a      5
       e      5
+      f      5
       13      5
+      14      5
       18      5
+      19      5
       1d      5
+      1e      5
       22      5
+      23      5
       28      5
+      29      5
       2e      5
+      2f      5
       31      5
       32      6
+      33      6
+      34      6
+      35      6
       36      6
+      37      6
+      38      6
       39      7
+      3a      7
+      3b      7
+      3c      7
       3d      7
+      3e      7
+      3f      7
       40      8
    }
 }

@@ -304,6 +304,7 @@ public class FinallyProcessor {
       }
     }
 
+    final int storeLength = var <= 3 ? 1 : var <= 128 ? 2 : 4;
     // disable semaphore at statement exit points
     for (BasicBlock block : setTry) {
       for (BasicBlock dest : block.getSuccessors()) {
@@ -311,8 +312,8 @@ public class FinallyProcessor {
         if (dest != graph.getLast() && !setCopy.contains(dest)) {
           // disable semaphore
           SimpleInstructionSequence seq = new SimpleInstructionSequence();
-          seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{0}), -1);
-          seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}), -1);
+          seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{0}, 1), -1);
+          seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}, storeLength), -1);
 
           // build a separate block
           BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
@@ -331,11 +332,11 @@ public class FinallyProcessor {
     }
 
     // enable semaphore at the statement entrance
-    BasicBlock newHead = createHeadBlock(graph, 1, var, bytecodeVersion);
+    BasicBlock newHead = createHeadBlock(graph, 1, var, bytecodeVersion, storeLength);
     insertBlockBefore(graph, head, newHead);
 
     // initialize semaphore with false
-    BasicBlock newHeadInit = createHeadBlock(graph, 0, var, bytecodeVersion);
+    BasicBlock newHeadInit = createHeadBlock(graph, 0, var, bytecodeVersion, storeLength);
     insertBlockBefore(graph, newHead, newHeadInit);
 
     setCopy.add(newHead);
@@ -352,10 +353,10 @@ public class FinallyProcessor {
   }
 
   @NotNull
-  private static BasicBlock createHeadBlock(ControlFlowGraph graph, int value, int var, int bytecodeVersion) {
+  private static BasicBlock createHeadBlock(ControlFlowGraph graph, int value, int var, int bytecodeVersion, int storeLength) {
     SimpleInstructionSequence seq = new SimpleInstructionSequence();
-    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{value}), -1);
-    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}), -1);
+    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{value}, 1), -1);
+    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}, storeLength), -1);
     return new BasicBlock(++graph.last_id, seq);
   }
 

@@ -46,12 +46,12 @@ public abstract class TestAnonymousClass {
 
    void foo(int var1) throws Exception {
       if (var1 > 0) {// 10
-         I var2 = new I() {
+         I var2 = new I() {// 11
             public void foo() throws Exception {
                boolean var1 = true;// 13
                boolean var2 = true;// 14
             }// 15
-         };// 11
+         };
          var2.foo();// 17
       } else {
          System.out.println(5);// 21
@@ -67,6 +67,10 @@ public abstract class TestAnonymousClass {
       boolean var1 = true;// 39
    }// 40
 
+   interface I {
+      void foo() throws Exception;
+   }
+
    private static class Inner {
       private static Runnable R_I = new Runnable() {
          public void run() {
@@ -77,18 +81,14 @@ public abstract class TestAnonymousClass {
    }
 
    static class InnerRecursive {
-      InnerRecursive r;
+      TestAnonymousClass.InnerRecursive r;
 
-      public InnerRecursive(InnerRecursive var1) {
+      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
          this.r = var1;// 105
       }// 106
 
       void foo() {
       }// 110
-   }
-
-   interface I {
-      void foo() throws Exception;
    }
 }
 
@@ -158,10 +158,18 @@ class 'pkg/TestAnonymousClass$1' {
 
 class 'pkg/TestAnonymousClass' {
    method 'foo (I)V' {
+      0      47
       1      47
-      c      53
+      c      48
+      d      54
       e      54
+      f      54
+      10      54
+      11      54
+      12      54
       16      56
+      17      56
+      18      56
       19      56
       1a      56
       1d      59
@@ -182,28 +190,32 @@ class 'pkg/TestAnonymousClass' {
 
 class 'pkg/TestAnonymousClass$Inner$1' {
    method 'run ()V' {
-      0      72
-      1      72
-      2      73
-      3      73
-      4      74
+      0      76
+      1      76
+      2      77
+      3      77
+      4      78
    }
 }
 
 class 'pkg/TestAnonymousClass$InnerRecursive' {
    method '<init> (Lpkg/TestAnonymousClass$InnerRecursive;)V' {
-      6      82
-      9      83
+      4      86
+      5      86
+      6      86
+      7      86
+      8      86
+      9      87
    }
 
    method 'foo ()V' {
-      0      86
+      0      90
    }
 }
 
 Lines mapping:
 10 <-> 48
-11 <-> 54
+11 <-> 49
 13 <-> 51
 14 <-> 52
 15 <-> 53
@@ -223,9 +235,9 @@ Lines mapping:
 53 <-> 18
 54 <-> 19
 55 <-> 20
-66 <-> 73
-67 <-> 74
-68 <-> 75
+66 <-> 77
+67 <-> 78
+68 <-> 79
 75 <-> 24
 76 <-> 25
 77 <-> 26
@@ -234,9 +246,9 @@ Lines mapping:
 91 <-> 37
 92 <-> 38
 93 <-> 39
-105 <-> 83
-106 <-> 84
-110 <-> 87
+105 <-> 87
+106 <-> 88
+110 <-> 91
 Not mapped:
 18
 104

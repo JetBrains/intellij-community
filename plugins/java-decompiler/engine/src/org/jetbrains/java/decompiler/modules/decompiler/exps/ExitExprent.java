@@ -16,9 +16,9 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class ExitExprent extends Exprent {
 
@@ -29,7 +29,7 @@ public class ExitExprent extends Exprent {
   private Exprent value;
   private final VarType retType;
 
-  public ExitExprent(int exitType, Exprent value, VarType retType, Set<Integer> bytecodeOffsets) {
+  public ExitExprent(int exitType, Exprent value, VarType retType, BitSet bytecodeOffsets) {
     super(EXPRENT_EXIT);
     this.exitType = exitType;
     this.value = value;
@@ -140,6 +140,13 @@ public class ExitExprent extends Exprent {
     return retType;
   }
 
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, value);
+    measureBytecode(values);
+  }
+
+  
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************

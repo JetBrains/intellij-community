@@ -65,7 +65,7 @@ public class InvocationExprent extends Exprent {
                            LinkConstant cn,
                            List<PooledConstant> bootstrapArguments,
                            ListStack<? extends Exprent> stack,
-                           Set<Integer> bytecodeOffsets) {
+                           BitSet bytecodeOffsets) {
     this();
 
     name = cn.elementName;
@@ -610,6 +610,13 @@ public class InvocationExprent extends Exprent {
 
   public List<PooledConstant> getBootstrapArguments() {
     return bootstrapArguments;
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, parameters);
+    measureBytecode(values, instance);
+    measureBytecode(values);
   }
 
   // *****************************************************************************

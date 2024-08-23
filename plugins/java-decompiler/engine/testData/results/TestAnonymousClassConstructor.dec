@@ -65,34 +65,16 @@ class TestAnonymousClassConstructor {
       System.out.println("n(): " + s);// 53
    }// 54
 
-   class InnerPrivateString {
-      private InnerPrivateString(String s) {
-         TestAnonymousClassConstructor.n(s);// 58
-      }// 59
-   }
-
    class InnerPrivate {
       private InnerPrivate(long a, int b) {
          TestAnonymousClassConstructor.n(a + "+" + b);// 64
       }// 65
    }
 
-   static class InnerStaticPrivateString {
-      private InnerStaticPrivateString(String s) {
-         TestAnonymousClassConstructor.n(s);// 70
-      }// 71
-   }
-
-   static class InnerStaticPrivate {
-      private InnerStaticPrivate(long a, int b) {
-         TestAnonymousClassConstructor.n(a + "+" + b);// 76
-      }// 77
-   }
-
-   class InnerPublicString {
-      public InnerPublicString(String s) {
-         TestAnonymousClassConstructor.n(s);// 82
-      }// 83
+   class InnerPrivateString {
+      private InnerPrivateString(String s) {
+         TestAnonymousClassConstructor.n(s);// 58
+      }// 59
    }
 
    class InnerPublic {
@@ -101,10 +83,22 @@ class TestAnonymousClassConstructor {
       }// 89
    }
 
-   static class InnerStaticPublicString {
-      public InnerStaticPublicString(String s) {
-         TestAnonymousClassConstructor.n(s);// 94
-      }// 95
+   class InnerPublicString {
+      public InnerPublicString(String s) {
+         TestAnonymousClassConstructor.n(s);// 82
+      }// 83
+   }
+
+   static class InnerStaticPrivate {
+      private InnerStaticPrivate(long a, int b) {
+         TestAnonymousClassConstructor.n(a + "+" + b);// 76
+      }// 77
+   }
+
+   static class InnerStaticPrivateString {
+      private InnerStaticPrivateString(String s) {
+         TestAnonymousClassConstructor.n(s);// 70
+      }// 71
    }
 
    static class InnerStaticPublic {
@@ -112,145 +106,219 @@ class TestAnonymousClassConstructor {
          TestAnonymousClassConstructor.n(a + "+" + b);// 100
       }// 101
    }
+
+   static class InnerStaticPublicString {
+      public InnerStaticPublicString(String s) {
+         TestAnonymousClassConstructor.n(s);// 94
+      }// 95
+   }
 }
 
 class 'pkg/TestAnonymousClassConstructor' {
    method 'innerPrivateString ()V' {
       5      4
+      6      4
       b      6
    }
 
    method 'innerPrivate ()V' {
       5      9
+      6      9
+      7      9
       8      9
       d      11
    }
 
    method 'innerStaticPrivateString ()V' {
       5      14
+      6      14
       b      16
    }
 
    method 'innerStaticPrivate ()V' {
       5      19
+      6      19
+      7      19
       8      19
       d      21
    }
 
    method 'innerStaticPrivateStringStatic ()V' {
       4      24
+      5      24
       a      26
    }
 
    method 'innerStaticPrivateStatic ()V' {
       4      29
+      5      29
+      6      29
       7      29
       c      31
    }
 
    method 'innerPublicString ()V' {
       5      34
+      6      34
       b      36
    }
 
    method 'innerPublic ()V' {
       5      39
+      6      39
+      7      39
       8      39
       d      41
    }
 
    method 'innerStaticPublicString ()V' {
       5      44
+      6      44
       b      46
    }
 
    method 'innerStaticPublic ()V' {
       5      49
+      6      49
+      7      49
       8      49
       d      51
    }
 
    method 'innerStaticPublicStringStatic ()V' {
       4      54
+      5      54
       a      56
    }
 
    method 'innerStaticPublicStatic ()V' {
       4      59
+      5      59
+      6      59
       7      59
       c      61
    }
 
    method 'n (Ljava/lang/String;)V' {
       0      64
+      1      64
+      2      64
       a      64
+      b      64
+      f      64
       13      64
+      14      64
+      15      64
       16      64
+      17      64
+      18      64
       19      65
-   }
-}
-
-class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
-   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
-      a      69
-      d      70
    }
 }
 
 class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
    method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
-      14      75
-      1e      75
-      21      75
-      24      76
+      10      69
+      14      69
+      15      69
+      19      69
+      1a      69
+      1e      69
+      1f      69
+      20      69
+      21      69
+      22      69
+      23      69
+      24      70
    }
 }
 
-class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
-   method '<init> (Ljava/lang/String;)V' {
-      5      81
-      8      82
-   }
-}
-
-class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivate' {
-   method '<init> (JI)V' {
-      f      87
-      18      87
-      1b      87
-      1e      88
-   }
-}
-
-class 'pkg/TestAnonymousClassConstructor$InnerPublicString' {
+class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
    method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
-      a      93
-      d      94
+      9      75
+      a      75
+      b      75
+      c      75
+      d      76
    }
 }
 
 class 'pkg/TestAnonymousClassConstructor$InnerPublic' {
    method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
-      14      99
-      1e      99
-      21      99
-      24      100
+      10      81
+      14      81
+      15      81
+      19      81
+      1a      81
+      1e      81
+      1f      81
+      20      81
+      21      81
+      22      81
+      23      81
+      24      82
    }
 }
 
-class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
+class 'pkg/TestAnonymousClassConstructor$InnerPublicString' {
+   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
+      9      87
+      a      87
+      b      87
+      c      87
+      d      88
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivate' {
+   method '<init> (JI)V' {
+      b      93
+      f      93
+      10      93
+      14      93
+      18      93
+      19      93
+      1a      93
+      1b      93
+      1c      93
+      1d      93
+      1e      94
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
    method '<init> (Ljava/lang/String;)V' {
-      5      105
-      8      106
+      4      99
+      5      99
+      6      99
+      7      99
+      8      100
    }
 }
 
 class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
    method '<init> (JI)V' {
-      f      111
-      18      111
-      1b      111
-      1e      112
+      b      105
+      f      105
+      10      105
+      14      105
+      18      105
+      19      105
+      1a      105
+      1b      105
+      1c      105
+      1d      105
+      1e      106
+   }
+}
+
+class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
+   method '<init> (Ljava/lang/String;)V' {
+      4      111
+      5      111
+      6      111
+      7      111
+      8      112
    }
 }
 
@@ -281,22 +349,22 @@ Lines mapping:
 50 <-> 62
 53 <-> 65
 54 <-> 66
-58 <-> 70
-59 <-> 71
-64 <-> 76
-65 <-> 77
-70 <-> 82
-71 <-> 83
-76 <-> 88
-77 <-> 89
-82 <-> 94
-83 <-> 95
-88 <-> 100
-89 <-> 101
-94 <-> 106
-95 <-> 107
-100 <-> 112
-101 <-> 113
+58 <-> 76
+59 <-> 77
+64 <-> 70
+65 <-> 71
+70 <-> 100
+71 <-> 101
+76 <-> 94
+77 <-> 95
+82 <-> 88
+83 <-> 89
+88 <-> 82
+89 <-> 83
+94 <-> 112
+95 <-> 113
+100 <-> 106
+101 <-> 107
 Not mapped:
 57
 63

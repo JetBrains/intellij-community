@@ -31,11 +31,11 @@ public class NewExprent extends Exprent {
   private boolean lambda;
   private boolean enumConst;
 
-  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
+  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
 
-  public NewExprent(VarType newType, List<Exprent> lstDims, Set<Integer> bytecodeOffsets) {
+  public NewExprent(VarType newType, List<Exprent> lstDims, BitSet bytecodeOffsets) {
     super(EXPRENT_NEW);
     this.newType = newType;
     this.lstDims = lstDims;
@@ -433,6 +433,14 @@ public class NewExprent extends Exprent {
            Objects.equals(constructor, ne.constructor) &&
            directArrayInit == ne.directArrayInit &&
            Objects.equals(lstArrayElements, ne.lstArrayElements);
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, lstArrayElements);
+    measureBytecode(values, lstDims);
+    measureBytecode(values, constructor);
+    measureBytecode(values);
   }
 
   public InvocationExprent getConstructor() {

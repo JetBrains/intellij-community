@@ -15,12 +15,20 @@ public class TestClassSwitch {
 
 class 'pkg/TestClassSwitch' {
    method 'testCaseOrder (I)V' {
+      0      4
       1      4
       1c      10
+      1d      10
+      1e      10
       1f      10
+      20      10
       21      10
+      22      10
+      23      10
       24      12
       25      6
+      26      6
+      27      6
       28      6
       29      6
       2c      8

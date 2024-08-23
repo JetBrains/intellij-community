@@ -31,10 +31,10 @@ public class BytecodeMappingTracer {
     mapping.putIfAbsent(bytecode_offset, currentSourceLine);
   }
 
-  public void addMapping(Set<Integer> bytecode_offsets) {
+  public void addMapping(BitSet bytecode_offsets) {
     if (bytecode_offsets != null) {
-      for (Integer bytecode_offset : bytecode_offsets) {
-        addMapping(bytecode_offset);
+      for (int i = bytecode_offsets.nextSetBit(0); i >= 0; i = bytecode_offsets.nextSetBit(i+1)) {
+        addMapping(i);
       }
     }
   }

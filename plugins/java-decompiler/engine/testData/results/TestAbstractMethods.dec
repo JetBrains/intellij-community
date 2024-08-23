@@ -16,12 +16,18 @@ public abstract class TestAbstractMethods {
 
 class 'pkg/TestAbstractMethods' {
    method 'test (I)I' {
+      0      6
       1      6
    }
 
    method 'test2 (Ljava/lang/String;)V' {
       0      12
+      1      12
+      2      12
+      3      12
       4      12
+      5      12
+      6      12
       7      13
    }
 }

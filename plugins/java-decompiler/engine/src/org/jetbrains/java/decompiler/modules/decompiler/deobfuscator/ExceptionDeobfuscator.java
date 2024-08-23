@@ -495,8 +495,8 @@ public final class ExceptionDeobfuscator {
       for (ExceptionRangeCFG range : ranges) {
         // add some dummy instructions to prevent optimizing away the empty block
         SimpleInstructionSequence seq = new SimpleInstructionSequence();
-        seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
-        seq.addInstruction(Instruction.create(CodeConstants.opc_pop, false, CodeConstants.GROUP_GENERAL, bytecode_version, null), -1);
+        seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}, 1), -1);
+        seq.addInstruction(Instruction.create(CodeConstants.opc_pop, false, CodeConstants.GROUP_GENERAL, bytecode_version, null, 1), -1);
 
         BasicBlock dummyBlock = new BasicBlock(++graph.last_id, seq);
 

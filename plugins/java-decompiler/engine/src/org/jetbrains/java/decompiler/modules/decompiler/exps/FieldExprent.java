@@ -19,9 +19,9 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class FieldExprent extends Exprent {
   private final String name;
@@ -30,11 +30,11 @@ public class FieldExprent extends Exprent {
   private Exprent instance;
   private final FieldDescriptor descriptor;
 
-  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
+  public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
     this(cn.elementName, cn.className, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
   }
 
-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
+  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets) {
     super(EXPRENT_FIELD);
     this.name = name;
     this.classname = classname;
@@ -180,6 +180,12 @@ public class FieldExprent extends Exprent {
 
   public String getName() {
     return name;
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, instance);
+    measureBytecode(values);
   }
 
   // *****************************************************************************

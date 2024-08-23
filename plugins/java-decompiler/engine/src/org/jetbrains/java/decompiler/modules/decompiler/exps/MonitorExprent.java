@@ -7,9 +7,9 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class MonitorExprent extends Exprent {
 
@@ -19,7 +19,7 @@ public class MonitorExprent extends Exprent {
   private final int monType;
   private Exprent value;
 
-  public MonitorExprent(int monType, Exprent value, Set<Integer> bytecodeOffsets) {
+  public MonitorExprent(int monType, Exprent value, BitSet bytecodeOffsets) {
     super(EXPRENT_MONITOR);
     this.monType = monType;
     this.value = value;
@@ -73,5 +73,11 @@ public class MonitorExprent extends Exprent {
 
   public Exprent getValue() {
     return value;
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, value);
+    measureBytecode(values);
   }
 }

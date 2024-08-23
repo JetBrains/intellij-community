@@ -28,54 +28,91 @@ public class TestInnerSignature<A, B, C> {
       B b;
       C c;
 
-      public InnerStatic(A a, @Deprecated B b, C c) {
-         this.a = a;// 32
-         this.b = b;// 33
-         this.c = c;// 34
-      }// 35
+      public InnerStatic(A var1, B var2, C var3) {
+         this.a = var1;// 46
+         this.b = var2;// 47
+         this.c = var3;// 48
+      }// 49
    }
 }
 
 class 'pkg/TestInnerSignature' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      6      8
-      b      9
-      10      10
-      13      11
+      4      6
+      5      6
+      6      6
+      7      6
+      8      6
+      9      7
+      a      7
+      b      7
+      c      7
+      d      7
+      e      8
+      f      8
+      10      8
+      11      8
+      12      8
+      13      9
    }
 }
 
-class 'pkg/TestInnerSignature$Inner' {
-   method '<init> (Lpkg/TestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      b      19
-      10      20
-      16      21
-      19      22
+class 'TestInnerSignature$Inner' {
+   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      9      17
+      a      17
+      b      17
+      c      17
+      d      17
+      e      18
+      f      18
+      10      18
+      11      18
+      12      18
+      13      19
+      14      19
+      15      19
+      16      19
+      17      19
+      18      19
+      19      20
    }
 }
 
-class 'pkg/TestInnerSignature$InnerStatic' {
+class 'TestInnerSignature$InnerStatic' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      6      31
-      b      32
-      10      33
-      13      34
+      4      29
+      5      29
+      6      29
+      7      29
+      8      29
+      9      30
+      a      30
+      b      30
+      c      30
+      d      30
+      e      31
+      f      31
+      10      31
+      11      31
+      12      31
+      13      32
    }
 }
 
 Lines mapping:
-9 <-> 9
-10 <-> 10
-11 <-> 11
-12 <-> 12
-20 <-> 20
-21 <-> 21
-22 <-> 22
-23 <-> 23
-32 <-> 32
-33 <-> 33
-34 <-> 34
-35 <-> 35
+23 <-> 7
+24 <-> 8
+25 <-> 9
+26 <-> 10
+34 <-> 18
+35 <-> 19
+36 <-> 20
+37 <-> 21
+46 <-> 30
+47 <-> 31
+48 <-> 32
+49 <-> 33
 Not mapped:
 8
 19

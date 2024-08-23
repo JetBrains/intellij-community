@@ -21,7 +21,10 @@ class 'pkg/TestExtendingSubclass$Subclass1' {
 
 class 'pkg/TestExtendingSubclass$Subclass2' {
    method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+      7      10
       8      10
+      9      10
+      a      10
       b      11
    }
 }

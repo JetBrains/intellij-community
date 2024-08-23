@@ -27,58 +27,135 @@ public class TestVarArgCalls {
 
 class 'pkg/TestVarArgCalls' {
    method 'doSmth ()V' {
+      0      4
       1      4
+      2      4
       7      4
+      8      4
+      9      4
+      a      5
       b      5
+      c      5
       13      5
+      14      5
       16      5
+      17      5
+      18      5
+      19      6
       1a      6
+      1b      6
       22      6
+      23      6
       27      6
+      28      6
       2a      6
+      2b      6
+      2c      6
+      2d      7
       2e      7
+      2f      7
       34      7
+      35      7
+      36      7
+      37      8
       38      8
+      39      8
       46      8
+      47      8
       4a      8
+      4b      8
+      4c      8
+      4d      9
       4e      9
+      4f      9
       5c      9
+      5d      9
       68      9
+      69      9
       6c      9
+      6d      9
+      6e      9
       6f      10
+      70      10
       75      10
+      76      10
+      77      10
       79      11
+      7a      11
       81      11
+      82      11
       83      11
+      84      11
+      85      11
       87      11
+      88      11
+      89      11
       8b      12
+      8c      12
       93      12
+      94      12
       95      12
+      96      12
+      97      12
       9b      12
+      9c      12
       9e      12
+      9f      12
+      a0      12
       a8      13
+      a9      13
       ab      13
       ac      14
+      ad      14
+      b4      14
       b6      14
+      b7      14
+      b8      14
       ba      15
+      bb      15
+      bc      15
       bd      15
+      be      15
+      bf      15
       c0      15
+      c1      15
+      c2      15
       c4      16
    }
 
    method 'printAll (Ljava/lang/String;[Ljava/lang/String;)V' {
       0      19
+      1      19
+      2      19
+      3      19
+      4      19
       5      19
+      6      19
+      7      19
       8      19
+      9      19
+      a      19
       b      19
+      c      19
+      d      19
       e      20
    }
 
    method 'printComplex (Ljava/lang/String;[[Ljava/lang/String;)V' {
       0      23
+      1      23
+      2      23
+      3      23
+      4      23
       5      23
+      6      23
+      7      23
       8      23
+      9      23
+      a      23
       b      23
+      c      23
+      d      23
       e      24
    }
 }

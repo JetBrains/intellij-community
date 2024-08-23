@@ -50,13 +50,20 @@ class 'pkg/TestEnum' {
 
    method '<init> (Ljava/lang/String;I)V' {
       3      20
+      4      20
       5      20
       6      20
+      7      20
+      8      20
       9      21
    }
 
    method '<init> (Ljava/lang/String;ILjava/lang/String;Lpkg/TestEnum$Type;)V' {
+      6      24
+      7      24
       8      24
+      9      24
+      a      24
       b      25
    }
 }
