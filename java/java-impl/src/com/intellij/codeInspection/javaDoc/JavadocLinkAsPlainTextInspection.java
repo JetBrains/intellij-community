@@ -27,6 +27,8 @@ public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool 
   private static final Pattern END_TAG = Pattern.compile("^.*</\\w+>", Pattern.DOTALL);
   private static final Pattern TAG_BEFORE_ATTRIBUTE = Pattern.compile("<\\w+\\s.*\\w+\\s*=\\s*[\"']?\\s*$", Pattern.DOTALL);
   private static final Pattern TAG_AFTER_ATTRIBUTE = Pattern.compile("^\\s*[\"']?.*>", Pattern.DOTALL);
+  private static final Pattern TAG_MARKDOWN_BEFORE_ATTRIBUTE = Pattern.compile("]\\(\\s*", Pattern.DOTALL);
+  private static final Pattern TAG_MARKDOWN_AFTER_ATTRIBUTE = Pattern.compile("\\s*\\)", Pattern.DOTALL);
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -54,9 +56,10 @@ public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool 
           }
           String prefix = commentText.substring(0, start);
           String suffix = commentText.substring(end);
-          if (isContentOfATag(prefix, suffix) || isHtmlTagAttribute(prefix, suffix)) continue;
+          if (isContentOfATag(prefix, suffix) || isHtmlTagAttribute(prefix, suffix) || isMarkdownLinkAttribute(prefix, suffix)) continue;
+
           holder.problem(comment, JavaBundle.message("inspection.javadoc.link.as.plain.text.message"))
-            .range(range).fix(new UrlToHtmlFix(comment, start, end)).register();
+            .range(range).fix(new UrlToLinkFix(comment, start, end)).register();
         }
       }
 
@@ -66,6 +69,10 @@ public final class JavadocLinkAsPlainTextInspection extends LocalInspectionTool 
 
       private static boolean isHtmlTagAttribute(String prefix, String suffix) {
         return TAG_BEFORE_ATTRIBUTE.matcher(prefix).find() && TAG_AFTER_ATTRIBUTE.matcher(suffix).find();
+      }
+
+      private static boolean isMarkdownLinkAttribute(String prefix, String suffix) {
+        return TAG_MARKDOWN_BEFORE_ATTRIBUTE.matcher(prefix).find() && TAG_MARKDOWN_AFTER_ATTRIBUTE.matcher(suffix).find();
       }
     };
   }

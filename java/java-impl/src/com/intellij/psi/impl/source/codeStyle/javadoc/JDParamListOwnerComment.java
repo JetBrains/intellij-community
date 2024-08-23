@@ -12,8 +12,8 @@ import java.util.List;
 public class JDParamListOwnerComment extends JDComment {
   protected List<TagDescription> myParamsList;
 
-  public JDParamListOwnerComment(@NotNull CommentFormatter formatter) {
-    super(formatter);
+  public JDParamListOwnerComment(@NotNull CommentFormatter formatter, boolean isMarkdown) {
+    super(formatter, isMarkdown);
   }
 
   @Override
@@ -117,7 +117,7 @@ public class JDParamListOwnerComment extends JDComment {
   private StringBuilder formatJDTagDescription(@Nullable String description,
                                                @NotNull CharSequence firstLinePrefix,
                                                @NotNull CharSequence continuationPrefix) {
-    return myFormatter.getParser().formatJDTagDescription(description, firstLinePrefix, continuationPrefix);
+    return myFormatter.getParser().formatJDTagDescription(description, firstLinePrefix, continuationPrefix, getIsMarkdown());
   }
 
   private StringBuilder formatJDTagDescription(@Nullable String description, @NotNull CharSequence prefix) {
