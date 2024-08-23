@@ -1921,6 +1921,7 @@ f:com.intellij.execution.target.value.TargetEnvironmentFunctions
 - sf:getRelativeTargetPath(java.util.function.Function,java.lang.String):java.util.function.Function
 - sf:getTargetDownloadPath(com.intellij.execution.target.TargetEnvironment$DownloadRoot):java.util.function.Function
 - sf:getTargetEnvironmentValue(com.intellij.execution.target.TargetEnvironment$LocalPortBinding):java.util.function.Function
+- sf:getTargetEnvironmentValue(com.intellij.execution.target.TargetEnvironment$TargetPortBinding):java.util.function.Function
 - sf:getTargetEnvironmentValueForLocalPath(java.nio.file.Path):java.util.function.Function
 - sf:getTargetUploadPath(com.intellij.execution.target.TargetEnvironment$UploadRoot):java.util.function.Function
 - sf:getUploadRootForLocalPath(com.intellij.execution.target.TargetEnvironmentRequest,java.lang.String):kotlin.Pair
