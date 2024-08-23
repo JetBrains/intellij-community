@@ -14,10 +14,17 @@ private val logger = getLogger<User32Ex>()
 fun User32Ex.findWindowsWithText(pid: UInt, windowName: String): List<WinDef.HWND> {
   val result = mutableListOf<WinDef.HWND>()
   findProcessWindow(pid) { hWnd ->
-    val length = GetWindowTextLength(hWnd)
-    val textArray = CharArray(length)
-    GetWindowText(hWnd, textArray, length + 1)
-    val name = String(textArray, 0, textArray.size)
+    val lengthNoTerminatingZero = GetWindowTextLength(hWnd)
+    if (lengthNoTerminatingZero == 0) { return@findProcessWindow false }
+
+    val lengthWithZero = lengthNoTerminatingZero + 1
+    val textArray = CharArray(lengthWithZero)
+    val finalTextSize = GetWindowText(hWnd, textArray, lengthWithZero)
+    if (finalTextSize == 0) {
+      return@findProcessWindow false
+    }
+
+    val name = String(textArray, 0, finalTextSize)
     if (name.contains(windowName))
       result.add(hWnd)
     false
