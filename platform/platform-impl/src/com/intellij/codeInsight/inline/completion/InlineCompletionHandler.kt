@@ -47,6 +47,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
@@ -370,11 +372,17 @@ class InlineCompletionHandler(
       // We do not need one big readAction: it's enough to have them synced at this moment
       return
     }
-    coroutineToIndicator {
-      // documentManager.commitAllDocuments/commitDocument takes too much EDT and non-cancellable: performance tests fail
-      // constrainedReadAction takes too much time to finish (because no explicit call of 'commit')
-      // This method is the best choice I've found: cancellable, doesn't occupy EDT, fast
-      documentManager.commitAndRunReadAction { }
+
+    suspendCancellableCoroutine { continuation ->
+      application.invokeLater {
+        if (project.isDisposed) {
+          continuation.resumeWithException(CancellationException())
+        } else {
+          documentManager.performWhenAllCommitted {
+            continuation.resume(Unit)
+          }
+        }
+      }
     }
   }
 
