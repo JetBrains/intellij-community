@@ -61,7 +61,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     buildProjectArtifacts(
       platform = distState.platform,
       enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish, context = context),
-      compilationTasks = compilationTasks,
       context = context,
     )
     val searchableOptionSet = buildSearchableOptions(context)
@@ -88,7 +87,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    buildDistribution(state = compileModulesForDistribution(context), context = context, isUpdateFromSources = true)
+    buildDistribution(state = compileAllModulesAndCreateDistributionState(context), context = context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -343,30 +342,9 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
   )
 }
 
-internal fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
-  val result = LinkedHashSet<String>()
-  collectModulesToCompile(result = result, context = context)
-  context.proprietaryBuildTools.scrambleTool?.let {
-    result.addAll(it.additionalModulesToCompile)
-  }
-
-  val productProperties = context.productProperties
-  result.add(productProperties.applicationInfoModule)
-
-  val mavenArtifacts = productProperties.mavenArtifacts
-  result.addAll(mavenArtifacts.additionalModules)
-  result.addAll(mavenArtifacts.squashedModules)
-  result.addAll(mavenArtifacts.proprietaryModules)
-
-  result.addAll(productProperties.modulesToCompileTests)
-  result.add("intellij.tools.launcherGenerator")
-  return result
-}
-
-private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  val compilationTasks = CompilationTasks.create(context)
-  val moduleNames = collectModulesToCompileForDistribution(context)
-  compilationTasks.compileModules(moduleNames)
+private suspend fun compileAllModulesAndCreateDistributionState(context: BuildContext): DistributionBuilderState {
+  // compile all
+  CompilationTasks.create(context).compileModules(null)
 
   val productLayout = context.productProperties.productLayout
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
@@ -376,25 +354,26 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
 
-  return context.executeStep(spanBuilder("collecting compatible plugins"), BuildOptions.PROVIDED_MODULES_LIST_STEP) {
-    if (!context.shouldBuildDistributions()) {
-      it.addEvent("skipped, no need to build distributions")
-      return@executeStep null
-    }
+  if (!context.shouldBuildDistributions() || context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+    return distributionState(
+      pluginsToPublish = pluginsToPublish,
+      projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
+      enabledPluginModules = enabledPluginModules,
+      context = context,
+    )
+  }
 
+  return spanBuilder("collecting compatible plugins").use {
     val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
     val platform = createPlatformLayout(context = context)
-    val moduleNames = getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish)
-    compilationTasks.compileModules(moduleNames)
-
-    val builtinModuleData = spanBuilder("build provided module list").useWithScope {
+    val builtinModuleData = spanBuilder("build provided module list").use {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
       context.createProductRunner().runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {
-        val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
+        val builtinModuleData = readBuiltinModulesFile(providedModuleFile)
         context.builtinModule = builtinModuleData
         builtinModuleData
       }
@@ -402,46 +381,45 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
         throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn't exist")
       }
     }
-
-    context.notifyArtifactBuilt(artifactPath = providedModuleFile)
-    if (!productLayout.buildAllCompatiblePlugins) {
-      val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-      buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
-      distState
-    }
-    else {
+    context.notifyArtifactBuilt(providedModuleFile)
+    if (productLayout.buildAllCompatiblePlugins) {
       collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, result = pluginsToPublish, context = context)
       filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
-        // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
-      val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
-      distributionState(context, pluginsToPublish, projectLibrariesUsedByPlugins, enabledPluginModules)
+      // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
+      distributionState(
+        pluginsToPublish = pluginsToPublish,
+        projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
+        enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context),
+        context = context,
+      )
     }
-  } ?: distributionState(context, pluginsToPublish, projectLibrariesUsedByPlugins, enabledPluginModules)
+    else {
+      buildProjectArtifacts(platform = platform, enabledPluginModules = enabledPluginModules, context = context)
+      DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
+    }
+  }
 }
 
 private suspend fun distributionState(
-  context: BuildContext,
   pluginsToPublish: Set<PluginLayout>,
   projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
   enabledPluginModules: Set<String>,
+  context: BuildContext,
 ): DistributionBuilderState {
   val platform = createPlatformLayout(projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-  val moduleNames = distState.getModulesForPluginsToPublish()
-  val compilationTasks = CompilationTasks.create(context)
-  compilationTasks.compileModules(moduleNames)
-  buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
+  buildProjectArtifacts(platform = platform, enabledPluginModules = enabledPluginModules, context = context)
   return distState
 }
 
-private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPluginModules: Set<String>, compilationTasks: CompilationTasks, context: BuildContext) {
+private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPluginModules: Set<String>, context: BuildContext) {
   val artifactNames = LinkedHashSet<String>()
   artifactNames.addAll(platform.includedArtifacts.keys)
   getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
     .flatMapTo(artifactNames) { it.includedArtifacts.keys }
 
-  compilationTasks.buildProjectArtifacts(artifactNames)
+  CompilationTasks.create(context).buildProjectArtifacts(artifactNames)
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").use {
@@ -453,7 +431,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     modules = context.productProperties.productLayout.pluginModulesToPublish,
     productLayout = context.productProperties.productLayout,
   )
-  val distributionState = compileModulesForDistribution(context)
+  val distributionState = compileAllModulesAndCreateDistributionState(context)
   logFreeDiskSpace("after compilation", context)
 
   coroutineScope {
@@ -515,8 +493,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
     val platformModules = HashSet<String>()
     if (mavenArtifacts.forIdeModules) {
       platformModules.addAll(distributionState.platformModules)
-      val productLayout = context.productProperties.productLayout
-      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = platformModules, context = context)
+      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, result = platformModules, context = context)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
@@ -568,11 +545,13 @@ private suspend fun checkProductProperties(context: BuildContextImpl) {
   properties.rootModuleForModularLoader?.let { rootModule ->
     checkModule(rootModule, "productProperties.rootModuleForModularLoader", context)
     if (properties.productLayout.bundledPluginModules.isNotEmpty()) {
-      context.messages.error("""
+      context.messages.error(
+        """
         |'${properties.javaClass.name}' uses module-based loader, so the following bundled plugins must be specified in product-modules.xml file 
         |located in '$rootModule', not via 'productLayout.bundledPluginModules' property: 
         |${properties.productLayout.bundledPluginModules.joinToString("\n")}
-        |""".trimMargin())
+        |""".trimMargin()
+      )
     }
   }
 
@@ -1065,22 +1044,6 @@ private fun crossPlatformZip(
   }
 }
 
-fun collectModulesToCompile(result: MutableSet<String>, context: BuildContext) {
-  val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = result, context = context)
-  collectPlatformModules(result)
-  result.addAll(productLayout.productApiModules)
-  result.addAll(productLayout.productImplementationModules)
-  result.addAll(getToolModules())
-  if (context.isEmbeddedJetBrainsClientEnabled) {
-    result.add(context.productProperties.embeddedJetBrainsClientMainModule!!)
-  }
-  result.addAll(context.productProperties.additionalModulesToCompile)
-  result.add("intellij.idea.community.build.tasks")
-  result.add("intellij.platform.images.build")
-  result.removeAll(productLayout.excludedModuleNames)
-}
-
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
 // This is later used by Qodana and other tools.
 // Keymaps are extracted as an XML file and also used in authoring help.
@@ -1122,20 +1085,10 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
 /**
  * @return list of all modules which output is included in the plugin's JARs
  */
-internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>, context: BuildContext) {
+internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, result: MutableSet<String>, context: BuildContext) {
   result.addAll(enabledPluginModules)
-  val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
-    enabledPluginModules
-  }
-  else {
-    enabledPluginModules.toHashSet()
-  }
-
-  for (plugin in product.pluginLayouts) {
-    if (!enabledPluginModuleSet.contains(plugin.mainModule)) {
-      continue
-    }
-
+  val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
+  for (plugin in pluginLayouts) {
     plugin.includedModules.mapTo(result) { it.moduleName }
     result.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(context.findRequiredModule(plugin.mainModule)))
   }

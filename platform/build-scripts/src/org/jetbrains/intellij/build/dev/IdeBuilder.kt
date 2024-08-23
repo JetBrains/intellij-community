@@ -291,6 +291,39 @@ private suspend fun compileIfNeeded(context: BuildContext) {
   }
 }
 
+private fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
+  val result = java.util.LinkedHashSet<String>()
+  val productLayout = context.productProperties.productLayout
+  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, result = result, context = context)
+  collectPlatformModules(to = result)
+  result.addAll(productLayout.productApiModules)
+  result.addAll(productLayout.productImplementationModules)
+  result.addAll(getToolModules())
+  if (context.isEmbeddedJetBrainsClientEnabled) {
+    result.add(context.productProperties.embeddedJetBrainsClientMainModule!!)
+  }
+  result.addAll(context.productProperties.additionalModulesToCompile)
+  result.add("intellij.idea.community.build.tasks")
+  result.add("intellij.platform.images.build")
+  result.removeAll(productLayout.excludedModuleNames)
+
+  context.proprietaryBuildTools.scrambleTool?.let {
+    result.addAll(it.additionalModulesToCompile)
+  }
+
+  val productProperties = context.productProperties
+  result.add(productProperties.applicationInfoModule)
+
+  val mavenArtifacts = productProperties.mavenArtifacts
+  result.addAll(mavenArtifacts.additionalModules)
+  result.addAll(mavenArtifacts.squashedModules)
+  result.addAll(mavenArtifacts.proprietaryModules)
+
+  result.addAll(productProperties.modulesToCompileTests)
+  result.add("intellij.tools.launcherGenerator")
+  return result
+}
+
 private suspend fun computeIdeFingerprint(
   platformDistributionEntriesDeferred: Deferred<List<DistributionFileEntry>>,
   pluginDistributionEntriesDeferred: Deferred<Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?>>,

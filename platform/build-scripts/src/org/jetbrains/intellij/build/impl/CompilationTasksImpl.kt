@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 
 internal class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
   private val compileMutex = Mutex()
@@ -36,7 +35,7 @@ internal class CompilationTasksImpl(private val context: CompilationContext) : C
 
     spanBuilder("build project artifacts")
       .setAttribute(AttributeKey.stringArrayKey("artifactNames"), java.util.List.copyOf(artifactNames))
-      .useWithScope {
+      .use {
         jps.buildArtifacts(artifactNames = artifactNames, buildIncludedModules = false)
       }
   }
