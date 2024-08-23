@@ -7,7 +7,7 @@ mod tests {
     use std::{env, fs};
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use xplat_launcher::jvm_property;
+    use xplat_launcher::{get_caches_home, jvm_property};
     use crate::utils::*;
 
     #[test]
@@ -143,10 +143,17 @@ mod tests {
 
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
-        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Dpath.macro.test="))
-            .unwrap_or_else(|| panic!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
+        let ide_home_property = jvm_property!("ide.home.macro.test", "");
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&ide_home_property))
+            .unwrap_or_else(|| panic!("'{}' is not in {:?}", ide_home_property, dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
-        assert_eq!(test.dist_root.canonicalize().unwrap(), path.canonicalize().unwrap());
+        assert_eq!(path.canonicalize().unwrap(), test.dist_root.canonicalize().unwrap());
+
+        let cache_dir_property = jvm_property!("cache.dir.macro.test", "");
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&cache_dir_property))
+            .unwrap_or_else(|| panic!("'{}' is not in {:?}", cache_dir_property, dump.vmOptions));
+        let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
+        assert!(path.starts_with(get_caches_home().unwrap()), "Suspicious {path:?}");
     }
 
     #[test]

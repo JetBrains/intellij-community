@@ -343,6 +343,11 @@ pub fn get_config_home() -> Result<PathBuf> {
 }
 
 #[cfg(target_os = "windows")]
+pub fn get_caches_home() -> Result<PathBuf> {
+    get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")
+}
+
+#[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
     let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, Foundation::HANDLE::default()) }?;
@@ -356,9 +361,19 @@ pub fn get_config_home() -> Result<PathBuf> {
     Ok(get_user_home()?.join("Library/Application Support"))
 }
 
+#[cfg(target_os = "macos")]
+pub fn get_caches_home() -> Result<PathBuf> {
+    Ok(get_user_home()?.join("Library/Caches"))
+}
+
 #[cfg(target_os = "linux")]
 pub fn get_config_home() -> Result<PathBuf> {
     get_xdg_dir("XDG_CONFIG_HOME", ".config")
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_caches_home() -> Result<PathBuf> {
+    get_xdg_dir("XDG_CACHE_HOME", ".cache")
 }
 
 #[cfg(target_os = "linux")]
