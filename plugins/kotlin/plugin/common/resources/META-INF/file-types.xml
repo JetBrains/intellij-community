@@ -20,8 +20,6 @@
               implementationClass="org.jetbrains.kotlin.idea.KotlinFileType"/>
     <fileType name="KNM" fieldName="INSTANCE" extensions="knm"
               implementationClass="org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType"/>
-    <fileType name="KLIB manifest" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.KlibManifestFileType"/>
     <fileType name="KJSM" fieldName="INSTANCE" extensions="kjsm"
               implementationClass="org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileType"/>
     <fileType name="kotlin_builtins" fieldName="INSTANCE" extensions="kotlin_builtins;kotlin_metadata"
