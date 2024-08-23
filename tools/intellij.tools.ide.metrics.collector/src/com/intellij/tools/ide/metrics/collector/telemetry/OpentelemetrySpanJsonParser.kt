@@ -5,7 +5,7 @@ package com.intellij.tools.ide.metrics.collector.telemetry
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import it.unimi.dsi.fastutil.objects.Object2ObjectFunction
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -133,12 +133,12 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
     return jsonData
   }
 
-  private fun getParentToSpanMap(spans: List<SpanData>): Object2ObjectLinkedOpenHashMap<String, MutableSet<SpanData>> {
-    val indexParentToChild = Object2ObjectLinkedOpenHashMap<String, MutableSet<SpanData>>()
+  private fun getParentToSpanMap(spans: List<SpanData>): Object2ObjectOpenHashMap<String, ArrayList<SpanData>> {
+    val indexParentToChild = Object2ObjectOpenHashMap<String, ArrayList<SpanData>>()
     for (span in spans) {
       val parentSpanId = span.getParentSpanId()
       if (parentSpanId != null) {
-        indexParentToChild.computeIfAbsent(parentSpanId, Object2ObjectFunction { ObjectLinkedOpenHashSet() }).add(span)
+        indexParentToChild.computeIfAbsent(parentSpanId, Object2ObjectFunction { ArrayList(5) }).add(span)
       }
     }
     return indexParentToChild
