@@ -2,10 +2,8 @@
 
 package com.intellij.tools.ide.metrics.collector.telemetry
 
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -52,7 +50,6 @@ internal fun toSpanElement(span: SpanData): SpanElement {
   )
 }
 
-private val cache = ConcurrentHashMap<String, String>()
 
 /**
  * OT has a very verbose format with a lot of string duplication.
@@ -69,7 +66,71 @@ private class CachedStringSerializer : KSerializer<String> {
 
   override fun deserialize(decoder: Decoder): String {
     val deserialized = delegate.deserialize(decoder)
-    return cache.computeIfAbsent(deserialized) { it }
+    return OpenTelemetryDeserializerCache.stringCache.getOrPut(deserialized) { deserialized }
+  }
+}
+
+private object CachedTagListSerializer : KSerializer<List<SpanTag>> by createCachedListSerializer(
+  listCache = OpenTelemetryDeserializerCache.tagListCache,
+  elementCache = OpenTelemetryDeserializerCache.tagCache
+)
+
+private object CachedReferencesListSerializer : KSerializer<List<SpanRef>> by createCachedListSerializer(
+  listCache = OpenTelemetryDeserializerCache.referencesListCache,
+  elementCache = OpenTelemetryDeserializerCache.referencesCache
+)
+
+private inline fun <reified T : Any> createCachedListSerializer(
+  listCache: MutableMap<List<T>, List<T>>,
+  elementCache: MutableMap<T, T>
+): KSerializer<List<T>> {
+  return object : KSerializer<List<T>> {
+    private val elementSerializer = CachedElementSerializer(serializer(), elementCache)
+    private val delegate = ListSerializer(elementSerializer)
+
+    override val descriptor: SerialDescriptor = delegate.descriptor
+
+    override fun serialize(encoder: Encoder, value: List<T>) {
+      delegate.serialize(encoder, value)
+    }
+
+    override fun deserialize(decoder: Decoder): List<T> {
+      val deserialized = delegate.deserialize(decoder)
+      return listCache.getOrPut(deserialized) { deserialized }
+    }
+  }
+}
+
+private class CachedElementSerializer<T : Any>(
+  private val serializer: KSerializer<T>,
+  private val cache: MutableMap<T, T>
+) : KSerializer<T> {
+
+  override val descriptor: SerialDescriptor = serializer.descriptor
+
+  override fun serialize(encoder: Encoder, value: T) {
+    serializer.serialize(encoder, value)
+  }
+
+  override fun deserialize(decoder: Decoder): T {
+    val deserialized = serializer.deserialize(decoder)
+    return cache.getOrPut(deserialized) { deserialized }
+  }
+}
+
+internal object OpenTelemetryDeserializerCache {
+  val stringCache = ConcurrentHashMap<String, String>()
+  val tagListCache = ConcurrentHashMap<List<SpanTag>, List<SpanTag>>()
+  val tagCache = ConcurrentHashMap<SpanTag, SpanTag>()
+  val referencesListCache = ConcurrentHashMap<List<SpanRef>, List<SpanRef>>()
+  val referencesCache = ConcurrentHashMap<SpanRef, SpanRef>()
+
+  fun clearCaches() {
+    stringCache.clear()
+    tagListCache.clear()
+    referencesListCache.clear()
+    tagCache.clear()
+    referencesCache.clear()
   }
 }
 
@@ -85,8 +146,8 @@ data class SpanData(
   @JsonNames("startTime")
   @Contextual val startTimeNano: Instant,
 
-  @JvmField val references: List<SpanRef> = emptyList(),
-  @JvmField val tags: List<SpanTag> = emptyList(),
+  @JvmField @Serializable(with = CachedReferencesListSerializer::class) val references: List<SpanRef> = emptyList(),
+  @JvmField @Serializable(with = CachedTagListSerializer::class) val tags: List<SpanTag> = emptyList(),
 )
 
 @Serializable

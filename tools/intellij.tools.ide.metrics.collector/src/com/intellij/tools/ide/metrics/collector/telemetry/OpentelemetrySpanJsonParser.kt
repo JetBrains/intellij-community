@@ -80,7 +80,7 @@ private data class OpentelemetryJsonData(
 
 open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
   fun getSpanElements(file: Path, spanElementFilter: (SpanElement) -> Boolean = { true }): Set<SpanElement> {
-    var jsonData = getSpans(file, jsonSerializerNanoseconds)
+    val jsonData = getSpans(file, jsonSerializerNanoseconds)
 
     val spans = jsonData.data.single().spans
     val index = getParentToSpanMap(spans)
@@ -90,6 +90,7 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
       result.add(span)
       processChild(result, span, index)
     }
+    OpenTelemetryDeserializerCache.clearCaches()
     return result
   }
 
