@@ -86,15 +86,14 @@ internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesO
     for (buildTargetId in classesBuildTargetIds) {
       val buildTargetState = classesBuildTargetMap.getValue(buildTargetId)
       val outputPath = buildTargetState.relativePath.replace(IDENTIFIER, root.toString())
-      compilationOutputs.add(CompilationOutput(buildTargetId, classesBuildTargetType.typeId, buildTargetState.hash, outputPath))
+      compilationOutputs.add(CompilationOutput(name = buildTargetId, type = classesBuildTargetType.typeId, hash = buildTargetState.hash, path = outputPath))
     }
 
     resourcesBuildTargetIds.removeAll(bothClassesAndResourcesBuildTargetIds)
     for (buildTargetId in resourcesBuildTargetIds) {
       val buildTargetState = resourcesBuildTargetMap.getValue(buildTargetId)
       val outputPath = buildTargetState.relativePath.replace(IDENTIFIER, root.toString())
-
-      compilationOutputs.add(CompilationOutput(buildTargetId, resourcesBuildTargetType.typeId, buildTargetState.hash, outputPath))
+      compilationOutputs.add(CompilationOutput(name = buildTargetId, type = resourcesBuildTargetType.typeId, hash = buildTargetState.hash, path = outputPath))
     }
 
     return compilationOutputs

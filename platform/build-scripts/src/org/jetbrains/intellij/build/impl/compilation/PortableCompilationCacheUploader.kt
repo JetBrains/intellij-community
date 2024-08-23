@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -62,7 +61,6 @@ internal class PortableCompilationCacheUploader(
 
     val start = System.nanoTime()
     val totalUploadedBytes = AtomicLong()
-    val currentSourcesState = sourceStateProcessor.parseSourcesStateFile()
     val uploadedOutputCount = AtomicInteger()
     withContext(Dispatchers.IO) {
       // Jps Caches upload is started first because of significant size
@@ -73,12 +71,13 @@ internal class PortableCompilationCacheUploader(
       }
 
       spanBuilder("upload compilation outputs").use {
+        val allCompilationOutputs = sourceStateProcessor.getAllCompilationOutputs(sourceStateProcessor.parseSourcesStateFile())
         uploadCompilationOutputs(
-          currentSourcesState = currentSourcesState,
           uploader = uploader,
           uploadedOutputCount = uploadedOutputCount,
-          sourcesStateProcessor = sourceStateProcessor,
+          allCompilationOutputs = allCompilationOutputs,
         )
+        messages.reportStatisticValue("Total outputs", allCompilationOutputs.size.toString())
       }
     }
 
@@ -86,8 +85,6 @@ internal class PortableCompilationCacheUploader(
     messages.reportStatisticValue("jps-cache:uploaded:count", (uploadedOutputCount.get() + 1).toString())
     messages.reportStatisticValue("jps-cache:uploaded:bytes", "$totalUploadedBytes")
 
-    val totalOutputs = (sourceStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
-    messages.reportStatisticValue("Total outputs", totalOutputs)
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
 
     uploadMetadata(sourceStateFile)
@@ -122,12 +119,11 @@ internal class PortableCompilationCacheUploader(
   }
 
   private suspend fun uploadCompilationOutputs(
-    currentSourcesState: Map<String, Map<String, BuildTargetState>>,
     uploader: Uploader,
     uploadedOutputCount: AtomicInteger,
-    sourcesStateProcessor: SourcesStateProcessor,
+    allCompilationOutputs: List<CompilationOutput>,
   ) {
-    sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEachConcurrent(uploadParallelism) { compilationOutput ->
+    allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
       spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
         val sourcePath = compilationOutput.remotePath
         val outputFolder = Path.of(compilationOutput.path)
@@ -217,7 +213,7 @@ private class Uploader(serverUrl: String, val authHeader: String) {
                 var position = 0L
                 val size = channel.size()
                 while (position < size) {
-                    position += channel.transferTo(position, size - position, sink)
+                  position += channel.transferTo(position, size - position, sink)
                 }
               }
             }
