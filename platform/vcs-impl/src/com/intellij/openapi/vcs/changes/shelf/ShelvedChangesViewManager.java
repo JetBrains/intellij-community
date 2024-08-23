@@ -13,7 +13,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -60,7 +59,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xml.util.XmlStringUtil;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -82,7 +80,7 @@ import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
@@ -727,15 +725,13 @@ public class ShelvedChangesViewManager implements Disposable {
 
       setContent(myTreeScrollPane);
       setToolbar(toolbar.getComponent());
-      updatePanelLayout();
 
       myEditorDiffPreview = new ShelveEditorDiffPreview();
       Disposer.register(this, myEditorDiffPreview);
 
-      setSplitterDiffPreview();
-      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setSplitterDiffPreview);
-
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, () -> updatePanelLayout());
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+      subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
+      updatePanelLayout();
 
       PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
       new MyDnDSupport(myProject, myTree, myTreeScrollPane).install(this);
@@ -752,12 +748,10 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void updatePanelLayout() {
-      setVertical(isCommitToolWindowShown(myProject));
-    }
+      boolean isVertical = ChangesViewContentManager.isToolWindowTabVertical(myProject, SHELF);
+      setVertical(isVertical);
 
-    private void setSplitterDiffPreview() {
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
-
+      boolean hasSplitterPreview = !isVertical;
       //noinspection DoubleNegation
       boolean needUpdatePreview = hasSplitterPreview != (mySplitterDiffPreview != null);
       if (!needUpdatePreview) return;
