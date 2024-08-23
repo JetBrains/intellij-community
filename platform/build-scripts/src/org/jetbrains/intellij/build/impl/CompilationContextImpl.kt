@@ -381,11 +381,10 @@ class CompilationContextImpl private constructor(
   private fun enableCoroutinesDump(span: Span) {
     try {
       enableCoroutineDump()
-      JBR.getJstack()?.includeInfoFrom {
-        """
-          $COROUTINE_DUMP_HEADER
-          ${dumpCoroutines()}
-        """.trimIndent()
+      JBR.getJstack()?.includeInfoFrom { """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines()}
+""" // dumpCoroutines is multiline, trimIndent won't work
       }
     }
     catch (e: NoClassDefFoundError) {

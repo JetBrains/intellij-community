@@ -120,11 +120,10 @@ fun loadApp(setupEventQueue: Runnable) {
   // if BB in classpath
   enableCoroutineDump()
   CoroutineDumpState.install()
-  JBR.getJstack()?.includeInfoFrom {
-    """
-    $COROUTINE_DUMP_HEADER
-    ${dumpCoroutines(stripDump = false)}
-    """.trimIndent()
+  JBR.getJstack()?.includeInfoFrom { """
+$COROUTINE_DUMP_HEADER
+${dumpCoroutines(stripDump = false)}
+""" // dumpCoroutines is multiline, trimIndent won't work
   }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
