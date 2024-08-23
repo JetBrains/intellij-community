@@ -1460,7 +1460,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                     from typing_extensions import TypeIs
                     
-                    def <warning descr="User-defined type guard and type is functions must have at least one parameter">foo</warning>() -> TypeIs[float]:
+                    def <warning descr="User-defined TypeGuard or TypeIs functions must have at least one parameter">foo</warning>() -> TypeIs[float]:
                       ...
                     """);
   }
