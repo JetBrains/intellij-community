@@ -205,6 +205,6 @@ sealed class NewCondaEnvRequest {
     }
     override val envName: String get() = lazyName.value
 
-    override val createEnvArguments: Array<String> = arrayOf("env", "create", "--force", "-f", environmentYaml.toFile().path)
+    override val createEnvArguments: Array<String> = arrayOf("env", "create", "-y", "-f", environmentYaml.toFile().path)
   }
 }
