@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -75,8 +74,7 @@ open class IdeErrorsDialog internal constructor(
   @Suppress("KotlinConstantConditions")
   private val myAssigneeVisible: Boolean =
     false && // disabling the Assignee field for now (the corresponding endpoint is no longer available) todo [r.sh]
-    PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID)) &&
-    Registry.`is`("ea.enable.developers.list", true)
+    PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
   private var myIndex: Int
