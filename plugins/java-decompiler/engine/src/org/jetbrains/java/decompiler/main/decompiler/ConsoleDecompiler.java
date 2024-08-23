@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.CancellationManager;
@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -198,7 +199,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       ZipOutputStream zipStream = new ZipOutputStream(fileStream);
       if (manifest != null) {
         final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
-        manifestEntry.setTime(STABLE_ZIP_TIMESTAMP);
+        Instant now = Instant.now();
+        manifestEntry.setTime(now.toEpochMilli());
         zipStream.putNextEntry(manifestEntry);
         manifest.write(zipStream);
         zipStream.closeEntry();
@@ -252,7 +254,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     try {
       ZipOutputStream out = mapArchiveStreams.get(file);
       ZipEntry entry = new ZipEntry(entryName);
-      entry.setTime(STABLE_ZIP_TIMESTAMP);
+      Instant now = Instant.now();
+      entry.setTime(now.toEpochMilli());
       out.putNextEntry(entry);
       if (content != null) {
         out.write(content.getBytes(StandardCharsets.UTF_8));

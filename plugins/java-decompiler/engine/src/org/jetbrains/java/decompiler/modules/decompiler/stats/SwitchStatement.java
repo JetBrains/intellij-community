@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -53,12 +53,7 @@ public final class SwitchStatement extends Statement {
 
     //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
     List<Statement> sorted = new ArrayList<>(regularSuccessors);
-    Collections.sort(sorted, new Comparator<Statement>() {
-      @Override
-      public int compare(Statement o1, Statement o2) {
-        return o1.id - o2.id;
-      }
-    });
+    Collections.sort(sorted, Comparator.comparingInt(o -> o.id));
     for (Statement successor : sorted) {
       stats.addWithKey(successor, successor.id);
     }

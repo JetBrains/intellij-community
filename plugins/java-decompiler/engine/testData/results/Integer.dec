@@ -208,15 +208,15 @@ public final class Integer extends Number implements Comparable<Integer> {
             char var3 = var0.charAt(0);// 669
             if (var3 == '-') {// 670
                throw new NumberFormatException(String.format("Illegal leading minus sign on unsigned string %s.", var0));// 671 672
-            } else if (var2 <= 5 || var1 == 10 && var2 <= 9) {// 675
-               return parseInt(var0, var1);// 677
-            } else {
+            } else if (var2 > 5 && (var1 != 10 || var2 > 9)) {// 675
                long var4 = Long.parseLong(var0, var1);// 679
                if ((var4 & -4294967296L) == 0L) {// 680
                   return (int)var4;// 681
                } else {
                   throw new NumberFormatException(String.format("String value %s exceeds range of unsigned int.", var0));// 683 684
                }
+            } else {
+               return parseInt(var0, var1);// 677
             }
          } else {
             throw NumberFormatException.forInputString(var0);// 690
@@ -840,20 +840,20 @@ class 'java/lang/Integer' {
       40      210
       44      210
       46      210
-      4b      211
-      4e      211
-      51      213
-      54      213
-      58      214
-      5b      214
-      5c      214
-      5d      214
-      5e      214
-      63      215
-      64      215
-      69      217
-      73      217
-      79      217
+      4b      218
+      4e      218
+      51      211
+      54      211
+      58      212
+      5b      212
+      5c      212
+      5d      212
+      5e      212
+      63      213
+      64      213
+      69      215
+      73      215
+      79      215
       7b      221
       7e      221
    }
@@ -1509,12 +1509,12 @@ Lines mapping:
 671 <-> 210
 672 <-> 210
 675 <-> 211
-677 <-> 212
-679 <-> 214
-680 <-> 215
-681 <-> 216
-683 <-> 218
-684 <-> 218
+677 <-> 219
+679 <-> 212
+680 <-> 213
+681 <-> 214
+683 <-> 216
+684 <-> 216
 690 <-> 222
 711 <-> 228
 740 <-> 232

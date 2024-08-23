@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -128,17 +126,12 @@ public class Exprent implements IMatchable {
       List<Exprent> ret = new ArrayList<>();
       List<VarExprent> defs = new ArrayList<>();
 
-      Comparator<VarExprent> comp = new Comparator<>() {
-        @Override
-        public int compare(VarExprent o1, VarExprent o2) {
-          return o1.getIndex() - o2.getIndex();
-        }
-      };
+      Comparator<VarExprent> comp = Comparator.comparingInt(VarExprent::getIndex);
 
       for (Exprent exp : lst) {
         boolean isDef = exp instanceof VarExprent && ((VarExprent)exp).isDefinition();
         if (!isDef) {
-          if (defs.size() > 0) {
+          if (!defs.isEmpty()) {
             Collections.sort(defs, comp);
             ret.addAll(defs);
             defs.clear();
@@ -150,7 +143,7 @@ public class Exprent implements IMatchable {
         }
       }
 
-      if (defs.size() > 0) {
+      if (!defs.isEmpty()) {
         Collections.sort(defs, comp);
         ret.addAll(defs);
       }

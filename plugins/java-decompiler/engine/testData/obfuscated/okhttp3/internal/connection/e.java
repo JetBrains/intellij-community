@@ -314,8 +314,8 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
          if (var2 != null) {
             return var2.M(System.nanoTime());
          } else if (var1) {
-            boolean var10001;
             int var3;
+            boolean var10001;
             try {
                var3 = this.y.getSoTimeout();
             } catch (SocketTimeoutException var21) {
@@ -436,103 +436,102 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
 
          Throwable var10000;
          boolean var10001;
-         label870: {
-            label876: {
-               ErrorCode var94;
-               label877: {
-                  label867: {
-                     int var3;
+         label874: {
+            label873: {
+               int var3;
+               label880: {
+                  ErrorCode var94;
+                  label881: {
                      try {
-                        if (!(var1 instanceof StreamResetException)) {
-                           break label867;
-                        }
+                        if (var1 instanceof StreamResetException) {
+                           var94 = ((StreamResetException)var1).errorCode;
+                           if (var94 != ErrorCode.REFUSED_STREAM) {
+                              break label881;
+                           }
 
-                        var94 = ((StreamResetException)var1).errorCode;
-                        if (var94 != ErrorCode.REFUSED_STREAM) {
-                           break label877;
+                           var3 = this.E + 1;
+                           this.E = var3;
+                           break label880;
                         }
-
-                        var3 = this.E + 1;
-                        this.E = var3;
                      } catch (Throwable var93) {
                         var10000 = var93;
                         var10001 = false;
-                        break label870;
+                        break label874;
                      }
 
-                     if (var3 > 1) {
+                     try {
+                        if (this.t() && !(var1 instanceof ConnectionShutdownException)) {
+                           break label873;
+                        }
+                     } catch (Throwable var92) {
+                        var10000 = var92;
+                        var10001 = false;
+                        break label874;
+                     }
+
+                     try {
+                        this.c = true;
+                        if (this.e != 0) {
+                           break label873;
+                        }
+                     } catch (Throwable var91) {
+                        var10000 = var91;
+                        var10001 = false;
+                        break label874;
+                     }
+
+                     if (var1 != null) {
                         try {
-                           this.c = true;
-                           ++this.d;
-                        } catch (Throwable var89) {
-                           var10000 = var89;
+                           this.b.k(this.w, var1);
+                        } catch (Throwable var88) {
+                           var10000 = var88;
                            var10001 = false;
-                           break label870;
+                           break label874;
                         }
                      }
-                     break label876;
-                  }
 
-                  try {
-                     if (this.t() && !(var1 instanceof ConnectionShutdownException)) {
-                        break label876;
-                     }
-                  } catch (Throwable var92) {
-                     var10000 = var92;
-                     var10001 = false;
-                     break label870;
-                  }
-
-                  try {
-                     this.c = true;
-                     if (this.e != 0) {
-                        break label876;
-                     }
-                  } catch (Throwable var91) {
-                     var10000 = var91;
-                     var10001 = false;
-                     break label870;
-                  }
-
-                  if (var1 != null) {
                      try {
-                        this.b.k(this.w, var1);
-                     } catch (Throwable var88) {
-                        var10000 = var88;
+                        ++this.d;
+                        break label873;
+                     } catch (Throwable var87) {
+                        var10000 = var87;
                         var10001 = false;
-                        break label870;
+                        break label874;
                      }
                   }
 
                   try {
-                     ++this.d;
-                     break label876;
-                  } catch (Throwable var87) {
-                     var10000 = var87;
+                     if (var94 != ErrorCode.CANCEL) {
+                        this.c = true;
+                        ++this.d;
+                     }
+                     break label873;
+                  } catch (Throwable var90) {
+                     var10000 = var90;
                      var10001 = false;
-                     break label870;
+                     break label874;
                   }
                }
 
-               try {
-                  if (var94 != ErrorCode.CANCEL) {
+               if (var3 > 1) {
+                  try {
                      this.c = true;
                      ++this.d;
+                  } catch (Throwable var89) {
+                     var10000 = var89;
+                     var10001 = false;
+                     break label874;
                   }
-               } catch (Throwable var90) {
-                  var10000 = var90;
-                  var10001 = false;
-                  break label870;
                }
             }
 
-            label836:
+            label839:
             try {
                return;
             } catch (Throwable var86) {
                var10000 = var86;
                var10001 = false;
-               break label836;
+               break label839;
             }
          }
 

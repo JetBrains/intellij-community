@@ -201,6 +201,16 @@ public class TestSwitchNestedDeconstructionsJavac {
 
    }
 
+   static record R1(Object o) {
+      R1(Object o) {
+         this.o = o;
+      }
+
+      public Object o() {
+         return this.o;// 8
+      }
+   }
+
    static record R2(Object o, Object o2) {
       R2(Object o, Object o2) {
          this.o = o;
@@ -213,16 +223,6 @@ public class TestSwitchNestedDeconstructionsJavac {
 
       public Object o2() {
          return this.o2;// 183
-      }
-   }
-
-   static record R1(Object o) {
-      R1(Object o) {
-         this.o = o;
-      }
-
-      public Object o() {
-         return this.o;// 8
       }
    }
 }
@@ -472,31 +472,31 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
    }
 }
 
-class 'pkg/TestSwitchNestedDeconstructionsJavac$R2' {
-   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+class 'pkg/TestSwitchNestedDeconstructionsJavac$R1' {
+   method '<init> (Ljava/lang/Object;)V' {
       6      205
-      b      206
-      e      207
+      9      206
    }
 
    method 'o ()Ljava/lang/Object;' {
-      1      210
-      4      210
-   }
-
-   method 'o2 ()Ljava/lang/Object;' {
-      1      214
-      4      214
+      1      209
+      4      209
    }
 }
 
-class 'pkg/TestSwitchNestedDeconstructionsJavac$R1' {
-   method '<init> (Ljava/lang/Object;)V' {
-      6      220
-      9      221
+class 'pkg/TestSwitchNestedDeconstructionsJavac$R2' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      215
+      b      216
+      e      217
    }
 
    method 'o ()Ljava/lang/Object;' {
+      1      220
+      4      220
+   }
+
+   method 'o2 ()Ljava/lang/Object;' {
       1      224
       4      224
    }
@@ -504,7 +504,7 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac$R1' {
 
 Lines mapping:
 6 <-> 5
-8 <-> 225
+8 <-> 210
 14 <-> 8
 15 <-> 9
 16 <-> 10
@@ -597,7 +597,7 @@ Lines mapping:
 175 <-> 194
 177 <-> 197
 180 <-> 192
-183 <-> 215
+183 <-> 225
 Not mapped:
 35
 46

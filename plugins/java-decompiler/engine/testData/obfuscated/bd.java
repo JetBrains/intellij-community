@@ -3320,10 +3320,10 @@ public class bd {
       char[] var10001 = var6;
       int var7 = var10002;
 
-      char var15;
+      char var14;
       byte var16;
       for(var2 = 0; var7 > var2; ++var2) {
-         var15 = var10001[var2];
+         var14 = var10001[var2];
          switch (var2 % 5) {
             case 0:
                var16 = 40;
@@ -3341,7 +3341,7 @@ public class bd {
                var16 = 49;
          }
 
-         var10001[var2] = (char)(var15 ^ var16);
+         var10001[var2] = (char)(var14 ^ var16);
       }
 
       a = (new String(var10001)).intern();
@@ -3351,7 +3351,7 @@ public class bd {
       var7 = var10002;
 
       for(var2 = 0; var7 > var2; ++var2) {
-         var15 = var10001[var2];
+         var14 = var10001[var2];
          switch (var2 % 5) {
             case 0:
                var16 = 40;
@@ -3369,29 +3369,29 @@ public class bd {
                var16 = 49;
          }
 
-         var10001[var2] = (char)(var15 ^ var16);
+         var10001[var2] = (char)(var14 ^ var16);
       }
 
       j = (new String(var10001)).intern();
       f = "\b";
 
       label2227: {
-         String var10;
-         boolean var11;
+         String var8;
+         boolean var10;
          try {
-            var10 = "Bf7\u0016\u001f[b\"\u0002CAs8Y|Mt2\u0016VMC(\u0010T[s";
+            var8 = "Bf7\u0016\u001f[b\"\u0002CAs8Y|Mt2\u0016VMC(\u0010T[s";
          } catch (Exception var5) {
-            var11 = false;
+            var10 = false;
             break label2227;
          }
 
-         var6 = var10.toCharArray();
+         var6 = var8.toCharArray();
          var10002 = var6.length;
          var10001 = var6;
          var7 = var10002;
 
          for(var2 = 0; var7 > var2; ++var2) {
-            var15 = var10001[var2];
+            var14 = var10001[var2];
             switch (var2 % 5) {
                case 0:
                   var16 = 40;
@@ -3409,26 +3409,26 @@ public class bd {
                   var16 = 49;
             }
 
-            var10001[var2] = (char)(var15 ^ var16);
+            var10001[var2] = (char)(var14 ^ var16);
          }
 
-         var10 = (new String(var10001)).intern();
+         var8 = (new String(var10001)).intern();
 
          try {
-            Class.forName(var10);
-            var10 = "Bf7\u0016\u001fEf5\u001f\u001fjn&>_\\b&\u0012C";
+            Class.forName(var8);
+            var8 = "Bf7\u0016\u001fEf5\u001f\u001fjn&>_\\b&\u0012C";
          } catch (Exception var4) {
-            var11 = false;
+            var10 = false;
             break label2227;
          }
 
-         var6 = var10.toCharArray();
+         var6 = var8.toCharArray();
          var10002 = var6.length;
          var10001 = var6;
          var7 = var10002;
 
          for(var2 = 0; var7 > var2; ++var2) {
-            var15 = var10001[var2];
+            var14 = var10001[var2];
             switch (var2 % 5) {
                case 0:
                   var16 = 40;
@@ -3446,13 +3446,13 @@ public class bd {
                   var16 = 49;
             }
 
-            var10001[var2] = (char)(var15 ^ var16);
+            var10001[var2] = (char)(var14 ^ var16);
          }
 
-         var10 = (new String(var10001)).intern();
+         var8 = (new String(var10001)).intern();
 
          try {
-            Class.forName(var10);
+            Class.forName(var8);
             "".getBytes(j);
             b = MessageDigest.getInstance(a);
             c = new Hashtable();
@@ -3479,7 +3479,7 @@ public class bd {
             j(c, b);
             return;
          } catch (Exception var3) {
-            var11 = false;
+            var10 = false;
          }
       }
 

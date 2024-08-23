@@ -55,62 +55,62 @@ public class TestSwitchPatternWithExpression {
    }
 
    private static String getX4(I i) {
-      String var11;
+      String var12;
       switch (i) {// 52
          case A(String a):
-            var11 = a;
+            var12 = a;
             break;// 53
          case B(String a):
-            var11 = a;
+            var12 = a;
             break;
       }
 
-      String string = var11;// 54
+      String string = var12;// 54
       return string;// 56
    }
 
    private static void getX10(I i) {
-      String var11;
+      String var12;
       switch (i) {// 60
          case A(String a):
-            var11 = a;
+            var12 = a;
             break;// 61
          case B(String a):
-            var11 = a;
+            var12 = a;
             break;
       }
 
-      String string = var11;// 62
+      String string = var12;// 62
       System.out.println(string + "2");// 64
    }
 
    private static String getX5(I i) {
-      String var11;
+      String var12;
       switch (i) {// 68
          case A(String a):
-            var11 = a + "1";// 69
+            var12 = a + "1";// 69
             break;
          case B(String a):
-            var11 = a;
+            var12 = a;
             break;
       }
 
-      String string = var11;// 70
+      String string = var12;// 70
       return string;// 72
    }
 
    private static void getX9(I i) {
-      String var11;
+      String var12;
       switch (i) {// 76
          case A(String a):
-            var11 = a + "1";// 77
+            var12 = a + "1";// 77
             break;
          case B(String a):
-            var11 = a;
+            var12 = a;
             break;
       }
 
-      String string = var11;// 78
+      String string = var12;// 78
       System.out.println(string + "2");// 80
    }
 

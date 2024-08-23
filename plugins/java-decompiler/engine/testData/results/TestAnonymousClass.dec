@@ -67,10 +67,6 @@ public abstract class TestAnonymousClass {
       boolean var1 = true;// 39
    }// 40
 
-   interface I {
-      void foo() throws Exception;
-   }
-
    private static class Inner {
       private static Runnable R_I = new Runnable() {
          public void run() {
@@ -81,14 +77,18 @@ public abstract class TestAnonymousClass {
    }
 
    static class InnerRecursive {
-      TestAnonymousClass.InnerRecursive r;
+      InnerRecursive r;
 
-      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
+      public InnerRecursive(InnerRecursive var1) {
          this.r = var1;// 105
       }// 106
 
       void foo() {
       }// 110
+   }
+
+   interface I {
+      void foo() throws Exception;
    }
 }
 
@@ -182,22 +182,22 @@ class 'pkg/TestAnonymousClass' {
 
 class 'pkg/TestAnonymousClass$Inner$1' {
    method 'run ()V' {
-      0      76
-      1      76
-      2      77
-      3      77
-      4      78
+      0      72
+      1      72
+      2      73
+      3      73
+      4      74
    }
 }
 
 class 'pkg/TestAnonymousClass$InnerRecursive' {
    method '<init> (Lpkg/TestAnonymousClass$InnerRecursive;)V' {
-      6      86
-      9      87
+      6      82
+      9      83
    }
 
    method 'foo ()V' {
-      0      90
+      0      86
    }
 }
 
@@ -223,9 +223,9 @@ Lines mapping:
 53 <-> 18
 54 <-> 19
 55 <-> 20
-66 <-> 77
-67 <-> 78
-68 <-> 79
+66 <-> 73
+67 <-> 74
+68 <-> 75
 75 <-> 24
 76 <-> 25
 77 <-> 26
@@ -234,9 +234,9 @@ Lines mapping:
 91 <-> 37
 92 <-> 38
 93 <-> 39
-105 <-> 87
-106 <-> 88
-110 <-> 91
+105 <-> 83
+106 <-> 84
+110 <-> 87
 Not mapped:
 18
 104

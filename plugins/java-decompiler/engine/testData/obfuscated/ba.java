@@ -50,12 +50,12 @@ class ba extends TimerTask {
    }
 
    static {
-      String[] var10000;
       int var1;
       int var2;
+      char[] var4;
+      String[] var10000;
       char[] var10003;
       char[] var10004;
-      char[] var4;
       int var10005;
       int var10006;
       char var10007;

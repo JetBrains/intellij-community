@@ -66,8 +66,8 @@ public class n<F, S> {
          var10000 = this.a;
       }
 
-      Object var10001;
       int var3;
+      Object var10001;
       try {
          var3 = var10000.hashCode() / 2;
          if (this.b == null) {
@@ -152,8 +152,8 @@ public class n<F, S> {
       int var1 = 0;
       char[] var10001 = var10000;
       int var2 = var10002;
-      int var10003;
       char[] var4;
+      int var10003;
       if (var10002 <= 1) {
          var4 = var10000;
          var10003 = var1;

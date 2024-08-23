@@ -13,16 +13,16 @@ class TestInnerClassConstructor {
       System.out.println("n(): " + var1);// 13
    }// 14
 
-   private class Another {
-      private Another(int var2, int var3) {
-         TestInnerClassConstructor.this.n(var2 + "+" + var3);// 24
-      }// 25
-   }
-
    final class Inner {
       private Inner(String var2) {
          TestInnerClassConstructor.this.n(var2);// 18
       }// 19
+   }
+
+   private class Another {
+      private Another(int var2, int var3) {
+         TestInnerClassConstructor.this.n(var2 + "+" + var3);// 24
+      }// 25
    }
 }
 
@@ -47,19 +47,19 @@ class 'pkg/TestInnerClassConstructor' {
    }
 }
 
-class 'pkg/TestInnerClassConstructor$Another' {
-   method '<init> (Lpkg/TestInnerClassConstructor;II)V' {
-      15      17
-      1e      17
-      21      17
-      24      18
+class 'pkg/TestInnerClassConstructor$Inner' {
+   method '<init> (Lpkg/TestInnerClassConstructor;Ljava/lang/String;)V' {
+      b      17
+      e      18
    }
 }
 
-class 'pkg/TestInnerClassConstructor$Inner' {
-   method '<init> (Lpkg/TestInnerClassConstructor;Ljava/lang/String;)V' {
-      b      23
-      e      24
+class 'pkg/TestInnerClassConstructor$Another' {
+   method '<init> (Lpkg/TestInnerClassConstructor;II)V' {
+      15      23
+      1e      23
+      21      23
+      24      24
    }
 }
 
@@ -70,10 +70,10 @@ Lines mapping:
 10 <-> 10
 13 <-> 13
 14 <-> 14
-18 <-> 24
-19 <-> 25
-24 <-> 18
-25 <-> 19
+18 <-> 18
+19 <-> 19
+24 <-> 24
+25 <-> 25
 Not mapped:
 17
 23

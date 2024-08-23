@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -246,7 +246,8 @@ public class VarVersionsProcessor {
 
     // map var-version pairs on new var indexes
     List<VarVersionPair> vvps = new ArrayList<>(mapExprentMinTypes.keySet());
-    Collections.sort(vvps, (o1, o2) -> o1.var != o2.var ?  o1.var - o2.var : o1.version - o2.version);
+    Collections.sort(vvps,
+                     Comparator.<VarVersionPair>comparingInt(pair -> pair.var).thenComparing(pair -> pair.version));
 
     for (VarVersionPair pair : vvps) {
 

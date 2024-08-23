@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -86,8 +86,6 @@ public interface IFernflowerPreferences {
     defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
     defaults.put(CONVERT_RECORD_PATTERN, "0");
     defaults.put(CONVERT_PATTERN_SWITCH, "0");
-
-    defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");

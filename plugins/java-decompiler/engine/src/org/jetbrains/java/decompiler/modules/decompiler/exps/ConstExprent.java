@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -220,6 +220,7 @@ public class ConstExprent extends Exprent {
       }
       case CodeConstants.TYPE_DOUBLE -> {
         double doubleVal = (Double)value;
+        boolean withSuffix = DecompilerContext.getOption(IFernflowerPreferences.STANDARDIZE_FLOATING_POINT_NUMBERS);
         if (!literal) {
           if (Double.isNaN(doubleVal) && !inConstantVariable(DOUBLE_SIG, NAN)) {
             yield new FieldExprent(NAN, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
@@ -247,15 +248,19 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Double.isNaN(doubleVal)) {
-          yield new TextBuffer("0.0D / 0.0D");
+          yield withSuffix ? new TextBuffer("0.0D / 0.0D") : new TextBuffer("0.0 / 0.0");
         }
         else if (doubleVal == Double.POSITIVE_INFINITY) {
-          yield new TextBuffer("1.0D / 0.0D");
+          yield withSuffix ? new TextBuffer("1.0D / 0.0D") : new TextBuffer("1.0 / 0.0") ;
         }
         else if (doubleVal == Double.NEGATIVE_INFINITY) {
-          yield new TextBuffer("-1.0D / 0.0D");
+          yield withSuffix ? new TextBuffer("-1.0D / 0.0D") : new TextBuffer("-1.0 / 0.0");
         }
-        yield new TextBuffer(trimDouble(Double.toString(doubleVal), doubleVal)).append('D');
+        TextBuffer buffer = new TextBuffer(trimDouble(Double.toString(doubleVal), doubleVal));
+        if (withSuffix) {
+          buffer = buffer.append('D');
+        }
+        yield buffer;
       }
       case CodeConstants.TYPE_NULL -> new TextBuffer("null");
       case CodeConstants.TYPE_OBJECT -> {
@@ -355,7 +360,6 @@ public class ConstExprent extends Exprent {
           return rounded;
       }
     }
-
     return value + exp;
   }
 

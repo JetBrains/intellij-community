@@ -338,13 +338,13 @@ public class o {
    }
 
    static {
-      char[] var10000;
       int var1;
+      int var2;
+      char[] var4;
+      char[] var10000;
       char[] var10001;
       int var10002;
-      int var2;
       int var10003;
-      char[] var4;
       char var10004;
       byte var10005;
       label51: {

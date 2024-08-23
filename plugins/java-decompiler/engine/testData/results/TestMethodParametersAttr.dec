@@ -26,28 +26,14 @@ public class TestMethodParametersAttr {
 
    }// 25
 
-   static enum E1 {
-      private E1(int p71) {
-         System.out.print(p71);// 44
+   class C1 {
+      C1(int p11) {
+         System.out.print(p11);
+      }// 10
+
+      void m(int p12) {
+         System.out.print(p12);// 11
       }
-   }
-
-   abstract static class C4 {
-      abstract void m1(int p61);
-
-      abstract void m2(final int p62);
-   }
-
-   abstract class C3 {
-      abstract void m1(int p51);
-
-      abstract void m2(final int p52);
-   }
-
-   interface I1 {
-      void m1(int p41);
-
-      void m2(final int p42);
    }
 
    static class C2 {
@@ -64,14 +50,28 @@ public class TestMethodParametersAttr {
       }
    }
 
-   class C1 {
-      C1(int p11) {
-         System.out.print(p11);
-      }// 10
+   abstract class C3 {
+      abstract void m1(int p51);
 
-      void m(int p12) {
-         System.out.print(p12);// 11
+      abstract void m2(final int p52);
+   }
+
+   abstract static class C4 {
+      abstract void m1(int p61);
+
+      abstract void m2(final int p62);
+   }
+
+   static enum E1 {
+      private E1(int p71) {
+         System.out.print(p71);// 44
       }
+   }
+
+   interface I1 {
+      void m1(int p41);
+
+      void m2(final int p42);
    }
 }
 
@@ -113,45 +113,45 @@ class 'pkg/TestMethodParametersAttr$1Local' {
    }
 }
 
-class 'pkg/TestMethodParametersAttr$E1' {
-   method '<init> (Ljava/lang/String;II)V' {
-      6      30
-      a      30
-      d      31
+class 'pkg/TestMethodParametersAttr$C1' {
+   method '<init> (Lpkg/TestMethodParametersAttr;I)V' {
+      9      30
+      d      30
+      10      31
+   }
+
+   method 'm (I)V' {
+      0      34
+      4      34
+      7      35
    }
 }
 
 class 'pkg/TestMethodParametersAttr$C2' {
    method '<init> (I)V' {
-      4      54
-      8      54
-      b      55
+      4      40
+      8      40
+      b      41
    }
 
    method 'm1 (I)V' {
-      0      58
-      4      58
-      7      59
+      0      44
+      4      44
+      7      45
    }
 
    method 'm2 (I)V' {
-      0      62
-      4      62
-      7      63
+      0      48
+      4      48
+      7      49
    }
 }
 
-class 'pkg/TestMethodParametersAttr$C1' {
-   method '<init> (Lpkg/TestMethodParametersAttr;I)V' {
-      9      68
-      d      68
-      10      69
-   }
-
-   method 'm (I)V' {
-      0      72
-      4      72
-      7      73
+class 'pkg/TestMethodParametersAttr$E1' {
+   method '<init> (Ljava/lang/String;II)V' {
+      6      66
+      a      66
+      d      67
    }
 }
 
@@ -159,12 +159,12 @@ Lines mapping:
 5 <-> 5
 6 <-> 9
 7 <-> 13
-10 <-> 70
-11 <-> 73
-15 <-> 55
-16 <-> 59
-17 <-> 63
+10 <-> 32
+11 <-> 35
+15 <-> 41
+16 <-> 45
+17 <-> 49
 22 <-> 20
 23 <-> 23
 25 <-> 27
-44 <-> 31
+44 <-> 67

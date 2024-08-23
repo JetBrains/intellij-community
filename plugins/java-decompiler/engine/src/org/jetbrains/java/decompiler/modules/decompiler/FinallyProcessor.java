@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -454,12 +454,7 @@ public class FinallyProcessor {
     startBlocks.remove(graph.getLast());
     startBlocks.removeAll(tryBlocks);
     List<BasicBlock> starts = new ArrayList<>(startBlocks);
-    Collections.sort(starts, new Comparator<BasicBlock>() {
-      @Override
-      public int compare(BasicBlock o1, BasicBlock o2) {
-        return o2.id - o1.id;
-      }
-    });
+    Collections.sort(starts, Comparator.comparingInt(o -> -o.id));
 
     List<Area> areas = new ArrayList<>();
     for (BasicBlock start : starts) {

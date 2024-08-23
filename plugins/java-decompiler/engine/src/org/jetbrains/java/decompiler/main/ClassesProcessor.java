@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -21,11 +21,13 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLineNumberTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
 import java.util.*;
@@ -429,7 +431,7 @@ public class ClassesProcessor {
   }
 
   private static void addClassNameToImport(ClassNode node, ImportCollector imp) {
-    if (node.simpleName != null && node.simpleName.length() > 0) {
+    if (node.simpleName != null && !node.simpleName.isEmpty()) {
       imp.getNestedName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
     }
 
@@ -520,9 +522,37 @@ public class ClassesProcessor {
 
     @Override
     public int compareTo(ClassNode o) {
-      //TODO: Take line numbers into account?
-      return this.classStruct.qualifiedName.compareTo(o.classStruct.qualifiedName);
+      int thisI = findMethodIndex(this);
+      int otherI = findMethodIndex(o);
+      if (thisI == otherI) {
+        return this.classStruct.qualifiedName.compareTo(o.classStruct.qualifiedName);
+      }
+      if (thisI == -1) {
+        return 1;
+      }
+      if (otherI == -1) {
+        return -1;
+      }
+      return Integer.compare(thisI, otherI);
     }
+
+    private static int findMethodIndex(ClassNode node) {
+      if (node == null) {
+        return -1;
+      }
+      StructClass structClass = node.classStruct;
+      if (structClass == null) return -1;
+      VBStyleCollection<StructMethod, String> methods = structClass.getMethods();
+      for (StructMethod method : methods) {
+        StructLineNumberTableAttribute table = method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+        if (table == null) continue;
+        int[] data = table.getRawData();
+        if (data != null && data.length > 0) return data[data.length - 1];
+      }
+
+      return -1;
+    }
+
 
     public ClassNode getClassNode(String qualifiedName) {
       for (ClassNode node : nested) {

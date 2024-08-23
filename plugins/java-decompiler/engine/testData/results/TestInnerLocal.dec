@@ -33,9 +33,9 @@ public class TestInnerLocal {
    class Inner1 {
       final String x;
 
-      public Inner1(String var2) {
-         this.x = var2;// 46
-      }// 47
+      public Inner1(@Deprecated String x) {
+         this.x = x;// 32
+      }// 33
    }
 
    static class Inner1Static {
@@ -86,47 +86,47 @@ class 'pkg/TestInnerLocal$2Inner' {
    }
 }
 
-class 'TestInnerLocal$Inner1' {
-   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
-      b      34
-      e      35
+class 'pkg/TestInnerLocal$Inner1' {
+   method '<init> (Lpkg/TestInnerLocal;Ljava/lang/String;)V' {
+      b      36
+      e      37
    }
 }
 
-class 'TestInnerLocal$Inner1Static' {
+class 'pkg/TestInnerLocal$Inner1Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      42
-      9      43
+      6      44
+      9      45
    }
 }
 
 class 'pkg/TestInnerLocal$Inner1Static$Inner2Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      49
-      9      50
+      6      51
+      9      52
    }
 }
 
 Lines mapping:
-22 <-> 7
-23 <-> 8
-25 <-> 11
-26 <-> 12
-27 <-> 13
-28 <-> 14
-34 <-> 21
-35 <-> 22
-37 <-> 25
-38 <-> 26
-39 <-> 27
-40 <-> 28
-41 <-> 29
-46 <-> 35
-47 <-> 36
-53 <-> 43
-54 <-> 44
-59 <-> 50
-60 <-> 51
+8 <-> 9
+9 <-> 10
+11 <-> 13
+12 <-> 14
+13 <-> 15
+14 <-> 16
+20 <-> 23
+21 <-> 24
+23 <-> 27
+24 <-> 28
+25 <-> 29
+26 <-> 30
+27 <-> 31
+32 <-> 37
+33 <-> 38
+39 <-> 45
+40 <-> 46
+45 <-> 52
+46 <-> 53
 Not mapped:
 7
 19

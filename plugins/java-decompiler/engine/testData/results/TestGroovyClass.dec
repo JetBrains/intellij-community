@@ -44,23 +44,6 @@ public class TestGroovyClass implements GroovyObject {
       return this.c;
    }
 
-   public static class Nested implements GroovyObject {
-      public Nested() {
-         CallSite[] var1 = $getCallSiteArray();
-         MetaClass var2 = this.$getStaticMetaClass();
-         this.metaClass = var2;
-      }
-   }
-
-   public class Inner implements GroovyObject {
-      public Inner() {
-         CallSite[] var2 = $getCallSiteArray();
-         super();
-         MetaClass var4 = this.$getStaticMetaClass();
-         this.metaClass = var4;
-      }
-   }
-
    public class _closure1 extends Closure implements GeneratedClosure {
       public _closure1(Object _outerInstance, Object _thisObject) {
          CallSite[] var3 = $getCallSiteArray();
@@ -92,6 +75,23 @@ public class TestGroovyClass implements GroovyObject {
       public Object doCall() {
          CallSite[] var1 = $getCallSiteArray();
          return this.doCall((Object)null);
+      }
+   }
+
+   public class Inner implements GroovyObject {
+      public Inner() {
+         CallSite[] var2 = $getCallSiteArray();
+         super();
+         MetaClass var4 = this.$getStaticMetaClass();
+         this.metaClass = var4;
+      }
+   }
+
+   public static class Nested implements GroovyObject {
+      public Nested() {
+         CallSite[] var1 = $getCallSiteArray();
+         MetaClass var2 = this.$getStaticMetaClass();
+         this.metaClass = var2;
       }
    }
 }
@@ -149,30 +149,34 @@ class 'pkg/TestGroovyClass' {
    }
 }
 
-class 'pkg/TestGroovyClass$Nested' {
-   method '<init> ()V' {
-      4      48
-      7      48
-      9      49
-      c      49
-      10      50
-      15      51
-   }
-}
-
-class 'pkg/TestGroovyClass$Inner' {
-   method '<init> (Lpkg/TestGroovyClass;)V' {
-      0      56
-      3      56
-      f      57
-      13      58
-      16      58
-      1c      59
-      22      60
-   }
-}
-
 class 'pkg/TestGroovyClass$_closure1' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      48
+      3      48
+      7      49
+      a      50
+   }
+
+   method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      53
+      3      53
+      5      54
+      7      54
+      9      54
+      b      54
+      10      54
+   }
+
+   method 'doCall ()Ljava/lang/Object;' {
+      0      58
+      3      58
+      5      59
+      6      59
+      9      59
+   }
+}
+
+class 'pkg/TestGroovyClass$_closure2' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
       0      65
       3      65
@@ -183,11 +187,8 @@ class 'pkg/TestGroovyClass$_closure1' {
    method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
       0      70
       3      70
-      5      71
-      7      71
-      9      71
-      b      71
-      10      71
+      4      71
+      6      71
    }
 
    method 'doCall ()Ljava/lang/Object;' {
@@ -199,32 +200,31 @@ class 'pkg/TestGroovyClass$_closure1' {
    }
 }
 
-class 'pkg/TestGroovyClass$_closure2' {
-   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+class 'pkg/TestGroovyClass$Inner' {
+   method '<init> (Lpkg/TestGroovyClass;)V' {
       0      82
       3      82
-      7      83
-      a      84
+      f      83
+      13      84
+      16      84
+      1c      85
+      22      86
    }
+}
 
-   method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
-      0      87
-      3      87
-      4      88
-      6      88
-   }
-
-   method 'doCall ()Ljava/lang/Object;' {
-      0      92
-      3      92
-      5      93
-      6      93
-      9      93
+class 'pkg/TestGroovyClass$Nested' {
+   method '<init> ()V' {
+      4      91
+      7      91
+      9      92
+      c      92
+      10      93
+      15      94
    }
 }
 
 Lines mapping:
 9 <-> 19
 10 <-> 23
-11 <-> 72
-12 <-> 89
+11 <-> 55
+12 <-> 72

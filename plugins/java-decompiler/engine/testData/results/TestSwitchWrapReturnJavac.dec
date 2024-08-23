@@ -18,13 +18,13 @@ class TestSwitchWrapReturnJavac {
    }
 
    sealed interface S {
-      public static record C() implements S {
+      public static record A() implements S {
       }
 
       public static record B() implements S {
       }
 
-      public static record A() implements S {
+      public static record C() implements S {
       }
    }
 }

@@ -40,7 +40,7 @@ public class a3 {
    static {
       int var1;
       int var6;
-      char[] var8;
+      char[] var9;
       String[] var10000;
       char[] var10003;
       char[] var10004;
@@ -56,7 +56,7 @@ public class a3 {
          var10004 = var10003;
          var6 = var10005;
          if (var10005 <= 1) {
-            var8 = var10003;
+            var9 = var10003;
             var10006 = var1;
          } else {
             var10004 = var10003;
@@ -65,12 +65,12 @@ public class a3 {
                break label697;
             }
 
-            var8 = var10003;
+            var9 = var10003;
             var10006 = var1;
          }
 
          while(true) {
-            var10007 = var8[var10006];
+            var10007 = var9[var10006];
             switch (var1 % 5) {
                case 0:
                   var10008 = 53;
@@ -88,17 +88,17 @@ public class a3 {
                   var10008 = 57;
             }
 
-            var8[var10006] = (char)(var10007 ^ var10008);
+            var9[var10006] = (char)(var10007 ^ var10008);
             ++var1;
             if (var6 == 0) {
                var10006 = var6;
-               var8 = var10004;
+               var9 = var10004;
             } else {
                if (var6 <= var1) {
                   break;
                }
 
-               var8 = var10004;
+               var9 = var10004;
                var10006 = var1;
             }
          }
@@ -113,12 +113,12 @@ public class a3 {
       char[] var2;
       int var3;
       char[] var5;
-      char var9;
+      char var8;
       byte var10;
       char[] var10001;
       int var10002;
       if (var10005 <= 1) {
-         var8 = var10003;
+         var9 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
          switch (var1 % 5) {
@@ -149,7 +149,7 @@ public class a3 {
                var10004 = var10003;
                var6 = var10005;
                if (var10005 <= 1) {
-                  var8 = var10003;
+                  var9 = var10003;
                   var10006 = var1;
                } else {
                   var10004 = var10003;
@@ -158,12 +158,12 @@ public class a3 {
                      break label740;
                   }
 
-                  var8 = var10003;
+                  var9 = var10003;
                   var10006 = var1;
                }
 
                while(true) {
-                  var10007 = var8[var10006];
+                  var10007 = var9[var10006];
                   switch (var1 % 5) {
                      case 0:
                         var10008 = 53;
@@ -181,17 +181,17 @@ public class a3 {
                         var10008 = 57;
                   }
 
-                  var8[var10006] = (char)(var10007 ^ var10008);
+                  var9[var10006] = (char)(var10007 ^ var10008);
                   ++var1;
                   if (var6 == 0) {
                      var10006 = var6;
-                     var8 = var10004;
+                     var9 = var10004;
                   } else {
                      if (var6 <= var1) {
                         break;
                      }
 
-                     var8 = var10004;
+                     var9 = var10004;
                      var10006 = var1;
                   }
                }
@@ -204,7 +204,7 @@ public class a3 {
             var10004 = var10003;
             var6 = var10005;
             if (var10005 <= 1) {
-               var8 = var10003;
+               var9 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
                switch (var1 % 5) {
@@ -235,7 +235,7 @@ public class a3 {
                      var10004 = var10003;
                      var6 = var10005;
                      if (var10005 <= 1) {
-                        var8 = var10003;
+                        var9 = var10003;
                         var10006 = var1;
                      } else {
                         var10004 = var10003;
@@ -244,12 +244,12 @@ public class a3 {
                            break label808;
                         }
 
-                        var8 = var10003;
+                        var9 = var10003;
                         var10006 = var1;
                      }
 
                      while(true) {
-                        var10007 = var8[var10006];
+                        var10007 = var9[var10006];
                         switch (var1 % 5) {
                            case 0:
                               var10008 = 53;
@@ -267,17 +267,17 @@ public class a3 {
                               var10008 = 57;
                         }
 
-                        var8[var10006] = (char)(var10007 ^ var10008);
+                        var9[var10006] = (char)(var10007 ^ var10008);
                         ++var1;
                         if (var6 == 0) {
                            var10006 = var6;
-                           var8 = var10004;
+                           var9 = var10004;
                         } else {
                            if (var6 <= var1) {
                               break;
                            }
 
-                           var8 = var10004;
+                           var9 = var10004;
                            var10006 = var1;
                         }
                      }
@@ -290,7 +290,7 @@ public class a3 {
                   var10004 = var10003;
                   var6 = var10005;
                   if (var10005 <= 1) {
-                     var8 = var10003;
+                     var9 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
                      switch (var1 % 5) {
@@ -321,7 +321,7 @@ public class a3 {
                            var10004 = var10003;
                            var6 = var10005;
                            if (var10005 <= 1) {
-                              var8 = var10003;
+                              var9 = var10003;
                               var10006 = var1;
                            } else {
                               var10004 = var10003;
@@ -330,12 +330,12 @@ public class a3 {
                                  break label876;
                               }
 
-                              var8 = var10003;
+                              var9 = var10003;
                               var10006 = var1;
                            }
 
                            while(true) {
-                              var10007 = var8[var10006];
+                              var10007 = var9[var10006];
                               switch (var1 % 5) {
                                  case 0:
                                     var10008 = 53;
@@ -353,17 +353,17 @@ public class a3 {
                                     var10008 = 57;
                               }
 
-                              var8[var10006] = (char)(var10007 ^ var10008);
+                              var9[var10006] = (char)(var10007 ^ var10008);
                               ++var1;
                               if (var6 == 0) {
                                  var10006 = var6;
-                                 var8 = var10004;
+                                 var9 = var10004;
                               } else {
                                  if (var6 <= var1) {
                                     break;
                                  }
 
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10006 = var1;
                               }
                            }
@@ -392,7 +392,7 @@ public class a3 {
                         }
 
                         while(true) {
-                           var9 = var5[var6];
+                           var8 = var5[var6];
                            switch (var1 % 5) {
                               case 0:
                                  var10 = 53;
@@ -410,7 +410,7 @@ public class a3 {
                                  var10 = 57;
                            }
 
-                           var5[var6] = (char)(var9 ^ var10);
+                           var5[var6] = (char)(var8 ^ var10);
                            ++var1;
                            if (var3 == 0) {
                               var6 = var3;
@@ -427,7 +427,7 @@ public class a3 {
                         }
                      }
 
-                     var8 = var10003;
+                     var9 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
                      switch (var1 % 5) {
@@ -450,11 +450,11 @@ public class a3 {
 
                   while(true) {
                      while(true) {
-                        var8[var10006] = (char)(var10007 ^ var10008);
+                        var9[var10006] = (char)(var10007 ^ var10008);
                         ++var1;
                         if (var6 == 0) {
                            var10006 = var6;
-                           var8 = var10004;
+                           var9 = var10004;
                            var10007 = var10004[var6];
                            switch (var1 % 5) {
                               case 0:
@@ -482,7 +482,7 @@ public class a3 {
                                  var10004 = var10003;
                                  var6 = var10005;
                                  if (var10005 <= 1) {
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  } else {
                                     var10004 = var10003;
@@ -491,12 +491,12 @@ public class a3 {
                                        break label984;
                                     }
 
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  }
 
                                  while(true) {
-                                    var10007 = var8[var10006];
+                                    var10007 = var9[var10006];
                                     switch (var1 % 5) {
                                        case 0:
                                           var10008 = 53;
@@ -514,17 +514,17 @@ public class a3 {
                                           var10008 = 57;
                                     }
 
-                                    var8[var10006] = (char)(var10007 ^ var10008);
+                                    var9[var10006] = (char)(var10007 ^ var10008);
                                     ++var1;
                                     if (var6 == 0) {
                                        var10006 = var6;
-                                       var8 = var10004;
+                                       var9 = var10004;
                                     } else {
                                        if (var6 <= var1) {
                                           break;
                                        }
 
-                                       var8 = var10004;
+                                       var9 = var10004;
                                        var10006 = var1;
                                     }
                                  }
@@ -553,7 +553,7 @@ public class a3 {
                               }
 
                               while(true) {
-                                 var9 = var5[var6];
+                                 var8 = var5[var6];
                                  switch (var1 % 5) {
                                     case 0:
                                        var10 = 53;
@@ -571,7 +571,7 @@ public class a3 {
                                        var10 = 57;
                                  }
 
-                                 var5[var6] = (char)(var9 ^ var10);
+                                 var5[var6] = (char)(var8 ^ var10);
                                  ++var1;
                                  if (var3 == 0) {
                                     var6 = var3;
@@ -588,7 +588,7 @@ public class a3 {
                               }
                            }
 
-                           var8 = var10004;
+                           var9 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
                            switch (var1 % 5) {
@@ -612,7 +612,7 @@ public class a3 {
                   }
                }
 
-               var8 = var10003;
+               var9 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
                switch (var1 % 5) {
@@ -635,11 +635,11 @@ public class a3 {
 
             while(true) {
                while(true) {
-                  var8[var10006] = (char)(var10007 ^ var10008);
+                  var9[var10006] = (char)(var10007 ^ var10008);
                   ++var1;
                   if (var6 == 0) {
                      var10006 = var6;
-                     var8 = var10004;
+                     var9 = var10004;
                      var10007 = var10004[var6];
                      switch (var1 % 5) {
                         case 0:
@@ -667,7 +667,7 @@ public class a3 {
                            var10004 = var10003;
                            var6 = var10005;
                            if (var10005 <= 1) {
-                              var8 = var10003;
+                              var9 = var10003;
                               var10006 = var1;
                            } else {
                               var10004 = var10003;
@@ -676,12 +676,12 @@ public class a3 {
                                  break label1119;
                               }
 
-                              var8 = var10003;
+                              var9 = var10003;
                               var10006 = var1;
                            }
 
                            while(true) {
-                              var10007 = var8[var10006];
+                              var10007 = var9[var10006];
                               switch (var1 % 5) {
                                  case 0:
                                     var10008 = 53;
@@ -699,17 +699,17 @@ public class a3 {
                                     var10008 = 57;
                               }
 
-                              var8[var10006] = (char)(var10007 ^ var10008);
+                              var9[var10006] = (char)(var10007 ^ var10008);
                               ++var1;
                               if (var6 == 0) {
                                  var10006 = var6;
-                                 var8 = var10004;
+                                 var9 = var10004;
                               } else {
                                  if (var6 <= var1) {
                                     break;
                                  }
 
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10006 = var1;
                               }
                            }
@@ -722,7 +722,7 @@ public class a3 {
                         var10004 = var10003;
                         var6 = var10005;
                         if (var10005 <= 1) {
-                           var8 = var10003;
+                           var9 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
                            switch (var1 % 5) {
@@ -753,7 +753,7 @@ public class a3 {
                                  var10004 = var10003;
                                  var6 = var10005;
                                  if (var10005 <= 1) {
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  } else {
                                     var10004 = var10003;
@@ -762,12 +762,12 @@ public class a3 {
                                        break label1187;
                                     }
 
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  }
 
                                  while(true) {
-                                    var10007 = var8[var10006];
+                                    var10007 = var9[var10006];
                                     switch (var1 % 5) {
                                        case 0:
                                           var10008 = 53;
@@ -785,17 +785,17 @@ public class a3 {
                                           var10008 = 57;
                                     }
 
-                                    var8[var10006] = (char)(var10007 ^ var10008);
+                                    var9[var10006] = (char)(var10007 ^ var10008);
                                     ++var1;
                                     if (var6 == 0) {
                                        var10006 = var6;
-                                       var8 = var10004;
+                                       var9 = var10004;
                                     } else {
                                        if (var6 <= var1) {
                                           break;
                                        }
 
-                                       var8 = var10004;
+                                       var9 = var10004;
                                        var10006 = var1;
                                     }
                                  }
@@ -824,7 +824,7 @@ public class a3 {
                               }
 
                               while(true) {
-                                 var9 = var5[var6];
+                                 var8 = var5[var6];
                                  switch (var1 % 5) {
                                     case 0:
                                        var10 = 53;
@@ -842,7 +842,7 @@ public class a3 {
                                        var10 = 57;
                                  }
 
-                                 var5[var6] = (char)(var9 ^ var10);
+                                 var5[var6] = (char)(var8 ^ var10);
                                  ++var1;
                                  if (var3 == 0) {
                                     var6 = var3;
@@ -859,7 +859,7 @@ public class a3 {
                               }
                            }
 
-                           var8 = var10003;
+                           var9 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
                            switch (var1 % 5) {
@@ -882,11 +882,11 @@ public class a3 {
 
                         while(true) {
                            while(true) {
-                              var8[var10006] = (char)(var10007 ^ var10008);
+                              var9[var10006] = (char)(var10007 ^ var10008);
                               ++var1;
                               if (var6 == 0) {
                                  var10006 = var6;
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10007 = var10004[var6];
                                  switch (var1 % 5) {
                                     case 0:
@@ -914,7 +914,7 @@ public class a3 {
                                        var10004 = var10003;
                                        var6 = var10005;
                                        if (var10005 <= 1) {
-                                          var8 = var10003;
+                                          var9 = var10003;
                                           var10006 = var1;
                                        } else {
                                           var10004 = var10003;
@@ -923,12 +923,12 @@ public class a3 {
                                              break label1295;
                                           }
 
-                                          var8 = var10003;
+                                          var9 = var10003;
                                           var10006 = var1;
                                        }
 
                                        while(true) {
-                                          var10007 = var8[var10006];
+                                          var10007 = var9[var10006];
                                           switch (var1 % 5) {
                                              case 0:
                                                 var10008 = 53;
@@ -946,17 +946,17 @@ public class a3 {
                                                 var10008 = 57;
                                           }
 
-                                          var8[var10006] = (char)(var10007 ^ var10008);
+                                          var9[var10006] = (char)(var10007 ^ var10008);
                                           ++var1;
                                           if (var6 == 0) {
                                              var10006 = var6;
-                                             var8 = var10004;
+                                             var9 = var10004;
                                           } else {
                                              if (var6 <= var1) {
                                                 break;
                                              }
 
-                                             var8 = var10004;
+                                             var9 = var10004;
                                              var10006 = var1;
                                           }
                                        }
@@ -985,7 +985,7 @@ public class a3 {
                                     }
 
                                     while(true) {
-                                       var9 = var5[var6];
+                                       var8 = var5[var6];
                                        switch (var1 % 5) {
                                           case 0:
                                              var10 = 53;
@@ -1003,7 +1003,7 @@ public class a3 {
                                              var10 = 57;
                                        }
 
-                                       var5[var6] = (char)(var9 ^ var10);
+                                       var5[var6] = (char)(var8 ^ var10);
                                        ++var1;
                                        if (var3 == 0) {
                                           var6 = var3;
@@ -1020,7 +1020,7 @@ public class a3 {
                                     }
                                  }
 
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
                                  switch (var1 % 5) {
@@ -1044,7 +1044,7 @@ public class a3 {
                         }
                      }
 
-                     var8 = var10004;
+                     var9 = var10004;
                      var10006 = var1;
                      var10007 = var10004[var1];
                      switch (var1 % 5) {
@@ -1068,7 +1068,7 @@ public class a3 {
             }
          }
 
-         var8 = var10003;
+         var9 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
          switch (var1 % 5) {
@@ -1091,11 +1091,11 @@ public class a3 {
 
       while(true) {
          while(true) {
-            var8[var10006] = (char)(var10007 ^ var10008);
+            var9[var10006] = (char)(var10007 ^ var10008);
             ++var1;
             if (var6 == 0) {
                var10006 = var6;
-               var8 = var10004;
+               var9 = var10004;
                var10007 = var10004[var6];
                switch (var1 % 5) {
                   case 0:
@@ -1123,7 +1123,7 @@ public class a3 {
                      var10004 = var10003;
                      var6 = var10005;
                      if (var10005 <= 1) {
-                        var8 = var10003;
+                        var9 = var10003;
                         var10006 = var1;
                      } else {
                         var10004 = var10003;
@@ -1132,12 +1132,12 @@ public class a3 {
                            break label333;
                         }
 
-                        var8 = var10003;
+                        var9 = var10003;
                         var10006 = var1;
                      }
 
                      while(true) {
-                        var10007 = var8[var10006];
+                        var10007 = var9[var10006];
                         switch (var1 % 5) {
                            case 0:
                               var10008 = 53;
@@ -1155,17 +1155,17 @@ public class a3 {
                               var10008 = 57;
                         }
 
-                        var8[var10006] = (char)(var10007 ^ var10008);
+                        var9[var10006] = (char)(var10007 ^ var10008);
                         ++var1;
                         if (var6 == 0) {
                            var10006 = var6;
-                           var8 = var10004;
+                           var9 = var10004;
                         } else {
                            if (var6 <= var1) {
                               break;
                            }
 
-                           var8 = var10004;
+                           var9 = var10004;
                            var10006 = var1;
                         }
                      }
@@ -1178,7 +1178,7 @@ public class a3 {
                   var10004 = var10003;
                   var6 = var10005;
                   if (var10005 <= 1) {
-                     var8 = var10003;
+                     var9 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
                      switch (var1 % 5) {
@@ -1209,7 +1209,7 @@ public class a3 {
                            var10004 = var10003;
                            var6 = var10005;
                            if (var10005 <= 1) {
-                              var8 = var10003;
+                              var9 = var10003;
                               var10006 = var1;
                            } else {
                               var10004 = var10003;
@@ -1218,12 +1218,12 @@ public class a3 {
                                  break label377;
                               }
 
-                              var8 = var10003;
+                              var9 = var10003;
                               var10006 = var1;
                            }
 
                            while(true) {
-                              var10007 = var8[var10006];
+                              var10007 = var9[var10006];
                               switch (var1 % 5) {
                                  case 0:
                                     var10008 = 53;
@@ -1241,17 +1241,17 @@ public class a3 {
                                     var10008 = 57;
                               }
 
-                              var8[var10006] = (char)(var10007 ^ var10008);
+                              var9[var10006] = (char)(var10007 ^ var10008);
                               ++var1;
                               if (var6 == 0) {
                                  var10006 = var6;
-                                 var8 = var10004;
+                                 var9 = var10004;
                               } else {
                                  if (var6 <= var1) {
                                     break;
                                  }
 
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10006 = var1;
                               }
                            }
@@ -1264,7 +1264,7 @@ public class a3 {
                         var10004 = var10003;
                         var6 = var10005;
                         if (var10005 <= 1) {
-                           var8 = var10003;
+                           var9 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
                            switch (var1 % 5) {
@@ -1295,7 +1295,7 @@ public class a3 {
                                  var10004 = var10003;
                                  var6 = var10005;
                                  if (var10005 <= 1) {
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  } else {
                                     var10004 = var10003;
@@ -1304,12 +1304,12 @@ public class a3 {
                                        break label445;
                                     }
 
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  }
 
                                  while(true) {
-                                    var10007 = var8[var10006];
+                                    var10007 = var9[var10006];
                                     switch (var1 % 5) {
                                        case 0:
                                           var10008 = 53;
@@ -1327,17 +1327,17 @@ public class a3 {
                                           var10008 = 57;
                                     }
 
-                                    var8[var10006] = (char)(var10007 ^ var10008);
+                                    var9[var10006] = (char)(var10007 ^ var10008);
                                     ++var1;
                                     if (var6 == 0) {
                                        var10006 = var6;
-                                       var8 = var10004;
+                                       var9 = var10004;
                                     } else {
                                        if (var6 <= var1) {
                                           break;
                                        }
 
-                                       var8 = var10004;
+                                       var9 = var10004;
                                        var10006 = var1;
                                     }
                                  }
@@ -1366,7 +1366,7 @@ public class a3 {
                               }
 
                               while(true) {
-                                 var9 = var5[var6];
+                                 var8 = var5[var6];
                                  switch (var1 % 5) {
                                     case 0:
                                        var10 = 53;
@@ -1384,7 +1384,7 @@ public class a3 {
                                        var10 = 57;
                                  }
 
-                                 var5[var6] = (char)(var9 ^ var10);
+                                 var5[var6] = (char)(var8 ^ var10);
                                  ++var1;
                                  if (var3 == 0) {
                                     var6 = var3;
@@ -1401,7 +1401,7 @@ public class a3 {
                               }
                            }
 
-                           var8 = var10003;
+                           var9 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
                            switch (var1 % 5) {
@@ -1424,11 +1424,11 @@ public class a3 {
 
                         while(true) {
                            while(true) {
-                              var8[var10006] = (char)(var10007 ^ var10008);
+                              var9[var10006] = (char)(var10007 ^ var10008);
                               ++var1;
                               if (var6 == 0) {
                                  var10006 = var6;
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10007 = var10004[var6];
                                  switch (var1 % 5) {
                                     case 0:
@@ -1456,7 +1456,7 @@ public class a3 {
                                        var10004 = var10003;
                                        var6 = var10005;
                                        if (var10005 <= 1) {
-                                          var8 = var10003;
+                                          var9 = var10003;
                                           var10006 = var1;
                                        } else {
                                           var10004 = var10003;
@@ -1465,12 +1465,12 @@ public class a3 {
                                              break label553;
                                           }
 
-                                          var8 = var10003;
+                                          var9 = var10003;
                                           var10006 = var1;
                                        }
 
                                        while(true) {
-                                          var10007 = var8[var10006];
+                                          var10007 = var9[var10006];
                                           switch (var1 % 5) {
                                              case 0:
                                                 var10008 = 53;
@@ -1488,17 +1488,17 @@ public class a3 {
                                                 var10008 = 57;
                                           }
 
-                                          var8[var10006] = (char)(var10007 ^ var10008);
+                                          var9[var10006] = (char)(var10007 ^ var10008);
                                           ++var1;
                                           if (var6 == 0) {
                                              var10006 = var6;
-                                             var8 = var10004;
+                                             var9 = var10004;
                                           } else {
                                              if (var6 <= var1) {
                                                 break;
                                              }
 
-                                             var8 = var10004;
+                                             var9 = var10004;
                                              var10006 = var1;
                                           }
                                        }
@@ -1527,7 +1527,7 @@ public class a3 {
                                     }
 
                                     while(true) {
-                                       var9 = var5[var6];
+                                       var8 = var5[var6];
                                        switch (var1 % 5) {
                                           case 0:
                                              var10 = 53;
@@ -1545,7 +1545,7 @@ public class a3 {
                                              var10 = 57;
                                        }
 
-                                       var5[var6] = (char)(var9 ^ var10);
+                                       var5[var6] = (char)(var8 ^ var10);
                                        ++var1;
                                        if (var3 == 0) {
                                           var6 = var3;
@@ -1562,7 +1562,7 @@ public class a3 {
                                     }
                                  }
 
-                                 var8 = var10004;
+                                 var9 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
                                  switch (var1 % 5) {
@@ -1586,7 +1586,7 @@ public class a3 {
                         }
                      }
 
-                     var8 = var10003;
+                     var9 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
                      switch (var1 % 5) {
@@ -1609,11 +1609,11 @@ public class a3 {
 
                   while(true) {
                      while(true) {
-                        var8[var10006] = (char)(var10007 ^ var10008);
+                        var9[var10006] = (char)(var10007 ^ var10008);
                         ++var1;
                         if (var6 == 0) {
                            var10006 = var6;
-                           var8 = var10004;
+                           var9 = var10004;
                            var10007 = var10004[var6];
                            switch (var1 % 5) {
                               case 0:
@@ -1641,7 +1641,7 @@ public class a3 {
                                  var10004 = var10003;
                                  var6 = var10005;
                                  if (var10005 <= 1) {
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  } else {
                                     var10004 = var10003;
@@ -1650,12 +1650,12 @@ public class a3 {
                                        break label172;
                                     }
 
-                                    var8 = var10003;
+                                    var9 = var10003;
                                     var10006 = var1;
                                  }
 
                                  while(true) {
-                                    var10007 = var8[var10006];
+                                    var10007 = var9[var10006];
                                     switch (var1 % 5) {
                                        case 0:
                                           var10008 = 53;
@@ -1673,17 +1673,17 @@ public class a3 {
                                           var10008 = 57;
                                     }
 
-                                    var8[var10006] = (char)(var10007 ^ var10008);
+                                    var9[var10006] = (char)(var10007 ^ var10008);
                                     ++var1;
                                     if (var6 == 0) {
                                        var10006 = var6;
-                                       var8 = var10004;
+                                       var9 = var10004;
                                     } else {
                                        if (var6 <= var1) {
                                           break;
                                        }
 
-                                       var8 = var10004;
+                                       var9 = var10004;
                                        var10006 = var1;
                                     }
                                  }
@@ -1696,7 +1696,7 @@ public class a3 {
                               var10004 = var10003;
                               var6 = var10005;
                               if (var10005 <= 1) {
-                                 var8 = var10003;
+                                 var9 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
                                  switch (var1 % 5) {
@@ -1727,7 +1727,7 @@ public class a3 {
                                        var10004 = var10003;
                                        var6 = var10005;
                                        if (var10005 <= 1) {
-                                          var8 = var10003;
+                                          var9 = var10003;
                                           var10006 = var1;
                                        } else {
                                           var10004 = var10003;
@@ -1736,12 +1736,12 @@ public class a3 {
                                              break label216;
                                           }
 
-                                          var8 = var10003;
+                                          var9 = var10003;
                                           var10006 = var1;
                                        }
 
                                        while(true) {
-                                          var10007 = var8[var10006];
+                                          var10007 = var9[var10006];
                                           switch (var1 % 5) {
                                              case 0:
                                                 var10008 = 53;
@@ -1759,17 +1759,17 @@ public class a3 {
                                                 var10008 = 57;
                                           }
 
-                                          var8[var10006] = (char)(var10007 ^ var10008);
+                                          var9[var10006] = (char)(var10007 ^ var10008);
                                           ++var1;
                                           if (var6 == 0) {
                                              var10006 = var6;
-                                             var8 = var10004;
+                                             var9 = var10004;
                                           } else {
                                              if (var6 <= var1) {
                                                 break;
                                              }
 
-                                             var8 = var10004;
+                                             var9 = var10004;
                                              var10006 = var1;
                                           }
                                        }
@@ -1798,7 +1798,7 @@ public class a3 {
                                     }
 
                                     while(true) {
-                                       var9 = var5[var6];
+                                       var8 = var5[var6];
                                        switch (var1 % 5) {
                                           case 0:
                                              var10 = 53;
@@ -1816,7 +1816,7 @@ public class a3 {
                                              var10 = 57;
                                        }
 
-                                       var5[var6] = (char)(var9 ^ var10);
+                                       var5[var6] = (char)(var8 ^ var10);
                                        ++var1;
                                        if (var3 == 0) {
                                           var6 = var3;
@@ -1833,7 +1833,7 @@ public class a3 {
                                     }
                                  }
 
-                                 var8 = var10003;
+                                 var9 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
                                  switch (var1 % 5) {
@@ -1856,11 +1856,11 @@ public class a3 {
 
                               while(true) {
                                  while(true) {
-                                    var8[var10006] = (char)(var10007 ^ var10008);
+                                    var9[var10006] = (char)(var10007 ^ var10008);
                                     ++var1;
                                     if (var6 == 0) {
                                        var10006 = var6;
-                                       var8 = var10004;
+                                       var9 = var10004;
                                        var10007 = var10004[var6];
                                        switch (var1 % 5) {
                                           case 0:
@@ -1888,7 +1888,7 @@ public class a3 {
                                              var10004 = var10003;
                                              var6 = var10005;
                                              if (var10005 <= 1) {
-                                                var8 = var10003;
+                                                var9 = var10003;
                                                 var10006 = var1;
                                              } else {
                                                 var10004 = var10003;
@@ -1897,12 +1897,12 @@ public class a3 {
                                                    break label136;
                                                 }
 
-                                                var8 = var10003;
+                                                var9 = var10003;
                                                 var10006 = var1;
                                              }
 
                                              while(true) {
-                                                var10007 = var8[var10006];
+                                                var10007 = var9[var10006];
                                                 switch (var1 % 5) {
                                                    case 0:
                                                       var10008 = 53;
@@ -1920,17 +1920,17 @@ public class a3 {
                                                       var10008 = 57;
                                                 }
 
-                                                var8[var10006] = (char)(var10007 ^ var10008);
+                                                var9[var10006] = (char)(var10007 ^ var10008);
                                                 ++var1;
                                                 if (var6 == 0) {
                                                    var10006 = var6;
-                                                   var8 = var10004;
+                                                   var9 = var10004;
                                                 } else {
                                                    if (var6 <= var1) {
                                                       break;
                                                    }
 
-                                                   var8 = var10004;
+                                                   var9 = var10004;
                                                    var10006 = var1;
                                                 }
                                              }
@@ -1959,7 +1959,7 @@ public class a3 {
                                           }
 
                                           while(true) {
-                                             var9 = var5[var6];
+                                             var8 = var5[var6];
                                              switch (var1 % 5) {
                                                 case 0:
                                                    var10 = 53;
@@ -1977,7 +1977,7 @@ public class a3 {
                                                    var10 = 57;
                                              }
 
-                                             var5[var6] = (char)(var9 ^ var10);
+                                             var5[var6] = (char)(var8 ^ var10);
                                              ++var1;
                                              if (var3 == 0) {
                                                 var6 = var3;
@@ -1994,7 +1994,7 @@ public class a3 {
                                           }
                                        }
 
-                                       var8 = var10004;
+                                       var9 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
                                        switch (var1 % 5) {
@@ -2018,7 +2018,7 @@ public class a3 {
                               }
                            }
 
-                           var8 = var10004;
+                           var9 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
                            switch (var1 % 5) {
@@ -2042,7 +2042,7 @@ public class a3 {
                   }
                }
 
-               var8 = var10004;
+               var9 = var10004;
                var10006 = var1;
                var10007 = var10004[var1];
                switch (var1 % 5) {
