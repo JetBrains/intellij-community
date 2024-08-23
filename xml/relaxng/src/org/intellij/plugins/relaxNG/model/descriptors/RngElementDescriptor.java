@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.AbstractPsiCachedValue;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration;
@@ -70,8 +71,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   private final DElementPattern myElementPattern;
   protected final RngNsDescriptor myNsDescriptor;
-  private final PsiCachedValueImpl<PsiElement> myCachedElement;
-
+  private final AbstractPsiCachedValue<PsiElement> myCachedElement;
 
   RngElementDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern) {
     myNsDescriptor = nsDescriptor;

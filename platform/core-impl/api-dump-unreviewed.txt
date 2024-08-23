@@ -2420,6 +2420,12 @@ a:com.intellij.psi.impl.AbstractModificationTracker
 - pa:isInsideCodeBlock(com.intellij.psi.PsiElement):Z
 - p:processOutOfCodeBlockModification(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
 - treeChanged(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
+a:com.intellij.psi.impl.AbstractPsiCachedValue
+- com.intellij.psi.impl.PsiCachedValue
+- com.intellij.psi.util.CachedValue
+- pf:doCompute(java.lang.Object):com.intellij.psi.util.CachedValueProvider$Result
+- getValue():java.lang.Object
+- f:getValueProvider():com.intellij.psi.util.CachedValueProvider
 com.intellij.psi.impl.AnyPsiChangeListener
 - afterPsiChanged(Z):V
 - beforePsiChanged(Z):V
@@ -2568,23 +2574,30 @@ c:com.intellij.psi.impl.PsiCachedValueImpl
 - com.intellij.psi.impl.PsiCachedValue
 - com.intellij.psi.util.CachedValue
 - <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider):V
-- p:doCompute(java.lang.Object):com.intellij.psi.util.CachedValueProvider$Result
+- pf:doCompute(java.lang.Object):com.intellij.psi.util.CachedValueProvider$Result
 - p:getRawData():com.intellij.util.CachedValueBase$Data
 - getValue():java.lang.Object
-- getValueProvider():com.intellij.psi.util.CachedValueProvider
+- f:getValueProvider():com.intellij.psi.util.CachedValueProvider
+- p:isTrackValue():Z
 - p:setData(com.intellij.util.CachedValueBase$Data):V
 f:com.intellij.psi.impl.PsiCachedValueImpl$Direct
-- com.intellij.psi.impl.PsiCachedValue
+- com.intellij.psi.impl.AbstractPsiCachedValue
 - com.intellij.psi.util.CachedValue
 - <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider):V
-- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider,Z):V
 - getValue():java.lang.Object
-- getValueProvider():com.intellij.psi.util.CachedValueProvider
-f:com.intellij.psi.impl.PsiCachedValueImpl$Soft
-- com.intellij.psi.impl.PsiCachedValueImpl
+f:com.intellij.psi.impl.PsiCachedValueImpl$DirectTracked
+- com.intellij.psi.impl.AbstractPsiCachedValue
 - com.intellij.psi.util.CachedValue
 - <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider):V
-- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider,Z):V
+- getValue():java.lang.Object
+f:com.intellij.psi.impl.PsiCachedValueImpl$Soft
+- com.intellij.psi.impl.AbstractPsiCachedValue
+- com.intellij.psi.util.CachedValue
+- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider):V
+f:com.intellij.psi.impl.PsiCachedValueImpl$SoftTracked
+- com.intellij.psi.impl.AbstractPsiCachedValue
+- com.intellij.psi.util.CachedValue
+- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider):V
 a:com.intellij.psi.impl.PsiDocumentManagerBase
 - com.intellij.psi.PsiDocumentManager
 - com.intellij.openapi.Disposable
@@ -2796,11 +2809,15 @@ a:com.intellij.psi.impl.PsiParameterizedCachedValue
 f:com.intellij.psi.impl.PsiParameterizedCachedValue$Direct
 - com.intellij.psi.impl.PsiParameterizedCachedValue
 - <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.ParameterizedCachedValueProvider):V
-- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.ParameterizedCachedValueProvider,Z):V
+f:com.intellij.psi.impl.PsiParameterizedCachedValue$DirectTracked
+- com.intellij.psi.impl.PsiParameterizedCachedValue
+- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.ParameterizedCachedValueProvider):V
 f:com.intellij.psi.impl.PsiParameterizedCachedValue$Soft
 - com.intellij.psi.impl.PsiParameterizedCachedValue
 - <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.ParameterizedCachedValueProvider):V
-- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.ParameterizedCachedValueProvider,Z):V
+f:com.intellij.psi.impl.PsiParameterizedCachedValue$SoftTracked
+- com.intellij.psi.impl.PsiParameterizedCachedValue
+- <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.ParameterizedCachedValueProvider):V
 f:com.intellij.psi.impl.PsiParserFacadeImpl
 - com.intellij.psi.PsiParserFacade
 - <init>(com.intellij.openapi.project.Project):V
@@ -4370,7 +4387,7 @@ com.intellij.refactoring.rename.FragmentaryPsiReference
 - a:isFragmentOnlyRename():Z
 - a:isReadOnlyFragment():Z
 a:com.intellij.util.CachedValueBase
-- p:<init>(Z):V
+- <init>():V
 - clear():V
 - pa:doCompute(java.lang.Object):com.intellij.psi.util.CachedValueProvider$Result
 - p:getIdempotenceFailureContext():java.lang.String
@@ -4382,15 +4399,16 @@ a:com.intellij.util.CachedValueBase
 - hasUpToDateValue():Z
 - p:isDependencyOutOfDate(java.lang.Object,J):Z
 - a:isFromMyProject(com.intellij.openapi.project.Project):Z
+- pa:isTrackValue():Z
 - p:isUpToDate(com.intellij.util.CachedValueBase$Data):Z
 - p:normalizeDependencies(java.lang.Object,java.lang.Object[]):java.lang.Object[]
 - pa:setData(com.intellij.util.CachedValueBase$Data):V
 - setValue(com.intellij.psi.util.CachedValueProvider$Result):java.lang.Object
-f:com.intellij.util.CachedValueBase$Data
+Fa:com.intellij.util.CachedValueBase$Data
 - com.intellij.openapi.util.Getter
 - get():java.lang.Object
-- getDependencies():java.lang.Object[]
-- getTimeStamps():J[]
+- a:getDependencies():java.lang.Object[]
+- a:getTimeStamps():J[]
 - getValue():java.lang.Object
 c:com.intellij.util.CachedValueImpl
 - com.intellij.util.CachedValueBase
@@ -4401,6 +4419,7 @@ c:com.intellij.util.CachedValueImpl
 - getValue():java.lang.Object
 - getValueProvider():com.intellij.psi.util.CachedValueProvider
 - isFromMyProject(com.intellij.openapi.project.Project):Z
+- p:isTrackValue():Z
 - p:setData(com.intellij.util.CachedValueBase$Data):V
 f:com.intellij.util.CachedValuesManagerImpl
 - com.intellij.psi.util.CachedValuesManager

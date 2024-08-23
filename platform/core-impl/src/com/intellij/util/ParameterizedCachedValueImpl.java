@@ -17,13 +17,19 @@ public final class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> 
   private final @NotNull Project myProject;
   private final ParameterizedCachedValueProvider<T,P> myProvider;
   private volatile SoftReference<Data<T>> myData;
+  private final boolean myTrackValue;
 
   ParameterizedCachedValueImpl(@NotNull Project project,
                                @NotNull ParameterizedCachedValueProvider<T, P> provider,
                                boolean trackValue) {
-    super(trackValue);
+    myTrackValue = trackValue;
     myProject = project;
     myProvider = provider;
+  }
+
+  @Override
+  protected boolean isTrackValue() {
+    return myTrackValue;
   }
 
   @Override

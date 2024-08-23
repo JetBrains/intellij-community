@@ -10,21 +10,15 @@ import com.intellij.psi.util.CachedValueProfiler;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.NotNullList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
 public abstract class CachedValueBase<T> {
-  private final boolean myTrackValue;
-
-  protected CachedValueBase(boolean trackValue) {
-    myTrackValue = trackValue;
-  }
+  protected abstract boolean isTrackValue();
 
   protected abstract @Nullable Data<T> getRawData();
 
@@ -44,7 +38,7 @@ public abstract class CachedValueBase<T> {
       tracker = null;
     }
     if (result == null) {
-      return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY, null);
+      return new DefaultData<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY);
     }
     T value = result.getValue();
     Object[] inferredDependencies = normalizeDependencies(value, result.getDependencyItems());
@@ -52,7 +46,17 @@ public abstract class CachedValueBase<T> {
     for (int i = 0; i < inferredDependencies.length; i++) {
       inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
     }
-    return new Data<>(value, inferredDependencies, inferredTimeStamps, tracker);
+
+    if (tracker != null) {
+      return new TrackedData<>(value, inferredDependencies, inferredTimeStamps, tracker);
+    }
+
+    // more lightweight storage for simple caches dependent on PSI
+    if (inferredDependencies.length == 1 && inferredDependencies[0] == PsiModificationTracker.MODIFICATION_COUNT) {
+      return new PsiDependentData<>(value, inferredTimeStamps[0]);
+    }
+
+    return new DefaultData<>(value, inferredDependencies, inferredTimeStamps);
   }
 
   private synchronized @Nullable Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
@@ -70,9 +74,9 @@ public abstract class CachedValueBase<T> {
   }
 
   protected Object @NotNull [] normalizeDependencies(@Nullable T value, Object @NotNull [] dependencyItems) {
-    List<Object> flattened = new NotNullList<>(dependencyItems.length+1);
+    List<Object> flattened = new NotNullList<>(dependencyItems.length + 1);
     collectDependencies(dependencyItems, flattened);
-    if (myTrackValue && value != null) {
+    if (isTrackValue() && value != null) {
       if (value instanceof Object[]) {
         collectDependencies((Object[])value, flattened);
       }
@@ -100,16 +104,24 @@ public abstract class CachedValueBase<T> {
     if (isUpToDate(data)) {
       return true;
     }
-    if (data.trackingInfo != null) {
-      data.trackingInfo.onValueInvalidated();
+    if (data instanceof TrackedData) {
+      CachedValueProfiler.ValueTracker trackingInfo = ((TrackedData<T>)data).trackingInfo;
+      if (trackingInfo != null) {
+        trackingInfo.onValueInvalidated();
+      }
     }
     return false;
   }
 
   protected boolean isUpToDate(@NotNull Data<T> data) {
-    for (int i = 0; i < data.myDependencies.length; i++) {
-      Object dependency = data.myDependencies[i];
-      if (isDependencyOutOfDate(dependency, data.myTimeStamps[i])) return false;
+    if (data instanceof CachedValueBase.PsiDependentData) {
+      // do not create an unnecessary long[] array
+      return !isDependencyOutOfDate(PSI_MODIFICATION_DEPENDENCIES[0], ((PsiDependentData<T>)data).getTimeStamp());
+    }
+
+    for (int i = 0; i < data.getDependencies().length; i++) {
+      Object dependency = data.getDependencies()[i];
+      if (isDependencyOutOfDate(dependency, data.getTimeStamps()[i])) return false;
     }
 
     return true;
@@ -142,14 +154,14 @@ public abstract class CachedValueBase<T> {
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
     }
-    else if (dependency instanceof Reference){
+    else if (dependency instanceof Reference) {
       Object original = ((Reference<?>)dependency).get();
-      if(original == null) return -1;
+      if (original == null) return -1;
       return getTimeStamp(original);
     }
     else if (dependency instanceof Ref) {
       Object original = ((Ref<?>)dependency).get();
-      if(original == null) return -1;
+      if (original == null) return -1;
       return getTimeStamp(original);
     }
     else if (dependency instanceof Document) {
@@ -175,36 +187,48 @@ public abstract class CachedValueBase<T> {
 
   public abstract @NotNull Object getValueProvider();
 
-  private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[] { PsiModificationTracker.MODIFICATION_COUNT };
+  private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[]{PsiModificationTracker.MODIFICATION_COUNT};
 
-  public static final class Data<T> implements Getter<T> {
+  @ApiStatus.NonExtendable
+  public static abstract class Data<T> implements Getter<T> {
     private final T myValue;
-    private final Object @NotNull [] myDependencies;
-    private final long @NotNull [] myTimeStamps;
-    final @Nullable CachedValueProfiler.ValueTracker trackingInfo;
 
-    Data(T value,
-         Object @NotNull [] dependencies,
-         long @NotNull [] timeStamps,
-         @Nullable CachedValueProfiler.ValueTracker trackingInfo) {
+    protected Data(T value) {
       myValue = value;
-
-      if (dependencies.length == 1 && dependencies[0] == PsiModificationTracker.MODIFICATION_COUNT) {
-        // there is no sense in storing hundreds of new arrays of [PsiModificationTracker.MODIFICATION_COUNT]
-        myDependencies = PSI_MODIFICATION_DEPENDENCIES;
-      }
-      else {
-        myDependencies = dependencies;
-      }
-
-      myTimeStamps = timeStamps;
-      this.trackingInfo = trackingInfo;
     }
 
+    public abstract Object @NotNull [] getDependencies();
+
+    public abstract long @NotNull [] getTimeStamps();
+
+    @Override
+    public T get() {
+      return getValue();
+    }
+
+    public T getValue() {
+      return myValue;
+    }
+  }
+
+  @ApiStatus.Internal
+  protected static class DefaultData<T> extends Data<T> implements Getter<T> {
+    private final Object @NotNull [] myDependencies;
+    private final long @NotNull [] myTimeStamps;
+
+    protected DefaultData(T value, Object @NotNull [] dependencies, long @NotNull [] timeStamps) {
+      super(value);
+
+      myDependencies = dependencies;
+      myTimeStamps = timeStamps;
+    }
+
+    @Override
     public Object @NotNull [] getDependencies() {
       return myDependencies;
     }
 
+    @Override
     public long @NotNull [] getTimeStamps() {
       return myTimeStamps;
     }
@@ -213,12 +237,51 @@ public abstract class CachedValueBase<T> {
     public T get() {
       return getValue();
     }
+  }
 
+  // only depends on PsiModificationTracker.MODIFICATION_COUNT, less memory to hold value needed
+  private static final class PsiDependentData<T> extends Data<T> {
+    private final long myPsiTimeStamp;
+
+    PsiDependentData(T value, long psiTimeStamp) {
+      super(value);
+      myPsiTimeStamp = psiTimeStamp;
+    }
+
+    private long getTimeStamp() {
+      return myPsiTimeStamp;
+    }
+
+    @Override
+    public Object @NotNull [] getDependencies() {
+      return PSI_MODIFICATION_DEPENDENCIES;
+    }
+
+    @Override
+    public long @NotNull [] getTimeStamps() {
+      return new long[] {myPsiTimeStamp};
+    }
+  }
+
+  // used only with cached value profiler enabled,
+  // trackingInfo is not added to Data to avoid additional memory overhead in production
+  private static final class TrackedData<T> extends DefaultData<T> {
+    final @Nullable CachedValueProfiler.ValueTracker trackingInfo;
+
+    TrackedData(T value,
+                Object @NotNull [] dependencies,
+                long @NotNull [] timeStamps,
+                @Nullable CachedValueProfiler.ValueTracker trackingInfo) {
+      super(value, dependencies, timeStamps);
+      this.trackingInfo = trackingInfo;
+    }
+
+    @Override
     public T getValue() {
       if (trackingInfo != null) {
         trackingInfo.onValueUsed();
       }
-      return myValue;
+      return super.getValue();
     }
   }
 
@@ -243,12 +306,16 @@ public abstract class CachedValueBase<T> {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && checkUpToDate(alreadyComputed);
         if (reuse) {
-          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData, this::getIdempotenceFailureContext);
+          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData,
+                                              this::getIdempotenceFailureContext);
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
-          if (data != toReturn && data.trackingInfo != null) {
-            data.trackingInfo.onValueRejected();
+          if (data != toReturn && data instanceof TrackedData) {
+            CachedValueProfiler.ValueTracker trackingInfo = ((TrackedData<T>)data).trackingInfo;
+            if (trackingInfo != null) {
+              trackingInfo.onValueRejected();
+            }
           }
           return toReturn.getValue();
         }
