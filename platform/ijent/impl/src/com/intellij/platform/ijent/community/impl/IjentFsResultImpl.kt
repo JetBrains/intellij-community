@@ -2,7 +2,6 @@
 package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.ijent.fs.*
-import com.intellij.platform.ijent.fs.IjentFsResult
 
 @Suppress("unused") // Usages are to be implemented later.
 object IjentFsResultImpl {
