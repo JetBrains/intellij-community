@@ -7646,6 +7646,7 @@ f:com.intellij.ide.plugins.RatesPanel
 f:com.intellij.ide.plugins.RepositoryHelper
 - <init>():V
 - s:addMarketplacePluginDependencyIfRequired(com.intellij.ide.plugins.PluginNode):V
+- s:getCustomPluginRepositoryHosts():java.util.List
 - s:getPluginHosts():java.util.List
 - s:loadPlugins(java.lang.String,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - s:loadPlugins(java.lang.String,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):java.util.List
