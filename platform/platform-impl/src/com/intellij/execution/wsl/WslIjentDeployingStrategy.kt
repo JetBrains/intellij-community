@@ -4,6 +4,8 @@ package com.intellij.execution.wsl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
@@ -37,5 +39,13 @@ class WslIjentDeployingStrategy(
     distribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
     return ShellProcessWrapper(computeDetached { commandLine.createProcess() })
+  }
+
+  override suspend fun getConnectionStrategy(): IjentConnectionStrategy {
+    return object : IjentConnectionStrategy {
+      override suspend fun canUseVirtualSockets(): Boolean {
+        return Registry.`is`("ijent.allow.hyperv.connection") && distribution.version == 2
+      }
+    }
   }
 }

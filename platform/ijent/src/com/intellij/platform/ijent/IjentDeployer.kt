@@ -59,7 +59,7 @@ private suspend fun IjentDeployingStrategy.doDeploy(ijentName: String): Pair<Str
     val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
     val process = createProcess(remotePathToBinary)
 
-    val ijentApi = connectToRunningIjent(ijentName, targetPlatform, process)
+    val ijentApi = connectToRunningIjent(ijentName, getConnectionStrategy(), targetPlatform, process)
     remotePathToBinary to ijentApi
   }
   finally {

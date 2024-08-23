@@ -28,6 +28,15 @@ interface IjentDeployingStrategy {
   suspend fun getTargetPlatform(): IjentPlatform
 
   /**
+   * Defines a set of options for connecting to a running IJent
+   * This step is logically different from deployment,
+   * and here we allow to configure the actual process of initial message exchange.
+   *
+   * @see IjentConnectionStrategy
+   */
+  suspend fun getConnectionStrategy(): IjentConnectionStrategy
+
+  /**
    * Should start the ijent process.
    *
    * This function is called the last and called exactly once.

@@ -72,6 +72,8 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     }
   }
 
+  override suspend fun getConnectionStrategy(): IjentConnectionStrategy = IjentConnectionStrategy.Default
+
   class ShellProcessWrapper(private var wrapped: Process?) {
     suspend fun write(data: String) {
       val wrapped = wrapped!!
