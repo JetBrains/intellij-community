@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -46,7 +45,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   private final Project myProject;
   private final Map<Document, List<Change>> changedElements = new WeakHashMap<>();
   private final FileStatusMap myFileStatusMap;
-  private record Change(@NotNull PsiElement psiElement, boolean whiteSpaceOptimizationAllowed, boolean referenceWasChanged) {}
+  private record Change(@NotNull PsiElement psiElement, boolean whiteSpaceOptimizationAllowed) {}
 
   PsiChangeHandler(@NotNull Project project, @NotNull SimpleMessageBusConnection connection,
                    @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
@@ -115,7 +114,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       PsiElement file = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
       if (file == null) return;
 
-      toUpdate = Collections.singletonList(new Change(file, true, true));
+      toUpdate = Collections.singletonList(new Change(file, true));
     }
     Application application = ApplicationManager.getApplication();
     Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
@@ -132,9 +131,6 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     for (Change change : toUpdate) {
       PsiElement element = change.psiElement();
       boolean whiteSpaceOptimizationAllowed = change.whiteSpaceOptimizationAllowed();
-      if (change.referenceWasChanged() && !"Rust".equals(element.getLanguage().getID())) {
-        myFileStatusMap.markAllFilesDirty(change);
-      }
       updateByChange(element, document, whiteSpaceOptimizationAllowed);
     }
     changedElements.remove(document);
@@ -195,42 +191,6 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     }
   }
 
-  private boolean hasReferenceInside(@NotNull PsiElement psiElement) {
-    boolean[] result = new boolean[1];
-    psiElement.accept(new PsiRecursiveElementWalkingVisitor(){
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof PsiReference) { // reference was deleted/appeared, has to rehighlight all
-          result[0] = true;
-          stopWalking();
-        }
-        if (element instanceof PsiNameIdentifierOwner) {  // PsiMember, e.g. PsiClass or PsiMethod, was modified - no need to drill into because we have to rehighlight all anyway
-          result[0] = true;
-          stopWalking();
-        }
-        if (element instanceof LazyParseableElement || element.getNode() instanceof LazyParseableElement) {
-          // do not expand chameleons unnecessarily
-          return;
-        }
-        super.visitElement(element);
-      }
-    });
-    return result[0];
-  }
-  private boolean wasReferenceChanged(@NotNull PsiTreeChangeEvent event) {
-    PsiElement oldChild = event.getOldChild();
-    if (oldChild != null && hasReferenceInside(oldChild)) {
-      return true;
-    }
-    PsiElement newChild = event.getNewChild();
-    if (newChild != null && newChild != oldChild && hasReferenceInside(newChild)) {
-      return true;
-    }
-    PsiElement child = event.getChild();
-    boolean result = child != null && child != oldChild && child != newChild && hasReferenceInside(child);
-    return result;
-  }
-
   private void queueElement(@NotNull PsiElement child, boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     PsiFile psiFile = event.getFile();
@@ -257,7 +217,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       }
 
       List<Change> toUpdate = changedElements.computeIfAbsent(document, __->new SmartList<>());
-      toUpdate.add(new Change(child, whitespaceOptimizationAllowed, wasReferenceChanged(event)));
+      toUpdate.add(new Change(child, whitespaceOptimizationAllowed));
     }
   }
 

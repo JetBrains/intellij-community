@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector
+import com.intellij.codeInsight.daemon.impl.HighlightingPsiUtil
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
@@ -9,6 +10,10 @@ import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModification
 @ApiStatus.Internal
 class KotlinChangeLocalityDetector : ChangeLocalityDetector {
     override fun getChangeHighlightingDirtyScopeFor(element: PsiElement): PsiElement? {
+        if (HighlightingPsiUtil.hasReferenceInside(element)) {
+            // turn off optimization when a reference was changed to avoid "unused symbol" false positives
+            return null
+        }
         // in some cases it returns a bit wider scope for the element as it is not possible to track changes here
         // e.g.: delete a space in expression `foo( )` results to entire expression `foo()`
         return PureKotlinCodeBlockModificationListener.getInsideCodeBlockModificationDirtyScope(element)

@@ -35,7 +35,9 @@ public final class JavaChangeLocalityDetector implements ChangeLocalityDetector 
         && parent instanceof PsiMethod
         && !((PsiMethod)parent).isConstructor()
         && (grand = parent.getParent()) instanceof PsiClass
-        && !(grand instanceof PsiAnonymousClass)) {
+        && !(grand instanceof PsiAnonymousClass)
+        && !HighlightingPsiUtil.hasReferenceInside(element) // turn off optimization when a reference was changed to avoid "unused symbol" false positives
+    ) {
       // for changes inside method, rehighlight codeblock only
       // do not use this optimization for constructors and class initializers - to update non-initialized fields
       return parent;
