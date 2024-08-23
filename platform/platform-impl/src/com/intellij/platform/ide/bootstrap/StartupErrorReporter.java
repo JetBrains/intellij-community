@@ -168,9 +168,10 @@ public final class StartupErrorReporter {
       title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
     }
     try {
-      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$")
+      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
-        .replace("$DESCR$", URLUtil.encodeURIComponent(message));
+        .replace("$DESCR$", URLUtil.encodeURIComponent(message))
+        .replace("$SUBSYSTEM$", URLUtil.encodeURIComponent("Subsystem: IDE. Startup"));
       Desktop.getDesktop().browse(new URI(url));
     }
     catch (Throwable t) {
