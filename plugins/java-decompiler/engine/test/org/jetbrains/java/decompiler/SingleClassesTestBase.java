@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 import static org.junit.Assert.assertTrue;
 
-public class SingleClassesTestBase {
+public abstract class SingleClassesTestBase {
   protected DecompilerTestFixture fixture;
 
   protected Map<String, String> getDecompilerOptions() {
