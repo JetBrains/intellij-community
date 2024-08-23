@@ -1,12 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
+import kotlinx.coroutines.*
 import java.io.IOException
+import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.*
 import java.nio.file.FileSystemException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 internal class IjentNioFileChannel private constructor(
   private val nioFs: IjentNioFileSystem,
@@ -260,8 +274,160 @@ internal class IjentNioFileChannel private constructor(
     return bytesWritten
   }
 
-  override fun map(mode: MapMode, position: Long, size: Long): MappedByteBuffer =
-    throw UnsupportedOperationException()
+  /**
+   * Holds an already created file copy, suitable for opening more than one memory map for the same file.
+   *
+   * The first element of a pair is a path to a local copy of the remote file.
+   * The second element is a job that copies the file from the client to the server.
+   */
+  private var memoryMap: AtomicReference<Pair<Path, Job>?> = AtomicReference(null)
+
+  /**
+   * The current implementation is a huge compromise that tries to work but can never work reliably.
+   *
+   * The interface of [MappedByteBuffer] is strictly bound to file descriptors and direct memory.
+   * Such an abstraction prevents from having decent memory maps for remote filesystems through IJent.
+   *
+   * This method downloads the file from the remote location, puts it into a temporary place and returns a memory map for the copied file.
+   * It brings several problems:
+   * * Better not to copy [map] for huge files, they are downloaded from the server to the client.
+   * * Concurrent modifications on the server won't be noticed.
+   * * The actual implementation supports only READ_ONLY and PRIVATE mappings.
+   *   A READ_WRITE implementation would require a complicated algorithm of synchronization.
+   * * The copied file is not removed if the IDE exits abruptly.
+   */
+  override fun map(mode: MapMode, position: Long, size: Long): MappedByteBuffer {
+    val fileCopyOpenOptions = when (mode) {
+      MapMode.PRIVATE -> setOf(StandardOpenOption.READ, StandardOpenOption.WRITE)
+      MapMode.READ_ONLY -> setOf(StandardOpenOption.READ)
+      MapMode.READ_WRITE -> throw UnsupportedOperationException("MapMode.READ_WRITE is not supported")
+      else -> throw UnsupportedOperationException("MapMode $mode is not supported")
+    }
+
+    check(ijentOpenedFile is IjentOpenedFile.Reader) { "The file must be opened for reading" }
+
+    val mmapCopyRegistry = service<MmapCopyRegistry>()
+    return fsBlocking {
+      val pathCreatedHere = Files.createTempFile("ijent-memory-map-copy-", null)
+      var deletePathCreatedHere = true
+
+      try {
+        coroutineScope {
+          val fileCopyDeferredCreatedHere: Job = launch(start = CoroutineStart.LAZY) {
+            downloadWholeFile(pathCreatedHere)
+          }
+
+          val (fileCopyPath: Path, fileCopyDeferred: Job) = memoryMap.updateAndGet { actual ->
+            actual ?: (pathCreatedHere to fileCopyDeferredCreatedHere)
+          }!!
+
+          fileCopyDeferred.join()
+
+          val map = fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
+            localCopy.map(mode, position, size)
+          }
+          mmapCopyRegistry.holdMemoryMapReference(fileCopyPath, map)
+
+          deletePathCreatedHere = fileCopyDeferred != fileCopyDeferredCreatedHere
+
+          map
+        }
+      }
+      finally {
+        if (deletePathCreatedHere) {
+          MmapCopyRegistry.tryDelete(pathCreatedHere)
+        }
+      }
+    }
+  }
+
+  private suspend fun downloadWholeFile(fileCopyPath: Path) {
+    ijentOpenedFile as IjentOpenedFile.Reader
+    Files.newByteChannel(fileCopyPath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE).use { outputChannel ->
+      val buffer = ByteBuffer.allocate(RECOMMENDED_MAX_PACKET_SIZE)
+      var position = 0L
+      while (true) {
+        // There are classes like `jdk.internal.jimage.BasicImageReader` that create a memory map and keep reading the file
+        // with usual methods.
+        // The current position in the file should remain the same after the copying.
+        when (val r = ijentOpenedFile.read(buffer, position).getOrThrowFileSystemException()) {
+          is IjentOpenedFile.Reader.ReadResult.Bytes -> {
+            position += r.bytesRead
+            buffer.flip()
+            outputChannel.write(buffer)
+            buffer.clear()
+          }
+          is IjentOpenedFile.Reader.ReadResult.EOF -> break
+        }
+      }
+    }
+  }
+
+  /** A garbage collector for file copies. */
+  @Service
+  private class MmapCopyRegistry(coroutineScope: CoroutineScope) {
+    companion object {
+      fun tryDelete(path: Path) {
+        try {
+          Files.delete(path)
+        }
+        catch (err: IOException) {
+          logger<IjentNioFileSystem>().info(
+            "Failed to delete a file copy created for mmap. It does not break the IDE but leaves garbage on the disk. Path: $path",
+            err,
+          )
+        }
+      }
+    }
+
+    private val memoryMapReferences: Queue<Pair<Path, WeakReference<MappedByteBuffer>>> =
+      ConcurrentLinkedQueue<Pair<Path, WeakReference<MappedByteBuffer>>>()
+
+    fun holdMemoryMapReference(localFileCopyPath: Path, buffer: MappedByteBuffer) {
+      assert(localFileCopyPath !is IjentNioPath)
+      memoryMapReferences.add(localFileCopyPath to WeakReference(buffer))
+    }
+
+    init {
+      ShutDownTracker.getInstance().registerShutdownTask {
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking(Dispatchers.IO) {
+          while (true) {
+            val (path, _) = memoryMapReferences.poll() ?: break
+            launch {
+              tryDelete(path)
+            }
+          }
+        }
+      }
+
+      coroutineScope.launch {
+        while (isActive) {
+          delay(2.seconds)  // The timeout was taken at random.
+
+          val requeue = mutableListOf<Pair<Path, WeakReference<MappedByteBuffer>>>()
+          val deleteList = mutableListOf<Path>()
+          while (true) {
+            val pair = memoryMapReferences.poll() ?: break
+            if (pair.second.get() == null) {
+              deleteList.add(pair.first)
+            }
+            else {
+              requeue.add(pair)
+            }
+          }
+
+          memoryMapReferences.addAll(requeue)
+
+          for (path in deleteList) {
+            launch(Dispatchers.IO) {
+              tryDelete(path)
+            }
+          }
+        }
+      }
+    }
+  }
 
   override fun lock(position: Long, size: Long, shared: Boolean): FileLock {
     checkClosed()
