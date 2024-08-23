@@ -4,9 +4,15 @@ package com.intellij.tools.ide.metrics.collector.telemetry
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonNames
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 /**
@@ -46,11 +52,32 @@ internal fun toSpanElement(span: SpanData): SpanElement {
   )
 }
 
+val cache = ConcurrentHashMap<String, String>()
+
+/**
+ * OT has a very verbose format with a lot of string duplication.
+ * Using cache, we can save about 30% of memory required to parse JSON.
+ */
+class CachedStringSerializer : KSerializer<String> {
+  private val delegate = String.serializer()
+
+  override val descriptor: SerialDescriptor = delegate.descriptor
+
+  override fun serialize(encoder: Encoder, value: String) {
+    delegate.serialize(encoder, value)
+  }
+
+  override fun deserialize(decoder: Decoder): String {
+    val deserialized = delegate.deserialize(decoder)
+    return cache.computeIfAbsent(deserialized) { it }
+  }
+}
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SpanData(
   @JvmField val spanID: String,
-  @JvmField val operationName: String,
+  @JvmField @Serializable(with = CachedStringSerializer::class) val operationName: String,
 
   // see com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter.export
   @Contextual val duration: Duration,
@@ -64,16 +91,14 @@ data class SpanData(
 
 @Serializable
 data class SpanRef(
-  @JvmField val refType: String? = null,
-  @JvmField val traceID: String? = null,
-  @JvmField val spanID: String? = null,
+  @JvmField @Serializable(with = CachedStringSerializer::class)val refType: String? = null,
+  @JvmField @Serializable(with = CachedStringSerializer::class) val spanID: String? = null,
 )
 
 @Serializable
 data class SpanTag(
-  @JvmField val key: String? = null,
-  @JvmField val type: String? = null,
-  @JvmField val value: String? = null,
+  @JvmField @Serializable(with = CachedStringSerializer::class) val key: String? = null,
+  @JvmField @Serializable(with = CachedStringSerializer::class) val value: String? = null,
 )
 
 internal fun SpanData.getParentSpanId(): String? {
