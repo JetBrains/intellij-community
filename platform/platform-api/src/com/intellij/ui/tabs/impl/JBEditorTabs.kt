@@ -26,14 +26,14 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
     : super(
     project = project,
     parentDisposable = parentDisposable,
-    coroutineScope = null,
+    nullableCoroutineScope = null,
     tabListOptions = TabListOptions(supportCompression = true),
   )
 
   constructor(project: Project?, parentDisposable: Disposable) : super(
     project = project,
     parentDisposable = parentDisposable,
-    coroutineScope = null,
+    nullableCoroutineScope = null,
     tabListOptions = TabListOptions(supportCompression = true),
   )
 
@@ -46,7 +46,7 @@ open class JBEditorTabs : JBTabsImpl, JBEditorTabsBase {
   ) : super(
     project = project,
     parentDisposable = parentDisposable,
-    coroutineScope = coroutineScope,
+    nullableCoroutineScope = coroutineScope,
     tabListOptions = tabListOptions,
   )
 

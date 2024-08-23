@@ -114,7 +114,7 @@ data class TabListOptions(
 open class JBTabsImpl internal constructor(
   private var project: Project?,
   private val parentDisposable: Disposable,
-  coroutineScope: CoroutineScope? = null,
+  nullableCoroutineScope: CoroutineScope? = null,
   tabListOptions: TabListOptions,
 ) : JComponent(), JBTabsEx, PropertyChangeListener, UiCompatibleDataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
@@ -367,12 +367,12 @@ open class JBTabsImpl internal constructor(
   constructor(project: Project?, parentDisposable: Disposable) : this(
     project = project,
     parentDisposable = parentDisposable,
-    coroutineScope = null,
+    nullableCoroutineScope = null,
     tabListOptions = TabListOptions(),
   )
 
   // we expect that every production usage of JBTabsImpl passes scope
-  private val coroutineScope: CoroutineScope = if (coroutineScope == null) {
+  private val coroutineScope: CoroutineScope = if (nullableCoroutineScope == null) {
     @Suppress("SSBasedInspection")
     val orphanScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("JBTabsImpl"))
     Disposer.register(parentDisposable) {
@@ -381,7 +381,7 @@ open class JBTabsImpl internal constructor(
     orphanScope
   }
   else {
-    coroutineScope
+    nullableCoroutineScope
   }
 
   init {
@@ -423,13 +423,8 @@ open class JBTabsImpl internal constructor(
       add(entryPointToolbar!!.component)
     }
     add(titleWrapper)
-    if (coroutineScope == null) {
-      Disposer.register(parentDisposable) { setTitleProducer(null) }
-    }
-    else {
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        setTitleProducer(null)
-      }
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      setTitleProducer(null)
     }
 
     // This scroll pane won't be shown on screen, it is needed only to handle scrolling events and properly update a scrolling model
@@ -464,7 +459,7 @@ open class JBTabsImpl internal constructor(
         val e = MouseEventAdapter.convert(event, fakeScrollPane, event.id, event.getWhen(), modifiers, event.x, event.y)
         MouseEventAdapter.redispatch(e, fakeScrollPane)
       }
-      addMouseMotionAwtListener(parentDisposable, coroutineScope)
+      addMouseMotionAwtListener()
     }
     isFocusTraversalPolicyProvider = true
     focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
@@ -489,14 +484,10 @@ open class JBTabsImpl internal constructor(
             processFocusChange()
           }
         }
-        if (coroutineScope == null) {
-          StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK, parentDisposable, listener)
-        }
-        else {
-          Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
-          coroutineScope.coroutineContext.job.invokeOnCompletion {
-            Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
-          }
+
+        Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
+        coroutineScope.coroutineContext.job.invokeOnCompletion {
+          Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
         }
       }
 
@@ -530,7 +521,7 @@ open class JBTabsImpl internal constructor(
 
   internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
-  private fun addMouseMotionAwtListener(parentDisposable: Disposable, coroutineScope: CoroutineScope?) {
+  private fun addMouseMotionAwtListener() {
     val listener = fun(event: AWTEvent) {
       val tabRectangle = lastLayoutPass?.headerRectangle ?: return
       event as MouseEvent
@@ -553,14 +544,9 @@ open class JBTabsImpl internal constructor(
       }
     }
 
-    if (coroutineScope == null) {
-      StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable, listener)
-    }
-    else {
-      Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
-      }
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
   }
 
