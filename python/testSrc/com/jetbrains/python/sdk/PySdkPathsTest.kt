@@ -18,6 +18,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
@@ -69,11 +70,13 @@ class PySdkPathsTest {
   fun userAddedIsModuleRoot() {
     val (module, moduleRoot) = createModule()
 
+    mockPythonPluginDisposable()
+
     val sdk = PythonMockSdk.create().also {
       registerSdk(it)
       module.pythonSdk = it
     }
-    mockPythonPluginDisposable()
+
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(moduleRoot)) }
 
     updateSdkPaths(sdk)
@@ -142,25 +145,16 @@ class PySdkPathsTest {
     // emulates com.jetbrains.python.configuration.PythonSdkDetailsDialog.ShowPathButton.actionPerformed
 
     val (module, moduleRoot) = createModule()
-
     val sdkPath = createVenvStructureInModule(moduleRoot).path
-
     val userAddedPath = createSubdir(moduleRoot)
 
     mockPythonPluginDisposable()
 
     val pythonVersion = LanguageLevel.getDefault().toPythonVersion()
-    val sdk = ProjectJdkTable.getInstance().createSdk("Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion", PythonSdkType.getInstance())
-    sdk.sdkModificator.apply {
-      homePath = "$sdkPath/bin/python"
-      versionString = pythonVersion
-      runWriteActionAndWait {
-        commitChanges()
-        sdk.getOrCreateAdditionalData()
-      }
-    }
+    val sdk = PythonMockSdk.create(pythonVersion)
     registerSdk(sdk)
     module.pythonSdk = sdk
+
     IndexingTestUtil.waitUntilIndexesAreReady(module.project)
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
 
