@@ -72,8 +72,8 @@
     <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
     <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
     <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
-    <languageInjectionContributor implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector" language="yaml"/>
-    <languageInjectionPerformer implementationClass="org.jetbrains.yaml.YamlLanguageInjectionPerformer" language="yaml"/>
+    <languageInjectionContributor implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector" language="yaml" id="yamlJsonSchemaLanguageInjector"/>
+    <languageInjectionPerformer implementationClass="org.jetbrains.yaml.YamlLanguageInjectionPerformer" language="yaml" id="yamlLanguageInjectionPerformer"/>
     <lang.inspectionSuppressor language="yaml" implementationClass="org.jetbrains.yaml.YAMLlInspectionSuppressor"/>
     <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLInvalidBlockChildrenErrorAnnotator"/>
     <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
