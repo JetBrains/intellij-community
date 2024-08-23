@@ -97,6 +97,9 @@ if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
 fi
 
+# shellcheck disable=SC2034
+IDE_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/__product_vendor__/__system_selector__"
+
 # <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
 VM_OPTIONS_FILE=""
 if [ -r "${IDE_BIN_HOME}/__vm_options__64.vmoptions" ]; then

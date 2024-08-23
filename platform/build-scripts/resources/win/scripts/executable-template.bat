@@ -55,6 +55,8 @@ IF NOT EXIST "%JAVA_EXE%" (
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
+SET IDE_CACHE_DIR=%LOCALAPPDATA%\@@product_vendor@@\@@system_selector@@
+
 :: <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
 SET VM_OPTIONS_FILE=
 IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
