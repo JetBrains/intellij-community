@@ -19,7 +19,7 @@ class ArchivedCompilationContext(
   private val delegate: CompilationContext,
   private val storage: ArchivedCompilationOutputsStorage = ArchivedCompilationOutputsStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory).apply {
     delegate.options.pathToCompiledClassesArchivesMetadata?.let {
-      this.loadMetadataFile(Path.of(it))
+      this.loadMetadataFile(it)
     }
   },
 ) : CompilationContext by delegate {

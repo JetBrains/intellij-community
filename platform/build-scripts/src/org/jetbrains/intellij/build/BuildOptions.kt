@@ -83,7 +83,7 @@ data class BuildOptions(
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
    * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
    */
-  @JvmField val pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA),
+  @JvmField val pathToCompiledClassesArchivesMetadata: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA)?.let { Path.of(it) },
 
   /**
    * If `true` won't unpack downloaded jars with compiled classes from [pathToCompiledClassesArchivesMetadata].

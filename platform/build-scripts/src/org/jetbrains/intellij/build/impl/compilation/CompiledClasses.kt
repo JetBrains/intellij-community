@@ -41,7 +41,8 @@ internal fun checkCompilationOptions(context: CompilationContext) {
   if (options.pathToCompiledClassesArchive != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
     messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
   }
-  if (options.pathToCompiledClassesArchivesMetadata != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+  val pathToCompiledClassArchiveMetadata = options.pathToCompiledClassesArchivesMetadata
+  if (pathToCompiledClassArchiveMetadata != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
     messages.error("JPS Cache is enabled " +
                    "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
@@ -56,7 +57,7 @@ internal fun checkCompilationOptions(context: CompilationContext) {
         "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used"
       )
     }
-    if (options.pathToCompiledClassesArchivesMetadata != null) {
+    if (pathToCompiledClassArchiveMetadata != null) {
       messages.error(
         "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
         "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output"
@@ -64,12 +65,12 @@ internal fun checkCompilationOptions(context: CompilationContext) {
     }
   }
 
-  if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
+  if (pathToCompiledClassArchiveMetadata != null && options.incrementalCompilation) {
     messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
                      "so 'incremental compilation' option cannot be used")
   }
 
-  if (options.pathToCompiledClassesArchive != null && options.pathToCompiledClassesArchivesMetadata != null) {
+  if (options.pathToCompiledClassesArchive != null && pathToCompiledClassArchiveMetadata != null) {
     messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
                    "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
@@ -80,30 +81,24 @@ internal fun checkCompilationOptions(context: CompilationContext) {
   if (options.forceRebuild && options.useCompiledClassesFromProjectOutput) {
     val message = "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' options are specified"
     if (options.isInDevelopmentMode) {
-      messages.warning(message)
+      Span.current().addEvent(message)
       options.incrementalCompilation = false
     }
     else {
       messages.error(message)
     }
   }
-  if (options.forceRebuild && context.options.pathToCompiledClassesArchive != null) {
-    messages.error(
-      "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified"
-    )
+  if (options.forceRebuild && options.pathToCompiledClassesArchive != null) {
+    messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' options are specified")
   }
-  if (options.forceRebuild && context.options.pathToCompiledClassesArchivesMetadata != null) {
-    messages.error(
-      "Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified"
-    )
+  if (options.forceRebuild && pathToCompiledClassArchiveMetadata != null) {
+    messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
   }
   if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES) {
-    messages.error(
-      "${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty"
-    )
+    messages.error("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
   }
   if (!options.useCompiledClassesFromProjectOutput) {
-    messages.info("Incremental compilation: ${options.incrementalCompilation}")
+    Span.current().addEvent("incremental compilation", Attributes.of(AttributeKey.booleanKey("options.incrementalCompilation"), options.incrementalCompilation))
   }
 }
 
@@ -124,6 +119,7 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
 }
 
 internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>?, includingTestsInModules: List<String>?, span: Span) {
+  val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
       span.addEvent("compiled classes reused", Attributes.of(AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString()))
@@ -132,14 +128,14 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
       span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), context.options.pathToCompiledClassesArchive.toString()))
       unpackCompiledClasses(classOutput = context.classesOutputDirectory, context = context)
     }
-    context.options.pathToCompiledClassesArchivesMetadata != null -> {
-      span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), context.options.pathToCompiledClassesArchivesMetadata.toString()))
+    pathToCompiledClassArchiveMetadata != null -> {
+      span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), pathToCompiledClassArchiveMetadata.toString()))
       val forInstallers = System.getProperty("intellij.fetch.compiled.classes.for.installers", "false").toBoolean()
       spanBuilder("fetch and unpack compiled classes").use {
         fetchAndUnpackCompiledClasses(
           reportStatisticValue = context.messages::reportStatisticValue,
           classOutput = context.classesOutputDirectory,
-          metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
+          metadataFile = pathToCompiledClassArchiveMetadata,
           skipUnpack = !context.options.unpackCompiledClassesArchives,
           /**
            * [FetchAndUnpackItem.output].hash files shouldn't leak to installer distribution
