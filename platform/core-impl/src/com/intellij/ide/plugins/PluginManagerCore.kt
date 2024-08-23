@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.HtmlChunk
@@ -645,24 +644,30 @@ object PluginManagerCore {
     pluginSetBuilder.checkPluginCycles(globalErrors)
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
-    pluginSetBuilder.computeEnabledModuleMap { descriptor ->
+    
+    fun registerLoadingError(loadingError: PluginLoadingError) {
+      pluginErrorsById.put(loadingError.plugin.pluginId, loadingError)
+      pluginsToDisable.put(loadingError.plugin.pluginId, loadingError.plugin.name)
+      val disabledDependencyId = loadingError.disabledDependency
+      if (disabledDependencyId != null && context.disabledPlugins.contains(disabledDependencyId)) {
+        pluginsToEnable.put(disabledDependencyId, idMap.get(disabledDependencyId)!!.getName())
+      }
+    }
+
+    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap { descriptor ->
       val disabledPlugins = context.disabledPlugins
       val loadingError = pluginSetBuilder.initEnableState(descriptor = descriptor,
                                                           idMap = idMap,
                                                           disabledPlugins = disabledPlugins,
                                                           errors = pluginErrorsById)
-      val pluginId = descriptor.getPluginId()
-      val isLoadable = loadingError == null
-      if (!isLoadable) {
-        pluginErrorsById.put(pluginId, loadingError!!)
-        pluginsToDisable.put(pluginId, descriptor.getName())
-        val disabledDependencyId = loadingError.disabledDependency
-        if (disabledDependencyId != null && disabledPlugins.contains(disabledDependencyId)) {
-          pluginsToEnable.put(disabledDependencyId, idMap.get(disabledDependencyId)!!.getName())
-        }
+      if (loadingError != null) {
+        registerLoadingError(loadingError)
       }
-      descriptor.isEnabled = (descriptor.isEnabled() && isLoadable && !context.expiredPlugins.contains(pluginId))
+      descriptor.isEnabled = descriptor.isEnabled() && loadingError == null && !context.expiredPlugins.contains(descriptor.getPluginId())
       !descriptor.isEnabled()
+    }
+    for (loadingError in additionalErrors) {
+      registerLoadingError(loadingError)
     }
 
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)

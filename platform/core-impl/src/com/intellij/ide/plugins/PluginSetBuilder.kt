@@ -79,7 +79,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return sorted
   }
 
-  internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): PluginSetBuilder {
+  internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): List<PluginLoadingError> {
     val logMessages = ArrayList<String>()
 
     m@ for (module in moduleGraph.nodes) {
@@ -125,10 +125,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     if (!logMessages.isEmpty()) {
       PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n"))
     }
-    return this
+    return emptyList()
   }
 
-  fun createPluginSetWithEnabledModulesMap(): PluginSet = computeEnabledModuleMap().createPluginSet(incompletePlugins = emptyList())
+  fun createPluginSetWithEnabledModulesMap(): PluginSet {
+    computeEnabledModuleMap()
+    return createPluginSet(incompletePlugins = emptyList())
+  }
 
   internal fun createPluginSet(incompletePlugins: Collection<IdeaPluginDescriptorImpl>): PluginSet {
     val sortedPlugins = getSortedPlugins()
