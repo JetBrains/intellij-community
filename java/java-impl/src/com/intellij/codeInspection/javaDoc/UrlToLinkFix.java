@@ -11,7 +11,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-class UrlToHtmlFix extends PsiUpdateModCommandAction<PsiDocComment> {
+class UrlToLinkFix extends PsiUpdateModCommandAction<PsiDocComment> {
   private final int myStartOffsetInDocComment;
 
   private final int myEndOffsetInDocComment;
@@ -19,10 +19,10 @@ class UrlToHtmlFix extends PsiUpdateModCommandAction<PsiDocComment> {
   /**
    * @param comment                 target Javadoc comment to fix
    * @param startOffsetInDocComment the start offset of the URL in Javadoc comment
-   * @param endOffsetInDocComment   if you want to use "..." as the HTML link text, use the end URL offset in a JavaDoc comment;
-   *                                if you want to use a substring after the URL as the HTML link text, use the end of that substring
+   * @param endOffsetInDocComment   if you want to use "..." as the link text, use the end URL offset in a JavaDoc comment;
+   *                                if you want to use a substring after the URL as the link text, use the end of that substring
    */
-  UrlToHtmlFix(@NotNull PsiDocComment comment, int startOffsetInDocComment, int endOffsetInDocComment) {
+  UrlToLinkFix(@NotNull PsiDocComment comment, int startOffsetInDocComment, int endOffsetInDocComment) {
     super(comment);
     myStartOffsetInDocComment = startOffsetInDocComment;
     myEndOffsetInDocComment = endOffsetInDocComment;
@@ -30,7 +30,7 @@ class UrlToHtmlFix extends PsiUpdateModCommandAction<PsiDocComment> {
 
   @Override
   public @NotNull String getFamilyName() {
-    return JavaBundle.message("quickfix.text.replace.url.with.html");
+    return JavaBundle.message("quickfix.text.replace.url.with.link");
   }
 
   @Override
@@ -48,10 +48,16 @@ class UrlToHtmlFix extends PsiUpdateModCommandAction<PsiDocComment> {
     else {
       text = "...";
     }
-    String wrappedLink = "<a href=\"" + urlAndMaybeText + "\">" + text + "</a>";
+
     CommentTracker ct = new CommentTracker();
+    String wrappedLink = element.isMarkdownComment()
+                         ? "[%s](%s)".formatted(text, urlAndMaybeText)
+                         : "<a href=\"" + urlAndMaybeText + "\">" + text + "</a>";
+
     PsiElement replacement = ct.replace(element, prefix + wrappedLink + suffix);
-    int start = replacement.getTextRange().getStartOffset() + prefix.length() + urlAndMaybeText.length() + 11;
+    int start = replacement.getTextRange().getStartOffset() + prefix.length();
+    start += element.isMarkdownComment() ? 1 : urlAndMaybeText.length() + 11;
+
     updater.select(TextRange.from(start, text.length()));
   }
 }

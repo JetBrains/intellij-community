@@ -16,8 +16,8 @@ public class JDClassComment extends JDParamListOwnerComment {
   private List<String> myAuthorsList;
   private String myVersion;
 
-  public JDClassComment(@NotNull CommentFormatter formatter) {
-    super(formatter);
+  public JDClassComment(@NotNull CommentFormatter formatter, boolean isMarkdown) {
+    super(formatter, isMarkdown);
   }
 
   @Override
@@ -29,14 +29,16 @@ public class JDClassComment extends JDParamListOwnerComment {
       for (String author : myAuthorsList) {
         sb.append(myFormatter.getParser().formatJDTagDescription(author,
                                                                  prefix + tag.getWithEndWhitespace(),
-                                                                 continuationPrefix));
+                                                                 continuationPrefix,
+                                                                 getIsMarkdown()));
       }
     }
     if (!isNull(myVersion)) {
       JDTag tag = JDTag.VERSION;
       sb.append(myFormatter.getParser().formatJDTagDescription(myVersion,
                                                                prefix + tag.getWithEndWhitespace(),
-                                                               continuationPrefix));
+                                                               continuationPrefix,
+                                                               getIsMarkdown()));
     }
   }
 
