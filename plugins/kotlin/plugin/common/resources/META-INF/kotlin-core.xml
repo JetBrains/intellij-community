@@ -536,6 +536,10 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
     <safeDelete.importSearcher implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinImportSearcher"/>
 
+    <refactoring.inlineHandler
+            language="JAVA"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
+
     <usageToPsiElementProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUsageToPsiElementProvider"/>
 
     <usageFeaturesProvider implementation="org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider"/>

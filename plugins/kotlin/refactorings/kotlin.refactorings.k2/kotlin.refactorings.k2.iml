@@ -58,5 +58,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared" />
   </component>
 </module>

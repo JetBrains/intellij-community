@@ -40,6 +40,9 @@
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineTypeAliasHandler"/>
+    <refactoring.inlineHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.inline.JavaToKotlinInlineHandler"/>
 
     <refactoring.copyHandler
             id="kotlinClass"

@@ -49,8 +49,8 @@ class CodeInliner(
     private val usageExpression: KtSimpleNameExpression?,
     private val call: KtElement,
     private val inlineSetter: Boolean,
-    codeToInline: CodeToInline
-) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, codeToInline) {
+    private val replacement: CodeToInline
+) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, replacement) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
         treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
     }
@@ -74,9 +74,11 @@ class CodeInliner(
             ?.getAssignmentByLHS()
             ?.takeIf { it.operationToken == KtTokens.EQ }
         val originalDeclaration = analyze(call) {
+            //it might resolve in java method which is converted to kotlin by j2k
+            //the originalDeclaration in this case should point to the converted non-physical function
             (call.parent as? KtCallableReferenceExpression
                 ?: treeUpToCall())
-                .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration
+                .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration ?: replacement.originalDeclaration
         } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
             originalDeclaration.setter?.takeIf { inlineSetter && it.hasBody() } ?: originalDeclaration

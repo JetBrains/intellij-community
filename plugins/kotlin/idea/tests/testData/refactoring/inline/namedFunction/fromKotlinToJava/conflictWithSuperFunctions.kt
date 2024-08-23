@@ -1,4 +1,5 @@
 // ERROR: Inlined function overrides function Adw1.a\nInlined function overrides function Asswe.a\nInlined function overrides function D.a
+// ERROR_K2: Inlined function overrides function Adw1.a\nInlined function overrides function Asswe.a
 
 open class A {
     open fun a() = Unit

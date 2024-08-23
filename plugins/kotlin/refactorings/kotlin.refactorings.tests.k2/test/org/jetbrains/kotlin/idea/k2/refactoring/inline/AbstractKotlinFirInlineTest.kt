@@ -51,7 +51,8 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
             else
                 null
 
-            val expectedErrors = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR: ")
+            val expectedErrors = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR_K2: ").takeIf { it.isNotEmpty() }
+                ?: InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR: ")
             val inlinePropertyKeepValue = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "// INLINE_PROPERTY_KEEP: ")
             val settings = KotlinCommonRefactoringSettings.getInstance()
             val oldInlinePropertyKeepValue = settings.INLINE_PROPERTY_KEEP

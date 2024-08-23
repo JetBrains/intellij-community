@@ -74,9 +74,6 @@
     <refactoring.inlineHandler
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.JavaToKotlinInlineHandler"/>
-    <refactoring.inlineHandler
-            language="JAVA"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
 
     <refactoring.safeDeleteProcessor
             id="kotlinProcessor"
