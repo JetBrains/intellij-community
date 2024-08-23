@@ -7,17 +7,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.LoggedErrorProcessor.Action
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createSimpleMessageBusOwner
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail
 import org.junit.jupiter.api.AfterEach
@@ -233,12 +232,8 @@ class MessageBusTest : MessageBusOwner {
 
     val conn2 = bus.connect()
     conn2.subscribe(TOPIC1, T1Handler("handler2"))
-    try {
-      bus.syncPublisher(TOPIC1).t11()
-      Assertions.fail<Any>("PCE expected")
-    }
-    catch (ignored: ProcessCanceledException) {
-    }
+    bus.syncPublisher(TOPIC1).t11()
+
     assertEvents("pce", "cce", "handler2:t11")
   }
 
@@ -263,16 +258,9 @@ class MessageBusTest : MessageBusOwner {
     val conn2 = bus.connect()
     conn2.subscribe(TOPIC1, T1Handler("handler2"))
 
-    try {
-      bus.syncPublisher(TOPIC1).t12()
-      Assertions.fail<Any>("ISE propagation expected")
-    }
-    catch (e: Throwable) {
-      val rootCause = ExceptionUtil.getRootCause(e)
-      assertThat(rootCause).isInstanceOf(IllegalStateException::class.java)
-    }
+    bus.syncPublisher(TOPIC1).t12()
 
-    // event is delivered to all subscribers, then the error is rethrown
+    // event is delivered to all subscribers, then the error is logged
     assertEvents("handler3:t12", "uoe", "handler2:t12")
   }
 
@@ -330,12 +318,8 @@ class MessageBusTest : MessageBusOwner {
 
     val conn2 = bus.connect()
     conn2.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler2"))
-    try {
-      bus.syncPublisher(IMMEDIATE_DELIVERY).t11()
-      Assertions.fail<Any>("PCE expected")
-    }
-    catch (ignored: ProcessCanceledException) {
-    }
+    bus.syncPublisher(IMMEDIATE_DELIVERY).t11()
+
     assertEvents("pce", "cce", "handler2:t11")
   }
 
@@ -360,16 +344,9 @@ class MessageBusTest : MessageBusOwner {
     val conn2 = bus.connect()
     conn2.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler2"))
 
-    try {
-      bus.syncPublisher(IMMEDIATE_DELIVERY).t12()
-      Assertions.fail<Any>("ISE propagation expected")
-    }
-    catch (e: Throwable) {
-      val rootCause = ExceptionUtil.getRootCause(e)
-      assertThat(rootCause).isInstanceOf(IllegalStateException::class.java)
-    }
+    bus.syncPublisher(IMMEDIATE_DELIVERY).t12()
 
-    // event is delivered to all subscribers, then the error is rethrown
+    // event is delivered to all subscribers, then the error is logged
     assertEvents("handler3:t12", "uoe", "handler2:t12")
   }
 

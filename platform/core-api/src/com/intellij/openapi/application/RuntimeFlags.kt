@@ -20,3 +20,11 @@ val isMessageBusThrowsWhenDisposed: Boolean =
 @get:ApiStatus.Internal
 val isCoroutineWILEnabled: Boolean =
   System.getProperty(COROUTINE_WIL_PROPERTY, "true").toBoolean()
+
+/**
+ * - `false` means exceptions from [com.intellij.util.messages.Topic] subscribers are being logged
+ * - `true` means exceptions from [com.intellij.util.messages.Topic] subscribers are being rethrown at [com.intellij.util.messages.MessageBus.syncPublisher] usages (the old behavior)
+ */
+@get:ApiStatus.Internal
+val isMessageBusErrorPropagationEnabled: Boolean =
+  System.getProperty("ijpl.message.bus.rethrows.errors.from.subscribers", "false").toBoolean()
