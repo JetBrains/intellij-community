@@ -10820,7 +10820,7 @@ c:com.intellij.execution.console.LanguageConsoleImpl
 - getCurrentEditor():com.intellij.openapi.editor.ex.EditorEx
 - getEditorDocument():com.intellij.openapi.editor.Document
 - getFile():com.intellij.psi.PsiFile
-- getHistoryViewer():com.intellij.openapi.editor.ex.EditorEx
+- f:getHistoryViewer():com.intellij.openapi.editor.ex.EditorEx
 - getLanguage():com.intellij.lang.Language
 - p:getMinHistoryLineCount():I
 - getPreferredFocusableComponent():javax.swing.JComponent

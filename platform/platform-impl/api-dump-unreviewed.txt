@@ -3109,13 +3109,13 @@ f:com.intellij.diagnostic.logs.LogCategory
 - f:getCategory():java.lang.String
 - f:getLevel():com.intellij.diagnostic.logs.DebugLogLevel
 - hashCode():I
-f:com.intellij.diagnostic.logs.LogCategory$$serializer
+bc:com.intellij.diagnostic.logs.LogCategory$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.diagnostic.logs.LogCategory$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogCategory
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogCategory):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogCategory
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogCategory):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.diagnostic.logs.LogCategory$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -3142,13 +3142,13 @@ f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
 - bs:copy$default(com.intellij.diagnostic.logs.LogLevelConfigurationManager$State,java.util.List,I,java.lang.Object):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
+bc:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogLevelConfigurationManager$State):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogLevelConfigurationManager$State):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -14016,13 +14016,13 @@ f:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
 - bs:copy$default(com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState,java.util.Map,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$$serializer
+bc:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20286,13 +20286,13 @@ f:com.intellij.toolWindow.ToolWindowDescriptor
 - f:setOrder(I):V
 - f:setVisible(Z):V
 - f:setWeight(F):V
-f:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
+bc:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowDescriptor
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowDescriptor):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowDescriptor
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowDescriptor):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowDescriptor$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20440,13 +20440,13 @@ f:com.intellij.toolWindow.ToolWindowLayoutDescriptor
 - f:getV2():java.util.List
 - hashCode():I
 - f:withUpdatedLayout(java.util.List,Z,java.util.Map):com.intellij.toolWindow.ToolWindowLayoutDescriptor
-f:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
+bc:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutDescriptor
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutDescriptor):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutDescriptor
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutDescriptor):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowLayoutDescriptor$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20473,13 +20473,13 @@ f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - f:withUpdatedLayout(java.lang.String,java.util.List,Z,java.util.Map):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - bs:withUpdatedLayout$default(com.intellij.toolWindow.ToolWindowLayoutStorageManagerState,java.lang.String,java.util.List,Z,java.util.Map,I,java.lang.Object):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - f:withoutLayout(java.lang.String):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
-f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
+bc:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerState):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerState):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20496,13 +20496,13 @@ f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
 - f:getV1():java.util.List
 - f:getV2():java.util.List
 - hashCode():I
-f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
+bc:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$Companion
 - f:serializer():kotlinx.serialization.KSerializer
