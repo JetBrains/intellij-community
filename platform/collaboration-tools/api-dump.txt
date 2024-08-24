@@ -1280,6 +1280,8 @@ a:com.intellij.collaboration.ui.codereview.diff.action.CodeReviewDiscussionsTogg
 - com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$None
 - sort(java.util.List):java.util.List
+*f:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorterKt
+- sf:sort(com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter,com.intellij.openapi.ListSelection):com.intellij.openapi.ListSelection
 com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 - a:getLocation():kotlinx.coroutines.flow.Flow
 - a:isVisible():kotlinx.coroutines.flow.Flow
@@ -1976,6 +1978,8 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - <init>(javax.swing.JList):V
 - mouseClicked(java.awt.event.MouseEvent):V
 - mouseMoved(java.awt.event.MouseEvent):V
+*f:com.intellij.collaboration.ui.util.ListSelectionUtilKt
+- sf:getSelectedItem(com.intellij.openapi.ListSelection):java.lang.Object
 *f:com.intellij.collaboration.ui.util.SwingBindingsKt
 - sf:bindBackgroundIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindBorderIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V

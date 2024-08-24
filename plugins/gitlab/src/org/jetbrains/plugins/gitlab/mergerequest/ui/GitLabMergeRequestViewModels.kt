@@ -3,13 +3,14 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
+import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -19,9 +20,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
+import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffProcessorViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
@@ -34,15 +34,15 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolW
 /**
  * Collection of view models for different merge request views
  */
-internal class GitLabMergeRequestViewModels(private val project: Project,
-                                            parentCs: CoroutineScope,
-                                            projectData: GitLabProject,
-                                            private val mergeRequest: GitLabMergeRequest,
-                                            private val projectVm: GitLabToolWindowProjectViewModel,
-                                            currentUser: GitLabUserDTO) {
-  private val cs = parentCs.childScope()
-
-  private val diffBridge = GitLabMergeRequestDiffBridge()
+internal class GitLabMergeRequestViewModels(
+  private val project: Project,
+  parentCs: CoroutineScope,
+  projectData: GitLabProject,
+  private val mergeRequest: GitLabMergeRequest,
+  private val projectVm: GitLabToolWindowProjectViewModel,
+  currentUser: GitLabUserDTO,
+) {
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val lazyDetailsVm = lazy {
     GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, projectVm.avatarIconProvider).also {
@@ -61,14 +61,18 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
     GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest)
   }
 
-  val diffVm: GitLabMergeRequestDiffViewModel by lazy {
-    GitLabMergeRequestDiffViewModelImpl(project, cs, currentUser, mergeRequest, diffBridge, discussionsVms,
-                                        projectVm.avatarIconProvider).apply { setup() }
+  private val _diffVm by lazy {
+    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms, projectVm.avatarIconProvider).apply {
+      setup()
+    }
   }
+  val diffVm: GitLabMergeRequestDiffViewModel get() = _diffVm
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
-    GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest, diffBridge,
-                                            projectVm, discussionsVms, projectVm.avatarIconProvider)
+    GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest,
+                                            projectVm, discussionsVms, projectVm.avatarIconProvider).apply {
+      setup()
+    }
   }
 
   private fun setupDetailsVm(vm: GitLabMergeRequestDetailsViewModelImpl) {
@@ -83,7 +87,7 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
       vm.changesVm.changeListVm.map { it.getOrNull() }.collectScoped { vm ->
         vm?.handleSelection {
           if (it != null) {
-            diffBridge.setChanges(it)
+            _diffVm.showChanges(ListSelection.createAt(it.changes, it.selectedIdx))
           }
         }
       }
@@ -100,8 +104,8 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
 
   private fun setupTimelineVm(vm: LoadAllGitLabMergeRequestTimelineViewModel) {
     cs.launchNow {
-      vm.diffRequests.collect { change ->
-        diffBridge.setChanges(change)
+      vm.diffRequests.collect {
+        _diffVm.showChanges(ListSelection.createAt(it.changes, it.selectedIdx), it.location)
         withContext(Dispatchers.EDT) {
           projectVm.filesController.openDiff(mergeRequest.iid, true)
         }
@@ -109,14 +113,23 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
     }
   }
 
-  private fun GitLabMergeRequestDiffViewModelImpl.setup() {
+  private fun GitLabMergeRequestDiffProcessorViewModelImpl.setup() {
     cs.launchNow {
-      diffVm.collectScoped {
-        it.getOrNull()?.handleSelection { producer ->
-          val change = producer?.asSafely<CodeReviewDiffRequestProducer>()?.change
-          if (lazyDetailsVm.isInitialized() && change != null) {
-            lazyDetailsVm.value.changesVm.selectChange(change)
-          }
+      handleSelection {
+        val change = it?.selectedItem
+        if (lazyDetailsVm.isInitialized() && change != null) {
+          lazyDetailsVm.value.changesVm.selectChange(change)
+        }
+      }
+    }
+  }
+
+  private fun GitLabMergeRequestEditorReviewViewModel.setup() {
+    cs.launchNow {
+      handleDiffRequests { listWithSelection, location ->
+        _diffVm.showChanges(listWithSelection, location)
+        runInEdt {
+          projectVm.filesController.openDiff(mergeRequest.iid, true)
         }
       }
     }

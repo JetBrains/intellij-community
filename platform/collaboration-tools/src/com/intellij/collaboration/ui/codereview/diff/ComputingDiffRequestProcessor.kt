@@ -9,9 +9,6 @@ import com.intellij.collaboration.ui.codereview.diff.model.getSelected
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
-import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
-import com.intellij.diff.tools.simple.SimpleDiffViewer
-import com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
@@ -66,13 +63,7 @@ class ComputingDiffRequestProcessor(project: Project, cs: CoroutineScope, privat
   }
 
   private fun FrameDiffTool.DiffViewer.scrollTo(loc: DiffLineLocation) {
-    val v = this
-    val (side, line) = loc
-    when (v) {
-      is OnesideTextDiffViewer -> v.scrollToLine(line)
-      is SimpleDiffViewer -> v.scrollToLine(side, line)
-      is UnifiedDiffViewer -> v.scrollToLine(side, line)
-    }
+    DiffViewerScrollRequestProcessor.scroll(this, loc)
   }
 
   override fun getCurrentRequestProvider(): DiffRequestProducer? {

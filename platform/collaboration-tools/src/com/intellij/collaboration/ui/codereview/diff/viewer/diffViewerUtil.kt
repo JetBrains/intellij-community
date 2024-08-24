@@ -249,7 +249,7 @@ private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>?, 
   }
 }
 
-private fun <V : DiffViewerBase> V.viewerReadyFlow(): Flow<Boolean> {
+internal fun <V : DiffViewerBase> V.viewerReadyFlow(): Flow<Boolean> {
   val isViewerGood: V.() -> Boolean = { !hasPendingRediff() }
   return callbackFlow {
     val listener = object : DiffViewerListener() {

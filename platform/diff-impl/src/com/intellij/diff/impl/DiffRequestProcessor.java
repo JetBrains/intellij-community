@@ -263,6 +263,13 @@ public abstract class DiffRequestProcessor
     updateRequest(force, myCurrentScrollToPolicy);
   }
 
+  /**
+   * Perform a request to update the current DiffRequest
+   * Typically invoked after navigation or on error recovery attempt
+   *
+   * @param force if the request should be re-applied
+   * @param scrollToChangePolicy optional scrolling request passed when navigating between changes in adjacent requests
+   */
   @RequiresEdt
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
@@ -414,9 +421,13 @@ public abstract class DiffRequestProcessor
   @RequiresEdt
   private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
-
     request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
+    doApplyRequest(request);
+  }
 
+  @RequiresEdt
+  @ApiStatus.Internal
+  protected void doApplyRequest(@NotNull DiffRequest request) {
     DiffUtil.runPreservingFocus(myContext, () -> {
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
