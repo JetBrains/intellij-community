@@ -165,7 +165,7 @@ class JarPackager private constructor(
       packager.computeModuleSources(includedModules = includedModules, searchableOptionSet = searchableOptionSet, layout = layout)
       packager.computeModuleCustomLibrarySources(layout)
 
-      val clientModuleFilter = context.jetBrainsClientModuleFilter
+      val clientModuleFilter = context.getJetBrainsClientModuleFilter()
       val libraryToMerge = packager.computeProjectLibrariesSources(outDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles, clientModuleFilter = clientModuleFilter)
       if (isRootDir) {
         for ((jarName, predicate) in predefinedMergeRules) {
@@ -940,9 +940,6 @@ private fun createAssetDescriptor(outDir: Path, relativeOutputFile: String, targ
   val nativeFiles = metaInfDir?.resolve("native-files-list")?.takeIf { Files.isRegularFile(it) }?.readLines()
   return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile, pathInClassLog = pathInClassLog, nativeFiles = nativeFiles)
 }
-
-// also, put libraries from Maven repo ahead of others, for them to not depend on the lexicographical order of Maven repo and source path
-private fun isFromLocalMavenRepo(path: Path) = path.startsWith(MAVEN_REPO)
 
 private fun computeDistributionFileEntries(asset: AssetDescriptor, hasher: HashStream64, list: MutableList<DistributionFileEntry>, dryRun: Boolean, cacheManager: JarCacheManager) {
   for ((module, sources) in asset.includedModules) {

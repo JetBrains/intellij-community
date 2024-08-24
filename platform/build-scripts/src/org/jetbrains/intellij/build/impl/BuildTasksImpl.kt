@@ -486,7 +486,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
     val platformModules = HashSet<String>()
     if (mavenArtifacts.forIdeModules) {
       platformModules.addAll(distributionState.platformModules)
-      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, result = platformModules, context = context)
+      collectIncludedPluginModules(enabledPluginModules = context.getBundledPluginModules(), result = platformModules, context = context)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)

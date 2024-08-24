@@ -46,7 +46,7 @@ private data class PluginDescription(
   val requiredDependencies: Set<String> = emptySet()
 )
 
-private fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
+private suspend fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
   val pluginMap = collectPluginDescriptors(
     skipImplementationDetailPlugins = true, //it's not possible to disable implementation detail plugin
     skipBundledPlugins = false,

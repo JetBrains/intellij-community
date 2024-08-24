@@ -91,7 +91,7 @@ interface BuildContext : CompilationContext {
    * Returns main modules' names of plugins bundled with the product.
    * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
    */
-  val bundledPluginModules: List<String>
+  suspend fun getBundledPluginModules(): List<String>
 
   /**
    * see BuildTasksImpl.buildProvidedModuleList
@@ -101,7 +101,7 @@ interface BuildContext : CompilationContext {
   val appInfoXml: String
 
   /**
-   * Add file to be copied into application.
+   * Add the file to be copied into an application.
    */
   fun addDistFile(file: DistFile)
 
@@ -110,7 +110,7 @@ interface BuildContext : CompilationContext {
    */
   fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
-  fun includeBreakGenLibraries(): Boolean
+  suspend fun includeBreakGenLibraries(): Boolean
 
   fun patchInspectScript(path: Path)
 
@@ -129,7 +129,7 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
+  suspend fun getJetBrainsClientModuleFilter(): JetBrainsClientModuleFilter
 
   val isEmbeddedJetBrainsClientEnabled: Boolean
 

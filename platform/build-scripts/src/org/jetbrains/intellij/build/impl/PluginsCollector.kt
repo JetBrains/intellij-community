@@ -13,7 +13,7 @@ import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import java.nio.file.Path
 
-fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, result: MutableSet<PluginLayout>, context: BuildContext) {
+suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, result: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
@@ -22,7 +22,7 @@ fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData,
     skipImplementationDetailPlugins = true,
     skipBundledPlugins = false,
     honorCompatiblePluginsToIgnore = true,
-    context = context
+    context = context,
   )
 
   // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
@@ -34,9 +34,9 @@ fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData,
     val substitutor = layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
                       ?: layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
                       ?: continue
-    layouts.forEach {
-      if (it != substitutor) {
-        moreThanOneLayoutSubstitutors.put(it, substitutor)
+    for (layout in layouts) {
+      if (layout != substitutor) {
+        moreThanOneLayoutSubstitutors.put(layout, substitutor)
       }
     }
   }
@@ -95,7 +95,7 @@ private fun isPluginCompatible(plugin: PluginDescriptor, availableModulesAndPlug
   return true
 }
 
-fun collectPluginDescriptors(
+suspend fun collectPluginDescriptors(
   skipImplementationDetailPlugins: Boolean,
   skipBundledPlugins: Boolean,
   honorCompatiblePluginsToIgnore: Boolean,
@@ -109,7 +109,7 @@ fun collectPluginDescriptors(
     nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
   }
 
-  val allBundledPlugins = HashSet(context.bundledPluginModules)
+  val allBundledPlugins = HashSet(context.getBundledPluginModules())
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name
     if ((skipBundledPlugins && allBundledPlugins.contains(moduleName)) ||

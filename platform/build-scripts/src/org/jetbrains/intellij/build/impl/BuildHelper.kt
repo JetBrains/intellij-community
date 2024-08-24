@@ -17,11 +17,11 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import java.util.function.Predicate
 
-inline fun CoroutineScope.createSkippableJob(
+fun CoroutineScope.createSkippableJob(
   spanBuilder: SpanBuilder,
   stepId: String,
   context: BuildContext,
-  crossinline task: suspend () -> Unit,
+  task: suspend () -> Unit,
 ): Job {
   return launch {
     context.executeStep(spanBuilder, stepId) {

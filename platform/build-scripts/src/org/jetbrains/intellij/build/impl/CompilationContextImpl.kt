@@ -17,11 +17,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -98,13 +100,14 @@ internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, artifactDi
 
 @Internal
 class CompilationContextImpl private constructor(
-  model: JpsModel,
+  private val model: JpsModel,
   override val messages: BuildMessages,
   override val paths: BuildPaths,
   override val options: BuildOptions,
 ) : CompilationContext {
-  @JvmField
-  val global: JpsGlobal = model.global
+  val global: JpsGlobal
+    get() = model.global
+
   private val nameToModule: Map<String?, JpsModule>
 
   override var classesOutputDirectory: Path
@@ -114,13 +117,15 @@ class CompilationContextImpl private constructor(
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
     }
 
-  override val project: JpsProject = model.project
+  override val project: JpsProject
+    get() = model.project
 
-  override val projectModel: JpsModel = model
+  override val projectModel: JpsModel
+    get() = model
 
-  override val dependenciesProperties: DependenciesProperties
+  override val dependenciesProperties: DependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
 
-  override val bundledRuntime: BundledRuntime
+  override val bundledRuntime: BundledRuntime = BundledRuntimeImpl(this)
 
   override lateinit var compilationData: JpsCompilationData
 
@@ -130,6 +135,11 @@ class CompilationContextImpl private constructor(
 
   @Volatile
   private var cachedJdkHome: Path? = null
+
+  init {
+    val modules = project.modules
+    nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+  }
 
   override suspend fun getStableJdkHome(): Path {
     var jdkHome = cachedJdkHome
@@ -150,18 +160,9 @@ class CompilationContextImpl private constructor(
     JdkDownloader.getJavaExecutable(jdkHome)
   }
 
-  override val originalModuleRepository: OriginalModuleRepository by lazy {
-    runBlocking(Dispatchers.Default) {
-      CompilationTasks.create(this@CompilationContextImpl).generateRuntimeModuleRepository()
-    }
-    OriginalModuleRepositoryImpl(this)
-  }
-
-  init {
-    val modules = project.modules
-    nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
-    dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
-    bundledRuntime = BundledRuntimeImpl(context = this)
+  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
+    generateRuntimeModuleRepository(this)
+    return OriginalModuleRepositoryImpl(this)
   }
 
   companion object {
@@ -290,9 +291,13 @@ class CompilationContextImpl private constructor(
 
   private val compileMutex = Mutex()
 
+  override suspend fun withCompilationLock(block: suspend () -> Unit) {
+    compileMutex.withReentrantLock(block)
+  }
+
   override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     spanBuilder("resolve dependencies and compile modules").block { span ->
-      compileMutex.withLock {
+      compileMutex.withReentrantLock {
         resolveProjectDependencies(this@CompilationContextImpl)
         reuseOrCompile(context = this@CompilationContextImpl, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span)
       }

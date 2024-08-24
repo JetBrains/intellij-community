@@ -111,7 +111,7 @@ private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, pr
 }
 
 suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
-  val enabledPluginModules = context.bundledPluginModules.toHashSet()
+  val enabledPluginModules = context.getBundledPluginModules().toHashSet()
   return createPlatformLayout(
     projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
     context = context,
@@ -119,7 +119,7 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
 }
 
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
-  val jetBrainsClientModuleFilter = context.jetBrainsClientModuleFilter
+  val jetBrainsClientModuleFilter = context.getJetBrainsClientModuleFilter()
   val productLayout = context.productProperties.productLayout
   val layout = PlatformLayout()
   // used only in modules that packed into Java
@@ -250,7 +250,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
         moduleName = moduleName,
         relativeOutputFile = when {
           isModuleCloseSource(moduleName, context = context) -> if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
-          else -> PlatformJarNames.getPlatformModuleJarName(moduleName, context)
+          else -> PlatformJarNames.getPlatformModuleJarName(moduleName, jetBrainsClientModuleFilter)
         },
         reason = "productImplementationModules",
       )
@@ -289,7 +289,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
      implicit.asSequence().map {
        ModuleItem(
          moduleName = it.first,
-         relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it.first, context),
+         relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it.first, jetBrainsClientModuleFilter),
          reason = "<- " + it.second.asReversed().joinToString(separator = " <- ")
        )
      })
@@ -364,9 +364,9 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
   return result
 }
 
-fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): Set<String> {
+suspend fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): Set<String> {
   val result = LinkedHashSet<String>()
-  result.addAll(context.bundledPluginModules)
+  result.addAll(context.getBundledPluginModules())
   pluginsToPublish.mapTo(result) { it.mainModule }
   return result
 }
@@ -386,10 +386,11 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
   }
 }
 
-private fun toModuleItemSequence(list: Collection<String>, productLayout: ProductModulesLayout, reason: String, context: BuildContext): Sequence<ModuleItem> {
+private suspend fun toModuleItemSequence(list: Collection<String>, productLayout: ProductModulesLayout, reason: String, context: BuildContext): Sequence<ModuleItem> {
+  val jetBrainsClientModuleFilter = context.getJetBrainsClientModuleFilter()
   return list.asSequence()
     .filter { !productLayout.excludedModuleNames.contains(it) }
-    .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, context), reason = reason) }
+    .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, jetBrainsClientModuleFilter), reason = reason) }
 }
 
 private suspend fun computeImplicitRequiredModules(

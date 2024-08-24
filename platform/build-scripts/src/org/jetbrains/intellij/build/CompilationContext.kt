@@ -42,7 +42,7 @@ interface CompilationContext {
    */
   val classesOutputDirectory: Path
 
-  val originalModuleRepository: OriginalModuleRepository
+  suspend fun getOriginalModuleRepository(): OriginalModuleRepository
 
   fun findRequiredModule(name: String): JpsModule
 
@@ -67,6 +67,9 @@ interface CompilationContext {
   suspend fun prepareForBuild()
 
   suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
+
+  @ApiStatus.Internal
+  suspend fun withCompilationLock(block: suspend () -> Unit)
 }
 
 interface CompilationTasks {

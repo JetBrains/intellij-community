@@ -44,15 +44,16 @@ internal class WindowsDistributionBuilder(
 
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
-      copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir }, fileFilter = { file ->
+      val includeBreakGenLibraries = context.includeBreakGenLibraries()
+      copyDir(sourceDir = sourceBinDir, targetDir = distBinDir, dirFilter = { it == sourceBinDir }, fileFilter = { file ->
         @Suppress("SpellCheckingInspection")
-        context.includeBreakGenLibraries() || !file.name.startsWith("breakgen")
+        includeBreakGenLibraries || !file.name.startsWith("breakgen")
       })
 
       copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
       generateBuildTxt(context, targetPath)
-      copyDistFiles(context, newDir = targetPath, OsFamily.WINDOWS, arch)
+      copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
@@ -64,11 +65,17 @@ internal class WindowsDistributionBuilder(
 
       writeVmOptions(distBinDir)
 
-      buildWinLauncher(targetPath, arch, additionalNonCustomizableJvmArgs = emptyList(), context)
+      buildWinLauncher(winDistPath = targetPath, arch = arch, additionalNonCustomizableJvmArgs = emptyList(), context = context)
 
       createJetBrainsClientContextForLaunchers(context)?.let { clientContext ->
         writeWindowsVmOptions(distBinDir, clientContext)
-        buildWinLauncher(targetPath, arch, additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS, clientContext, copyLicense = false)
+        buildWinLauncher(
+          winDistPath = targetPath,
+          arch = arch,
+          additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
+          context = clientContext,
+          copyLicense = false,
+        )
       }
 
       customizer.copyAdditionalFiles(context, targetPath, arch)

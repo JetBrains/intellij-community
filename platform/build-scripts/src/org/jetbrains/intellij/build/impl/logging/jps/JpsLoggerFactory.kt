@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.*
@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
 @Internal
-fun withJpsLogging(context: CompilationContext, action: (JpsMessageHandler) -> Unit) {
-  val messageHandler = JpsMessageHandler(context)
+suspend fun withJpsLogging(context: CompilationContext, span: Span, action: suspend (JpsMessageHandler) -> Unit) {
+  val messageHandler = JpsMessageHandler(context, span)
   JpsLoggerFactory.messageHandler = messageHandler
   if (context.options.compilationLogEnabled) {
     val categoriesWithDebugLevel = context.compilationData.categoriesWithDebugLevel
@@ -79,13 +79,13 @@ class JpsLoggerFactory : Logger.Factory {
 }
 
 @Internal
-class JpsMessageHandler(private val context: CompilationContext) : MessageHandler {
+class JpsMessageHandler(private val context: CompilationContext, private val span: Span) : MessageHandler {
   val errorMessagesByCompiler = MultiMap.createConcurrent<String, String>()
   private val compilationStartTimeForTarget = ConcurrentHashMap<String, Long>()
   private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
   private var progress = (-1.0).toFloat()
-  lateinit var span: Span
-  override fun processMessage(message: BuildMessage) = span.use<Unit> {
+
+  override fun processMessage(message: BuildMessage): Unit = TeamCityBuildMessageLogger.withFlow(span) {
     val text = message.messageText
     when (message.kind) {
       BuildMessage.Kind.ERROR, BuildMessage.Kind.INTERNAL_BUILDER_ERROR -> {
@@ -189,19 +189,18 @@ class JpsMessageHandler(private val context: CompilationContext) : MessageHandle
   }
 }
 
-private class JpsLogger(category: String?, val fileLogger: Logger?) : DefaultLogger(category) {
-  companion object {
-    @Nls
-    const val COMPILER_NAME = "build runner"
-  }
+@Nls
+private const val COMPILER_NAME = "build runner"
 
+private class JpsLogger(category: String?, val fileLogger: Logger?) : DefaultLogger(category) {
   init {
     require(messageHandler != null || fileLogger != null) {
       "Jps logging is not initialized"
     }
   }
 
-  val messageHandler get() = JpsLoggerFactory.messageHandler
+  private val messageHandler: JpsMessageHandler?
+    get() = JpsLoggerFactory.messageHandler
 
   override fun error(@Nls message: String?, t: Throwable?, vararg details: String) {
     if (t == null) {

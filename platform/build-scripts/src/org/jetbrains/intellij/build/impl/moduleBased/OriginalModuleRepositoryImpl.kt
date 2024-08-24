@@ -50,12 +50,11 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
         return "source file based resolver for '${context.paths.projectHome}' project"
       }
     }
-    return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString,
-                                                                          resolver)
+    return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
   }
 
-  override fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules {
-    val repository = context.originalModuleRepository.repository
+  override suspend fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules {
+    val repository = context.getOriginalModuleRepository().repository
     val productModulesFile = findProductModulesFile(context, rootModuleName)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     return ProductModulesSerialization.loadProductModules(productModulesFile, productMode, repository)

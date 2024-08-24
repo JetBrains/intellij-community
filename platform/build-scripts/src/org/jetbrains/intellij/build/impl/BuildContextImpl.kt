@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -78,10 +79,10 @@ class BuildContextImpl internal constructor(
     get() = productProperties.xBootClassPathJarNames
 
   override var bootClassPathJarNames: List<String> = java.util.List.of(PLATFORM_LOADER_JAR)
-  
+
   override val ideMainClassName: String
     get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
-  
+
   override val useModularLoader: Boolean
     get() = productProperties.rootModuleForModularLoader != null && options.useModularLoader
 
@@ -102,9 +103,11 @@ class BuildContextImpl internal constructor(
     }
     options.buildStepsToSkip += productProperties.incompatibleBuildSteps
     if (!options.buildStepsToSkip.isEmpty()) {
-      Span.current().addEvent("build steps to be skipped", Attributes.of(
+      Span.current().addEvent(
+        "build steps to be skipped", Attributes.of(
         AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
-      ))
+      )
+      )
     }
   }
 
@@ -174,13 +177,15 @@ class BuildContextImpl internal constructor(
     distFiles.add(file)
   }
 
-  override val bundledPluginModules: List<String>
-    get() = bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
-  
-  private val bundledPluginModulesForModularLoader by lazy {
+  override suspend fun getBundledPluginModules(): List<String> {
+    return bundledPluginModulesForModularLoader.await() ?: productProperties.productLayout.bundledPluginModules
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private val bundledPluginModulesForModularLoader = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
-      originalModuleRepository.loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map { 
-        it.stringId 
+      getOriginalModuleRepository().loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
+        it.stringId
       }
     }
   }
@@ -201,16 +206,20 @@ class BuildContextImpl internal constructor(
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
-  override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
+  @OptIn(DelicateCoroutinesApi::class)
+  private val _jetBrainsClientModuleFilter = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
     val mainModule = productProperties.embeddedJetBrainsClientMainModule
     if (mainModule != null && options.enableEmbeddedJetBrainsClient) {
-      JetBrainsClientModuleFilterImpl(clientMainModuleName = mainModule, context = this)
+      val productModules = getOriginalModuleRepository().loadProductModules(mainModule, ProductMode.FRONTEND)
+      JetBrainsClientModuleFilterImpl(productModules = productModules)
     }
     else {
       EmptyJetBrainsClientModuleFilter
     }
   }
-  
+
+  override suspend fun getJetBrainsClientModuleFilter(): JetBrainsClientModuleFilter = _jetBrainsClientModuleFilter.await()
+
   override val isEmbeddedJetBrainsClientEnabled: Boolean
     get() = productProperties.embeddedJetBrainsClientMainModule != null && options.enableEmbeddedJetBrainsClient
 
@@ -254,8 +263,8 @@ class BuildContextImpl internal constructor(
         )(project),
         projectHome = paths.projectHome,
         artifactDir = if (prepareForBuild) {
-            @Suppress("DEPRECATION")
-            paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode)
+          @Suppress("DEPRECATION")
+          paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode)
         }
         else {
           null
@@ -278,10 +287,7 @@ class BuildContextImpl internal constructor(
     return copy
   }
 
-  override fun includeBreakGenLibraries() = isJavaSupportedInProduct
-
-  private val isJavaSupportedInProduct: Boolean
-    get() = bundledPluginModules.contains(JavaPluginLayout.MAIN_MODULE_NAME)
+  override suspend fun includeBreakGenLibraries() = getBundledPluginModules().contains(JavaPluginLayout.MAIN_MODULE_NAME)
 
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead

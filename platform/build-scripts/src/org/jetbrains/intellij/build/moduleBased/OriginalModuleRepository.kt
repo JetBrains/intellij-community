@@ -23,7 +23,7 @@ interface OriginalModuleRepository {
    * Loads information about the product layout from product-modules.xml file located in module [rootModuleName], for a product running in
    * [productMode].
    */
-  fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules
+  suspend fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules
 
   /**
    * Loads raw data from product-modules.xml file located in module [rootModuleName], for a product running in [productMode].

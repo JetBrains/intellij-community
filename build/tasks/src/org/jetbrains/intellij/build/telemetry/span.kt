@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.telemetry
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
@@ -14,18 +13,6 @@ import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-
-/**
- * See [com.intellij.platform.diagnostic.telemetry.helpers.use]
- */
-@Internal
-inline fun <T> SpanBuilder.blockingUse(operation: (Span) -> T): T {
-  return use { span ->
-    TeamCityBuildMessageLogger.withFlow(span) {
-      operation(span)
-    }
-  }
-}
 
 suspend fun <T> block(
   name: String,
@@ -63,18 +50,6 @@ suspend inline fun <T> SpanBuilder.use(
       withContext(Context.current().with(span).asContextElement() + context) {
         operation(span)
       }
-    }
-  }
-}
-
-/**
- * See [com.intellij.platform.diagnostic.telemetry.helpers.use]
- */
-@Internal
-inline fun <T> Span.use(operation: (Span) -> T): T {
-  return use { span ->
-    TeamCityBuildMessageLogger.withFlow(span) {
-      operation(span)
     }
   }
 }

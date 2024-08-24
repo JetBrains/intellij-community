@@ -20,37 +20,19 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
 
-class BundledRuntimeImpl : BundledRuntime {
-  private val options: BuildOptions
-  private val paths: BuildPaths
-  private val dependenciesProperties: DependenciesProperties
-  private val productProperties: ProductProperties?
-  private val error: (String) -> Unit
-  private val info: (String) -> Unit
-
-  constructor(
-    options: BuildOptions,
-    paths: BuildPaths,
-    dependenciesProperties: DependenciesProperties,
-    productProperties: ProductProperties? = null,
-    error: (String) -> Unit,
-    info: (String) -> Unit
-  ) {
-    this.options = options
-    this.paths = paths
-    this.dependenciesProperties = dependenciesProperties
-    this.productProperties = productProperties
-    this.error = error
-    this.info = info
-  }
-
+class BundledRuntimeImpl(
+  private val options: BuildOptions,
+  private val paths: BuildPaths,
+  private val dependenciesProperties: DependenciesProperties,
+  private val productProperties: ProductProperties?,
+  private val info: (String) -> Unit,
+) : BundledRuntime {
   constructor(context: CompilationContext) : this(
-    context.options,
-    context.paths,
-    context.dependenciesProperties,
-    (context as? BuildContext)?.productProperties,
-    context.messages::error,
-    context.messages::info,
+    options = context.options,
+    paths = context.paths,
+    dependenciesProperties = context.dependenciesProperties,
+    productProperties = (context as? BuildContext)?.productProperties,
+    info = context.messages::info,
   )
 
   override val prefix: String
@@ -135,8 +117,8 @@ class BundledRuntimeImpl : BundledRuntime {
     if (!options.runtimeDebug) {
       return ""
     }
-    if (!options.isTestBuild && !options.isInDevelopmentMode) {
-      error("Either test or development mode is required to use fastdebug runtime build")
+    check(options.isTestBuild || options.isInDevelopmentMode) {
+      "Either test or development mode is required to use fastdebug runtime build"
     }
     info("Fastdebug runtime build is requested")
     return "fastdebug-"

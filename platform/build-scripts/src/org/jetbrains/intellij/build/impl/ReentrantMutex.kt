@@ -24,7 +24,7 @@ For more information, please refer to <https://unlicense.org>
 // https://gist.github.com/elizarov/9a48b9709ffd508909d34fab6786acfe
 // https://github.com/Kotlin/kotlinx.coroutines/issues/1686#issuecomment-825547551
 
-package com.intellij.platform.diagnostic.telemetry.exporters
+package org.jetbrains.intellij.build.impl
 
 import com.intellij.concurrency.IntelliJContextElement
 import kotlinx.coroutines.sync.Mutex

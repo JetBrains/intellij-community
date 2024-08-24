@@ -291,10 +291,10 @@ private suspend fun compileIfNeeded(context: BuildContext) {
   }
 }
 
-private fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
+private suspend fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
   val result = java.util.LinkedHashSet<String>()
   val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, result = result, context = context)
+  collectIncludedPluginModules(enabledPluginModules = context.getBundledPluginModules(), result = result, context = context)
   collectPlatformModules(to = result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
@@ -618,8 +618,12 @@ private suspend fun layoutPlatform(
   return entries to sortedClassPath
 }
 
-private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
-  return LinkedHashSet(context.bundledPluginModules) + additionalModules
+private suspend fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
+  val bundledPluginModules = context.getBundledPluginModules()
+  val result = LinkedHashSet<String>(bundledPluginModules.size + additionalModules.size)
+  result.addAll(bundledPluginModules)
+  result.addAll(additionalModules)
+  return result
 }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
