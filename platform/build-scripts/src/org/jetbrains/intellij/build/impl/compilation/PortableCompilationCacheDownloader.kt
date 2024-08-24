@@ -160,9 +160,9 @@ internal class PortableCompilationCacheDownloader(
     try {
       spanBuilder("unpack output")
         .setAttribute("archive", "$outputArchive")
-        .setAttribute("destination", compilationOutput.path)
+        .setAttribute("destination", compilationOutput.path.toString())
         .use {
-          Decompressor.Zip(outputArchive).overwrite(true).extract(Path.of(compilationOutput.path))
+          Decompressor.Zip(outputArchive).overwrite(true).extract(compilationOutput.path)
         }
     }
     catch (e: CancellationException) {
@@ -177,7 +177,7 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private suspend fun downloadOutput(compilationOutput: CompilationOutput): Path {
-    val outputArchive = Path.of(compilationOutput.path, "tmp-output.zip")
+    val outputArchive = compilationOutput.path.resolve("tmp-output.zip")
     downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = outputArchive, spanName = "download output")
     return outputArchive
   }

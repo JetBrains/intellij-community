@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.google.gson.stream.JsonReader
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
@@ -17,7 +16,7 @@ private const val IDENTIFIER = "\$BUILD_DIR\$"
 private const val PRODUCTION = "production"
 private const val TEST = "test"
 
-internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDirectory: Path) {
+internal class SourcesStateProcessor(dataStorageRoot: Path, private val classOutDir: Path) {
   @JvmField
   val sourceStateFile: Path = dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
 
@@ -40,10 +39,10 @@ internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesO
       // production modules with both classes and resources
       bothClassesAndResourcesBuildTargetType = PRODUCTION,
       // production modules with classes only
-      classesBuildTargetType = JavaModuleBuildTargetType.PRODUCTION,
+      classBuildTargetType = JavaModuleBuildTargetType.PRODUCTION,
       // production modules with resources only
       resourcesBuildTargetType = ResourcesTargetType.PRODUCTION,
-      currentSourcesState = currentSourcesState
+      currentSourceState = currentSourcesState,
     )
   }
 
@@ -52,54 +51,105 @@ internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesO
       // test modules with both classes and resources
       bothClassesAndResourcesBuildTargetType = TEST,
       // test modules with classes only
-      classesBuildTargetType = JavaModuleBuildTargetType.TEST,
+      classBuildTargetType = JavaModuleBuildTargetType.TEST,
       // test modules with resources only
       resourcesBuildTargetType = ResourcesTargetType.TEST,
-      currentSourcesState = currentSourcesState
+      currentSourceState = currentSourcesState
     )
   }
 
+  /**
+   * We have class and resource build targets.
+   * We produce a list of compilation output items.
+   * Since both targets output to the same directory, we create one item for both class and resource targets for the same module.
+   *
+   * Naming convention:
+   *
+   * - `buildTargetHash-c` or `buildTargetHash-r` if the module has only one build target output (either class or resource).
+   * - `classBuildTargetHash-resourceBuildTargetHash-cr` if the module has both class and resource build target outputs.
+   *
+   * Suffixes are used to avoid collisions.
+   * Since the hash is only unique for a particular build target type (to some extent, depending on the hash function).
+   */
   private fun getCompilationOutputs(
     bothClassesAndResourcesBuildTargetType: String,
-    classesBuildTargetType: JavaModuleBuildTargetType,
+    classBuildTargetType: JavaModuleBuildTargetType,
     resourcesBuildTargetType: ResourcesTargetType,
-    currentSourcesState: Map<String, Map<String, BuildTargetState>>,
+    currentSourceState: Map<String, Map<String, BuildTargetState>>,
   ): List<CompilationOutput> {
-    val root = classesOutputDirectory.toAbsolutePath()
+    val root = classOutDir.toAbsolutePath().toString()
 
-    val classesBuildTargetMap = currentSourcesState.getValue(classesBuildTargetType.typeId)
-    val resourcesBuildTargetMap = currentSourcesState.getValue(resourcesBuildTargetType.typeId)
+    val classBuildTargetMap = currentSourceState.getValue(classBuildTargetType.typeId)
+    val resourceBuildTargetMap = currentSourceState.getValue(resourcesBuildTargetType.typeId)
 
-    val classesBuildTargetIds = HashSet<String>(classesBuildTargetMap.keys)
-    val resourcesBuildTargetIds = HashSet<String>(resourcesBuildTargetMap.keys)
-    val bothClassesAndResourcesBuildTargetIds = classesBuildTargetIds.intersect(resourcesBuildTargetIds)
+    val classBuildTargetIds = HashSet<String>(classBuildTargetMap.keys)
+    val resourcesBuildTargetIds = HashSet<String>(resourceBuildTargetMap.keys)
+    val bothClassAndResourceBuildTargetIds = classBuildTargetIds.intersect(resourcesBuildTargetIds)
 
-    val compilationOutputs = ArrayList<CompilationOutput>(classesBuildTargetIds.size + resourcesBuildTargetIds.size - bothClassesAndResourcesBuildTargetIds.size)
+    val compilationOutputs = ArrayList<CompilationOutput>((classBuildTargetIds.size + resourcesBuildTargetIds.size) - bothClassAndResourceBuildTargetIds.size)
 
-    for (buildTargetId in bothClassesAndResourcesBuildTargetIds) {
-      val classesBuildTargetState = classesBuildTargetMap.getValue(buildTargetId)
-      val resourcesBuildTargetState = resourcesBuildTargetMap.getValue(buildTargetId)
-      val outputPath = classesBuildTargetState.relativePath.replace(IDENTIFIER, root.toString())
-
-      val hash = Hashing.komihash5_0().hashLongLongToLong(classesBuildTargetState.hash, resourcesBuildTargetState.hash)
-      compilationOutputs.add(CompilationOutput(name = buildTargetId, type = bothClassesAndResourcesBuildTargetType, hash = hash, path = outputPath))
+    for (buildTargetId in bothClassAndResourceBuildTargetIds) {
+      val classBuildTargetState = classBuildTargetMap.getValue(buildTargetId)
+      compilationOutputs.add(
+        createCompilationOutputItem(
+          buildTargetId = buildTargetId,
+          type = bothClassesAndResourcesBuildTargetType,
+          hash = toHashPartOfUrl(classBuildTargetState, resourceBuildTargetMap.getValue(buildTargetId)),
+          path = classBuildTargetState,
+          root = root,
+        )
+      )
     }
 
-    classesBuildTargetIds.removeAll(bothClassesAndResourcesBuildTargetIds)
-    for (buildTargetId in classesBuildTargetIds) {
-      val buildTargetState = classesBuildTargetMap.getValue(buildTargetId)
-      val outputPath = buildTargetState.relativePath.replace(IDENTIFIER, root.toString())
-      compilationOutputs.add(CompilationOutput(name = buildTargetId, type = classesBuildTargetType.typeId, hash = buildTargetState.hash, path = outputPath))
+    classBuildTargetIds.removeAll(bothClassAndResourceBuildTargetIds)
+    for (buildTargetId in classBuildTargetIds) {
+      val buildTargetState = classBuildTargetMap.getValue(buildTargetId)
+      compilationOutputs.add(
+        createCompilationOutputItem(
+          type = classBuildTargetType.typeId,
+          buildTargetId = buildTargetId,
+          // `c` stands for `classes`
+          hash = toHashPartOfUrl(buildTargetState.hash) + "-c",
+          path = buildTargetState,
+          root = root,
+        )
+      )
     }
 
-    resourcesBuildTargetIds.removeAll(bothClassesAndResourcesBuildTargetIds)
+    resourcesBuildTargetIds.removeAll(bothClassAndResourceBuildTargetIds)
     for (buildTargetId in resourcesBuildTargetIds) {
-      val buildTargetState = resourcesBuildTargetMap.getValue(buildTargetId)
-      val outputPath = buildTargetState.relativePath.replace(IDENTIFIER, root.toString())
-      compilationOutputs.add(CompilationOutput(name = buildTargetId, type = resourcesBuildTargetType.typeId, hash = buildTargetState.hash, path = outputPath))
+      val buildTargetState = resourceBuildTargetMap.getValue(buildTargetId)
+      compilationOutputs.add(
+        createCompilationOutputItem(
+          buildTargetId = buildTargetId,
+          type = resourcesBuildTargetType.typeId,
+          // `r` stands for `resources`
+          hash = toHashPartOfUrl(buildTargetState.hash) + "-r",
+          path = buildTargetState,
+          root = root,
+        )
+      )
     }
 
     return compilationOutputs
   }
 }
 
+private fun createCompilationOutputItem(
+  type: String,
+  buildTargetId: String,
+  hash: String,
+  path: BuildTargetState,
+  root: String,
+): CompilationOutput {
+  return CompilationOutput(remotePath = "$type/$buildTargetId/$hash", path = Path.of(path.relativePath.replace(IDENTIFIER, root)))
+}
+
+private fun toHashPartOfUrl(classBuildTargetState: BuildTargetState, resourceBuildTargetState: BuildTargetState): String {
+  // `cr` stands for `classes;resources`
+  return "${toHashPartOfUrl(classBuildTargetState.hash)}-${toHashPartOfUrl(resourceBuildTargetState.hash)}-cr"
+}
+
+private fun toHashPartOfUrl(hash: Long): String {
+  return java.lang.Long.toUnsignedString(hash, Character.MAX_RADIX)
+}

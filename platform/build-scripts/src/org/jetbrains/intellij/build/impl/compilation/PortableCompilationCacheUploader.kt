@@ -126,7 +126,7 @@ internal class PortableCompilationCacheUploader(
     allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
       spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
         val sourcePath = compilationOutput.remotePath
-        val outputFolder = Path.of(compilationOutput.path)
+        val outputFolder = compilationOutput.path
         if (Files.notExists(outputFolder)) {
           span.addEvent("$outputFolder doesn't exist, was a respective module removed?", Attributes.of(AttributeKey.stringKey("path"), "$outputFolder"))
           return@use

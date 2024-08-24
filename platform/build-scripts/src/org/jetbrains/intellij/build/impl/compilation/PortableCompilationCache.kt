@@ -238,10 +238,7 @@ private fun require(systemProperty: String, description: String): String {
  * Note: cannot be used for incremental compilation without [org.jetbrains.intellij.build.impl.JpsCompilationData.dataStorageRoot]
  */
 internal class CompilationOutput(
-  name: String,
-  type: String,
-  @JvmField val hash: Long, // Some hash of compilation output, could be non-unique across different CompilationOutput's
-  @JvmField val path: String, // Local path to compilation output
-) {
-  @JvmField val remotePath: String = "$type/$name/${java.lang.Long.toUnsignedString(hash, Character.MAX_RADIX)}"
-}
+  @JvmField val remotePath: String,
+  // local path to compilation output
+  @JvmField val path: Path,
+)
