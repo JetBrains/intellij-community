@@ -11,4 +11,8 @@ interface PinToTopParentValue : PinToTopValue {
      */
     @Suppress("DEPRECATION")
     val tag: String?
+
+    fun onChildPinned(isPinned: Boolean, pinnedItemInfo: PinnedItemInfo) {
+
+    }
 }
