@@ -13,7 +13,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.telemetry.TraceManager
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -63,7 +63,7 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
   if (request.tracer != null) {
     TraceManager.setTracer(request.tracer)
   }
-  return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope {
+  return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
     try {
       buildProduct(
         request = request,

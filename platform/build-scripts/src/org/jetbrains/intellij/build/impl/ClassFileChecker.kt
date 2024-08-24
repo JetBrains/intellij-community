@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.channels.FileChannel
@@ -45,7 +45,7 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
     .setAttribute("forbiddenSubPathExceptionsCount", forbiddenSubPathExceptions.size.toLong())
     .setAttribute("root", root.toString())
-    .useWithScope { span ->
+    .use { span ->
       val rules = ArrayList<Rule>(versionCheckConfig.size)
       for (entry in versionCheckConfig.entries) {
         rules.add(Rule(path = entry.key, version = classVersion(entry.value)))

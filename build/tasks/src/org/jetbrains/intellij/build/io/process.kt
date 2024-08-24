@@ -14,7 +14,6 @@ import kotlinx.coroutines.channels.toList
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.io.File
 import java.io.InputStream
 import java.nio.charset.MalformedInputException
@@ -220,7 +219,7 @@ suspend fun runProcess(
   spanBuilder(commandLine)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", "$timeout")
-    .useWithScope(Dispatchers.IO) { span ->
+    .use(Dispatchers.IO) { span ->
         var process: Process? = null
         val phase = args.joinToString(separator = " ")
         try {

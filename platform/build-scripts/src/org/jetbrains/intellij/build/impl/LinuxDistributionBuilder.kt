@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -46,7 +45,7 @@ class LinuxDistributionBuilder(
     get() = OsFamily.LINUX
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope {
+    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).use {
       withContext(Dispatchers.IO) {
         val distBinDir = targetPath.resolve("bin")
         val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")

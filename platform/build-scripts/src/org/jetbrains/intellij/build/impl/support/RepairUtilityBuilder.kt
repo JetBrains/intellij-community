@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -149,8 +149,8 @@ class RepairUtilityBuilder {
     }
 
     private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
-      return spanBuilder("build repair-utility").useWithScope {
-        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope emptyMap()
+      return spanBuilder("build repair-utility").use {
+        val projectHome = repairUtilityProjectHome(context) ?: return@use emptyMap()
         try {
           val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/") 
                         ?: error("'baseDownloadUrl' is not specified in ${context.productProperties.javaClass.name}")
@@ -176,7 +176,7 @@ class RepairUtilityBuilder {
           if (TeamCityHelper.isUnderTeamCity) {
             throw e
           }
-          return@useWithScope emptyMap<Binary, Path>()
+          return@use emptyMap<Binary, Path>()
         }
 
         val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }

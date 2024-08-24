@@ -8,6 +8,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.logging.LogMessage.Kind.*
+import org.jetbrains.intellij.build.telemetry.TraceManager
 
 class TeamCityBuildMessageLogger : BuildMessageLogger() {
   companion object {
@@ -15,12 +16,12 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
     val FACTORY: () -> BuildMessageLogger = ::TeamCityBuildMessageLogger
 
     private fun print(messageId: String, argument: String) {
-      println(SpanAwareServiceMessage(messageId, argument))
+      println(SpanAwareServiceMessage(span = Span.current(), messageName = messageId, argument = argument))
     }
 
     @ApiStatus.Internal
     fun print(messageId: String, vararg attributes: Pair<String, String>) {
-      println(SpanAwareServiceMessage(messageId, *attributes))
+      println(SpanAwareServiceMessage(span = Span.current(), messageName = messageId, attributes = mapOf(*attributes)))
     }
 
     /**
@@ -32,11 +33,12 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
      */
     @ApiStatus.Internal
     class SpanAwareServiceMessage : ServiceMessage {
-      constructor(messageName: String, argument: String) : super(messageName, argument)
-      constructor(messageName: String, vararg attributes: Pair<String, String>) : super(messageName, mapOf(*attributes))
+      constructor(span: Span, messageName: String, argument: String) : super(messageName, argument) {
+        setFlowId(span.spanContext.spanId)
+      }
 
-      init {
-        setFlowId(Span.current().spanContext.spanId)
+      constructor(span: Span, messageName: String, attributes: Map<String, String>) : super(messageName, attributes) {
+        setFlowId(span.spanContext.spanId)
       }
     }
 
@@ -49,13 +51,42 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       if (!TeamCityHelper.isUnderTeamCity) {
         return operation()
       }
-      val parentFlowId = (span as? ReadableSpan)?.parentSpanContext?.spanId
-      print(ServiceMessageTypes.FLOW_STARTED, "parent" to "$parentFlowId")
-      return try {
-        operation()
+
+      val parentFlowId = (span as? ReadableSpan)?.parentSpanContext?.takeIf { it.isValid }?.spanId
+      val attributes = if (parentFlowId == null) java.util.Map.of() else java.util.Map.of("parent", parentFlowId)
+      println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_STARTED, attributes = attributes))
+      try {
+        return operation()
       }
       finally {
         print(ServiceMessageTypes.FLOW_FINSIHED)
+      }
+    }
+
+    /**
+     * Wraps a [span] into a TeamCity flow linked to a parent flow of a parent span.
+     * Flows are not displayed in a TeamCity build log.
+     */
+    @ApiStatus.Internal
+    suspend fun <T> withBlock(span: Span, operation: suspend () -> T): T {
+      if (TeamCityHelper.isUnderTeamCity || span !is ReadableSpan) {
+        return operation()
+      }
+
+      val parentFlowId = span.parentSpanContext?.takeIf { it.isValid }?.spanId
+      val attributes = if (parentFlowId == null) {
+        java.util.Map.of("name", span.name)
+      }
+      else {
+        java.util.Map.of("name", span.name, "parent", parentFlowId)
+      }
+      println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_OPENED, attributes = attributes))
+      try {
+        return operation()
+      }
+      finally {
+        print(ServiceMessageTypes.BLOCK_CLOSED)
+        TraceManager.exportPendingSpans()
       }
     }
   }

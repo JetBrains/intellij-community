@@ -15,8 +15,8 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-import org.jetbrains.intellij.build.telemetry.TraceManager
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 import java.util.*
@@ -683,7 +683,7 @@ object CommunityRepositoryModules {
 
 private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
   val antDir = pluginDir.resolve("dist")
-  return TraceManager.spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
+  return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).use {
     val sources = ArrayList<ZipSource>()
     val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.MERGED, reason = "ant")
     copyDir(

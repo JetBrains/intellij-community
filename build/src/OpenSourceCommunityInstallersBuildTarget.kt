@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.buildCommunityStandaloneJpsBuilder
 import org.jetbrains.intellij.build.createCommunityBuildContext
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 
 internal object OpenSourceCommunityInstallersBuildTarget {
   @JvmStatic
@@ -24,7 +24,7 @@ internal object OpenSourceCommunityInstallersBuildTarget {
       val context = createCommunityBuildContext(options)
       CompilationTasks.create(context).compileModules(moduleNames = null, includingTestsInModules = listOf("intellij.platform.jps.build.tests"))
       buildDistributions(context)
-      spanBuilder("build standalone JPS").useWithScope {
+      spanBuilder("build standalone JPS").use {
         buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)
       }
     }

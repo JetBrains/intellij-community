@@ -10,7 +10,6 @@ import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.blockingUse
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import org.jetbrains.jps.api.GlobalOptions
@@ -221,7 +220,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     for (artifact in artifacts) {
       context.compilationData.builtArtifacts.remove(artifact.name)
     }
-    spanBuilder("Compiling modules for missing artifacts: ${modules.joinToString()}").useWithScope {
+    spanBuilder("Compiling modules for missing artifacts: ${modules.joinToString()}").use {
       runBuild(moduleSet = modules,
                allModules = false,
                artifactNames = artifacts.map { it.name },

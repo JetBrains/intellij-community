@@ -26,7 +26,6 @@ import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -179,7 +178,7 @@ internal suspend fun signMacBinaries(files: List<Path>,
   span.setAttribute("contentType", "application/x-mac-app-bin")
   span.setAttribute(AttributeKey.stringArrayKey("files"), files.map { it.name })
   val options = signingOptions(contentType = "application/x-mac-app-bin", context = context).putAll(m = additionalOptions)
-  span.useWithScope {
+  span.use {
     context.proprietaryBuildTools.signTool.signFiles(files = files, context = context, options = options)
     if (!permissions.isEmpty()) {
       // SRE-1223 workaround

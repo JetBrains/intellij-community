@@ -23,7 +23,7 @@ import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import org.junit.jupiter.api.TestInfo
 import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
@@ -177,7 +177,7 @@ private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpa
   var traceFile: Path? = null
   var error: Throwable? = null
   try {
-    spanBuilder(traceSpanName).useWithScope { span ->
+    spanBuilder(traceSpanName).use { span ->
         val context = context()
         context.cleanupJarCache()
         outDir = context.paths.buildOutputDir

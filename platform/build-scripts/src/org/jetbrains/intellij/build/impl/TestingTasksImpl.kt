@@ -12,15 +12,12 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -35,7 +32,6 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.Callable
 import java.util.regex.Pattern
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readLines
@@ -397,12 +393,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.bucketsCount > 1) {
       messages.info("Tests from bucket ${options.bucketIndex} of ${options.bucketsCount} will be executed")
     }
-    messages.block("Test classpath and runtime info") {
-      runBlocking(Dispatchers.IO) {
+    spanBuilder("test classpath and runtime info").use {
+      withContext(Dispatchers.IO) {
         val runtime = getRuntimeExecutablePath().toString()
         messages.info("Runtime: ${runtime}")
         runProcess(args = listOf(runtime, "-version"), inheritOut = true, inheritErrToOut = true)
       }
+
       messages.info("Runtime options: ${allJvmArgs}")
       messages.info("System properties: ${systemProperties}")
       messages.info("Bootstrap classpath: ${bootstrapClasspath}")
@@ -480,11 +477,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     return snapshotsDir
   }
 
-  override fun prepareEnvForTestRun(jvmArgs: MutableList<String>,
-                                    systemProperties: MutableMap<String, String>,
-                                    classPath: MutableList<String>,
-                                    remoteDebugging: Boolean,
-                                    cleanSystemDir: Boolean) {
+  override suspend fun prepareEnvForTestRun(
+    jvmArgs: MutableList<String>,
+    systemProperties: MutableMap<String, String>,
+    classPath: MutableList<String>,
+    remoteDebugging: Boolean,
+    cleanSystemDir: Boolean,
+  ) {
     val snapshotsDir = createSnapshotsDirectory()
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
@@ -503,7 +502,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val ideaSystemPath = Path.of("$tempDir/system")
     if (cleanSystemDir) {
-      spanBuilder("idea.system.path cleanup").blockingUse {
+      spanBuilder("idea.system.path cleanup").use(Dispatchers.IO) {
         NioFiles.deleteRecursively(ideaSystemPath)
       }
     }
@@ -581,7 +580,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context))
 
     if (suspendDebugProcess) {
-      context.messages.info("""
+      context.messages.info(
+        """
         ------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
         ---------------------------------------^------^------^------^------^------^------^----------------------------------------
         """.trimIndent()
@@ -757,16 +757,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       .toList()
   }
 
-  private fun <T> blockAndSpan(spanName: String, task: Callable<T>): T {
-    var result: T? = null
-    context.messages.block(spanName) {
-      spanBuilder(spanName).blockingUse {
-        result = task.call()
-      }
-    }
-    return result!!
-  }
-
   private suspend fun runJUnit5Engine(
     mainModule: String,
     systemProperties: Map<String, String>,
@@ -811,7 +801,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
       }
 
-      val testClassesJUnit34 = blockAndSpan("collect junit 3+4 tests") {
+      val testClassesJUnit34 = block("collect junit 3+4 tests") {
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
@@ -823,7 +813,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           suiteName = options.bootstrapSuite,
           methodName = null
         )
-        return@blockAndSpan testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
+        return@block testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
       }
 
       if (testClassesJUnit5.isEmpty() && testClassesJUnit34.isEmpty() &&
@@ -833,8 +823,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
 
       if (options.isDedicatedTestRuntime == "class") {
-        fun runOneClass(testClassName: String) {
-          val exitCode = blockAndSpan("running test class '$testClassName'") {
+        suspend fun runOneClass(testClassName: String) {
+          val exitCode = block("running test class '$testClassName'") {
             runJUnit5Engine(
               systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
@@ -851,11 +841,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
         if (testClassesJUnit5.isNotEmpty()) {
           context.messages.info("Will run JUnit 5 tests:\n${testClassesJUnit5.joinToString("\n")}")
-          testClassesJUnit5.forEach(::runOneClass)
+          for (s in testClassesJUnit5) {
+            runOneClass(s)
+          }
         }
         if (testClassesJUnit34.isNotEmpty()) {
           context.messages.info("Will run JUnit 3+4 tests:\n${testClassesJUnit34.joinToString("\n")}")
-          testClassesJUnit34.forEach(::runOneClass)
+          for (s in testClassesJUnit34) {
+            runOneClass(s)
+          }
         }
       }
       else if (options.isDedicatedTestRuntime == "package") {
@@ -866,11 +860,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           }
         }
 
-        fun runOnePackage(entry: Map.Entry<String, List<String>>) {
+        suspend fun runOnePackage(entry: Map.Entry<String, List<String>>) {
           val packageName = entry.key
           val classes = entry.value
 
-          val exitCode = blockAndSpan("running tests in package '$packageName'") {
+          val exitCode = block("running tests in package '$packageName'") {
             runJUnit5Engine(
               systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
@@ -890,14 +884,18 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           context.messages.info(packages.entries.joinToString(prefix = "Will run JUnit 5 packages:\n", separator = "\n") { e ->
             e.value.joinToString(prefix = "${e.key}\n  ", separator = "\n  ")
           })
-          packages.forEach(::runOnePackage)
+          for (entry in packages) {
+            runOnePackage(entry)
+          }
         }
         if (testClassesJUnit34.isNotEmpty()) {
           val packages = groupByPackages(testClassesJUnit34)
           context.messages.info(packages.entries.joinToString(prefix = "Will run JUnit 3+4 packages:\n", separator = "\n") { e ->
             e.value.joinToString(prefix = "${e.key}\n  ", separator = "\n  ")
           })
-          packages.forEach(::runOnePackage)
+          for (entry in packages) {
+            runOnePackage(entry)
+          }
         }
       }
     }
@@ -919,33 +917,41 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
         val additionalProperties: Map<String, String> = if (attempt > 1) mapOf("intellij.build.test.ignoreFirstAndLastTests" to "true") else emptyMap()
 
-        val exitCode5: Int = if (runJUnit5) blockAndSpan("run junit 5 tests${spanNameSuffix}") {
-          runJUnit5Engine(
-            systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit5,
-            jvmArgs = jvmArgs,
-            envVariables = envVariables,
-            bootstrapClasspath = bootstrapClasspath,
-            modulePath = modulePath,
-            testClasspath = testClasspath,
-            suiteName = null,
-            methodName = null
-          )
+        val exitCode5: Int = if (runJUnit5) {
+          block("run junit 5 tests${spanNameSuffix}") {
+            runJUnit5Engine(
+              systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit5,
+              jvmArgs = jvmArgs,
+              envVariables = envVariables,
+              bootstrapClasspath = bootstrapClasspath,
+              modulePath = modulePath,
+              testClasspath = testClasspath,
+              suiteName = null,
+              methodName = null
+            )
+          }
         }
-        else 0
+        else {
+          0
+        }
 
-        val exitCode34: Int = if (runJUnit34) blockAndSpan("run junit 3+4 tests${spanNameSuffix}") {
-          runJUnit5Engine(
-            systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit34,
-            jvmArgs = jvmArgs,
-            envVariables = envVariables,
-            bootstrapClasspath = bootstrapClasspath,
-            modulePath = modulePath,
-            testClasspath = testClasspath,
-            suiteName = options.bootstrapSuite,
-            methodName = null
-          )
+        val exitCode34: Int = if (runJUnit34) {
+          block("run junit 3+4 tests${spanNameSuffix}") {
+            runJUnit5Engine(
+              systemProperties = systemProperties + additionalProperties + additionalPropertiesJUnit34,
+              jvmArgs = jvmArgs,
+              envVariables = envVariables,
+              bootstrapClasspath = bootstrapClasspath,
+              modulePath = modulePath,
+              testClasspath = testClasspath,
+              suiteName = options.bootstrapSuite,
+              methodName = null
+            )
+          }
         }
-        else 0
+        else {
+          0
+        }
 
         if (exitCode5 == NO_TESTS_ERROR && exitCode34 == NO_TESTS_ERROR &&
             // only check on the first (full) attempt

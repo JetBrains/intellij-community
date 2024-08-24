@@ -13,9 +13,9 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.buildJar
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -141,7 +141,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     spanBuilder("layout maven artifacts")
       .setAttribute(AttributeKey.stringArrayKey("modules"), artifactsToBuild.entries.map { entry ->
         "  [${entry.value.joinToString(separator = ",") { it.name }}] -> ${entry.key.coordinates}"
-      }).useWithScope {
+      }).use {
         layoutMavenArtifacts(artifactsToBuild, context.paths.artifactDir.resolve(outputDir), context)
       }
     builtArtifacts += artifactsToBuild.keys

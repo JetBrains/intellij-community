@@ -52,29 +52,19 @@ suspend inline fun <T> SpanBuilder.useWithScope(
   context: CoroutineContext = EmptyCoroutineContext,
   crossinline operation: suspend CoroutineScope.(Span) -> T,
 ): T {
-  val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement() + context) {
-    try {
+  return startSpan().useWithoutActiveScope { span ->
+    // inner withContext to ensure that we report the end of the span only when all child tasks are completed
+    withContext(Context.current().with(span).asContextElement() + context) {
       operation(span)
-    }
-    catch (e: CancellationException) {
-      span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
-      throw e
-    }
-    catch (e: Throwable) {
-      span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
-      span.setStatus(StatusCode.ERROR)
-      throw e
-    }
-    finally {
-      span.end()
     }
   }
 }
 
 @Internal
-internal fun <T> computeWithSpanIgnoreThrows(spanBuilder: SpanBuilder,
-                                             operation: ThrowableNotNullFunction<Span, T, out Throwable>): T {
+internal fun <T> computeWithSpanIgnoreThrows(
+  spanBuilder: SpanBuilder,
+  operation: ThrowableNotNullFunction<Span, T, out Throwable>,
+): T {
   return spanBuilder.use(operation::`fun`)
 }
 
@@ -84,15 +74,17 @@ internal fun runWithSpanIgnoreThrows(spanBuilder: SpanBuilder, operation: Throwa
 }
 
 /**
+ * Do not use it.
+ * Only for implementation.
+ *
  * Does not activate the span scope, so **new spans created inside [operation] will not be linked to [this] span**.
  * [Span] supplied as an argument to [operation] may not be the [Span.current].
  * No overhead of [Context.makeCurrent] is incurred.
  *
  * Consider using [use] to also activate the scope.
  */
-@PublishedApi
 @Internal
-internal inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
+inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
+import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildMessages
@@ -21,8 +22,12 @@ import org.junit.jupiter.api.TestInfo
 open class BuildStepTeamCityListener(testInfo: TestInfo) : BuildStepListener() {
   private val testName: String = "${testInfo.testClass.get().canonicalName}.${testInfo.testMethod.orElseThrow().name}"
 
-  private fun reportTestEvent(testEvent: String, stepId: String, vararg attributes: Pair<String, String>) {
-    println(SpanAwareServiceMessage(testEvent, "name" to "$testName($stepId)", *attributes))
+  private fun reportTestEvent(testEvent: String, stepId: String, attributes: Sequence<Pair<String, String>> = emptySequence()) {
+    println(SpanAwareServiceMessage(
+      span = Span.current(),
+      messageName = testEvent,
+      attributes = (sequenceOf("name" to "$testName($stepId)") + attributes).toMap()
+    ))
   }
 
   override suspend fun onStart(stepId: String, messages: BuildMessages) {
@@ -40,11 +45,15 @@ open class BuildStepTeamCityListener(testInfo: TestInfo) : BuildStepListener() {
   override suspend fun onFailure(stepId: String, failure: Throwable, messages: BuildMessages) {
     // no need to throw the build step failure, just reporting it to TeamCity as a test failure,
     // providing an option to mute it without muting the main test
-    reportTestEvent(ServiceMessageTypes.TEST_FAILED, stepId, "message" to "${failure.message}", "details" to failure.stackTraceToString())
+    reportTestEvent(
+      testEvent = ServiceMessageTypes.TEST_FAILED,
+      stepId = stepId,
+      attributes = sequenceOf("message" to "${failure.message}", "details" to failure.stackTraceToString()),
+    )
   }
 
   override suspend fun onCompletion(stepId: String, messages: BuildMessages) {
     super.onCompletion(stepId, messages)
-    reportTestEvent(ServiceMessageTypes.TEST_FINISHED, stepId)
+    reportTestEvent(testEvent = ServiceMessageTypes.TEST_FINISHED, stepId = stepId)
   }
 }

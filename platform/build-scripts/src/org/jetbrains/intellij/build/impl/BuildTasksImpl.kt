@@ -24,8 +24,8 @@ import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -151,7 +151,7 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
 }
 
 private suspend fun layoutShared(context: BuildContext) {
-  spanBuilder("copy files shared among all distributions").useWithScope {
+  spanBuilder("copy files shared among all distributions").use {
     val licenseOutDir = context.paths.distAllDir.resolve("license")
     withContext(Dispatchers.IO) {
       copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
@@ -192,7 +192,7 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
 }
 
 internal suspend fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
-  spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").useWithScope(Dispatchers.IO) {
+  spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").use(Dispatchers.IO) {
     val executable = EnumSet.of(
       PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
       PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
@@ -275,7 +275,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
         }
 
         async {
-          spanBuilder(stepId).useWithScope {
+          spanBuilder(stepId).use {
             val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, context = context)
             builder.buildArtifacts(osAndArchSpecificDistPath = osAndArchSpecificDistDirectory, arch = arch)
             checkClassFiles(root = osAndArchSpecificDistDirectory, context = context, isDistAll = false)
@@ -415,7 +415,7 @@ private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPlugi
   CompilationTasks.create(context).buildProjectArtifacts(artifactNames)
 }
 
-suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").use {
+suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
   context.checkDistributionBuildNumber()
   checkProductProperties(context as BuildContextImpl)
   copyDependenciesFile(context)
@@ -1064,7 +1064,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
 }
 
 internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
-  spanBuilder("update last modified time").setAttribute("dir", directory.toString()).useWithScope(Dispatchers.IO) {
+  spanBuilder("update last modified time").setAttribute("dir", directory.toString()).use(Dispatchers.IO) {
     val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
     Files.walkFileTree(directory, object : SimpleFileVisitor<Path>() {
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {

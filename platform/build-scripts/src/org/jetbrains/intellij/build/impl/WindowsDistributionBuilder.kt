@@ -20,7 +20,7 @@ import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -252,7 +252,7 @@ internal class WindowsDistributionBuilder(
     spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
       .setAttribute("targetFile", targetFile.toString())
       .setAttribute("arch", arch.dirName)
-      .useWithScope {
+      .use {
         val dirs = mutableListOf(context.paths.distAllDir, winDistPath)
 
         if (runtimeDir != null) {
@@ -302,7 +302,7 @@ internal class WindowsDistributionBuilder(
     context: BuildContext,
     copyLicense: Boolean = true
   ) {
-    spanBuilder("build Windows executable").useWithScope {
+    spanBuilder("build Windows executable").use {
       val communityHome = context.paths.communityHomeDir
       val appInfo = context.applicationInfo
       val executableBaseName = "${context.productProperties.baseFileName}64"

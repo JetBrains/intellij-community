@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -164,7 +164,7 @@ suspend inline fun <T> BuildContext.executeStep(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   crossinline step: suspend CoroutineScope.(Span) -> T,
 ): T? {
-  return spanBuilder.use(coroutineContext) { span ->
+  return spanBuilder.block(coroutineContext) { span ->
     try {
       options.buildStepListener.onStart(stepId, messages)
       if (isStepSkipped(stepId)) {

@@ -60,5 +60,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
   </component>
 </module>

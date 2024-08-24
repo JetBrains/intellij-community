@@ -28,7 +28,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.ByteArrayOutputStream
@@ -145,7 +145,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         Files.writeString(ideaPropertyFile, createIdeaPropertyFile(context))
       }
 
-      val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope {
+      val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
         layoutPlatform(
           runDir = runDir,
           platformLayout = platformLayout.await(),
@@ -191,7 +191,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     launch {
       val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
-      spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
+      spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
         val mainData = generatePluginClassPath(pluginEntries = pluginEntries, moduleOutputPatcher = moduleOutputPatcher)
         val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
@@ -210,7 +210,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     if (context.generateRuntimeModuleRepository) {
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() + pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
-        spanBuilder("generate runtime repository").useWithScope(Dispatchers.IO) {
+        spanBuilder("generate runtime repository").use(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
       }
@@ -252,7 +252,7 @@ private suspend fun compileIfNeeded(context: BuildContext) {
     return
   }
 
-  val modulesToCompile = spanBuilder("collect modules to compile").useWithScope {
+  val modulesToCompile = spanBuilder("collect modules to compile").use {
     val result = collectModulesToCompileForDistribution(context)
     JpsJavaExtensionService.getInstance().enumerateDependencies(listOf(context.findRequiredModule("intellij.platform.bootstrap.dev")))
       .recursively()
@@ -264,7 +264,7 @@ private suspend fun compileIfNeeded(context: BuildContext) {
 
   val url = "http://127.0.0.1:$port/devkit/make?project-hash=$project&token=$token"
   TraceManager.flush()
-  spanBuilder("compile modules").setAttribute("url", url).useWithScope {
+  spanBuilder("compile modules").setAttribute("url", url).use {
     coroutineScope {
       val task = launch {
         postData(url, ProtoBuf.encodeToByteArray(SetSerializer(String.serializer()), modulesToCompile))
@@ -428,7 +428,7 @@ private suspend fun createBuildContext(
 
     // load project is executed as part of compilation context creation - ~1 second
     val compilationContextDeferred = async {
-      spanBuilder("create build context").useWithScope {
+      spanBuilder("create build context").use {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val options = BuildOptions(
           jarCacheDir = jarCacheDir,
@@ -542,11 +542,11 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
 internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
   val classPathFiles = getBuildModules(productConfiguration).map { request.productionClassOutput.resolve(it) }.toList()
 
-  val classLoader = spanBuilder("create product properties classloader").useWithScope {
+  val classLoader = spanBuilder("create product properties classloader").use {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  return spanBuilder("create product properties").useWithScope {
+  return spanBuilder("create product properties").use {
     val productPropertiesClass = try {
       classLoader.loadClass(productConfiguration.className)
     }
