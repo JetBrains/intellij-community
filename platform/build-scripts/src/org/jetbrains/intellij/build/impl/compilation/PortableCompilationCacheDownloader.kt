@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
@@ -47,11 +48,11 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private suspend fun downloadToFile(url: String, file: Path, spanName: String, notFound: LongAdder) {
-    spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").use { span ->
+    spanBuilder(spanName).setAttribute("url", url).setAttribute("path", file.toString()).use { span ->
       Files.createDirectories(file.parent)
       retryWithExponentialBackOff {
         if (url.isS3()) {
-          awsS3Cli("cp", url, "$file")
+          awsS3Cli("cp", url, file.toString())
         }
         else {
           httpClient.newCall(Request.Builder().url(url).header("Authorization", remoteCache.authHeader).build())
@@ -172,7 +173,15 @@ internal class PortableCompilationCacheDownloader(
   private suspend fun downloadAndUnpackCompilationOutput(compilationOutput: CompilationOutput, notFound: LongAdder, totalDownloadedBytes: LongAdder) {
     val tempFile = compilationOutput.path.resolve("tmp-output.zip")
     downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = tempFile, spanName = "download output", notFound = notFound)
-    totalDownloadedBytes.add(Files.size(tempFile))
+    try {
+      totalDownloadedBytes.add(Files.size(tempFile))
+    }
+    catch (e: NoSuchFileException) {
+      // We assume that the error is logged by downloadToFile.
+      // In the future, we will implement stricter behavior.
+      // For now, the JPS cache reports non-existent compilation outputs, and we have to use such a workaround.
+      return
+    }
 
     try {
       spanBuilder("unpack output")
