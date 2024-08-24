@@ -865,9 +865,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <group id="PyPackageToolwindowContext">
       <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
       <action id="PyInstallWithOptionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction"/>
-      <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
       <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
       <action id="PyUpdateToLatestPackage" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
+      <separator/>
+      <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
     </group>
   </actions>
 

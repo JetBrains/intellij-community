@@ -1,15 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging.toolwindow.ui
+package com.jetbrains.python.packaging.toolwindow.packages
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.packages.table.PyPackagesTable
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class PyPackagingTableGroup<T : DisplayablePackage>(val repository: PyPackageRepository, val table: PyPackagesTable<T>) {
+internal class PyPackagingTableGroup(val repository: PyPackageRepository, val table: PyPackagesTable) {
   @NlsSafe
   val name: String = repository.name!!
 
@@ -19,7 +21,7 @@ internal class PyPackagingTableGroup<T : DisplayablePackage>(val repository: PyP
   private var itemsCount: Int? = null
 
 
-  internal var items: List<T>
+  internal var items: List<DisplayablePackage>
     get() = table.items
     set(value) {
       table.items = value
@@ -45,11 +47,6 @@ internal class PyPackagingTableGroup<T : DisplayablePackage>(val repository: PyP
   fun addTo(panel: JPanel) {
     panel.add(header)
     panel.add(table)
-  }
-
-  fun replace(row: Int, pkg: T) {
-    table.removeRow(row)
-    table.insertRow(row, pkg)
   }
 
   fun removeFrom(panel: JPanel) {

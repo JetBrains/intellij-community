@@ -137,6 +137,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PyPackagesUiComponents.SELECTED_PACKAGE_DATA_CONTEXT] = descriptionController.selectedPackage.get()
+    sink[PyPackagesUiComponents.SELECTED_PACKAGES_DATA_CONTEXT] = this.packageListController.getSelectedPackages()
     super.uiDataSnapshot(sink)
   }
 

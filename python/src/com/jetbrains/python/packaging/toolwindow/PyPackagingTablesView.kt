@@ -5,12 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.repository.InstalledPyPackagedRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.*
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesTable
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesTableModel
+import com.jetbrains.python.packaging.toolwindow.packages.PyPackagingTableGroup
+import com.jetbrains.python.packaging.toolwindow.packages.table.PyPackagesTable
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagingTableGroup
 import java.awt.Rectangle
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -19,11 +19,12 @@ import javax.swing.JTable
 class PyPackagingTablesView(private val project: Project,
                             private val container: JPanel,
                             private val controller: PyPackagingToolWindowPanel) {
-  private val repositories: MutableList<PyPackagingTableGroup<DisplayablePackage>> = mutableListOf()
+  private val repositories: MutableList<PyPackagingTableGroup> = mutableListOf()
   private val installedPackages = PyPackagingTableGroup(
-    object : PyPackageRepository(message("python.toolwindow.packages.installed.label"), "", "") {},
-             PyPackagesTable(project, PyPackagesTableModel(), this, controller))
+    InstalledPyPackagedRepository(),
+    PyPackagesTable(project, this, controller))
   private val invalidRepositories: MutableMap<String, JPanel> = mutableMapOf()
+
   init {
     installedPackages.addTo(container)
     installedPackages.expand()
@@ -31,8 +32,10 @@ class PyPackagingTablesView(private val project: Project,
 
   fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
+
     installedPackages.expand()
     installedPackages.updateHeaderText(installed.size)
+
     val tableToData = repositories.map { repo -> repo to repoData.find { it.repository.name == repo.name }!! }
     tableToData.forEach { (table, data) ->
       table.updateHeaderText(data.packages.size + data.moreItems)
@@ -47,17 +50,21 @@ class PyPackagingTablesView(private val project: Project,
 
   fun resetSearch(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     updatePackages(installed, repoData)
+
     installedPackages.expand()
     installedPackages.updateHeaderText(null)
+
     repositories.forEach {
       it.collapse()
       it.updateHeaderText(null)
     }
+
     container.scrollRectToVisible(Rectangle(0, 0))
   }
 
   private fun updatePackages(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
     installedPackages.table.items = installed
+
     val (validRepoData, invalid) = repoData.partition { it !is PyInvalidRepositoryViewData }
 
     for (data in validRepoData) {
@@ -73,7 +80,7 @@ class PyPackagingTablesView(private val project: Project,
         selectedItem?.let { existingRepo.table.selectPackage(it) }
       }
       else {
-        val newTable = PyPackagesTable(project, PyPackagesTableModel(), this, controller)
+        val newTable = PyPackagesTable(project, this, controller)
         newTable.items = withExpander
 
         val newTableGroup = PyPackagingTableGroup(data.repository, newTable)
@@ -129,7 +136,7 @@ class PyPackagingTablesView(private val project: Project,
     tableWithMatch.setRowSelectionInterval(exactMatch, exactMatch)
   }
 
-  fun requestSelection(table: JTable) {
+  fun removeSelectionNotFormTable(table: JTable) {
     if (table != installedPackages.table) installedPackages.table.clearSelection()
     repositories.asSequence()
       .filter { it.table != table }
@@ -177,5 +184,10 @@ class PyPackagingTablesView(private val project: Project,
         table.requestFocus()
       }
     }
+  }
+
+  fun getSelectedPackages(): List<DisplayablePackage> {
+    val repos = listOf(installedPackages) + repositories
+    return repos.flatMap { it.table.selectedItems() }
   }
 }

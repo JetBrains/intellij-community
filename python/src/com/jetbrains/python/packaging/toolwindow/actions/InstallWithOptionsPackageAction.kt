@@ -13,6 +13,7 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +33,7 @@ internal class InstallWithOptionsPackageAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.selectedPackage is InstallablePackage
+    e.presentation.isEnabledAndVisible = e.selectedPackage as? InstallablePackage != null && e.selectedPackages.size == 1
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

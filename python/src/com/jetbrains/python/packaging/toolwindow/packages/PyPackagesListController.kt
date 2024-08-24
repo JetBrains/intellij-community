@@ -8,6 +8,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.toolwindow.PyPackagingTablesView
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import javax.swing.BoxLayout
@@ -36,5 +37,9 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
 
   fun selectPackage(name: String) {
     tablesView.selectPackage(name)
+  }
+
+  fun getSelectedPackages(): List<DisplayablePackage> {
+    return tablesView.getSelectedPackages()
   }
 }

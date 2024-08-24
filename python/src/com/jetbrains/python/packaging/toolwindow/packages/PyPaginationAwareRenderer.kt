@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging.toolwindow.ui
+package com.jetbrains.python.packaging.toolwindow.packages
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.hover.TableHoverListener
@@ -10,6 +10,8 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.packages.table.PyPackagesTable
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import java.awt.Component
 import java.awt.font.TextAttribute
 import javax.swing.BoxLayout
@@ -20,7 +22,9 @@ import javax.swing.table.DefaultTableCellRenderer
 
 internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
   private val nameLabel = JLabel().apply { border = JBUI.Borders.empty(0, 12) }
+
   private val versionLabel = JLabel().apply { border = JBUI.Borders.emptyRight(12) }
+
   private val linkLabel = JLabel(PyBundle.message("action.python.packages.install.text")).apply {
     border = JBUI.Borders.emptyRight(12)
     foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
@@ -45,7 +49,7 @@ internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
     row: Int,
     column: Int,
   ): Component {
-    val rowSelected = table.selectedRow == row
+    val rowSelected = row in table.selectedRows
     val tableFocused = table.hasFocus()
 
     if (value is ExpandResultNode) {
@@ -101,7 +105,7 @@ internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
   @Suppress("UNCHECKED_CAST")
   private fun JLabel.updateUnderline(table: JTable, currentRow: Int) {
     val hoveredRow = TableHoverListener.getHoveredRow(table)
-    val hoveredColumn = (table as PyPackagesTable<*>).hoveredColumn
+    val hoveredColumn = (table as PyPackagesTable).hoveredColumn
     val underline = if (hoveredRow == currentRow && hoveredColumn == 1) TextAttribute.UNDERLINE_ON else -1
 
     val attributes = font.attributes as MutableMap<TextAttribute, Any>

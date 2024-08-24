@@ -10,6 +10,7 @@ import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,8 +32,7 @@ internal class ChangeVersionPackageAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val pkg = e.selectedPackage as? InstalledPackage
-    e.presentation.isEnabledAndVisible = pkg != null
+    e.presentation.isEnabledAndVisible = e.selectedPackage as? InstalledPackage != null && e.selectedPackages.size == 1
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

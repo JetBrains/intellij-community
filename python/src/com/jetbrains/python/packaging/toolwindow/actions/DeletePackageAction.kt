@@ -8,12 +8,23 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 
 internal class DeletePackageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
+    val selectedPackages = e.selectedPackages.filterIsInstance<InstalledPackage>()
+    if (selectedPackages.size > 1) {
+      PyPackageCoroutine.launch(project, Dispatchers.IO) {
+        selectedPackages.forEach { pkg ->
+          project.service<PyPackagingToolWindowService>().deletePackage(pkg)
+        }
+      }
+      return
+    }
+
     val pkg = e.selectedPackage as? InstalledPackage ?: return
 
     val service = project.service<PyPackagingToolWindowService>()
@@ -23,7 +34,7 @@ internal class DeletePackageAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.selectedPackage is InstalledPackage
+    e.presentation.isEnabledAndVisible = e.selectedPackages.all { it is InstalledPackage }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
