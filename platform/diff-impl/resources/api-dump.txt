@@ -1828,6 +1828,7 @@ a:com.intellij.diff.tools.util.base.DiffViewerBase
 - getProject():com.intellij.openapi.project.Project
 - getRequest():com.intellij.diff.requests.ContentDiffRequest
 - p:getStatusPanel():javax.swing.JComponent
+- hasPendingRediff():Z
 - f:init():com.intellij.diff.FrameDiffTool$ToolbarComponents
 - isDisposed():Z
 - p:onAfterRediff():V
