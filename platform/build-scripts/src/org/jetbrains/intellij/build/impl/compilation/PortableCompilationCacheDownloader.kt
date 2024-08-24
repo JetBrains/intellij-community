@@ -13,7 +13,8 @@ import okhttp3.Request
 import okio.sink
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
-import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
+import org.jetbrains.intellij.build.impl.compilation.cache.parseSourcesStateFile
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -33,8 +34,6 @@ internal class PortableCompilationCacheDownloader(
   private val gitUrl: String,
 ) {
   private val remoteCacheUrl = remoteCache.url.trimEnd('/')
-
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
 
   private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
@@ -132,8 +131,8 @@ internal class PortableCompilationCacheDownloader(
         }
       }
 
-      val sourcesState = sourcesStateProcessor.parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$lastCachedCommit"))
-      val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
+      val sourcesState = parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$lastCachedCommit"))
+      val outputs = getAllCompilationOutputs(sourcesState, context.classesOutputDirectory)
       total = outputs.size
       spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
         outputs.forEachConcurrent(downloadParallelism) { output ->

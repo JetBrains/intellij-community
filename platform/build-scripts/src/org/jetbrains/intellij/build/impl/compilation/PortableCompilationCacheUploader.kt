@@ -2,6 +2,7 @@
 @file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.google.gson.stream.JsonReader
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
@@ -17,21 +18,25 @@ import okio.source
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
-import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
+
+private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
 
 internal class PortableCompilationCacheUploader(
   private val context: CompilationContext,
@@ -51,11 +56,18 @@ internal class PortableCompilationCacheUploader(
   }
 
   suspend fun upload(messages: BuildMessages) {
-    val sourceStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
-    val sourceStateFile = sourceStateProcessor.sourceStateFile
-    check(Files.exists(sourceStateFile)) {
-      "Compilation outputs doesn't contain source state file, " +
-      "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag"
+    val sourceStateFile = context.compilationData.dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
+
+    val sourceState = try {
+      Files.newBufferedReader(sourceStateFile).use {
+        BuildTargetSourcesState.readJson(JsonReader(it))
+      }
+    }
+    catch (e: NoSuchFileException) {
+      throw IllegalStateException(
+        "Compilation outputs doesn't contain source state file, " +
+        "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag", e
+      )
     }
 
     val start = System.nanoTime()
@@ -70,7 +82,7 @@ internal class PortableCompilationCacheUploader(
       }
 
       spanBuilder("upload compilation outputs").use {
-        val allCompilationOutputs = sourceStateProcessor.getAllCompilationOutputs(sourceStateProcessor.parseSourcesStateFile())
+        val allCompilationOutputs = getAllCompilationOutputs(sourceState = sourceState, classOutDir = context.classesOutputDirectory)
         uploadCompilationOutputs(
           uploader = uploader,
           uploadedOutputCount = uploadedOutputCount,
@@ -123,22 +135,25 @@ internal class PortableCompilationCacheUploader(
     allCompilationOutputs: List<CompilationOutput>,
   ) {
     allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
-      spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
-        val sourcePath = compilationOutput.remotePath
-        val outputFolder = compilationOutput.path
-        if (Files.notExists(outputFolder)) {
-          span.addEvent("$outputFolder doesn't exist, was a respective module removed?", Attributes.of(AttributeKey.stringKey("path"), "$outputFolder"))
-          return@use
-        }
+      val outDir = compilationOutput.path
+      spanBuilder("upload output part")
+        .setAttribute("part", compilationOutput.remotePath)
+        .setAttribute("path", outDir.toString())
+        .use { span ->
+          val sourcePath = compilationOutput.remotePath
+          if (Files.notExists(outDir)) {
+            span.addEvent("doesn't exist, was a respective module removed?")
+            return@use
+          }
 
-        val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
-        zipWithCompression(zipFile, mapOf(outputFolder to ""))
-        if (forcedUpload || !uploader.isExist(sourcePath)) {
-          uploader.upload(sourcePath, zipFile)
-          uploadedOutputCount.incrementAndGet()
+          val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
+          zipWithCompression(zipFile, mapOf(outDir to ""))
+          if (forcedUpload || !uploader.isExist(sourcePath)) {
+            uploader.upload(sourcePath, zipFile)
+            uploadedOutputCount.incrementAndGet()
+          }
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
         }
-        moveFile(zipFile, s3Folder.resolve(sourcePath))
-      }
     }
   }
 
