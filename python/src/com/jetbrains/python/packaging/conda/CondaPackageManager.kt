@@ -118,10 +118,10 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       val commandLineString = StringUtil.join(commandLine, " ")
       val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
 
-      val result = withBackgroundProgress<Unit>(project, text, true) {
+      val result = withBackgroundProgress(project, text, true) {
         withRawProgressReporter<ProcessOutput?> {
           handler.runProcess(10 * 60 * 1000)
-        }
+        } as ProcessOutput
       }
 
       result.checkSuccess(thisLogger())
@@ -133,5 +133,4 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       else result.stdout
     }
   }
-
 }

@@ -5,7 +5,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.OneLineProgressIndicator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -15,7 +14,6 @@ import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -32,6 +30,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
@@ -39,7 +38,6 @@ import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Font
@@ -75,19 +73,8 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val installWithOptionAction: Action = wrapAction(message("action.PyInstallWithOptionPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
-
-    val optionsString = withContext(Dispatchers.EDT) {
-      Messages.showInputDialog(project,
-                               message("package.install.with.options.dialog.message"),
-                               message("action.PyInstallWithOptionPackage.text"),
-                               Messages.getQuestionIcon()
-      )
-    } ?: return@wrapAction
-
-    val options = optionsString.split(' ').map { it.trim() }.filter { it.isNotBlank() }
-
-    val specification = details.repository.createPackageSpecification(details.name, details.availableVersions.first())
-    project.service<PyPackagingToolWindowService>().installPackage(specification, options)
+    val version = versionSelector.text.takeIf { it != latestText }
+    InstallWithOptionsPackageAction.installWithOptions(project, details,version)
   }
 
 
@@ -96,13 +83,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private val progressEnabledProperty = AtomicBooleanProperty(false)
 
   private val progressIndicatorComponent = JPanel()
-  //private val progressBar: JProgressBar = JProgressBar(JProgressBar.HORIZONTAL).apply {
-  //  maximumSize.width = 200
-  //  minimumSize.width = 200
-  //  preferredSize.width = 200
-  //  isVisible = false
-  //  isIndeterminate = true
-  //}
 
   private val htmlPanel: JCEFHtmlPanel = PyPackagingJcefHtmlPanel(project).also { panel ->
     Disposer.register(this, panel)
@@ -214,7 +194,10 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private fun suggestInstallPackage(selectedValue: String) {
     if (selectedPackage.get() !is InstalledPackage)
       return
-    updatePackageVersion(selectedValue)
+
+    wrapInvokeOp(message("progress.text.installing")) {
+      updatePackageVersion(selectedValue)
+    }
   }
 
   private fun calculateVersionText() = (selectedPackage.get() as? InstalledPackage)?.currentVersion?.presentableText ?: latestText

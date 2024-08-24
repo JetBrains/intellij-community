@@ -38,8 +38,7 @@ import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
 class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
-  var toolWindowPanel: PyPackagingToolWindowPanel? = null
-    private set
+  private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   lateinit var manager: PythonPackageManager
   private var installedPackages: Map<String, InstalledPackage> = emptyMap()
   internal var currentSdk: Sdk? = null
@@ -67,6 +66,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
 
   fun handleSearch(query: String) {
+    val prevSelected = toolWindowPanel?.getSelectedPackage()
+
     currentQuery = query
     if (query.isNotEmpty()) {
       searchJob?.cancel()
@@ -85,6 +86,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         if (isActive) {
           withContext(Dispatchers.Main) {
             toolWindowPanel?.showSearchResult(installed, packagesFromRepos + invalidRepositories)
+            prevSelected?.name?.let { toolWindowPanel?.selectPackageName(it) }
           }
         }
       }
@@ -96,26 +98,24 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }.toList()
 
       toolWindowPanel?.resetSearch(installedPackages.values.toList(), packagesByRepository + invalidRepositories)
+      prevSelected?.name?.let { toolWindowPanel?.selectPackageName(it) }
     }
   }
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
     val result = manager.installPackage(specification, options = options)
-    toolWindowPanel?.selectPackageName(specification.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
   }
 
   suspend fun deletePackage(selectedPackage: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
     val result = manager.uninstallPackage(selectedPackage.instance)
-    toolWindowPanel?.selectPackageName(selectedPackage.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
 
   suspend fun updatePackage(specification: PythonPackageSpecification) {
     val result = manager.updatePackage(specification)
-    toolWindowPanel?.selectPackageName(specification.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
   }
 

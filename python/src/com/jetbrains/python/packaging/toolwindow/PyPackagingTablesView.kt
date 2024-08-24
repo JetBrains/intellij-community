@@ -67,8 +67,10 @@ class PyPackagingTablesView(private val project: Project,
       if (existingRepo != null) {
         // recreate order of the repositories -- it might have changed in the package manager (e.g. Sdk switch)
         existingRepo.removeFrom(container)
+        val selectedItem = existingRepo.table.selectedItem()
         existingRepo.items = withExpander
         existingRepo.addTo(container)
+        selectedItem?.let { existingRepo.table.selectPackage(it) }
       }
       else {
         val newTable = PyPackagesTable(project, PyPackagesTableModel(), this, controller)

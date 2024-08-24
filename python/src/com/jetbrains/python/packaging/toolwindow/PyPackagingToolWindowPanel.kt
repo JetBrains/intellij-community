@@ -140,6 +140,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     super.uiDataSnapshot(sink)
   }
 
+  fun getSelectedPackage(): DisplayablePackage? = descriptionController.selectedPackage.get()
+
   private fun initOrientation(service: PyPackagingToolWindowService, horizontal: Boolean) {
     val second = if (splitter?.secondComponent == rightPanel) rightPanel else noPackagePanel
     val proportionKey = if (horizontal) HORIZONTAL_SPLITTER_KEY else VERTICAL_SPLITTER_KEY
