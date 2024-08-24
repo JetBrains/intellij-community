@@ -155,7 +155,7 @@ class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickFix {
       val name = requirement.displayName
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-        manager.installPackage(manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch)
+        manager.installPackage(manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch, emptyList<String>())
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }
     }

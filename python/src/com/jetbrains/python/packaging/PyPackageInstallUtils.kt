@@ -64,7 +64,7 @@ object PyPackageInstallUtils {
     val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
-    return pythonPackageManager.installPackage(packageSpecification)
+    return pythonPackageManager.installPackage(packageSpecification, emptyList<String>())
   }
 
   fun getPackageVersion(project: Project, sdk: Sdk, packageName: String): Version? {

@@ -99,9 +99,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  suspend fun installPackage(specification: PythonPackageSpecification) {
+  suspend fun installPackage(specification: PythonPackageSpecification, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    val result = manager.installPackage(specification)
+    val result = manager.installPackage(specification, options = options)
     toolWindowPanel?.selectPackageName(specification.name)
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
   }

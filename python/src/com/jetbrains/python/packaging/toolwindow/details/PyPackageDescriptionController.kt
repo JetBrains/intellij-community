@@ -15,6 +15,7 @@ import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.*
@@ -67,18 +67,27 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private val installActionButton = JBOptionButton(null, emptyArray())
 
   private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
-    installSelectedPackage()
+    val details = selectedPackageDetails.get() ?: return@wrapAction
+    val specification = details.repository.createPackageSpecification(details.name, details.availableVersions.first())
+    project.service<PyPackagingToolWindowService>().installPackage(specification)
+
   }
 
-
-  private val installWithOptionAction: Action = wrapAction(message("action.PyChangeInstallWithOption.text"), message("progress.text.installing")) {
-    val pkg = selectedPackage.get() ?: return@wrapAction
+  private val installWithOptionAction: Action = wrapAction(message("action.PyInstallWithOptionPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
-    withContext(Dispatchers.EDT) {
-      val mousePosition = RelativePoint(component.mousePosition)
-      PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project).show(
-        mousePosition)
-    }
+
+    val optionsString = withContext(Dispatchers.EDT) {
+      Messages.showInputDialog(project,
+                               message("package.install.with.options.dialog.message"),
+                               message("action.PyInstallWithOptionPackage.text"),
+                               Messages.getQuestionIcon()
+      )
+    } ?: return@wrapAction
+
+    val options = optionsString.split(' ').map { it.trim() }.filter { it.isNotBlank() }
+
+    val specification = details.repository.createPackageSpecification(details.name, details.availableVersions.first())
+    project.service<PyPackagingToolWindowService>().installPackage(specification, options)
   }
 
 
@@ -201,13 +210,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       pyPackagingToolWindowService.installPackage(newVersionSpec)
     }
   }
-
-  private suspend fun installSelectedPackage() {
-    val details = selectedPackageDetails.get() ?: return
-    val specification = details.repository.createPackageSpecification(details.name, details.availableVersions.first())
-    project.service<PyPackagingToolWindowService>().installPackage(specification)
-  }
-
 
   private fun suggestInstallPackage(selectedValue: String) {
     if (selectedPackage.get() !is InstalledPackage)
