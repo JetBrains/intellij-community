@@ -48,28 +48,29 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
      */
     @ApiStatus.Internal
     inline fun <T> withFlow(span: Span, operation: () -> T): T {
-      if (!TeamCityHelper.isUnderTeamCity) {
-        return operation()
+      // the method is inlined - avoid using `operation` more than once
+      if (TeamCityHelper.isUnderTeamCity) {
+        val parentFlowId = (span as? ReadableSpan)?.parentSpanContext?.takeIf { it.isValid }?.spanId
+        val attributes = if (parentFlowId == null) java.util.Map.of() else java.util.Map.of("parent", parentFlowId)
+        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_STARTED, attributes = attributes))
       }
 
-      val parentFlowId = (span as? ReadableSpan)?.parentSpanContext?.takeIf { it.isValid }?.spanId
-      val attributes = if (parentFlowId == null) java.util.Map.of() else java.util.Map.of("parent", parentFlowId)
-      println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_STARTED, attributes = attributes))
       try {
         return operation()
       }
       finally {
-        print(ServiceMessageTypes.FLOW_FINSIHED)
+        if (TeamCityHelper.isUnderTeamCity) {
+          print(ServiceMessageTypes.FLOW_FINSIHED)
+        }
       }
     }
 
     /**
-     * Wraps a [span] into a TeamCity flow linked to a parent flow of a parent span.
-     * Flows are not displayed in a TeamCity build log.
+     * Wraps a [span] into a TeamCity block linked to a parent flow of a parent span.
      */
     @ApiStatus.Internal
     suspend fun <T> withBlock(span: Span, operation: suspend () -> T): T {
-      if (TeamCityHelper.isUnderTeamCity || span !is ReadableSpan) {
+      if (!TeamCityHelper.isUnderTeamCity || span !is ReadableSpan) {
         return operation()
       }
 
@@ -140,13 +141,16 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
           "Unexpected build problem message type: ${message::class.java.canonicalName}"
         }
         if (message.identity != null) {
-          print(ServiceMessageTypes.BUILD_PORBLEM, "description" to message.text, "identity" to message.identity)
+          print(ServiceMessageTypes.BUILD_PROBLEM, "description" to message.text, "identity" to message.identity)
         }
         else {
-          print(ServiceMessageTypes.BUILD_PORBLEM, "description" to message.text)
+          print(ServiceMessageTypes.BUILD_PROBLEM, "description" to message.text)
         }
       }
-      BUILD_CANCEL -> print(ServiceMessageTypes.BUILD_STOP, "comment" to message.text, "readdToQueue" to "false")
+      BUILD_CANCEL -> {
+        @Suppress("SpellCheckingInspection")
+        print(ServiceMessageTypes.BUILD_STOP, "comment" to message.text, "readdToQueue" to "false")
+      }
     }
   }
 }

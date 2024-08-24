@@ -118,7 +118,7 @@
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>serviceMessages</artifactId>
-      <version>2023.11.1</version>
+      <version>2024.07</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
