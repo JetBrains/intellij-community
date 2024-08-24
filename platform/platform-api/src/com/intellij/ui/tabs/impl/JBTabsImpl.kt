@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep.FINAL_CHOICE
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.getTransparentIcon
@@ -75,11 +74,7 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.accessibility.*
-import javax.accessibility.AccessibleContext.ACCESSIBLE_DESCRIPTION_PROPERTY
-import javax.accessibility.AccessibleContext.ACCESSIBLE_NAME_PROPERTY
 import javax.swing.*
-import javax.swing.JComponent.AccessibleJComponent.ACCESSIBLE_NAME_PROPERTY
-import javax.swing.JComponent.AccessibleJComponent.ACCESSIBLE_SELECTION_PROPERTY
 import javax.swing.border.Border
 import javax.swing.event.ChangeListener
 import javax.swing.event.PopupMenuEvent
@@ -484,7 +479,7 @@ open class JBTabsImpl internal constructor(
       glassPane = gp
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        val listener = { _: AWTEvent? ->
+        val listener = AWTEventListener { _: AWTEvent? ->
           if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
             processFocusChange()
           }
@@ -531,8 +526,8 @@ open class JBTabsImpl internal constructor(
   internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable, coroutineScope: CoroutineScope?) {
-    val listener = fun(event: AWTEvent) {
-      val tabRectangle = lastLayoutPass?.headerRectangle ?: return
+    val listener = AWTEventListener { event ->
+      val tabRectangle = lastLayoutPass?.headerRectangle ?: return@AWTEventListener
       event as MouseEvent
       val point = event.point
       SwingUtilities.convertPointToScreen(point, event.component)
@@ -543,7 +538,7 @@ open class JBTabsImpl internal constructor(
       rectangle.location = p
       val inside = rectangle.contains(point)
       if (inside == isMouseInsideTabsArea) {
-        return
+        return@AWTEventListener
       }
 
       isMouseInsideTabsArea = inside
