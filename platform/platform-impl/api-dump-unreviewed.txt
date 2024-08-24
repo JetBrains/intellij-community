@@ -24071,8 +24071,8 @@ com.intellij.ui.dsl.builder.Row
 - a:rowComment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Row
 - bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - a:scrollCell(javax.swing.JComponent):com.intellij.ui.dsl.builder.Cell
-- *ba:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.SegmentedButton
-- *a:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.SegmentedButton
+- ba:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.SegmentedButton
+- a:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.SegmentedButton
 - a:slider(I,I,I,I):com.intellij.ui.dsl.builder.Cell
 - a:spinner(kotlin.ranges.ClosedRange,D):com.intellij.ui.dsl.builder.Cell
 - a:spinner(kotlin.ranges.IntRange,I):com.intellij.ui.dsl.builder.Cell
@@ -24115,9 +24115,9 @@ e:com.intellij.ui.dsl.builder.RowLayout
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.RowLayout
 - s:values():com.intellij.ui.dsl.builder.RowLayout[]
-*:com.intellij.ui.dsl.builder.SegmentedButton
+com.intellij.ui.dsl.builder.SegmentedButton
 - com.intellij.ui.dsl.builder.CellBase
-- *sf:Companion:com.intellij.ui.dsl.builder.SegmentedButton$Companion
+- sf:Companion:com.intellij.ui.dsl.builder.SegmentedButton$Companion
 - sf:DEFAULT_MAX_BUTTONS_COUNT:I
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.SegmentedButton
 - a:bind(com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.SegmentedButton
@@ -24137,11 +24137,11 @@ e:com.intellij.ui.dsl.builder.RowLayout
 - *bs:whenItemSelected$default(com.intellij.ui.dsl.builder.SegmentedButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton
 - *a:whenItemSelectedFromUi(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.SegmentedButton
 - *bs:whenItemSelectedFromUi$default(com.intellij.ui.dsl.builder.SegmentedButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton
-*f:com.intellij.ui.dsl.builder.SegmentedButton$Companion
+f:com.intellij.ui.dsl.builder.SegmentedButton$Companion
 - sf:DEFAULT_MAX_BUTTONS_COUNT:I
-- *f:createPresentation(java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
-- *bs:createPresentation$default(com.intellij.ui.dsl.builder.SegmentedButton$Companion,java.lang.String,java.lang.String,javax.swing.Icon,Z,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
-*:com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+- f:createPresentation(java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+- bs:createPresentation$default(com.intellij.ui.dsl.builder.SegmentedButton$Companion,java.lang.String,java.lang.String,javax.swing.Icon,Z,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
 - a:getEnabled():Z
 - a:getIcon():javax.swing.Icon
 - a:getText():java.lang.String

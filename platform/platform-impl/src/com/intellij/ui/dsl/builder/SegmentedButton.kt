@@ -16,13 +16,11 @@ import javax.swing.Icon
  * @see Row.segmentedButton
  */
 @ApiStatus.NonExtendable
-@ApiStatus.Experimental
 interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   companion object {
     const val DEFAULT_MAX_BUTTONS_COUNT: Int = 6
 
-    @ApiStatus.Experimental
     fun createPresentation(text: @Nls String? = null, toolTipText: @Nls String? = null, icon: Icon? = null, enabled: Boolean = true): ItemPresentation {
       return ItemPresentationImpl(text, toolTipText, icon, enabled)
     }
