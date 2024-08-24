@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
+import okio.source
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
@@ -24,10 +25,8 @@ import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -209,12 +208,8 @@ private class Uploader(serverUrl: String, val authHeader: String) {
             override fun contentLength(): Long = fileSize
 
             override fun writeTo(sink: BufferedSink) {
-              FileChannel.open(file, StandardOpenOption.READ).use { channel ->
-                var position = 0L
-                val size = channel.size()
-                while (position < size) {
-                  position += channel.transferTo(position, size - position, sink)
-                }
+              file.source().use {
+                sink.writeAll(it)
               }
             }
           }).build()).executeAsync().useSuccessful {}

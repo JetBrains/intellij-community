@@ -3,9 +3,7 @@ package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.util.*
 import java.util.concurrent.TimeUnit

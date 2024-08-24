@@ -9,17 +9,20 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import okhttp3.Request
+import okio.sink
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 
 private const val COMMITS_COUNT = 1_000
 
@@ -44,19 +47,30 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private suspend fun downloadToFile(url: String, file: Path, spanName: String) {
-    spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").use {
+  private suspend fun downloadToFile(url: String, file: Path, spanName: String, notFound: LongAdder) {
+    spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").use { span ->
       Files.createDirectories(file.parent)
       retryWithExponentialBackOff {
         if (url.isS3()) {
           awsS3Cli("cp", url, "$file")
         }
         else {
-          httpClient.get(url, remoteCache.authHeader) { response ->
-            Files.newOutputStream(file).use {
-              response.body.byteStream().transferTo(it)
+          httpClient.newCall(Request.Builder().url(url).header("Authorization", remoteCache.authHeader).build())
+            .executeAsync()
+            .use { response ->
+              when {
+                response.isSuccessful -> {
+                  file.sink().use {
+                    response.body.source().readAll(it)
+                  }
+                }
+                response.code == 404 -> {
+                  span.addEvent("resource not found")
+                  notFound.increment()
+                }
+                else -> throw IOException("Unexpected code $response")
+              }
             }
-          }
         }
       }
     }
@@ -108,12 +122,13 @@ internal class PortableCompilationCacheDownloader(
       )
     )
     val start = System.nanoTime()
-    val totalDownloadedBytes = AtomicLong()
+    val totalDownloadedBytes = LongAdder()
+    val notFound = LongAdder()
     var total = -1
     withContext(Dispatchers.IO) {
       launch {
         spanBuilder("get and unpack jps cache").setAttribute("commit", lastCachedCommit).use {
-          downloadAndUnpackJpsCache(lastCachedCommit, totalDownloadedBytes)
+          downloadAndUnpackJpsCache(commitHash = lastCachedCommit, notFound = notFound, totalBytes = totalDownloadedBytes)
         }
       }
 
@@ -123,23 +138,24 @@ internal class PortableCompilationCacheDownloader(
       spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
         outputs.forEachConcurrent(downloadParallelism) { output ->
           spanBuilder("get and unpack output").setAttribute("part", output.remotePath).use {
-            downloadAndUnpackCompilationOutput(compilationOutput = output, totalDownloadedBytes = totalDownloadedBytes)
+            downloadAndUnpackCompilationOutput(compilationOutput = output, notFound = notFound, totalDownloadedBytes = totalDownloadedBytes)
           }
         }
       }
     }
 
     reportStatisticValue("jps-cache:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-    reportStatisticValue("jps-cache:downloaded:bytes", totalDownloadedBytes.toString())
+    reportStatisticValue("jps-cache:downloaded:bytes", totalDownloadedBytes.sum().toString())
     reportStatisticValue("jps-cache:downloaded:count", total.toString())
+    reportStatisticValue("jps-cache:notFound:count", notFound.sum().toString())
   }
 
-  private suspend fun downloadAndUnpackJpsCache(commitHash: String, totalBytes: AtomicLong) {
+  private suspend fun downloadAndUnpackJpsCache(commitHash: String, notFound: LongAdder, totalBytes: LongAdder) {
     val cacheArchive = Files.createTempFile("cache", ".zip")
     try {
-      downloadToFile(url = "$remoteCacheUrl/caches/$commitHash", file = cacheArchive, spanName = "download jps cache")
+      downloadToFile(url = "$remoteCacheUrl/caches/$commitHash", file = cacheArchive, spanName = "download jps cache", notFound = notFound)
 
-      totalBytes.addAndGet(Files.size(cacheArchive))
+      totalBytes.add(Files.size(cacheArchive))
       val cacheDestination = context.compilationData.dataStorageRoot
 
       spanBuilder("unpack jps cache")
@@ -154,10 +170,10 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private suspend fun downloadAndUnpackCompilationOutput(compilationOutput: CompilationOutput, totalDownloadedBytes: AtomicLong) {
+  private suspend fun downloadAndUnpackCompilationOutput(compilationOutput: CompilationOutput, notFound: LongAdder, totalDownloadedBytes: LongAdder) {
     val tempFile = compilationOutput.path.resolve("tmp-output.zip")
-    downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = tempFile, spanName = "download output")
-    totalDownloadedBytes.addAndGet(Files.size(tempFile))
+    downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = tempFile, spanName = "download output", notFound = notFound)
+    totalDownloadedBytes.add(Files.size(tempFile))
 
     try {
       spanBuilder("unpack output")
