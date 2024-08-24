@@ -61,7 +61,7 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
 @ApiStatus.Internal
 public final class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
-  private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
+  public static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final ExecutorService parallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "TargetSourcesState Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
   private final Map<String, BuildTarget<?>> changedBuildTargets = new ConcurrentHashMap<>();

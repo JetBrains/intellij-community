@@ -17,6 +17,7 @@ import org.jetbrains.jps.cache.model.OutputLoadResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,18 +33,18 @@ public final class JpsServerClientImpl implements JpsServerClient {
   }
 
   @Override
-  public @Nullable File downloadMetadataById(@NotNull JpsNettyClient nettyClient, @NotNull String metadataId, @NotNull File targetDir) {
+  public @Nullable Path downloadMetadataById(@NotNull JpsNettyClient nettyClient, @NotNull String metadataId, @NotNull Path targetDir) {
     String downloadUrl = myServerUrl + "/metadata/" + metadataId;
     String fileName = "metadata.json";
     DownloadableFileUrl description = new DownloadableFileUrl(downloadUrl, fileName);
     JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description), nettyClient, null);
 
     LOG.debug("Downloading JPS metadata from: " + downloadUrl);
-    File metadataFile;
+    Path metadataFile;
     try {
-      List<Pair<File, DownloadableFileUrl>> pairs = downloader.download(targetDir);
-      Pair<File, DownloadableFileUrl> first = ContainerUtil.getFirstItem(pairs);
-      metadataFile = first != null ? first.first : null;
+      List<Pair<File, DownloadableFileUrl>> pairs = downloader.download(targetDir.toFile());
+      Pair<File, DownloadableFileUrl> first = pairs.isEmpty() ? null : pairs.get(0);
+      metadataFile = first == null ? null : first.first.toPath();
       if (metadataFile == null) {
         LOG.warn("Failed to download JPS metadata");
         return null;
