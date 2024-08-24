@@ -437,7 +437,7 @@ open class JBTabsImpl internal constructor(
       glassPane = gp
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        val listener = { _: AWTEvent? ->
+        val listener = AWTEventListener { _: AWTEvent? ->
           if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
             processFocusChange()
           }
@@ -496,8 +496,8 @@ open class JBTabsImpl internal constructor(
   internal fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable, coroutineScope: CoroutineScope?) {
-    val listener = fun(event: AWTEvent) {
-      val tabRectangle = lastLayoutPass?.headerRectangle ?: return
+    val listener = AWTEventListener { event ->
+      val tabRectangle = lastLayoutPass?.headerRectangle ?: return@AWTEventListener
       event as MouseEvent
       val point = event.point
       SwingUtilities.convertPointToScreen(point, event.component)
@@ -508,7 +508,7 @@ open class JBTabsImpl internal constructor(
       rectangle.location = p
       val inside = rectangle.contains(point)
       if (inside == isMouseInsideTabsArea) {
-        return
+        return@AWTEventListener
       }
 
       isMouseInsideTabsArea = inside
