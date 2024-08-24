@@ -197,7 +197,7 @@ public final class Standalone {
     final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     final BuildRunner buildRunner = new BuildRunner(loader);
     buildRunner.setBuilderParams(buildParameters);
-    ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
+    ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot.toPath(), new BuildFSState(true));
     try {
       buildRunner.runBuild(descriptor, canceledStatus, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }

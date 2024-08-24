@@ -36,6 +36,8 @@ import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -271,9 +273,9 @@ public final class JpsOutputLoaderManager {
     return true;
   }
 
-  private <T> CompletableFuture<LoaderStatus> initLoaders(String commitId, int totalDownloads,
-                                                          Map<String, Map<String, BuildTargetState>> commitSourcesState,
-                                                          Map<String, Map<String, BuildTargetState>> currentSourcesState) {
+  private CompletableFuture<LoaderStatus> initLoaders(String commitId, int totalDownloads,
+                                                      Map<String, Map<String, BuildTargetState>> commitSourcesState,
+                                                      Map<String, Map<String, BuildTargetState>> currentSourcesState) {
     JpsLoaderContext loaderContext =
       JpsLoaderContext.createNewContext(totalDownloads, myCanceledStatus, commitId, myNettyClient, commitSourcesState, currentSourcesState);
     List<JpsOutputLoader<?>> loaders = getLoaders();
@@ -349,12 +351,13 @@ public final class JpsOutputLoaderManager {
     try {
       long startTime = System.currentTimeMillis();
       BuildFSState fsState = new BuildFSState(false);
-      final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
-      if (!dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists()) {
+      Path dataStorageRoot = Utils.getDataStorageRoot(myProjectPath).toPath();
+      if (!Files.exists(dataStorageRoot) || !Files.exists(dataStorageRoot.resolve(FS_STATE_FILE))) {
         // invoked the very first time for this project
         buildRunner.setForceCleanCaches(true);
         LOG.info("Storage files are absent");
       }
+
       projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
       long contextInitializationTime = System.currentTimeMillis() - startTime;
       LOG.info("Time spend to context initialization: " + contextInitializationTime);

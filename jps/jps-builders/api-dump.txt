@@ -1854,6 +1854,7 @@ f:org.jetbrains.jps.cmdline.BuildRunner
 - s:isParallelBuildAutomakeEnabled():Z
 - s:isParallelBuildEnabled():Z
 - load(org.jetbrains.jps.incremental.MessageHandler,java.io.File,org.jetbrains.jps.incremental.fs.BuildFSState):org.jetbrains.jps.cmdline.ProjectDescriptor
+- load(org.jetbrains.jps.incremental.MessageHandler,java.nio.file.Path,org.jetbrains.jps.incremental.fs.BuildFSState):org.jetbrains.jps.cmdline.ProjectDescriptor
 - loadModelAndGetJpsProject():org.jetbrains.jps.model.JpsProject
 - runBuild(org.jetbrains.jps.cmdline.ProjectDescriptor,org.jetbrains.jps.api.CanceledStatus,org.jetbrains.jps.incremental.MessageHandler,org.jetbrains.jps.api.BuildType,java.util.List,Z):V
 - setBuilderParams(java.util.Map):V
@@ -2709,6 +2710,7 @@ f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - sf:TRACK_LIBRARY_CONTENT:Z
 - sf:TRACK_LIBRARY_CONTENT_PROPERTY:java.lang.String
 - <init>(java.io.File,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
+- <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - clean():V
 - close():V
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
@@ -2718,7 +2720,7 @@ org.jetbrains.jps.incremental.storage.StampsStorage
 - a:force():V
 - a:getCurrentStamp(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
 - a:getPreviousStamp(java.io.File,org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
-- a:getStorageRoot():java.io.File
+- a:getStorageRoot():java.nio.file.Path
 - a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.io.File):Z
 - a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.io.File,java.nio.file.attribute.BasicFileAttributes):Z
 - a:removeStamp(java.io.File,org.jetbrains.jps.builders.BuildTarget):V

@@ -15,7 +15,7 @@ import static org.jetbrains.jps.incremental.storage.StampsStorage.Stamp;
  * @author Eugene Zhuravlev
  */
 public interface StampsStorage<T extends Stamp> {
-  File getStorageRoot();
+  Path getStorageRoot();
 
   void force();
 

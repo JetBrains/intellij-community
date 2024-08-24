@@ -200,7 +200,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
       BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject());
-      ProjectStamps projectStamps = new ProjectStamps(myDataStorageRoot, targetsState, relativizer);
+      ProjectStamps projectStamps = new ProjectStamps(myDataStorageRoot.toPath(), targetsState, relativizer);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       return new ProjectDescriptor(myModel, new BuildFSState(true), projectStamps, dataManager, buildLoggingManager, index,
                                    targetIndex, buildRootIndex, ignoredFileIndex);
@@ -214,8 +214,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     loadProject(projectPath, Collections.emptyMap());
   }
 
-  protected void loadProject(String projectPath,
-                             Map<String, String> pathVariables) {
+  protected void loadProject(String projectPath, Map<String, String> pathVariables) {
     try {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);

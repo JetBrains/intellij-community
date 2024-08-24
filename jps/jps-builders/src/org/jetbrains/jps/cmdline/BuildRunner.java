@@ -36,6 +36,7 @@ import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -64,9 +65,17 @@ public final class BuildRunner {
     return myModelLoader.loadModel().getProject();
   }
 
+  /**
+   * @deprecated please use {@link #load(MessageHandler, Path, BuildFSState)}
+   */
+  @Deprecated()
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull File dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
+    return load(msgHandler, dataStorageRoot.toPath(), fsState);
+  }
+
+  public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
-    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
+    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot.toFile());
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(jpsModel);
     ModuleExcludeIndex index = new ModuleExcludeIndexImpl(jpsModel);
     IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);
@@ -97,7 +106,7 @@ public final class BuildRunner {
         dataManager.close();
       }
       myForceCleanCaches = true;
-      NioFiles.deleteRecursively(dataStorageRoot.toPath());
+      NioFiles.deleteRecursively(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);

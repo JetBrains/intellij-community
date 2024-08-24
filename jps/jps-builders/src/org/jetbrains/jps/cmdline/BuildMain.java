@@ -121,7 +121,7 @@ public final class BuildMain {
               public void processMessage(BuildMessage msg) {
                 data.addMessage(msg);
               }
-            }, dataStorageRoot, fsState);
+            }, dataStorageRoot.toPath(), fsState);
             data.setProjectDescriptor(pd);
 
             final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);

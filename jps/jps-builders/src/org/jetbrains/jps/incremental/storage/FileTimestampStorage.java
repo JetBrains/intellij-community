@@ -19,26 +19,26 @@ import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timesta
 
 final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<FileTimestamp> {
   private final BuildTargetsState myTargetsState;
-  private final File myTimestampsRoot;
+  private final Path timestampRoot;
 
-  FileTimestampStorage(File dataStorageRoot, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), new FileKeyDescriptor(), new StateExternalizer());
-    myTimestampsRoot = calcStorageRoot(dataStorageRoot);
+  FileTimestampStorage(Path dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+    super(calcStorageRoot(dataStorageRoot).resolve("data").toFile(), new FileKeyDescriptor(), new StateExternalizer());
+    timestampRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;
   }
 
-  private static @NotNull File calcStorageRoot(File dataStorageRoot) {
-    return new File(dataStorageRoot, "timestamps");
+  private static Path calcStorageRoot(Path dataStorageRoot) {
+    return dataStorageRoot.resolve("timestamps");
   }
 
   @Override
-  public File getStorageRoot() {
-    return myTimestampsRoot;
+  public Path getStorageRoot() {
+    return timestampRoot;
   }
 
   @Override
   public FileTimestamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
-    final TimestampPerTarget[] state = getState(file);
+    TimestampPerTarget[] state = getState(file);
     if (state != null) {
       int targetId = myTargetsState.getBuildTargetId(target);
       for (TimestampPerTarget timestampPerTarget : state) {
