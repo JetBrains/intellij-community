@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -278,11 +279,11 @@ class CompilationContextImpl private constructor(
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
     if (options.cleanOutDir || options.forceRebuild) {
-      cleanOutput(this@CompilationContextImpl)
+      cleanOutput(this@CompilationContextImpl, keepCompilationState = keepCompilationState(options))
     }
     else {
       Span.current().addEvent("skip output cleaning", Attributes.of(
-        AttributeKey.stringKey("dir"), "${paths.buildOutputDir}",
+        AttributeKey.stringKey("dir"), paths.buildOutputDir.toString(),
       ))
     }
   }
@@ -290,7 +291,7 @@ class CompilationContextImpl private constructor(
   private val compileMutex = Mutex()
 
   override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
-    spanBuilder("resolve dependencies and compile modules").use { span ->
+    spanBuilder("resolve dependencies and compile modules").block { span ->
       compileMutex.withLock {
         resolveProjectDependencies(this@CompilationContextImpl)
         reuseOrCompile(context = this@CompilationContextImpl, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span)
@@ -307,8 +308,7 @@ class CompilationContextImpl private constructor(
       }
       else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
-    Span.current().addEvent("set class output directory",
-                            Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
+    Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
 
   override fun findRequiredModule(name: String): JpsModule {
@@ -468,25 +468,22 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
   }
 }
 
-internal suspend fun cleanOutput(
-  compilationContext: CompilationContext,
-  keepCompilationState: Boolean = keepCompilationState(compilationContext.options),
-) {
+internal suspend fun cleanOutput(context: CompilationContext, keepCompilationState: Boolean) {
   val compilationState = setOf(
-    compilationContext.compilationData.dataStorageRoot,
-    compilationContext.classesOutputDirectory,
-    compilationContext.paths.jpsArtifacts,
+    context.compilationData.dataStorageRoot,
+    context.classesOutputDirectory,
+    context.paths.jpsArtifacts,
   )
   val outputDirectoriesToKeep = buildSet {
-    this.add(compilationContext.paths.logDir)
+    this.add(context.paths.logDir)
     if (keepCompilationState) {
       this.addAll(compilationState)
     }
   }
   spanBuilder("clean output").use { span ->
-    val outDir = compilationContext.paths.buildOutputDir
-    outputDirectoriesToKeep.forEach {
-      val path = it.relativeToOrNull(outDir) ?: it
+    val outDir = context.paths.buildOutputDir
+    for (dir in outputDirectoriesToKeep) {
+      val path = dir.relativeToOrNull(outDir) ?: dir
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
     }
     Files.newDirectoryStream(outDir).use { dirStream ->
@@ -507,7 +504,7 @@ internal suspend fun cleanOutput(
         NioFiles.deleteRecursively(path)
       }
     }
-    Files.createDirectories(compilationContext.paths.tempDir)
+    Files.createDirectories(context.paths.tempDir)
   }
 }
 

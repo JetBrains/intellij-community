@@ -123,7 +123,7 @@ internal class PortableCompilationCacheDownloader(
       spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
         outputs.forEachConcurrent(downloadParallelism) { output ->
           spanBuilder("get and unpack output").setAttribute("part", output.remotePath).use {
-            saveOutput(compilationOutput = output, totalDownloadedBytes = totalDownloadedBytes)
+            downloadAndUnpackCompilationOutput(compilationOutput = output, totalDownloadedBytes = totalDownloadedBytes)
           }
         }
       }
@@ -154,32 +154,28 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private suspend fun saveOutput(compilationOutput: CompilationOutput, totalDownloadedBytes: AtomicLong) {
-    val outputArchive = downloadOutput(compilationOutput)
-    totalDownloadedBytes.addAndGet(Files.size(outputArchive))
+  private suspend fun downloadAndUnpackCompilationOutput(compilationOutput: CompilationOutput, totalDownloadedBytes: AtomicLong) {
+    val tempFile = compilationOutput.path.resolve("tmp-output.zip")
+    downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = tempFile, spanName = "download output")
+    totalDownloadedBytes.addAndGet(Files.size(tempFile))
+
     try {
       spanBuilder("unpack output")
-        .setAttribute("archive", "$outputArchive")
+        .setAttribute("archive", tempFile.toString())
         .setAttribute("destination", compilationOutput.path.toString())
         .use {
-          Decompressor.Zip(outputArchive).overwrite(true).extract(compilationOutput.path)
+          Decompressor.Zip(tempFile).overwrite(true).extract(compilationOutput.path)
         }
     }
     catch (e: CancellationException) {
       throw e
     }
     catch (e: Exception) {
-      throw Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to ${compilationOutput.path}", e)
+      throw Exception("Unable to unpack $remoteCacheUrl/${compilationOutput.remotePath} to ${compilationOutput.path}", e)
     }
     finally {
-      Files.deleteIfExists(outputArchive)
+      Files.deleteIfExists(tempFile)
     }
-  }
-
-  private suspend fun downloadOutput(compilationOutput: CompilationOutput): Path {
-    val outputArchive = compilationOutput.path.resolve("tmp-output.zip")
-    downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = outputArchive, spanName = "download output")
-    return outputArchive
   }
 
   private fun reportStatisticValue(key: String, value: String) {

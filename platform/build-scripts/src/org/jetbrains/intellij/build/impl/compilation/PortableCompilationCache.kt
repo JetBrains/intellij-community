@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
@@ -77,30 +78,37 @@ class PortableCompilationCache(private val context: CompilationContext) {
    * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
   internal suspend fun downloadCacheAndCompileProject() {
-    if (isAlreadyUpdated) {
-      Span.current().addEvent("PortableCompilationCache is already updated")
-      return
-    }
+    spanBuilder("download JPS cache and compile")
+      .setAttribute("forceRebuild", forceRebuild)
+      .setAttribute("forceDownload", forceDownload)
+      .block { span ->
+        if (isAlreadyUpdated) {
+          span.addEvent("PortableCompilationCache is already updated")
+          return@block
+        }
 
-    check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
-      "JPS Caches are expected to be enabled"
-    }
-    if (forceRebuild || forceDownload) {
-      clean()
-    }
+        check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+          "JPS Caches are expected to be enabled"
+        }
 
-    val availableCommitDepth = if (remoteCache.shouldBeDownloaded) {
-      downloadCache(downloader)
-    }
-    else {
-      -1
-    }
-    context.options.incrementalCompilation = !forceRebuild
-    // compilation is executed unconditionally here even if the exact commit cache is downloaded
-    // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
-    doCompile(availableCommitDepth = availableCommitDepth, context = context)
-    isAlreadyUpdated = true
-    context.options.incrementalCompilation = true
+        if (forceRebuild || forceDownload) {
+          cleanOutput(context = context, keepCompilationState = false)
+        }
+
+        val availableCommitDepth = if (remoteCache.shouldBeDownloaded) {
+          downloadCache(downloader)
+        }
+        else {
+          -1
+        }
+
+        context.options.incrementalCompilation = !forceRebuild
+        // compilation is executed unconditionally here even if the exact commit cache is downloaded
+        // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
+        doCompile(availableCommitDepth = availableCommitDepth, context = context)
+        isAlreadyUpdated = true
+        context.options.incrementalCompilation = true
+      }
   }
 
   private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && isIncrementalCompilationDataAvailable(context)
@@ -115,7 +123,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     when {
       forceDownload -> {
         Span.current().addEvent("Incremental compilation using Remote Cache failed. Re-trying with clean build.")
-        clean()
+        cleanOutput(context = context, keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
       else -> {
@@ -154,10 +162,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
     uploader.updateCommitHistory(commitHistory = CommitsHistory(mapOf(remoteGitUrl to forceRebuiltCommits)), overrideRemoteHistory = true)
   }
 
-  private suspend fun clean() {
-    cleanOutput(compilationContext = context, keepCompilationState = false)
-  }
-
   private suspend fun downloadCache(downloader: PortableCompilationCacheDownloader): Int {
     spanBuilder("downloading Portable Compilation Cache").use { span ->
       try {
@@ -173,7 +177,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
         context.options.forceRebuild = true
         forceDownload = false
         context.options.incrementalCompilation = false
-        clean()
+        cleanOutput(context = context, keepCompilationState = false)
       }
     }
     return downloader.getAvailableCommitDepth()
@@ -181,7 +185,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   internal fun usageStatus(availableCommitDepth: Int): String {
     return when (availableCommitDepth) {
-      0 -> "All classes reused from JPS remote cache"
+      0 -> "all classes reused from JPS remote cache"
       1 -> "1 commit compiled using JPS remote cache"
       else -> "$availableCommitDepth commits compiled using JPS remote cache"
     }

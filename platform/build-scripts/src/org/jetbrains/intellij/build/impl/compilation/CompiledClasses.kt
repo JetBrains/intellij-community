@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepository
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
@@ -148,7 +149,7 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
       context.portableCompilationCache.downloadCacheAndCompileProject()
     }
     else -> {
-      spanBuilder("compile modules").use {
+      block("compile modules") {
         doCompile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, availableCommitDepth = -1, context = context)
       }
       return
@@ -185,16 +186,22 @@ internal suspend fun doCompile(
   val runner = JpsCompilationRunner(context)
   try {
     val (status, isIncrementalCompilation) = when {
-      context.options.forceRebuild -> "Forced rebuild" to false
+      context.options.forceRebuild -> "forced rebuild" to false
       availableCommitDepth >= 0 -> context.portableCompilationCache.usageStatus(availableCommitDepth) to true
-      isIncrementalCompilationDataAvailable(context) -> "Compiled using local cache" to true
-      else -> "Clean build" to false
+      isIncrementalCompilationDataAvailable(context) -> "compiled using local cache" to true
+      else -> "clean build" to false
     }
     context.options.incrementalCompilation = isIncrementalCompilation
     if (!isIncrementalCompilation) {
-      Span.current().addEvent("no compiled classes can be reused")
+      Span.current().addEvent(
+        "no compiled classes can be reused",
+        Attributes.of(
+          AttributeKey.stringKey("status"), status,
+          AttributeKey.longKey("availableCommitDepth"), availableCommitDepth.toLong(),
+        )
+      )
     }
-    spanBuilder(status).use {
+    block(status) {
       if (isIncrementalCompilation) {
         // workaround for KT-55695
         compileWithTimeout(
@@ -264,7 +271,7 @@ private suspend fun retryCompilation(
     e is TimeoutCancellationException -> {
       context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
       successMessage = "$successMessage after timeout"
-      cleanOutput(compilationContext = context, keepCompilationState = false)
+      cleanOutput(context = context, keepCompilationState = false)
       context.options.incrementalCompilation = false
     }
     IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
@@ -272,7 +279,7 @@ private suspend fun retryCompilation(
     }
     else -> {
       Span.current().addEvent("Incremental compilation failed. Re-trying with clean build.")
-      cleanOutput(compilationContext = context, keepCompilationState = false)
+      cleanOutput(context = context, keepCompilationState = false)
       context.options.incrementalCompilation = false
     }
   }

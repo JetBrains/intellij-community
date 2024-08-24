@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -19,6 +21,7 @@ import org.jetbrains.jps.incremental.messages.*
 import java.beans.Introspector
 import java.nio.file.Files
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
@@ -32,15 +35,27 @@ fun withJpsLogging(context: CompilationContext, action: (JpsMessageHandler) -> U
     val buildLogFile = context.compilationData.buildLogFile
     try {
       JpsLoggerFactory.fileLoggerFactory = JpsFileLoggerFactory(buildLogFile, categoriesWithDebugLevel)
-      context.messages.info(
-        "Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
-        "will be written to $buildLogFile"
+      Span.current().addEvent(
+        "build log will be written to $buildLogFile",
+        Attributes.of(
+          AttributeKey.stringKey("level"), if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel",
+        )
       )
     }
-    catch (t: Throwable) {
-      context.messages.warning("Cannot setup additional logging to $buildLogFile: ${t.message}")
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      Span.current().addEvent(
+        "cannot setup additional logging",
+        Attributes.of(
+          AttributeKey.stringKey("error"), e.message ?: "",
+          AttributeKey.stringKey("buildLogFile"), buildLogFile.toString(),
+        )
+      )
     }
   }
+
   val defaultLoggerFactory = Logger.getFactory()
   Logger.setFactory(JpsLoggerFactory::class.java)
   try {
@@ -105,8 +120,9 @@ class JpsMessageHandler(private val context: CompilationContext) : MessageHandle
         val sources = message.numberOfProcessedSources
         context.messages.reportStatisticValue("Processed files by '${message.builderName}'$buildKind", sources.toString())
         if (!context.options.incrementalCompilation && sources > 0) {
-          context.messages.reportStatisticValue("Compilation time per file for '${message.builderName}', ms",
-                                                String.format(Locale.US, "%.2f", message.elapsedTimeMs.toDouble() / sources))
+          context.messages.reportStatisticValue(
+            "Compilation time per file for '${message.builderName}', ms", String.format(Locale.US, "%.2f", message.elapsedTimeMs.toDouble() / sources)
+          )
         }
       }
       else if (!text.isEmpty()) {
@@ -153,9 +169,11 @@ class JpsMessageHandler(private val context: CompilationContext) : MessageHandle
       it.key to (it.value - compilationStartTimeForTarget.getValue(it.key))
     }
 
-    buildMessages.info(" average: ${
-      String.format("%.2f", ((compilationTimeForTarget.sumOf { it.second }.toDouble()) / compilationTimeForTarget.size) / 1000000)
-    }ms")
+    buildMessages.info(
+      " average: ${
+        String.format("%.2f", ((compilationTimeForTarget.sumOf { it.second }.toDouble()) / compilationTimeForTarget.size) / 1000000)
+      }ms"
+    )
     val topTargets = compilationTimeForTarget.sortedBy { it.second }.asReversed().take(10)
     buildMessages.info(" top ${topTargets.size} targets by compilation time:")
     for (entry in topTargets) {
