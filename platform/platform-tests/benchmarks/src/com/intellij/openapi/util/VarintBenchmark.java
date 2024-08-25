@@ -64,7 +64,7 @@ public class VarintBenchmark {
     }
   }
 
-  //@Benchmark no difference with j.u.DataOutputStream
+  //@Benchmark (no difference with j.u.DataOutputStream)
   public void writeVarints_toUnsyncDataOutputOverByteArrayStream(DataContext context) throws IOException {
     int[] values = context.values;
     UnsyncByteArrayOutputStream stream = context.outputStream;
@@ -90,7 +90,7 @@ public class VarintBenchmark {
     }
   }
 
-  //@Benchmark no difference with writeVarints_toDataOutputOverByteArrayStream
+  //@Benchmark (no difference with writeVarints_toDataOutputOverByteArrayStream)
   public void writeVarints_toDataOutputOverByteArrayStream_optimized(DataContext context) throws IOException {
     int[] values = context.values;
     UnsyncByteArrayOutputStream stream = context.outputStream;

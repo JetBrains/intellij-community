@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -142,7 +141,7 @@ class IndexUpdateRunner(
       processFileSetInParallel(project, fileSet) { fileIndexingRequest ->
         currentlyIndexedFileRef.set(fileIndexingRequest.file)
 
-        indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
+        indexOneFileHandleExceptions(fileIndexingRequest, project, contentLoader, fileSet.statistics)
 
         filesIndexed.incrementAndGet()
       }
@@ -207,7 +206,6 @@ class IndexUpdateRunner(
   private suspend fun indexOneFileHandleExceptions(
     fileIndexingRequest: FileIndexingRequest,
     project: Project,
-    parentDisposableForInvokeLater: Disposable,
     contentLoader: CachedFileContentLoader,
     statistics: IndexingFileSetStatistics,
   ) {
@@ -218,7 +216,7 @@ class IndexUpdateRunner(
         LOG.info("Directory was passed for indexing unexpectedly: " + fileIndexingRequest.file.path)
       }
 
-      indexer.indexOneFile(fileIndexingRequest, parentDisposableForInvokeLater, startTime, project, contentLoader, statistics)
+      indexer.indexOneFile(fileIndexingRequest, startTime, project, contentLoader, statistics)
     }
     catch (e: CancellationException) {
       FileBasedIndexImpl.LOG.info("Indexing coroutine cancelled")
@@ -252,7 +250,6 @@ class IndexUpdateRunner(
 
     suspend fun indexOneFile(
       fileIndexingRequest: FileIndexingRequest,
-      parentDisposableForInvokeLater: Disposable,
       startTime: Long,
       project: Project,
       contentLoader: CachedFileContentLoader,
@@ -264,16 +261,16 @@ class IndexUpdateRunner(
       val indexingStamp = indexingRequest.getFileIndexingStamp(file)
 
       val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
-        val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, file, parentDisposableForInvokeLater)
+        val applierOrNullIfResurrected = getApplierForFileIndexDelete(indexingStamp, file)
         if (applierOrNullIfResurrected == null) {
-          getApplierForFileIndexUpdate(indexingStamp, startTime, file, parentDisposableForInvokeLater, project, contentLoader)
+          getApplierForFileIndexUpdate(indexingStamp, startTime, file, project, contentLoader)
         }
         else {
           Triple(applierOrNullIfResurrected, 0L, 0L)
         }
       }
       else {
-        getApplierForFileIndexUpdate(indexingStamp, startTime, file, parentDisposableForInvokeLater, project, contentLoader)
+        getApplierForFileIndexUpdate(indexingStamp, startTime, file, project, contentLoader)
       }
 
       try {
@@ -294,7 +291,7 @@ class IndexUpdateRunner(
 
     private suspend fun getApplierForFileIndexDelete(
       indexingStamp: FileIndexingStamp,
-      file: VirtualFile, parentDisposable: Disposable,
+      file: VirtualFile
     ): FileIndexingResult? {
       //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
       //         the lifecycle?
@@ -308,7 +305,6 @@ class IndexUpdateRunner(
     private suspend fun getApplierForFileIndexUpdate(
       indexingStamp: FileIndexingStamp, startTime: Long,
       file: VirtualFile,
-      parentDisposable: Disposable,
       project: Project,
       loader: CachedFileContentLoader,
     ): Triple<FileIndexingResult, Long, Long> {
