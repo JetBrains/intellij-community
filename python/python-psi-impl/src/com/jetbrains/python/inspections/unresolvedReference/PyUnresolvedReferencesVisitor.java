@@ -389,7 +389,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(qualifiedNames));
     var installPackageQuickFixes = getInstallPackageQuickFixes(node, reference, refName);
     if (Iterables.size(installPackageQuickFixes) > 0) {
-      ContainerUtil.addAll(fixes, getInstallPackageQuickFixes(node, reference, refName));
+      ContainerUtil.addAll(fixes, installPackageQuickFixes);
       myUnresolvedNames.add(refName);
       ContainerUtil.addAll(fixes, getInstallAllPackagesQuickFixes());
     }

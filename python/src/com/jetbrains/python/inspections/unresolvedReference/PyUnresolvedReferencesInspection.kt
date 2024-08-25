@@ -1,214 +1,221 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections.unresolvedReference;
+@file:Suppress("CompanionObjectInExtension")
 
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Key;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
-import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
-import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
-import com.jetbrains.python.inspections.PyInspection;
-import com.jetbrains.python.inspections.PyInspectionVisitor;
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
-import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
-import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
-import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
-import com.jetbrains.python.inspections.quickfix.InstallAllPackagesQuickFix;
-import com.jetbrains.python.packaging.PyPIPackageUtil;
-import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.references.PyImportReference;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.jetbrains.python.inspections.unresolvedReference
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static com.intellij.codeInspection.options.OptPane.pane;
-import static com.jetbrains.python.packaging.common.PackagesKt.normalizePackageName;
+import com.intellij.codeInspection.InspectionProfile
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.util.Key
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.QualifiedName
+import com.intellij.psi.util.parentOfType
+import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.imports.AutoImportHintAction
+import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix
+import com.jetbrains.python.codeInsight.imports.PythonImportUtils
+import com.jetbrains.python.inspections.PyInspection
+import com.jetbrains.python.inspections.PyInspectionVisitor
+import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallAndImportPackageQuickFix
+import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
+import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
+import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix
+import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix
+import com.jetbrains.python.inspections.quickfix.InstallAllPackagesQuickFix
+import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.common.normalizePackageName
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
+import com.jetbrains.python.psi.impl.PyImportElementImpl
+import com.jetbrains.python.psi.impl.references.PyImportReference
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  */
-public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
-  public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
-    Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
+class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() {
+  @JvmField
+  var ignoredIdentifiers: List<String> = ArrayList()
 
-  public List<String> ignoredIdentifiers = new ArrayList<>();
+  override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession) =
+    Visitor(holder,
+            ignoredIdentifiers,
+            this,
+            PyInspectionVisitor.getContext(session))
 
-  public static PyUnresolvedReferencesInspection getInstance(PsiElement element) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-    return (PyUnresolvedReferencesInspection)inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element);
-  }
+  override fun getOptionsPane() = OptPane.pane(
+    OptPane.stringList("ignoredIdentifiers",
+                       PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")))
 
-  @Override
-  protected @NotNull PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder,
-                                                                 @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, ignoredIdentifiers, this, PyInspectionVisitor.getContext(session));
-  }
+  class Visitor(
+    holder: ProblemsHolder?,
+    ignoredIdentifiers: List<String>?,
+    inspection: PyInspection,
+    context: TypeEvalContext,
+  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, inspection, context) {
+    override fun visitPyFile(node: PyFile) {
+      super.visitPyFile(node)
 
-  @Override
-  public @NotNull OptPane getOptionsPane() {
-    return pane(OptPane.stringList("ignoredIdentifiers", PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")));
-  }
-
-  public static class Visitor extends PyUnresolvedReferencesVisitor {
-    private static final InstallAllPackagesQuickFix installAllPackagesQuickFix = new InstallAllPackagesQuickFix();
-
-    public Visitor(@Nullable ProblemsHolder holder,
-                   List<String> ignoredIdentifiers,
-                   @NotNull PyInspection inspection,
-                   @NotNull TypeEvalContext context) {
-      super(holder, ignoredIdentifiers, inspection, context);
+      installAllPackagesQuickFix.packageNames = myUnresolvedNames.toList()
     }
 
-    @Override
-    public void visitPyFile(@NotNull PyFile node) {
-      super.visitPyFile(node);
+    public override fun getInstallPackageQuickFixes(
+      node: PyElement,
+      reference: PsiReference,
+      refName: String,
+    ): Iterable<LocalQuickFix> {
+      if (reference !is PyImportReference) {
+        return emptyList()
+      }
 
-      installAllPackagesQuickFix.setPackageNames(myUnresolvedNames.stream().toList());
-    }
 
-    @Override
-    public Iterable<LocalQuickFix> getInstallPackageQuickFixes(@NotNull PyElement node,
-                                                               @NotNull PsiReference reference,
-                                                               String refName) {
-      if (reference instanceof PyImportReference) {
-        // TODO: Ignore references in the second part of the 'from ... import ...' expression
-        final QualifiedName qname = QualifiedName.fromDottedString(refName);
-        final List<String> components = qname.getComponents();
-        if (!components.isEmpty()) {
-          final String packageName = components.get(0);
-          final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-          final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
-            return StreamEx
-              .of(packageName, PyPsiPackageUtil.INSTANCE.moduleToPackageName(packageName, ""))
-              .map(pkg -> normalizePackageName(pkg))
-              .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
-              .map(pkg -> new PyPackageRequirementsInspection.InstallPackageQuickFix(pkg));
-          }
+      //Ignore references in the second part of the 'from ... import ...' expression
+      val fromImport = node.parentOfType<PyFromImportStatementImpl>()
+      if (fromImport != null) {
+        val importSection = node.parentOfType<PyImportElementImpl>()
+        if (importSection != null) {
+          return emptyList()
         }
       }
-      return Collections.emptyList();
+
+      val qname = QualifiedName.fromDottedString(refName)
+      val components = qname.components
+      if (components.isEmpty()) {
+        return emptyList()
+      }
+
+      val packageName = components[0]
+      val module = ModuleUtilCore.findModuleForPsiElement(node)
+      val sdk = PythonSdkUtil.findPythonSdk(module)
+      if (module == null || sdk == null || !PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
+        return emptyList()
+      }
+
+
+      val packageCandidates = listOf(packageName, moduleToPackageName(packageName, ""))
+        .map { pkg: String -> normalizePackageName(pkg) }
+        .filter { pyPackageName: String -> PyPIPackageUtil.INSTANCE.isInPyPI(pyPackageName) }
+      return packageCandidates.map { pkg: String -> InstallPackageQuickFix(pkg) }
     }
 
-    @Override
-    public Iterable<LocalQuickFix> getInstallAllPackagesQuickFixes() {
-      return StreamEx.of(installAllPackagesQuickFix);
-    }
+    public override fun getInstallAllPackagesQuickFixes() = listOf(installAllPackagesQuickFix)
 
-    @Override
-    public Iterable<LocalQuickFix> getAddIgnoredIdentifierQuickFixes(List<QualifiedName> qualifiedNames) {
-      List<LocalQuickFix> result = new ArrayList<>(2);
-      if (qualifiedNames.size() == 1) {
-        final QualifiedName qualifiedName = qualifiedNames.get(0);
-        result.add(new AddIgnoredIdentifierQuickFix(qualifiedName, false));
-        if (qualifiedName.getComponentCount() > 1) {
-          result.add(new AddIgnoredIdentifierQuickFix(qualifiedName.removeLastComponent(), true));
+    public override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): Iterable<LocalQuickFix> {
+      val result: MutableList<LocalQuickFix> = ArrayList(2)
+      if (qualifiedNames.size == 1) {
+        val qualifiedName = qualifiedNames[0]
+        result.add(AddIgnoredIdentifierQuickFix(qualifiedName, false))
+        if (qualifiedName.componentCount > 1) {
+          result.add(AddIgnoredIdentifierQuickFix(qualifiedName.removeLastComponent(), true))
         }
       }
-      return result;
+      return result
     }
 
-    @Override
-    public Iterable<LocalQuickFix> getImportStatementQuickFixes(PsiElement element) {
-      PyImportStatementBase importStatementBase = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class);
+    public override fun getImportStatementQuickFixes(element: PsiElement): Iterable<LocalQuickFix> {
+      val importStatementBase = PsiTreeUtil.getParentOfType(element,
+                                                            PyImportStatementBase::class.java)
       if ((importStatementBase != null) && GenerateBinaryStubsFix.isApplicable(importStatementBase)) {
-        return GenerateBinaryStubsFix.generateFixes(importStatementBase);
+        return GenerateBinaryStubsFix.generateFixes(importStatementBase)
       }
-      return Collections.emptyList();
+
+      return emptyList()
     }
 
-    @Override
-    protected Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
+    override fun getAutoImportFixes(node: PyElement, reference: PsiReference, element: PsiElement): Iterable<LocalQuickFix> {
       // look in other imported modules for this whole name
       if (!PythonImportUtils.isImportable(element)) {
-        return Collections.emptyList();
+        return emptyList()
       }
-      final PsiFile file = InjectedLanguageManager.getInstance(node.getProject()).getTopLevelFile(node);
-      if (!(file instanceof PyFile)) {
-        return Collections.emptyList();
+      val file = InjectedLanguageManager.getInstance(node.project).getTopLevelFile(node)
+      if (file !is PyFile) {
+        return emptyList()
       }
-      List<LocalQuickFix> result = new ArrayList<>();
-      AutoImportQuickFix importFix = PythonImportUtils.proposeImportFix(node, reference);
+      val result: MutableList<LocalQuickFix> = ArrayList()
+      val importFix = PythonImportUtils.proposeImportFix(node, reference)
       if (importFix != null) {
         if (!suppressHintForAutoImport(node, importFix) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
-          final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
-          result.add(autoImportHintAction);
+          val autoImportHintAction = AutoImportHintAction(importFix)
+          result.add(autoImportHintAction)
         }
         else {
-          result.add(importFix);
+          result.add(importFix)
         }
-        if (ScopeUtil.getScopeOwner(node) instanceof PyFunction) {
-          result.add(importFix.forLocalImport());
+        if (ScopeUtil.getScopeOwner(node) is PyFunction) {
+          result.add(importFix.forLocalImport())
         }
       }
-      String referencedName = node instanceof PyReferenceExpression refExpr && !refExpr.isQualified() ? refExpr.getReferencedName() : null;
+
+      val referencedName = if (node is PyReferenceExpression && !node.isQualified) node.referencedName else null
       if (referencedName != null && PythonSdkUtil.findPythonSdk(node) != null) {
-        ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(referencedName, null));
-        String realPackageName = PyCommonImportAliasesKt.PY_COMMON_IMPORT_ALIASES.get(referencedName);
+        ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(referencedName, null))
+        val realPackageName = PY_COMMON_IMPORT_ALIASES[referencedName]
         if (realPackageName != null) {
-          ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(realPackageName, referencedName));
+          ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(realPackageName, referencedName))
         }
       }
-      return result;
+
+      return result
     }
 
-    private static @Nullable LocalQuickFix createInstallAndImportQuickFix(@NotNull String packageName, @Nullable String asName) {
-      return PyPIPackageUtil.INSTANCE.isInPyPI(packageName)
-             ? new PyPackageRequirementsInspection.InstallAndImportPackageQuickFix(packageName, asName)
-             : null;
-    }
-
-    private static boolean suppressHintForAutoImport(PyElement node, AutoImportQuickFix importFix) {
-      // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
-      // as a quickfix but no popup balloon (PY-2312)
-      if (!isCall(node) && importFix.hasOnlyFunctions()) {
-        return true;
+    override fun getPluginQuickFixes(fixes: List<LocalQuickFix>, reference: PsiReference) {
+      for (provider in PyUnresolvedReferenceQuickFixProvider.EP_NAME.extensionList) {
+        provider.registerQuickFixes(reference, fixes)
       }
-      // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
-      // not as popup
-      PyClass containingClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      if (containingClass != null && (containingClass.findMethodByName(importFix.getNameToImport(), true, null) != null ||
-                                      containingClass.findInstanceAttribute(importFix.getNameToImport(), true) != null)) {
-        return true;
-      }
-      return false;
     }
 
-    private static boolean isCall(PyElement node) {
-      final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(node, PyCallExpression.class);
-      return callExpression != null && node == callExpression.getCallee();
-    }
+    companion object {
+      private val installAllPackagesQuickFix = InstallAllPackagesQuickFix()
 
-    @Override
-    void getPluginQuickFixes(List<LocalQuickFix> fixes, PsiReference reference) {
-      for (PyUnresolvedReferenceQuickFixProvider provider : PyUnresolvedReferenceQuickFixProvider.EP_NAME.getExtensionList()) {
-        provider.registerQuickFixes(reference, fixes);
+      private fun createInstallAndImportQuickFix(packageName: String, asName: String?): LocalQuickFix? {
+        return if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName))
+          InstallAndImportPackageQuickFix(packageName, asName)
+        else
+          null
       }
+
+      private fun suppressHintForAutoImport(node: PyElement, importFix: AutoImportQuickFix): Boolean {
+        // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
+        // as a quickfix but no popup balloon (PY-2312)
+        if (!isCall(node) && importFix.hasOnlyFunctions()) {
+          return true
+        }
+        // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
+        // not as popup
+        val containingClass = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
+        return containingClass != null && (containingClass.findMethodByName(importFix.nameToImport, true, null) != null ||
+                                           containingClass.findInstanceAttribute(importFix.nameToImport, true) != null)
+      }
+
+      private fun isCall(node: PyElement): Boolean {
+        val callExpression = PsiTreeUtil.getParentOfType(node,
+                                                         PyCallExpression::class.java)
+        return callExpression != null && node === callExpression.callee
+      }
+    }
+  }
+
+  companion object {
+    private val SHORT_NAME_KEY = Key.create<PyUnresolvedReferencesInspection>(PyUnresolvedReferencesInspection::class.java.simpleName)
+
+    fun getInstance(element: PsiElement?): PyUnresolvedReferencesInspection? {
+      element ?: return null
+
+      val inspectionProfile: InspectionProfile = InspectionProjectProfileManager.getInstance(element.project).currentProfile
+      return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element) as PyUnresolvedReferencesInspection?
     }
   }
 }

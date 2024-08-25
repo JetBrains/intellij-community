@@ -32,7 +32,6 @@ object PyPackageInstallUtils {
     installPackage(project, sdk, packageName)
   }
 
-
   fun confirmInstall(project: Project, packageName: String): Boolean {
     val isWellKnownPackage = ApplicationManager.getApplication()
       .getService(PyPIPackageRanking::class.java)
@@ -106,14 +105,18 @@ fun getConfirmedPackages(packageNames: List<String>): List<String> {
     return packageNames
   }
 
-  val nonWellKnownPackages = packageNames.filterNot {
-    ApplicationManager.getApplication()
-      .getService(PyPIPackageRanking::class.java)
-      .packageRank.containsKey(it)
+  val packageRank = ApplicationManager.getApplication()
+    .getService(PyPIPackageRanking::class.java)
+    .packageRank
+
+  val (knownPackages, nonWellKnownPackages) = packageNames.partition {
+    packageRank.containsKey(it)
   }
+
   if (nonWellKnownPackages.isEmpty()) {
     return packageNames
   }
+
   val packagesToInstall = ArrayList(packageNames)
   val panel = panel {
     packageNames.forEach {
@@ -127,11 +130,13 @@ fun getConfirmedPackages(packageNames: List<String>): List<String> {
       }
     }
   }
+
   val dialog = dialog(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"), panel, resizable = true)
   dialog.contentPanel.preferredSize = JBUI.size(maxOf(dialog.contentPanel.preferredSize.width, 600), dialog.preferredSize.height)
+
   val isOk = dialog.showAndGet()
   if (!isOk) {
     return emptyList()
   }
-  return packagesToInstall
+  return knownPackages + packagesToInstall
 }
