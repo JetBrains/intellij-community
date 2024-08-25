@@ -31,6 +31,7 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
 import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
+import com.jetbrains.python.inspections.quickfix.InstallAllPackagesQuickFix;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
@@ -63,7 +64,8 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
   }
 
   @Override
-  protected @NotNull PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+  protected @NotNull PyUnresolvedReferencesVisitor createVisitor(@NotNull ProblemsHolder holder,
+                                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, ignoredIdentifiers, this, PyInspectionVisitor.getContext(session));
   }
 
@@ -73,8 +75,7 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
   }
 
   public static class Visitor extends PyUnresolvedReferencesVisitor {
-    private static final PyPackageRequirementsInspection.InstallAllPackagesQuickFix installAllPackagesQuickFix =
-      new PyPackageRequirementsInspection.InstallAllPackagesQuickFix(Collections.emptyList());
+    private static final InstallAllPackagesQuickFix installAllPackagesQuickFix = new InstallAllPackagesQuickFix();
 
     public Visitor(@Nullable ProblemsHolder holder,
                    List<String> ignoredIdentifiers,
