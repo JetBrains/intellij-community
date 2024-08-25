@@ -24,6 +24,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
@@ -361,11 +362,16 @@ class IndexUpdateRunner(
       return loadedFileContentLimiter.acquiringBytes(fileLength) {
         //TODO RC: withContext(Dispatchers.IO) ?
         //TODO RC: non-cancellable section is used just to avoid context-switch down the stack (DiskQueryRelay):
-        //TODO RC: withContext(NonCancellable) {} don't work here (but should work: IJPL-157558)
-        Cancellation.withNonCancelableSection().use {
-          val fileContent = loader.loadContent(file)
-          ContentLoadingResult(fileContent, fileLength)
+        val fileContent = if(LOAD_CONTENT_IN_NON_CANCELLABLE_SECTION) {
+          //TODO RC: withContext(NonCancellable) {} don't work here (but should work: IJPL-157558)
+          Cancellation.withNonCancelableSection().use {
+            loader.loadContent(file)
+          }
         }
+        else{
+          loader.loadContent(file)
+        }
+        ContentLoadingResult(fileContent, fileLength)
       }
     }
   }
@@ -379,6 +385,7 @@ class IndexUpdateRunner(
     private val VERBOSE_INDEXES: Scope = Scope(Indexes.name, Indexes.parent, verbose = true)
 
     internal val TRACER: IJTracer = TelemetryManager.getTracer(VERBOSE_INDEXES)
+    private val LOAD_CONTENT_IN_NON_CANCELLABLE_SECTION = getBooleanProperty("idea.indexing.load-content-in-non-cancellable-section", true)
 
     /** Number indexing tasks to run in parallel */
     val INDEXING_PARALLELIZATION: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
