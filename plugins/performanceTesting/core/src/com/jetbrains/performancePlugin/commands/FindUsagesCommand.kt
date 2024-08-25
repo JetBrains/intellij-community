@@ -23,7 +23,6 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewElementsListener
 import com.jetbrains.performancePlugin.PerformanceTestSpan
-import com.jetbrains.performancePlugin.commands.PerformanceCommand.CMD_PREFIX
 import com.sampullara.cli.Args
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
@@ -108,25 +107,6 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           })
         }
 
-        if (element != null) {
-          LOG.info("Command find usages is called on element $element")
-
-          if (!elementName.isNullOrEmpty()) {
-            val foundElementName = readAction { (element as PsiNamedElement).name }
-            check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
-          }
-
-          if (options.runInBackground) {
-            FindManager.getInstance(project).findUsages(element)
-            return@withContext
-          }
-
-          spanRef = spanBuilder.startSpan()
-          scopeRef = spanRef!!.makeCurrent()
-
-          findUsagesFuture = writeIntentReadAction { ShowUsagesAction.startFindUsagesWithResult (element, popupPosition, editor, scope) }
-        }
-
         val searchTargets = readAction {
           PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, offset) }
         }
@@ -144,6 +124,24 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           scopeRef = spanRef!!.makeCurrent()
 
           findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(project, target, popupPosition, editor, scope)
+        }
+        else if (element != null) {
+          LOG.info("Command find usages is called on element $element")
+
+          if (!elementName.isNullOrEmpty()) {
+            val foundElementName = readAction { (element as PsiNamedElement).name }
+            check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
+          }
+
+          if (options.runInBackground) {
+            FindManager.getInstance(project).findUsages(element)
+            return@withContext
+          }
+
+          spanRef = spanBuilder.startSpan()
+          scopeRef = spanRef!!.makeCurrent()
+
+          findUsagesFuture = writeIntentReadAction { ShowUsagesAction.startFindUsagesWithResult (element, popupPosition, editor, scope) }
         }
 
         if (findUsagesFuture == null) {
