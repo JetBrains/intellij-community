@@ -498,6 +498,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
 
     <!-- Statistics -->
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.PyPackagesUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>

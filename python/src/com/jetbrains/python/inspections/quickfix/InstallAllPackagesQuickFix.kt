@@ -12,6 +12,7 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection.RunningP
 import com.jetbrains.python.packaging.getConfirmedPackages
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.statistics.PyPackagesUsageCollector
 
 class InstallAllPackagesQuickFix : LocalQuickFix {
   var packageNames: List<String> = emptyList()
@@ -33,6 +34,7 @@ class InstallAllPackagesQuickFix : LocalQuickFix {
                                        emptyList(),
                                        RunningPackagingTasksListener(module))
     fix.applyFix(module.project, descriptor)
+    PyPackagesUsageCollector.installAllEvent.log(requirements.size)
   }
 
   override fun getFamilyName() = PyBundle.message("python.unresolved.reference.inspection.install.all")

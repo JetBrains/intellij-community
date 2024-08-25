@@ -49,6 +49,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.statistics.PyPackagesUsageCollector;
 import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -516,6 +517,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
             }
           }
         ).applyFix(module.getProject(), descriptor);
+        PyPackagesUsageCollector.installSingleEvent.log();
       }
     }
 
