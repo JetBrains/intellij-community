@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -24,11 +23,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.*
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.Alarm
-import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.PyBundle.message
@@ -39,6 +39,7 @@ import com.jetbrains.python.packaging.toolwindow.details.PyPackageDescriptionCon
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
+import com.jetbrains.python.packaging.toolwindow.packages.PyPackageSearchTextField
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackagesListController
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -51,7 +52,6 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.*
-import javax.swing.event.DocumentEvent
 import javax.swing.event.ListSelectionListener
 
 class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
@@ -66,9 +66,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   internal val packagingScope = PyPackageCoroutine.getIoScope(project)
 
-  private val searchTextField: SearchTextField
-  private val searchAlarm: SingleAlarm
-
+  private val searchTextField: SearchTextField = PyPackageSearchTextField(project)
 
   private val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
 
@@ -98,37 +96,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
     leftPanel = createLeftPanel(service)
 
-    searchTextField = object : SearchTextField(false) {
-      init {
-        preferredSize = Dimension(250, 30)
-        minimumSize = Dimension(250, 30)
-        maximumSize = Dimension(250, 30)
-        textEditor.border = JBUI.Borders.emptyLeft(6)
-        textEditor.isOpaque = true
-        textEditor.emptyText.text = message("python.toolwindow.packages.search.text.placeholder")
-      }
 
-      override fun onFieldCleared() {
-        service.handleSearch("")
-      }
-    }
-
-    searchAlarm = SingleAlarm(
-      task = {
-        service.handleSearch(searchTextField.text.trim())
-      },
-      delay = 500,
-      parentDisposable = null,
-      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-      coroutineScope = service.serviceScope,
-      modalityState = ModalityState.nonModal(),
-    )
-
-    searchTextField.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        searchAlarm.cancelAndRequest()
-      }
-    })
 
     initOrientation(service, true)
     trackOrientation(service)
@@ -384,3 +352,4 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       get() = message("python.toolwindow.packages.no.description.placeholder")
   }
 }
+
