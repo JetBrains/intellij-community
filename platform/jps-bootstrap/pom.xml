@@ -73,7 +73,7 @@
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-extension-kotlin</artifactId>
-      <version>1.40.0</version>
+      <version>1.41.0</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>
@@ -137,7 +137,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
+        <version>3.4.0</version>
       </plugin>
     </plugins>
   </build>

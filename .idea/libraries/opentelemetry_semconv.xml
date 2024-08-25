@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="opentelemetry-semconv" type="repository">
-    <properties maven-id="io.opentelemetry.semconv:opentelemetry-semconv:1.26.0-alpha">
+    <properties maven-id="io.opentelemetry.semconv:opentelemetry-semconv:1.27.0-alpha">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.26.0-alpha/opentelemetry-semconv-1.26.0-alpha.jar">
-          <sha256sum>4ab23f9d62fa65e351944826af81ea1dfded45fb24b550fd681ded2e1eb6fec0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.27.0-alpha/opentelemetry-semconv-1.27.0-alpha.jar">
+          <sha256sum>9d63590c51a3455f440841e149b132bfd4d46eccbff9823d10211c1cec3e97f0</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.26.0-alpha/opentelemetry-semconv-1.26.0-alpha.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.27.0-alpha/opentelemetry-semconv-1.27.0-alpha.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.26.0-alpha/opentelemetry-semconv-1.26.0-alpha-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/semconv/opentelemetry-semconv/1.27.0-alpha/opentelemetry-semconv-1.27.0-alpha-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
