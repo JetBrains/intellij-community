@@ -209,9 +209,9 @@ private fun readScrollbarWindowsAndLinuxColors(isDark: Boolean): ScrollbarColors
 
 private fun readScrollbarMetrics(): ScrollbarMetrics =
     if (hostOs.isMacOS) {
-        ScrollbarMetrics(thumbCornerSize = CornerSize(percent = 100), minThumbLength = 20.dp)
+        ScrollbarMetrics(thumbCornerSize = CornerSize(percent = 100), minThumbLength = 24.dp)
     } else {
-        ScrollbarMetrics(thumbCornerSize = CornerSize(0), minThumbLength = 16.dp)
+        ScrollbarMetrics(thumbCornerSize = CornerSize(0), minThumbLength = 24.dp)
     }
 
 private fun readTrackClickBehavior() =

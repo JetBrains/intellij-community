@@ -524,7 +524,7 @@ private fun readDefaultDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
             DropdownMetrics(
                 arrowMinSize = DpSize(arrowWidth, minimumSize.height),
                 minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
-                cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2),
+                cornerSize = componentArc,
                 contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
                 borderWidth = DarculaUIUtil.LW.dp,
             ),
@@ -922,7 +922,7 @@ private fun readTextAreaStyle(metrics: TextFieldMetrics): TextAreaStyle {
         metrics =
             TextAreaMetrics(
                 cornerSize = metrics.cornerSize,
-                contentPadding = metrics.contentPadding,
+                contentPadding = PaddingValues(horizontal = 5.dp, vertical = 4.dp),
                 minSize = metrics.minSize,
                 borderWidth = metrics.borderWidth,
             ),
@@ -966,8 +966,8 @@ private fun readTextFieldStyle(): TextFieldStyle {
         colors = colors,
         metrics =
             TextFieldMetrics(
-                cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2),
-                contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp),
+                cornerSize = componentArc,
+                contentPadding = PaddingValues(horizontal = 8.dp + DarculaUIUtil.LW.dp),
                 minSize = DpSize(144.dp, minimumSize.height),
                 borderWidth = DarculaUIUtil.LW.dp,
             ),
@@ -1182,3 +1182,6 @@ private fun readIconButtonStyle(): IconButtonStyle =
                 borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
             ),
     )
+
+private val componentArc: CornerSize
+    get() = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2)

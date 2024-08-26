@@ -123,7 +123,7 @@ public fun TextFieldColors.Companion.dark(
 
 public fun TextFieldMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp, vertical = 6.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 9.dp), // 8 + 1 (border)
     minSize: DpSize = DpSize(144.dp, 28.dp),
     borderWidth: Dp = 1.dp,
 ): TextFieldMetrics = TextFieldMetrics(borderWidth, contentPadding, cornerSize, minSize)

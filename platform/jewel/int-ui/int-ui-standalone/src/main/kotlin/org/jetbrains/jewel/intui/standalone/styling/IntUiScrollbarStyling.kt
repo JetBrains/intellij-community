@@ -200,12 +200,12 @@ public fun ScrollbarColors.Companion.windowsAndLinuxDark(
 
 public fun ScrollbarMetrics.Companion.macOs(
     thumbCornerSize: CornerSize = CornerSize(100),
-    minThumbLength: Dp = 20.dp,
+    minThumbLength: Dp = 24.dp,
 ): ScrollbarMetrics = ScrollbarMetrics(thumbCornerSize, minThumbLength)
 
 public fun ScrollbarMetrics.Companion.windowsAndLinux(
     thumbCornerSize: CornerSize = CornerSize(0),
-    minThumbLength: Dp = 20.dp,
+    minThumbLength: Dp = 24.dp,
 ): ScrollbarMetrics = ScrollbarMetrics(thumbCornerSize, minThumbLength)
 
 public fun AlwaysVisible.Companion.default(): AlwaysVisible =

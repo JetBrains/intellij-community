@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.offset
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -119,7 +118,7 @@ private fun NoTextAreaDecorator(style: TextAreaStyle, scrollbarStyle: ScrollbarS
             TextAreaScrollableContainer(
                 scrollState = scrollState,
                 style = scrollbarStyle,
-                contentModifier = Modifier.padding(end = innerEndPadding),
+                contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
                 content = { Box(Modifier.padding(contentPadding)) { innerTextField() } },
             )
         } else {
@@ -147,14 +146,13 @@ private fun TextAreaDecorator(
                 TextAreaScrollableContainer(
                     scrollState = scrollState,
                     style = scrollbarStyle,
-                    contentModifier = Modifier.padding(end = innerEndPadding),
-                    content = innerTextField,
+                    contentModifier = Modifier.padding(style.metrics.borderWidth).padding(end = innerEndPadding),
+                    content = { Box(Modifier.padding(contentPadding)) { innerTextField() } },
                 )
             } else {
-                innerTextField()
+                Box(Modifier.padding(contentPadding)) { innerTextField() }
             }
         },
-        contentPadding = contentPadding,
         placeholderTextColor = style.colors.placeholder,
         placeholder = if (state.text.isEmpty()) placeholder else null,
         textStyle = textStyle,
@@ -291,7 +289,6 @@ public fun TextArea(
     ) { innerTextField, _ ->
         TextAreaDecorationBox(
             innerTextField = innerTextField,
-            contentPadding = style.metrics.contentPadding,
             placeholderTextColor = style.colors.placeholder,
             placeholder = if (value.text.isEmpty()) placeholder else null,
             textStyle = textStyle,
@@ -303,7 +300,6 @@ public fun TextArea(
 @Composable
 private fun TextAreaDecorationBox(
     innerTextField: @Composable () -> Unit,
-    contentPadding: PaddingValues,
     textStyle: TextStyle,
     modifier: Modifier,
     placeholderTextColor: Color,
@@ -331,14 +327,7 @@ private fun TextAreaDecorationBox(
         },
         modifier,
     ) { measurables, incomingConstraints ->
-        val leftPadding = contentPadding.calculateLeftPadding(layoutDirection)
-        val rightPadding = contentPadding.calculateRightPadding(layoutDirection)
-        val horizontalPadding = (leftPadding + rightPadding).roundToPx()
-        val verticalPadding =
-            (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding()).roundToPx()
-
-        val textAreaConstraints =
-            incomingConstraints.offset(horizontal = -horizontalPadding, vertical = -verticalPadding).copy(minHeight = 0)
+        val textAreaConstraints = incomingConstraints.copy(minHeight = 0)
 
         val textAreaPlaceable = measurables.single { it.layoutId == TEXT_AREA_ID }.measure(textAreaConstraints)
 
@@ -347,17 +336,14 @@ private fun TextAreaDecorationBox(
         val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(textAreaPlaceable, placeholderPlaceable, incomingConstraints)
-        val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, verticalPadding, incomingConstraints)
+        val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, incomingConstraints)
 
         layout(width, height) {
-            val startPadding = contentPadding.calculateStartPadding(layoutDirection).roundToPx()
-            val topPadding = contentPadding.calculateTopPadding().roundToPx()
-
             // Placed top-start
-            textAreaPlaceable.placeRelative(startPadding, topPadding)
+            textAreaPlaceable.placeRelative(0, 0)
 
             // Placed similar to the input text above
-            placeholderPlaceable?.placeRelative(startPadding, topPadding)
+            placeholderPlaceable?.placeRelative(0, 0)
         }
     }
 }
@@ -371,11 +357,10 @@ private fun calculateWidth(
 private fun calculateHeight(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    verticalPadding: Int,
     incomingConstraints: Constraints,
 ): Int {
     val textAreaHeight = maxOf(textFieldPlaceable.height, placeholderPlaceable?.height ?: 0)
-    return (textAreaHeight + verticalPadding).coerceAtLeast(incomingConstraints.minHeight)
+    return textAreaHeight.coerceAtLeast(incomingConstraints.minHeight)
 }
 
 private const val PLACEHOLDER_ID = "Placeholder"

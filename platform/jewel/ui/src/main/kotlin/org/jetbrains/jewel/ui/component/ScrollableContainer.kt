@@ -6,6 +6,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.rememberScrollState
@@ -83,7 +84,7 @@ internal fun TextAreaScrollableContainer(
             VerticalScrollbar(
                 scrollState,
                 style = style,
-                modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                modifier = Modifier.pointerHoverIcon(PointerIcon.Default).padding(1.dp),
                 keepVisible = keepVisible,
             )
         },

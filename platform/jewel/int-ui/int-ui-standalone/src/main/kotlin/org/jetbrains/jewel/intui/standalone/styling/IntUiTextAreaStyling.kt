@@ -123,7 +123,7 @@ public fun TextAreaColors.Companion.dark(
 
 public fun TextAreaMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 5.dp, vertical = 4.dp),
     minSize: DpSize = DpSize(144.dp, 28.dp),
     borderWidth: Dp = 1.dp,
 ): TextAreaMetrics = TextAreaMetrics(borderWidth, contentPadding, cornerSize, minSize)
