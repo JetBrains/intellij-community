@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -65,7 +67,9 @@ internal class TerminalWidgetImpl(
     view = if (options.shellIntegration?.commandBlockIntegration != null) {
       val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
       Disposer.register(this, session)
-      BlockTerminalView(project, session, settings, terminalTitle)
+      BlockTerminalView(project, session, settings, terminalTitle).also {
+        installResponsivenessReporter(project, checkNotNull(options.startupMoment), session)
+      }
     }
     else {
       OldPlainTerminalView(project, settings, terminalTitle)
@@ -172,3 +176,5 @@ internal class TerminalWidgetImpl(
     }
   }
 }
+
+internal val LOG: Logger = logger<TerminalWidgetImpl>()
