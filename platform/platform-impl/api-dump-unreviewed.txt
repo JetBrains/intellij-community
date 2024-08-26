@@ -6323,10 +6323,6 @@ Fc:com.intellij.ide.impl.HeadlessDataManager
 - getDataContextFromFocusAsync():org.jetbrains.concurrency.Promise
 - setTestDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - setTestDataProvider(com.intellij.openapi.actionSystem.DataProvider,com.intellij.openapi.Disposable):V
-c:com.intellij.ide.impl.NoContentRootProjectConfigurator
-- com.intellij.platform.DirectoryProjectConfigurator
-- <init>():V
-- configureProject(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Ref,Z):V
 f:com.intellij.ide.impl.Origin
 - <init>(java.lang.String,java.lang.String):V
 - f:component1():java.lang.String
