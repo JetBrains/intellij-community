@@ -106,7 +106,7 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
   }
 
   private suspend fun getProjectFromUID(projectId: UID): Project? {
-    return withContext(KernelService.kernelCoroutineContext()) {
+    return withKernel {
       val projectEntity = entity<ProjectEntity, UID>(ProjectEntity.ProjectId, projectId)
       projectEntity?.asProject()
     }

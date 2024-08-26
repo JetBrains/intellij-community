@@ -9,6 +9,7 @@ import com.intellij.openapi.project.impl.asEntity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
@@ -51,20 +52,20 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
     val hintCoroutineScope = editor.childCoroutineScope("ValueLookupManagerValueHintParentScope")
 
     val hint: Deferred<AbstractValueHint?> = coroutineScope.async(Dispatchers.IO) {
-      withContext(KernelService.kernelCoroutineContext()) {
+      withKernel {
         val remoteApi = RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
         val projectEntity = project.asEntity()
         if (projectEntity == null) {
-          return@withContext null
+          return@withKernel null
         }
         val projectId = projectEntity.projectId
         val editorId = editor.editorId()
         val canShowHint = remoteApi.canShowHint(projectId, editorId, offset, type)
         if (!canShowHint) {
-          return@withContext null
+          return@withKernel null
         }
         val hint = ValueLookupManagerValueHint(hintCoroutineScope, project, projectId, editor, point, type, offset)
-        return@withContext hint
+        return@withKernel hint
       }
     }
     val hintPromise = hint.asCompletableFuture().asCancellablePromise()

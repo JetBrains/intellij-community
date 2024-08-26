@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frontend.evaluate.quick.common
 
 import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withKernel
 import com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupHideHintsRequestEntity
 import com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupListeningStartedEntity
 import fleet.kernel.change
@@ -15,7 +16,7 @@ import kotlinx.coroutines.withContext
 
 internal fun subscribeForDebuggingStart(cs: CoroutineScope, onStartListening: () -> Unit) {
   cs.launch(Dispatchers.Default) {
-    withContext(KernelService.kernelCoroutineContext()) {
+    withKernel {
       change {
         shared {
           register(XDebuggerValueLookupListeningStartedEntity)
@@ -32,7 +33,7 @@ internal fun subscribeForDebuggingStart(cs: CoroutineScope, onStartListening: ()
 
 internal fun subscribeForValueHintHideRequest(cs: CoroutineScope, onHintHidden: () -> Unit) {
   cs.launch(Dispatchers.Default) {
-    withContext(KernelService.kernelCoroutineContext()) {
+    withKernel {
       change {
         shared {
           register(XDebuggerValueLookupHideHintsRequestEntity)
@@ -43,10 +44,12 @@ internal fun subscribeForValueHintHideRequest(cs: CoroutineScope, onHintHidden: 
           onHintHidden()
         }
         // TODO: support multiple clients by clientId
-        cs.launch(Dispatchers.Default + KernelService.kernelCoroutineContext()) {
-          change {
-            shared {
-              entity.delete()
+        cs.launch(Dispatchers.Default) {
+          withKernel {
+            change {
+              shared {
+                entity.delete()
+              }
             }
           }
         }

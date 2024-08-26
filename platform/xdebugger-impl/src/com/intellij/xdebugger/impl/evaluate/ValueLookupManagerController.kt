@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withKernel
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import fleet.kernel.DurableEntityType
@@ -47,7 +48,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
       return
     }
     cs.launch(Dispatchers.Main) {
-      withContext(KernelService.kernelCoroutineContext()) {
+      withKernel {
         change {
           shared {
             register(XDebuggerValueLookupListeningStartedEntity)
@@ -71,7 +72,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
    */
   fun hideHint() {
     cs.launch(Dispatchers.Main) {
-      withContext(KernelService.kernelCoroutineContext()) {
+      withKernel {
         change {
           shared {
             register(XDebuggerValueLookupHideHintsRequestEntity)
