@@ -828,7 +828,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
                           int initialOldLength,
                           int moveOffset) {
     if (LOG.isTraceEnabled()) {
-      LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
+      LOG.trace("updating document " + this + ".\nNew string:'" + newString + "'\nOld string:'" + oldString + "' at offset "+offset);
     }
 
     assert moveOffset >= 0 && moveOffset <= getTextLength() : "Invalid moveOffset: " + moveOffset;
