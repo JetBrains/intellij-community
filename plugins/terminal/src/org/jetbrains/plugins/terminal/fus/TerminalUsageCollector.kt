@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.*
 import kotlin.time.Duration
 
@@ -21,7 +22,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 22)
+  private val GROUP = EventLogGroup(GROUP_ID, 23)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -65,6 +66,13 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                         BLOCK_TERMINAL_FIELD,
                                                         "Fired each time when command is started")
 
+
+  private val stepDurationEvent = GROUP.registerEvent("terminal.step.duration",
+                                                      EventFields.Enum<ShellType>("shell"),
+                                                      EventFields.Enum<DurationType>("duration_type"),
+                                                      EventFields.DurationMs,
+                                                      "Logs performance/responsiveness metrics")
+
   private val commandFinishedEvent = GROUP.registerVarargEvent("terminal.command.finished",
                                                                "Fired each time when command is finished. New Terminal only.",
                                                                TerminalCommandUsageStatistics.commandExecutableField,
@@ -93,6 +101,11 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   fun triggerCommandStarted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
     commandStartedEvent.log(project, commandData?.command, commandData?.subCommand, isBlockTerminal)
+  }
+
+  @JvmStatic
+  internal fun logBlockTerminalStepDuration(project: Project, shellType: ShellType, durationType: DurationType, duration: Duration) {
+    stepDurationEvent.log(project, shellType, durationType, duration.inWholeMilliseconds)
   }
 
   fun triggerCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
@@ -213,6 +226,11 @@ internal enum class TerminalFeedbackMoment {
 @ApiStatus.Internal
 enum class TerminalCommandGenerationEvent {
   MODE_ENABLED, MODE_DISABLED, GENERATION_FINISHED, GENERATION_INTERRUPTED, GENERATION_FAILED
+}
+
+internal enum class DurationType(val description: String) {
+  FROM_STARTUP_TO_SHOWN_CURSOR("time from startup to terminal cursor shown in initialization block"),
+  FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input")
 }
 
 private const val GROUP_ID = "terminalShell"

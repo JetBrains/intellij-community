@@ -267,7 +267,8 @@ public final class TerminalToolWindowManager implements Disposable {
                                @Nullable TerminalTabState tabState,
                                boolean requestFocus,
                                boolean deferSessionStartUntilUiShown) {
-    final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState, deferSessionStartUntilUiShown);
+    TerminalStartupMoment startupMoment = requestFocus && deferSessionStartUntilUiShown ? new TerminalStartupMoment() : null;
+    Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState, deferSessionStartUntilUiShown, startupMoment);
     content.putUserData(RUNNER_KEY, terminalRunner);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
@@ -298,7 +299,8 @@ public final class TerminalToolWindowManager implements Disposable {
                                         @NotNull ToolWindow toolWindow,
                                         @Nullable TerminalWidget terminalWidget,
                                         @Nullable TerminalTabState tabState,
-                                        boolean deferSessionStartUntilUiShown) {
+                                        boolean deferSessionStartUntilUiShown,
+                                        @Nullable TerminalStartupMoment startupMoment) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
     Content content = ContentFactory.getInstance().createContent(panel, null, false);
@@ -316,6 +318,7 @@ public final class TerminalToolWindowManager implements Disposable {
         .workingDirectory(currentWorkingDir)
         .shellCommand(tabState != null ? tabState.myShellCommand : null)
         .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
+        .startupMoment$intellij_terminal(startupMoment)
         .build();
       widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
       widget.getTerminalTitle().change(state -> {
