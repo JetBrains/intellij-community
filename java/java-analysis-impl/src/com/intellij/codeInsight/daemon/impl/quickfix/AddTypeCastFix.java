@@ -66,11 +66,8 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     originalExpression.replace(Objects.requireNonNull(typeCast));
   }
 
-  private static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {
-    if (expr instanceof PsiLiteralExpression) {
-      return PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)expr, type);
-    }
-    return null;
+  static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {
+    return expr instanceof PsiLiteralExpression literal ? PsiLiteralUtil.tryConvertNumericLiteral(literal, type) : null;
   }
 
   static PsiExpression createCastExpression(PsiExpression original, PsiType type) {
@@ -84,33 +81,35 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     if (newLiteral != null) {
       return factory.createExpressionFromText(newLiteral, null);
     }
-    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
+    if (type instanceof PsiEllipsisType ellipsisType) type = ellipsisType.toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText(text, original);
 
+    PsiExpression operand = typeCast.getOperand();
+    assert operand != null;
     if (expression instanceof PsiConditionalExpression) {
       // we'd better cast one branch of ternary expression if we can
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression.copy();
-      PsiExpression thenE = conditional.getThenExpression();
-      PsiExpression elseE = conditional.getElseExpression();
-      if (thenE != null && elseE != null) {
-        boolean replaceThen = !TypeConversionUtil.areTypesAssignmentCompatible(type, thenE);
-        boolean replaceElse = !TypeConversionUtil.areTypesAssignmentCompatible(type, elseE);
+      PsiExpression thenExpression = conditional.getThenExpression();
+      PsiExpression elseExpression = conditional.getElseExpression();
+      if (thenExpression != null && elseExpression != null) {
+        boolean replaceThen = !TypeConversionUtil.areTypesAssignmentCompatible(type, thenExpression);
+        boolean replaceElse = !TypeConversionUtil.areTypesAssignmentCompatible(type, elseExpression);
         if (replaceThen != replaceElse) {
           if (replaceThen) {
-            Objects.requireNonNull(typeCast.getOperand()).replace(thenE);
-            thenE.replace(typeCast);
+            operand.replace(thenExpression);
+            thenExpression.replace(typeCast);
           }
           else {
-            Objects.requireNonNull(typeCast.getOperand()).replace(elseE);
-            elseE.replace(typeCast);
+            operand.replace(elseExpression);
+            elseExpression.replace(typeCast);
           }
           return conditional;
         }
       }
     }
 
-    Objects.requireNonNull(typeCast.getOperand()).replace(expression);
+    operand.replace(expression);
 
     return typeCast;
   }
@@ -121,14 +120,14 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
                                  TextRange fixRange) {
     String referenceName = ref.getReferenceName();
     if (referenceName == null) return;
-    if (qualifier instanceof PsiReferenceExpression) {
-      PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
+    if (qualifier instanceof PsiReferenceExpression referenceExpression) {
+      PsiElement resolve = referenceExpression.resolve();
       if (resolve == null) return;
-      if (resolve instanceof PsiParameter && ((PsiParameter)resolve).getTypeElement() == null) {
+      if (resolve instanceof PsiParameter parameter && parameter.getTypeElement() == null) {
         PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(resolve, PsiMethodCallExpression.class);
         if (callExpression != null) {
           JavaResolveResult result = callExpression.resolveMethodGenerics();
-          if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getInferenceErrorMessage() != null) {
+          if (result instanceof MethodCandidateInfo candidateInfo && candidateInfo.getInferenceErrorMessage() != null) {
             return;
           }
         }
