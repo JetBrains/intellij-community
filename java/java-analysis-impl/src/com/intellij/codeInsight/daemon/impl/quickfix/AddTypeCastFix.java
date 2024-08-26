@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -63,7 +62,7 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   }
 
   public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
-    PsiExpression typeCast = createCastExpression(originalExpression, project, type);
+    PsiExpression typeCast = createCastExpression(originalExpression, type);
     originalExpression.replace(Objects.requireNonNull(typeCast));
   }
 
@@ -74,7 +73,7 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     return null;
   }
 
-  static PsiExpression createCastExpression(PsiExpression original, Project project, PsiType type) {
+  static PsiExpression createCastExpression(PsiExpression original, PsiType type) {
     // remove nested casts
     PsiElement expression = PsiUtil.deparenthesizeExpression(original);
     if (expression == null) return null;

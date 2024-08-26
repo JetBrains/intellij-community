@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -20,7 +19,8 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
     String role = list.getExpressionCount() == 1
                   ? QuickFixBundle.message("fix.expression.role.argument")
                   : QuickFixBundle.message("fix.expression.role.nth.argument", myIndex + 1);
-    return QuickFixBundle.message("add.typecast.cast.text", myToType.getPresentableText(), role);
+    boolean literal = AddTypeCastFix.createCastExpression(list.getExpressions()[myIndex], myToType) instanceof PsiLiteralExpression;
+    return QuickFixBundle.message(literal ? "add.typecast.convert.text" : "add.typecast.cast.text", myToType.getPresentableText(), role);
   }
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
@@ -32,18 +32,18 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
     @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, PsiType toType) throws IncorrectOperationException {
       final PsiType exprType = expression.getType();
-      if (exprType instanceof PsiClassType && toType instanceof PsiPrimitiveType) {
-        PsiClassType boxed = ((PsiPrimitiveType)toType).getBoxedType(expression);
+      if (exprType instanceof PsiClassType && toType instanceof PsiPrimitiveType primitiveType) {
+        PsiClassType boxed = primitiveType.getBoxedType(expression);
         assert boxed != null : toType + ":" + PsiUtil.getLanguageLevel(expression);
         toType = boxed;
       }
-      return AddTypeCastFix.createCastExpression(expression, expression.getProject(), toType);
+      return AddTypeCastFix.createCastExpression(expression, toType);
     }
 
     @Override
     public boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull final PsiElement context) {
-      if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType) {
-        parameterType = ((PsiPrimitiveType)parameterType).getBoxedType(context); //unboxing from type of cast expression will take place at runtime
+      if (exprType instanceof PsiClassType && parameterType instanceof PsiPrimitiveType primitiveType) {
+        parameterType = primitiveType.getBoxedType(context); //unboxing from type of cast expression will take place at runtime
         if (parameterType == null) return false;
       }
       if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
@@ -57,8 +57,8 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
         return true;
       }
 
-      return parameterType instanceof PsiEllipsisType &&
-             areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
+      return parameterType instanceof PsiEllipsisType ellipsisType &&
+             areTypesConvertible(exprType, ellipsisType.getComponentType(), context);
     }
   }
 
