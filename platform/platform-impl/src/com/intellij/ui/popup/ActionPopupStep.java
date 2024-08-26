@@ -76,9 +76,6 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myPreselectActionCondition = options.getPreselectCondition();
     myAutoSelectionEnabled = options.autoSelectionEnabled();
     myShowDisabledActions = options.showDisabledActions();
-    if (!isPopupOrMainMenuPlace(actionPlace)) {
-      LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
-    }
   }
 
   public @NotNull PresentationFactory getPresentationFactory() {
@@ -150,10 +147,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                              @NotNull String actionPlace,
                                                                              @NotNull PresentationFactory presentationFactory,
                                                                              @NotNull ActionPopupOptions options) {
-    if (!isPopupOrMainMenuPlace(actionPlace)) {
-      LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
-      actionPlace = getPopupOrMainMenuPlace(actionPlace);
-    }
+    actionPlace = getPopupOrMainMenuPlace(actionPlace);
     ActionStepBuilder builder = new ActionStepBuilder(
       dataContext, options.showNumbers(), options.useAlphaAsNumbers(), options.showDisabledActions(),
       options.honorActionMnemonics(),
@@ -387,11 +381,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myItems.remove(from);
   }
 
-  private static boolean isPopupOrMainMenuPlace(@NotNull String place) {
-    return ActionPlaces.isPopupPlace(place) || ActionPlaces.MAIN_MENU.equals(place);
-  }
-
   private static @NotNull String getPopupOrMainMenuPlace(@Nullable String place) {
-    return place != null && isPopupOrMainMenuPlace(place) ? place : ActionPlaces.getPopupPlace(place);
+    boolean isOk = place != null && ActionPlaces.isPopupPlace(place) ||
+                   ActionPlaces.MAIN_MENU.equals(place);
+    return isOk ? place : ActionPlaces.getPopupPlace(place);
   }
 }

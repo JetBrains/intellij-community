@@ -52,11 +52,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
                       @NotNull ActionManagerImpl actionManager,
                       @Nullable PresentationFactory factory) {
     if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
-      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+      LOG.warn("Do not use ActionPlaces.UNKNOWN or the empty string. " +
                "Any string unique enough to deduce the popup menu location will do.", new Throwable("popup menu creation trace"));
-    }
-    else if (!ActionPlaces.isPopupPlace(place)) {
-      LOG.info("isPopupOrMainMenuPlace(" + place + ")==false. Use ActionPlaces.getPopupPlace.");
     }
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
