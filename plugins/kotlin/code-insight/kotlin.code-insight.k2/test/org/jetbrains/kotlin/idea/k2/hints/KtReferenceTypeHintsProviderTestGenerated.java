@@ -185,6 +185,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/ParameterType.kt");
     }
 
+    @TestMetadata("PrivateAnonymousObject.kt")
+    public void testPrivateAnonymousObject() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/PrivateAnonymousObject.kt");
+    }
+
     @TestMetadata("PropertyType.kt")
     public void testPropertyType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/PropertyType.kt");

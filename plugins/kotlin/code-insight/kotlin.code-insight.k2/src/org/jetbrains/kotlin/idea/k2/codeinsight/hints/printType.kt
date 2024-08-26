@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
@@ -112,7 +113,10 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
 
 context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    type.classId.let { printClassId(it, truncatedName(type)) }
+    val truncatedName = truncatedName(type)
+    if (truncatedName.isNotEmpty()) {
+        printClassId(type.classId, truncatedName)
+    }
 
     val ownTypeArguments = type.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
@@ -155,13 +159,17 @@ private fun PresentationTreeBuilder.printProjection(projection: KaTypeProjection
 
 
 private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String) {
-    text(
-        name,
-        InlayActionData(
-            StringInlayActionPayload(classId.asFqNameString()),
-            KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
+    if (classId.shortClassName.isSpecial) {
+        text(name)
+    } else {
+        text(
+            name,
+            InlayActionData(
+                StringInlayActionPayload(classId.asFqNameString()),
+                KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
+            )
         )
-    )
+    }
 }
 
 private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
@@ -210,10 +218,13 @@ private fun isSimilarTypes(
 private fun truncatedName(classType: KaClassType): String {
     val names = classType.qualifiers
         .mapNotNull {
-            it.symbol.takeUnless {
+            val symbol = it.symbol
+            symbol.takeUnless {
                 (it as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
                         it.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
-            }?.name
+            }?.name ?: symbol.takeIf { (symbol as? KaClassSymbol)?.classKind == KaClassKind.ANONYMOUS_OBJECT }?.let {
+                SpecialNames.ANONYMOUS
+            }
         }
 
     names.joinToString(".", transform = Name::asString)
