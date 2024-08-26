@@ -5411,6 +5411,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterface.kt");
                     }
 
+                    @TestMetadata("extensionOfInt.kt")
+                    public void testExtensionOfInt() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionOfInt.kt");
+                    }
+
                     @TestMetadata("extensionPartialSubstitution.kt")
                     public void testExtensionPartialSubstitution() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionPartialSubstitution.kt");

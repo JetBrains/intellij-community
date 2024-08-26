@@ -67,7 +67,12 @@ internal class CreateKotlinCallableAction(
 
     override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
-    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = pointerToContainer.element
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? {
+        if (isExtension) {
+            return currentFile
+        }
+        return pointerToContainer.element
+    }
 
     override fun startInWriteAction(): Boolean = true
 
@@ -113,10 +118,10 @@ internal class CreateKotlinCallableAction(
             val passedContainerElement = pointerToContainer.element ?: return
             val anchor = call
             val shouldComputeContainerFromAnchor =
-                if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension
+                if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
                 else passedContainerElement.getContainer() == anchor.getContainer()
             val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
-                (anchor.getExtractionContainers().firstOrNull() ?:return)
+                anchor.getExtractionContainers().firstOrNull() ?:return
             } else {
                 passedContainerElement
             }
