@@ -104,6 +104,17 @@ abstract class ProductProperties {
    */
   var classLoader: String? = "com.intellij.util.lang.PathClassLoader"
 
+
+  /**
+   * If `true`, the Class Data Sharing (CDS) feature will be enabled for the JVM and system.class.loader will be disabled.
+   *
+   * When enabled, the JVM will generate a shared archive file for the application's classes on the first startup,
+   * which can be reused in further launches.
+   *
+   * The location of the cds file is $SYSTEM/$shortProductName$Version.jsa
+   */
+  var enableCds: Boolean = false
+
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems.
    */

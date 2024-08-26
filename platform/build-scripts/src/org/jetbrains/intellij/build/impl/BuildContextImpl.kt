@@ -298,8 +298,25 @@ class BuildContextImpl internal constructor(
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
 
-    productProperties.classLoader?.let {
-      jvmArgs.add("-Djava.system.class.loader=${it}")
+    val cacheMacroName = when (os) {
+      OsFamily.WINDOWS -> "%IDE_CACHE_DIR%"
+      OsFamily.MACOS -> "\$IDE_CACHE_DIR"
+      OsFamily.LINUX -> "\$IDE_CACHE_DIR"
+    }
+
+    if (!productProperties.enableCds) {
+      productProperties.classLoader?.let {
+        jvmArgs.add("-Djava.system.class.loader=${it}")
+      }
+    }
+    else {
+      if (os == OsFamily.WINDOWS) {
+        jvmArgs.add("-XX:SharedArchiveFile=$cacheMacroName\\${productProperties.baseFileName}$buildNumber.jsa")
+      }
+      else {
+        jvmArgs.add("-XX:SharedArchiveFile=$cacheMacroName/${productProperties.baseFileName}$buildNumber.jsa")
+      }
+      jvmArgs.add("-XX:+AutoCreateSharedArchive")
     }
 
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
