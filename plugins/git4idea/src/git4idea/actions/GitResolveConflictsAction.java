@@ -10,8 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +36,8 @@ public class GitResolveConflictsAction extends DumbAwareAction {
     Project project = Objects.requireNonNull(event.getProject());
     GitVcs vcs = GitVcs.getInstance(project);
 
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+
     Set<VirtualFile> conflictedFiles = new TreeSet<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (Change change : ChangeListManager.getInstance(project).getAllChanges()) {
       if (change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
@@ -43,13 +47,13 @@ public class GitResolveConflictsAction extends DumbAwareAction {
       ContentRevision after = change.getAfterRevision();
       if (before != null) {
         VirtualFile file = before.getFile().getVirtualFile();
-        if (file != null) {
+        if (file != null && vcs.equals(vcsManager.getVcsFor(file))) {
           conflictedFiles.add(file);
         }
       }
       if (after != null) {
         VirtualFile file = after.getFile().getVirtualFile();
-        if (file != null) {
+        if (file != null && vcs.equals(vcsManager.getVcsFor(file))) {
           conflictedFiles.add(file);
         }
       }
@@ -59,8 +63,14 @@ public class GitResolveConflictsAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull Project project) {
+    GitVcs gitVcs = GitVcs.getInstance(project);
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (!vcsManager.checkVcsIsActive(gitVcs)) return false;
+
     Collection<Change> changes = ChangeListManager.getInstance(project).getAllChanges();
-    return ContainerUtil.exists(changes, it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS);
+    return ContainerUtil.exists(changes, it -> it.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS &&
+                                               gitVcs.equals(ChangesUtil.getVcsForChange(it, project)));
   }
 
   @Override
