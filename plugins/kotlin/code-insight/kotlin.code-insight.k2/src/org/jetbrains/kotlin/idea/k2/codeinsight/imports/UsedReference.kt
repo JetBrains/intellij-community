@@ -5,8 +5,6 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -208,42 +206,6 @@ private fun KaSession.isStaticallyImportedReceiver(
     } else {
         !typeIsPresentAsImplicitReceiver(implicitDispatchReceiver.type, element)
     }
-}
-
-private fun KaSession.typeIsPresentAsImplicitReceiver(
-    type: KaType,
-    contextPosition: KtElement,
-): Boolean {
-    val containingFile = contextPosition.containingKtFile
-    val implicitReceivers = containingFile.scopeContext(contextPosition).implicitReceivers
-
-    return implicitReceivers.any { it.type.semanticallyEquals(type) }
-}
-
-private fun KaSession.isAccessibleAsStaticMemberDeclaration(
-    symbol: KaCallableSymbol,
-    contextPosition: KtElement,
-): Boolean {
-    require(symbol.isJavaStaticDeclaration())
-
-    if (symbol !is KaNamedSymbol) return false
-
-    val nonImportingScopes = nonImportingScopesForPosition(contextPosition).asCompositeScope()
-
-    return nonImportingScopes.callables(symbol.name).any { it == symbol }
-}
-
-private fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {
-    if (symbol !is KaClassLikeSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
-
-    val name = symbol.name ?: return false
-
-    val nonImportingScopes = nonImportingScopesForPosition(element).asCompositeScope()
-
-    val foundClasses = nonImportingScopes.classifiers(name)
-    val foundClass = foundClasses.firstOrNull()
-
-    return symbol == foundClass
 }
 
 private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {

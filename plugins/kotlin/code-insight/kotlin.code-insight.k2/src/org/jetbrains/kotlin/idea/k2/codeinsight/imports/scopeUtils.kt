@@ -6,6 +6,11 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -51,7 +56,7 @@ private fun buildFileWithImports(
     return fileWithImports
 }
 
-internal fun KaSession.nonImportingScopesForPosition(element: KtElement): List<KaScope> {
+private fun KaSession.nonImportingScopesForPosition(element: KtElement): List<KaScope> {
     val scopeContext = element.containingKtFile.scopeContext(element)
 
     // we have to filter scopes created by implicit receivers (like companion objects, for example); see KT-70108
@@ -65,4 +70,40 @@ internal fun KaSession.nonImportingScopesForPosition(element: KtElement): List<K
         .toList()
 
     return nonImportingScopes
+}
+
+internal fun KaSession.typeIsPresentAsImplicitReceiver(
+    type: KaType,
+    contextPosition: KtElement,
+): Boolean {
+    val containingFile = contextPosition.containingKtFile
+    val implicitReceivers = containingFile.scopeContext(contextPosition).implicitReceivers
+
+    return implicitReceivers.any { it.type.semanticallyEquals(type) }
+}
+
+internal fun KaSession.isAccessibleAsStaticMemberDeclaration(
+    symbol: KaCallableSymbol,
+    contextPosition: KtElement,
+): Boolean {
+    require(symbol.isJavaStaticDeclaration())
+
+    if (symbol !is KaNamedSymbol) return false
+
+    val nonImportingScopes = nonImportingScopesForPosition(contextPosition).asCompositeScope()
+
+    return nonImportingScopes.callables(symbol.name).any { it == symbol }
+}
+
+internal fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {
+    if (symbol !is KaClassLikeSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
+
+    val name = symbol.name ?: return false
+
+    val nonImportingScopes = nonImportingScopesForPosition(element).asCompositeScope()
+
+    val foundClasses = nonImportingScopes.classifiers(name)
+    val foundClass = foundClasses.firstOrNull()
+
+    return symbol == foundClass
 }
