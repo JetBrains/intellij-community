@@ -33,7 +33,10 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         testClass<AbstractK2IdeK2CodeKotlinEvaluateExpressionTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-            // TODO support "evaluation/multiplatform"
+        }
+
+        testClass<AbstractK2IdeK2MultiplatformCodeKotlinEvaluateExpressionTest> {
+            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest> {

@@ -327,7 +327,7 @@ abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest : AbstractIr
 }
 
 
-private class MppDebuggerCompilerFacility(
+open class MppDebuggerCompilerFacility(
     project: Project,
     files: List<TestFileWithModule>,
     jvmTarget: JvmTarget,

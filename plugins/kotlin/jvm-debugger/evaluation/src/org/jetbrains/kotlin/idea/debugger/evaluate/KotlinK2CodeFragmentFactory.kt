@@ -6,14 +6,36 @@ import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.projectStructure.analysisExtensionFileContextModule
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 
 class KotlinK2CodeFragmentFactory : CodeFragmentFactory() {
+    @OptIn(KaImplementationDetail::class)
     override fun createCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)
-        return KtBlockCodeFragment(project, "fragment.kt", item.text, item.imports, contextElement)
+
+        return KtBlockCodeFragment(project, "fragment.kt", item.text, item.imports, contextElement).apply {
+            /*
+            Handle support for KMP:
+            If the given module has refining (modules that have a 'refines' edge to this module) modules,
+            Then we'll try to find a leaf jvm module which we can use as context for evaluating the expressions.
+             */
+            val jvmLeafModule = contextElement?.module?.implementingModules
+                .orEmpty()
+                .filter { module -> module.implementingModules.isEmpty() } // Looking for a leave
+                .firstOrNull { module -> module.platform.isJvm() }
+
+            virtualFile.analysisExtensionFileContextModule = jvmLeafModule?.productionOrTestSourceModuleInfo?.toKaModule()
+        }
     }
 
     override fun createPresentationCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {

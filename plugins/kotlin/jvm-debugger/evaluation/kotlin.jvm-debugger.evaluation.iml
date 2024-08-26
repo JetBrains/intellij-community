@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
   </component>
 </module>
