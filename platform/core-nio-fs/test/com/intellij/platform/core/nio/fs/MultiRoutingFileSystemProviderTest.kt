@@ -1,23 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs
 
+import com.intellij.util.containers.forEachGuaranteed
 import io.kotest.assertions.withClue
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigInteger
 import java.net.URI
+import java.nio.file.Files
+import java.util.concurrent.ThreadLocalRandom
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.PathWalkOption
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.walk
 
 class MultiRoutingFileSystemProviderTest {
   @Nested
   inner class `everything must return MultiRoutingFsPath` {
     val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
     val rootDirectory = provider.getFileSystem(URI("file:/")).rootDirectories.first()
-    val childOfRootDirectory = rootDirectory.listDirectoryEntries().first()
 
     @Test
     fun `getPath of URI`() {
@@ -37,25 +37,37 @@ class MultiRoutingFileSystemProviderTest {
 
     @OptIn(ExperimentalPathApi::class)
     @Test
-    fun readSymbolicLink() {
-      val path =
-        rootDirectory
-          .walk(PathWalkOption.BREADTH_FIRST)
-          .take(10_000)  // This number was taken at random.
-          .firstNotNullOfOrNull { path ->
-            try {
-              provider.readSymbolicLink(path)
-            }
-            catch (_: java.nio.file.FileSystemException) {
-              null
-            }
-            catch (_: UnsupportedOperationException) {
-              Assumptions.abort("This OS does not support symbolic links")
-            }
-          }
-        ?: Assumptions.abort("No symlink found on the filesystem")
+    fun readSymbolicLink(): Unit = CloseableList().use { closeables ->
+      val targetDefaultFs = Files.createTempFile("MultiRoutingFileSystemProviderTest-target", ".txt")
 
-      path.shouldBeInstanceOf<MultiRoutingFsPath>()
+      closeables.add {
+        Files.delete(targetDefaultFs)
+      }
+
+      val randomString = BigInteger(ByteArray(10).also(ThreadLocalRandom.current()::nextBytes)).abs().toString(36)
+
+      val linkDefaultFs =
+        try {
+          Files.createSymbolicLink(targetDefaultFs.parent.resolve("MultiRoutingFileSystemProviderTest-link-$randomString"), targetDefaultFs)
+        }
+        catch (_: Throwable) {
+          // TODO Class-loader tricks are suspected in failing tests on CI.
+          //  UnsupportedOperationException + FileSystemException should be caught instead of Throwable.
+          Assumptions.abort("This OS does not support symbolic links")
+        }
+
+      closeables.add {
+        Files.delete(linkDefaultFs)
+      }
+
+      val linkMrfsp = provider.getPath(linkDefaultFs.toUri())
+      linkMrfsp.shouldBeInstanceOf<MultiRoutingFsPath>()
+    }
+  }
+
+  private class CloseableList : MutableList<AutoCloseable> by mutableListOf(), AutoCloseable {
+    override fun close() {
+      asReversed().forEachGuaranteed { it.close() }
     }
   }
 }
