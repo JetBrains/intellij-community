@@ -17,13 +17,10 @@
         <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.13.12/mockk-core-1.13.12.jar">
           <sha256sum>fbc64f5c44a7added8b6eab517cf7d70555e25153bf5d44a6ed9b0e5312f7de9</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0.jar">
-          <sha256sum>240938c4aab8e73e888703e3e7d3f87383ffe5bd536d6d5e3c100d4cd0379fcf</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar">
-          <sha256sum>ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478</sha256sum>
-        </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
     </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk/1.13.12/mockk-1.13.12.jar!/" />
@@ -31,8 +28,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.13.12/mockk-agent-1.13.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.13.12/mockk-agent-api-1.13.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.13.12/mockk-core-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -41,8 +36,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent/1.13.12/mockk-agent-1.13.12-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api/1.13.12/mockk-agent-api-1.13.12-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core/1.13.12/mockk-core-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

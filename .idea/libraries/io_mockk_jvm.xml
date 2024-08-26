@@ -11,133 +11,38 @@
         <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1.13.12/mockk-agent-jvm-1.13.12.jar">
           <sha256sum>a016a7d678a37966ef6a91dd3f5c0d901e1fd087ea3a664b8aaade02edbb0428</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar">
-          <sha256sum>02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.17/byte-buddy-1.14.17.jar">
-          <sha256sum>cde8f8f8e07bff3694aace0d9944ba755665a583b05d9153d41062285e9a8a61</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.17/byte-buddy-agent-1.14.17.jar">
-          <sha256sum>461ec3017f1445b0af42d4e5f08eb6f5032fa4039ad737f3fcc4b2a12a38f984</sha256sum>
-        </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1.13.12/mockk-agent-api-jvm-1.13.12.jar">
           <sha256sum>6aba1cfaba319bdbf624990a3a795ec59d8f71ca7f1bfc34487660fd9f403724</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1.13.12/mockk-core-jvm-1.13.12.jar">
           <sha256sum>55438756521253b04da99f8e559d99188edb3efc08c5735820ff5c72eeef4f0e</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0.jar">
-          <sha256sum>240938c4aab8e73e888703e3e7d3f87383ffe5bd536d6d5e3c100d4cd0379fcf</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar">
-          <sha256sum>ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/junit/junit/4.13.2/junit-4.13.2.jar">
-          <sha256sum>8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar">
-          <sha256sum>66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter/5.8.2/junit-jupiter-5.8.2.jar">
-          <sha256sum>4f5c1cc6432244cd16e36aa0e02b74bce34a81ff95a13d63d50951ec4ce3f4bd</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.8.2/junit-jupiter-api-5.8.2.jar">
-          <sha256sum>1808ee87e0f718cd6e25f3b75afc17956ac8a3edc48c7e9bab9f19f9a79e3801</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar">
-          <sha256sum>58812de60898d976fb81ef3b62da05c6604c18fd4a249f5044282479fc286af2</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.8.2/junit-platform-commons-1.8.2.jar">
-          <sha256sum>d2e015fca7130e79af2f4608dc54415e4b10b592d77333decb4b1a274c185050</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar">
-          <sha256sum>b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.8.2/junit-jupiter-params-5.8.2.jar">
-          <sha256sum>d1c22d6fe5483568c08c8913f34abd2303490c3480ce6c18a2ea31c65e44102a</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.8.2/junit-jupiter-engine-5.8.2.jar">
-          <sha256sum>753b7726cdd158bb34cedb94c161e2291896f47832a1e9eda53d970020a8184e</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.2/junit-platform-engine-1.8.2.jar">
-          <sha256sum>0b7d000f8c3e8e5f7d6b819649936e7b9938314e87c8f983805218ea57567e59</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.6.4/kotlinx-coroutines-core-1.6.4.jar">
-          <sha256sum>778851e73851b502e8366434bc9ec58371431890fb12b89e7edbf1732962c030</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar">
-          <sha256sum>c24c8bb27bb320c4a93871501a7e5e0c61607638907b197aef675513d4c820be</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar">
-          <sha256sum>dab45489b47736d59fce44b80676f1947a9b6bcab10fd60e878a83bd82a6954c</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar">
-          <sha256sum>f1b0634dbb94172038463020bb2dd45ca26849f8ce29d625acb0f1569d11dbee</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar">
-          <sha256sum>183bec59cd9f3a14957b190e8c879cf1194bd1f106b0a7b6e1cbb8790d242363</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.0.0/kotlin-reflect-2.0.0.jar">
-          <sha256sum>111bd906921937f76da17760641116d04b57a7a12fcf980efe7c6767f45179f0</sha256sum>
-        </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+        <dependency maven-id="org.objenesis:objenesis" />
+        <dependency maven-id="net.bytebuddy:byte-buddy" />
+        <dependency maven-id="net.bytebuddy:byte-buddy-agent" />
+        <dependency maven-id="junit:junit" />
+        <dependency maven-id="org.junit.jupiter:junit-jupiter" />
+      </exclude>
     </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-jvm/1.13.12/mockk-jvm-1.13.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl-jvm/1.13.12/mockk-dsl-jvm-1.13.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1.13.12/mockk-agent-jvm-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.17/byte-buddy-1.14.17.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.17/byte-buddy-agent-1.14.17.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1.13.12/mockk-agent-api-jvm-1.13.12.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1.13.12/mockk-core-jvm-1.13.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.13.2/junit-4.13.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter/5.8.2/junit-jupiter-5.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.8.2/junit-jupiter-api-5.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.8.2/junit-platform-commons-1.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.8.2/junit-jupiter-params-5.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.8.2/junit-jupiter-engine-5.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.2/junit-platform-engine-1.8.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.6.4/kotlinx-coroutines-core-1.6.4.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.0.0/kotlin-reflect-2.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-jvm/1.13.12/mockk-jvm-1.13.12-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-dsl-jvm/1.13.12/mockk-dsl-jvm-1.13.12-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-jvm/1.13.12/mockk-agent-jvm-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.17/byte-buddy-1.14.17-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.17/byte-buddy-agent-1.14.17-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-agent-api-jvm/1.13.12/mockk-agent-api-jvm-1.13.12-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/mockk/mockk-core-jvm/1.13.12/mockk-core-jvm-1.13.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.0.0/kotlin-stdlib-2.0.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.13.2/junit-4.13.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter/5.8.2/junit-jupiter-5.8.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.8.2/junit-jupiter-api-5.8.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.8.2/junit-platform-commons-1.8.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-params/5.8.2/junit-jupiter-params-5.8.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.8.2/junit-jupiter-engine-5.8.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.2/junit-platform-engine-1.8.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.6.4/kotlinx-coroutines-core-1.6.4-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.6.4/kotlinx-coroutines-core-jvm-1.6.4-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.21/kotlin-stdlib-jdk8-1.6.21-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.21/kotlin-stdlib-jdk7-1.6.21-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.0.0/kotlin-reflect-2.0.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
