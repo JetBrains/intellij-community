@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
  * This case is not handled by this collector.
  */
 object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 8)
+  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 9)
 
   private val FUNCTIONALITY_SOURCE = EventFields.Enum("functionality", DumbModeBlockedFunctionality::class.java)
   private val EXECUTED_WHEN_SMART = EventFields.Boolean("executed_when_smart")
@@ -28,6 +28,9 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
                                                                 ActionsEventLogGroup.ACTION_ID,
                                                                 FUNCTIONALITY_SOURCE,
                                                                 EXECUTED_WHEN_SMART)
+
+  private val ACTION_FAILED = GROUP.registerEvent("action.failed.due.to.dumb.mode",
+                                                  ActionsEventLogGroup.ACTION_ID)
 
   fun logActionBlocked(project: Project, actionId: String) {
     lastEqualityObjectReference.set(null)
@@ -74,6 +77,10 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
     }
     FUNCTIONALITY_BLOCKED.log(project,
                               FUNCTIONALITY_SOURCE.with(functionality))
+  }
+
+  fun logActionFailedToExecute(project: Project, actionId: String?) {
+    ACTION_FAILED.log(project, actionId)
   }
 
   override fun getGroup(): EventLogGroup {
