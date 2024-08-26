@@ -99,21 +99,21 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   }
 
   public String @Nullable [] getPatterns() {
-    if (myCoveragePatterns != null) {
-      List<String> patterns = new ArrayList<>();
-      for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled() && coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
-      }
-      return ArrayUtilRt.toStringArray(patterns);
-    }
-    return null;
+    return getPatterns(true);
   }
 
   public String @Nullable [] getExcludePatterns() {
+    return getPatterns(false);
+  }
+
+  private String @Nullable [] getPatterns(boolean include) {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled() && !coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
+        if (coveragePattern == null) continue;
+        if (coveragePattern.isEnabled() && coveragePattern.isInclude() == include) {
+          patterns.add(coveragePattern.getPattern());
+        }
       }
       return ArrayUtilRt.toStringArray(patterns);
     }
@@ -179,6 +179,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     // patterns
     if (myCoveragePatterns != null) {
       for (ClassFilter pattern : myCoveragePatterns) {
+        if (pattern == null) continue;
         @NonNls final Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
         pattern.writeExternal(patternElement);
         element.addContent(patternElement);
