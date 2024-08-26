@@ -32,7 +32,7 @@ public interface RangeHighlighter extends RangeMarker {
 
   /**
    * Returns the value indicating whether the highlighter affects a range of text or a sequence of
-   * of entire lines in the specified range.
+   * entire lines in the specified range.
    *
    * @return the highlighter target area.
    */
@@ -50,7 +50,7 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * Sets the text attributes key used for highlighting.
    * Having a key is preferred over raw attributes which makes it impossible to update it on a {@link EditorColorsScheme} changes
-   * @param textAttributesKey a attributes key.
+   * @param textAttributesKey a text attributes key.
    */
   void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey);
 
