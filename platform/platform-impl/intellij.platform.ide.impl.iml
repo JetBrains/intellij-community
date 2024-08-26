@@ -145,5 +145,6 @@
     <orderEntry type="library" name="googlecode.plist.dd" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jbr" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
+    <orderEntry type="module" module-name="fleet.util.core" />
   </component>
 </module>
