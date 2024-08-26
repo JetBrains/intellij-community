@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.frontend.evaluate.quick.common
+package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common
 
-import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.withKernel
 import com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupHideHintsRequestEntity
 import com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupListeningStartedEntity

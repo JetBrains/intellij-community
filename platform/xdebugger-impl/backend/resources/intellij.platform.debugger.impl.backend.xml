@@ -1,9 +1,9 @@
-<idea-plugin package="com.intellij.xdebugger.impl.backend">
+<idea-plugin package="com.intellij.platform.debugger.impl.backend">
   <dependencies>
     <module name="intellij.platform.kernel.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.xdebugger.impl.backend.BackendDebuggerValueLookupHintsRemoteApiProvider"/>
+      implementation="com.intellij.platform.debugger.impl.backend.BackendDebuggerValueLookupHintsRemoteApiProvider"/>
   </extensions>
 </idea-plugin>

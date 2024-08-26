@@ -1,12 +1,12 @@
-<idea-plugin package="com.intellij.xdebugger.impl.frontend">
+<idea-plugin package="com.intellij.platform.debugger.impl.frontend">
   <dependencies>
     <plugin id="com.intellij.platform.experimental.frontend"/>
   </dependencies>
   <actions>
-    <action id="QuickEvaluateExpression" class="com.intellij.xdebugger.impl.frontend.actions.QuickEvaluateAction"/>
+    <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.xdebugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
-    <postStartupActivity implementation="com.intellij.xdebugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
+    <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
+    <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
   </extensions>
 </idea-plugin>

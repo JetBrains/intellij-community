@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
+@ApiStatus.Internal
 class XDebuggerValueLookupListeningStartedEntity(override val eid: EID) : Entity {
   companion object : DurableEntityType<XDebuggerValueLookupListeningStartedEntity>(
     "XDebuggerValueLookupListeningStartedEntity",
@@ -27,6 +28,7 @@ class XDebuggerValueLookupListeningStartedEntity(override val eid: EID) : Entity
   )
 }
 
+@ApiStatus.Internal
 class XDebuggerValueLookupHideHintsRequestEntity(override val eid: EID) : Entity {
   companion object : DurableEntityType<XDebuggerValueLookupHideHintsRequestEntity>(
     "XDebuggerValueLookupHideHintsEntity",

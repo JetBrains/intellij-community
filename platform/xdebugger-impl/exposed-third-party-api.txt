@@ -1,1 +1,6 @@
+fleet/rpc/RemoteApi
+fleet/rpc/RemoteApiDescriptor
+fleet/rpc/RpcSignature
+fleet/util/UID
 kotlin/jvm/internal/DefaultConstructorMarker
+kotlinx/serialization/KSerializer

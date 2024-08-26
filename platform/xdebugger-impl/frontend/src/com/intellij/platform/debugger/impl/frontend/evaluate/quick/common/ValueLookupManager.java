@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.frontend.evaluate.quick.common;
+package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common;
 
 /*
  * Class ValueLookupManager
@@ -25,6 +25,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.settings.DataViewsConfigurableUi;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.awt.*;
 
 import static com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController.DISABLE_VALUE_LOOKUP;
 
+@ApiStatus.Internal
 public class ValueLookupManager implements EditorMouseMotionListener, EditorMouseListener {
   private final Project myProject;
   private final Alarm myAlarm;

@@ -422,10 +422,6 @@ c:com.intellij.xdebugger.impl.actions.PauseAction
 - <init>():V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - p:isHidden(com.intellij.openapi.actionSystem.AnActionEvent):Z
-c:com.intellij.xdebugger.impl.actions.QuickEvaluateAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
-- <init>():V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -1042,7 +1038,6 @@ a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.openapi.util.TextRange):V
 - pf:appendEvaluatorLink(com.intellij.xdebugger.frame.XFullValueEvaluator,com.intellij.ui.SimpleColoredComponent):V
 - s:calculateOffset(com.intellij.openapi.editor.Editor,java.awt.Point):I
-- p:canShowHint():Z
 - p:createExpandableHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,java.lang.Runnable,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent
 - equals(java.lang.Object):Z
 - pa:evaluateAndShowHint():V
@@ -1050,16 +1045,15 @@ a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - pf:getEditor():com.intellij.openapi.editor.Editor
 - s:getHintType(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - f:getProject():com.intellij.openapi.project.Project
-- p:getType():com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - hashCode():I
 - pf:hideCurrentHint():V
 - hideHint():V
 - invokeHint():V
 - invokeHint(java.lang.Runnable):V
-- p:isHintHidden():Z
 - isInsideHint(com.intellij.openapi.editor.Editor,java.awt.Point):Z
 - p:isShowing():Z
 - p:onHintHidden():V
+- p:processHintHidden():V
 - p:showHint(javax.swing.JComponent):Z
 - *p:showTextPopup(com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.util.Pair,java.lang.String,com.intellij.xdebugger.frame.XFullValueEvaluator):V
 - p:showTooltipPopup(javax.swing.JComponent):V
@@ -1101,22 +1095,15 @@ f:com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$Cancell
 - tryCancel():V
 e:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - java.lang.Enum
+- sf:Companion:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType$Companion
 - sf:MOUSE_ALT_OVER_HINT:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - sf:MOUSE_CLICK_HINT:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - sf:MOUSE_OVER_HINT:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 - s:values():com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType[]
-c:com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager
-- com.intellij.openapi.editor.event.EditorMouseListener
-- com.intellij.openapi.editor.event.EditorMouseMotionListener
-- sf:DISABLE_VALUE_LOOKUP:com.intellij.openapi.util.Key
-- <init>(com.intellij.openapi.project.Project):V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager
-- hideHint():V
-- mouseExited(com.intellij.openapi.editor.event.EditorMouseEvent):V
-- mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
-- showHint(com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.event.EditorMouseEvent,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):V
-- startListening():V
+f:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 *c:com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTextPopup
 - sf:ACTION_PLACE:java.lang.String
 - pf:myEditor:com.intellij.openapi.editor.Editor
@@ -1525,6 +1512,22 @@ f:com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction$Companion
 - f:pinToTopField(java.awt.event.MouseEvent,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+f:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiClientStub
+- fleet.rpc.RemoteApi
+- <init>(kotlin.jvm.functions.Function3):V
+- f:canShowHint-vZ3MphE(fleet.util.UID,fleet.util.UID,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
+- f:createHint-vZ3MphE(fleet.util.UID,fleet.util.UID,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
+- f:getInvocationHandler():kotlin.jvm.functions.Function3
+- f:removeHint(fleet.util.UID,I,kotlin.coroutines.Continuation):java.lang.Object
+- f:showHint(fleet.util.UID,I,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiRemoteApiDescriptorImpl
+- fleet.rpc.RemoteApiDescriptor
+- sf:INSTANCE:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiRemoteApiDescriptorImpl
+- <init>():V
+- f:call(com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi,java.lang.String,java.lang.Object[],kotlin.coroutines.Continuation):java.lang.Object
+- f:clientStub(kotlin.jvm.functions.Function3):com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+- f:getApiFqn():java.lang.String
+- f:getSignature(java.lang.String):fleet.rpc.RpcSignature
 c:com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction
 - com.intellij.xdebugger.impl.runToolbar.RunToolbarXDebuggerAction
 - <init>():V
