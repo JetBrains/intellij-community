@@ -1,4 +1,8 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.entityTypes" dynamic="true"
+                    beanClass="com.intellij.platform.kernel.EntityTypeProvider"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.platform.kernel.impl.KernelApplicationInitializedListener"/>
   </extensions>

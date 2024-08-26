@@ -5,20 +5,17 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.platform.kernel.EntityTypeProvider
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.collectEntityClasses
-import fleet.kernel.DbSource
-import fleet.kernel.Kernel
-import fleet.kernel.KernelMiddleware
-import fleet.kernel.kernel
+import fleet.kernel.*
 import fleet.kernel.rebase.*
 import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
 import fleet.rpc.core.Serialization
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
 import kotlin.coroutines.CoroutineContext
 
@@ -31,6 +28,40 @@ suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend Coroutine
       body()
     }
   }
+}
+
+fun CoroutineScope.handleEntityTypes() {
+  launch {
+    change {
+      for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+        for (entityType in extension.entityTypes()) {
+          register(entityType)
+        }
+      }
+    }
+  }
+  EntityTypeProvider.EP_NAME.addExtensionPointListener(this, object : ExtensionPointListener<EntityTypeProvider> {
+
+    override fun extensionAdded(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
+      launch {
+        change {
+          for (entityType in extension.entityTypes()) {
+            register(entityType)
+          }
+        }
+      }
+    }
+
+    override fun extensionRemoved(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
+      launch {
+        change {
+          for (entityType in extension.entityTypes()) {
+            entityType.delete()
+          }
+        }
+      }
+    }
+  })
 }
 
 fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
