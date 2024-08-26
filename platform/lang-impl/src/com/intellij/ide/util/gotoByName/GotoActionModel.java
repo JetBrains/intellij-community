@@ -99,7 +99,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   private @NotNull UpdateSession newUpdateSession() {
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext);
+    AnActionEvent event = AnActionEvent.createEvent(myDataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null);
     Utils.initUpdateSession(event);
     return event.getUpdateSession();
   }

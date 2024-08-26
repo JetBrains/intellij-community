@@ -51,6 +51,8 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     });
   }
 
+  /** @deprecated Use {@link ActionManager#tryToExecute(AnAction, InputEvent, Component, String, boolean)} instead */
+  @Deprecated(forRemoval = true)
   public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
     performAction(element, component, e, 0);
   }
@@ -76,8 +78,8 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     DataManager dataManager = DataManager.getInstance();
     DataContext context = dataManager != null ? dataManager.getDataContext(component) : DataContext.EMPTY_CONTEXT;
     AnActionEvent event = new AnActionEvent(
-      inputEvent, context, ActionPlaces.ACTION_SEARCH, presentation, ActionManager.getInstance(),
-      inputEvent == null ? modifiers : inputEvent.getModifiers());
+      context, presentation, ActionPlaces.ACTION_SEARCH,
+      ActionUiKind.SEARCH_POPUP, inputEvent, modifiers, ActionManager.getInstance());
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       Window window = SwingUtilities.getWindowAncestor(component);

@@ -14,6 +14,7 @@ interface ActionUiKind {
 
   interface Popup : ActionUiKind {
     fun isMainMenu(): Boolean = false
+    fun isSearchPopup(): Boolean = false
   }
 
   companion object {
@@ -29,6 +30,11 @@ interface ActionUiKind {
     @JvmField
     val MAIN_MENU = object : Popup {
       override fun isMainMenu(): Boolean = true
+    }
+
+    @JvmField
+    val SEARCH_POPUP = object : Popup {
+      override fun isSearchPopup(): Boolean = true
     }
   }
 }

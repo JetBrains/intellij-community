@@ -1163,11 +1163,13 @@ com.intellij.openapi.actionSystem.ActionUiKind
 - sf:MAIN_MENU:com.intellij.openapi.actionSystem.ActionUiKind$Popup
 - sf:NONE:com.intellij.openapi.actionSystem.ActionUiKind
 - sf:POPUP:com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- sf:SEARCH_POPUP:com.intellij.openapi.actionSystem.ActionUiKind$Popup
 - sf:TOOLBAR:com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
 f:com.intellij.openapi.actionSystem.ActionUiKind$Companion
 com.intellij.openapi.actionSystem.ActionUiKind$Popup
 - com.intellij.openapi.actionSystem.ActionUiKind
 - isMainMenu():Z
+- isSearchPopup():Z
 com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
 - com.intellij.openapi.actionSystem.ActionUiKind
 - isHorizontal():Z
