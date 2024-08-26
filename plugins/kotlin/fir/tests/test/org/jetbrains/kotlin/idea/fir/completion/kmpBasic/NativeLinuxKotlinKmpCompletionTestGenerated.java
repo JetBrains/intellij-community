@@ -1070,6 +1070,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/extensions/JavaTypeExtension.kt");
         }
 
+        @TestMetadata("KTIJ-30225.kt")
+        public void testKTIJ_30225() throws Exception {
+            runTest("../../completion/testData/basic/common/extensions/KTIJ-30225.kt");
+        }
+
         @TestMetadata("KotlinGenericTypeExtension.kt")
         public void testKotlinGenericTypeExtension() throws Exception {
             runTest("../../completion/testData/basic/common/extensions/KotlinGenericTypeExtension.kt");

@@ -1021,6 +1021,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/extensions/JavaTypeExtension.kt");
             }
 
+            @TestMetadata("KTIJ-30225.kt")
+            public void testKTIJ_30225() throws Exception {
+                runTest("../testData/basic/common/extensions/KTIJ-30225.kt");
+            }
+
             @TestMetadata("KotlinGenericTypeExtension.kt")
             public void testKotlinGenericTypeExtension() throws Exception {
                 runTest("../testData/basic/common/extensions/KotlinGenericTypeExtension.kt");
