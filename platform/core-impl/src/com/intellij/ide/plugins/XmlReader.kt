@@ -754,10 +754,12 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
 
     var name: String? = null
+    var loading: String? = null
     var os: ExtensionDescriptor.Os? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
+        "loading" -> loading = reader.getAttributeValue(i)
         "os" -> os = readOs(reader.getAttributeValue(i))
       }
     }
@@ -777,9 +779,15 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
+    val loadingRule = when (loading) {
+      null, "optional" -> ModuleLoadingRule.OPTIONAL
+      "required" -> ModuleLoadingRule.REQUIRED
+      "on-demand" -> ModuleLoadingRule.ON_DEMAND
+      else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
+    }
     if (isEndElement) {
       if (os == null || os.isSuitableForOs()) {
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null))
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null, loadingRule = loadingRule))
       }
     }
     else {
@@ -788,7 +796,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
         val toIndex = fromIndex + reader.textLength
         val length = toIndex - fromIndex
         val descriptorContent = if (length == 0) null else Arrays.copyOfRange(reader.textCharacters, fromIndex, toIndex)
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent))
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent, loadingRule = loadingRule))
       }
 
       var nesting = 1

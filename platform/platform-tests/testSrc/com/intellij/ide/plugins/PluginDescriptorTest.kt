@@ -521,6 +521,55 @@ class PluginDescriptorTest {
       .build()
     assertThat(result.enabledPlugins).isEmpty()
   }
+  
+  @Test
+  fun `disable plugin if dependency of required content module is not available`() {
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("required.module", PluginBuilder().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath.resolve("sample-plugin"))
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).isEmpty()
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).isNotEmpty
+    assertThat(errors.first().toString()).contains("sample.plugin", "requires plugin", "unknown")
+  }
+  
+  @Test
+  fun `required content module uses same classloader as the main module`() {
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("required.module", PluginBuilder().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("optional.module", PluginBuilder().packagePrefix("optional"))
+      .build(pluginDirPath.resolve("sample-plugin"))
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(1)
+    val mainClassLoader = result.enabledPlugins.single().pluginClassLoader
+    val requiredModuleClassLoader = result.findEnabledModule("required.module")!!.pluginClassLoader
+    assertThat(requiredModuleClassLoader).isSameAs(mainClassLoader)
+    val optionalModuleClassLoader = result.findEnabledModule("optional.module")!!.pluginClassLoader
+    assertThat(optionalModuleClassLoader).isNotSameAs(mainClassLoader)
+  }
+  
+  @Test
+  fun `dependencies of required content module are added to the main class loader`() {
+    PluginBuilder()
+      .noDepends()
+      .id("dep")
+      .build(pluginDirPath.resolve("dep"))
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("required.module", PluginBuilder().packagePrefix("required").pluginDependency("dep"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath.resolve("sample-plugin"))
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(2)
+    val depPluginDescriptor = result.findEnabledPlugin(PluginId.getId("dep"))!!
+    val mainClassLoader = result.findEnabledPlugin(PluginId.getId("sample.plugin"))!!.pluginClassLoader
+    assertThat((mainClassLoader as PluginClassLoader)._getParents()).contains(depPluginDescriptor)
+  }
 
   @Test
   fun testExpiredPluginNotLoaded() {

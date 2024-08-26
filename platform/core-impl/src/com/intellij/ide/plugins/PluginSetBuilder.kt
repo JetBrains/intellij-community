@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
 import java.util.function.Supplier
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
@@ -81,6 +83,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
   internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): List<PluginLoadingError> {
     val logMessages = ArrayList<String>()
+    val loadingErrors = ArrayList<PluginLoadingError>()
+    val enabledRequiredContentModules = HashMap<String, IdeaPluginDescriptorImpl>()
+    val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
 
     m@ for (module in moduleGraph.nodes) {
       if (module.moduleName == null) {
@@ -88,24 +93,43 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           continue
         }
       }
-      else if (!enabledPluginIds.containsKey(module.pluginId)) {
+      else if (module.moduleLoadingRule != ModuleLoadingRule.REQUIRED && !enabledPluginIds.containsKey(module.pluginId)) {
+        disabledModuleToProblematicPlugin.put(module.moduleName, module.pluginId)
         continue
       }
 
       for (ref in module.dependencies.modules) {
         if (!enabledModuleV2Ids.containsKey(ref.name)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
+          if (module.moduleName != null) {
+            disabledModuleToProblematicPlugin.put(module.moduleName, disabledModuleToProblematicPlugin.get(ref.name) ?: PluginId.getId(ref.name))
+          }
           continue@m
         }
       }
       for (ref in module.dependencies.plugins) {
         if (!enabledPluginIds.containsKey(ref.id)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
+          if (module.moduleName != null) {
+            disabledModuleToProblematicPlugin.put(module.moduleName, ref.id)
+          }
           continue@m
         }
       }
 
       if (module.moduleName == null) {
+        for (contentModule in module.content.modules) {
+          if (contentModule.loadingRule == ModuleLoadingRule.REQUIRED && !enabledRequiredContentModules.containsKey(contentModule.name)) {
+            module.isEnabled = false
+            loadingErrors.add(createCannotLoadError(
+              descriptor = module,
+              dependencyPluginId = disabledModuleToProblematicPlugin.get(contentModule.name) ?: PluginId.getId(contentModule.name),
+              errors = emptyMap(),
+              isNotifyUser = !module.isImplementationDetail))
+            continue@m
+          }
+        }
+
         enabledPluginIds.put(module.pluginId, module)
         for (pluginAlias in module.pluginAliases) {
           enabledPluginIds.put(pluginAlias, module)
@@ -113,19 +137,32 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         if (module.packagePrefix != null) {
           enabledModuleV2Ids.put(module.pluginId.idString, module)
         }
+        for (contentModule in module.content.modules) {
+          if (contentModule.loadingRule == ModuleLoadingRule.REQUIRED) {
+            val requiredContentModule = enabledRequiredContentModules.remove(contentModule.name)!!
+            markModuleAsEnabled(contentModule.name, requiredContentModule)
+          }
+        }
+      }
+      else if (module.moduleLoadingRule == ModuleLoadingRule.REQUIRED) {
+        enabledRequiredContentModules.put(module.moduleName, module)
       }
       else {
-        enabledModuleV2Ids.put(module.moduleName, module)
-        for (pluginAlias in module.pluginAliases) {
-          enabledPluginIds.put(pluginAlias, module)
-        }
+        markModuleAsEnabled(module.moduleName, module)
       }
     }
 
     if (!logMessages.isEmpty()) {
       PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n"))
     }
-    return emptyList()
+    return loadingErrors
+  }
+
+  private fun markModuleAsEnabled(moduleName: String, moduleDescriptor: IdeaPluginDescriptorImpl) {
+    enabledModuleV2Ids.put(moduleName, moduleDescriptor)
+    for (pluginAlias in moduleDescriptor.pluginAliases) {
+      enabledPluginIds.put(pluginAlias, moduleDescriptor)
+    }
   }
 
   fun createPluginSetWithEnabledModulesMap(): PluginSet {

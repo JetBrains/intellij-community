@@ -31,8 +31,8 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = arrayOf(
       IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
       IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
-      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java"),
-      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
     )
     sortDependenciesInPlace(plugins)
     assertThat(plugins.last().moduleName).isNull()
@@ -48,7 +48,8 @@ internal class ClassLoaderConfiguratorTest {
                                       path = emptyPath,
                                       isBundled = false,
                                       id = pluginId,
-                                      moduleName = name)
+                                      moduleName = name,
+                                      moduleLoadingRule = ModuleLoadingRule.OPTIONAL)
     }
 
     val modules = arrayOf(

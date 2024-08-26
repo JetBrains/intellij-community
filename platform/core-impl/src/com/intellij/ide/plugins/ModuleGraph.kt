@@ -9,6 +9,10 @@ import com.intellij.util.graph.Graph
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+/**
+ * A graph which determines the order in which modules from the platform and the plugins are processed. 
+ * The graph has a node for each module, and there is an edge from a module to other modules which depend on it.
+ */
 @ApiStatus.Internal
 class ModuleGraph internal constructor(
   @JvmField val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>,
@@ -109,10 +113,12 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
 
     if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {
-      // add main as implicit dependency
+      // add main as an implicit dependency for optional content modules; for required modules dependency is in the opposite way. 
       val main = moduleMap.get(module.pluginId.idString)!!
       assert(main !== module)
-      result.add(main)
+      if (module.moduleLoadingRule != ModuleLoadingRule.REQUIRED) {
+        result.add(main)
+      }
     }
 
     if (!result.isEmpty()) {
@@ -228,6 +234,15 @@ private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImp
     val descriptor = idMap.get(item.name)
     if (descriptor != null) {
       result.add(descriptor)
+      if (descriptor.moduleLoadingRule == ModuleLoadingRule.REQUIRED) {
+        /* Adds a dependency on the main plugin module.
+           This is needed to ensure that modules depending on a required content module are processed after all required content modules, because if a required module cannot be 
+           loaded, the whole plugin will be disabled. */
+        val mainPluginDescriptor = idMap.get(descriptor.pluginId.idString)
+        if (mainPluginDescriptor != null) {
+          result.add(mainPluginDescriptor)
+        }
+      }
     }
   }
   for (item in module.dependencies.plugins) {
@@ -235,6 +250,17 @@ private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImp
     // fake v1 module maybe located in a core plugin
     if (descriptor != null && descriptor.pluginId != PluginManagerCore.CORE_ID) {
       result.add(descriptor)
+    }
+  }
+
+  /* Add dependencies on all required content modules. This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether 
+     the plugin can be loaded or not. */
+  for (item in module.content.modules) {
+    if (item.loadingRule == ModuleLoadingRule.REQUIRED) {
+      val descriptor = idMap.get(item.name)
+      if (descriptor != null) {
+        result.add(descriptor)
+      }
     }
   }
 }

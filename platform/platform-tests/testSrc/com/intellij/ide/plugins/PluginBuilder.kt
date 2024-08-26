@@ -110,10 +110,10 @@ class PluginBuilder {
     return this
   }
 
-  fun module(moduleName: String, moduleDescriptor: PluginBuilder): PluginBuilder {
+  fun module(moduleName: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL): PluginBuilder {
     val fileName = "$moduleName.xml"
     subDescriptors.put(fileName, moduleDescriptor)
-    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null))
+    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
 
     // remove default dependency on lang
     moduleDescriptor.noDepends()
@@ -207,7 +207,14 @@ class PluginBuilder {
 
       if (content.isNotEmpty()) {
         append("\n<content>\n  ")
-        content.joinTo(this, separator = "\n  ") { """<module name="${it.name}" />""" }
+        content.joinTo(this, separator = "\n  ") { moduleItem ->
+          val loadingAttribute = when (moduleItem.loadingRule) {
+            ModuleLoadingRule.OPTIONAL -> ""
+            ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
+            ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
+          }
+          """<module name="${moduleItem.name}" $loadingAttribute/>""" 
+        }
         append("\n</content>")
       }
 
