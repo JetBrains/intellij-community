@@ -3782,7 +3782,6 @@ c:com.intellij.terminal.JBTerminalWidget
 - dispose():V
 - p:executeCommand(java.lang.String):V
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
-- getDefaultSessionName(com.jediterm.terminal.TtyConnector):java.lang.String
 - getFontSize():I
 - getFontSize2D():F
 - getListener():com.intellij.terminal.JBTerminalWidgetListener
@@ -3800,7 +3799,6 @@ c:com.intellij.terminal.JBTerminalWidget
 - setFontSize(I):V
 - setListener(com.intellij.terminal.JBTerminalWidgetListener):V
 - p:setShellCommand(java.util.List):V
-- setTtyConnector(com.jediterm.terminal.TtyConnector):V
 - start(com.jediterm.terminal.TtyConnector):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - writePlainMessage(java.lang.String):V
