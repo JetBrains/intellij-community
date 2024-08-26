@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,8 +14,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Objects;
 
 public final class MacUIUtil {
+  private static final Logger LOG = Logger.getInstance(MacUIUtil.class);
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
   private static Cursor INVERTED_TEXT_CURSOR;
@@ -24,6 +29,32 @@ public final class MacUIUtil {
       Foundation.executeOnMainThread(false, false, () -> {
         Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
       });
+    }
+  }
+
+  /**
+   * Sets a native predefined cursor on macOS
+   * <p>
+   *   The intended use is to work around a macOS bug when a cursor set the normal way doesn't appear,
+   *   the call is simply ignored.
+   *   This often happens when the mouse enters a window with rounded corners through a corner.
+   *   Abusing this workaround can cause high CPU usage (IDEA-167733).
+   * </p>
+   * @deprecated Do not use unless absolutely necessary, normally setting a cursor for a component should be enough.
+   *
+   * @param type
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public static void nativeSetBuiltInCursor(int type) {
+    try {
+      var cursorManagerClass = Class.forName("sun.lwawt.macosx.CCursorManager");
+      var cursorManager = ReflectionUtil.getField(cursorManagerClass, null, cursorManagerClass, "theInstance");
+      var method = ReflectionUtil.getDeclaredMethod(cursorManagerClass, "nativeSetBuiltInCursor", int.class, String.class);
+      Objects.requireNonNull(method).invoke(cursorManager, type, null);
+    }
+    catch (Exception e) {
+      LOG.error("Couldn't invoke sun.lwawt.macosx.CCursorManager.nativeSetBuiltInCursor", e);
     }
   }
 
