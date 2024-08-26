@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
@@ -16,6 +17,8 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.DataExternalizer;
@@ -44,6 +47,7 @@ public class CompilerReferenceIndex<Input> {
   private static final String NAME_ENUM_TAB = "name.tab";
 
   private static final String VERSION_FILE = "version";
+
   private final ConcurrentMap<IndexId<?, ?>, InvertedIndex<?, ?, Input>> myIndices;
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
@@ -102,15 +106,34 @@ public class CompilerReferenceIndex<Input> {
 
       myIndices = new ConcurrentHashMap<>();
       for (IndexExtension<?, ?, ? super Input> indexExtension : indices) {
-        //noinspection unchecked
-        myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
+        myIndices.put(indexExtension.getName(), createCompilerIndex(indexExtension, readOnly));
       }
 
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
     catch (IOException e) {
+      //IJPL-2855: must close all storages opened
+      Exception closeException = ExceptionUtil.runAndCatch(
+        this::close
+      );
+      if (closeException != null) {
+        e.addSuppressed(closeException);
+      }
+
       removeIndexFiles(myBuildDir, e);
       throw new BuildDataCorruptedException(e);
+    }
+    catch (Throwable t) {
+      //IJPL-2855: must always close all storages opened
+      Exception closeException = ExceptionUtil.runAndCatch(
+        this::close
+      );
+      if (closeException != null) {
+        t.addSuppressed(closeException);
+      }
+
+      removeIndexFiles(myBuildDir, t);
+      throw t;
     }
   }
 
@@ -155,14 +178,13 @@ public class CompilerReferenceIndex<Input> {
 
   public void close() {
     myLowMemoryWatcher.stop();
-    final CommonProcessors.FindFirstProcessor<Exception> exceptionProc =
-      new CommonProcessors.FindFirstProcessor<Exception>() {
-        @Override
-        public boolean process(Exception e) {
-          LOG.error(e);
-          return super.process(e);
-        }
-      };
+    CommonProcessors.FindFirstProcessor<Exception> exceptionProc = new CommonProcessors.FindFirstProcessor<>() {
+      @Override
+      public boolean process(Exception e) {
+        LOG.error(e);
+        return super.process(e);
+      }
+    };
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
     for (Iterator<Map.Entry<IndexId<?, ?>, InvertedIndex<?, ?, Input>>> iterator = myIndices.entrySet().iterator(); iterator.hasNext(); ) {
@@ -253,7 +275,8 @@ public class CompilerReferenceIndex<Input> {
     LOG.error(e);
   }
 
-  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
+  private static void close(@NotNull InvertedIndex<?, ?, ?> index,
+                            @NotNull CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
     try {
       index.dispose();
     }
@@ -262,7 +285,9 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private static void close(Closeable closeable, Processor<? super Exception> exceptionProcessor) {
+  private static void close(@Nullable Closeable closeable,
+                            @NotNull Processor<? super Exception> exceptionProcessor) {
+    if (closeable == null) return;
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {
@@ -278,14 +303,11 @@ public class CompilerReferenceIndex<Input> {
   }
 
   final class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
-    CompilerMapReduceIndex(final @NotNull IndexExtension<Key, Value, Input> extension,
-                           final @NotNull File indexDir,
-                           boolean readOnly)
-      throws IOException {
-      super(extension,
-            createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs").toPath(), false),
-            readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
+    CompilerMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable ForwardIndex index,
+                           @Nullable ForwardIndexAccessor<Key, Value> accessor) throws IOException {
+      super(extension, storage, index, accessor);
     }
 
     @Override
@@ -299,19 +321,53 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
+  private <Key, Value> @NotNull CompilerMapReduceIndex<Key, Value> createCompilerIndex(@NotNull IndexExtension<Key, Value, ? super Input> indexExtension,
+                                                                                       boolean readOnly) throws IOException {
+    IndexStorage<Key, Value> indexStorage = createIndexStorage(
+      indexExtension.getKeyDescriptor(),
+      indexExtension.getValueExternalizer(),
+      indexExtension.getName(),
+      myIndicesDir,
+      readOnly
+    );
+    try {
+      if (readOnly) {
+        //noinspection unchecked,rawtypes
+        return new CompilerMapReduceIndex(indexExtension, indexStorage, /* forwardIndex: */ null, /* forwardIndexAccessor: */ null);
+      }
+      else {
+        Path storagePath = new File(myIndicesDir, indexExtension.getName().getName() + ".inputs").toPath();
+        ForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storagePath, /* readOnly: */ false);
+        try {
+          ForwardIndexAccessor<Key, Value> forwardIndexAccessor = new KeyCollectionForwardIndexAccessor<>(indexExtension);
+          //noinspection unchecked,rawtypes
+          return new CompilerMapReduceIndex(indexExtension, indexStorage, forwardIndex, forwardIndexAccessor);
+        }
+        catch (Throwable t) {//IJPL-2855: must close all storages opened
+          forwardIndex.close();
+          throw t;
+        }
+      }
+    }
+    catch (Throwable t) {//IJPL-2855: must close all storages opened
+      indexStorage.close();
+      throw t;
+    }
+  }
+
   private static <Key, Value> IndexStorage<Key, Value> createIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                                                                           @NotNull DataExternalizer<Value> valueExternalizer,
                                                                           @NotNull IndexId<Key, Value> indexId,
                                                                           @NotNull File indexDir,
                                                                           boolean readOnly) throws IOException {
-    return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.getName()).toPath(),
-                                           keyDescriptor,
-                                           valueExternalizer,
-                                           16 * 1024,
-                                           false,
-                                           true,
-                                           false,
-                                           readOnly,
-                                           null);
+    return new MapIndexStorage<>(new File(indexDir, indexId.getName()).toPath(),
+                                 keyDescriptor,
+                                 valueExternalizer,
+                                 16 * 1024,
+                                 false,
+                                 true,
+                                 false,
+                                 readOnly,
+                                 null);
   }
 }
