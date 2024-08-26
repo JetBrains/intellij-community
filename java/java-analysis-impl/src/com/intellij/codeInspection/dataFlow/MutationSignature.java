@@ -173,7 +173,7 @@ public final class MutationSignature {
       if (part.equals("this")) {
         mutatesThis = true;
       }
-      else if (part.startsWith("io")) {
+      else if (part.equals("io")) {
         mutatesIO = true;
       }
       else if (part.equals("param")) {
