@@ -486,7 +486,12 @@ public final class TerminalToolWindowManager implements Disposable {
     List<String> tabs = Arrays.stream(toolWindow.getContentManager().getContents())
       .filter(c -> c!= content)
       .map(c -> c.getDisplayName()).toList();
-    content.setDisplayName(generateUniqueName(title, tabs));
+    String generatedName = generateUniqueName(title, tabs);
+    content.setDisplayName(generatedName);
+    terminalTitle.change((state) -> {
+      state.setDefaultTitle(generatedName);
+      return null;
+    });
   }
 
   public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
