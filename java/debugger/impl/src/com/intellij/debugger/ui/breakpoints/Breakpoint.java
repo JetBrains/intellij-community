@@ -54,6 +54,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
@@ -147,11 +148,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public void customizeRenderer(SimpleColoredComponent renderer) {
     if (myXBreakpoint != null) {
       renderer.setIcon(myXBreakpoint.getType().getEnabledIcon());
+      renderer.append(XBreakpointUtil.getShortText(myXBreakpoint));
     }
     else {
       renderer.setIcon(AllIcons.Debugger.Db_set_breakpoint);
+      renderer.append(getDisplayName());
     }
-    renderer.append(getDisplayName());
   }
 
   @Override
