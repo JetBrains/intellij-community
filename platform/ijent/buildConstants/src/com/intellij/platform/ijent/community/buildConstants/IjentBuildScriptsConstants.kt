@@ -17,6 +17,8 @@ fun isIjentWslFsEnabledByDefaultForProduct(platformPrefix: String?): Boolean =
  * The platform prefix is defined in `org.jetbrains.intellij.build.ProductProperties.platformPrefix`.
  */
 private val IJENT_DISABLED_BY_DEFAULT_IN: Collection<String> = listOf(
+  "JetBrainsClient",
+  "Gateway",
 )
 
 const val IJENT_BOOT_CLASSPATH_MODULE = "intellij.platform.core.nio.fs"
