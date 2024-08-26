@@ -94,6 +94,10 @@ public final class JBCefApp {
     addCefCustomSchemeHandlerFactory(new JBCefSourceSchemeHandlerFactory());
     addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
 
+    if (RegistryManager.getInstance().is("ide.browser.jcef.out-of-process.enabled")) {
+      System.setProperty("jcef.remote.enabled", "true");
+    }
+
     Boolean result = null;
     try {
       // Temporary use reflection to avoid jcef-version increment
