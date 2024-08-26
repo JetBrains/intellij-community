@@ -82,11 +82,11 @@ internal fun KaSession.typeIsPresentAsImplicitReceiver(
     return implicitReceivers.any { it.type.semanticallyEquals(type) }
 }
 
-internal fun KaSession.isAccessibleAsStaticMemberDeclaration(
+internal fun KaSession.isAccessibleAsMemberCallableDeclaration(
     symbol: KaCallableSymbol,
     contextPosition: KtElement,
 ): Boolean {
-    require(symbol.isJavaStaticDeclaration())
+    if (containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
 
     if (symbol !is KaNamedSymbol) return false
 

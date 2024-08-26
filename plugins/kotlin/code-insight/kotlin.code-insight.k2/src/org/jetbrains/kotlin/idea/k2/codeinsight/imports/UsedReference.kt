@@ -181,6 +181,10 @@ private fun KaSession.isAccessibleAsMemberCallable(
 ): Boolean {
     if (symbol !is KaCallableSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
 
+    if (symbol is KaEnumEntrySymbol) {
+        return isAccessibleAsMemberCallableDeclaration(symbol, element)
+    }
+
     val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
 
     return isDispatchedCall(element, symbol, dispatchReceiver)
@@ -202,7 +206,7 @@ private fun KaSession.isStaticallyImportedReceiver(
     if (!receiverIsObject) return false
 
     return if (symbol.isJavaStaticDeclaration()) {
-        !isAccessibleAsStaticMemberDeclaration(symbol, element)
+        !isAccessibleAsMemberCallableDeclaration(symbol, element)
     } else {
         !typeIsPresentAsImplicitReceiver(implicitDispatchReceiver.type, element)
     }

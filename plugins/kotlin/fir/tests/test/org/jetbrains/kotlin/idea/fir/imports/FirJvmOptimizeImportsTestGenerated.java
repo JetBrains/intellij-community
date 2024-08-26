@@ -609,6 +609,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/DefaultObjectReference.kt");
             }
 
+            @TestMetadata("EnumEntryUsedInsideEnum.kt")
+            public void testEnumEntryUsedInsideEnum() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/EnumEntryUsedInsideEnum.kt");
+            }
+
             @TestMetadata("Enums.kt")
             public void testEnums() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/Enums.kt");
