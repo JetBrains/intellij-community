@@ -62,7 +62,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   NodeRenderer myAutoRenderer = null;
 
   private Value myValue;
-  private volatile boolean myValueReady;
 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
@@ -92,7 +91,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
     myValue = value;
-    myValueReady = true;
     myInitFuture = CompletableFuture.completedFuture(null);
   }
 
@@ -102,7 +100,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   private void assertValueReady() {
-    if (!myValueReady) {
+    if (!isValueReady()) {
       LOG.error("Value is not yet calculated for " + getClass());
     }
   }
@@ -161,7 +159,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isValueReady() {
-    return myValueReady;
+    return myInitFuture.isDone();
   }
 
   @Override
@@ -243,7 +241,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     finally {
       myInitFuture.complete(null);
-      myValueReady = true;
     }
 
     myIsNew = false;
@@ -304,12 +301,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
-    if (!myValueReady) {
+    if (!isValueReady()) {
       ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
-      if (other.myValueReady) {
+      if (other.isValueReady()) {
         myValue = other.getValue();
         myInitFuture.complete(null);
-        myValueReady = true;
       }
     }
   }
@@ -746,7 +742,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canSetValue() {
-    return myValueReady && isLvalue();
+    return isValueReady() && isLvalue();
   }
 
   public XValueModifier getModifier(JavaValue value) {
@@ -784,7 +780,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canMark() {
-    if (!myValueReady) {
+    if (!isValueReady()) {
       return false;
     }
     return getValue() instanceof ObjectReference;
