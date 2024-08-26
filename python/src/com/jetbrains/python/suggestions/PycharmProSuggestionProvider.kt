@@ -36,7 +36,7 @@ internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
     if (!vFile.isPythonFile()
         || isDismissed()
         || tryUltimateIsDisabled()
-        || isPyCharmProOrIdeaUltimate()
+        || isUntargetedIDE()
         || FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
       return null
     }
@@ -63,9 +63,9 @@ internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
     return PACKAGES_TO_ADVERTISE.intersect(imports).firstOrNull()
   }
 
-  private fun isPyCharmProOrIdeaUltimate(): Boolean {
+  private fun isUntargetedIDE(): Boolean {
     val productCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
-    return productCode == "PY" || productCode == "IU"
+    return productCode == "PY" || productCode == "IU" || productCode == "DS"
   }
 
   private fun isDismissed(): Boolean = PropertiesComponent.getInstance().isTrueValue(PYCHARM_PRO_SUGGESTION_DISMISSED_KEY)
