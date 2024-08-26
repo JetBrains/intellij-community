@@ -93,7 +93,7 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
                         var start: Long = Long.MAX_VALUE,
                         var end: Long = 0)
 
-  data class ViewModules(var filter: Predicate<EventKey> = Predicate<EventKey> { _ -> true },
+  data class ViewModules(var filter: Predicate<EventKey> = Filter(),
                          val data: MutableMap<EventKey, List<Modules.Event>> = ConcurrentHashMap()) {
     fun data(): Map<EventKey, List<Modules.Event>> = data(filter)
     fun data(filter: Predicate<EventKey>): Map<EventKey, List<Modules.Event>> = data.filter { filter.test(it.key) }

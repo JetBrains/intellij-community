@@ -118,13 +118,14 @@ class CompilationChartsDiagramsComponent(
     }
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
-      .scheduleWithFixedDelay({ smartDraw() }, 0, 1, TimeUnit.SECONDS)
+      .scheduleWithFixedDelay({ smartDraw() }, 0, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
   }
 
   internal fun smartDraw(clean: Boolean = false) {
     if (clean) {
       images.clear()
       imageRequestCount.clear()
+      charts.settings.mouse.clear()
     }
     // todo check new data
     // todo check viewport position

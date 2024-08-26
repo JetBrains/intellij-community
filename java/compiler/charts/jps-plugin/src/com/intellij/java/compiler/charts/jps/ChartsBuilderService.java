@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.sun.management.OperatingSystemMXBean;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -30,6 +31,8 @@ public class ChartsBuilderService extends BuilderService {
 
   private static class ChartsModuleLevelBuilder extends ModuleLevelBuilder {
     private static final Logger LOG = Logger.getInstance(ChartsModuleLevelBuilder.class);
+
+    @Nullable private CompileStatisticService myStatisticService = null;
 
     protected ChartsModuleLevelBuilder() {
       super(BuilderCategory.TRANSLATOR);
@@ -62,7 +65,8 @@ public class ChartsBuilderService extends BuilderService {
     @Override
     public void buildStarted(@NotNull CompileContext context) {
       context.processMessage(new CompilationStatusBuilderMessage("START"));
-      SharedThreadPool.getInstance().execute(new CompileStatisticService(context));
+      myStatisticService = new CompileStatisticService(context);
+      SharedThreadPool.getInstance().execute(myStatisticService);
     }
 
     @Override
@@ -73,11 +77,13 @@ public class ChartsBuilderService extends BuilderService {
     @Override
     public void chunkBuildStarted(@NotNull CompileContext context, @NotNull ModuleChunk chunk) {
       context.processMessage(CompileStatisticBuilderMessage.create(chunk.getTargets(), "STARTED"));
+      if (myStatisticService != null) myStatisticService.send();
     }
 
     @Override
     public void chunkBuildFinished(@NotNull CompileContext context, @NotNull ModuleChunk chunk) {
       context.processMessage(CompileStatisticBuilderMessage.create(chunk.getTargets(), "FINISHED"));
+      if (myStatisticService != null) myStatisticService.send();
     }
   }
 
@@ -92,15 +98,19 @@ public class ChartsBuilderService extends BuilderService {
       this.context = context;
     }
 
+    public void send() {
+      BuildMessage message = CompileStatisticBuilderMessage.create(memory, os);
+      if (message != null) context.processMessage(message);
+    }
+
     @Override
     public void run() {
       while (true) {
         try {
-          BuildMessage message = CompileStatisticBuilderMessage.create(memory, os);
-          if (message != null) context.processMessage(message);
+          send();
           TimeUnit.SECONDS.sleep(1);
         }
-        catch (Throwable e) {
+        catch (Exception e) {
           break;
         }
       }

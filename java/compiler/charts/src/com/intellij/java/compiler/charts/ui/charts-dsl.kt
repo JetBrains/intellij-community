@@ -64,7 +64,7 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom)
   }
 
   fun width(): Int {
-    return listOf(progress, usage, axis).maxOfOrNull { it.width(settings) } ?: 0
+    return listOf(progress, usage, axis).minOfOrNull { it.width(settings) } ?: 0
   }
 
   fun height(): Double = listOf(progress, usage, axis).sumOf { it.height() }
@@ -124,7 +124,7 @@ internal data class MaxSize(val width: Double, val height: Double) {
 }
 
 class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, private val component: CompilationChartsDiagramsComponent) : MouseAdapter() {
-  private val components: MutableList<Index> = mutableListOf()
+  private val components: MutableSet<Index> = HashSet()
   private var currentPopup: JPopupMenu? = null
 
   override fun mouseClicked(e: MouseEvent) {
@@ -166,5 +166,23 @@ class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, 
     constructor(rect: Rectangle2D, key: EventKey, info: Map<String, String>) : this(rect.x, rect.x + rect.width,
                                                                                     rect.y, rect.y + rect.height,
                                                                                     key, info)
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Index) return false
+      if (x0 != other.x0) return false
+      if (x1 != other.x1) return false
+      if (y0 != other.y0) return false
+      if (y1 != other.y1) return false
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = x0.hashCode()
+      result = 31 * result + x1.hashCode()
+      result = 31 * result + y0.hashCode()
+      result = 31 * result + y1.hashCode()
+      return result
+    }
   }
 }

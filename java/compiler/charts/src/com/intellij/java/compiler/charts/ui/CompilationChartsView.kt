@@ -65,17 +65,16 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.statistic.memory(statistics.newValueOpt?.data)
       diagrams.statistic.maxMemory = vm.statistics.maxMemory
       diagrams.statistic.time(statistics.newValueOpt?.time)
-
     }
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-      diagrams.smartDraw()
+      diagrams.smartDraw(true)
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-      diagrams.smartDraw()
+      diagrams.smartDraw(true)
     }
 
     vm.scrollToEndEvent.advise(vm.lifetime) { _ ->

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.Filter
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.*
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
 import com.intellij.openapi.util.text.Formats
@@ -19,7 +20,7 @@ import kotlin.math.min
 interface ChartComponent {
   fun background(g2d: ChartGraphics, settings: ChartSettings)
   fun component(g2d: ChartGraphics, settings: ChartSettings)
-  fun width(settings: ChartSettings): Int
+  fun width(settings: ChartSettings): Int = Int.MAX_VALUE
   fun height(): Double
 }
 
@@ -92,8 +93,6 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
   }
 
   override fun component(g2d: ChartGraphics, settings: ChartSettings) {
-    settings.mouse.clear()
-
     g2d.withAntialiasing {
       model.putAll(state.model.getAndClean())
       drawChart(model, settings)
@@ -112,7 +111,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
                    zoom,
                    clip)
       }
-      .filter { !isSmall(it.value) }) {
+      .filter { !isSmall(it.value, state) }) {
       val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: continue
       val end = events.filterIsInstance<FinishEvent>().firstOrNull()
       val rect = getRectangle(start, end, settings)
@@ -140,10 +139,16 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
     }
   }
 
-  private fun isSmall(events: List<Event>): Boolean {
-    val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: return false
-    val finish = events.filterIsInstance<FinishEvent>().firstOrNull() ?: return false
-    return zoom.toPixels(finish.target.time) - zoom.toPixels(start.target.time) < 2
+  private fun isSmall(events: List<Event>, state: ChartModel): Boolean {
+    val filter = state.filter
+    if (filter is Filter && filter.text.isEmpty()) {
+      val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: return false
+      val finish = events.filterIsInstance<FinishEvent>().firstOrNull() ?: return false
+      return zoom.toPixels(finish.target.time) - zoom.toPixels(start.target.time) < 2
+    }
+    else {
+      return false
+    }
   }
 
   private fun getRectangle(start: StartEvent, end: FinishEvent?, settings: ChartSettings): Rectangle2D {
@@ -185,71 +190,85 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     drawUsageChart(model, settings, g2d)
   }
 
-  override fun width(settings: ChartSettings): Int = 0
+  override fun width(settings: ChartSettings): Int {
+    model.addAll(state.model.getAndClean())
+    if (model.isEmpty()) return 0
+    val (end, _) = getXY(model.last(), settings, 0.0, 0.0)
+    return (end - clip.x).toInt()
+  }
+
   override fun height(): Double = clip.height
 
-  private fun drawUsageChart(data: NavigableSet<StatisticData>,
-                             settings: ChartSettings,
-                             g2d: ChartGraphics): Boolean {
-    if (data.isEmpty()) return true
-    val path = path(data, settings)
+  private fun drawUsageChart(
+    data: NavigableSet<StatisticData>,
+    settings: ChartSettings,
+    g2d: ChartGraphics,
+  ): Boolean {
+    val filtered = filterData(data, settings)
+    val path = path(filtered, settings) ?: return true
+    val border = border(filtered, settings) ?: return true
+
+    g2d.withColor(color.background) {
+      fill(path)
+    }
     g2d.withStroke(BasicStroke(USAGE_BORDER)) {
       withColor(color.border) {
-        draw(path)
-      }
-      withColor(color.background) {
-        fill(path)
+        draw(border)
       }
     }
     return false
   }
 
-  private fun path(data: NavigableSet<StatisticData>, settings: ChartSettings): Path2D {
+  private fun filterData(data: NavigableSet<StatisticData>, settings: ChartSettings): NavigableSet<StatisticData> {
+    val filtered: NavigableSet<StatisticData> = TreeSet(data.filter { statistic -> inViewport(statistic.time, statistic.time, settings, zoom, clip) })
+    if (filtered.isEmpty()) return filtered
+
+    (0..5).forEach { i ->
+      data.lower(filtered.first())?.let { first -> filtered.add(first) }
+      data.higher(filtered.last())?.let { last -> filtered.add(last) }
+    }
+    return filtered
+  }
+
+  private fun border(data: NavigableSet<StatisticData>, settings: ChartSettings): Path2D? =
+    path(data, settings, { _, _, _, _ -> }, { _, _, _ -> })
+
+  private fun path(data: NavigableSet<StatisticData>, settings: ChartSettings): Path2D? {
+    val setFirstPoint: (Path2D, Double, Double, Double) -> Unit = { path, x0, y0, data0 ->
+      path.moveTo(x0, y0)
+      path.moveTo(x0, data0)
+    }
+    val setLastPoint: (Path2D, Double, Double) -> Unit = { path, x0, y0 ->
+      path.currentPoint?.let { last ->
+        path.lineTo(last.x, y0)
+        path.lineTo(x0, y0)
+      }
+      path.closePath()
+    }
+    return path(data, settings, setFirstPoint, setLastPoint)
+  }
+
+  private fun path(data: NavigableSet<StatisticData>, settings: ChartSettings,
+                   before: (Path2D, Double, Double, Double) -> Unit,
+                   after: (Path2D, Double, Double) -> Unit): Path2D? {
+    if (data.isEmpty()) return null
     val neighborhood = DoubleArray(8) { Double.NaN }
     val border = 5
     val height = clip.height - border
-    val x0 = clip.x
     val y0 = clip.y + height + border
-
     val path = Path2D.Double()
-    path.moveTo(x0, y0)
 
-    var cursor: StatisticData? = null
+    val (x0, data0) = getXY(data.first(), settings, y0, height)
+    before(path, x0, y0, data0)
+
     data.forEach { statistic ->
-      if (inViewport(statistic.time, statistic.time, settings, zoom, clip)) {
-        if (cursor == null) {
-          // prev point
-          data.lower(statistic)?.let { lower ->
-            getXY(lower, settings, y0, height).let { (px, py) ->
-              neighborhood.shiftLeftByTwo(px, py)
-              path.curveTo(neighborhood)
-            }
-          }
-        }
-        getXY(statistic, settings, y0, height).let { (px, py) ->
-          neighborhood.shiftLeftByTwo(px, py)
-          path.curveTo(neighborhood)
-        }
-        cursor = statistic
-      }
-    }
-    // next point
-    if (cursor != null) data.higher(cursor)?.let { higher ->
-      getXY(higher, settings, y0, height).let { (px, py) ->
-        neighborhood.shiftLeftByTwo(px, py)
-        path.curveTo(neighborhood)
-      }
+      val (px, py) = getXY(statistic, settings, y0, height)
+      path.currentPoint ?: path.moveTo(px, py) // if the first point
+      neighborhood.shiftLeftByTwo(px, py)
+      path.curveTo(neighborhood)
     }
 
-    neighborhood.shiftLeftByTwo(Double.NaN, Double.NaN)
-    path.curveTo(neighborhood)
-
-    path.currentPoint?.let { last ->
-      path.lineTo(last.x, y0)
-      path.lineTo(x0, y0)
-    }
-    path.closePath()
-
+    after(path, x0, y0)
     return path
   }
 
@@ -320,6 +339,5 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
     }
   }
 
-  override fun width(settings: ChartSettings): Int = 0
   override fun height(): Double = clip.height
 }

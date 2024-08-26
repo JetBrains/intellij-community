@@ -33,7 +33,7 @@ class ChartModel {
         end = max(end, it.target.time)
       }
     }
-  internal var filter: Predicate<EventKey> = Predicate<EventKey> { _ -> true }
+  internal var filter: Predicate<EventKey> = Filter()
   internal var threads: Int = 0
   internal var start: Long = Long.MAX_VALUE
   internal var end: Long = Long.MIN_VALUE
