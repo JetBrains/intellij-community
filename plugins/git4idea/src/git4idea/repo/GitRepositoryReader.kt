@@ -40,30 +40,34 @@ internal class GitRepositoryReader(private val project: Project, private val git
     state: Repository.State,
     branches: GitBranches,
   ): GitHeadState {
-    var currentBranch: GitLocalBranch?
-    var currentRevision: String?
-    if (headInfo !is HeadInfo.Branch) {
-      currentBranch = when {
-        state == Repository.State.REBASING -> fixCurrentBranchCase(findRebaseBranch(), branches)
-        else -> null
-      }
-      currentRevision = (headInfo as? HeadInfo.DetachedHead)?.hash?.asString()
-    }
-    else if (!branches.localBranches.isEmpty()) {
-      currentBranch = fixCurrentBranchCase(headInfo.branch, branches)
+    if (headInfo is HeadInfo.Branch) {
+      val currentBranch = fixCurrentBranchCase(headInfo.branch, branches)
       val currentBranchHash = if (currentBranch != null) branches.localBranches[currentBranch] else null
-      currentRevision = currentBranchHash?.asString()
+      val currentRevision = currentBranchHash?.asString()
+
+      return GitHeadState(currentBranch, currentRevision)
+    }
+
+    val currentBranch = when {
+      state == Repository.State.REBASING -> fixCurrentBranchCase(findRebaseBranch(), branches)
+      else -> null
+    }
+
+    if (headInfo is HeadInfo.DetachedHead) {
+      val currentRevision = headInfo.hash.asString()
+      return GitHeadState(currentBranch, currentRevision)
     }
     else {
-      currentBranch = headInfo.branch
-      currentRevision = null
+      // headInfo is HeadInfo.Unknown
+      if (currentBranch == null) {
+        LOG.warn("Couldn't identify neither current branch nor current revision.")
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs.")
+          GitRefUtil.logDebugAllRefsFiles(gitFiles)
+        }
+      }
+      return GitHeadState(currentBranch, null)
     }
-    if (currentBranch == null && currentRevision == null) {
-      LOG.warn("Couldn't identify neither current branch nor current revision. Ref specified in .git/HEAD: [" + headInfo + "]")
-      LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled())
-      GitRefUtil.logDebugAllRefsFiles(gitFiles)
-    }
-    return GitHeadState(currentBranch, currentRevision)
   }
 
   fun readHooksInfo(): GitHooksInfo {
