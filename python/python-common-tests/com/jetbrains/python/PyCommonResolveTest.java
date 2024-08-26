@@ -2094,6 +2094,49 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertResolvedElement(LanguageLevel.PYTHON27, buz, e -> assertResolveResult(e, PyFunction.class, "buz", "mod.py"));
   }
 
+  // PY-34617
+  public void testImportUnderVersionCheckMultifile() {
+    myFixture.copyDirectoryToProject("resolve/ImportUnderVersionCheck", "");
+    String plainImport = """
+      from mod import *
+      math
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, plainImport, e -> assertResolveResult(e, PyFile.class, "math.pyi", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, plainImport, TestCase::assertNull);
+
+    String importAlias = """
+      from mod import *
+      cm
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, importAlias, e -> assertResolveResult(e, PyFile.class, "cmath.pyi", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, importAlias, TestCase::assertNull);
+  }
+
+  // PY-34617
+  public void testImportFromUnderVersionCheckMultifile() {
+    myFixture.copyDirectoryToProject("resolve/ImportUnderVersionCheck", "");
+    String plainImport = """
+      from mod import *
+      digits
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, plainImport, e -> assertResolveResult(e, PyTargetExpression.class, "digits", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, plainImport, TestCase::assertNull);
+
+    String importAlias = """
+      from mod import *
+      imported_name
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, importAlias, e -> assertResolveResult(e, PyTargetExpression.class, "hexdigits", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, importAlias, TestCase::assertNull);
+
+    String starImport = """
+      from mod import *
+      DivisionByZero
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, starImport, e -> assertResolveResult(e, PyClass.class, "DivisionByZero", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, starImport, TestCase::assertNull);
+  }
+
   private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {
     runWithLanguageLevel(languageLevel, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, text);

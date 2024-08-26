@@ -23,3 +23,10 @@ if condition1:
 
 if (sys.version_info > (2, 1) and ((sys.version_info <= (2, 2) or sys.version_info > (3, )))):
     qux = ""
+
+if sys.version_info <= (2, 1):
+    import mod_aaa
+    import mod_bbb as bbb
+    from mod import ab
+    from mod import aba as abb
+    from mod import *

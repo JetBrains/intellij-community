@@ -154,7 +154,12 @@ public class PyStubsTest extends PyTestCase {
           ),
         element(PyTargetExpressionStub.class,
                 ImmutableRangeSet.unionOf(List.of(Range.openClosed(Version.parseVersion("2.1"), Version.parseVersion("2.2")),
-                                                  Range.greaterThan(Version.parseVersion("3.0")))))
+                                                  Range.greaterThan(Version.parseVersion("3.0"))))),
+        element(PyImportStatementStub.class, versionAtMost("2.1")),
+        element(PyImportStatementStub.class, versionAtMost("2.1")),
+        element(PyFromImportStatementStub.class, versionAtMost("2.1")),
+        element(PyFromImportStatementStub.class, versionAtMost("2.1")),
+        element(PyFromImportStatementStub.class, versionAtMost("2.1"))
       )
       .test(file.getStub());
   }
@@ -311,10 +316,12 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testImportInExcept() {
-    final PyFileImpl file = (PyFileImpl) getTestFile();
-    final PsiElement element = file.getElementNamed("tzinfo");
-    assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
-    assertNotParsed(file);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> {
+      final PyFileImpl file = (PyFileImpl)getTestFile();
+      final PsiElement element = file.getElementNamed("tzinfo");
+      assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
+      assertNotParsed(file);
+    });
   }
 
 
@@ -1278,6 +1285,10 @@ public class PyStubsTest extends PyTestCase {
 
   private static @NotNull RangeSet<Version> versionLessThan(@NotNull String version) {
     return ImmutableRangeSet.of(Range.lessThan(Version.parseVersion(version)));
+  }
+
+  private static @NotNull RangeSet<Version> versionAtMost(@NotNull String version) {
+    return ImmutableRangeSet.of(Range.atMost(Version.parseVersion(version)));
   }
 
   private static @NotNull RangeSet<Version> versionRange(@NotNull String lowInclusive, @NotNull String highExclusive) {

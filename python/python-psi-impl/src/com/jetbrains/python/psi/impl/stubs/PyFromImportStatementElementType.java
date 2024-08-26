@@ -1,14 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
@@ -43,8 +44,9 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
   @NotNull
   @Override
   public PyFromImportStatementStub createStub(@NotNull PyFromImportStatement psi, StubElement parentStub) {
+    final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi);
     return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub,
-                                             getStubElementType());
+                                             getStubElementType(), versions);
   }
 
   @Override
@@ -53,6 +55,7 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     QualifiedName.serialize(qName, dataStream);
     dataStream.writeBoolean(stub.isStarImport());
     dataStream.writeVarInt(stub.getRelativeLevel());
+    PyVersionSpecificStubBaseKt.serializeVersions(stub.getVersions(), dataStream);
   }
 
   @Override
@@ -61,7 +64,8 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     QualifiedName qName = QualifiedName.deserialize(dataStream);
     boolean isStarImport = dataStream.readBoolean();
     int relativeLevel = dataStream.readVarInt();
-    return new PyFromImportStatementStubImpl(qName, isStarImport, relativeLevel, parentStub, getStubElementType());
+    RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(dataStream);
+    return new PyFromImportStatementStubImpl(qName, isStarImport, relativeLevel, parentStub, getStubElementType(), versions);
   }
 
   protected IStubElementType getStubElementType() {
