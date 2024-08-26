@@ -130,9 +130,11 @@ object ActionUtil {
   private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 
   @JvmStatic
-  fun showDumbModeWarning(project: Project?,
-                          action: AnAction,
-                          vararg events: AnActionEvent) {
+  fun showDumbModeWarning(
+    project: Project?,
+    action: AnAction,
+    vararg events: AnActionEvent,
+  ) {
     val actionNames = events.asSequence()
       .map { it.presentation.text }.filter { it.isNotEmpty() }.toList()
     if (LOG.isDebugEnabled) {
@@ -140,19 +142,10 @@ object ActionUtil {
     }
     if (project == null) return
     DumbService.getInstance(project).showDumbModeNotificationForAction(
-      getActionUnavailableMessage(actionNames), ActionManager.getInstance().getId(action))
+      getActionsUnavailableMessage(actionNames), ActionManager.getInstance().getId(action))
   }
 
-  @JvmStatic
-  private fun getActionUnavailableMessage(actionNames: List<@ActionText String>): @NlsContexts.PopupContent String {
-    return when {
-      actionNames.isEmpty() -> getUnavailableMessage("This action", false)
-      actionNames.size == 1 -> getUnavailableMessage("'${actionNames[0]}'", false)
-      else -> getUnavailableMessage("None of the following actions", true) +
-              ": ${actionNames.joinToString(", ")}"
-    }
-  }
-
+  @Deprecated("Use getActionUnavailableMessage(@ActionText String?) or getActionsUnavailableMessage(actionNames: List<@ActionText String>)")
   @JvmStatic
   fun getUnavailableMessage(action: String, plural: Boolean): @NlsContexts.PopupContent String {
     if (plural) {
@@ -161,6 +154,24 @@ object ActionUtil {
     }
     return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action,
                              ApplicationNamesInfo.getInstance().productName)
+  }
+
+  @JvmStatic
+  fun getActionUnavailableMessage(@ActionText action: String?): @NlsContexts.PopupContent String {
+    val productName = ApplicationNamesInfo.getInstance().productName
+    if (action == null) return IdeBundle.message("popup.content.this.action.not.available.while.updating.indices", productName)
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, productName)
+  }
+
+  @JvmStatic
+  fun getActionsUnavailableMessage(actionNames: List<@ActionText String>): @NlsContexts.PopupContent String {
+    return when {
+      actionNames.isEmpty() -> getActionUnavailableMessage(null)
+      actionNames.size == 1 -> getActionUnavailableMessage(actionNames[0])
+      else -> IdeBundle.message("popup.content.none.of.following.actions.are.available.while.updating.indices",
+                                ApplicationNamesInfo.getInstance().productName,
+                                actionNames.joinToString(", "))
+    }
   }
 
   /**
@@ -268,15 +279,18 @@ object ActionUtil {
    */
   @Throws(ProcessCanceledException::class)
   @JvmStatic
-  fun <T> underModalProgress(project: Project,
-                             progressTitle: @NlsContexts.ProgressTitle String,
-                             computable: Computable<T>): T {
+  fun <T> underModalProgress(
+    project: Project,
+    progressTitle: @NlsContexts.ProgressTitle String,
+    computable: Computable<T>,
+  ): T {
     val dumbService = DumbService.getInstance(project)
     val useAlternativeResolve = dumbService.isAlternativeResolveEnabled
     val inReadAction = ThrowableComputable<T, RuntimeException> { ApplicationManager.getApplication().runReadAction(computable) }
     val prioritizedRunnable = ThrowableComputable<T, RuntimeException> { ProgressManager.getInstance().computePrioritized(inReadAction) }
     val process = if (useAlternativeResolve) ThrowableComputable {
-      dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) }
+      dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
+    }
     else prioritizedRunnable
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
   }
@@ -328,9 +342,11 @@ object ActionUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun doPerformActionOrShowPopup(action: AnAction,
-                                 e: AnActionEvent,
-                                 popupShow: Consumer<in JBPopup>?) {
+  fun doPerformActionOrShowPopup(
+    action: AnAction,
+    e: AnActionEvent,
+    popupShow: Consumer<in JBPopup>?,
+  ) {
     if (action is ActionGroup && !e.presentation.isPerformGroup) {
       val dataContext = e.dataContext
       val place = ActionPlaces.getActionGroupPopupPlace(e.place)
@@ -368,10 +384,12 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun performDumbAwareWithCallbacks(action: AnAction,
-                                    event: AnActionEvent,
-                                    performRunnable: Runnable) {
-    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action,  event, performRunnable)
+  fun performDumbAwareWithCallbacks(
+    action: AnAction,
+    event: AnActionEvent,
+    performRunnable: Runnable,
+  ) {
+    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action, event, performRunnable)
   }
 
   @JvmStatic
@@ -397,9 +415,11 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun registerForEveryKeyboardShortcut(component: JComponent,
-                                       action: ActionListener,
-                                       shortcuts: ShortcutSet) {
+  fun registerForEveryKeyboardShortcut(
+    component: JComponent,
+    action: ActionListener,
+    shortcuts: ShortcutSet,
+  ) {
     for (shortcut in shortcuts.shortcuts) {
       if (shortcut is KeyboardShortcut) {
         val first: KeyStroke = shortcut.firstKeyStroke
@@ -457,11 +477,13 @@ object ActionUtil {
 
   @Deprecated("Use [invokeAction(action, event, onDone)] instead")
   @JvmStatic
-  fun invokeAction(action: AnAction,
-                   component: Component,
-                   place: String,
-                   inputEvent: InputEvent?,
-                   onDone: Runnable?) {
+  fun invokeAction(
+    action: AnAction,
+    component: Component,
+    place: String,
+    inputEvent: InputEvent?,
+    onDone: Runnable?,
+  ) {
     val uiKind = if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE
     val dataContext = DataManager.getInstance().getDataContext(component)
     val event = AnActionEvent.createEvent(action, dataContext, null, place, uiKind, inputEvent)
@@ -470,11 +492,13 @@ object ActionUtil {
 
   @Deprecated("Use [invokeAction(action, event, onDone)] instead")
   @JvmStatic
-  fun invokeAction(action: AnAction,
-                   dataContext: DataContext,
-                   place: String,
-                   inputEvent: InputEvent?,
-                   onDone: Runnable?) {
+  fun invokeAction(
+    action: AnAction,
+    dataContext: DataContext,
+    place: String,
+    inputEvent: InputEvent?,
+    onDone: Runnable?,
+  ) {
     val uiKind = if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE
     val event = AnActionEvent.createEvent(action, dataContext, null, place, uiKind, inputEvent)
     invokeAction(action, event, onDone)
@@ -493,9 +517,11 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun createActionListener(actionId: String,
-                           component: Component,
-                           place: String): ActionListener {
+  fun createActionListener(
+    actionId: String,
+    component: Component,
+    place: String,
+  ): ActionListener {
     return ActionListener { e: ActionEvent? ->
       val action = getAction(actionId) ?: return@ActionListener
       invokeAction(action, component, place, null, null)
@@ -583,10 +609,12 @@ object ActionUtil {
 
   @ApiStatus.Experimental
   @JvmStatic
-  fun createToolbarComponent(target: JComponent,
-                             place: @NonNls String,
-                             group: ActionGroup,
-                             horizontal: Boolean): JComponent {
+  fun createToolbarComponent(
+    target: JComponent,
+    place: @NonNls String,
+    group: ActionGroup,
+    horizontal: Boolean,
+  ): JComponent {
     val toolbar = ActionManager.getInstance().createActionToolbar(place, group, horizontal)
     toolbar.targetComponent = target
     return toolbar.component

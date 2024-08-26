@@ -119,7 +119,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
-      DumbService.getInstance(project).showDumbModeNotificationForAction(ActionUtil.getUnavailableMessage(name, false),
+      DumbService.getInstance(project).showDumbModeNotificationForAction(ActionUtil.getActionUnavailableMessage(name),
                                                                          ShowUsagesAction.ID);
     }
     else {

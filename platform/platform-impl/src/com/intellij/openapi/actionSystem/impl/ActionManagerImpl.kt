@@ -27,7 +27,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil.getUnavailableMessage
+import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -1202,10 +1202,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       result.failureCause is IndexNotReadyException -> {
         LOG.info(result.failureCause)
         if (project != null) {
-          //see com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage, will be fixed in 2024.3
-          val actionName = StringUtilRt.notNullize(event.presentation.text, "This action")
           val dumbServiceImpl = DumbService.getInstance(project) as DumbServiceImpl
-          dumbServiceImpl.showDumbModeNotificationForFailedAction(getUnavailableMessage(actionName, false), getId(action))
+          dumbServiceImpl.showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
         }
       }
       else -> throw result.failureCause

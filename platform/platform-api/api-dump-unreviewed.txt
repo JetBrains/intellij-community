@@ -1927,7 +1927,9 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - *sf:getAction(java.lang.String):com.intellij.openapi.actionSystem.AnAction
 - *sf:getActionGroup(java.lang.String):com.intellij.openapi.actionSystem.ActionGroup
 - *sf:getActionGroup(java.lang.String[]):com.intellij.openapi.actionSystem.ActionGroup
+- sf:getActionUnavailableMessage(java.lang.String):java.lang.String
 - sf:getActions(javax.swing.JComponent):java.util.List
+- sf:getActionsUnavailableMessage(java.util.List):java.lang.String
 - sf:getDelegateChainRoot(com.intellij.openapi.actionSystem.AnAction):java.lang.Object
 - sf:getDelegateChainRootAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.AnAction
 - sf:getMnemonicAsShortcut(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ShortcutSet
