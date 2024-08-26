@@ -70,7 +70,7 @@ public class JmxCallHandler implements InvocationHandler {
       return wrappedHandler.invoke(proxy, method, args);
     }
     catch (IOException e) {
-      throw new JmxCallException("Unable to perform JMX call: " + method + "(" + Arrays.asList(args) + ")", e);
+      throw new JmxCallException("Unable to perform JMX call: " + method + "(" + (args != null ? Arrays.asList(args) : "null") + ")", e);
     }
   }
 
