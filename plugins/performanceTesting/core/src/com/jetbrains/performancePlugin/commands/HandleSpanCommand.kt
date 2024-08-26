@@ -8,26 +8,27 @@ import io.opentelemetry.api.trace.Span
 /**
  *  The first call will create and start span.
  *  The second call with the same spanName will stop span.
+ *  !!!The hierarchy of spans can't be created using it since there is no propagation of the scope.
  * */
 class HandleSpanCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "handleSpan"
     const val PREFIX = "$CMD_PREFIX$NAME"
 
-    private val CREATED_SPANS: MutableMap<String, Span> =  mutableMapOf()
+    private val createdSpans: MutableMap<String, Span> =  mutableMapOf()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
     val spanName = extractCommandArgument(PREFIX)
-    val span = CREATED_SPANS[spanName]
+    val span = createdSpans[spanName]
     if (span != null) {
       span.end()
-      CREATED_SPANS.remove(spanName)
+      createdSpans.remove(spanName)
     } else {
       val newSpan = TelemetryManager.getTracer(Scope("HandleSpanCommand"))
         .spanBuilder(spanName)
         .startSpan()
-      CREATED_SPANS[spanName] = newSpan
+      createdSpans[spanName] = newSpan
     }
   }
 
