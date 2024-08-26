@@ -29,6 +29,8 @@ class IdeProxyAuthenticator(
    * 4. we now prompt the user for credentials in the first thread
    * 5. the second thread comes and should reuse the prompt result of the first thread. So it should react to the fact that the credentials
    *    that were used before are already known to be wrong, and there are other available => no need to prompt again
+   *
+   * NB: there is a JDK internal property: "http.auth.serializeRequests", see [sun.net.www.protocol.http.AuthenticationInfo.serializeAuth]
    */
   private val lastRequest = ThreadLocal<String>()
 
