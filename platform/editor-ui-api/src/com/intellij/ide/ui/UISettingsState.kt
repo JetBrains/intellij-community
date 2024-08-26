@@ -42,7 +42,7 @@ class UISettingsState : BaseState() {
 
   @get:ReportValue
   @get:OptionTag("EDITOR_TAB_LIMIT")
-  var editorTabLimit: Int by property(10)
+  var editorTabLimit: Int by property(30)
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs: Boolean by property(false)
