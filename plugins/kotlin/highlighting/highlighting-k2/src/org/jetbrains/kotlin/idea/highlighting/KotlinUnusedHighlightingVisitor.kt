@@ -151,7 +151,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,
                                   deadCodeKey: HighlightDisplayKey,
                                   holder: HighlightInfoHolder) {
-        if (!KotlinUnusedSymbolUtil.isApplicableByPsi(declaration)) return
+        if (!K2UnusedSymbolUtil.isApplicableByPsi(declaration)) return
         if (refHolder.isUsedLocally(declaration)) return // even for non-private declarations our refHolder might have usage info
         val mustBeLocallyReferenced = declaration is KtParameter && !(declaration.hasValOrVar()) ||
                                       declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
@@ -168,13 +168,13 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
-            KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
+            K2UnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
         }
         if (problemPsiElement == null) return
         val description = declaration.describe() ?: return
         val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
-        val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration)
+        val fixes = K2UnusedSymbolUtil.createQuickFixes(declaration)
         fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
         holder.add(builder.create())
     }
