@@ -399,7 +399,13 @@ object K2UnusedSymbolUtil {
               it is KtNamedDeclaration && hasNonTrivialUsages(it, declarationContainingClass = it.containingClass())
           }
       }
-      if (import.importedFqName == declaration.fqName) return true
+    val importedFqName = import.importedFqName
+    val declarationFqName = declaration.fqName
+    if (importedFqName == declarationFqName) return true
+    if (declarationFqName != null && importedFqName?.startsWith(declarationFqName) == true) {
+        // imported a member of declaration
+        return false
+    }
       val importedDeclaration =
           import.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() as? KtNamedDeclaration
               ?: return true

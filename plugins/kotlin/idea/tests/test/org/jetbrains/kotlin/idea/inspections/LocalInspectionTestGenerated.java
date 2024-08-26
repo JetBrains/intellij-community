@@ -17914,6 +17914,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/multifile/functionReference.kt");
             }
 
+            @TestMetadata("importedDeclarationMember.kt")
+            public void testImportedDeclarationMember() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/multifile/importedDeclarationMember.kt");
+            }
+
             @TestMetadata("parameterOnlyUsedAsNamedArgument.kt")
             public void testParameterOnlyUsedAsNamedArgument() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/multifile/parameterOnlyUsedAsNamedArgument.kt");

@@ -103,6 +103,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/functionReference.kt");
         }
 
+        @TestMetadata("importedDeclarationMember.kt")
+        public void testImportedDeclarationMember() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/importedDeclarationMember.kt");
+        }
+
         @TestMetadata("parameterOnlyUsedAsNamedArgument.kt")
         public void testParameterOnlyUsedAsNamedArgument() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/parameterOnlyUsedAsNamedArgument.kt");
