@@ -964,6 +964,8 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   internal var storageIsAlreadyApplied = false
   internal var applyInfo: String? = null
 
+  private val detectBridgesUsageInListeners = Registry.`is`("ide.workspace.model.assertions.bridges.usage", false)
+
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     @Suppress("UNCHECKED_CAST")
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
@@ -1016,7 +1018,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalMapping(identifier: ExternalMappingKey<T>): ExternalEntityMapping<T> {
-    if (Registry.`is`("ide.workspace.model.assertions.bridges.usage", false) && isEventHandling) {
+    if (detectBridgesUsageInListeners && isEventHandling) {
       // https://stackoverflow.com/a/26122232
       reporterExecutor.execute(BridgeAccessThreadAnalyzer(Exception(), identifier as ExternalMappingKey<Any>))
     }
