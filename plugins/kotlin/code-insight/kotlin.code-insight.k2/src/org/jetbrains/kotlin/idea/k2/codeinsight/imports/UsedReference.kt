@@ -5,6 +5,8 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -163,15 +165,15 @@ private fun KaSession.toImportableSymbol(
  */
 private fun KaSession.isDispatchedCall(
     element: KtElement,
+    symbol: KaCallableSymbol,
     dispatchReceiver: KaReceiverValue,
-    containingFile: KtFile = element.containingKtFile
 ): Boolean {
     return when (dispatchReceiver) {
         is KaExplicitReceiverValue -> true
 
-        is KaSmartCastedReceiverValue -> isDispatchedCall(element, dispatchReceiver.original, containingFile)
+        is KaSmartCastedReceiverValue -> isDispatchedCall(element, symbol, dispatchReceiver.original)
 
-        is KaImplicitReceiverValue -> !isStaticallyImportedReceiver(element, dispatchReceiver, containingFile)
+        is KaImplicitReceiverValue -> !isStaticallyImportedReceiver(element, symbol, dispatchReceiver)
     }
 }
 
@@ -183,7 +185,7 @@ private fun KaSession.isAccessibleAsMemberCallable(
 
     val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
 
-    return isDispatchedCall(element, dispatchReceiver)
+    return isDispatchedCall(element, symbol, dispatchReceiver)
 }
 
 /**
@@ -192,8 +194,8 @@ private fun KaSession.isAccessibleAsMemberCallable(
  */
 private fun KaSession.isStaticallyImportedReceiver(
     element: KtElement,
+    symbol: KaCallableSymbol,
     implicitDispatchReceiver: KaImplicitReceiverValue,
-    containingFile: KtFile
 ): Boolean {
     val receiverTypeSymbol = implicitDispatchReceiver.type.symbol ?: return false
     val receiverIsObject = receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind.isObject
@@ -201,9 +203,34 @@ private fun KaSession.isStaticallyImportedReceiver(
     // with static imports, the implicit receiver is either some object symbol or `Unit` in case of imports from Java classes
     if (!receiverIsObject) return false
 
-    val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
+    return if (symbol.isJavaStaticDeclaration()) {
+        !isAccessibleAsStaticMemberDeclaration(symbol, element)
+    } else {
+        !typeIsPresentAsImplicitReceiver(implicitDispatchReceiver.type, element)
+    }
+}
 
-    return regularImplicitReceivers.none { it.type.semanticallyEquals(implicitDispatchReceiver.type) }
+private fun KaSession.typeIsPresentAsImplicitReceiver(
+    type: KaType,
+    contextPosition: KtElement,
+): Boolean {
+    val containingFile = contextPosition.containingKtFile
+    val implicitReceivers = containingFile.scopeContext(contextPosition).implicitReceivers
+
+    return implicitReceivers.any { it.type.semanticallyEquals(type) }
+}
+
+private fun KaSession.isAccessibleAsStaticMemberDeclaration(
+    symbol: KaCallableSymbol,
+    contextPosition: KtElement,
+): Boolean {
+    require(symbol.isJavaStaticDeclaration())
+
+    if (symbol !is KaNamedSymbol) return false
+
+    val nonImportingScopes = nonImportingScopesForPosition(contextPosition).asCompositeScope()
+
+    return nonImportingScopes.callables(symbol.name).any { it == symbol }
 }
 
 private fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {

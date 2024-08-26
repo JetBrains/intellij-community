@@ -84,3 +84,14 @@ private fun KaSession.resolveReferencedType(reference: KtReference): KaType? {
 
     return psiType?.type
 }
+
+/**
+ * Checks if the given [KaCallableSymbol] is a static declaration from Java.
+ */
+internal fun KaCallableSymbol.isJavaStaticDeclaration(): Boolean =
+    when (this) {
+        is KaNamedFunctionSymbol -> isStatic
+        is KaPropertySymbol -> isStatic
+        is KaJavaFieldSymbol -> isStatic
+        else -> false
+    }

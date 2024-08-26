@@ -279,6 +279,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/SamConstructor.kt");
             }
 
+            @TestMetadata("StaticClassFromSuper.kt")
+            public void testStaticClassFromSuper() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/StaticClassFromSuper.kt");
+            }
+
             @TestMetadata("staticFromJava.kt")
             public void testStaticFromJava() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/staticFromJava.kt");
@@ -292,6 +297,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             @TestMetadata("StaticMethodFromSuper.kt")
             public void testStaticMethodFromSuper() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/StaticMethodFromSuper.kt");
+            }
+
+            @TestMetadata("StaticMethodFromSuper_redundantImport.kt")
+            public void testStaticMethodFromSuper_redundantImport() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/StaticMethodFromSuper_redundantImport.kt");
             }
 
             @TestMetadata("ThisAndSuper.kt")

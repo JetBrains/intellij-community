@@ -1,4 +1,4 @@
-import java.util.ArrayList
+import java.lang.Thread.currentThread
 
 class B : Thread() {
     init {
