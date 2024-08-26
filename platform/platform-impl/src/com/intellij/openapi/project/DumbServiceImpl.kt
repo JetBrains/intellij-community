@@ -472,6 +472,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     doShowDumbModeNotification(message)
   }
 
+  /**
+   * This method is designed to be used when [DumbAware] action was invoked in dumb mode and threw [IndexNotReadyException]
+   */
+  fun showDumbModeNotificationForFailedAction(message: @NlsContexts.PopupContent String, actionId: String?) {
+    DumbModeBlockedFunctionalityCollector.logActionFailedToExecute(project, actionId)
+    doShowDumbModeNotification(message)
+  }
+
   override fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
                                          runWhenSmartAndBalloonStillShowing: Runnable,
                                          actionIds: List<String>) {
