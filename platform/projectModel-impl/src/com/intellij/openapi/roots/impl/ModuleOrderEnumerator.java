@@ -20,7 +20,7 @@ public final class ModuleOrderEnumerator extends OrderEnumeratorBase {
 
   @ApiStatus.Internal
   public ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, @Nullable OrderRootsCache cache) {
-    super(cache);
+    super(rootModel.getModule().getProject(), cache);
     myRootModel = rootModel;
   }
 

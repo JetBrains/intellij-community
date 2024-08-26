@@ -3,7 +3,9 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
@@ -33,9 +35,13 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   private boolean myExportedOnly;
   private Condition<? super OrderEntry> myCondition;
   RootModelProvider myModulesProvider;
+  private final Project myProject;
   private final OrderRootsCache myCache;
+  // A map is quicker than querying the workspace model repeatedly.
+  private Map<String, Module> myModulesByNameMap;
 
-  OrderEnumeratorBase(@Nullable OrderRootsCache cache) {
+  OrderEnumeratorBase(@NotNull Project project, @Nullable OrderRootsCache cache) {
+    myProject = project;
     myCache = cache;
   }
 
@@ -200,6 +206,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
 
   @Override
   public boolean shouldRecurse(@NotNull ModuleOrderEntry entry, @NotNull List<? extends OrderEnumerationHandler> handlers) {
+    updateModulesByNameMap();
     ProcessEntryAction action = shouldAddOrRecurse(entry, true, handlers);
     return action.type == ProcessEntryActionType.RECURSE;
   }
@@ -278,7 +285,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       if (myRecursivelyExportedOnly && !firstLevel) return ProcessEntryAction.SKIP;
     }
     if (myRecursively && entry instanceof ModuleOrderEntry moduleOrderEntry) {
-      final Module depModule = moduleOrderEntry.getModule();
+      final Module depModule = myModulesByNameMap.get(moduleOrderEntry.getModuleName());
       if (depModule != null && shouldProcessRecursively(customHandlers)) {
         return ProcessEntryAction.RECURSE(depModule);
       }
@@ -292,6 +299,20 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
                                 boolean firstLevel,
                                 @NotNull List<? extends OrderEnumerationHandler> customHandlers,
                                 @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+    updateModulesByNameMap();
+    doProcessEntries(rootModel, processed, firstLevel, customHandlers, processor);
+  }
+
+  private void updateModulesByNameMap() {
+    final ModuleManagerEx moduleManager = ModuleManagerEx.getInstanceEx(myProject);
+    myModulesByNameMap = moduleManager.getModulesByNameMap();
+  }
+
+  private void doProcessEntries(@NotNull ModuleRootModel rootModel,
+                                @Nullable Set<? super Module> processed,
+                                boolean firstLevel,
+                                @NotNull List<? extends OrderEnumerationHandler> customHandlers,
+                                @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
     ProgressManager.checkCanceled();
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
@@ -301,7 +322,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
         continue;
       }
       if (action.type == ProcessEntryActionType.RECURSE) {
-        processEntries(getRootModel(action.recurseOnModule), processed, false, customHandlers, processor);
+        doProcessEntries(getRootModel(action.recurseOnModule), processed, false, customHandlers, processor);
         continue;
       }
       assert action.type == ProcessEntryActionType.PROCESS;
@@ -351,13 +372,15 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
 
   @Override
   public void forEachModule(@NotNull final Processor<? super Module> processor) {
+    updateModulesByNameMap();
     forEach((orderEntry, customHandlers) -> {
       if (myRecursively && orderEntry instanceof ModuleSourceOrderEntry) {
         final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
         return processor.process(module);
       }
       if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively(customHandlers))) {
-        final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+        final String moduleName = ((ModuleOrderEntry)orderEntry).getModuleName();
+        final Module module = myModulesByNameMap.get(moduleName);
         if (module != null) {
           return processor.process(module);
         }

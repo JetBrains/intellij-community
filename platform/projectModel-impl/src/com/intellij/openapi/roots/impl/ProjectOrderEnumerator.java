@@ -20,7 +20,7 @@ final class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 
   ProjectOrderEnumerator(@NotNull Project project, @Nullable OrderRootsCache rootsCache) {
-    super(rootsCache);
+    super(project, rootsCache);
     myProject = project;
   }
 

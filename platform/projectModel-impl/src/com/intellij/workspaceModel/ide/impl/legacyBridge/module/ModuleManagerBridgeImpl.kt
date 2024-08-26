@@ -335,6 +335,13 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   override val sortedModules: Array<Module>
     get() = entityStore.cachedValue(sortedModulesValue)
 
+  private val modulesByNameMapValue = CachedValue<Map<String, Module>> { storage ->
+    modules(storage).associateByTo(hashMapOf()) { it.name }
+  }
+
+  override val modulesByNameMap: Map<String, Module>
+    get() = entityStore.cachedValue(modulesByNameMapValue)
+
   override fun findModuleByName(name: String): Module? {
     return entityStore.current.resolve(ModuleId(name))?.findModule(entityStore.current)
   }

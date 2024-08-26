@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -19,6 +20,8 @@ abstract class ModuleManagerEx : ModuleManager() {
   }
 
   open fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {}
+
+  abstract val modulesByNameMap: Map<String, Module>
 
   companion object {
     const val IML_EXTENSION: String = ".iml"

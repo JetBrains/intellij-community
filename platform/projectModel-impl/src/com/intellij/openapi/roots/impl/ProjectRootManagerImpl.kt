@@ -235,7 +235,7 @@ open class ProjectRootManagerImpl(val project: Project,
   override fun orderEntries(): OrderEnumerator = ProjectOrderEnumerator(project, rootCache)
 
   @ApiStatus.Internal
-  override fun orderEntries(modules: Collection<Module>): OrderEnumerator = ModulesOrderEnumerator(modules)
+  override fun orderEntries(modules: Collection<Module>): OrderEnumerator = ModulesOrderEnumerator(project, modules)
 
   @ApiStatus.Internal
   override fun getContentRootsFromAllModules(): Array<VirtualFile> {
