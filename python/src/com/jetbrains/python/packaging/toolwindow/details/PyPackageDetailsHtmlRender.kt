@@ -15,7 +15,6 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel.Companion.NO_DESCRIPTION
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -108,4 +107,8 @@ class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: Sdk?) {
   }
 
   private fun wrapHtml(html: String): String = "<html><head></head><body><p>$html</p></body></html>"
+
+  private val NO_DESCRIPTION: String
+    get() = message("python.toolwindow.packages.no.description.placeholder")
+
 }

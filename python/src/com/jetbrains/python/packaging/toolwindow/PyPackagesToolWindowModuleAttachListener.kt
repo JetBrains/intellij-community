@@ -12,4 +12,6 @@ class PyPackagesToolWindowModuleAttachListener : ModuleAttachListener {
       module.project.service<PyPackagingToolWindowService>().moduleAttached()
     }
   }
+
+
 }
