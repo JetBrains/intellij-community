@@ -16,9 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
@@ -145,7 +143,6 @@ class PySdkPathsTest {
     // emulates com.jetbrains.python.configuration.PythonSdkDetailsDialog.ShowPathButton.actionPerformed
 
     val (module, moduleRoot) = createModule()
-    val sdkPath = createVenvStructureInModule(moduleRoot).path
     val userAddedPath = createSubdir(moduleRoot)
 
     mockPythonPluginDisposable()
