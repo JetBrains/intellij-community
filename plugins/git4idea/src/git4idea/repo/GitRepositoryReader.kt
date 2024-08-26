@@ -42,9 +42,17 @@ internal class GitRepositoryReader(private val project: Project, private val git
   ): GitHeadState {
     var currentBranch: GitLocalBranch?
     var currentRevision: String?
-    if (headInfo !is HeadInfo.Branch || !branches.localBranches.isEmpty()) {
-      currentBranch = fixCurrentBranchCase(findCurrentBranch(state, headInfo), branches)
-      currentRevision = getCurrentRevision(headInfo, currentBranch, branches)
+    if (headInfo !is HeadInfo.Branch) {
+      currentBranch = when {
+        state == Repository.State.REBASING -> fixCurrentBranchCase(findRebaseBranch(), branches)
+        else -> null
+      }
+      currentRevision = (headInfo as? HeadInfo.DetachedHead)?.hash?.asString()
+    }
+    else if (!branches.localBranches.isEmpty()) {
+      currentBranch = fixCurrentBranchCase(headInfo.branch, branches)
+      val currentBranchHash = if (currentBranch != null) branches.localBranches[currentBranch] else null
+      currentRevision = currentBranchHash?.asString()
     }
     else {
       currentBranch = headInfo.branch
@@ -93,19 +101,12 @@ internal class GitRepositoryReader(private val project: Project, private val git
     return Repository.State.NORMAL
   }
 
-  private fun findCurrentBranch(state: Repository.State, headInfo: HeadInfo): GitLocalBranch? {
-    if (headInfo is HeadInfo.Branch) {
-      return headInfo.branch
+  private fun findRebaseBranch(): GitLocalBranch? {
+    val currentBranch = readRebaseDirBranchFile(gitFiles.rebaseApplyDir)
+                        ?: readRebaseDirBranchFile(gitFiles.rebaseMergeDir)
+    if (currentBranch != null && currentBranch != DETACHED_HEAD) {
+      return GitLocalBranch(currentBranch)
     }
-
-    if (state == Repository.State.REBASING) {
-      val currentBranch = readRebaseDirBranchFile(gitFiles.rebaseApplyDir)
-                          ?: readRebaseDirBranchFile(gitFiles.rebaseMergeDir)
-      if (currentBranch != null && currentBranch != DETACHED_HEAD) {
-        return GitLocalBranch(currentBranch)
-      }
-    }
-
     return null
   }
 
@@ -219,21 +220,6 @@ internal class GitRepositoryReader(private val project: Project, private val git
 
     private fun isExistingExecutableFile(file: File): Boolean {
       return file.exists() && file.canExecute()
-    }
-
-    private fun getCurrentRevision(headInfo: HeadInfo, currentBranch: GitLocalBranch?, branches: GitBranches): String? {
-      val currentBranchHash = if (currentBranch != null) branches.localBranches.get(currentBranch) else null;
-      var currentRevision: String?
-      if (headInfo !is HeadInfo.Branch) {
-        currentRevision = (headInfo as? HeadInfo.DetachedHead)?.hash?.asString()
-      }
-      else if (currentBranchHash == null) {
-        currentRevision = null
-      }
-      else {
-        currentRevision = currentBranchHash.asString()
-      }
-      return currentRevision
     }
 
     private fun readRebaseDirBranchFile(rebaseDir: @NonNls File): String? {
