@@ -21,6 +21,9 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CopyableThreadContextElement
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -373,7 +376,7 @@ data class ClientId(val value: String) {
       val newContext = currentThreadContext + ClientIdContextElement(newClientId)
       if (errorOnMismatch) {
         if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId) {
-          logger.error("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}")
+          logger.error(Throwable("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}", currentClientIdContextElement.creationTrace))
         }
       }
       return installThreadContext(newContext, replace = true)
@@ -506,14 +509,50 @@ fun ClientId.asContextElement(): CoroutineContext.Element {
 @ApiStatus.Internal
 fun CoroutineContext.clientId(): ClientId? = this[ClientIdContextElement.Key]?.clientId
 
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+@DelicateCoroutinesApi
 @ApiStatus.Internal
-class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
-  private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
-  object Key : CoroutineContext.Key<ClientIdContextElement>
+object ClientIdContextElementPrecursor : CopyableThreadContextElement<Unit>, CoroutineContext.Key<ClientIdContextElementPrecursor>, IntelliJContextElement {
+
+  override fun copyForChild(): CopyableThreadContextElement<Unit> {
+    // there is only a precursor in the scope -> replace with a ClientId element from the thread local storage
+    val clientIdContextElement = currentThreadContext().clientIdContextElement
+    if (clientIdContextElement != null) return clientIdContextElement
+    return this
+  }
+
+  override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
+    val existingClientIdElement = overwritingElement[ClientIdContextElement.Key]
+    if (existingClientIdElement != null) return overwritingElement.minusKey(ClientIdContextElementPrecursor) // real client id is here - we remove precursor
+    val clientIdContextElement = currentThreadContext().clientIdContextElement
+    if (clientIdContextElement != null) return overwritingElement.minusKey(ClientIdContextElementPrecursor) + clientIdContextElement // remove precursor but add client id
+    return overwritingElement // keep as is if impossible to determine ClientId
+  }
+
+  override fun updateThreadContext(context: CoroutineContext) {
+  }
+
+  override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
+  }
+
+  override val key: CoroutineContext.Key<*>
+    get() = this
+}
+
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+@ApiStatus.Internal
+class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextElement<Unit>, IntelliJContextElement {
+  //private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
+  // TODO: temp enable in the branch
+  val creationTrace: Throwable? = Throwable("${formatClientId()} created at")
+  companion object Key : CoroutineContext.Key<ClientIdContextElement>
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
-  override fun toString(): String = if (creationTrace != null) "${formatClientId()}. Created at:\r${creationTrace.stackTraceToString()}" else "${formatClientId()}"
+  override val key: CoroutineContext.Key<*>
+    get() = Key
+
+  override fun toString(): String = formatClientId()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -526,6 +565,22 @@ class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContext
 
   override fun hashCode(): Int {
     return clientId?.hashCode() ?: 0
+  }
+
+  override fun updateThreadContext(context: CoroutineContext) {
+  }
+
+  override fun copyForChild(): CopyableThreadContextElement<Unit> {
+    // if copyForChild is called on ClientIdContextElement (not on a precursor) it means that nothing should be done, a ClientId is here already
+    return this
+  }
+
+  override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
+    // the same for mergeForChild
+    return overwritingElement
+  }
+
+  override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
   }
 
   private fun formatClientId(): String = "${clientId ?: "ClientId=<null>"}"

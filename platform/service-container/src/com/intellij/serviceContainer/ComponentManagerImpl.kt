@@ -4,6 +4,8 @@
 
 package com.intellij.serviceContainer
 
+import com.intellij.codeWithMe.ClientIdContextElement
+import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.withThreadLocal
@@ -160,9 +162,14 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private val scopeHolder = ScopeHolder(
     parentScope = parentScope,
-    additionalContext = additionalContext + this.asContextElement(),
+    additionalContext = (additionalContext + this.asContextElement()).let { context ->
+      val clientIdContextElement = context[ClientIdContextElement.Key]
+      return@let if (clientIdContextElement == null) context + ClientIdContextElementPrecursor
+      else context
+    },
     containerName = debugString(short = true),
   )
 
