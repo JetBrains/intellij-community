@@ -9,10 +9,12 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.GraphOptionsUtil.presentationForTabTitle
 import com.intellij.vcs.log.visible.filters.getPresentation
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
-internal object VcsLogTabsUtil {
+@ApiStatus.Internal
+object VcsLogTabsUtil {
   fun getFullName(shortName: @TabTitle String): @TabTitle String {
     return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName)
   }
