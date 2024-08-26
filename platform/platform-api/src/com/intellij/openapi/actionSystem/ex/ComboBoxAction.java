@@ -96,7 +96,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   protected boolean isNoWrapping(@NotNull String place) {
-    return ExperimentalUI.isNewUI() && ActionPlaces.isMainToolbar(place);
+    if (!ExperimentalUI.isNewUI()) return false;
+    return ActionPlaces.MAIN_TOOLBAR.equals(place);
   }
 
   protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
