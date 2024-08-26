@@ -31,9 +31,9 @@ abstract class IdePlatformKindTooling {
     companion object : ApplicationExtensionDescriptor<IdePlatformKindTooling>(
         "org.jetbrains.kotlin.idePlatformKindTooling", IdePlatformKindTooling::class.java
     ) {
-        private val ALL_TOOLING_SUPPORT by lazy { getInstances() }
+        private val ALL_TOOLING_SUPPORT: List<IdePlatformKindTooling> by lazy { getInstances() }
 
-        private val TOOLING_SUPPORT_BY_KIND by lazy {
+        private val TOOLING_SUPPORT_BY_KIND: Map<IdePlatformKind, IdePlatformKindTooling> by lazy {
             val allPlatformKinds = IdePlatformKind.ALL_KINDS
             val groupedTooling = ALL_TOOLING_SUPPORT.groupBy { it.kind }.mapValues { it.value.single() }
 
@@ -49,7 +49,7 @@ abstract class IdePlatformKindTooling {
             groupedTooling
         }
 
-        private val TOOLING_SUPPORT_BY_PLATFORM_ID by lazy {
+        private val TOOLING_SUPPORT_BY_PLATFORM_ID: Map<KotlinPlatform, IdePlatformKindTooling> by lazy {
             ALL_TOOLING_SUPPORT.flatMap { tooling -> tooling.gradlePlatformIds.map { it to tooling } }.toMap()
         }
 

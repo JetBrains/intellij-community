@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleInfo, BinaryModuleInfo {
     abstract val sdk: Sdk?
 
-    override val name = Name.special("<Script dependencies>")
+    override val name: Name get() = Name.special("<Script dependencies>")
 
     override val displayedName: String
         get() = KotlinBaseScriptingBundle.message("script.dependencies")

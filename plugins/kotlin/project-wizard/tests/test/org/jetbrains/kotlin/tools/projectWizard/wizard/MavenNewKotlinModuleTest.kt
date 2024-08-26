@@ -38,7 +38,8 @@ import org.junit.runners.JUnit4
 @TestRoot("project-wizard/tests")
 @RunWith(JUnit4::class)
 class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProjectTestUtils {
-    override val testDirectory = "testData/mavenNewProjectWizard"
+    override val testDirectory: String
+        get() = "testData/mavenNewProjectWizard"
     private val newModuleName = "module"
 
     @JvmField

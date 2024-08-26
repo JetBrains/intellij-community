@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
 abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
-    override val kind = JvmIdePlatformKind
+    override val kind: JvmIdePlatformKind = JvmIdePlatformKind
 
-    override val mavenLibraryIds = listOf(
+    override val mavenLibraryIds: List<String> = listOf(
       PathUtil.KOTLIN_JAVA_STDLIB_NAME,
       PathUtil.KOTLIN_JAVA_RUNTIME_JRE7_NAME,
       PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME,
@@ -32,12 +32,12 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
       PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME
     )
 
-    override val gradlePluginId = "kotlin-platform-jvm"
+    override val gradlePluginId: String get() = "kotlin-platform-jvm"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JVM, KotlinPlatform.ANDROID)
 
-    override val libraryKind: PersistentLibraryKind<*>? = null
+    override val libraryKind: PersistentLibraryKind<*>? get() = null
 
-    override fun acceptsAsEntryPoint(function: KtFunction) = true
+    override fun acceptsAsEntryPoint(function: KtFunction): Boolean = true
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         val calculatedTestFrameworkValue = declaration.getUserData(TEST_FRAMEWORK_NAME_KEY)
@@ -84,6 +84,6 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
     }
 
     private companion object {
-        val TEST_FRAMEWORK_NAME_KEY = Key.create<CachedValue<String>>("TestFramework:name")
+        val TEST_FRAMEWORK_NAME_KEY: Key<CachedValue<String>?> = Key.create<CachedValue<String>>("TestFramework:name")
     }
 }

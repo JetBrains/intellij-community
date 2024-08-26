@@ -24,13 +24,13 @@ interface KotlinNativeRunConfigurationProvider {
 }
 
 abstract class AbstractNativeIdePlatformKindTooling : IdePlatformKindTooling() {
-    override val kind = NativeIdePlatformKind
+    override val kind: NativeIdePlatformKind = NativeIdePlatformKind
 
     override val mavenLibraryIds: List<String> get() = emptyList()
     override val gradlePluginId: String get() = ""
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.NATIVE)
 
-    override val libraryKind: PersistentLibraryKind<*> = KotlinNativeLibraryKind
+    override val libraryKind: PersistentLibraryKind<*> get() = KotlinNativeLibraryKind
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {
         val functionName = function.fqName?.asString() ?: return false

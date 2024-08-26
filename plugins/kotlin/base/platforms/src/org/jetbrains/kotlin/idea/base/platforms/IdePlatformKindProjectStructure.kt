@@ -64,7 +64,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
         @JvmStatic
         fun getInstance(project: Project): IdePlatformKindProjectStructure = project.service()
 
-        private val PLATFORM_EXTENSIONS = mapOf(
+        private val PLATFORM_EXTENSIONS: Map<String, IdePlatformKind> = mapOf(
             METADATA_FILE_EXTENSION to CommonIdePlatformKind,
             "js" to JsIdePlatformKind,
             "kjsm" to JsIdePlatformKind

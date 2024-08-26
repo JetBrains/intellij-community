@@ -27,18 +27,21 @@ fun hasSomethingInPackage(indexId: ID<FqName, Void>, fqName: FqName, scope: Glob
 
 @ApiStatus.Internal
 object FqNameKeyDescriptor : KeyDescriptor<FqName> {
-    override fun save(output: DataOutput, value: FqName) = IOUtil.writeUTF(output, value.asString())
-    override fun read(input: DataInput) = FqName(IOUtil.readUTF(input))
-    override fun getHashCode(value: FqName) = value.asString().hashCode()
-    override fun isEqual(val1: FqName?, val2: FqName?) = val1 == val2
+    override fun save(output: DataOutput, value: FqName) {
+        IOUtil.writeUTF(output, value.asString())
+    }
+
+    override fun read(input: DataInput): FqName = FqName(IOUtil.readUTF(input))
+    override fun getHashCode(value: FqName): Int = value.asString().hashCode()
+    override fun isEqual(val1: FqName?, val2: FqName?): Boolean = val1 == val2
 }
 
 abstract class KotlinFileIndexBase : ScalarIndexExtension<FqName>() {
-    protected val LOG = Logger.getInstance(javaClass)
+    protected val LOG: Logger = Logger.getInstance(javaClass)
 
-    override fun dependsOnFileContent() = true
+    override fun dependsOnFileContent(): Boolean = true
 
-    override fun getKeyDescriptor() = FqNameKeyDescriptor
+    override fun getKeyDescriptor(): FqNameKeyDescriptor = FqNameKeyDescriptor
 
     protected fun indexer(f: (FileContent) -> FqName?): DataIndexer<FqName, Void, FileContent> {
         return DataIndexer {
@@ -64,15 +67,15 @@ class KotlinClassFileIndex : KotlinFileIndexBase() {
         val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinClassFileIndex")
     }
 
-    override fun getName() = NAME
+    override fun getName(): ID<FqName, Void> = NAME
 
-    override fun getIndexer() = INDEXER
+    override fun getIndexer(): DataIndexer<FqName, Void, FileContent> = INDEXER
 
-    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
+    override fun getInputFilter(): DefaultFileTypeSpecificInputFilter = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
 
-    override fun getVersion() = 3
+    override fun getVersion(): Int = 3
 
-    private val INDEXER = indexer { fileContent ->
+    private val INDEXER: DataIndexer<FqName, Void, FileContent> = indexer { fileContent ->
         val headerInfo = ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
         if (headerInfo != null && headerInfo.metadataVersion.isCompatible()) headerInfo.classId.asSingleFqName() else null
     }
@@ -89,16 +92,16 @@ class KotlinStdlibIndex : KotlinFileIndexBase() {
         private const val STDLIB_TAG_MANIFEST_ATTRIBUTE = "Kotlin-Runtime-Component"
     }
 
-    override fun getName() = NAME
+    override fun getName(): ID<FqName, Void> = NAME
 
-    override fun getIndexer() = INDEXER
+    override fun getIndexer(): DataIndexer<FqName, Void, FileContent> = INDEXER
 
-    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(ManifestFileType.INSTANCE)
+    override fun getInputFilter(): DefaultFileTypeSpecificInputFilter = DefaultFileTypeSpecificInputFilter(ManifestFileType.INSTANCE)
 
-    override fun getVersion() = 1
+    override fun getVersion(): Int = 1
 
     // TODO: refactor [KotlinFileIndexBase] and get rid of FqName here, it's never a proper fully qualified name, just a String wrapper
-    private val INDEXER = indexer { fileContent ->
+    private val INDEXER: DataIndexer<FqName, Void, FileContent> = indexer { fileContent ->
         if (fileContent.fileType is ManifestFileType) {
             val manifest = Manifest(ByteArrayInputStream(fileContent.content))
             val attributes = manifest.mainAttributes

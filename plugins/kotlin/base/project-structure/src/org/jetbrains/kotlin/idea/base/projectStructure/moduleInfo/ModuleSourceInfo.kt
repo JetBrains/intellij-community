@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
@@ -19,7 +20,7 @@ interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModul
 
     override val expectedBy: List<ModuleSourceInfo>
 
-    override val displayedName get() = module.name
+    override val displayedName: @NlsSafe String get() = module.name
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.MODULE

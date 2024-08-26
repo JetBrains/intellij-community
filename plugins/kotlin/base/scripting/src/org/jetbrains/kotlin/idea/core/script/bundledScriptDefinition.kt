@@ -35,7 +35,8 @@ class BundledScriptDefinitionContributor(val project: Project) : ScriptDefinitio
     override fun getDefinitions() = listOf(myLegacyBundledIdeScriptDefinition)
 
     @Deprecated("migrating to new configuration refinement: drop usages")
-    override val id: String = "StandardKotlinScript"
+    override val id: String
+        get() = "StandardKotlinScript"
 }
 
 class LegacyBundledIdeScriptDefinition internal constructor(project: Project) : KotlinScriptDefinition(ScriptTemplateWithArgs::class) {

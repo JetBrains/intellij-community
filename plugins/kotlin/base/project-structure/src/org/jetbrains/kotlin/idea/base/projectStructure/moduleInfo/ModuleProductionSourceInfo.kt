@@ -15,11 +15,12 @@ data class ModuleProductionSourceInfo internal constructor(
     override val module: Module
 ) : ModuleSourceInfoWithExpectedBy(forProduction = true) {
 
-    override val name = Name.special("<production sources for module ${module.name}>")
+    override val name: Name
+        get() = Name.special("<production sources for module ${module.name}>")
 
     override val stableName: Name by lazy { module.stableName }
 
-    override fun keyForSdk() = KeyForSdks
+    override fun keyForSdk(): KeyForSdks = KeyForSdks
 
     override val contentScope: GlobalSearchScope
         get() = KotlinResolveScopeEnlarger.enlargeScope(module.moduleProductionSourceScope, module, isTestScope = false)

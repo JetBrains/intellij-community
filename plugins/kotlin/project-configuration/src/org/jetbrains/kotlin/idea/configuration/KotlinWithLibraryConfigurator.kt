@@ -437,7 +437,8 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         )
     }
 
-    override val canAddModuleWideOptIn: Boolean = true
+    override val canAddModuleWideOptIn: Boolean
+        get() = true
 
     override fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
         module.addCompilerArgumentToKotlinFacet(compilerArgument)

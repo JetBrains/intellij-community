@@ -47,7 +47,7 @@ fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Bo
 
     try {
         return children?.any { checkKlibComponent(it, targetPlatform, requestedBuiltInsPlatform) } == true
-    } catch (e: InvalidVirtualFileAccessException) {
+    } catch (_: InvalidVirtualFileAccessException) {
         return false
     }
 }

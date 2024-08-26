@@ -45,7 +45,8 @@ data class ScriptModuleInfo(
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
-    override val name: Name = Name.special("<script ${scriptFile.name} ${scriptDefinition.name}>")
+    override val name: Name
+        get() = Name.special("<script ${scriptFile.name} ${scriptDefinition.name}>")
 
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("script.0.1", scriptFile.presentableName, scriptDefinition.name)
