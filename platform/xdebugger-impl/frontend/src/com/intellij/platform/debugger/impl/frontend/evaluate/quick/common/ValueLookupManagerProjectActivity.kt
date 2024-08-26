@@ -9,11 +9,11 @@ private class ValueLookupManagerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     coroutineScope {
       val cs = this@coroutineScope
-      subscribeForDebuggingStart(cs) {
+      subscribeForDebuggingStart(cs, project) {
         ValueLookupManager.getInstance(project).startListening()
       }
 
-      subscribeForValueHintHideRequest(cs) {
+      subscribeForValueHintHideRequest(cs, project) {
         ValueLookupManager.getInstance(project).hideHint()
       }
     }

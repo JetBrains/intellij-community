@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/1.9.20-0.1/rpc-compiler-plugin-1.9.20-0.1.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/1.9.20-0.1/rpc-compiler-plugin-1.9.20-0.1.jar</args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
@@ -42,5 +40,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>
