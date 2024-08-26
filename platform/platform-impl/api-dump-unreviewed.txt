@@ -727,6 +727,16 @@ f:com.intellij.buildfiles.ForcedBuildFileAttribute
 - s:belongsToFramework(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 - s:forceFileToFramework(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):V
 - s:getFrameworkIdOfBuildFile(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- sf:Companion:com.intellij.codeInsight.actions.ReaderModeDefaultsOverride$Companion
+- s:getInstance():com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- a:getShowWarningsDefault():Z
+f:com.intellij.codeInsight.actions.ReaderModeDefaultsOverride$Companion
+- f:getInstance():com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+f:com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl
+- com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- <init>():V
+- getShowWarningsDefault():Z
 com.intellij.codeInsight.actions.ReaderModeSettings
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.codeInsight.actions.ReaderModeSettings$Companion
