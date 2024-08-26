@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.ModuleUtilCore
@@ -180,16 +181,42 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       handleSearch(query = currentQuery)
     }
 
-    invokeUpdateLatestVersion()
-
-    withContext(Dispatchers.Main) {
-      handleSearch(query = currentQuery)
+    withContext(Dispatchers.Default) {
+      launch {
+        calculateLatestVersionForInstalledPackages()
+        withContext(Dispatchers.Main) {
+          handleSearch(query = currentQuery)
+        }
+      }
     }
   }
 
-  private suspend fun invokeUpdateLatestVersion() {
+  private suspend fun calculateLatestVersionForInstalledPackages() {
     val proccessPackages = installedPackages
-    val updatedPackages = proccessPackages.map { (name, pyPackage: InstalledPackage) ->
+
+    val updatedPackages = withContext(Dispatchers.Main) {
+      val jobs = proccessPackages.entries.chunked(5).map { chunk ->
+        async(Dispatchers.IO) {
+          chunk.map { (name, pyPackage) ->
+            name to calculatePyPackageLatestVersion(pyPackage)
+          }
+        }
+      }
+      val results = jobs.awaitAll()
+      results.flatten().toMap()
+    }
+
+    installedPackages = installedPackages.map {
+      val newVersion = updatedPackages[it.key]
+      it.key to it.value.withNextVersion(newVersion)
+    }.toMap()
+  }
+
+  private suspend fun calculatePyPackageLatestVersion(pyPackage: InstalledPackage): PyPackageVersion? {
+    if (pyPackage.nextVersion != null)
+      return pyPackage.nextVersion
+
+    try {
       val specification = pyPackage.repository.createPackageSpecification(pyPackage.name)
       val latestVersion = manager.repositoryManager.getLatestVersion(specification)
       val currentVersion = PyPackageVersionNormalizer.normalize(pyPackage.instance.version)
@@ -201,14 +228,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       else {
         null
       }
-      name to upgradeTo
-    }.toMap()
-
-    installedPackages = installedPackages.map {
-      val newVersion = updatedPackages[it.key]
-      it.key to it.value.withNextVersion(newVersion)
-    }.toMap()
-    handleSearch(currentQuery)
+      return upgradeTo
+    }
+    catch (t: Throwable) {
+      thisLogger().warn("Cannot get version for ${pyPackage.instance.name}", t)
+      return null
+    }
   }
 
   private suspend fun showPackagingNotification(text: @Nls String) {
@@ -249,8 +274,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       withBackgroundProgress(project, message("python.packaging.loading.packages.progress.text"), cancellable = false) {
         reportRawProgress {
           manager.reloadPackages()
-          manager.repositoryManager.refreshCashes()
           refreshInstalledPackages()
+          manager.repositoryManager.refreshCashes()
         }
       }
     }
