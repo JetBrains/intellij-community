@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.event.*
-import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.Action
@@ -331,7 +330,7 @@ object ActionUtil {
   @JvmStatic
   fun doPerformActionOrShowPopup(action: AnAction,
                                  e: AnActionEvent,
-                                 popupShow: Consumer<in JBPopup?>?) {
+                                 popupShow: Consumer<in JBPopup>?) {
     if (action is ActionGroup && !e.presentation.isPerformGroup) {
       val dataContext = e.dataContext
       val place = ActionPlaces.getActionGroupPopupPlace(e.place)
@@ -357,11 +356,14 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun performInputEventHandlerWithCallbacks(inputEvent: InputEvent, runnable: Runnable) {
-    val place = if (inputEvent is KeyEvent) ActionPlaces.KEYBOARD_SHORTCUT else if (inputEvent is MouseEvent) ActionPlaces.MOUSE_SHORTCUT else ActionPlaces.UNKNOWN
-    val event = AnActionEvent.createFromInputEvent(
-      inputEvent, place, InputEventDummyAction.templatePresentation.clone(),
-      DataManager.getInstance().getDataContext(Objects.requireNonNull(inputEvent.component)))
+  fun performInputEventHandlerWithCallbacks(uiKind: ActionUiKind, place: String?, inputEvent: InputEvent, runnable: Runnable) {
+    val place = place ?: when (inputEvent) {
+      is KeyEvent -> ActionPlaces.KEYBOARD_SHORTCUT
+      is MouseEvent -> ActionPlaces.MOUSE_SHORTCUT
+      else -> ActionPlaces.UNKNOWN
+    }
+    val context = DataManager.getInstance().getDataContext(inputEvent.component)
+    val event = AnActionEvent.createEvent(InputEventDummyAction, context, null, place, uiKind, inputEvent)
     (event.actionManager as ActionManagerEx).performWithActionCallbacks(InputEventDummyAction, event, runnable)
   }
 
@@ -374,7 +376,7 @@ object ActionUtil {
 
   @JvmStatic
   fun createEmptyEvent(): AnActionEvent {
-    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT)
+    return AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
   }
 
   @JvmStatic
@@ -453,24 +455,33 @@ object ActionUtil {
     return a1
   }
 
+  @Deprecated("Use [invokeAction(action, event, onDone)] instead")
   @JvmStatic
   fun invokeAction(action: AnAction,
                    component: Component,
                    place: String,
                    inputEvent: InputEvent?,
                    onDone: Runnable?) {
-    invokeAction(action, DataManager.getInstance().getDataContext(component), place, inputEvent, onDone)
+    val uiKind = if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE
+    val dataContext = DataManager.getInstance().getDataContext(component)
+    val event = AnActionEvent.createEvent(action, dataContext, null, place, uiKind, inputEvent)
+    invokeAction(action, event, onDone)
   }
 
+  @Deprecated("Use [invokeAction(action, event, onDone)] instead")
   @JvmStatic
   fun invokeAction(action: AnAction,
                    dataContext: DataContext,
                    place: String,
                    inputEvent: InputEvent?,
                    onDone: Runnable?) {
-    val presentation = action.templatePresentation.clone()
-    val event = AnActionEvent.createFromInputEvent(inputEvent, place, presentation, dataContext)
-    event.setInjectedContext(action.isInInjectedContext)
+    val uiKind = if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE
+    val event = AnActionEvent.createEvent(action, dataContext, null, place, uiKind, inputEvent)
+    invokeAction(action, event, onDone)
+  }
+
+  @JvmStatic
+  fun invokeAction(action: AnAction, event: AnActionEvent, onDone: Runnable?) {
     if (lastUpdateAndCheckDumb(action, event, false)) {
       try {
         performActionDumbAwareWithCallbacks(action, event)

@@ -89,6 +89,8 @@ import kotlin.io.path.pathString
 import kotlin.math.max
 import kotlin.math.min
 
+private const val ACTION_PLACE = "Switcher"
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -142,7 +144,7 @@ object Switcher : BaseSwitcherAction(null) {
 
     init {
       onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e ->
-        ActionUtil.performInputEventHandlerWithCallbacks(e) {
+        ActionUtil.performInputEventHandlerWithCallbacks(ActionUiKind.POPUP, ACTION_PLACE, e) {
           navigate(e)
         }
       }
@@ -259,7 +261,7 @@ object Switcher : BaseSwitcherAction(null) {
               source.selectedIndex = source.anchorSelectionIndex
             }
             if (source.selectedIndex != -1) {
-              ActionUtil.performInputEventHandlerWithCallbacks(e) {
+              ActionUtil.performInputEventHandlerWithCallbacks(ActionUiKind.POPUP, ACTION_PLACE, e) {
                 navigate(e)
               }
             }
@@ -698,7 +700,7 @@ object Switcher : BaseSwitcherAction(null) {
           sink[PlatformDataKeys.PREDEFINED_TEXT] = fileName
         }
         val event = AnActionEvent.createEvent(dataContext, gotoAction.templatePresentation.clone(),
-                                              "Switcher", ActionUiKind.NONE, e)
+                                              ACTION_PLACE, ActionUiKind.NONE, e)
         blockingContext {
           ActionUtil.performActionDumbAwareWithCallbacks(gotoAction, event)
         }
