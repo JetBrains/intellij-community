@@ -2342,6 +2342,7 @@ Ff:com.intellij.openapi.progress.CoroutineSuspender$DefaultImpls
 - sf:blockingContext(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:blockingContextScope(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:checkCanceled(kotlin.coroutines.Continuation):java.lang.Object
+- *sf:coroutineToIndicator(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 c:com.intellij.openapi.progress.DumbProgressIndicator

@@ -364,7 +364,7 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
-@Internal
+@ApiStatus.Experimental
 suspend fun <T> coroutineToIndicator(action: () -> T): T {
   val ctx = coroutineContext
   return contextToIndicator(ctx, action)
