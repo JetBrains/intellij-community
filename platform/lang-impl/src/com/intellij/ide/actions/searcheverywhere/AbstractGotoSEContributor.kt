@@ -411,6 +411,9 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
             if (file == null) {
               val navigatable = psiElement as? Navigatable
               if (navigatable != null) {
+                // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
+                // navigated through the Navigatable API.
+                // This fallback is for items like that.
                 val navRequest = RawNavigationRequest(navigatable, true)
                 project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
               } else {
