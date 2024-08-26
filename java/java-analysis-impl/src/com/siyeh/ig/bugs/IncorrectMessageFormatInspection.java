@@ -75,17 +75,16 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
 
       private void checkIndexes(@NotNull PsiMethodCallExpression call,
                                 @NotNull List<MessageFormatUtil.MessageFormatPlaceholder> indexes) {
-        PsiExpressionList list = call.getArgumentList();
-        if (list.getExpressionCount() == 2 && list.getExpressions()[1].getType() instanceof PsiArrayType) {
+        PsiExpression[] expressions = call.getArgumentList().getExpressions();
+        int count = expressions.length;
+        if (count == 2 && expressions[1].getType() instanceof PsiArrayType) {
           return;
         }
-        PsiExpression[] expressions = call.getArgumentList().getExpressions();
         for (PsiExpression expression : expressions) {
           if (expression == null || expression instanceof PsiEmptyExpressionImpl) {
             return;
           }
         }
-        int count = call.getArgumentList().getExpressionCount();
         int argumentNumber = count - 1;
         List<Integer> notFoundArguments = new ArrayList<>();
         Set<Integer> usedArgumentIndexes = new HashSet<>();
