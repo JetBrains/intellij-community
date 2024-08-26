@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId.getProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
@@ -10,10 +9,7 @@ import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.gradle.scripting.GradleKotlinScriptDefinitionWrapper
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.kotlinDslSyncListenerInstance
-import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinitionAdapterFromNewAPIBase
+import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
@@ -24,17 +20,17 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
-import kotlin.reflect.KClass
-import kotlin.script.dependencies.Environment
-import kotlin.script.dependencies.ScriptContents
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.dependencies.DependenciesResolver
-import kotlin.script.experimental.dependencies.ScriptReport
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-fun loadGradleDefinitions(workingDir: String, gradleHome: String?, javaHome: String?, project: Project): List<ScriptDefinition> {
+fun loadGradleDefinitions(
+    workingDir: String,
+    gradleHome: String?,
+    javaHome: String?,
+    project: Project
+): List<ScriptDefinition> {
     val loadedDefinitions = try {
         val gradleLibDir = gradleHome.toGradleHomePath()
 
@@ -70,7 +66,7 @@ fun loadGradleDefinitions(workingDir: String, gradleHome: String?, javaHome: Str
             scriptingDebugLog { "error loading gradle script templates ${t.message}" }
         }
 
-        listOf(ErrorGradleScriptDefinition(project, t.message))
+        listOf(ErrorGradleScriptDefinition(project))
     }
 
     if (loadedDefinitions.isEmpty()) {
@@ -80,58 +76,23 @@ fun loadGradleDefinitions(workingDir: String, gradleHome: String?, javaHome: Str
     return loadedDefinitions
 }
 
-
-// TODO: refactor - minimize
-class ErrorGradleScriptDefinition(project: Project, message: String? = null) :
-    ScriptDefinition.FromLegacy(
+class ErrorGradleScriptDefinition(val project: Project) :
+    ScriptDefinition.FromConfigurations(
         ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration),
-        LegacyDefinition(project, message),
-        emptyList()
+        ScriptCompilationConfiguration.Default,
+        ScriptEvaluationConfiguration {
+            hostConfiguration(ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration))
+        }
     ) {
 
-    private class LegacyDefinition(project: Project, message: String?) : KotlinScriptDefinitionAdapterFromNewAPIBase() {
-        companion object {
-            private const val KOTLIN_DSL_SCRIPT_EXTENSION = "gradle.kts"
-        }
+    override val name: String get() = KotlinIdeaGradleBundle.message("text.default.kotlin.gradle.script")
+    override val fileExtension: String = "gradle.kts"
+    override val baseClassType: KotlinType = KotlinType(ScriptTemplateWithArgs::class)
 
-        override val name: String get() = KotlinIdeaGradleBundle.message("text.default.kotlin.gradle.script")
-        override val fileExtension: String = KOTLIN_DSL_SCRIPT_EXTENSION
-
-        override val scriptCompilationConfiguration: ScriptCompilationConfiguration = ScriptCompilationConfiguration.Default
-        override val hostConfiguration: ScriptingHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration)
-        override val baseClass: KClass<*> = ScriptTemplateWithArgs::class
-
-        override val dependencyResolver: DependenciesResolver =
-            ErrorScriptDependenciesResolver(project, message)
-
-        override fun toString(): String = "ErrorGradleScriptDefinition"
-    }
+    override fun toString(): String = "ErrorGradleScriptDefinition"
 
     override fun equals(other: Any?): Boolean = other is ErrorGradleScriptDefinition
     override fun hashCode(): Int = name.hashCode()
-}
-
-class ErrorScriptDependenciesResolver(
-    project: Project,
-    private val message: String? = null
-) : DependenciesResolver {
-    private val projectId: String = getProjectId(project)
-
-    override fun resolve(scriptContents: ScriptContents, environment: Environment): DependenciesResolver.ResolveResult {
-        val importInProgress =
-            kotlinDslSyncListenerInstance?.tasks?.let { importTasks ->
-                synchronized(importTasks) { importTasks.values.any { it.projectId == projectId } }
-            } == true
-        val failureMessage = if (importInProgress) {
-            KotlinIdeaGradleBundle.message("error.text.highlighting.is.impossible.during.gradle.import")
-        } else {
-            message ?: KotlinIdeaGradleBundle.message(
-                "error.text.failed.to.load.script.definitions.by",
-                GradleScriptDefinitionsContributor::class.java.name
-            )
-        }
-        return DependenciesResolver.ResolveResult.Failure(ScriptReport(failureMessage, ScriptReport.Severity.FATAL))
-    }
 }
 
 private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<String> {
@@ -142,9 +103,13 @@ private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<Str
 
     if (result.groupValues.size < 3) return emptyList()
     val version = result.groupValues[2]
-    return LanguageVersion.fromVersionString(version)?.let { listOf("-language-version", it.versionString) } ?: emptyList()
+    return LanguageVersion.fromVersionString(version)?.let { listOf("-language-version", it.versionString) }
+        ?: emptyList()
 }
 
+/**
+ * Force-wrap legacy definitions into `ScriptDefinition.FromConfigurations` when updating.
+ */
 private fun loadGradleTemplates(
     projectPath: String,
     templateClasses: List<String>,
@@ -170,12 +135,12 @@ private fun loadGradleTemplates(
         additionalClassPath,
         defaultCompilerOptions
     ).map {
-        it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let { legacyDef ->
-            // Expand scope for old gradle script definition
+        it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let { legacyDefinition ->
             GradleKotlinScriptDefinitionWrapper(
+                legacyDefinition,
                 it.hostConfiguration,
-                legacyDef,
-                defaultCompilerOptions
+                it.evaluationConfiguration,
+                it.defaultCompilerOptions
             )
         } ?: it
     }
@@ -240,4 +205,29 @@ fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
     scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
 
     emptyList()
+}
+
+class GradleKotlinScriptDefinitionWrapper(
+    legacyDefinition: KotlinScriptDefinitionFromAnnotatedTemplate,
+    override val hostConfiguration: ScriptingHostConfiguration,
+    override val evaluationConfiguration: ScriptEvaluationConfiguration?,
+    override val defaultCompilerOptions: Iterable<String>
+) : ScriptDefinition.FromConfigurationsBase() {
+
+    init {
+        order = Int.MIN_VALUE
+    }
+
+    override val compilationConfiguration by lazy {
+        ScriptCompilationConfigurationFromDefinition(
+            hostConfiguration,
+            legacyDefinition
+        ).with {
+            ScriptCompilationConfiguration.ide.acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
+            @Suppress("DEPRECATION_ERROR")
+            ScriptCompilationConfiguration.fileNamePattern.put(legacyDefinition.scriptFilePattern.pattern)
+        }
+    }
+
+    override val canDefinitionBeSwitchedOff: Boolean = false
 }
