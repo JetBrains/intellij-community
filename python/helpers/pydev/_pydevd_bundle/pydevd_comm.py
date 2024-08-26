@@ -75,8 +75,7 @@ from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_J
     IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, \
     GlobalDebuggerHolder, \
-    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR, \
-    IS_WINDOWS
+    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
 from _pydev_bundle.pydev_override import overrides
 import json
 import weakref
@@ -428,11 +427,7 @@ def start_server(port):
         try:
             s.shutdown(SHUT_RDWR)
         except OSError:
-            if IS_WINDOWS:
-                # For possible and likely harmless WinError 10057 on Windows.
-                pass
-            else:
-                raise
+            pass
         finally:
             s.close()
         return newSock
