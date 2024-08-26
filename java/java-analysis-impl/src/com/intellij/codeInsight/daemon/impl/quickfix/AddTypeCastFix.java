@@ -93,11 +93,9 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression.copy();
       PsiExpression thenE = conditional.getThenExpression();
       PsiExpression elseE = conditional.getElseExpression();
-      PsiType thenType = thenE == null ? null : thenE.getType();
-      PsiType elseType = elseE == null ? null : elseE.getType();
-      if (elseType != null && thenType != null) {
-        boolean replaceThen = !TypeConversionUtil.isAssignable(type, thenType);
-        boolean replaceElse = !TypeConversionUtil.isAssignable(type, elseType);
+      if (thenE != null && elseE != null) {
+        boolean replaceThen = !TypeConversionUtil.areTypesAssignmentCompatible(type, thenE);
+        boolean replaceElse = !TypeConversionUtil.areTypesAssignmentCompatible(type, elseE);
         if (replaceThen != replaceElse) {
           if (replaceThen) {
             Objects.requireNonNull(typeCast.getOperand()).replace(thenE);
