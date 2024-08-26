@@ -248,10 +248,8 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /**
-   * Returns the identifier of the place in the IDE user interface from where the action is invoked
-   * or updated.
+   * Returns some user defined string intended for stats, logging and debugging.
    *
-   * @return the place identifier
    * @see com.intellij.openapi.actionSystem.ActionPlaces
    */
   @Override

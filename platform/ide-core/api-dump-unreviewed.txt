@@ -1075,8 +1075,6 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - s:getPopupPlace(java.lang.String):java.lang.String
 - s:isCommonPlace(java.lang.String):Z
 - s:isMainMenuOrActionSearch(java.lang.String):Z
-- s:isMainToolbar(java.lang.String):Z
-- s:isNewUiToolbarPlace(java.lang.String):Z
 - s:isPopupPlace(java.lang.String):Z
 - s:isShortcutPlace(java.lang.String):Z
 com.intellij.openapi.actionSystem.ActionWithDelegate
