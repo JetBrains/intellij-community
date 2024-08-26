@@ -168,7 +168,13 @@ fun <T : CommandChain> T.navigateAndFindUsages(
   warmup: Boolean = false,
   runInBackground: Boolean = false,
 ): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}findUsages")
+  val command = if (runInBackground) {
+    mutableListOf("${CMD_PREFIX}findUsagesInBackground")
+  }
+  else {
+    mutableListOf("${CMD_PREFIX}findUsages")
+  }
+
   if (expectedElementName.isNotEmpty()) {
     command.add("-expectedName $expectedElementName")
     if (position.isNotEmpty()) {
@@ -178,10 +184,6 @@ fun <T : CommandChain> T.navigateAndFindUsages(
 
   if (scope.isNotEmpty()) {
     command.add("-scope $scope")
-  }
-
-  if (runInBackground) {
-    command.add("-runInBackground")
   }
 
   if (warmup) {
