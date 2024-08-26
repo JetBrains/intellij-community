@@ -229,7 +229,7 @@ public final class MissortedModifiersInspection extends BaseInspection implement
             if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !ModifierListUtil.isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type
               // see e.g. https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html
-              if (ModifierListUtil.isTypeAnnotationAlwaysUseWithType(annotation) || !modifiers.isEmpty()) {
+              if (typeUseWithType && ModifierListUtil.isTypeAnnotationAlwaysUseWithType(annotation) || !modifiers.isEmpty()) {
                 typeAnnotation = annotation;
               }
               final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
