@@ -11,7 +11,6 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 class GradleKotlinScriptDefinitionWrapper(
     hostConfiguration: ScriptingHostConfiguration,
     legacyDefinition: KotlinScriptDefinitionFromAnnotatedTemplate,
-    gradleVersion: String,
     defaultCompilerOptions: Iterable<String>
 ) : ScriptDefinition.FromLegacy(hostConfiguration, legacyDefinition, defaultCompilerOptions) {
     override val compilationConfiguration by lazy {

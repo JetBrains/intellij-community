@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId.getPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinitionAdapterF
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -36,49 +34,33 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-private val kotlinStdLibSelector = Regex("^(kotlin-compiler-embeddable|kotlin-stdlib)-(\\d+\\.\\d+).*\\.jar\$")
-
 fun loadGradleDefinitions(workingDir: String, gradleHome: String?, javaHome: String?, project: Project): List<ScriptDefinition> {
-    try {
-        val (templateClasspath, additionalClassPath) = getFullDefinitionsClasspath(gradleHome)
+    val loadedDefinitions = try {
+        val gradleLibDir = gradleHome.toGradleHomePath()
 
-        val kotlinDslTemplates = ArrayList<ScriptDefinition>()
+        val templateClasspath = getFullDefinitionsClasspath(gradleLibDir)
+        scriptingDebugLog { "Gradle definitions additional classpath: $templateClasspath" }
+
+        val kotlinLibsClassPath = kotlinStdlibAndCompiler(gradleLibDir)
+
+        val languageVersionCompilerOptions = findStdLibLanguageVersion(kotlinLibsClassPath)
+
+        val templateClasses = listOf(
+            "org.gradle.kotlin.dsl.KotlinInitScript",
+            "org.gradle.kotlin.dsl.KotlinSettingsScript",
+            "org.gradle.kotlin.dsl.KotlinBuildScript",
+        )
 
         loadGradleTemplates(
             workingDir,
-            templateClass = "org.gradle.kotlin.dsl.KotlinInitScript",
+            templateClasses = templateClasses,
             gradleHome = gradleHome,
             javaHome = javaHome,
             templateClasspath = templateClasspath,
-            additionalClassPath = additionalClassPath,
-            project
-        ).let { kotlinDslTemplates.addAll(it) }
-
-        loadGradleTemplates(
-            workingDir,
-            templateClass = "org.gradle.kotlin.dsl.KotlinSettingsScript",
-            gradleHome = gradleHome,
-            javaHome = javaHome,
-            templateClasspath = templateClasspath,
-            additionalClassPath = additionalClassPath,
-            project
-        ).let { kotlinDslTemplates.addAll(it) }
-
-        // KotlinBuildScript should be last because it has wide scriptFilePattern
-        loadGradleTemplates(
-            workingDir,
-            templateClass = "org.gradle.kotlin.dsl.KotlinBuildScript",
-            gradleHome = gradleHome,
-            javaHome = javaHome,
-            templateClasspath = templateClasspath,
-            additionalClassPath = additionalClassPath,
-            project
-        ).let { kotlinDslTemplates.addAll(it) }
-
-
-        if (kotlinDslTemplates.isNotEmpty()) {
-            return kotlinDslTemplates.distinct()
-        }
+            additionalClassPath = kotlinLibsClassPath,
+            project,
+            languageVersionCompilerOptions
+        ).distinct()
     } catch (t: Throwable) {
         // TODO: review exception handling
 
@@ -88,11 +70,14 @@ fun loadGradleDefinitions(workingDir: String, gradleHome: String?, javaHome: Str
             scriptingDebugLog { "error loading gradle script templates ${t.message}" }
         }
 
-        return listOf(ErrorGradleScriptDefinition(project, t.message))
+        listOf(ErrorGradleScriptDefinition(project, t.message))
     }
 
-    return listOf(ErrorGradleScriptDefinition(project))
+    if (loadedDefinitions.isEmpty()) {
+        return listOf(ErrorGradleScriptDefinition(project))
+    }
 
+    return loadedDefinitions
 }
 
 
@@ -149,35 +134,37 @@ class ErrorScriptDependenciesResolver(
     }
 }
 
-fun findStdLibLanguageVersion(classpath: List<Path>): LanguageVersion? = classpath.map { it.parent }.toSet().mapNotNull { path ->
-    Files.newDirectoryStream(path) { kotlinStdLibSelector.find(it.name) != null }.use {
-        val resultPath = it.firstOrNull() ?: return@use null
-        val matchResult = kotlinStdLibSelector.find(resultPath.name) ?: return@use null
-        LanguageVersion.fromVersionString(matchResult.groupValues[2])
-    }
-}.firstOrNull()
+private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<String> {
+    if (kotlinLibsClassPath.isEmpty()) return emptyList()
+
+    val kotlinStdLibSelector = Regex("^(kotlin-compiler-embeddable|kotlin-stdlib)-(\\d+\\.\\d+).*\\.jar\$")
+    val result = kotlinStdLibSelector.find(kotlinLibsClassPath.first().name) ?: return emptyList()
+
+    if (result.groupValues.size < 3) return emptyList()
+    val version = result.groupValues[2]
+    return LanguageVersion.fromVersionString(version)?.let { listOf("-language-version", it.versionString) } ?: emptyList()
+}
 
 private fun loadGradleTemplates(
     projectPath: String,
-    templateClass: String,
+    templateClasses: List<String>,
     gradleHome: String?,
     javaHome: String?,
     templateClasspath: List<Path>,
     additionalClassPath: List<Path>,
-    project: Project
+    project: Project,
+    defaultCompilerOptions: List<String>
 ): List<ScriptDefinition> {
     val gradleExeSettings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
         project,
         projectPath,
         GradleConstants.SYSTEM_ID
     )
-    val defaultCompilerOptions = findStdLibLanguageVersion(templateClasspath)?.let {
-        listOf("-language-version", it.versionString)
-    } ?: emptyList()
 
     val hostConfiguration = createHostConfiguration(projectPath, gradleHome, javaHome, gradleExeSettings)
+
     return loadDefinitionsFromTemplatesByPaths(
-        listOf(templateClass),
+        templateClasses,
         templateClasspath,
         hostConfiguration,
         additionalClassPath,
@@ -185,11 +172,9 @@ private fun loadGradleTemplates(
     ).map {
         it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let { legacyDef ->
             // Expand scope for old gradle script definition
-            val version = GradleInstallationManager.getGradleVersion(gradleHome) ?: GradleVersion.current().version
             GradleKotlinScriptDefinitionWrapper(
                 it.hostConfiguration,
                 legacyDef,
-                version,
                 defaultCompilerOptions
             )
         } ?: it
@@ -219,40 +204,38 @@ private fun createHostConfiguration(
     }
 }
 
-fun getFullDefinitionsClasspath(gradleHome: String?): Pair<List<Path>, List<Path>> {
-    if (gradleHome == null) {
-        error(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory"))
-    }
+private fun String?.toGradleHomePath(): Path {
+    if (this == null) error(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory"))
 
-    val gradleLibDir = Path(gradleHome, "lib").let {
+    return Path(this, "lib").let {
         it.takeIf { it.exists() && it.isDirectory() }
             ?: error(KotlinIdeaGradleBundle.message("error.text.invalid.gradle.libraries.directory", it))
     }
+}
 
+fun getFullDefinitionsClasspath(gradleLibDir: Path): List<Path> {
     val templateClasspath = Files.newDirectoryStream(gradleLibDir) { kotlinDslDependencySelector.matches(it.name) }
         .use(DirectoryStream<Path>::toList)
         .ifEmpty { error(KotlinIdeaGradleBundle.message("error.text.missing.jars.in.gradle.directory")) }
 
     scriptingDebugLog { "Gradle definitions classpath: $templateClasspath" }
 
-    val additionalClassPath = kotlinStdlibAndCompiler(gradleLibDir)
-
-    scriptingDebugLog { "Gradle definitions additional classpath: $templateClasspath" }
-
-    return templateClasspath to additionalClassPath
+    return templateClasspath
 }
 
 private fun kotlinStdlibAndCompiler(gradleLibDir: Path): List<Path> {
-    val stdlibPath = gradleLibDir.listDirectoryEntries("kotlin-stdlib-[1-9]*").firstOrNull()
+    val stdlibPath = gradleLibDir.findFirst("kotlin-stdlib-[1-9]*")
     // additionally need compiler jar to load gradle resolver
-    val compilerPath = gradleLibDir.listDirectoryEntries("kotlin-compiler-embeddable*").firstOrNull()
+    val compilerPath = gradleLibDir.findFirst("kotlin-compiler-embeddable*")
     return listOfNotNull(stdlibPath, compilerPath)
 }
+
+private fun Path.findFirst(pattern: String): Path? = Files.newDirectoryStream(this, pattern).firstOrNull()
 
 private val kotlinDslDependencySelector = Regex("^gradle-(?:kotlin-dsl|core).*\\.jar\$")
 
 fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
-    getFullDefinitionsClasspath(gradleHome).first.map { it.invariantSeparatorsPathString }
+    getFullDefinitionsClasspath(gradleHome.toGradleHomePath()).map { it.invariantSeparatorsPathString }
 } catch (e: Throwable) {
     scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
 
