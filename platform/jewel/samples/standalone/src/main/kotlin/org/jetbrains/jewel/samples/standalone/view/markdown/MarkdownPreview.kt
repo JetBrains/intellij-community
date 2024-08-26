@@ -1,19 +1,14 @@
 package org.jetbrains.jewel.samples.standalone.view.markdown
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -36,7 +31,8 @@ import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRenderer
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
-import org.jetbrains.jewel.ui.component.VerticalScrollbar
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import java.awt.Desktop
 import java.net.URI
 
@@ -87,20 +83,16 @@ internal fun MarkdownPreview(
     val background = remember(isDark) { if (isDark) Color(0xff0d1117) else Color.White }
 
     ProvideMarkdownStyling(markdownStyling, blockRenderer) {
-        Box(modifier.background(background)) {
-            val lazyListState = rememberLazyListState()
+        val lazyListState = rememberLazyListState()
+        VerticallyScrollableContainer(lazyListState, modifier.background(background)) {
             LazyMarkdown(
                 markdownBlocks = markdownBlocks,
                 modifier = Modifier.background(background),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding =
+                    PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp + scrollbarContentSafePadding(), bottom = 8.dp),
                 state = lazyListState,
                 selectable = true,
                 onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
-            )
-
-            VerticalScrollbar(
-                rememberScrollbarAdapter(lazyListState),
-                Modifier.align(Alignment.TopEnd).fillMaxHeight().padding(2.dp),
             )
         }
     }

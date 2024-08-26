@@ -4,8 +4,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.OutputTransformation
+import androidx.compose.foundation.text.input.TextFieldDecorator
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,71 +30,78 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.offset
+import kotlin.math.max
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.theme.textFieldStyle
-import kotlin.math.max
 
-/**
- * @param placeholder the optional placeholder to be displayed over the
- *     component when the [value] is empty.
- */
+@Suppress("DuplicatedCode") // The dupe is scheduled for removal
 @Composable
 public fun TextField(
     state: TextFieldState,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    outline: Outline = Outline.None,
-    placeholder: @Composable() (() -> Unit)? = null,
-    leadingIcon: @Composable() (() -> Unit)? = null,
-    trailingIcon: @Composable() (() -> Unit)? = null,
-    undecorated: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    style: TextFieldStyle = JewelTheme.textFieldStyle,
+    inputTransformation: InputTransformation? = null,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    onKeyboardAction: KeyboardActionHandler? = null,
+    onTextLayout: (Density.(getResult: () -> TextLayoutResult?) -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: TextFieldStyle = JewelTheme.textFieldStyle,
+    outline: Outline = Outline.None,
+    placeholder: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    outputTransformation: OutputTransformation? = null,
+    undecorated: Boolean = false,
 ) {
     InputField(
         state = state,
+        modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
-        outline = outline,
-        undecorated = undecorated,
+        inputTransformation = inputTransformation,
+        textStyle = textStyle,
         keyboardOptions = keyboardOptions,
-        singleLine = true,
-        maxLines = 1,
+        onKeyboardAction = onKeyboardAction,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        onTextLayout = onTextLayout,
         interactionSource = interactionSource,
         style = style,
-        textStyle = textStyle,
-        showScrollbar = false,
-        modifier = modifier,
-        decorationBox = { innerTextField, _ ->
-            val minSize = style.metrics.minSize
+        outline = outline,
+        outputTransformation = outputTransformation,
+        decorator =
+            if (!undecorated) {
+                TextFieldDecorator { innerTextField ->
+                    val minSize = style.metrics.minSize
 
-            TextFieldDecorationBox(
-                modifier = Modifier
-                    .defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
-                    .padding(style.metrics.contentPadding),
-                innerTextField = innerTextField,
-                textStyle = textStyle,
-                placeholderTextColor = style.colors.placeholder,
-                placeholder = if (state.text.isEmpty()) placeholder else null,
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-            )
-        },
+                    TextFieldDecorationBox(
+                        modifier =
+                            Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
+                                .padding(style.metrics.contentPadding),
+                        innerTextField = innerTextField,
+                        textStyle = textStyle,
+                        placeholderTextColor = style.colors.placeholder,
+                        placeholder = if (state.text.isEmpty()) placeholder else null,
+                        leadingIcon = leadingIcon,
+                        trailingIcon = trailingIcon,
+                    )
+                }
+            } else {
+                null
+            },
+        scrollState = rememberScrollState(),
     )
 }
 
-/**
- * @param placeholder the optional placeholder to be displayed over the
- *     component when the [value] is empty.
- */
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Deprecated("Please use TextField(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
 @Composable
 public fun TextField(
@@ -113,6 +126,7 @@ public fun TextField(
     val textFieldValue = textFieldValueState.copy(text = value)
     var lastTextValue by remember(value) { mutableStateOf(value) }
 
+    @Suppress("DEPRECATION")
     TextField(
         value = textFieldValue,
         onValueChange = { newTextFieldValueState ->
@@ -142,10 +156,8 @@ public fun TextField(
     )
 }
 
-/**
- * @param placeholder the optional placeholder to be displayed over the
- *     component when the [value] is empty.
- */
+@Suppress("DuplicatedCode") // This is scheduled for removal
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Deprecated("Please use TextField(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
 @Composable
 public fun TextField(
@@ -167,6 +179,7 @@ public fun TextField(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
+    @Suppress("DEPRECATION")
     InputField(
         value = value,
         onValueChange = onValueChange,
@@ -215,14 +228,10 @@ private fun TextFieldDecorationBox(
         modifier = modifier,
         content = {
             if (leadingIcon != null) {
-                Box(modifier = Modifier.layoutId(LEADING_ID), contentAlignment = Alignment.Center) {
-                    leadingIcon()
-                }
+                Box(modifier = Modifier.layoutId(LEADING_ID), contentAlignment = Alignment.Center) { leadingIcon() }
             }
             if (trailingIcon != null) {
-                Box(modifier = Modifier.layoutId(TRAILING_ID), contentAlignment = Alignment.Center) {
-                    trailingIcon()
-                }
+                Box(modifier = Modifier.layoutId(TRAILING_ID), contentAlignment = Alignment.Center) { trailingIcon() }
             }
             if (placeholder != null) {
                 Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.Center) {
@@ -234,9 +243,7 @@ private fun TextFieldDecorationBox(
                 }
             }
 
-            Box(modifier = Modifier.layoutId(TEXT_FIELD_ID), propagateMinConstraints = true) {
-                innerTextField()
-            }
+            Box(modifier = Modifier.layoutId(TEXT_FIELD_ID), propagateMinConstraints = true) { innerTextField() }
         },
     ) { measurables, incomingConstraints ->
         // used to calculate the constraints for measuring elements that will be placed in a row
@@ -244,40 +251,22 @@ private fun TextFieldDecorationBox(
         val iconConstraints = incomingConstraints.copy(minWidth = 0, minHeight = 0)
 
         // measure trailing icon
-        val trailingPlaceable =
-            measurables.find { it.layoutId == TRAILING_ID }?.measure(iconConstraints)
+        val trailingPlaceable = measurables.find { it.layoutId == TRAILING_ID }?.measure(iconConstraints)
 
         val leadingPlaceable = measurables.find { it.layoutId == LEADING_ID }?.measure(iconConstraints)
         occupiedSpaceHorizontally += trailingPlaceable?.width ?: 0
         occupiedSpaceHorizontally += leadingPlaceable?.width ?: 0
 
         val textFieldConstraints =
-            incomingConstraints.offset(horizontal = -occupiedSpaceHorizontally)
-                .copy(minHeight = 0)
-        val textFieldPlaceable =
-            measurables.single { it.layoutId == TEXT_FIELD_ID }
-                .measure(textFieldConstraints)
+            incomingConstraints.offset(horizontal = -occupiedSpaceHorizontally).copy(minHeight = 0)
+        val textFieldPlaceable = measurables.single { it.layoutId == TEXT_FIELD_ID }.measure(textFieldConstraints)
 
         // measure placeholder
         val placeholderConstraints = textFieldConstraints.copy(minWidth = 0)
-        val placeholderPlaceable =
-            measurables.find { it.layoutId == PLACEHOLDER_ID }
-                ?.measure(placeholderConstraints)
+        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
-        val width =
-            calculateWidth(
-                leadingPlaceable,
-                trailingPlaceable,
-                textFieldPlaceable,
-                incomingConstraints,
-            )
-        val height =
-            calculateHeight(
-                leadingPlaceable,
-                trailingPlaceable,
-                textFieldPlaceable,
-                incomingConstraints,
-            )
+        val width = calculateWidth(leadingPlaceable, trailingPlaceable, textFieldPlaceable, incomingConstraints)
+        val height = calculateHeight(leadingPlaceable, trailingPlaceable, textFieldPlaceable, incomingConstraints)
 
         layout(width, height) {
             place(
@@ -299,8 +288,7 @@ private fun calculateWidth(
     constraints: Constraints,
 ): Int {
     val middleSection = textFieldPlaceable.width
-    val wrappedWidth =
-        middleSection + (trailingPlaceable?.width ?: 0) + (leadingPlaceable?.width ?: 0)
+    val wrappedWidth = middleSection + (trailingPlaceable?.width ?: 0) + (leadingPlaceable?.width ?: 0)
     return max(wrappedWidth, constraints.minWidth)
 }
 
@@ -326,10 +314,7 @@ private fun Placeable.PlacementScope.place(
     placeholderPlaceable: Placeable?,
 ) {
     // placed center vertically and to the end edge horizontally
-    leadingPlaceable?.placeRelative(
-        0,
-        Alignment.CenterVertically.align(leadingPlaceable.height, height),
-    )
+    leadingPlaceable?.placeRelative(0, Alignment.CenterVertically.align(leadingPlaceable.height, height))
     trailingPlaceable?.placeRelative(
         width - trailingPlaceable.width,
         Alignment.CenterVertically.align(trailingPlaceable.height, height),

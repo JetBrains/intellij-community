@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -73,7 +72,7 @@ public fun TabStrip(
             exit = fadeOut(tween(durationMillis = 125, delayMillis = 700, easing = LinearEasing)),
         ) {
             HorizontalScrollbar(
-                adapter = rememberScrollbarAdapter(scrollState),
+                scrollState,
                 style = style.scrollbarStyle,
                 modifier = Modifier.fillMaxWidth(),
             )

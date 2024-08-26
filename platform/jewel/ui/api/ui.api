@@ -577,12 +577,22 @@ public final class org/jetbrains/jewel/ui/component/RadioButtonState$Companion {
 	public static synthetic fun of-fp8g3n8$default (Lorg/jetbrains/jewel/ui/component/RadioButtonState$Companion;ZZZZZZILjava/lang/Object;)J
 }
 
-public final class org/jetbrains/jewel/ui/component/ScrollbarsKt {
-	public static final fun HorizontalScrollbar (Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun HorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun TabStripHorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
-	public static final fun VerticalScrollbar (Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun VerticalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
+public final class org/jetbrains/jewel/ui/component/ScrollableContainerKt {
+	public static final fun HorizontallyScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun HorizontallyScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun HorizontallyScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Landroidx/compose/foundation/ScrollState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticallyScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticallyScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticallyScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun scrollbarContentSafePadding (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)F
+}
+
+public final class org/jetbrains/jewel/ui/component/ScrollbarKt {
+	public static final fun HorizontalScrollbar (Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun VerticalScrollbar (Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZLandroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/SegmentedControlButtonData {
@@ -870,13 +880,13 @@ public final class org/jetbrains/jewel/ui/component/TabsKt {
 }
 
 public final class org/jetbrains/jewel/ui/component/TextAreaKt {
-	public static final fun TextArea (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/foundation/text/KeyboardOptions;ILorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;ZLandroidx/compose/runtime/Composer;III)V
-	public static final fun TextArea (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TextArea (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TextArea (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/text/input/InputTransformation;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/input/KeyboardActionHandler;Landroidx/compose/foundation/text/input/TextFieldLineLimits;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/text/input/OutputTransformation;ZLandroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TextArea (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TextArea (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TextFieldKt {
-	public static final fun TextField (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/foundation/text/KeyboardOptions;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
+	public static final fun TextField (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/text/input/InputTransformation;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/input/KeyboardActionHandler;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/text/input/OutputTransformation;ZLandroidx/compose/runtime/Composer;III)V
 	public static final fun TextField (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 }
@@ -1862,16 +1872,20 @@ public final class org/jetbrains/jewel/ui/component/styling/RadioButtonStylingKt
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarColors$Companion;
-	public synthetic fun <init> (JJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getThumbBackground-0d7_KjU ()J
-	public final fun getThumbBackgroundHovered-0d7_KjU ()J
-	public final fun getThumbBackgroundPressed-0d7_KjU ()J
+	public final fun getThumbBackgroundActive-0d7_KjU ()J
 	public final fun getThumbBorder-0d7_KjU ()J
-	public final fun getThumbBorderHovered-0d7_KjU ()J
-	public final fun getThumbBorderPressed-0d7_KjU ()J
+	public final fun getThumbBorderActive-0d7_KjU ()J
+	public final fun getThumbOpaqueBackground-0d7_KjU ()J
+	public final fun getThumbOpaqueBackgroundHovered-0d7_KjU ()J
+	public final fun getThumbOpaqueBorder-0d7_KjU ()J
+	public final fun getThumbOpaqueBorderHovered-0d7_KjU ()J
 	public final fun getTrackBackground-0d7_KjU ()J
-	public final fun getTrackBackgroundHovered-0d7_KjU ()J
+	public final fun getTrackBackgroundExpanded-0d7_KjU ()J
+	public final fun getTrackOpaqueBackground-0d7_KjU ()J
+	public final fun getTrackOpaqueBackgroundHovered-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1882,14 +1896,10 @@ public final class org/jetbrains/jewel/ui/component/styling/ScrollbarColors$Comp
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;FFFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMinThumbLength-D9Ej5fM ()F
 	public final fun getThumbCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
-	public final fun getThumbThickness-D9Ej5fM ()F
-	public final fun getThumbThicknessExpanded-D9Ej5fM ()F
-	public final fun getTrackPadding ()Landroidx/compose/foundation/layout/PaddingValues;
-	public final fun getTrackPaddingExpanded ()Landroidx/compose/foundation/layout/PaddingValues;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1918,25 +1928,51 @@ public final class org/jetbrains/jewel/ui/component/styling/ScrollbarStylingKt {
 }
 
 public abstract interface class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility {
+	public abstract fun getExpandAnimationDuration-UwyO8pc ()J
+	public abstract fun getLingerDuration-UwyO8pc ()J
+	public abstract fun getThumbColorAnimationDuration-UwyO8pc ()J
+	public abstract fun getTrackColorAnimationDuration-UwyO8pc ()J
+	public abstract fun getTrackPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public abstract fun getTrackPaddingWithBorder ()Landroidx/compose/foundation/layout/PaddingValues;
+	public abstract fun getTrackThickness-D9Ej5fM ()F
+	public abstract fun getTrackThicknessExpanded-D9Ej5fM ()F
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible : org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility {
 	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;
+	public synthetic fun <init> (FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public fun getExpandAnimationDuration-UwyO8pc ()J
+	public fun getLingerDuration-UwyO8pc ()J
+	public final fun getScrollbarBackgroundColorDark-0d7_KjU ()J
+	public final fun getScrollbarBackgroundColorLight-0d7_KjU ()J
+	public fun getThumbColorAnimationDuration-UwyO8pc ()J
+	public fun getTrackColorAnimationDuration-UwyO8pc ()J
+	public fun getTrackPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public fun getTrackPaddingWithBorder ()Landroidx/compose/foundation/layout/PaddingValues;
+	public fun getTrackThickness-D9Ej5fM ()F
+	public fun getTrackThicknessExpanded-D9Ej5fM ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling : org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;
-	public synthetic fun <init> (JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAppearAnimationDuration-UwyO8pc ()J
-	public final fun getDisappearAnimationDuration-UwyO8pc ()J
-	public final fun getExpandAnimationDuration-UwyO8pc ()J
-	public final fun getLingerDuration-UwyO8pc ()J
+	public fun getExpandAnimationDuration-UwyO8pc ()J
+	public fun getLingerDuration-UwyO8pc ()J
+	public fun getThumbColorAnimationDuration-UwyO8pc ()J
+	public fun getTrackColorAnimationDuration-UwyO8pc ()J
+	public fun getTrackPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public fun getTrackPaddingWithBorder ()Landroidx/compose/foundation/layout/PaddingValues;
+	public fun getTrackThickness-D9Ej5fM ()F
+	public fun getTrackThicknessExpanded-D9Ej5fM ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

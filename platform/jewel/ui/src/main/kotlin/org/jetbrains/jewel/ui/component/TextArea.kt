@@ -1,12 +1,21 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.OutputTransformation
+import androidx.compose.foundation.text.input.TextFieldDecorator
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -20,70 +29,168 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
+import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 
-/**
- * @param placeholder the optional placeholder to be displayed over the
- *     component when the [value] is empty.
- */
 @Composable
 public fun TextArea(
     state: TextFieldState,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    outline: Outline = Outline.None,
-    placeholder: @Composable() (() -> Unit)? = null,
-    undecorated: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    maxLines: Int = Int.MAX_VALUE,
-    style: TextAreaStyle = JewelTheme.textAreaStyle,
+    inputTransformation: InputTransformation? = null,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    onKeyboardAction: KeyboardActionHandler? = null,
+    lineLimits: TextFieldLineLimits = TextFieldLineLimits.MultiLine(),
+    onTextLayout: (Density.(getResult: () -> TextLayoutResult?) -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    showScrollbar: Boolean = true,
+    style: TextAreaStyle = JewelTheme.textAreaStyle,
+    outline: Outline = Outline.None,
+    placeholder: @Composable (() -> Unit)? = null,
+    decorationBoxModifier: Modifier = Modifier,
+    outputTransformation: OutputTransformation? = null,
+    undecorated: Boolean = false,
+    scrollState: ScrollState = rememberScrollState(),
+    scrollbarStyle: ScrollbarStyle? = JewelTheme.scrollbarStyle,
 ) {
     val minSize = style.metrics.minSize
     InputField(
         state = state,
+        modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
-        outline = outline,
-        undecorated = undecorated,
+        inputTransformation = inputTransformation,
+        textStyle = textStyle,
         keyboardOptions = keyboardOptions,
-        singleLine = false,
-        maxLines = maxLines,
+        onKeyboardAction = onKeyboardAction,
+        lineLimits = lineLimits,
+        onTextLayout = onTextLayout,
         interactionSource = interactionSource,
         style = style,
-        textStyle = textStyle,
-        showScrollbar = showScrollbar,
-        modifier = modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
-        decorationBox = { innerTextField, _ ->
-            TextAreaDecorationBox(
-                innerTextField = innerTextField,
-                contentPadding = style.metrics.contentPadding,
-                placeholderTextColor = style.colors.placeholder,
-                placeholder = if (state.text.isEmpty()) placeholder else null,
-                textStyle = textStyle,
-            )
-        },
+        outline = outline,
+        outputTransformation = outputTransformation,
+        decorator =
+            if (undecorated) {
+                NoTextAreaDecorator(style, scrollbarStyle, scrollState)
+            } else {
+                TextAreaDecorator(
+                    style,
+                    state,
+                    placeholder,
+                    textStyle,
+                    decorationBoxModifier,
+                    minSize,
+                    scrollbarStyle,
+                    scrollState,
+                )
+            },
+        undecorated = undecorated,
+        scrollState = scrollState,
     )
 }
 
-/**
- * @param placeholder the optional placeholder to be displayed over the
- *     component when the [value] is empty.
- */
+@Composable
+private fun NoTextAreaDecorator(style: TextAreaStyle, scrollbarStyle: ScrollbarStyle?, scrollState: ScrollState) =
+    TextFieldDecorator { innerTextField ->
+        val (contentPadding, innerEndPadding) =
+            calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
+
+        if (scrollbarStyle != null) {
+            TextAreaScrollableContainer(
+                scrollState = scrollState,
+                style = scrollbarStyle,
+                contentModifier = Modifier.padding(end = innerEndPadding),
+                content = { Box(Modifier.padding(contentPadding)) { innerTextField() } },
+            )
+        } else {
+            Box(Modifier.padding(contentPadding)) { innerTextField() }
+        }
+    }
+
+@Composable
+private fun TextAreaDecorator(
+    style: TextAreaStyle,
+    state: TextFieldState,
+    placeholder: @Composable (() -> Unit)?,
+    textStyle: TextStyle,
+    decorationBoxModifier: Modifier,
+    minSize: DpSize,
+    scrollbarStyle: ScrollbarStyle?,
+    scrollState: ScrollState,
+) = TextFieldDecorator { innerTextField ->
+    val (contentPadding, innerEndPadding) =
+        calculatePaddings(scrollbarStyle, style, scrollState, LocalLayoutDirection.current)
+
+    TextAreaDecorationBox(
+        innerTextField = {
+            if (scrollbarStyle != null) {
+                TextAreaScrollableContainer(
+                    scrollState = scrollState,
+                    style = scrollbarStyle,
+                    contentModifier = Modifier.padding(end = innerEndPadding),
+                    content = innerTextField,
+                )
+            } else {
+                innerTextField()
+            }
+        },
+        contentPadding = contentPadding,
+        placeholderTextColor = style.colors.placeholder,
+        placeholder = if (state.text.isEmpty()) placeholder else null,
+        textStyle = textStyle,
+        modifier = decorationBoxModifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
+    )
+}
+
+@Composable
+private fun calculatePaddings(
+    scrollbarStyle: ScrollbarStyle?,
+    style: TextAreaStyle,
+    scrollState: ScrollState,
+    layoutDirection: LayoutDirection,
+): Pair<PaddingValues, Dp> =
+    if (scrollbarStyle != null) {
+        with(style.metrics.contentPadding) {
+            val paddingValues =
+                PaddingValues(
+                    start = calculateStartPadding(layoutDirection),
+                    top = calculateTopPadding(),
+                    end = 0.dp,
+                    bottom = calculateBottomPadding(),
+                )
+
+            val scrollbarExtraPadding =
+                if (scrollState.canScrollForward || scrollState.canScrollBackward) {
+                    scrollbarContentSafePadding(scrollbarStyle)
+                } else 0.dp
+
+            paddingValues to calculateEndPadding(layoutDirection) + scrollbarExtraPadding
+        }
+    } else {
+        style.metrics.contentPadding to 0.dp
+    }
+
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Deprecated("Please use TextArea(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
 @Composable
 public fun TextArea(
@@ -103,11 +210,13 @@ public fun TextArea(
     style: TextAreaStyle = JewelTheme.textAreaStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    decorationBoxModifier: Modifier = Modifier,
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
     val textFieldValue = textFieldValueState.copy(text = value)
     var lastTextValue by remember(value) { mutableStateOf(value) }
 
+    @Suppress("DEPRECATION")
     TextArea(
         value = textFieldValue,
         onValueChange = { newTextFieldValueState ->
@@ -134,13 +243,11 @@ public fun TextArea(
         style = style,
         textStyle = textStyle,
         interactionSource = interactionSource,
+        decorationBoxModifier = decorationBoxModifier,
     )
 }
 
-/**
- * @param placeholder the optional placeholder to be displayed over the
- *     component when the [value] is empty.
- */
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Deprecated("Please use TextArea(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
 @Composable
 public fun TextArea(
@@ -160,8 +267,10 @@ public fun TextArea(
     style: TextAreaStyle = JewelTheme.textAreaStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    decorationBoxModifier: Modifier = Modifier,
 ) {
     val minSize = style.metrics.minSize
+    @Suppress("DEPRECATION")
     InputField(
         value = value,
         onValueChange = onValueChange,
@@ -186,6 +295,7 @@ public fun TextArea(
             placeholderTextColor = style.colors.placeholder,
             placeholder = if (value.text.isEmpty()) placeholder else null,
             textStyle = textStyle,
+            modifier = decorationBoxModifier,
         )
     }
 }
@@ -195,16 +305,14 @@ private fun TextAreaDecorationBox(
     innerTextField: @Composable () -> Unit,
     contentPadding: PaddingValues,
     textStyle: TextStyle,
+    modifier: Modifier,
     placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)?,
 ) {
     Layout(
         content = {
             if (placeholder != null) {
-                Box(
-                    modifier = Modifier.layoutId(PLACEHOLDER_ID),
-                    contentAlignment = Alignment.TopStart,
-                ) {
+                Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.TopStart) {
                     CompositionLocalProvider(
                         LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
                         LocalContentColor provides placeholderTextColor,
@@ -221,30 +329,22 @@ private fun TextAreaDecorationBox(
                 innerTextField()
             }
         },
+        modifier,
     ) { measurables, incomingConstraints ->
         val leftPadding = contentPadding.calculateLeftPadding(layoutDirection)
         val rightPadding = contentPadding.calculateRightPadding(layoutDirection)
         val horizontalPadding = (leftPadding + rightPadding).roundToPx()
         val verticalPadding =
-            (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding())
-                .roundToPx()
+            (contentPadding.calculateTopPadding() + contentPadding.calculateBottomPadding()).roundToPx()
 
         val textAreaConstraints =
-            incomingConstraints
-                .offset(horizontal = -horizontalPadding, vertical = -verticalPadding)
-                .copy(minHeight = 0)
+            incomingConstraints.offset(horizontal = -horizontalPadding, vertical = -verticalPadding).copy(minHeight = 0)
 
-        val textAreaPlaceable =
-            measurables
-                .single { it.layoutId == TEXT_AREA_ID }
-                .measure(textAreaConstraints)
+        val textAreaPlaceable = measurables.single { it.layoutId == TEXT_AREA_ID }.measure(textAreaConstraints)
 
         // Measure placeholder
         val placeholderConstraints = textAreaConstraints.copy(minWidth = 0, minHeight = 0)
-        val placeholderPlaceable =
-            measurables
-                .find { it.layoutId == PLACEHOLDER_ID }
-                ?.measure(placeholderConstraints)
+        val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(textAreaPlaceable, placeholderPlaceable, incomingConstraints)
         val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, verticalPadding, incomingConstraints)
@@ -266,9 +366,7 @@ private fun calculateWidth(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     incomingConstraints: Constraints,
-): Int =
-    maxOf(textFieldPlaceable.width, placeholderPlaceable?.width ?: 0)
-        .coerceAtLeast(incomingConstraints.minWidth)
+): Int = maxOf(textFieldPlaceable.width, placeholderPlaceable?.width ?: 0).coerceAtLeast(incomingConstraints.minWidth)
 
 private fun calculateHeight(
     textFieldPlaceable: Placeable,

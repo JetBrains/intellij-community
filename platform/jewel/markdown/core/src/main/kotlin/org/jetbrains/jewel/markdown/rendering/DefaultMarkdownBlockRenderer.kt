@@ -1,13 +1,8 @@
 package org.jetbrains.jewel.markdown.rendering
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,19 +15,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
@@ -41,15 +29,12 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
@@ -69,6 +54,7 @@ import org.jetbrains.jewel.markdown.WithInlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.ui.Orientation.Horizontal
 import org.jetbrains.jewel.ui.component.Divider
+import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.Text
 
 @ExperimentalJewelApi
@@ -126,13 +112,7 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
-        val renderedContent =
-            rememberRenderedContent(
-                block,
-                styling.inlinesStyling,
-                enabled,
-                onUrlClick,
-            )
+        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
         val textColor =
             styling.inlinesStyling.textStyle.color
                 .takeOrElse { LocalContentColor.current }
@@ -142,13 +122,8 @@ public open class DefaultMarkdownBlockRenderer(
 
         Text(
             modifier =
-                Modifier
-                    .focusProperties { canFocus = false }
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = onTextClick,
-                    ),
+                Modifier.focusProperties { canFocus = false }
+                    .clickable(interactionSource = interactionSource, indication = null, onClick = onTextClick),
             text = renderedContent,
             style = mergedStyle,
         )
@@ -181,13 +156,7 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
-        val renderedContent =
-            rememberRenderedContent(
-                block,
-                styling.inlinesStyling,
-                enabled,
-                onUrlClick,
-            )
+        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
         Heading(
             renderedContent,
             styling.inlinesStyling.textStyle,
@@ -208,15 +177,9 @@ public open class DefaultMarkdownBlockRenderer(
         underlineGap: Dp,
     ) {
         Column(modifier = Modifier.padding(paddingValues)) {
-            val textColor =
-                textStyle.color
-                    .takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
+            val textColor = textStyle.color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
             val mergedStyle = textStyle.merge(TextStyle(color = textColor))
-            Text(
-                text = renderedContent,
-                style = mergedStyle,
-                modifier = Modifier.focusProperties { canFocus = false },
-            )
+            Text(text = renderedContent, style = mergedStyle, modifier = Modifier.focusProperties { canFocus = false })
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
                 Spacer(Modifier.height(underlineGap))
@@ -234,21 +197,21 @@ public open class DefaultMarkdownBlockRenderer(
         onTextClick: () -> Unit,
     ) {
         Column(
-            Modifier
-                .drawBehind {
-                    val isLtr = layoutDirection == Ltr
-                    val lineWidthPx = styling.lineWidth.toPx()
-                    val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
+            Modifier.drawBehind {
+                val isLtr = layoutDirection == Ltr
+                val lineWidthPx = styling.lineWidth.toPx()
+                val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
 
-                    drawLine(
-                        styling.lineColor,
-                        Offset(x, 0f),
-                        Offset(x, size.height),
-                        lineWidthPx,
-                        styling.strokeCap,
-                        styling.pathEffect,
-                    )
-                }.padding(styling.padding),
+                drawLine(
+                    styling.lineColor,
+                    Offset(x, 0f),
+                    Offset(x, size.height),
+                    lineWidthPx,
+                    styling.strokeCap,
+                    styling.pathEffect,
+                )
+            }
+                .padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
             CompositionLocalProvider(LocalContentColor provides styling.textColor) {
@@ -286,10 +249,7 @@ public open class DefaultMarkdownBlockRenderer(
                 styling.itemVerticalSpacing
             }
 
-        Column(
-            modifier = Modifier.padding(styling.padding),
-            verticalArrangement = Arrangement.spacedBy(itemSpacing),
-        ) {
+        Column(modifier = Modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
             for ((index, item) in block.children.withIndex()) {
                 Row {
                     val number = block.startFrom + index
@@ -298,8 +258,7 @@ public open class DefaultMarkdownBlockRenderer(
                         style = styling.numberStyle,
                         color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
-                            Modifier
-                                .focusProperties { canFocus = false }
+                            Modifier.focusProperties { canFocus = false }
                                 .widthIn(min = styling.numberMinWidth)
                                 .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                         textAlign = styling.numberTextAlign,
@@ -328,10 +287,7 @@ public open class DefaultMarkdownBlockRenderer(
                 styling.itemVerticalSpacing
             }
 
-        Column(
-            modifier = Modifier.padding(styling.padding),
-            verticalArrangement = Arrangement.spacedBy(itemSpacing),
-        ) {
+        Column(modifier = Modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
             for (item in block.children) {
                 Row {
                     Text(
@@ -379,10 +335,9 @@ public open class DefaultMarkdownBlockRenderer(
         block: IndentedCodeBlock,
         styling: MarkdownStyling.Code.Indented,
     ) {
-        HorizontallyScrollingContainer(
+        MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier
-                .background(styling.background, styling.shape)
+            Modifier.background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
@@ -403,10 +358,9 @@ public open class DefaultMarkdownBlockRenderer(
         block: FencedCodeBlock,
         styling: MarkdownStyling.Code.Fenced,
     ) {
-        HorizontallyScrollingContainer(
+        MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier
-                .background(styling.background, styling.shape)
+            Modifier.background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
@@ -486,60 +440,15 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    private fun HorizontallyScrollingContainer(
+    private fun MaybeScrollingContainer(
         isScrollable: Boolean,
         modifier: Modifier = Modifier,
         content: @Composable () -> Unit,
     ) {
-        var isHovered by remember { mutableStateOf(false) }
-
-        Layout(
-            content = {
-                val scrollState = rememberScrollState()
-                Box(
-                    Modifier
-                        .layoutId("mainContent")
-                        .then(if (isScrollable) Modifier.horizontalScroll(scrollState) else Modifier),
-                ) {
-                    content()
-                }
-
-                val canScroll by derivedStateOf {
-                    scrollState.canScrollBackward || scrollState.canScrollForward
-                }
-
-                if (isScrollable && canScroll) {
-                    val alpha by animateFloatAsState(
-                        if (isHovered) 1f else 0f,
-                        tween(durationMillis = 150, easing = LinearEasing),
-                    )
-
-                    HorizontalScrollbar(
-                        rememberScrollbarAdapter(scrollState),
-                        Modifier
-                            .layoutId("containerHScrollbar")
-                            .padding(start = 2.dp, end = 2.dp, bottom = 2.dp)
-                            .alpha(alpha),
-                    )
-                }
-            },
-            modifier.onHover { isHovered = it },
-            { measurables, incomingConstraints ->
-                val contentMeasurable =
-                    measurables.singleOrNull { it.layoutId == "mainContent" }
-                        ?: error("There must be one and only one child with ID 'mainContent'")
-
-                val contentPlaceable = contentMeasurable.measure(incomingConstraints)
-
-                val scrollbarMeasurable = measurables.find { it.layoutId == "containerHScrollbar" }
-                val scrollbarPlaceable = scrollbarMeasurable?.measure(incomingConstraints)
-                val scrollbarHeight = scrollbarPlaceable?.measuredHeight ?: 0
-
-                layout(contentPlaceable.width, contentPlaceable.height + scrollbarHeight) {
-                    contentPlaceable.place(0, 0)
-                    scrollbarPlaceable?.place(0, contentPlaceable.height)
-                }
-            },
-        )
+        if (isScrollable) {
+            HorizontallyScrollableContainer(modifier) { content() }
+        } else {
+            content()
+        }
     }
 }

@@ -19,14 +19,17 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Level.APP)
 internal class SwingBridgeService(scope: CoroutineScope) {
+    private val scrollbarHelper = ScrollbarHelper.getInstance()
+
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
         combine(
             IntelliJApplication.lookAndFeelChangedFlow(scope),
-            MacScrollbarHelper.scrollbarVisibilityStyleFlow,
-            MacScrollbarHelper.trackClickBehaviorFlow,
+            scrollbarHelper.scrollbarVisibilityStyleFlow,
+            scrollbarHelper.trackClickBehaviorFlow,
         ) { _, _, _ ->
             tryGettingThemeData()
-        }.stateIn(scope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
+        }
+            .stateIn(scope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
 
     private suspend fun tryGettingThemeData(): BridgeThemeData {
         var counter = 0
@@ -43,16 +46,10 @@ internal class SwingBridgeService(scope: CoroutineScope) {
 
     private fun readThemeData(): BridgeThemeData {
         val themeDefinition = createBridgeThemeDefinition()
-        return BridgeThemeData(
-            themeDefinition = createBridgeThemeDefinition(),
-            componentStyling = createBridgeComponentStyling(themeDefinition),
-        )
+        return BridgeThemeData(themeDefinition = createBridgeThemeDefinition(), componentStyling = createBridgeComponentStyling(themeDefinition))
     }
 
-    internal data class BridgeThemeData(
-        val themeDefinition: ThemeDefinition,
-        val componentStyling: ComponentStyling,
-    ) {
+    internal data class BridgeThemeData(val themeDefinition: ThemeDefinition, val componentStyling: ComponentStyling) {
         companion object {
             val DEFAULT =
                 run {
@@ -65,10 +62,7 @@ internal class SwingBridgeService(scope: CoroutineScope) {
                             consoleTextStyle = monospaceTextStyle,
                         )
 
-                    BridgeThemeData(
-                        themeDefinition = themeDefinition,
-                        componentStyling = createBridgeComponentStyling(themeDefinition),
-                    )
+                    BridgeThemeData(themeDefinition = themeDefinition, componentStyling = createBridgeComponentStyling(themeDefinition))
                 }
         }
     }

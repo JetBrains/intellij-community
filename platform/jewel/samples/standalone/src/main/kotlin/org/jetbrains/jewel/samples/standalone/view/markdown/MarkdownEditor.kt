@@ -124,12 +124,13 @@ private fun Editor(
     state: TextFieldState,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.padding(16.dp)) {
+    Box(modifier) {
         TextArea(
             state = state,
             modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
             undecorated = true,
             textStyle = JewelTheme.editorTextStyle,
+            decorationBoxModifier = Modifier.padding(horizontal = 8.dp),
         )
     }
 }

@@ -25,6 +25,7 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun retrieveArcAsCornerSize (Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveArcAsCornerSizeOrDefault (Ljava/lang/String;Landroidx/compose/foundation/shape/CornerSize;)Landroidx/compose/foundation/shape/CornerSize;
 	public static final fun retrieveArcAsCornerSizeWithFallbacks ([Ljava/lang/String;)Landroidx/compose/foundation/shape/CornerSize;
+	public static final fun retrieveColor-0YGnOg8 (Ljava/lang/String;ZJJ)J
 	public static final fun retrieveColor-4WTKRHQ (Ljava/lang/String;J)J
 	public static final fun retrieveColorOrNull (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun retrieveColorOrUnspecified (Ljava/lang/String;)J
@@ -139,8 +140,16 @@ public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeKt {
 }
 
 public final class org/jetbrains/jewel/bridge/theme/ScrollbarBridgeKt {
-	public static final fun defaults-6ksGUsA (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;JJJJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
-	public static synthetic fun defaults-6ksGUsA$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;JJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static final fun default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+	public static final fun default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static final fun macOs-TZvXluI (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static synthetic fun macOs-TZvXluI$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static final fun macOs-fYp4AQw (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;JJJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+	public static synthetic fun macOs-fYp4AQw$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;JJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+	public static final fun windowsAndLinux-TZvXluI (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static synthetic fun windowsAndLinux-TZvXluI$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static final fun windowsAndLinux-tYhzLtE (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;JJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+	public static synthetic fun windowsAndLinux-tYhzLtE$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;JJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
 }
 
 public final class org/jetbrains/jewel/bridge/theme/SwingBridgeThemeKt {
