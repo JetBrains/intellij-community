@@ -6,10 +6,10 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface MLCompletionFeaturesScopeAnalyzer {
+interface InlineCompletionFeaturesScopeAnalyzer {
   fun analyzeScope(file: PsiFile, offset: Int): ExtendedScope? = null
 
-  companion object EMPTY : MLCompletionFeaturesScopeAnalyzer
+  companion object EMPTY : InlineCompletionFeaturesScopeAnalyzer
 
   data class ExtendedScope(
     val scope: Scope?,

@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesCollector
-import com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesScopeAnalyzer.ScopeType
+import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector
+import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesScopeAnalyzer.ScopeType
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -22,7 +22,7 @@ internal object InlineCompletionContextLogs {
   fun getFor(request: InlineCompletionRequest): List<EventPair<*>> {
     val element = if (request.startOffset == 0) null else request.file.findElementAt(request.startOffset - 1)
     val simple = captureSimple(request.file, request.editor, request.startOffset, element)
-    val featureCollectorBased = MLCompletionFeaturesCollector.get(request.file.language)?.let {
+    val featureCollectorBased = InlineCompletionFeaturesCollector.get(request.file.language)?.let {
       captureFeatureCollectorBased(request.file, request.startOffset, it, element)
     }
     return simple + featureCollectorBased.orEmpty()
@@ -103,7 +103,7 @@ internal object InlineCompletionContextLogs {
     }
   }
 
-  private fun captureFeatureCollectorBased(file: PsiFile, offset: Int, featuresCollector: MLCompletionFeaturesCollector, element: PsiElement?): List<EventPair<*>> {
+  private fun captureFeatureCollectorBased(file: PsiFile, offset: Int, featuresCollector: InlineCompletionFeaturesCollector, element: PsiElement?): List<EventPair<*>> {
     val result = mutableListOf<EventPair<*>>()
     result.addAll(addImportFeatures(featuresCollector, file))
 
@@ -124,14 +124,14 @@ internal object InlineCompletionContextLogs {
     return result
   }
 
-  private fun getExtendedScopeFeatures(featuresCollector: MLCompletionFeaturesCollector, file: PsiFile, offset: Int): List<EventPair<*>> {
+  private fun getExtendedScopeFeatures(featuresCollector: InlineCompletionFeaturesCollector, file: PsiFile, offset: Int): List<EventPair<*>> {
     val scopeFeatures = featuresCollector.getExtendedScopeFeatures(file, offset)
     return listOf(scopeFeatures.scopeFeatures, scopeFeatures.parentScopeFeatures,
                   scopeFeatures.grandParentScopeFeatures, scopeFeatures.prevSiblingScopeFeatures,
                   scopeFeatures.nextSiblingScopeFeatures).flatMapIndexed { idx, it -> getScopeFeatures(idx, it) }.toList()
   }
 
-  private fun getScopeFeatures(idx: Int, scopeFeatures: MLCompletionFeaturesCollector.ScopeFeatures?): List<EventPair<*>> {
+  private fun getScopeFeatures(idx: Int, scopeFeatures: InlineCompletionFeaturesCollector.ScopeFeatures?): List<EventPair<*>> {
     if (scopeFeatures == null) return emptyList()
     return buildList {
       add(Logs.SCOPE_TYPE[idx] with scopeFeatures.type)
@@ -146,7 +146,7 @@ internal object InlineCompletionContextLogs {
     }
   }
 
-  private fun addImportFeatures(featuresCollector: MLCompletionFeaturesCollector, file: PsiFile): List<EventPair<*>> {
+  private fun addImportFeatures(featuresCollector: InlineCompletionFeaturesCollector, file: PsiFile): List<EventPair<*>> {
     val result = mutableListOf<EventPair<*>>()
 
     val allImports = featuresCollector.getAllImports(file)
@@ -182,7 +182,7 @@ internal object InlineCompletionContextLogs {
     return result
   }
 
-  private fun MLCompletionFeaturesCollector.addKeyWordFeatures(element: PsiElement): List<EventPair<*>> {
+  private fun InlineCompletionFeaturesCollector.addKeyWordFeatures(element: PsiElement): List<EventPair<*>> {
     fun <T> zipLogs(logs: List<EventField<T>>, values: List<T>): List<EventPair<T>> {
       return logs.zip(values).map { (log, value) -> log with value }
     }
@@ -192,7 +192,7 @@ internal object InlineCompletionContextLogs {
            zipLogs(listOf(Logs.PREV_SAME_COLUMN_KEYWORD_1, Logs.PREV_SAME_COLUMN_KEYWORD_2), getPrevKeywordsIdsInTheSameColumn(element))
   }
 
-  private fun MLCompletionFeaturesCollector.addArgumentsFeatures(element: PsiElement): List<EventPair<*>> {
+  private fun InlineCompletionFeaturesCollector.addArgumentsFeatures(element: PsiElement): List<EventPair<*>> {
     val result = mutableListOf<EventPair<*>>()
 
     getArgumentFeatures(element)?.let {
@@ -208,7 +208,7 @@ internal object InlineCompletionContextLogs {
     return result
   }
 
-  private fun MLCompletionFeaturesCollector.addBracketFeatures(element: PsiElement): List<EventPair<*>> {
+  private fun InlineCompletionFeaturesCollector.addBracketFeatures(element: PsiElement): List<EventPair<*>> {
     val result = mutableListOf<EventPair<*>>()
 
     getBracketFeatures(element)?.let {

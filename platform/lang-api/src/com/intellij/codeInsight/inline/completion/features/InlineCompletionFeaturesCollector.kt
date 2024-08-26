@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.features
 
-import com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesScopeAnalyzer.ScopeType
+import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesScopeAnalyzer.ScopeType
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.Project
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface MLCompletionFeaturesCollector {
+interface InlineCompletionFeaturesCollector {
   fun getAllImports(file: PsiFile): Collection<PsiElement>
   fun getReceiverClassElement(element: PsiElement): PsiElement?
   fun countLibraries(project: Project, imports: Collection<PsiElement>): Int?
@@ -80,7 +80,7 @@ interface MLCompletionFeaturesCollector {
   )
 
   companion object {
-    private val EP_NAME = LanguageExtension<MLCompletionFeaturesCollector>("com.intellij.mlCompletionFeaturesCollector")
-    fun get(language: Language): MLCompletionFeaturesCollector? = EP_NAME.forLanguage(language)
+    private val EP_NAME = LanguageExtension<InlineCompletionFeaturesCollector>("com.intellij.mlCompletionFeaturesCollector")
+    fun get(language: Language): InlineCompletionFeaturesCollector? = EP_NAME.forLanguage(language)
   }
 }
