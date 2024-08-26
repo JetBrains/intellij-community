@@ -179,7 +179,7 @@ private fun KaSession.isAccessibleAsMemberCallable(
     symbol: KaSymbol,
     element: KtElement,
 ): Boolean {
-    if (symbol !is KaCallableSymbol || symbol.containingSymbol !is KaClassLikeSymbol) return false
+    if (symbol !is KaCallableSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
 
     val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
 
@@ -207,7 +207,7 @@ private fun KaSession.isStaticallyImportedReceiver(
 }
 
 private fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {
-    if (symbol !is KaClassLikeSymbol || symbol.containingSymbol !is KaClassLikeSymbol) return false
+    if (symbol !is KaClassLikeSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
 
     val name = symbol.name ?: return false
 

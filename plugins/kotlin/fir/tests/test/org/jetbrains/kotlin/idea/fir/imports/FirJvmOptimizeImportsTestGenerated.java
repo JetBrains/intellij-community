@@ -120,6 +120,16 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/NameCountSettingWithUnresolvedReference.kt");
             }
 
+            @TestMetadata("NestedClassesFromJavaAreConsideredMembers.kt")
+            public void testNestedClassesFromJavaAreConsideredMembers() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/NestedClassesFromJavaAreConsideredMembers.kt");
+            }
+
+            @TestMetadata("NestedStaticMembersFromJavaAreConsideredMembers.kt")
+            public void testNestedStaticMembersFromJavaAreConsideredMembers() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/NestedStaticMembersFromJavaAreConsideredMembers.kt");
+            }
+
             @TestMetadata("PackagesToUseStarImport.kt")
             public void testPackagesToUseStarImport() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/PackagesToUseStarImport.kt");

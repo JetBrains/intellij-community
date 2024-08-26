@@ -1,11 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -13,6 +12,22 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
+
+/**
+ * A patched version of [KaSession.containingDeclaration]; works as a workaround for KT-70949.
+ */
+internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclarationSymbol? {
+    symbol.containingDeclaration?.let { return it }
+
+    val declarationPsi = symbol.psi
+
+    if (declarationPsi is PsiMember) {
+        val containingClass = declarationPsi.parent as? PsiClass
+        containingClass?.namedClassSymbol?.let { return it }
+    }
+
+    return null
+}
 
 /**
  * Finds the original SAM type by the [samConstructorSymbol].

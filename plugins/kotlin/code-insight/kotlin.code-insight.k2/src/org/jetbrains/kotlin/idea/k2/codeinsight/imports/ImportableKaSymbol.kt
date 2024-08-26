@@ -46,7 +46,7 @@ internal data class ImportableKaClassLikeSymbol(
     override fun KaSession.computeImportableName(): FqName = importableFqName
 
     override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? {
-        return symbol.containingSymbol as? KaClassLikeSymbol
+        return containingDeclarationPatched(symbol) as? KaClassLikeSymbol
     }
 
     override fun KaSession.createPointer(): ImportableKaSymbolPointer {
@@ -70,7 +70,7 @@ internal data class ImportableKaCallableSymbol(
     override fun KaSession.computeImportableName(): FqName = importableFqName
 
     override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? {
-        return containingClassSymbol ?: (symbol.containingSymbol as? KaClassLikeSymbol)
+        return containingClassSymbol ?: (containingDeclarationPatched(symbol) as? KaClassLikeSymbol)
     }
 
     override fun KaSession.createPointer(): ImportableKaSymbolPointer {

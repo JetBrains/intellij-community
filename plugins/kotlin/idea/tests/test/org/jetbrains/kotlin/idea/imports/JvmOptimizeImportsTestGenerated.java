@@ -120,6 +120,16 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/NameCountSettingWithUnresolvedReference.kt");
             }
 
+            @TestMetadata("NestedClassesFromJavaAreConsideredMembers.kt")
+            public void testNestedClassesFromJavaAreConsideredMembers() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/NestedClassesFromJavaAreConsideredMembers.kt");
+            }
+
+            @TestMetadata("NestedStaticMembersFromJavaAreConsideredMembers.kt")
+            public void testNestedStaticMembersFromJavaAreConsideredMembers() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/NestedStaticMembersFromJavaAreConsideredMembers.kt");
+            }
+
             @TestMetadata("PackagesToUseStarImport.kt")
             public void testPackagesToUseStarImport() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/PackagesToUseStarImport.kt");
