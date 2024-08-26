@@ -45,7 +45,7 @@ interface LcrRow<T> {
   /**
    * `true` if the rendering item has the focus
    */
-  val hasFocus: Boolean
+  val cellHasFocus: Boolean
 
   /**
    * Row background. Used if the row is not selected and on left/right sides of selected row (new UI only)

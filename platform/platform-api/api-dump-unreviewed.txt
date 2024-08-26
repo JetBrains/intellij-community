@@ -9481,7 +9481,7 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 *:com.intellij.ui.dsl.listCellRenderer.LcrRow
 - a:gap(com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap):V
 - a:getBackground():java.awt.Color
-- a:getHasFocus():Z
+- a:getCellHasFocus():Z
 - a:getIndex():I
 - a:getList():javax.swing.JList
 - a:getSelected():Z

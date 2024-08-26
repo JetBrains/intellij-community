@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -190,7 +191,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       //noinspection unchecked
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
       if (component instanceof JComponent jComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        if (!(component instanceof GroupedElementsRenderer.MyComponent)) {
+        if (!(component instanceof GroupedElementsRenderer.MyComponent) && !(component instanceof KotlinUIDslRendererComponent)) {
           jComponent.setBorder(COMBO_ITEM_BORDER);
         }
         myContext.customizeListRendererComponent(jComponent);

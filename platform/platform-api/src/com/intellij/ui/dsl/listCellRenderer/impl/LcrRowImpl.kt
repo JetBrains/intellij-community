@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer.impl
 
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
@@ -45,8 +46,8 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     get() = listCellRendererParams!!.index
   override val selected: Boolean
     get() = listCellRendererParams!!.selected
-  override val hasFocus: Boolean
-    get() = listCellRendererParams!!.hasFocus
+  override val cellHasFocus: Boolean
+    get() = listCellRendererParams!!.cellHasFocus
 
   override var background: Color? = null
   override var selectionColor: Color? = null
@@ -86,11 +87,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   ): Component {
     cells.clear()
     gap = LcrRow.Gap.DEFAULT
+    listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
 
-    val selectionBg = if (isSelected) RenderingUtil.getSelectionBackground(list) else null
-    val isComboBox = isComboBox(list)
+    // The list is not focused when isSwingPopup = false
+    val isListFocused = isComboBoxPopup(list) || RenderingUtil.isFocused(list)
+    val selectionBg = if (isSelected) JBUI.CurrentTheme.List.Selection.background(isListFocused) else null
     val enabled: Boolean
-    if (isComboBox && index == -1) {
+    if (index == -1) {
       // Renderer for selected item in collapsed ComboBox component
       background = null
       selectionColor = null
@@ -102,8 +105,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       enabled = list.isEnabled
     }
 
-    listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
-    foreground = if (selected) RenderingUtil.getSelectionForeground(list) else RenderingUtil.getForeground(list)
+    foreground = if (selected) JBUI.CurrentTheme.List.Selection.foreground(isListFocused) else RenderingUtil.getForeground(list)
 
     renderer()
 
@@ -127,13 +129,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   private fun applyRowStyle(rendererPanel: RendererPanel) {
-    val isComboBox = isComboBox(list)
+    val isComboBoxPopup = isComboBoxPopup(list)
     if (ExperimentalUI.isNewUI()) {
-      if (isComboBox && index == -1) {
+      if (index == -1) {
         rendererPanel.initCollapsedComboBoxItem()
       }
       else {
-        rendererPanel.initItem(isComboBox, background, if (selected) selectionColor else null)
+        rendererPanel.initItem(isComboBoxPopup, background, if (selected) selectionColor else null)
       }
     }
     else {
@@ -153,8 +155,22 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     }
   }
 
-  private fun isComboBox(list: JList<*>): Boolean {
-    return UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null
+  private fun isComboBoxPopup(list: JList<*>): Boolean {
+    return isComboBoxPopupClass(list.getClientProperty(JBPopup.KEY)?.javaClass) // isSwingPopup = false
+           || UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null // isSwingPopup = true
+  }
+
+  // todo move the impl into intellij.platform.ide.impl module and use `is`
+  private fun isComboBoxPopupClass(clazz: Class<*>?): Boolean {
+    var c = clazz
+    while (c != null) {
+      if (c.name == "com.intellij.ui.popup.list.ComboBoxPopup") {
+        return true
+      }
+      c = c.superclass
+    }
+
+    return false
   }
 
   /**
@@ -177,7 +193,7 @@ private data class ListCellRendererParams<T>(
   val value: T,
   val index: Int,
   val selected: Boolean,
-  val hasFocus: Boolean,
+  val cellHasFocus: Boolean,
 )
 
 /**
@@ -327,16 +343,15 @@ private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendere
     selectionColor = null
   }
 
-  fun initItem(isComboBox: Boolean, background: Color?, selectionColor: Color?) {
+  fun initItem(isComboBoxPopup: Boolean, background: Color?, selectionColor: Color?) {
     // Update height/insets every time, so IDE scaling is applied
     isOpaque = true
     selectionArc = 8
-    if (isComboBox) {
-      selectionInsets = JBInsets.create(0, 12)
+    selectionInsets = JBInsets.create(0, 12)
+    if (isComboBoxPopup) {
       border = JBUI.Borders.empty(2, 20)
     }
     else {
-      selectionInsets = JBInsets.create(0, 12)
       border = JBUI.Borders.empty(0, 20)
     }
     preferredHeight = JBUI.CurrentTheme.List.rowHeight()
