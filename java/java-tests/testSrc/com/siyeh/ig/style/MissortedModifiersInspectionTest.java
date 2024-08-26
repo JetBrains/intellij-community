@@ -27,8 +27,20 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
     doTest();
   }
 
-  public void testTypeUseWithType() {
+  public void testTypeUseWithTypeUseGenerated() {
     doTestQuickFix();
+  }
+
+  public void testTypeUseWithTypeUseNotGenerated() {
+    doTest();
+  }
+
+  public void testTypeUseWithTypeHighlightingUseNotGenerated() {
+    doTest();
+  }
+
+  public void testTypeUseWithTypeHighlightingUseGenerated() {
+    doTest();
   }
 
   public void testSimpleComment() {
@@ -72,6 +84,9 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
     MissortedModifiersInspection inspection = new MissortedModifiersInspection();
     if (getTestName(false).contains("IgnoreAnnotations")) {
       inspection.m_requireAnnotationsFirst = false;
+    }
+    if (getTestName(false).contains("UseGenerated")) {
+      inspection.typeUseWithType = true;
     }
     return inspection;
   }
