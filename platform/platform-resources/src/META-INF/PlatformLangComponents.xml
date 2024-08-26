@@ -162,6 +162,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride"
+                        serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
