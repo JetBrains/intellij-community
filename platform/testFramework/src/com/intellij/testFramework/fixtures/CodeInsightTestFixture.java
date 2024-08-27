@@ -769,15 +769,26 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Actually, it works just like {@link #completeBasic()} but supports
    * several {@link #CARET_MARKER}.
    *
-   * @param charToTypeAfterCompletion after completion, this char will be typed if not {@code null}.
-   *                                  It could be used to complete the suggestion with {@code '\t'} for example.
-   * @param typeCharIfOnlyOneCompletion if charToTypeAfterCompletion should be placed if code is completed by {@link #completeBasic()}
+   * @param charToTypeIfOnlyOneOrNoCompletion this char will be typed when the completion performed automatically.
+   *                                          It is a legacy, consider providing it as {@code null} to avoid typing.
+   * @param charToTypeIfMultipleCompletions this char will be typed in case of multiple completion variants.
+   *                                        It could be used to complete the suggestion with {@code '\t'} for example.
+   *                                        Provide {@code null} to avoid typing.
    * @return list of all completion elements just like in {@link #completeBasic()}
    * @see #completeBasic()
    */
   @NotNull
-  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion, boolean typeCharIfOnlyOneCompletion);
+  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeIfOnlyOneOrNoCompletion,
+                                             @Nullable Character charToTypeIfMultipleCompletions);
 
+  /**
+   *
+   * @param charToTypeAfterCompletion this char will be typed after completion.
+   *                                  It could be used to complete the suggestion with {@code '\t'} for example.
+   *                                  Consider to use {@code completeBasicAllCarets(null, charToTypeIfMultipleCompletions)},
+   *                                  to avoid placing a {@code charToTypeAfterCompletion} when there are no completion variants
+   *                                  or it has only one completion that was performed automatically.
+   */
   @NotNull
   List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
