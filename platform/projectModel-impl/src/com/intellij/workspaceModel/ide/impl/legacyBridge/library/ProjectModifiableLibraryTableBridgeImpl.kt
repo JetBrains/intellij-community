@@ -16,11 +16,11 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -65,7 +65,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       LOG.error("Project library with name '$name' already exists.")
     }
 
-    val libraryEntity = LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)) {
+    val libraryEntity = LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForProjectLibrary(externalSource)) {
       this.typeId = type?.kindId?.let { LibraryTypeId(it) }
     }
 

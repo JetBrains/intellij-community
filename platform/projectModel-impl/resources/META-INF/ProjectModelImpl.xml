@@ -50,6 +50,8 @@
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryImpl"/>
 
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
                     serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>

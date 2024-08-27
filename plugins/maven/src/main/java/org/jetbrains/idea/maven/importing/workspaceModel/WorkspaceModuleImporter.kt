@@ -25,7 +25,8 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryInternal
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
@@ -63,9 +64,10 @@ internal class WorkspaceModuleImporter(
     val baseModuleDir = importData.mavenProject.directoryFile.toVirtualFileUrl(virtualFileUrlManager)
     val moduleName = importData.moduleData.moduleName
 
-    val moduleLibrarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,
-                                                                                             existingEntitySourceNames,
-                                                                                             moduleName + ModuleManagerEx.IML_EXTENSION)
+    val factory = LegacyBridgeJpsEntitySourceFactory.getInstance(project) as LegacyBridgeJpsEntitySourceFactoryInternal
+    val moduleLibrarySource = factory.createEntitySourceForModule(baseModuleDir, externalSource,
+                                                                  existingEntitySourceNames,
+                                                                                                                  moduleName + ModuleManagerEx.IML_EXTENSION)
 
     val originalModule = storageBeforeImport.resolve(ModuleId(moduleName))
     val dependencies = collectDependencies(moduleName, originalModule, importData.dependencies, moduleLibrarySource)
@@ -76,7 +78,8 @@ internal class WorkspaceModuleImporter(
   }
 
   private fun reuseOrCreateProjectLibrarySource(libraryName: String): EntitySource {
-    return LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource, existingEntitySourceNames, libraryName)
+    val factory = LegacyBridgeJpsEntitySourceFactory.getInstance(project) as LegacyBridgeJpsEntitySourceFactoryInternal
+    return factory.createEntitySourceForProjectLibrary(externalSource, existingEntitySourceNames, libraryName)
   }
 
   private fun createModuleEntity(moduleName: String,

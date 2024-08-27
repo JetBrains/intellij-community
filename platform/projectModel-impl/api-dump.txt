@@ -511,6 +511,12 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils
 - sf:findLibraryId(com.intellij.openapi.roots.libraries.Library):com.intellij.platform.workspace.jps.entities.LibraryId
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils
 - sf:getModuleLevelLibraries(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
+com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
+- sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory$Companion
+- a:createEntitySourceForModule(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.platform.workspace.storage.EntitySource
+- a:createEntitySourceForProjectLibrary(com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.platform.workspace.storage.EntitySource
+f:com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 f:com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt
 - sf:findLibraryEntity(com.intellij.openapi.roots.libraries.Library,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.LibraryEntity
 f:com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges

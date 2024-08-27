@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.ide.impl
+package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
@@ -15,41 +15,51 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-object LegacyBridgeJpsEntitySourceFactory {
-  fun createEntitySourceForModule(project: Project,
-                                  baseModuleDir: VirtualFileUrl,
-                                  externalSource: ProjectModelExternalSource?,
-                                  fileInDirectoryNames: FileInDirectorySourceNames? = null,
-                                  moduleFileName: String? = null): EntitySource {
+internal class LegacyBridgeJpsEntitySourceFactoryImpl(val project: Project) : LegacyBridgeJpsEntitySourceFactoryInternal {
+  override fun createEntitySourceForModule(
+    baseModuleDir: VirtualFileUrl,
+    externalSource: ProjectModelExternalSource?,
+    fileInDirectoryNames: FileInDirectorySourceNames?,
+    moduleFileName: String?,
+  ): EntitySource {
     val internalSource = if (fileInDirectoryNames != null && moduleFileName != null) {
-      fileInDirectoryNames.findSource(ModuleEntity::class.java, moduleFileName) ?: createInternalEntitySourceForModule(project, baseModuleDir)
-    } else {
+      fileInDirectoryNames.findSource(ModuleEntity::class.java, moduleFileName)
+      ?: createInternalEntitySourceForModule(project, baseModuleDir)
+    }
+    else {
       createInternalEntitySourceForModule(project, baseModuleDir)
     }
     return createImportedEntitySource(project, externalSource, internalSource)
   }
 
-  private fun createImportedEntitySource(project: Project,
-                                         externalSource: ProjectModelExternalSource?,
-                                         internalSource: JpsFileEntitySource?): EntitySource {
+  override fun createEntitySourceForModule(baseModuleDir: VirtualFileUrl, externalSource: ProjectModelExternalSource?): EntitySource {
+    return createEntitySourceForModule(baseModuleDir, externalSource, null, null)
+  }
+
+  private fun createImportedEntitySource(
+    project: Project,
+    externalSource: ProjectModelExternalSource?,
+    internalSource: JpsFileEntitySource?,
+  ): EntitySource {
     val internalFile = internalSource ?: return NonPersistentEntitySource
     if (externalSource == null) return internalFile
     return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
   }
 
-  private fun createInternalEntitySourceForModule(project: Project,
-                                                  baseModuleDir: VirtualFileUrl): JpsFileEntitySource? {
+  private fun createInternalEntitySourceForModule(
+    project: Project,
+    baseModuleDir: VirtualFileUrl,
+  ): JpsFileEntitySource? {
     val location = getJpsProjectConfigLocation(project) ?: return null
     return JpsProjectFileEntitySource.FileInDirectory(baseModuleDir, location)
   }
 
-  fun createEntitySourceForProjectLibrary(project: Project,
-                                          externalSource: ProjectModelExternalSource?,
-                                          fileInDirectoryNames: FileInDirectorySourceNames? = null,
-                                          fileName: String? = null): EntitySource {
+  override fun createEntitySourceForProjectLibrary(
+    externalSource: ProjectModelExternalSource?,
+    fileInDirectoryNames: FileInDirectorySourceNames?,
+    fileName: String?,
+  ): EntitySource {
     val internalEntitySource: JpsFileEntitySource? = if (fileInDirectoryNames != null && fileName != null) {
       fileInDirectoryNames.findSource(LibraryEntity::class.java, fileName) ?: createInternalEntitySourceForProjectLibrary(project)
     }
@@ -57,6 +67,10 @@ object LegacyBridgeJpsEntitySourceFactory {
       createInternalEntitySourceForProjectLibrary(project)
     }
     return createImportedEntitySource(project, externalSource, internalEntitySource)
+  }
+
+  override fun createEntitySourceForProjectLibrary(externalSource: ProjectModelExternalSource?): EntitySource {
+    return createEntitySourceForProjectLibrary(externalSource, null, null)
   }
 
   private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {

@@ -14,7 +14,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -204,7 +204,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     libraryRootsProvider: () -> List<LibraryRoot>) {
     if (libraryId in builder) return
 
-    val librarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
+    val librarySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForProjectLibrary(externalSource)
 
     builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), librarySource)
   }
