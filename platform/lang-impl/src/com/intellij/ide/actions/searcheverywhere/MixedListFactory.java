@@ -5,6 +5,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,8 +39,10 @@ final class MixedListFactory extends SEResultsListFactory {
 
     Map<String, Integer> priorities = getContributorsPriorities();
     Comparator<SearchEverywhereFoundElementInfo> prioritizedContributorsComparator = (element1, element2) -> {
-      int firstElementPriority = priorities.getOrDefault(element1.getContributor().getSearchProviderId(), 0);
-      int secondElementPriority = priorities.getOrDefault(element2.getContributor().getSearchProviderId(), 0);
+      @Nullable SearchEverywhereContributor<?> contributor1 = element1.getContributor();
+      @Nullable SearchEverywhereContributor<?> contributor2 = element2.getContributor();
+      int firstElementPriority = contributor1 == null ? 0 : priorities.getOrDefault(contributor1.getSearchProviderId(), 0);
+      int secondElementPriority = contributor2 == null ? 0 : priorities.getOrDefault(contributor2.getSearchProviderId(), 0);
       return Integer.compare(firstElementPriority, secondElementPriority);
     };
 
