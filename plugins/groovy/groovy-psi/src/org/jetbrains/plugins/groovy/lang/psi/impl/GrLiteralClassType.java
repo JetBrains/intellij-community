@@ -165,7 +165,8 @@ public abstract class GrLiteralClassType extends PsiClassType {
   }
 
   protected static String getInternalCanonicalText(@Nullable PsiType type) {
-    return type == null ? CommonClassNames.JAVA_LANG_OBJECT : type.getInternalCanonicalText();
+    if (type == null) return CommonClassNames.JAVA_LANG_OBJECT;
+    return doPreventingRecursion(type, false, () -> type.getInternalCanonicalText());
   }
 
   @NotNull
