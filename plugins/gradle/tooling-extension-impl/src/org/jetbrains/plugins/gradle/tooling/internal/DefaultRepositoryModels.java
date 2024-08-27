@@ -8,11 +8,11 @@ import org.jetbrains.plugins.gradle.model.RepositoryModels;
 import java.util.Collections;
 import java.util.List;
 
-public class DefaultRepositoriesModel implements RepositoryModels {
+public class DefaultRepositoryModels implements RepositoryModels {
 
   private final @NotNull List<MavenRepositoryModel> myRepositories;
 
-  public DefaultRepositoriesModel(@NotNull List<MavenRepositoryModel> repositories) {
+  public DefaultRepositoryModels(@NotNull List<MavenRepositoryModel> repositories) {
     myRepositories = Collections.unmodifiableList(repositories);
   }
 
@@ -26,7 +26,7 @@ public class DefaultRepositoriesModel implements RepositoryModels {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    DefaultRepositoriesModel model = (DefaultRepositoriesModel)o;
+    DefaultRepositoryModels model = (DefaultRepositoryModels)o;
 
     if (!myRepositories.equals(model.myRepositories)) return false;
 

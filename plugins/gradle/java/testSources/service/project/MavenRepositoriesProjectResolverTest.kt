@@ -33,7 +33,7 @@ class MavenRepositoriesProjectResolverTest {
     myResolver.nextResolver = mock(GradleProjectResolverExtension::class.java)
 
     myRepoList.clear()
-    val fakeModel = TestRepositoriesModel(myRepoList)
+    val fakeModel = TestRepositoryModels(myRepoList)
 
     myProject = mock(IdeaProject::class.java)
     myModule = mock(IdeaModule::class.java)
@@ -107,7 +107,7 @@ class MavenRepositoriesProjectResolverTest {
     override fun getUrl(): String = myUrl
   }
 
-  private class TestRepositoriesModel(private val myRepositories: List<MavenRepositoryModel>) : RepositoryModels {
+  private class TestRepositoryModels(private val myRepositories: List<MavenRepositoryModel>) : RepositoryModels {
     override fun getRepositories(): List<MavenRepositoryModel> = myRepositories
   }
 }
