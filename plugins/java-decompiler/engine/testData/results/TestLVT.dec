@@ -29,11 +29,11 @@ public class TestLVT {
    }
 
    public void methoda() {
-      double a = 0.0D;
-      double b = 1.0D;
+      double a = 0.0;
+      double b = 1.0;
       System.out.println(a + b);
-      a = 0.1D;
-      b = 1.1D;
+      a = 0.1;
+      b = 1.1;
       System.out.println(a + b);
    }
 }

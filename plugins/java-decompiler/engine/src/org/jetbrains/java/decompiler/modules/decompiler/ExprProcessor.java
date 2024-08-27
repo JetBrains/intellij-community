@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -348,7 +348,7 @@ public class ExprProcessor {
           if (offsets != null) { //TODO: Figure out why this nulls in some cases
             offsets.set(offset, offset + instr.length);
           }
-          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets, true);
+          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets);
           varProcessor.findLVT(left, offset + instr.length);
           exprList.add(new AssignmentExprent(left, value, offsets));
           break;

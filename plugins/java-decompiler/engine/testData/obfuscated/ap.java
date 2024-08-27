@@ -33,27 +33,27 @@ public abstract class ap implements ak {
       char[] var10000 = "K\u000eX".toCharArray();
       int var10002 = var10000.length;
       int var1 = 0;
-      char[] var10001 = var10000;
-      int var2 = var10002;
-      char[] var4;
+      char[] var9 = var10000;
+      int var4 = var10002;
+      char[] var15;
       int var10003;
       if (var10002 <= 1) {
-         var4 = var10000;
+         var15 = var10000;
          var10003 = var1;
       } else {
-         var10001 = var10000;
-         var2 = var10002;
+         var9 = var10000;
+         var4 = var10002;
          if (var10002 <= var1) {
             d = (new String(var10000)).intern();
             return;
          }
 
-         var4 = var10000;
+         var15 = var10000;
          var10003 = var1;
       }
 
       while(true) {
-         char var10004 = var4[var10003];
+         char var10004 = var15[var10003];
          byte var10005;
          switch (var1 % 5) {
             case 0:
@@ -72,18 +72,18 @@ public abstract class ap implements ak {
                var10005 = 23;
          }
 
-         var4[var10003] = (char)(var10004 ^ var10005);
+         var15[var10003] = (char)(var10004 ^ var10005);
          ++var1;
-         if (var2 == 0) {
-            var10003 = var2;
-            var4 = var10001;
+         if (var4 == 0) {
+            var10003 = var4;
+            var15 = var9;
          } else {
-            if (var2 <= var1) {
-               d = (new String(var10001)).intern();
+            if (var4 <= var1) {
+               d = (new String(var9)).intern();
                return;
             }
 
-            var4 = var10001;
+            var15 = var9;
             var10003 = var1;
          }
       }

@@ -6,7 +6,7 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
 
    public static void testStringString(Object o) {
       switch (o) {// 13
-         case R1(String var4, String s2):
+         case R1(String s1, String s2):
             if (s2.isEmpty()) {// 15
                System.out.println("2");// 16
             }
@@ -21,7 +21,7 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
 
    public static void testStringObjectWhen(Object o) {
       switch (o) {// 25
-         case R1(String s1, Object var10) when s1.hashCode() == 3:
+         case R1(String s1, Object var11) when s1.hashCode() == 3:
             if (s1.hashCode() == 1) {// 27
                System.out.println("2");// 28
                System.out.println("2");// 29
@@ -39,7 +39,7 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
    public static void testStringObject(Object o) {
       label34:
       switch (o) {// 39
-         case R1(String var4, Object var10) when var4.isEmpty():// 41
+         case R1(String s1, Object var11) when s1.isEmpty():// 41
             System.out.println("1");// 42
          default:
             System.out.println("3");// 45
@@ -51,7 +51,7 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
 
    public static void testObjectString(Object o) {
       switch (o) {// 51
-         case R1(Object s1, String var5):
+         case R1(Object s1, String s2):
             if (s1.hashCode() == 1) {// 53
                System.out.println("1");// 54
             }
@@ -66,8 +66,8 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
 
    public static void testObjectObject(Object o) {
       switch (o) {// 63
-         case R1(Object s1, Object var10):
-            if (s1.hashCode() == 1) {// 65
+         case R1(Object var6, Object var11):
+            if (var6.hashCode() == 1) {// 65
                System.out.println("1");// 66
             }
             break;
@@ -357,8 +357,8 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
    method 'testObjectObject (Ljava/lang/Object;)V' {
       0      67
       10      67
-      3d      69
-      3e      69
+      2f      69
+      30      69
       3f      69
       40      69
       41      69

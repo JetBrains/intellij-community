@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -217,7 +217,7 @@ public class VarDefinitionHelper {
   // private methods
   // *****************************************************************************
 
-  private LocalVariable findLVT(int index, Statement stat) {
+  private static LocalVariable findLVT(int index, Statement stat) {
     if (stat.getExprents() == null) {
       for (Object obj : stat.getSequentialObjects()) {
         if (obj instanceof Statement) {
@@ -245,7 +245,7 @@ public class VarDefinitionHelper {
     return null;
   }
 
-  private LocalVariable findLVT(int index, Exprent exp) {
+  private static LocalVariable findLVT(int index, Exprent exp) {
     for (Exprent e: exp.getAllExprents(false)) {
       LocalVariable lvt = findLVT(index, e);
       if (lvt != null) {
@@ -385,7 +385,7 @@ public class VarDefinitionHelper {
     return res;
   }
 
-  private boolean setDefinition(Exprent expr, Integer index) {
+  private static boolean setDefinition(Exprent expr, Integer index) {
     if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
       Exprent left = ((AssignmentExprent)expr).getLeft();
       if (left.type == Exprent.EXPRENT_VAR) {
@@ -399,7 +399,7 @@ public class VarDefinitionHelper {
     return false;
   }
 
-  private void populateTypeBounds(VarProcessor proc, Statement stat) {
+  private void populateTypeBounds() {
     Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMinExprentTypes();
     Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMaxExprentTypes();
     LinkedList<Statement> stack = new LinkedList<>();
@@ -409,8 +409,7 @@ public class VarDefinitionHelper {
       Statement st = stack.removeFirst();
 
       if (st.getExprents() != null) {
-        LinkedList<Exprent> exps = new LinkedList<>();
-        exps.addAll(st.getExprents());
+        LinkedList<Exprent> exps = new LinkedList<>(st.getExprents());
         while (!exps.isEmpty()) {
           Exprent exp = exps.removeFirst();
 
@@ -426,7 +425,7 @@ public class VarDefinitionHelper {
               } else if (exp.type == Exprent.EXPRENT_FIELD) {
                 instance = ((FieldExprent)exp).getInstance();
                 target = ((FieldExprent)exp).getClassname();
-              } else if (exp.type == Exprent.EXPRENT_EXIT) {
+              } else { //exp.type == Exprent.EXPRENT_EXIT
                 ExitExprent exit = (ExitExprent)exp;
                 if (exit.getExitType() == ExitExprent.EXIT_RETURN) {
                   instance = exit.getValue();
@@ -475,7 +474,7 @@ public class VarDefinitionHelper {
     }
   }
 
-  private VPPEntry mergeVars(Statement stat) {
+  private void mergeVars(Statement stat) {
     Map<Integer, VarVersionPair> parent = new HashMap<>(); // Always empty dua!
     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
@@ -489,27 +488,26 @@ public class VarDefinitionHelper {
       index += var.getStackSize();
     }
 
-    populateTypeBounds(varproc, stat);
+    populateTypeBounds();
 
     Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<>();
-    VPPEntry remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
+    VPPEntry remap = mergeVars(stat, parent, new HashMap<>(), blacklist);
     while (remap != null) {
       //System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
       if (!remapVar(stat, remap.getKey(), remap.getValue())) {
         blacklist.put(remap.getKey(), remap.getValue());
       }
-      remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
+      remap = mergeVars(stat, parent, new HashMap<>(), blacklist);
     }
-    return null;
   }
 
 
   private VPPEntry mergeVars(Statement stat, Map<Integer, VarVersionPair> parent, Map<Integer, VarVersionPair> leaked, Map<VarVersionPair, VarVersionPair> blacklist) {
     Map<Integer, VarVersionPair> this_vars = new HashMap<>();
-    if (parent.size() > 0)
+    if (!parent.isEmpty())
       this_vars.putAll(parent);
 
-    if (stat.getVarDefinitions().size() > 0) {
+    if (!stat.getVarDefinitions().isEmpty()) {
       for (int x = 0; x < stat.getVarDefinitions().size(); x++) {
         Exprent exp = stat.getVarDefinitions().get(x);
         if (exp.type == Exprent.EXPRENT_VAR) {
@@ -525,21 +523,16 @@ public class VarDefinitionHelper {
       }
     }
 
-    Map<Integer, VarVersionPair> scoped = null;
-    switch (stat.type) { // These are the type of statements that leak vars
-      case BASIC_BLOCK:
-      case GENERAL:
-      case ROOT:
-      case SEQUENCE:
-        scoped = leaked;
-    }
+    Map<Integer, VarVersionPair> scoped = switch (stat.type) { // These are the type of statements that leak vars
+      case BASIC_BLOCK, GENERAL, ROOT, SEQUENCE -> leaked;
+      default -> null;
+    };
 
     if (stat.getExprents() == null) {
       List<Object> objs = stat.getSequentialObjects();
       for (int i = 0; i < objs.size(); i++) {
         Object obj = objs.get(i);
-        if (obj instanceof Statement) {
-          Statement st = (Statement)obj;
+        if (obj instanceof Statement st) {
 
           //Map<VarVersionPair, VarVersionPair> blacklist_n = new HashMap<VarVersionPair, VarVersionPair>();
           Map<Integer, VarVersionPair> leaked_n = new HashMap<>();
@@ -563,7 +556,7 @@ public class VarDefinitionHelper {
           }
           */
 
-          if (leaked_n.size() > 0) {
+          if (!leaked_n.isEmpty()) {
             if (stat.type == Statement.StatementType.IF) {
               IfStatement ifst = (IfStatement)stat;
               if (obj == ifst.getIfstat() || obj == ifst.getElsestat()) {
@@ -768,7 +761,7 @@ public class VarDefinitionHelper {
     return getMergedType(minTypes.get(from), minTypes.get(to), maxTypes.get(from), maxTypes.get(to));
   }
 
-  private VarType getMergedType(VarType fromMin, VarType toMin, VarType fromMax, VarType toMax) {
+  private static VarType getMergedType(VarType fromMin, VarType toMin, VarType fromMax, VarType toMax) {
     if (fromMin != null && fromMin.equals(toMin)) {
       return fromMin; // Short circuit this for simplicities sake
     }
@@ -784,16 +777,16 @@ public class VarDefinitionHelper {
           // EXA: Collection -> List
           if (DecompilerContext.getStructContext().instanceOf(fromMax.getValue(), toMax.getValue()))
             return fromMax;
-        } else if (fromMin != null) {
+        } else {//fromMin != null
           // Pull to up to from: List -> ArrayList
           if (DecompilerContext.getStructContext().instanceOf(fromMin.getValue(), toMax.getValue()))
             return fromMin;
         }
-      } else if (toMin != null) {
+      } else {//toMin != null
         if (fromMax != null) {
           if (DecompilerContext.getStructContext().instanceOf(fromMax.getValue(), toMin.getValue()))
             return fromMax;
-        } else if (fromMin != null) {
+        } else {//fromMin != null
           if (DecompilerContext.getStructContext().instanceOf(toMin.getValue(), fromMin.getValue()))
             return toMin;
         }
@@ -812,7 +805,7 @@ public class VarDefinitionHelper {
       int index = 0;
       if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
         List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
-        if (lvt != null && lvt.size() > 0) {
+        if (lvt != null && !lvt.isEmpty()) {
           types.put(new VarVersionPair(index, 0), new VarInfo(lvt.get(0), null));
         }
         index++;
@@ -820,7 +813,7 @@ public class VarDefinitionHelper {
 
       for (VarType var : md.params) {
         List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
-        if (lvt != null && lvt.size() > 0) {
+        if (lvt != null && !lvt.isEmpty()) {
           types.put(new VarVersionPair(index, 0), new VarInfo(lvt.get(0), null));
         }
         index += var.getStackSize();
@@ -833,6 +826,9 @@ public class VarDefinitionHelper {
     for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
       typeNames.put(e.getKey(), e.getValue().getCast());
     }
+
+
+
     Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
 
     for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
@@ -852,7 +848,7 @@ public class VarDefinitionHelper {
     applyTypes(stat, lvts);
   }
 
-  private void findTypes(Statement stat, Map<VarVersionPair, VarInfo> types) {
+  private static void findTypes(Statement stat, Map<VarVersionPair, VarInfo> types) {
     if (stat == null) {
       return;
     }
@@ -878,7 +874,7 @@ public class VarDefinitionHelper {
     }
   }
 
-  private void findTypes(Exprent exp, Map<VarVersionPair, VarInfo> types) {
+  private static void findTypes(Exprent exp, Map<VarVersionPair, VarInfo> types) {
     List<Exprent> lst = exp.getAllExprents(true);
     lst.add(exp);
 
@@ -900,8 +896,8 @@ public class VarDefinitionHelper {
     }
   }
 
-  private void applyTypes(Statement stat, Map<VarVersionPair, LocalVariable> types) {
-    if (stat == null || types.size() == 0) {
+  private static void applyTypes(Statement stat, Map<VarVersionPair, LocalVariable> types) {
+    if (stat == null || types.isEmpty()) {
       return;
     }
 
@@ -926,7 +922,7 @@ public class VarDefinitionHelper {
     }
   }
 
-  private void applyTypes(Exprent exprent, Map<VarVersionPair, LocalVariable> types) {
+  private static void applyTypes(Exprent exprent, Map<VarVersionPair, LocalVariable> types) {
     if (exprent == null) {
       return;
     }
@@ -939,8 +935,6 @@ public class VarDefinitionHelper {
         LocalVariable lvt = types.get(new VarVersionPair(var));
         if (lvt != null) {
           var.setLVT(lvt);
-        } else {
-          System.currentTimeMillis();
         }
       }
     }
@@ -948,9 +942,9 @@ public class VarDefinitionHelper {
 
   //Helper classes because Java is dumb and doesn't have a Pair<K,V> class
   private static class SimpleEntry<K, V> implements Entry<K, V> {
-    private K key;
+    private final K key;
     private V value;
-    public SimpleEntry(K key, V value) {
+    private SimpleEntry(K key, V value) {
       this.key = key;
       this.value = value;
     }
@@ -964,15 +958,15 @@ public class VarDefinitionHelper {
     }
   }
   private static class VPPEntry extends SimpleEntry<VarVersionPair, VarVersionPair> {
-    public VPPEntry(VarExprent key, VarVersionPair value) {
+    private VPPEntry(VarExprent key, VarVersionPair value) {
         super(new VarVersionPair(key), value);
     }
   }
 
   private static class VarInfo {
-    private LocalVariable lvt;
-    private String cast;
-    private VarType type;
+    private final LocalVariable lvt;
+    private final String cast;
+    private final VarType type;
 
     private VarInfo(LocalVariable lvt, VarType type) {
       if (lvt != null && lvt.getSignature() != null)
@@ -1044,6 +1038,7 @@ public class VarDefinitionHelper {
           for (VarExprent white : whitelist) {
             if (var == white) {
               allowed = true;
+              break;
             }
           }
           if (!allowed) {

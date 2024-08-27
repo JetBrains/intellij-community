@@ -8,12 +8,12 @@ public class TestSwitchClassReferencesFastExitEcj {
 
          while(i < o.hashCode()) {
             switch (o) {// 8
-               case String var4:// 9
+               case String s:// 9
                   System.out.println("s");// 10
                   System.exit(0);// 11
                   ++i;// 12 13 14 15 16 17 18
                   break;// 7
-               case Integer var5:
+               case Integer in:
                   System.out.println("ii");
                   continue label16;
                default:
@@ -31,12 +31,12 @@ public class TestSwitchClassReferencesFastExitEcj {
 
          while(i < o.hashCode()) {
             switch (o) {// 28
-               case String var4:// 29
+               case String s:// 29
                   System.out.println("s");// 30
                   System.exit(0);// 31
                   ++i;// 32 34 35 36 38 39 40
                   break;// 27
-               case Integer var5:
+               case Integer in:
                   System.out.println("ii");
                   continue label16;
                default:

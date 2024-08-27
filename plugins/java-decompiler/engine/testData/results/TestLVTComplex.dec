@@ -6,48 +6,46 @@ public class TestLVTComplex {
    public static void main() {
       int[] x = new int[5];
 
-      for(int y : x) {
+      for(int var10000 : x) {
          ;
       }
 
-      for(int y : x) {
+      for(int var23 : x) {
          System.out.println("asdf");
       }
 
       ArrayList<Object> x1 = new ArrayList();
 
-      for(Object y : x1) {
+      for(Object var18 : x1) {
          ;
       }
 
       for(Object y : x1) {
          int[] x2 = new int[10];
 
-         for(int y2 : x2) {
+         for(int var24 : x2) {
             ;
-
          }
 
-         for(int y2 : x2) {
+         for(int var25 : x2) {
             System.out.println("asdf");
-
          }
 
          System.out.println("asdf");
       }
 
-      switch(Bob.HI) {
-      case HI:
-         System.out.println("HI");
-         break;
-      case LO:
-         System.out.println("LO");
+      switch (TestLVTComplex.Bob.HI) {
+         case HI:
+            System.out.println("HI");
+            break;
+         case LO:
+            System.out.println("LO");
       }
 
       if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
-         String a = "a";
+         String var14 = "a";
       } else {
-         String b = "b";
+         String var15 = "b";
       }
 
       String a2;
@@ -69,9 +67,9 @@ public class TestLVTComplex {
       LO;
 
       static {
-         for(TestLVTComplex.Bob b : values()) {
-            for(TestLVTComplex.Bob c : values()) {
-               for(TestLVTComplex.Bob d : values()) {
+         for(Bob b : values()) {
+            for(Bob c : values()) {
+               for(Bob var10000 : values()) {
                   if (b == c) {
                      System.out.println("Asdf");
                   }

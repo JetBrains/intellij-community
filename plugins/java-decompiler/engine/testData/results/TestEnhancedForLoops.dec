@@ -9,22 +9,22 @@ public class TestEnhancedForLoops {
       for(int number : numbers) {// 24
          System.out.println(number);// 25
       }
-// 27
-   }
 
-   public void forItterator() {// 31
-      for(String string : new ArrayList()) {// 32
-         System.out.println(string);
-      }// 34
+   }// 27
 
-   }
-// 38
-   public void forItteratorUnboxing() {// 39
-      for(int i : new ArrayList()) {
-         System.out.println("Value: " + i);// 41
+   public void forItterator() {
+      for(String string : new ArrayList()) {// 31
+         System.out.println(string);// 32
       }
 
-   }
+   }// 34
+
+   public void forItteratorUnboxing() {
+      for(int i : new ArrayList()) {// 38
+         System.out.println("Value: " + i);// 39
+      }
+
+   }// 41
 }
 
 class 'pkg/TestEnhancedForLoops' {
@@ -55,57 +55,57 @@ class 'pkg/TestEnhancedForLoops' {
       3a      8
       3b      8
       3c      8
-      40      11
+      40      12
    }
 
    method 'forItterator ()V' {
-      18      14
-      19      14
-      1a      14
-      1b      14
-      1c      14
-      1d      14
-      1e      14
-      1f      14
-      20      14
-      21      14
-      22      15
-      23      15
-      24      15
-      25      15
-      26      15
-      27      15
-      28      15
-      2c      17
+      18      15
+      19      15
+      1a      15
+      1b      15
+      1c      15
+      1d      15
+      1e      15
+      1f      15
+      20      15
+      21      15
+      22      16
+      23      16
+      24      16
+      25      16
+      26      16
+      27      16
+      28      16
+      2c      19
    }
 
    method 'forItteratorUnboxing ()V' {
-      18      20
-      19      20
-      1a      20
-      1b      20
-      1c      20
-      1d      20
-      1e      20
-      1f      20
-      20      20
-      21      20
-      22      20
-      23      20
-      24      20
-      25      21
-      26      21
-      27      21
-      2f      21
-      30      21
-      34      21
-      38      21
-      39      21
-      3a      21
-      3b      21
-      3c      21
-      3d      21
-      41      23
+      18      22
+      19      22
+      1a      22
+      1b      22
+      1c      22
+      1d      22
+      1e      22
+      1f      22
+      20      22
+      21      22
+      22      22
+      23      22
+      24      22
+      25      23
+      26      23
+      27      23
+      2f      23
+      30      23
+      34      23
+      38      23
+      39      23
+      3a      23
+      3b      23
+      3c      23
+      3d      23
+      41      26
    }
 }
 
@@ -113,13 +113,13 @@ Lines mapping:
 23 <-> 7
 24 <-> 9
 25 <-> 10
-27 <-> 12
-31 <-> 15
-32 <-> 16
-34 <-> 18
-38 <-> 21
-39 <-> 22
-41 <-> 24
+27 <-> 13
+31 <-> 16
+32 <-> 17
+34 <-> 20
+38 <-> 23
+39 <-> 24
+41 <-> 27
 Not mapped:
 30
 33

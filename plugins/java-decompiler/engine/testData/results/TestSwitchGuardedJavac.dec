@@ -6,9 +6,9 @@ public class TestSwitchGuardedJavac {
 
    public static void testObject(Object o) {
       switch (o) {// 10
-         case String var3 when var3.isEmpty() && var3.getBytes().length == 2 -> System.out.println("empty s");// 11
-         case String var4 -> System.out.println("s");// 12
-         case Integer var5 -> System.out.println("iii");// 13
+         case String s when s.isEmpty() && s.getBytes().length == 2 -> System.out.println("empty s");// 11
+         case String s -> System.out.println("s");// 12
+         case Integer i -> System.out.println("iii");// 13
          default -> System.out.println(o);// 14
       }
 
@@ -17,13 +17,13 @@ public class TestSwitchGuardedJavac {
 
    public static void testObject2(Object o) {
       switch (o) {// 20
-         case String var3 when var3.isEmpty() && var3.getBytes().length == 2:// 21
+         case String s when s.isEmpty() && s.getBytes().length == 2:// 21
             System.out.println("empty s");
             return;// 26
-         case String var4:// 22
+         case String s:// 22
             System.out.println("s");
             return;
-         case Integer var5:// 23
+         case Integer i:// 23
             System.out.println("ii");
             return;
          default:
@@ -37,13 +37,13 @@ public class TestSwitchGuardedJavac {
       while(true) {
          if (o.hashCode() == 1) {// 30
             switch (o) {// 31
-               case String var3 when var3.isEmpty() && var3.getBytes().length == 2:// 32
+               case String s when s.isEmpty() && s.getBytes().length == 2:// 32
                   System.out.println("empty s");// 33
                   break;// 34
-               case String var4:// 35
+               case String s:// 35
                   System.out.println("s");// 36
                   continue label33;// 37
-               case Integer var5:// 38
+               case Integer i:// 38
                   System.out.println("i");// 39
                   break;// 40
                default:

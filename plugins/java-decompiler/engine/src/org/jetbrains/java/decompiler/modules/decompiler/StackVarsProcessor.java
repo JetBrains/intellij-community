@@ -18,8 +18,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
@@ -367,6 +365,7 @@ public class StackVarsProcessor {
       }
     }
 
+    /*local variables are used now
     //workaround to preserve variable names
     AssignmentExprent assignmentExprent = (AssignmentExprent)exprent;
     if (assignmentExprent.getRight() instanceof VarExprent && assignmentExprent.getLeft() instanceof VarExprent leftExp) {
@@ -380,6 +379,7 @@ public class StackVarsProcessor {
         }
       }
     }
+    */
 
     if (isSelfReference && vernotreplaced) {
       return new int[]{-1, changed};

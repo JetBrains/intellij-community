@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
@@ -80,7 +81,7 @@ public final class LoopExtractHelper {
       }
     }
 
-    if (stats.size() > 0) { // In this case prioritize first to help the Loop enhancer
+    if (!stats.isEmpty()) { // In this case prioritize first to help the Loop enhancer
       if (stat.getParent().getStats().getLast() != stat) {
         return false;
       }
@@ -149,8 +150,8 @@ public final class LoopExtractHelper {
     // found an if statement
     if (first.type == StatementType.IF) {
       IfStatement firstif = (IfStatement)first;
-
-      if (firstif.getFirst().getExprents().isEmpty()) {
+      List<Exprent> exprents = firstif.getFirst().getExprents();
+      if (exprents != null && exprents.isEmpty()) {
 
         if (firstif.iftype == IfStatement.IFTYPE_IF && firstif.getIfstat() != null) {
           Statement ifstat = firstif.getIfstat();

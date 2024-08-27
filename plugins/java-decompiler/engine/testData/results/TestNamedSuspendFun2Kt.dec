@@ -56,16 +56,13 @@ public final class TestNamedSuspendFun2Kt {
          var3 = new NamelessClass_1(var0);
       }
 
-      Throwable var1;
+      Throwable x;
       Object var4;
       Throwable var10000;
       label486: {
-         int x;
          label452: {
             Object var2 = var3.data;
             var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();
-            Object var22;
-            boolean var10001;
             switch (var3.label) {
                case 0:
                   if (var2 instanceof SuccessOrFailure.Failure) {
@@ -78,21 +75,21 @@ public final class TestNamedSuspendFun2Kt {
                         throw ((SuccessOrFailure.Failure)var2).exception;
                      }
 
-                     var22 = var2;
+                     var23 = var2;
                   } catch (Throwable var18) {
                      var10000 = var18;
-                     var10001 = false;
+                     boolean var10001 = false;
                      break label486;
                   }
 
                   try {
-                     x = ((Number)var22).intValue();// 6
+                     x = ((Number)var23).intValue();// 6
                      if (x == 0) {
                         break label452;
                      }
                   } catch (Throwable var19) {
                      var10000 = var19;
-                     var10001 = false;
+                     boolean var25 = false;
                      break label486;
                   }
 
@@ -102,7 +99,7 @@ public final class TestNamedSuspendFun2Kt {
                   }
                   break;
                case 2:
-                  x = var3.I$0;
+                  int var21 = var3.I$0;
                   if (var2 instanceof SuccessOrFailure.Failure) {
                      throw ((SuccessOrFailure.Failure)var2).exception;
                   }
@@ -114,12 +111,12 @@ public final class TestNamedSuspendFun2Kt {
                   }
                   break;
                case 4:
-                  var1 = (Throwable)var3.L$0;
+                  x = (Throwable)var3.L$0;
                   if (var2 instanceof SuccessOrFailure.Failure) {
                      throw ((SuccessOrFailure.Failure)var2).exception;
                   }
 
-                  throw var1;
+                  throw x;
                default:
                   throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
@@ -127,25 +124,25 @@ public final class TestNamedSuspendFun2Kt {
             while(true) {
                try {
                   var3.label = 1;
-                  var22 = bar(var3);// 5
+                  var24 = bar(var3);// 5
                } catch (Throwable var17) {
                   var10000 = var17;
-                  var10001 = false;
+                  boolean var26 = false;
                   break label486;
                }
 
-               if (var22 == var4) {
+               if (var24 == var4) {
                   return var4;
                }
 
                try {
-                  x = ((Number)var22).intValue();
+                  x = ((Number)var24).intValue();
                   if (x == 0) {
                      break;
                   }
                } catch (Throwable var20) {
                   var10000 = var20;
-                  var10001 = false;
+                  boolean var27 = false;
                   break label486;
                }
 
@@ -165,13 +162,13 @@ public final class TestNamedSuspendFun2Kt {
          return 1;
       }
 
-      var1 = var10000;
-      var3.L$0 = var1;
+      x = var10000;
+      var3.L$0 = x;
       var3.label = 4;
       if (bar(var3) == var4) {
          return var4;
       } else {
-         throw var1;
+         throw x;
       }
    }
 
@@ -243,228 +240,228 @@ class 'TestNamedSuspendFun2Kt' {
       21      51
       28      55
       2c      55
-      2d      64
-      2e      64
-      2f      64
-      30      64
-      31      64
-      32      65
-      33      65
-      34      65
-      35      65
-      36      65
-      37      68
-      38      68
-      39      68
-      3a      68
-      3b      68
-      5c      70
-      5e      70
-      5f      70
-      60      70
-      61      70
-      64      71
-      65      71
-      66      71
-      67      71
-      68      71
-      69      71
-      6a      71
-      6d      129
-      6e      128
-      6f      128
-      70      128
-      71      128
-      72      128
-      73      129
-      77      136
-      78      136
-      79      136
-      7c      137
-      7d      137
-      7e      137
-      7f      76
-      81      76
-      82      76
-      83      76
-      84      76
-      87      77
-      88      77
-      89      77
-      8a      77
-      8b      77
-      8c      77
-      8d      77
-      8f      80
-      90      88
-      91      88
-      92      88
-      93      88
-      94      88
-      95      88
-      96      88
-      97      89
-      98      89
-      9b      160
-      9c      158
-      9d      158
-      9e      158
-      9f      158
-      a0      158
-      a1      159
-      a2      159
-      a3      159
-      a4      159
-      a5      159
-      a6      160
-      a7      160
-      a8      160
-      aa      160
-      ab      160
-      ac      160
-      af      161
-      b0      161
-      b1      161
-      b2      104
-      b3      104
-      b4      104
-      b5      104
-      b6      104
-      b7      105
-      b9      105
-      ba      105
-      bb      105
-      bc      105
-      bf      106
-      c0      106
-      c1      106
-      c2      106
-      c3      106
-      c4      106
-      c5      106
-      c9      109
-      ca      109
-      cb      109
-      cc      99
-      cd      98
-      ce      98
-      cf      98
-      d0      98
-      d1      98
-      d2      99
-      d3      99
-      d4      99
-      d5      109
-      d6      99
-      d7      99
-      d8      99
-      d9      109
-      da      109
-      db      100
-      dc      100
-      dd      100
-      de      109
-      df      109
-      e0      109
-      e1      109
-      e2      109
-      e3      109
-      e4      109
-      e5      109
-      e6      109
-      e7      109
-      e8      109
-      e9      109
-      ea      109
-      eb      109
-      ec      109
-      ed      109
-      ee      109
-      ef      109
-      f0      109
-      f1      109
-      f2      109
-      f3      109
-      f4      109
-      f5      109
-      f6      109
-      f7      109
-      f8      109
-      f9      109
-      fa      109
-      fb      109
-      fc      109
-      fd      109
-      fe      109
-      ff      109
-      100      109
-      101      109
-      102      109
-      103      109
-      104      109
-      105      109
-      106      109
-      107      109
-      108      109
-      109      109
-      10a      109
-      10b      109
-      10c      109
-      10d      109
-      10e      109
-      10f      109
-      110      109
-      111      109
-      112      109
-      113      109
-      114      109
-      115      109
-      116      109
-      117      109
-      118      109
-      119      109
-      11a      109
-      11b      109
-      11c      109
-      11d      109
-      11e      109
-      11f      109
-      120      109
-      121      109
-      122      109
-      123      109
-      124      109
-      125      109
-      126      109
-      127      109
-      128      109
-      129      109
-      12a      109
-      12b      109
-      12c      109
-      12d      109
-      133      123
-      134      123
-      138      123
+      2d      63
+      2e      63
+      2f      63
+      30      63
+      31      63
+      32      64
+      33      64
+      34      64
+      35      64
+      36      64
+      37      65
+      38      65
+      39      65
+      3a      65
+      3b      65
+      5c      67
+      5e      67
+      5f      67
+      60      67
+      61      67
+      64      68
+      65      68
+      66      68
+      67      68
+      68      68
+      69      68
+      6a      68
+      6d      126
+      6e      125
+      6f      125
+      70      125
+      71      125
+      72      125
+      73      126
+      77      133
+      78      133
+      79      133
+      7c      134
+      7d      134
+      7e      134
+      7f      73
+      81      73
+      82      73
+      83      73
+      84      73
+      87      74
+      88      74
+      89      74
+      8a      74
+      8b      74
+      8c      74
+      8d      74
+      8f      77
+      90      85
+      91      85
+      92      85
+      93      85
+      94      85
+      95      85
+      96      85
+      97      86
+      98      86
+      9b      157
+      9c      155
+      9d      155
+      9e      155
+      9f      155
+      a0      155
+      a1      156
+      a2      156
+      a3      156
+      a4      156
+      a5      156
+      a6      157
+      a7      157
+      a8      157
+      aa      157
+      ab      157
+      ac      157
+      af      158
+      b0      158
+      b1      158
+      b2      101
+      b3      101
+      b4      101
+      b5      101
+      b6      101
+      b7      102
+      b9      102
+      ba      102
+      bb      102
+      bc      102
+      bf      103
+      c0      103
+      c1      103
+      c2      103
+      c3      103
+      c4      103
+      c5      103
+      c9      106
+      ca      106
+      cb      106
+      cc      96
+      cd      95
+      ce      95
+      cf      95
+      d0      95
+      d1      95
+      d2      96
+      d3      96
+      d4      96
+      d5      106
+      d6      96
+      d7      96
+      d8      96
+      d9      106
+      da      106
+      db      97
+      dc      97
+      dd      97
+      de      106
+      df      106
+      e0      106
+      e1      106
+      e2      106
+      e3      106
+      e4      106
+      e5      106
+      e6      106
+      e7      106
+      e8      106
+      e9      106
+      ea      106
+      eb      106
+      ec      106
+      ed      106
+      ee      106
+      ef      106
+      f0      106
+      f1      106
+      f2      106
+      f3      106
+      f4      106
+      f5      106
+      f6      106
+      f7      106
+      f8      106
+      f9      106
+      fa      106
+      fb      106
+      fc      106
+      fd      106
+      fe      106
+      ff      106
+      100      106
+      101      106
+      102      106
+      103      106
+      104      106
+      105      106
+      106      106
+      107      106
+      108      106
+      109      106
+      10a      106
+      10b      106
+      10c      106
+      10d      106
+      10e      106
+      10f      106
+      110      106
+      111      106
+      112      106
+      113      106
+      114      106
+      115      106
+      116      106
+      117      106
+      118      106
+      119      106
+      11a      106
+      11b      106
+      11c      106
+      11d      106
+      11e      106
+      11f      106
+      120      106
+      121      106
+      122      106
+      123      106
+      124      106
+      125      106
+      126      106
+      127      106
+      128      106
+      129      106
+      12a      106
+      12b      106
+      12c      106
+      12d      106
+      133      120
+      134      120
+      138      120
    }
 
    method 'bar (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;' {
-      0      179
-      1      179
-      2      179
-      3      179
-      4      179
+      0      176
+      1      176
+      2      176
+      3      176
+      4      176
    }
 }
 
 Lines mapping:
-2 <-> 110
-3 <-> 110
-5 <-> 130
-6 <-> 89
-8 <-> 110
-9 <-> 110
-11 <-> 110
-14 <-> 180
+2 <-> 107
+3 <-> 107
+5 <-> 127
+6 <-> 86
+8 <-> 107
+9 <-> 107
+11 <-> 107
+14 <-> 177
 Not mapped:
 4

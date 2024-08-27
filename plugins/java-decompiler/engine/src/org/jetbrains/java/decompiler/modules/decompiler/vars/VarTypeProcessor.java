@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +170,7 @@ public class VarTypeProcessor {
         ((ConstExprent)exprent).setConstType(newMinType);
       }
       return currentMinType == null ||
-             (newMinType.getTypeFamily() <= currentMinType.getTypeFamily() && !newMinType.isStrictSuperset(currentMinType));
+             (newMinType!=null && newMinType.getTypeFamily() <= currentMinType.getTypeFamily() && !newMinType.isStrictSuperset(currentMinType));
     }
     VarType currentMaxType = maxExprentTypes.get(varVersion);
     VarType newMaxType;

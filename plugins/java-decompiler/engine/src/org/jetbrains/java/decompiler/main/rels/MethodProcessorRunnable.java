@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.decompiler.modules.decompiler.EliminateLoopsHelper;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -25,6 +26,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MethodProcessorRunnable implements Runnable {
   public final Object lock = new Object();
@@ -267,13 +269,15 @@ public class MethodProcessorRunnable implements Runnable {
       SynchronizedStatement sync = (SynchronizedStatement)stat;
       if (sync.getHeadexprentList().get(0).type == Exprent.EXPRENT_MONITOR) {
         MonitorExprent mon = (MonitorExprent)sync.getHeadexprentList().get(0);
-        for (Exprent e : sync.getFirst().getExprents()) {
+        List<Exprent> exprents = sync.getFirst().getExprents();
+        if (exprents == null) return;
+        for (Exprent e : exprents) {
           if (e.type == Exprent.EXPRENT_ASSIGNMENT) {
             AssignmentExprent ass = (AssignmentExprent)e;
             if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
               VarExprent var = (VarExprent)ass.getLeft();
               if (ass.getRight().equals(mon.getValue()) && !var.isVarReferenced(stat.getParent())) {
-                sync.getFirst().getExprents().remove(e);
+                exprents.remove(e);
                 break;
               }
             }

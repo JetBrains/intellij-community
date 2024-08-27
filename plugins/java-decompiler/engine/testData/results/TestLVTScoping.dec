@@ -3,7 +3,7 @@ package pkg;
 public class TestLVTScoping {
    public static void method() {
       String a;
-      if (1 == Integer.valueOf(1).intValue()) {
+      if (1 == Integer.valueOf(1)) {
          a = "YAY";
       } else {
          a = "NAY";
@@ -13,7 +13,7 @@ public class TestLVTScoping {
    }
 
    public static void method2() {
-      if (1 == Integer.valueOf(1).intValue()) {
+      if (1 == Integer.valueOf(1)) {
          String a = "YAY";
       } else {
          String a = "NAY";
@@ -23,7 +23,7 @@ public class TestLVTScoping {
    }
 
    public static void method3() {
-      if (1 == Integer.valueOf(1).intValue()) {
+      if (1 == Integer.valueOf(1)) {
          boolean a = true;
          System.out.println(a);
       } else {

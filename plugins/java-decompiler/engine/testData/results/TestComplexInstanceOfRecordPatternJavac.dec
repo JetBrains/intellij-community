@@ -5,9 +5,9 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(R(Object s1))) {
-         System.out.println(s1);// 10
-         System.out.println(s1);// 11
+      if (o instanceof R(R(Object var4))) {
+         System.out.println(var4);// 10
+         System.out.println(var4);// 11
       }
 
       System.out.println("1");// 13
@@ -23,7 +23,7 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 17
 
    public static void instanceOfTest3(Object o) {
-      if (o instanceof R2(String s1, Object var8)) {
+      if (o instanceof R2(String s1, Object var9)) {
          System.out.println(s1);// 26
          System.out.println(s1);// 27
       }
@@ -32,7 +32,7 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 25
 
    public static void instanceOfTest3_2(Object o) {
-      if (o instanceof R2(Object var8, String s1)) {
+      if (o instanceof R2(Object var9, String s1)) {
          System.out.println(s1);// 34
          System.out.println(s1);// 35
       }
@@ -90,17 +90,17 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       2      7
       3      7
       4      7
+      26      8
+      27      8
       29      8
       2a      8
       2b      8
-      2c      8
       2d      8
       2e      8
       2f      8
       30      9
       31      9
       32      9
-      33      9
       34      9
       37      12
       38      12

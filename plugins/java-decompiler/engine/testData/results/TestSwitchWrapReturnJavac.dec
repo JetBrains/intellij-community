@@ -5,13 +5,13 @@ class TestSwitchWrapReturnJavac {
 
    private static int test(S a) {
       switch (a) {// 18
-         case S.A var3 -> {// 19 20
+         case S.A a1 -> {// 19 20
             return 1;
          }
-         case S.B var4 -> {// 22 23
+         case S.B b -> {// 22 23
             return 2;
          }
-         case S.C var5 -> {// 25 26
+         case S.C c -> {// 25 26
             return 3;
          }
       }

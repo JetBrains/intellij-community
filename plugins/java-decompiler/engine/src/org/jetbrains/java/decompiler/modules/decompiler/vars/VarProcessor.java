@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -33,7 +33,7 @@ public class VarProcessor {
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
   private Map<VarVersionPair, String> mapVarNames = new HashMap<>();
-  private Map<VarVersionPair, LocalVariable> mapVarLVTs = new HashMap<>();
+  private final Map<VarVersionPair, LocalVariable> mapVarLVTs = new HashMap<>();
   private VarVersionsProcessor varVersions;
   private final Map<VarVersionPair, String> thisVars = new HashMap<>();
   private final Set<VarVersionPair> externalVars = new HashSet<>();
@@ -180,12 +180,8 @@ public class VarProcessor {
     if (!hasLVT())
       return;
 
-    LocalVariable lvt = method.getLocalVariableAttr().getVariables()
-      .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() == start).findFirst().orElse(null);
-
-    if (lvt != null) {
-      exprent.setLVT(lvt);
-    }
+    method.getLocalVariableAttr().getVariables()
+      .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() == start).findFirst().ifPresent(exprent::setLVT);
   }
 
   public void copyVarInfo(VarVersionPair from, VarVersionPair to) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.decompiler.util;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -13,7 +14,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import java.util.BitSet;
 
 //Debug printer useful for visualizing objects, no real functional value
-public class DebugPrinter {
+@SuppressWarnings({"unused", "UseOfSystemOutOrSystemErr"}) //used for debugging
+public final class DebugPrinter {
   public static void printMethod(Statement root, String name, VarProcessor varProc) {
     System.out.println(name + "{");
     if (root == null || root.getSequentialObjects() == null) {
@@ -70,23 +72,21 @@ public class DebugPrinter {
   }
 
   private static String printExprent(String indent, Exprent exp, VarProcessor varProc) {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append(indent);
       BitSet values = new BitSet();
       exp.getBytecodeRange(values);
       sb.append("(").append(values.nextSetBit(0)).append(", ").append(values.length()-1).append(") ");
       sb.append(exp.getClass().getSimpleName());
       sb.append(" ").append(exp.id).append(" ");
-      if (exp instanceof VarExprent) {
-        VarExprent varExprent = (VarExprent)exp;
+      if (exp instanceof VarExprent varExprent) {
         int currindex = varExprent.getIndex();
         int origindex = varProc == null ? -2 : varProc.getVarOriginalIndex(currindex);
         sb.append("[").append(currindex).append(":").append(origindex).append(", ").append(varExprent.isStack()).append("]");
         if (varProc != null) {
           sb.append(varProc.getCandidates(origindex));
         }
-      } else if (exp instanceof AssignmentExprent) {
-        AssignmentExprent assignmentExprent = (AssignmentExprent)exp;
+      } else if (exp instanceof AssignmentExprent assignmentExprent) {
         sb.append("{").append(printExprent(" ",assignmentExprent.getLeft(),varProc)).append(" =").append(printExprent(" ",assignmentExprent.getRight(),varProc)).append("}");
       } else if (exp instanceof IfExprent) {
         sb.append(' ').append(exp.toJava(0, new BytecodeMappingTracer()));

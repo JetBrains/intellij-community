@@ -50,12 +50,9 @@ public class bc extends DefaultHandler {
             }
 
             String var4 = this.b.toString();
-            Iterator var5 = this.d.iterator();
 
             label55: {
-               while(var5.hasNext()) {
-                  az var6 = (az)var5.next();
-
+               for(az var6 : this.d) {
                   try {
                      var6.a(var4);
                      if (var7 != 0) {
@@ -100,20 +97,14 @@ public class bc extends DefaultHandler {
    }
 
    public void processingInstruction(String var1, String var2) throws SAXException {
-      Iterator var3 = this.d.iterator();
-
-      while(var3.hasNext()) {
-         az var4 = (az)var3.next();
+      for(az var4 : this.d) {
          var4.a(var1, var2);
       }
 
    }
 
    public void startElement(String var1, String var2, String var3, Attributes var4) throws SAXException {
-      Iterator var5 = this.d.iterator();
-
-      while(var5.hasNext()) {
-         az var6 = (az)var5.next();
+      for(az var6 : this.d) {
          var6.a(var1, var3, var4);
       }
 

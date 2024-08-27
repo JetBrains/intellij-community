@@ -28,8 +28,8 @@ public final class TestKotlinConstructorKt {
          Mapping var11 = var10000;
          destination$iv$iv.add(var11);// 12
       }
-// 4 13
-      return CollectionsKt.toList((Iterable)((List)destination$iv$iv));
+
+      return CollectionsKt.toList((Iterable)((List)destination$iv$iv));// 4 13
    }
 }
 
@@ -51,8 +51,20 @@ class 'TestKotlinConstructorKt' {
       16      17
       17      17
       18      17
+      1b      19
+      1c      19
+      1d      19
+      1e      19
+      1f      19
       20      19
       21      19
+      2c      19
+      2d      19
+      2e      19
+      2f      19
+      30      19
+      31      19
+      32      19
       33      19
       34      19
       35      28
@@ -84,25 +96,25 @@ class 'TestKotlinConstructorKt' {
       61      28
       62      28
       63      28
-      68      30
-      69      30
-      6a      30
-      6b      30
-      6c      30
-      6d      30
-      6e      30
-      6f      30
-      70      30
-      71      30
-      72      30
+      68      31
+      69      31
+      6a      31
+      6b      31
+      6c      31
+      6d      31
+      6e      31
+      6f      31
+      70      31
+      71      31
+      72      31
    }
 }
 
 Lines mapping:
 2 <-> 17
 3 <-> 23
-4 <-> 31
+4 <-> 32
 10 <-> 20
 11 <-> 20
 12 <-> 29
-13 <-> 31
+13 <-> 32

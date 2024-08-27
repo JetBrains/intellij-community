@@ -43,39 +43,34 @@ public class r {
    }
 
    static {
-      int var1;
-      int var2;
-      char[] var4;
+      char[] var17;
       String[] var10000;
-      char[] var10003;
-      char[] var10004;
-      int var10005;
-      int var10006;
-      char var10007;
-      byte var10008;
       label51: {
          var10000 = new String[2];
-         var10003 = "hzE\u0016\u0001nt\u0002\u0007\u000bi|\u000275W\\T\u0007\u0001kmE\u000b\n".toCharArray();
-         var10005 = var10003.length;
-         var1 = 0;
-         var10004 = var10003;
-         var2 = var10005;
+         char[] var10003 = "hzE\u0016\u0001nt\u0002\u0007\u000bi|\u000275W\\T\u0007\u0001kmE\u000b\n".toCharArray();
+         int var10005 = var10003.length;
+         int var1 = 0;
+         var17 = var10003;
+         int var5 = var10005;
+         char[] var29;
+         int var10006;
          if (var10005 <= 1) {
-            var4 = var10003;
+            var29 = var10003;
             var10006 = var1;
          } else {
-            var10004 = var10003;
-            var2 = var10005;
+            var17 = var10003;
+            var5 = var10005;
             if (var10005 <= var1) {
                break label51;
             }
 
-            var4 = var10003;
+            var29 = var10003;
             var10006 = var1;
          }
 
          while(true) {
-            var10007 = var4[var10006];
+            char var10007 = var29[var10006];
+            byte var10008;
             switch (var1 % 5) {
                case 0:
                   var10008 = 27;
@@ -93,79 +88,82 @@ public class r {
                   var10008 = 100;
             }
 
-            var4[var10006] = (char)(var10007 ^ var10008);
+            var29[var10006] = (char)(var10007 ^ var10008);
             ++var1;
-            if (var2 == 0) {
-               var10006 = var2;
-               var4 = var10004;
+            if (var5 == 0) {
+               var10006 = var5;
+               var29 = var17;
             } else {
-               if (var2 <= var1) {
+               if (var5 <= var1) {
                   break;
                }
 
-               var4 = var10004;
+               var29 = var17;
                var10006 = var1;
             }
          }
       }
 
-      var10000[0] = (new String(var10004)).intern();
-      var10003 = "hzE\u0016\u0001nt\u0002\u0007\u000bi|\u00021\n~a\\\u0001\u0007o|H!\u001cx|\\\u0010\rtw".toCharArray();
-      var10005 = var10003.length;
-      var1 = 0;
-      var10004 = var10003;
-      var2 = var10005;
-      if (var10005 <= 1) {
-         var4 = var10003;
-         var10006 = var1;
+      var10000[0] = (new String(var17)).intern();
+      char[] var9 = "hzE\u0016\u0001nt\u0002\u0007\u000bi|\u00021\n~a\\\u0001\u0007o|H!\u001cx|\\\u0010\rtw".toCharArray();
+      int var36 = var9.length;
+      int var2 = 0;
+      var17 = var9;
+      int var12 = var36;
+      char[] var39;
+      int var46;
+      if (var36 <= 1) {
+         var39 = var9;
+         var46 = var2;
       } else {
-         var10004 = var10003;
-         var2 = var10005;
-         if (var10005 <= var1) {
-            var10000[1] = (new String(var10003)).intern();
+         var17 = var9;
+         var12 = var36;
+         if (var36 <= var2) {
+            var10000[1] = (new String(var9)).intern();
             c = var10000;
             a = Logger.getLogger(r.class.getName());
             return;
          }
 
-         var4 = var10003;
-         var10006 = var1;
+         var39 = var9;
+         var46 = var2;
       }
 
       while(true) {
-         var10007 = var4[var10006];
-         switch (var1 % 5) {
+         char var47 = var39[var46];
+         byte var48;
+         switch (var2 % 5) {
             case 0:
-               var10008 = 27;
+               var48 = 27;
                break;
             case 1:
-               var10008 = 25;
+               var48 = 25;
                break;
             case 2:
-               var10008 = 44;
+               var48 = 44;
                break;
             case 3:
-               var10008 = 100;
+               var48 = 100;
                break;
             default:
-               var10008 = 100;
+               var48 = 100;
          }
 
-         var4[var10006] = (char)(var10007 ^ var10008);
-         ++var1;
-         if (var2 == 0) {
-            var10006 = var2;
-            var4 = var10004;
+         var39[var46] = (char)(var47 ^ var48);
+         ++var2;
+         if (var12 == 0) {
+            var46 = var12;
+            var39 = var17;
          } else {
-            if (var2 <= var1) {
-               var10000[1] = (new String(var10004)).intern();
+            if (var12 <= var2) {
+               var10000[1] = (new String(var17)).intern();
                c = var10000;
                a = Logger.getLogger(r.class.getName());
                return;
             }
 
-            var4 = var10004;
-            var10006 = var1;
+            var39 = var17;
+            var46 = var2;
          }
       }
    }

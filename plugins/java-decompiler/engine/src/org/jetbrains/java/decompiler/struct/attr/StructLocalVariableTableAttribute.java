@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -106,7 +106,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
   }
 
   public void mergeSignatures(StructLocalVariableTypeTableAttribute lvtt) {
-      lvtt.backingAttribute.localVariables.stream().forEach(type -> localVariables.stream().filter(t -> t.compareTo(type) == 0).findFirst().ifPresent(lv -> lv.signature = type.descriptor));
+      lvtt.backingAttribute.localVariables.forEach(type -> localVariables.stream().filter(t -> t.compareTo(type) == 0).findFirst().ifPresent(lv -> lv.signature = type.descriptor));
   }
 
   public static class LocalVariable implements Comparable<LocalVariable> {
@@ -164,7 +164,8 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
     
     @Override
     public String toString() {
-      return "\'("+index+","+start_pc+'-'+getEnd()+")"+descriptor+(signature!=null ? "<"+signature+"> ":" ")+name+"\'";
+      return "'(" + index + "," + start_pc + '-' + getEnd() + ")" + descriptor + (signature != null ? "<" + signature + "> " : " ") + name +
+             "'";
     }
 
     public LocalVariable rename(String newName) {

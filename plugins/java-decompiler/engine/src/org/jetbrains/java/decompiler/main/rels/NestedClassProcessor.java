@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -960,7 +960,7 @@ public class NestedClassProcessor {
     }
   }
 
-  private static interface ExprentIteratorWithReplace {
+  private interface ExprentIteratorWithReplace {
     // null - remove exprent
     // ret != exprent - replace exprent with ret
     Exprent processExprent(Exprent exprent);

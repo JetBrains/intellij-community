@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -180,8 +180,8 @@ public class StructContext {
     }
 
     int[] interfaces = cl.getInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      String intfc = cl.getPool().getPrimitiveConstant(interfaces[i]).getString();
+    for (int anInterface : interfaces) {
+      String intfc = cl.getPool().getPrimitiveConstant(anInterface).getString();
 
       if (this.instanceOf(intfc, refclass)) {
         return true;

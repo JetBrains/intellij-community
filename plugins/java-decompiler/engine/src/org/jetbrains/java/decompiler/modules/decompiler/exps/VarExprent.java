@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +25,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class VarExprent extends Exprent {
   public static final int STACK_BASE = 10000;
@@ -40,23 +42,17 @@ public class VarExprent extends Exprent {
   private boolean classDef = false;
   private boolean stack = false;
   private LocalVariable lvt = null;
-  private final boolean isFromStore;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
     this(index, varType, processor, null);
   }
 
   public VarExprent(int index, VarType varType, VarProcessor processor, BitSet bytecode) {
-    this(index, varType, processor, bytecode, false);
-  }
-
-  public VarExprent(int index, VarType varType, VarProcessor processor, BitSet bytecode, boolean fromStore) {
     super(EXPRENT_VAR);
     this.index = index;
     this.varType = varType;
     this.processor = processor;
     this.addBytecodeOffsets(bytecode);
-    this.isFromStore = fromStore;
   }
 
   @Override
@@ -76,7 +72,7 @@ public class VarExprent extends Exprent {
 
   @Override
   public Exprent copy() {
-    VarExprent var = new VarExprent(index, getVarType(), processor, bytecode, isFromStore);
+    VarExprent var = new VarExprent(index, getVarType(), processor, bytecode);
     var.setDefinition(definition);
     var.setVersion(version);
     var.setClassDef(classDef);
@@ -301,7 +297,7 @@ public class VarExprent extends Exprent {
 
   public String getName() {
     VarVersionPair pair = getVarVersionPair();
-    if (lvt != null)
+    if (lvt != null && TextUtil.isValidIdentifier(lvt.getName(), CodeConstants.BYTECODE_JAVA_22))
       return lvt.getName();
 
     if (processor != null) {

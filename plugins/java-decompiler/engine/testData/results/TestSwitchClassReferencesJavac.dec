@@ -3,8 +3,8 @@ package pkg;
 public class TestSwitchClassReferencesJavac {
    public static void testObject(Object o) {
       switch (o) {// 6
-         case String var3 -> System.out.println("s");// 7
-         case Integer var4 -> System.out.println("i");// 8
+         case String s -> System.out.println("s");// 7
+         case Integer i -> System.out.println("i");// 8
          default -> System.out.println(o);// 9
       }
 
@@ -13,8 +13,8 @@ public class TestSwitchClassReferencesJavac {
    public static void testObject2(Object o) {
       switch (o) {// 14
          case null -> System.out.println("null");// 18
-         case String var3 -> System.out.println("s");// 15
-         case Integer var4 -> System.out.println("i");// 16
+         case String s -> System.out.println("s");// 15
+         case Integer i -> System.out.println("i");// 16
          case Object var6 -> System.out.println(o);// 17
       }
 
@@ -23,8 +23,8 @@ public class TestSwitchClassReferencesJavac {
    public static void testObject3(Object o) {
       switch (o) {// 23
          case null -> System.out.println("null");// 26
-         case String var3 -> System.out.println("s");// 24
-         case Integer var4 -> System.out.println("i");// 25
+         case String s -> System.out.println("s");// 24
+         case Integer i -> System.out.println("i");// 25
          default -> System.out.println("o");// 27
       }
 
@@ -32,8 +32,8 @@ public class TestSwitchClassReferencesJavac {
 
    public static void testObject4(Object o) {
       switch (o) {// 32
-         case String var3 -> System.out.println("s");// 33
-         case Integer var4 -> System.out.println("i");// 34
+         case String s -> System.out.println("s");// 33
+         case Integer i -> System.out.println("i");// 34
          default -> System.out.println("o");// 35
       }
 

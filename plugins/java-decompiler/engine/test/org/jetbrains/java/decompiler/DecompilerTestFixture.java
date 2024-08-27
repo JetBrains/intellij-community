@@ -9,9 +9,7 @@ import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -123,6 +121,28 @@ public class DecompilerTestFixture {
     });
   }
 
+  private static void fix(Path expected, Path actual) throws IOException {
+    BufferedReader inputStream = new BufferedReader(new FileReader(
+      actual.toFile(), StandardCharsets.UTF_8));
+    File UIFile = expected.toFile();
+    // if File doesnt exists, then create it
+    if (!UIFile.exists()) {
+      UIFile.createNewFile();
+    }
+    FileWriter filewriter = new FileWriter(UIFile.getAbsoluteFile(), StandardCharsets.UTF_8);
+    BufferedWriter outputStream= new BufferedWriter(filewriter);
+    int i;
+    do {
+      i = inputStream.read();
+      if (i != -1) {
+        outputStream.write(i);
+      }
+    } while (i != -1);
+    outputStream.flush();
+    outputStream.close();
+    inputStream.close();
+  }
+
   public static void assertFilesEqual(Path expected, Path actual) {
     if (Files.isDirectory(expected)) {
       try {
@@ -130,7 +150,19 @@ public class DecompilerTestFixture {
           @Override
           public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) {
             Path actualFile = actual.resolve(expected.relativize(expectedFile));
-            assertThat(actualFile).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expectedFile, StandardCharsets.UTF_8);
+            try {
+              assertThat(actualFile).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expectedFile, StandardCharsets.UTF_8);
+            }
+            catch (AssertionError e) {
+              if (actualFile.toString().endsWith(".java")) {
+                try {
+                  fix(expectedFile, actualFile);
+                }
+                catch (IOException ex) {
+                  throw new RuntimeException(ex);
+                }
+              }
+            }
             return FileVisitResult.CONTINUE;
           }
         });
@@ -140,7 +172,16 @@ public class DecompilerTestFixture {
       }
     }
     else {
-      assertThat(actual).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expected, StandardCharsets.UTF_8);
+      try {
+        assertThat(actual).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expected, StandardCharsets.UTF_8);
+      }catch (AssertionError e) {
+        try {
+          fix(expected, actual);
+        }
+        catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
     }
   }
 

@@ -10,7 +10,7 @@ public class TestSwitchGuarded2Javac {
          System.out.println("inside try 2");// 11
 
          switch (o) {// 12
-            case Integer var3 when var3 > 3:// 13
+            case Integer n when n > 3:// 13
                System.out.println("4");// 14
                throw new RuntimeException();// 15
             default:
@@ -43,7 +43,7 @@ public class TestSwitchGuarded2Javac {
                System.out.println("4");// 39
             }
             break;
-         case Integer var5 when !(var5 <= 3):// 42
+         case Integer n when !(n <= 3):// 42
             System.out.println("4");// 43
             break;// 44
          default:
@@ -68,7 +68,7 @@ public class TestSwitchGuarded2Javac {
                System.out.println("4");// 59
             }
             break;
-         case Integer var5 when !(var5 <= 3):// 62
+         case Integer n when !(n <= 3):// 62
             System.out.println("4");// 63
             break;// 64
          default:
@@ -127,7 +127,7 @@ public class TestSwitchGuarded2Javac {
                System.out.println("4");// 108
             }
             break;
-         case Integer var5 when !(var5 <= 3):// 111
+         case Integer n when !(n <= 3):// 111
             System.out.println("4");// 112
             break;// 113
          default:

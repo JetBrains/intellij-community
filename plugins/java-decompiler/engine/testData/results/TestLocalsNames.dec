@@ -13,12 +13,12 @@ public class TestLocalsNames {
 
             assert s.renameTo(dest) : "unable to rename " + s + " to " + dest;// 28
          }
-// 31
-         long elapsed = System.currentTimeMillis() - start;// 32
-         System.out.println("took " + elapsed + "ms (" + elapsed / (long)files.length + "ms per dir)");
+
+         long elapsed = System.currentTimeMillis() - start;// 31
+         System.out.println("took " + elapsed + "ms (" + elapsed / (long)files.length + "ms per dir)");// 32
       }
-// 34
-   }
+
+   }// 34
 }
 
 class 'pkg/TestLocalsNames' {
@@ -81,36 +81,36 @@ class 'pkg/TestLocalsNames' {
       81      10
       82      10
       83      10
-      87      15
-      88      15
-      89      15
-      8a      15
-      8b      15
-      8c      15
-      8d      15
-      8e      16
-      8f      16
-      90      16
-      98      16
-      99      16
-      9d      16
-      9e      16
-      a2      16
-      a3      16
-      a7      16
-      a8      16
-      a9      16
-      aa      16
-      ab      16
-      ac      16
-      ad      16
-      b1      16
-      b2      16
-      b6      16
-      b7      16
-      b8      16
-      b9      16
-      bc      19
+      87      16
+      88      16
+      89      16
+      8a      16
+      8b      16
+      8c      16
+      8d      16
+      8e      17
+      8f      17
+      90      17
+      98      17
+      99      17
+      9d      17
+      9e      17
+      a2      17
+      a3      17
+      a7      17
+      a8      17
+      a9      17
+      aa      17
+      ab      17
+      ac      17
+      ad      17
+      b1      17
+      b2      17
+      b6      17
+      b7      17
+      b8      17
+      b9      17
+      bc      20
    }
 }
 
@@ -121,6 +121,6 @@ Lines mapping:
 26 <-> 11
 27 <-> 12
 28 <-> 14
-31 <-> 16
-32 <-> 17
-34 <-> 20
+31 <-> 17
+32 <-> 18
+34 <-> 21

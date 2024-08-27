@@ -16,7 +16,7 @@ public final class TestSynchronizedUnprotected {
       synchronized(this) {
          String var2 = "Boom";// 6
          System.out.println(var2);
-         Unit var3 = Unit.INSTANCE;// 5 7
+         Unit $i$a$1$synchronized = Unit.INSTANCE;// 5 7
       }
    }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -107,11 +107,12 @@ public final class MergeHelper {
           lastif.removeSuccessor(elseedge);
 
           // remove empty if
-          if (lastif.getFirst().getExprents().isEmpty()) {
+          List<Exprent> exprents = lastif.getFirst().getExprents();
+          if (exprents != null && exprents.isEmpty()) {
             removeLastEmptyStatement(stat, lastif);
           }
           else {
-            lastif.setExprents(lastif.getFirst().getExprents());
+            lastif.setExprents(exprents);
 
             StatEdge newedge = new StatEdge(EdgeType.CONTINUE, lastif, stat);
             lastif.addSuccessor(newedge);
@@ -144,7 +145,8 @@ public final class MergeHelper {
     if (first.type == StatementType.IF) {
       IfStatement firstif = (IfStatement)first;
 
-      if (firstif.getFirst().getExprents().isEmpty()) {
+      List<Exprent> exprents = firstif.getFirst().getExprents();
+      if (exprents != null && exprents.isEmpty()) {
 
         if (firstif.iftype == IfStatement.IFTYPE_IF) {
           if (firstif.getIfstat() == null) {
@@ -298,7 +300,7 @@ public final class MergeHelper {
 
     // get last exprent
     lastData = getLastDirectData(stat.getFirst());
-    if (lastData == null || lastData.getExprents().isEmpty()) {
+    if (lastData == null || lastData.getExprents() == null || lastData.getExprents().isEmpty()) {
       return;
     }
 
@@ -336,7 +338,7 @@ public final class MergeHelper {
           // we're not a basic block, so we can't dive inside for exprents
           if (preData.type != Statement.StatementType.BASIC_BLOCK) break;
           preData = getLastDirectData(preData);
-          if (preData != null && !preData.getExprents().isEmpty()) {
+          if (preData != null && preData.getExprents() != null && !preData.getExprents().isEmpty()) {
             initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
             if (initDoExprent.type == Exprent.EXPRENT_ASSIGNMENT) {
               hasinit = true;
@@ -377,7 +379,7 @@ public final class MergeHelper {
   }
 
   private static void cleanEmptyStatements(DoStatement dostat, Statement stat) {
-    if (stat != null && stat.getExprents().isEmpty()) {
+    if (stat != null && stat.getExprents() != null && stat.getExprents().isEmpty()) {
       List<StatEdge> lst = stat.getAllSuccessorEdges();
       if (!lst.isEmpty()) {
         stat.removeSuccessor(lst.get(0));
@@ -417,7 +419,7 @@ public final class MergeHelper {
 
     for (int i = stat.getStats().size() - 1; i >= 0; i--) {
       Statement tmp = getLastDirectData(stat.getStats().get(i));
-      if (tmp == null || !tmp.getExprents().isEmpty()) {
+      if (tmp == null || tmp.getExprents() != null && !tmp.getExprents().isEmpty()) {
         return tmp;
       }
     }
@@ -427,7 +429,7 @@ public final class MergeHelper {
   private static boolean matchForEach(DoStatement stat) {
     AssignmentExprent firstDoExprent = null;
     AssignmentExprent[] initExprents = new AssignmentExprent[3];
-    Statement firstData = null, preData = null, lastData = null;
+    Statement firstData, preData = null, lastData;
     Exprent lastExprent = null;
 
     // search for an initializing exprent
@@ -445,7 +447,7 @@ public final class MergeHelper {
         else {
           preData = current.getNeighbours(StatEdge.EdgeType.REGULAR, StatEdge.EdgeDirection.BACKWARD).get(0);
           preData = getLastDirectData(preData);
-          if (preData != null && !preData.getExprents().isEmpty()) {
+          if (preData != null && preData.getExprents() != null && !preData.getExprents().isEmpty()) {
             int size = preData.getExprents().size();
             for (int x = 0; x < initExprents.length; x++) {
               if (size > x) {
@@ -465,11 +467,11 @@ public final class MergeHelper {
     }
 
     firstData = getFirstDirectData(stat.getFirst());
-    if (firstData != null && firstData.getExprents().get(0).type == Exprent.EXPRENT_ASSIGNMENT) {
+    if (firstData != null && firstData.getExprents()!=null && firstData.getExprents().get(0).type == Exprent.EXPRENT_ASSIGNMENT) {
       firstDoExprent = (AssignmentExprent)firstData.getExprents().get(0);
     }
     lastData = getLastDirectData(stat.getFirst());
-    if (lastData != null && !lastData.getExprents().isEmpty()) {
+    if (lastData != null && lastData.getExprents() != null && !lastData.getExprents().isEmpty()) {
       lastExprent = lastData.getExprents().get(lastData.getExprents().size() - 1);
     }
 
@@ -483,19 +485,18 @@ public final class MergeHelper {
           return false;
         }
 
-        if (!isHasNextCall(drillNots(stat.getConditionExprent())) ||
+        if (stat.getConditionExprent() != null && !isHasNextCall(drillNots(stat.getConditionExprent())) ||
             firstDoExprent.type != Exprent.EXPRENT_ASSIGNMENT) {
           return false;
         }
 
-        AssignmentExprent ass = firstDoExprent;
-        if ((!isNextCall(ass.getRight()) && !isNextUnboxing(ass.getRight())) || ass.getLeft().type != Exprent.EXPRENT_VAR) {
+        if ((!isNextCall(firstDoExprent.getRight()) && !isNextUnboxing(firstDoExprent.getRight())) || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
           return false;
         }
 
-        InvocationExprent next = (InvocationExprent)getUncast(ass.getRight());
-        if (isNextUnboxing(next))
-          next = (InvocationExprent)getUncast(next.getInstance());
+        InvocationExprent next = (InvocationExprent)getUncast(firstDoExprent.getRight());
+        if (isNextUnboxing(next)){ next = (InvocationExprent)getUncast(next.getInstance());}
+        if (stat.getConditionExprent() == null) return false;
         InvocationExprent hnext = (InvocationExprent)getUncast(drillNots(stat.getConditionExprent()));
         if (next.getInstance().type != Exprent.EXPRENT_VAR ||
             hnext.getInstance().type != Exprent.EXPRENT_VAR ||
@@ -507,18 +508,19 @@ public final class MergeHelper {
 
         initExprents[0].getBytecodeRange(holder.getInstance().bytecode);
         holder.getBytecodeRange(holder.getInstance().bytecode);
-        firstDoExprent.getBytecodeRange(ass.getLeft().bytecode);
-        ass.getRight().getBytecodeRange(ass.getLeft().bytecode);
+        firstDoExprent.getBytecodeRange(firstDoExprent.getLeft().bytecode);
+        firstDoExprent.getRight().getBytecodeRange(firstDoExprent.getLeft().bytecode);
         if (stat.getIncExprent() != null) {
           stat.getIncExprent().getBytecodeRange(holder.getInstance().bytecode);
         }
         if (stat.getInitExprent() != null) {
-          stat.getInitExprent().getBytecodeRange(ass.getLeft().bytecode);
+          stat.getInitExprent().getBytecodeRange(firstDoExprent.getLeft().bytecode);
         }
 
         stat.setLoopType(DoStatement.LoopType.FOREACH);
-        stat.setInitExprent(ass.getLeft());
+        stat.setInitExprent(firstDoExprent.getLeft());
         stat.setIncExprent(holder.getInstance());
+        if (preData == null || preData.getExprents() == null) return false;
         preData.getExprents().remove(initExprents[0]);
         firstData.getExprents().remove(firstDoExprent);
 
@@ -530,6 +532,7 @@ public final class MergeHelper {
               !inc.isVarReferenced(stat.getTopParent(), copy) && !isNextCall(initExprents[1].getRight())) {
             preData.getExprents().remove(initExprents[1]);
             initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
+            if (stat.getIncExprent() == null) return false;
             stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
             stat.setIncExprent(initExprents[1].getRight());
           }
@@ -548,7 +551,7 @@ public final class MergeHelper {
 
         if (initExprents[0].getRight().type != Exprent.EXPRENT_CONST ||
             initExprents[1].getRight().type != Exprent.EXPRENT_FUNCTION ||
-            stat.getConditionExprent().type != Exprent.EXPRENT_FUNCTION) {
+            stat.getConditionExprent() != null && stat.getConditionExprent().type != Exprent.EXPRENT_FUNCTION) {
           return false;
         }
 
@@ -587,6 +590,7 @@ public final class MergeHelper {
         stat.setLoopType(DoStatement.LoopType.FOREACH);
         stat.setInitExprent(firstDoExprent.getLeft());
         stat.setIncExprent(funcRight.getLstOperands().get(0));
+        if (preData == null || preData.getExprents() == null) return false;
         preData.getExprents().remove(initExprents[0]);
         preData.getExprents().remove(initExprents[1]);
         firstData.getExprents().remove(firstDoExprent);
@@ -597,7 +601,9 @@ public final class MergeHelper {
           if (copy.getIndex() == array.getIndex() && copy.getVersion() == array.getVersion()) {
             preData.getExprents().remove(initExprents[2]);
             initExprents[2].getRight().addBytecodeOffsets(initExprents[2].bytecode);
-            initExprents[2].getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
+            Exprent exprent = stat.getIncExprent();
+            if (exprent == null) return false;
+            initExprents[2].getRight().addBytecodeOffsets(exprent.bytecode);
             stat.setIncExprent(initExprents[2].getRight());
           }
         }

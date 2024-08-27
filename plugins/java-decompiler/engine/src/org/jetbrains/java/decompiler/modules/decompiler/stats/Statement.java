@@ -819,7 +819,7 @@ public abstract class Statement implements IMatchable {
 
   // helper methods
   public String toString() {
-    return String.format("{%d}:%d", type, id);
+    return String.format("{%s}:%d", type, id);
   }
 
   //TODO: Cleanup/cache?

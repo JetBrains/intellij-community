@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -106,12 +106,16 @@ public final class DoStatement extends Statement {
         tracer.incrementCurrentSourceLine();
       }
       case FOREACH -> {
-        buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
-        buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
-        tracer.incrementCurrentSourceLine();
-        buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
-        buf.appendIndent(indent).append("}").appendLineSeparator();
-        tracer.incrementCurrentSourceLine();
+        Exprent incFirstExprent = incExprent.get(0);
+        Exprent initFirstExprent = initExprent.get(0);
+        if (initFirstExprent != null && incFirstExprent != null) {
+          buf.appendIndent(indent).append("for(").append(initFirstExprent.toJava(indent, tracer));
+          buf.append(" : ").append(incFirstExprent.toJava(indent, tracer)).append(") {").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
+          buf.appendIndent(indent).append("}").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+        }
       }
     }
     return buf;
