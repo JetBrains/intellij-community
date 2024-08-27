@@ -164,4 +164,30 @@ public class StructContext {
   public Map<String, StructClass> getClasses() {
     return classes;
   }
+
+  public boolean instanceOf(String valclass, String refclass) {
+    if (valclass.equals(refclass)) {
+      return true;
+    }
+
+    StructClass cl = this.getClass(valclass);
+    if (cl == null) {
+      return false;
+    }
+
+    if (cl.superClass != null && this.instanceOf(cl.superClass.getString(), refclass)) {
+      return true;
+    }
+
+    int[] interfaces = cl.getInterfaces();
+    for (int i = 0; i < interfaces.length; i++) {
+      String intfc = cl.getPool().getPrimitiveConstant(interfaces[i]).getString();
+
+      if (this.instanceOf(intfc, refclass)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

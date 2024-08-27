@@ -193,7 +193,12 @@ public class VarTypeProcessor {
       allExprents.add(currExprent);
       for (Exprent exprent : allExprents) {
         if (exprent.type == Exprent.EXPRENT_VAR) {
-          ((VarExprent)exprent).setVarType(VarType.VARTYPE_UNKNOWN);
+          VarExprent ve = (VarExprent)exprent;
+          if (ve.getLVT() != null) {
+            ve.setVarType(ve.getLVT().getVarType());
+          } else {
+            ve.setVarType(VarType.VARTYPE_UNKNOWN);
+          }
         }
         else if (exprent.type == Exprent.EXPRENT_CONST) {
           ConstExprent constExprent = (ConstExprent)exprent;

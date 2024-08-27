@@ -7,21 +7,18 @@ public class TestLocalsNames {
       if (file.isDirectory()) {// 22
          long start = System.currentTimeMillis();// 23
          File[] files = file.listFiles();// 25
-         File[] var5 = files;
-         int var6 = files.length;
 
-         for(int var7 = 0; var7 < var6; ++var7) {// 26
-            File s = var5[var7];
+         for(File s : files) {// 26
             File dest = new File(s.getAbsolutePath() + ".tmp");// 27
 
             assert s.renameTo(dest) : "unable to rename " + s + " to " + dest;// 28
          }
-
-         long elapsed = System.currentTimeMillis() - start;// 31
-         System.out.println("took " + elapsed + "ms (" + elapsed / (long)files.length + "ms per dir)");// 32
+// 31
+         long elapsed = System.currentTimeMillis() - start;// 32
+         System.out.println("took " + elapsed + "ms (" + elapsed / (long)files.length + "ms per dir)");
       }
-
-   }// 34
+// 34
+   }
 }
 
 class 'pkg/TestLocalsNames' {
@@ -41,91 +38,79 @@ class 'pkg/TestLocalsNames' {
       e      8
       f      8
       10      8
-      11      9
-      12      9
-      13      9
-      14      9
-      17      10
+      11      10
+      12      10
+      13      10
+      14      10
       18      10
       19      10
-      1a      12
-      1b      12
-      1c      12
-      1d      12
-      1e      12
-      1f      12
-      20      12
-      21      12
-      24      13
-      25      13
-      26      13
-      27      13
-      28      13
-      29      13
-      2a      13
-      36      14
-      37      14
-      38      14
-      39      14
-      3a      14
-      3e      14
-      3f      14
-      43      14
-      44      14
-      45      14
-      49      14
-      4a      14
-      51      16
-      52      16
-      53      16
-      54      16
-      55      16
-      56      16
-      57      16
-      66      16
-      67      16
-      6b      16
-      6c      16
-      70      16
-      71      16
-      75      16
-      76      16
-      7a      16
-      7b      16
-      7c      16
-      81      12
-      82      12
-      83      12
-      87      19
-      88      19
-      89      19
-      8a      19
-      8b      19
-      8c      19
-      8d      19
-      8e      20
-      8f      20
-      90      20
-      98      20
-      99      20
-      9d      20
-      9e      20
-      a2      20
-      a3      20
-      a7      20
-      a8      20
-      a9      20
-      aa      20
-      ab      20
-      ac      20
-      ad      20
-      b1      20
-      b2      20
-      b6      20
-      b7      20
-      b8      20
-      b9      20
-      bc      23
+      1b      10
+      1c      10
+      29      10
+      2a      10
+      36      11
+      37      11
+      38      11
+      39      11
+      3a      11
+      3e      11
+      3f      11
+      43      11
+      44      11
+      45      11
+      49      11
+      4a      11
+      51      13
+      52      13
+      53      13
+      54      13
+      55      13
+      56      13
+      57      13
+      66      13
+      67      13
+      6b      13
+      6c      13
+      70      13
+      71      13
+      75      13
+      76      13
+      7a      13
+      7b      13
+      7c      13
+      81      10
+      82      10
+      83      10
+      87      15
+      88      15
+      89      15
+      8a      15
+      8b      15
+      8c      15
+      8d      15
+      8e      16
+      8f      16
+      90      16
+      98      16
+      99      16
+      9d      16
+      9e      16
+      a2      16
+      a3      16
+      a7      16
+      a8      16
+      a9      16
+      aa      16
+      ab      16
+      ac      16
+      ad      16
+      b1      16
+      b2      16
+      b6      16
+      b7      16
+      b8      16
+      b9      16
+      bc      19
    }
 }
 
@@ -133,9 +118,9 @@ Lines mapping:
 22 <-> 7
 23 <-> 8
 25 <-> 9
-26 <-> 13
-27 <-> 15
-28 <-> 17
-31 <-> 20
-32 <-> 21
-34 <-> 24
+26 <-> 11
+27 <-> 12
+28 <-> 14
+31 <-> 16
+32 <-> 17
+34 <-> 20

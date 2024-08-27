@@ -782,6 +782,14 @@ public abstract class Statement implements IMatchable {
     this.parent = parent;
   }
 
+  public Statement getTopParent() {
+    Statement ret = this;
+    while (ret.getParent() != null) {
+      ret = ret.getParent();
+    }
+    return ret;
+  }
+
   public HashSet<StatEdge> getLabelEdges() {  // FIXME: why HashSet?
     return labelEdges;
   }
@@ -811,7 +819,7 @@ public abstract class Statement implements IMatchable {
 
   // helper methods
   public String toString() {
-    return Integer.toString(id);
+    return String.format("{%d}:%d", type, id);
   }
 
   //TODO: Cleanup/cache?

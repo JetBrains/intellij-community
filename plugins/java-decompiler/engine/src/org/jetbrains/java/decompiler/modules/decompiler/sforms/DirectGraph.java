@@ -117,6 +117,21 @@ public class DirectGraph {
     return true;
   }
 
+  public boolean iterateExprentsDeep(ExprentIterator itr) {
+    return iterateExprents(exprent -> {
+      List<Exprent> lst = exprent.getAllExprents(true);
+      lst.add(exprent);
+
+      for (Exprent expr : lst) {
+        int res = itr.processExprent(expr);
+        if (res == 1 || res == 2) {
+          return res;
+        }
+      }
+      return 0;
+    });
+  }
+
   public interface ExprentIterator {
     // 0 - success, do nothing
     // 1 - cancel iteration

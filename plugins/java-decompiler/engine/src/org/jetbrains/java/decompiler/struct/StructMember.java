@@ -19,9 +19,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE;
+import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE;
+
 public abstract class StructMember {
-  private final int accessFlags;
-  private final Map<String, StructGeneralAttribute> attributes;
+  protected int accessFlags;
+  protected Map<String, StructGeneralAttribute> attributes;
 
   protected StructMember(int accessFlags, Map<String, StructGeneralAttribute> attributes) {
     this.accessFlags = accessFlags;
@@ -120,6 +123,20 @@ public abstract class StructMember {
       }
     }
 
+    if (attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE.name) && attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.name))
+      ((StructLocalVariableTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TABLE.name)).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.name));
     return attributes;
+  }
+
+  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
+    StructGeneralAttribute attribute = StructGeneralAttribute.createAttribute(name);
+    int length = in.readInt();
+    if (attribute == null) {
+      in.discard(length);
+    }
+    else {
+      attribute.initContent(in, pool);
+    }
+    return attribute;
   }
 }

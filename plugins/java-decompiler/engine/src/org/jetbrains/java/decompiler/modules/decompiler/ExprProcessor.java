@@ -320,7 +320,9 @@ public class ExprProcessor {
         case CodeConstants.opc_fload:
         case CodeConstants.opc_dload:
         case CodeConstants.opc_aload:
-          pushEx(stack, exprList, new VarExprent(instr.operand(0), varTypes[instr.opcode - CodeConstants.opc_iload], varProcessor, offsets));
+          VarExprent varExprent = new VarExprent(instr.operand(0), varTypes[instr.opcode - CodeConstants.opc_iload], varProcessor, offsets);
+          varProcessor.findLVT(varExprent, offset + instr.length);
+          pushEx(stack, exprList, varExprent);
           break;
         case CodeConstants.opc_iaload:
         case CodeConstants.opc_laload:
@@ -347,6 +349,7 @@ public class ExprProcessor {
             offsets.set(offset, offset + instr.length);
           }
           VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets, true);
+          varProcessor.findLVT(left, offset + instr.length);
           exprList.add(new AssignmentExprent(left, value, offsets));
           break;
         }
@@ -409,6 +412,7 @@ public class ExprProcessor {
           break;
         case CodeConstants.opc_iinc: {
           VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, offsets);
+          varProcessor.findLVT(varExpr, offset + instr.length);
           int type = instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD;
           List<Exprent> operands = Arrays.asList(varExpr.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null));
           exprList.add(new AssignmentExprent(varExpr, new FunctionExprent(type, operands, offsets), offsets));

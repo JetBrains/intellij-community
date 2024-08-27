@@ -201,7 +201,7 @@ public class FlattenStatementsHelper {
                 }
                 sourcenode = node;
               }
-              case FOR -> {
+              case FOR, FOREACH -> {
                 DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                 if (dostat.getInitExprent() != null) {
                   nodeinit.exprents = dostat.getInitExprentList();
@@ -209,7 +209,9 @@ public class FlattenStatementsHelper {
                 graph.nodes.putWithKey(nodeinit, nodeinit.id);
 
                 DirectNode nodecond = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
-                nodecond.exprents = dostat.getConditionExprentList();
+                if (loopType != DoStatement.LoopType.FOREACH) {
+                  nodecond.exprents = dostat.getConditionExprentList();
+                }
                 graph.nodes.putWithKey(nodecond, nodecond.id);
 
                 DirectNode nodeinc = new DirectNode(DirectNodeType.INCREMENT, stat, stat.id + "_inc");

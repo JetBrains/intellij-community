@@ -175,7 +175,7 @@ public final class ExitHelper {
   private static Statement isExitEdge(StatEdge edge) {
     Statement dest = edge.getDestination();
 
-    if (edge.getType() == EdgeType.BREAK && dest.type == StatementType.BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
+    if (edge.getType() == EdgeType.BREAK && dest.type == StatementType.BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge)) && edge.canInline) {
       List<Exprent> data = dest.getExprents();
 
       if (data != null && data.size() == 1) {

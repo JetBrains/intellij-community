@@ -121,6 +121,9 @@ public final class InlineSingleBlockHelper {
       StatEdge edge = lst.get(0);
 
       if (sameCatchRanges(edge)) {
+        if (!edge.canInline) {
+          return false; //Dirty hack, but lets do it!
+        }
         if (!edge.explicit) {
           for (int i = index; i < seq.getStats().size(); i++) {
             if (!noExitLabels(seq.getStats().get(i), seq)) {

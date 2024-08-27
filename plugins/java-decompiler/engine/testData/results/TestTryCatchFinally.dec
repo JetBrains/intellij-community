@@ -4,7 +4,7 @@ public class TestTryCatchFinally {
    public void test1(String var1) {
       try {
          System.out.println("sout1");// 24
-      } catch (Exception var9) {
+      } catch (Exception var2) {
          try {
             System.out.println("sout2");// 27
          } catch (Exception var8) {// 28

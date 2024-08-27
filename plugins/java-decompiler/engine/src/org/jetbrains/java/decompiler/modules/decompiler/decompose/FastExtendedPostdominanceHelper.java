@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
+import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
@@ -50,6 +51,8 @@ public class FastExtendedPostdominanceHelper {
     filterOnExceptionRanges(filter);
 
     filterOnDominance(filter);
+
+    addSupportedComponents(filter);
 
     Set<Entry<Integer, FastFixedSet<Integer>>> entries = mapExtPostdominators.entrySet();
     HashMap<Integer, Set<Integer>> res = new HashMap<>(entries.size());
@@ -115,6 +118,23 @@ public class FastExtendedPostdominanceHelper {
 
       if (setPostdoms.isEmpty()) {
         mapExtPostdominators.remove(head);
+      }
+    }
+  }
+
+  private void addSupportedComponents(DominatorTreeExceptionFilter filter) {
+    StrongConnectivityHelper schelp = new StrongConnectivityHelper(this.statement);
+
+    for (List<Statement> comp : schelp.getComponents()) {
+      SupportComponent supcomp = SupportComponent.identify(comp, this.mapSupportPoints, filter.getDomEngine());
+
+      if (supcomp != null) {
+        // If the identified support component is not null, then add additional postdom info
+        for (Statement st : supcomp.stats) {
+          if (st != supcomp.supportedPoint) {
+            this.mapExtPostdominators.computeIfAbsent(st.id, i -> this.factory.spawnEmptySet()).add(supcomp.supportedPoint.id);
+          }
+        }
       }
     }
   }

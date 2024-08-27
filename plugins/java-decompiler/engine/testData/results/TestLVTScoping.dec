@@ -1,0 +1,35 @@
+package pkg;
+
+public class TestLVTScoping {
+   public static void method() {
+      String a;
+      if (1 == Integer.valueOf(1).intValue()) {
+         a = "YAY";
+      } else {
+         a = "NAY";
+      }
+
+      System.out.println(a);
+   }
+
+   public static void method2() {
+      if (1 == Integer.valueOf(1).intValue()) {
+         String a = "YAY";
+      } else {
+         String a = "NAY";
+         System.out.println(a);
+      }
+
+   }
+
+   public static void method3() {
+      if (1 == Integer.valueOf(1).intValue()) {
+         boolean a = true;
+         System.out.println(a);
+      } else {
+         String a = "NAY";
+         System.out.println(a);
+      }
+
+   }
+}

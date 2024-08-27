@@ -9,7 +9,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -40,6 +39,7 @@ public class ClassWrapper {
   public void init() {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, DecompilerContext.getClassProcessor().getMapRootClasses().get(classStruct.qualifiedName));
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
@@ -154,8 +154,9 @@ public class ClassWrapper {
       StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
       if (attr != null) {
         // only param names here
-        varProc.setDebugVarNames(attr.getMapParamNames());
+        varProc.setDebugVarNames(attr.getMapNames());
 
+        /*
         // the rest is here
         methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
           List<Exprent> lst = exprent.getAllExprents(true);
@@ -171,6 +172,7 @@ public class ClassWrapper {
             });
           return 0;
         });
+        */
       }
     }
   }

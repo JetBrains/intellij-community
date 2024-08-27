@@ -12,7 +12,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.*;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -131,14 +137,14 @@ public class MethodProcessorRunnable implements Runnable {
       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
     }
     cancellationManager.checkCanceled();
-    RootStatement root = DomHelper.parseGraph(graph);
+    RootStatement root = DomHelper.parseGraph(graph, mt);
 
     cancellationManager.checkCanceled();
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(cl, mt, root, graph)) {
       cancellationManager.checkCanceled();
-      root = DomHelper.parseGraph(graph);
+      root = DomHelper.parseGraph(graph, mt);
     }
 
     // remove synchronized exception handler
@@ -163,17 +169,28 @@ public class MethodProcessorRunnable implements Runnable {
       StackVarsProcessor.simplifyStackVars(root, mt, cl);
       varProc.setVarVersions(root);
     }
-    while (new PPandMMHelper().findPPandMM(root));
+    while (new PPandMMHelper(varProc).findPPandMM(root));
 
     cancellationManager.checkCanceled();
 
     while (true) {
       LabelHelper.cleanUpEdges(root);
 
-      do {
+      while (true) {
+        if (EliminateLoopsHelper.eliminateLoops(root, cl)) {
+          continue;
+        }
+
         MergeHelper.enhanceLoops(root);
+
+        if (LoopExtractHelper.extractLoops(root)) {
+          continue;
+        }
+
+        if (!IfHelper.mergeAllIfs(root)) {
+          break;
+        }
       }
-      while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
 
       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
@@ -187,6 +204,12 @@ public class MethodProcessorRunnable implements Runnable {
 
       if (InlineSingleBlockHelper.inlineSingleBlocks(root)) {
         continue;
+      }
+
+      // this has to be done last so it does not screw up the formation of for loops
+      if (MergeHelper.makeDoWhileLoops(root)) {
+        LabelHelper.cleanUpEdges(root);
+        LabelHelper.identifyLabels(root);
       }
 
       // initializer may have at most one return point, so no transformation of method exits permitted
@@ -204,6 +227,8 @@ public class MethodProcessorRunnable implements Runnable {
     ExitHelper.removeRedundantReturns(root);
 
     SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
+
+    cleanSynchronizedVar(root);
 
     varProc.setVarDefinitions(root);
 
@@ -231,5 +256,30 @@ public class MethodProcessorRunnable implements Runnable {
 
   public boolean isFinished() {
     return finished;
+  }
+
+  public static void cleanSynchronizedVar(Statement stat) {
+    for (Statement st : stat.getStats()) {
+      cleanSynchronizedVar(st);
+    }
+
+    if (stat.type == Statement.StatementType.SYNCHRONIZED) {
+      SynchronizedStatement sync = (SynchronizedStatement)stat;
+      if (sync.getHeadexprentList().get(0).type == Exprent.EXPRENT_MONITOR) {
+        MonitorExprent mon = (MonitorExprent)sync.getHeadexprentList().get(0);
+        for (Exprent e : sync.getFirst().getExprents()) {
+          if (e.type == Exprent.EXPRENT_ASSIGNMENT) {
+            AssignmentExprent ass = (AssignmentExprent)e;
+            if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
+              VarExprent var = (VarExprent)ass.getLeft();
+              if (ass.getRight().equals(mon.getValue()) && !var.isVarReferenced(stat.getParent())) {
+                sync.getFirst().getExprents().remove(e);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

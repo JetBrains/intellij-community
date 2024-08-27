@@ -105,6 +105,14 @@ public final class DoStatement extends Statement {
         buf.appendIndent(indent).append("}").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
+      case FOREACH -> {
+        buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
+        buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+        buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
+        buf.appendIndent(indent).append("}").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+      }
     }
     return buf;
   }
@@ -119,6 +127,10 @@ public final class DoStatement extends Statement {
         }
       case WHILE:
         lst.add(getConditionExprent());
+        break;
+      case FOREACH:
+        lst.add(getInitExprent());
+        lst.add(getIncExprent());
     }
     lst.add(first);
     switch (loopType) {
@@ -194,6 +206,7 @@ public final class DoStatement extends Statement {
     DO,
     DO_WHILE,
     WHILE,
-    FOR
+    FOR,
+    FOREACH
   }
 }

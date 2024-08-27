@@ -15,6 +15,7 @@ public class StatEdge {
   public Statement closure;
   public boolean labeled = true;
   public boolean explicit = true;
+  public boolean canInline = true;
 
   private StatEdge(@NotNull EdgeType type,
                   Statement source,

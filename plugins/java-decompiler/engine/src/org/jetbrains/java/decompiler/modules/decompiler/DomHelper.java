@@ -12,6 +12,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPo
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -190,17 +192,12 @@ public final class DomHelper {
     return ret;
   }
 
-  public static RootStatement parseGraph(ControlFlowGraph graph) {
+  public static RootStatement parseGraph(ControlFlowGraph graph, StructMethod mt) {
 
     RootStatement root = graphToStatement(graph);
 
     if (!processStatement(root, new LinkedHashMap<>())) {
-
-      //			try {
-      //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
-      //			} catch (Exception ex) {
-      //				ex.printStackTrace();
-      //			}
+      DotExporter.toDotFile(graph, mt, "parseGraphFail", true);
       throw new RuntimeException("parsing failure!");
     }
 
