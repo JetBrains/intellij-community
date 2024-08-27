@@ -50,14 +50,16 @@ class MavenProjectReader(private val myProject: Project) {
 
     val model = myReadHelper.interpolate(basedir, file, readResult.first.model)
 
-    val modelMap: MutableMap<String, String?> = HashMap()
-    modelMap["groupId"] = model.mavenId.groupId
-    modelMap["artifactId"] = model.mavenId.artifactId
-    modelMap["version"] = model.mavenId.version
-    modelMap["build.outputDirectory"] = model.build.outputDirectory
-    modelMap["build.testOutputDirectory"] = model.build.testOutputDirectory
-    modelMap["build.finalName"] = model.build.finalName
-    modelMap["build.directory"] = model.build.directory
+    val modelMap: MutableMap<String, String> = HashMap()
+    val mavenId = model.mavenId
+    val build = model.build
+    mavenId.groupId?.let { modelMap["groupId"] = it }
+    mavenId.artifactId?.let { modelMap["artifactId"] = it }
+    mavenId.version?.let { modelMap["version"] = it }
+    build.outputDirectory?.let { modelMap["build.outputDirectory"] = it }
+    build.testOutputDirectory?.let { modelMap["build.testOutputDirectory"] = it }
+    build.finalName?.let { modelMap["build.finalName"] = it }
+    build.directory?.let { modelMap["build.directory"] = it }
 
     return MavenProjectReaderResult(model,
                                     modelMap,

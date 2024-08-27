@@ -20,6 +20,6 @@ import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 
 class MavenProjectReaderResult(@JvmField val mavenModel: MavenModel,
-                               @JvmField val nativeModelMap: Map<String, String?>,
+                               @JvmField val nativeModelMap: Map<String, String>,
                                @JvmField val activatedProfiles: MavenExplicitProfiles,
                                @JvmField val readingProblems: MutableCollection<MavenProjectProblem>)

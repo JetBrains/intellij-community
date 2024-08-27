@@ -40,7 +40,7 @@ data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collect
 class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
                                  @JvmField val dependencyHash: String?,
                                  @JvmField val dependencyResolutionSkipped: Boolean,
-                                 @JvmField val nativeModelMap: Map<String, String?>,
+                                 @JvmField val nativeModelMap: Map<String, String>,
                                  @JvmField val activatedProfiles: MavenExplicitProfiles,
                                  val nativeMavenProject: NativeMavenProjectHolder?,
                                  @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,

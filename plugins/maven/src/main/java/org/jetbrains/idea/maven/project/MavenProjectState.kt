@@ -46,55 +46,55 @@ internal class MavenProjectState : Cloneable, Serializable {
   var testOutputDirectory: String? = null
     private set
 
-  var sources: List<String>? = null
+  var sources: List<String> = emptyList()
     private set
 
-  var testSources: List<String>? = null
+  var testSources: List<String> = emptyList()
     private set
 
-  var resources: List<MavenResource>? = null
+  var resources: List<MavenResource> = emptyList()
     private set
 
-  var testResources: List<MavenResource>? = null
+  var testResources: List<MavenResource> = emptyList()
     private set
 
-  var filters: List<String>? = null
+  var filters: List<String> = emptyList()
     private set
 
   var properties: Properties? = null
     private set
 
-  private var myPlugins: MutableList<MavenPlugin>? = null
-  private var myExtensions: List<MavenArtifact>? = null
+  private var myPlugins: List<MavenPlugin> = emptyList()
+  private var myExtensions: List<MavenArtifact> = emptyList()
 
-  var dependencies: List<MavenArtifact>? = null
+  var dependencies: List<MavenArtifact> = emptyList()
     private set
 
-  var dependencyTree: List<MavenArtifactNode>? = null
+  var dependencyTree: List<MavenArtifactNode> = emptyList()
     private set
 
-  var remoteRepositories: List<MavenRemoteRepository>? = null
+  var remoteRepositories: List<MavenRemoteRepository> = emptyList()
     private set
 
-  var annotationProcessors: List<MavenArtifact>? = null
+  var annotationProcessors: List<MavenArtifact> = emptyList()
     private set
 
-  var modulesPathsAndNames: Map<String, String>? = null
+  var modulesPathsAndNames: Map<String, String> = emptyMap()
     private set
 
-  var modelMap: Map<String, String?>? = null
+  var modelMap: Map<String, String> = emptyMap()
     private set
 
   var profilesIds: Collection<String> = emptySet()
     private set
 
-  var activatedProfilesIds: MavenExplicitProfiles? = null
+  var activatedProfilesIds: MavenExplicitProfiles = MavenExplicitProfiles.NONE
     private set
 
   var dependencyHash: String? = null
 
-  private var myReadingProblems: Collection<MavenProjectProblem>? = null
-  private var myUnresolvedArtifactIds: Set<MavenId?>? = null
+  private var myReadingProblems: Collection<MavenProjectProblem> = emptySet()
+  private var myUnresolvedArtifactIds: Set<MavenId> = emptySet()
 
   var localRepository: File? = null
     private set
@@ -115,10 +115,10 @@ internal class MavenProjectState : Cloneable, Serializable {
   @Volatile
   private var myUnresolvedAnnotationProcessors: List<MavenArtifact>? = null
 
-  val plugins: List<MavenPlugin>?
+  val plugins: List<MavenPlugin>
     get() = myPlugins
 
-  var readingProblems: Collection<MavenProjectProblem>?
+  var readingProblems: Collection<MavenProjectProblem>
     get() = myReadingProblems
     set(readingProblems) {
       this.myReadingProblems = readingProblems
@@ -160,8 +160,7 @@ internal class MavenProjectState : Cloneable, Serializable {
 
     val repositoryChanged = !Comparing.equal(localRepository, newState.localRepository)
 
-    result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(
-      dependencies, newState.dependencies))
+    result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(dependencies, newState.dependencies))
     result.setHasPluginChanges(repositoryChanged || !Comparing.equal<List<MavenPlugin>?>(myPlugins, newState.myPlugins))
     result.setHasPropertyChanges(!Comparing.equal(properties, newState.properties))
     return result
@@ -171,8 +170,8 @@ internal class MavenProjectState : Cloneable, Serializable {
     model: MavenModel,
     readingProblems: Collection<MavenProjectProblem>,
     activatedProfiles: MavenExplicitProfiles,
-    unresolvedArtifactIds: Set<MavenId?>,
-    nativeModelMap: Map<String, String?>,
+    unresolvedArtifactIds: Set<MavenId>,
+    nativeModelMap: Map<String, String>,
     settings: MavenGeneralSettings,
     keepPreviousArtifacts: Boolean,
     keepPreviousProfiles: Boolean,
@@ -257,11 +256,11 @@ internal class MavenProjectState : Cloneable, Serializable {
 
   private fun doSetResolvedAttributes(
     model: MavenModel,
-    unresolvedArtifactIds: Set<MavenId?>,
+    unresolvedArtifactIds: Set<MavenId>,
     keepPreviousArtifacts: Boolean,
     keepPreviousPlugins: Boolean,
   ) {
-    val newUnresolvedArtifacts: MutableSet<MavenId?> = HashSet()
+    val newUnresolvedArtifacts: MutableSet<MavenId> = HashSet()
     val newRepositories = LinkedHashSet<MavenRemoteRepository>()
     val newDependencies = LinkedHashSet<MavenArtifact>()
     val newDependencyTree = LinkedHashSet<MavenArtifactNode>()
@@ -270,16 +269,16 @@ internal class MavenProjectState : Cloneable, Serializable {
     val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
 
     if (keepPreviousArtifacts) {
-      if (myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(myUnresolvedArtifactIds!!)
-      if (remoteRepositories != null) newRepositories.addAll(remoteRepositories!!)
-      if (dependencies != null) newDependencies.addAll(dependencies!!)
-      if (dependencyTree != null) newDependencyTree.addAll(dependencyTree!!)
-      if (myExtensions != null) newExtensions.addAll(myExtensions!!)
-      if (annotationProcessors != null) newAnnotationProcessors.addAll(annotationProcessors!!)
+      newUnresolvedArtifacts.addAll(myUnresolvedArtifactIds)
+      newRepositories.addAll(remoteRepositories)
+      newDependencies.addAll(dependencies)
+      newDependencyTree.addAll(dependencyTree)
+      newExtensions.addAll(myExtensions)
+      newAnnotationProcessors.addAll(annotationProcessors)
     }
 
     if (keepPreviousPlugins) {
-      if (myPlugins != null) newPlugins.addAll(myPlugins!!)
+      newPlugins.addAll(myPlugins)
     }
 
     newUnresolvedArtifacts.addAll(unresolvedArtifactIds)
@@ -307,10 +306,10 @@ internal class MavenProjectState : Cloneable, Serializable {
   }
 
   fun doSetFolders(
-    sources: List<String>?,
-    testSources: List<String>?,
-    resources: List<MavenResource>?,
-    testResources: List<MavenResource>?,
+    sources: List<String>,
+    testSources: List<String>,
+    resources: List<MavenResource>,
+    testResources: List<MavenResource>,
   ) {
     this.sources = sources
     this.testSources = testSources
@@ -323,9 +322,9 @@ internal class MavenProjectState : Cloneable, Serializable {
     val result: MutableList<MavenProjectProblem> = ArrayList()
 
     validateParent(file, result)
-    result.addAll(myReadingProblems!!)
+    result.addAll(myReadingProblems)
 
-    for ((key, value) in modulesPathsAndNames!!) {
+    for ((key, value) in modulesPathsAndNames) {
       if (LocalFileSystem.getInstance().findFileByPath(key) == null) {
         result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound",
                                                                             value)))
@@ -371,7 +370,7 @@ internal class MavenProjectState : Cloneable, Serializable {
   }
 
   private val isParentResolved: Boolean
-    get() = !myUnresolvedArtifactIds!!.contains(parentId)
+    get() = !myUnresolvedArtifactIds.contains(parentId)
 
   fun hasUnresolvedArtifacts(): Boolean {
     return !isParentResolved
@@ -384,7 +383,7 @@ internal class MavenProjectState : Cloneable, Serializable {
     synchronized(this) {
       if (myUnresolvedDependenciesCache == null) {
         val result: MutableList<MavenArtifact> = ArrayList()
-        for (each in dependencies!!) {
+        for (each in dependencies) {
           val resolved = each.isResolved(fileExistsPredicate)
           each.isFileUnresolved = !resolved
           if (!resolved) result.add(each)
@@ -400,11 +399,11 @@ internal class MavenProjectState : Cloneable, Serializable {
       synchronized(this) {
         if (myUnresolvedExtensionsCache == null) {
           val result: MutableList<MavenArtifact> = ArrayList()
-          for (each in myExtensions!!) {
+          for (each in myExtensions) {
             // Collect only extensions that were attempted to be resolved.
             // It is because embedder does not even try to resolve extensions that
             // are not necessary.
-            if (myUnresolvedArtifactIds!!.contains(each.mavenId)
+            if (myUnresolvedArtifactIds.contains(each.mavenId)
                 && !pomFileExists(localRepository!!, each)
             ) {
               result.add(each)
@@ -421,7 +420,7 @@ internal class MavenProjectState : Cloneable, Serializable {
       synchronized(this) {
         if (myUnresolvedAnnotationProcessors == null) {
           val result: MutableList<MavenArtifact> = ArrayList()
-          for (each in annotationProcessors!!) {
+          for (each in annotationProcessors) {
             if (!each.isResolved) result.add(each)
           }
           myUnresolvedAnnotationProcessors = result
@@ -446,7 +445,7 @@ internal class MavenProjectState : Cloneable, Serializable {
       }
     }
 
-  val declaredPlugins: List<MavenPlugin> get() = myPlugins?.filter { !it.isDefault } ?: emptyList()
+  val declaredPlugins: List<MavenPlugin> get() = myPlugins.filter { !it.isDefault }
 
   fun collectProblems(file: VirtualFile, fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
     synchronized(this) {
@@ -464,8 +463,7 @@ internal class MavenProjectState : Cloneable, Serializable {
   ) {
     this.dependencies = dependencies
     this.properties = properties
-    myPlugins!!.clear()
-    myPlugins!!.addAll(plugins)
+    myPlugins = plugins
   }
 
   private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
