@@ -76,11 +76,15 @@ class MavenRepositoriesProjectResolverTest {
   fun testRepositoriesDeduplicated() {
     val mavenRepo1 = MyMavenRepoModel("name", "http://some.host")
     myRepoList.add(mavenRepo1)
+    myRepoList.add(mavenRepo1)
+    myRepoList.add(mavenRepo1)
 
     myResolver.populateProjectExtraModels(myProject, myProjectNode)
 
     val mavenRepo2 = MyMavenRepoModel("name1", "http://some.other.host")
     myRepoList.apply {
+      add(MyMavenRepoModel("name", "http://some.host"))
+      add(MyMavenRepoModel("name", "http://some.host"))
       add(MyMavenRepoModel("name", "http://some.host"))
       add(mavenRepo2)
     }
@@ -93,7 +97,6 @@ class MavenRepositoriesProjectResolverTest {
   private fun assertProjectContainsExactly(vararg mavenRepoModels: MavenRepositoryModel) {
     assertEquals(myProjectNode.mavenRepositories(), mavenRepoModels.toMavenRepoData())
   }
-
 
   private fun DataNode<*>.mavenRepositories(): Collection<MavenRepositoryData> =
     ExternalSystemApiUtil.getChildren(this, MavenRepositoryData.KEY).map { it.data }
