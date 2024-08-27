@@ -90,11 +90,11 @@ public class KeymapTextContext {
     else {
       throw new IllegalStateException("unknown clickCount: " + clickCount);
     }
-    return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers)), button);
+    return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers), true), button);
   }
 
   @JdkConstants.InputEventMask
-  private static int mapNewModifiers(@JdkConstants.InputEventMask int modifiers) {
+  static int mapNewModifiers(@JdkConstants.InputEventMask int modifiers) {
     if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
       modifiers |= InputEvent.SHIFT_MASK;
     }
@@ -122,7 +122,7 @@ public class KeymapTextContext {
     String acceleratorText = "";
     int modifiers = accelerator.getModifiers();
     if (modifiers > 0) {
-      acceleratorText = getModifiersText(modifiers);
+      acceleratorText = getModifiersText(modifiers, true);
     }
 
     int code = accelerator.getKeyCode();
@@ -158,7 +158,7 @@ public class KeymapTextContext {
     return ClientSystemInfo.isMac() && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
-  private @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+  @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers, boolean addPlus) {
     if (isNativeMacShortcuts()) {
       //try {
       //  Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
@@ -178,7 +178,7 @@ public class KeymapTextContext {
     final String keyModifiersText = isSimplifiedMacShortcuts() ? getSimplifiedMacKeyModifiersText(modifiers)
                                                                : KeyEvent.getKeyModifiersText(modifiers);
 
-    return keyModifiersText.isEmpty() ? keyModifiersText : keyModifiersText + "+";
+    return !keyModifiersText.isEmpty()  && addPlus ? keyModifiersText + "+" : keyModifiersText;
   }
 
   private static String getSimplifiedMacKeyModifiersText(int modifiers) {

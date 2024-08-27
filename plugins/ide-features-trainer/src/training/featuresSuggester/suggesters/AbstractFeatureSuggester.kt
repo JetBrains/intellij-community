@@ -57,7 +57,7 @@ abstract class AbstractFeatureSuggester : FeatureSuggester {
   }
 
   @Nls
-  fun getShortcutText(actionId: String): String {
+  open fun getShortcutText(actionId: String): String {
     val shortcut = KeymapUtil.getShortcutText(actionId)
     return if (shortcut == "<no shortcut>") {
       FeatureSuggesterBundle.message("shortcut.not.found.message")
