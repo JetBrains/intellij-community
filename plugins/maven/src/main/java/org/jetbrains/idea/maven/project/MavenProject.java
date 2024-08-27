@@ -33,7 +33,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
@@ -58,7 +57,6 @@ public class MavenProject {
 
   private final @NotNull VirtualFile myFile;
   private volatile @NotNull MavenProjectState myState = new MavenProjectState();
-  private transient ConcurrentHashMap<Key<?>, Object> myCache = new ConcurrentHashMap<>();
 
   public enum ProcMode {BOTH, ONLY, NONE}
 
@@ -583,7 +581,6 @@ public class MavenProject {
     synchronized (myState) {
       myState.resetCache();
     }
-    myCache.clear();
   }
 
   public boolean isAggregator() {
@@ -919,12 +916,12 @@ public class MavenProject {
   }
 
   public @Nullable <V> V getCachedValue(Key<V> key) {
-    @SuppressWarnings("unchecked") V v = (V)myCache.get(key);
+    @SuppressWarnings("unchecked") V v = (V)myState.getCache().get(key);
     return v;
   }
 
   public @NotNull <V> V putCachedValue(Key<V> key, @NotNull V value) {
-    Object oldValue = myCache.putIfAbsent(key, value);
+    Object oldValue = myState.getCache().putIfAbsent(key, value);
     if (oldValue != null) {
       @SuppressWarnings("unchecked") V v = (V)oldValue;
       return v;

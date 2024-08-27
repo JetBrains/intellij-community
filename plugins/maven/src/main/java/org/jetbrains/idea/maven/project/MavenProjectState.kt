@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,8 +11,11 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import java.io.File
+import java.io.ObjectInputStream
+import java.io.Serial
 import java.io.Serializable
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
 
@@ -115,6 +119,10 @@ internal class MavenProjectState : Cloneable, Serializable {
   @Volatile
   private var myUnresolvedAnnotationProcessors: List<MavenArtifact>? = null
 
+  @Transient
+  var cache = ConcurrentHashMap<Key<*>, Any>()
+    private set
+
   val plugins: List<MavenPlugin>
     get() = myPlugins
 
@@ -135,12 +143,20 @@ internal class MavenProjectState : Cloneable, Serializable {
     }
   }
 
+  @Serial
+  private fun readObject(inputStream: ObjectInputStream) {
+    inputStream.defaultReadObject()
+    cache = ConcurrentHashMap<Key<*>, Any>()
+  }
+
   fun resetCache() {
     problemsCache = null
     myUnresolvedDependenciesCache = null
     myUnresolvedPluginsCache = null
     myUnresolvedExtensionsCache = null
     myUnresolvedAnnotationProcessors = null
+
+    cache.clear()
   }
 
   fun getChanges(newState: MavenProjectState): MavenProjectChanges {
