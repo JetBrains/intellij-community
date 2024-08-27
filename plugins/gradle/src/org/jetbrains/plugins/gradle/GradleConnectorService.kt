@@ -31,7 +31,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
 import org.jetbrains.plugins.gradle.execution.target.maybeConvertToRemote
-import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices
+import org.jetbrains.plugins.gradle.internal.daemon.getDaemonsStatus
+import org.jetbrains.plugins.gradle.internal.daemon.stopDaemons
+import org.jetbrains.plugins.gradle.internal.daemon.gracefulStopDaemons
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -90,12 +92,12 @@ internal class GradleConnectorService(project: Project) : Disposable {
     try {
       if (ProjectUtil.getOpenProjects().isEmpty()) {
         val gradleVersion_6_5 = GradleVersion.version("6.5")
-        val idleDaemons = GradleDaemonServices.getDaemonsStatus(knownGradleUserHomes).filter {
+        val idleDaemons = getDaemonsStatus(knownGradleUserHomes).filter {
           it.status.lowercase(Locale.getDefault()) == "idle" &&
           GradleVersion.version(it.version) < gradleVersion_6_5
         }
         if (idleDaemons.isNotEmpty()) {
-          GradleDaemonServices.stopDaemons(knownGradleUserHomes, idleDaemons)
+          stopDaemons(knownGradleUserHomes, idleDaemons)
         }
       }
     }
@@ -135,7 +137,7 @@ internal class GradleConnectorService(project: Project) : Disposable {
         }
       }
     }
-    GradleDaemonServices.gracefulStopDaemons(knownGradleUserHomes)
+    gracefulStopDaemons(knownGradleUserHomes)
   }
 
   private fun getConnection(connectorParams: ConnectorParams,
