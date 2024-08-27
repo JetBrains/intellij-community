@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
@@ -37,7 +38,7 @@ public class PsiMarkdownCodeBlockImpl extends CompositePsiElement implements Psi
   public @Nullable Language getCodeLanguage() {
     String languageInfo = getLanguageInfo();
     if (languageInfo == null) return getLanguage();
-    return Language.findLanguageByID(languageInfo);
+    return LanguageUtil.findRegisteredLanguage(languageInfo);
   }
 
   @Override
