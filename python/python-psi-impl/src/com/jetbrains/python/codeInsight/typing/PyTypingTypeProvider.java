@@ -2340,7 +2340,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     public Stack<PyQualifiedNameOwner> getTypeAliasStack() {
       return myTypeAliasStack;
     }
-
+    
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;

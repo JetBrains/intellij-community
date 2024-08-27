@@ -247,6 +247,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @Override
+  public void cleanAllFileLevelHighlights(int group) {
+    ThreadingAssertions.assertEventDispatchThread();
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditors()) {
+      cleanFileLevelHighlights(fileEditor, group);
+    }
+  }
+
+  @Override
   public boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     assertMyFile(psiFile.getProject(), psiFile);

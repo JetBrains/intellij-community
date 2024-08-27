@@ -64,8 +64,8 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
-import org.jetbrains.annotations.ApiStatus
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -320,7 +320,9 @@ var Module.pythonSdk: Sdk?
   set(value) {
     thisLogger().info("Setting PythonSDK $value to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, value)
-    PyUiUtil.clearFileLevelInspectionResults(project)
+    runInEdt {
+      PyUiUtil.clearFileLevelInspectionResults(project)
+    }
   }
 
 var Project.pythonSdk: Sdk?
