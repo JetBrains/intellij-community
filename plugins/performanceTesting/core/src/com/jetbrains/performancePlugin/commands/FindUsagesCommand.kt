@@ -55,7 +55,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
       }
     }
 
-    fun goToElement(position: String?, elementName: String, context: PlaybackContext) {
+    fun goToElement(position: String?, elementName: String?, context: PlaybackContext) {
       if (position != null) {
         val result = GoToNamedElementCommand(GoToNamedElementCommand.PREFIX + " $position $elementName", -1).execute(context)
         result.exceptionally { e ->
