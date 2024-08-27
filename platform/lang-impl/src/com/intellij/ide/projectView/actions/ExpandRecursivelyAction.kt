@@ -34,8 +34,10 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
       selection.any { selectedPath ->
         // N.B.: isDescendant is very poorly named: a.isDescendant(b) means "b is a descendant of a".
         when {
-          // Descendants of the selected paths are expanded.
-          selectedPath.isDescendant(path) -> true
+          // Selected paths are expanded unconditionally.
+          path == selectedPath -> true
+          // Descendants of the selected paths are expanded unless they explicitly don't want that.
+          selectedPath.isDescendant(path) -> path.isIncludedInExpandAll
           // This unusual isDescendant condition is needed because TreeUtil won't even visit
           // children if the parent doesn't match, so it'll just stop at the root node.
           // So even though the parents of the selected paths are obviously already expanded,
@@ -72,3 +74,10 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
       }
     }
 }
+
+private val TreePath.isIncludedInExpandAll: Boolean
+  get() {
+    // Include by default, unless the node can and does tell us otherwise.
+    val node = TreeUtil.getLastUserObject(this) as? AbstractTreeNode<*> ?: return true
+    return node.isIncludedInExpandAll
+  }
