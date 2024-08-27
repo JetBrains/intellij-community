@@ -18,9 +18,7 @@ import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -57,6 +55,7 @@ import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.function.Function
 
 abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
@@ -103,8 +102,8 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   private fun checkNoFixtureTags(file: VirtualFile) {
-    assertFalse("There should be no any <caret> tag in pom.xml during import", file.contentsToByteArray().toString().contains("<caret"))
-    assertFalse("There should be no any <error> tag in pom.xml during import", file.contentsToByteArray().toString().contains("<error"))
+    assertFalse("There should be no any <caret> tag in pom.xml during import", String(file.contentsToByteArray()).contains("<caret"))
+    assertFalse("There should be no any <error> tag in pom.xml during import", String(file.contentsToByteArray()).contains("<error"))
   }
 
   protected suspend fun findPsiFile(f: VirtualFile?): PsiFile {
@@ -202,6 +201,22 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       MavenDomUtil.findTag(model!!, path)!!
     }
   }
+
+  protected fun <T> readActionInSmartMode(action: () -> T): T {
+    return ReadAction.nonBlocking(Callable {
+      action()
+    }).inSmartMode(project).executeSynchronously()
+  }
+
+  @Suppress("SSBasedInspection")
+  protected suspend fun <T> readActionInSmartModeAsync(action: suspend () -> T): T {
+    return smartReadAction(project) {
+      runBlocking {
+        action()
+      }
+    }
+  }
+
 
   protected suspend fun findTagValue(file: VirtualFile, path: String, clazz: Class<out MavenDomElement> = MavenDomProjectModel::class.java): XmlTagValue {
     val tag = findTag(file, path, clazz)
@@ -308,8 +323,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     lookupElementStringFunction: Function<LookupElement, String?>,
     vararg expected: String?,
   ) {
+
     val actual = getCompletionVariantsNoCache(f, lookupElementStringFunction)
     assertUnorderedElementsAreEqual(actual, *expected)
+
   }
 
   protected suspend fun assertCompletionVariants(
@@ -360,24 +377,29 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun getCompletionVariants(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
     configTest(f)
-    val variants = fixture.completeBasic()
+    return withContext(Dispatchers.EDT) {
+      val variants = fixture.completeBasic()
 
-    val result: MutableList<String?> = ArrayList()
-    for (each in variants) {
-      result.add(lookupElementStringFunction.apply(each))
+      val result: MutableList<String?> = ArrayList()
+      for (each in variants) {
+        result.add(lookupElementStringFunction.apply(each))
+      }
+      return@withContext result
     }
-    return result
   }
 
   protected suspend fun getCompletionVariantsNoCache(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
     configTest(f)
-    val variants = fixture.complete(CompletionType.BASIC, 2)
+    return withContext(Dispatchers.EDT) {
+      val variants = fixture.complete(CompletionType.BASIC, 2)
 
-    val result: MutableList<String?> = ArrayList()
-    for (each in variants) {
-      result.add(lookupElementStringFunction.apply(each))
+      val result: MutableList<String?> = ArrayList()
+      for (each in variants) {
+        result.add(lookupElementStringFunction.apply(each))
+      }
+      return@withContext result
     }
-    return result
+
   }
 
   protected suspend fun getDependencyCompletionVariants(f: VirtualFile): Set<String> {
