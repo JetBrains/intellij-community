@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -12,6 +11,7 @@ import kotlinx.coroutines.*
 import okhttp3.Request
 import okio.sink
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
 import org.jetbrains.intellij.build.impl.compilation.cache.parseSourcesStateFile

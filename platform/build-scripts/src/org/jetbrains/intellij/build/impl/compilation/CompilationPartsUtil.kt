@@ -4,30 +4,29 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.util.coroutines.forEachConcurrent
-import com.intellij.platform.util.coroutines.mapConcurrent
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.http2Client.createHttp2ClientSessionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.io.File
 import java.math.BigInteger
+import java.net.InetSocketAddress
+import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.*
@@ -42,14 +41,13 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
 
-internal val uploadParallelism = Runtime.getRuntime().availableProcessors()
-internal val downloadParallelism = uploadParallelism
+internal val uploadParallelism = Runtime.getRuntime().availableProcessors().coerceIn(4, 32)
+internal val downloadParallelism = (Runtime.getRuntime().availableProcessors() * 2).coerceIn(8, 16)
 
 private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
-private const val SERVER_URL = "intellij.build.compiled.classes.server.url"
+private const val SERVER_URL_PROPERTY = "intellij.build.compiled.classes.server.url"
 private const val UPLOAD_PREFIX = "intellij.build.compiled.classes.upload.prefix"
 
 class CompilationCacheUploadConfiguration(
@@ -59,9 +57,18 @@ class CompilationCacheUploadConfiguration(
   branch: String? = null,
   uploadPredix: String? = null,
 ) {
-  val serverUrl: String by lazy { serverUrl ?: normalizeServerUrl() }
+  val serverUrl: String by lazy(LazyThreadSafetyMode.NONE) { serverUrl ?: getAndNormalizeServerUrlBySystemProperty() }
 
-  val uploadPrefix: String by lazy {
+  private val serverUri: URI by lazy(LazyThreadSafetyMode.NONE) { URI(serverUrl ?: getAndNormalizeServerUrlBySystemProperty()) }
+
+  // even if empty, a final path must always start with `/` (otherwise, error like "client sent invalid :path header")
+  val serverUrlPathPrefix: String by lazy(LazyThreadSafetyMode.NONE) { serverUri.path }
+
+  val serverAddress: InetSocketAddress by lazy {
+    InetSocketAddress.createUnresolved(serverUri.host, serverUri.port.let { if (it == -1) 443 else it })
+  }
+
+  val uploadUrlPathPrefix: String by lazy {
     uploadPredix ?: System.getProperty(UPLOAD_PREFIX, "intellij-compile/v2").also {
       check(!it.isNullOrBlank()) {
         "$UPLOAD_PREFIX system property should not be blank."
@@ -78,11 +85,10 @@ class CompilationCacheUploadConfiguration(
   }
 }
 
-private fun normalizeServerUrl(): String {
-  val serverUrlPropertyName = SERVER_URL
-  var result = System.getProperty(serverUrlPropertyName)?.trimEnd('/')
+private fun getAndNormalizeServerUrlBySystemProperty(): String {
+  var result = System.getProperty(SERVER_URL_PROPERTY)?.trimEnd('/')
   check(!result.isNullOrBlank()) {
-    "Compilation cache archive server url is not defined. Please set $serverUrlPropertyName system property."
+    "Compilation cache archive server url is not defined. Please set $SERVER_URL_PROPERTY system property."
   }
   if (!result.startsWith("http")) {
     @Suppress("HttpUrlsUsage")
@@ -110,10 +116,6 @@ suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, con
   spanBuilder("upload packed classes").use {
     upload(config = config, zipDir = zipDir, messages = context.messages, items = items)
   }
-}
-
-private fun createBufferPool(@Suppress("SameParameterValue") maxPoolSize: Int): DirectFixedSizeByteBufferPool {
-  return DirectFixedSizeByteBufferPool(bufferSize = MAX_BUFFER_SIZE, maxPoolSize = maxPoolSize)
 }
 
 private suspend fun packCompilationResult(zipDir: Path, context: CompilationContext, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.ALL): List<PackAndUploadItem> {
@@ -163,15 +165,17 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
     }
   }
 
-  spanBuilder("build zip archives").use(Dispatchers.IO) {
-    items.forEachConcurrent { item ->
-      item.hash = packAndComputeHash(addDirEntriesMode = addDirEntriesMode, name = item.name, archive = item.archive, directory = item.output)
+  spanBuilder("build zip archives").use {
+    for (item in items) {
+      launch {
+        item.hash = packAndComputeHash(addDirEntriesMode = addDirEntriesMode, name = item.name, archive = item.archive, directory = item.output)
+      }
     }
   }
   return items
 }
 
-private suspend fun packAndComputeHash(
+internal suspend fun packAndComputeHash(
   addDirEntriesMode: AddDirEntriesMode,
   name: String,
   archive: Path,
@@ -214,7 +218,7 @@ private suspend fun upload(
     CompilationPartsMetadata(
       serverUrl = config.serverUrl,
       branch = config.branch,
-      prefix = config.uploadPrefix,
+      prefix = config.uploadUrlPathPrefix,
       files = items.associateTo(TreeMap()) { item ->
         item.name to item.hash!!
       },
@@ -236,68 +240,24 @@ private suspend fun upload(
     messages.artifactBuilt(gzippedMetadataFile.toString())
   }
 
-  spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).use {
-    createBufferPool(maxPoolSize = uploadParallelism * 2).use { bufferPool ->
-      uploadArchives(
-        reportStatisticValue = messages::reportStatisticValue,
-        config = config,
-        metadataJson = metadataJson,
-        httpClient = httpClient,
-        items = items,
-        bufferPool = bufferPool,
-      )
+  val serverAddress = config.serverAddress
+  createHttp2ClientSessionFactory(trustAll = serverAddress.hostString == "127.0.0.1").use { client ->
+    client.connect(serverAddress).use { connection ->
+      spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).use {
+        uploadArchives(
+          reportStatisticValue = messages::reportStatisticValue,
+          config = config,
+          metadataJson = metadataJson,
+          httpConnection = connection,
+          items = items,
+        )
+      }
     }
   }
 }
 
-private fun getArchivesStorage(fallbackPersistentCacheRoot: Path): Path {
-  return (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: fallbackPersistentCacheRoot)
-    .resolve("idea-compile-parts-v2")
-}
-
-@ApiStatus.Internal
-class ArchivedCompilationOutputsStorage(
-  private val paths: BuildPaths,
-  private val classesOutputDirectory: Path,
-  val archivedOutputDirectory: Path = getArchivesStorage(classesOutputDirectory.parent),
-) {
-  private val unarchivedToArchivedMap = ConcurrentHashMap<Path, Path>()
-
-  internal fun loadMetadataFile(metadataFile: Path) {
-    val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
-    for (entry in metadata.files) {
-      unarchivedToArchivedMap.put(classesOutputDirectory.resolve(entry.key), archivedOutputDirectory.resolve(entry.key).resolve("${entry.value}.jar"))
-    }
-  }
-
-  suspend fun getArchived(path: Path): Path {
-    if (Files.isRegularFile(path) || !path.startsWith(classesOutputDirectory)) {
-      return path
-    }
-
-    unarchivedToArchivedMap.get(path)?.let {
-      return it
-    }
-
-    val archived = archive(path)
-    return unarchivedToArchivedMap.putIfAbsent(path, archived) ?: archived
-  }
-
-  private suspend fun archive(path: Path): Path {
-    val name = classesOutputDirectory.relativize(path).toString()
-
-    val archive = Files.createTempFile(paths.tempDir, name.replace(File.separator, "_"), ".jar")
-    Files.deleteIfExists(archive)
-    val hash = packAndComputeHash(addDirEntriesMode = AddDirEntriesMode.ALL, name = name, archive = archive, directory = path)
-
-    val result = archivedOutputDirectory.resolve(name).resolve("$hash.jar")
-    Files.createDirectories(result.parent)
-    Files.move(archive, result, StandardCopyOption.REPLACE_EXISTING)
-
-    return result
-  }
-
-  internal fun getMapping(): List<Map.Entry<Path, Path>> = unarchivedToArchivedMap.entries.sortedBy { it.key.invariantSeparatorsPathString }
+internal fun getArchiveStorage(fallbackPersistentCacheRoot: Path): Path {
+  return (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: fallbackPersistentCacheRoot).resolve("idea-compile-parts-v2")
 }
 
 @VisibleForTesting
@@ -309,7 +269,7 @@ suspend fun fetchAndUnpackCompiledClasses(
   saveHash: Boolean,
 ) {
   val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
-  val tempDownloadStorage = getArchivesStorage(classOutput.parent)
+  val tempDownloadStorage = getArchiveStorage(classOutput.parent)
 
   val items = metadata.files.mapTo(ArrayList(metadata.files.size)) { entry ->
     FetchAndUnpackItem(
@@ -321,10 +281,9 @@ suspend fun fetchAndUnpackCompiledClasses(
   }
   items.sortBy { it.name }
 
-  var verifyTime = 0L
   val upToDate = ConcurrentHashMap.newKeySet<String>()
-  spanBuilder("check previously unpacked directories").use { span ->
-    verifyTime += checkPreviouslyUnpackedDirectories(
+  var verifyTime = spanBuilder("check previously unpacked directories").use { span ->
+    checkPreviouslyUnpackedDirectories(
       items = items,
       span = span,
       upToDate = upToDate,
@@ -336,32 +295,32 @@ suspend fun fetchAndUnpackCompiledClasses(
 
   val toUnpack = LinkedHashSet<FetchAndUnpackItem>(items.size)
   val verifyStart = System.nanoTime()
-  val toDownload = spanBuilder("check previously downloaded archives").use(Dispatchers.IO) { span ->
-    items
-      .filter { item ->
-        if (upToDate.contains(item.name)) {
-          return@filter false
-        }
-
-        if (!skipUnpack) {
-          toUnpack.add(item)
-        }
-        true
+  val toDownload = ConcurrentHashMap.newKeySet<FetchAndUnpackItem>()
+  spanBuilder("check previously downloaded archives").use { span ->
+    items.filter { item ->
+      if (upToDate.contains(item.name)) {
+        return@filter false
       }
-      .mapConcurrent { item ->
+
+      if (!skipUnpack) {
+        toUnpack.add(item)
+      }
+      true
+    }
+      .forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtMost(4)) { item ->
         val file = item.file
         when {
-          Files.notExists(file) -> item
-          item.hash == computeHash(file) -> null
+          Files.notExists(file) -> toDownload.add(item)
+          item.hash == computeHash(file) -> return@forEachConcurrent
           else -> {
             span.addEvent("file has unexpected hash, will refetch", Attributes.of(AttributeKey.stringKey("file"), "${item.name}/${item.hash}.jar"))
             Files.deleteIfExists(file)
-            item
+            toDownload.add(item)
           }
         }
       }
-  }.filterNotNull()
-  verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - verifyStart)
+  }
+  verifyTime += System.nanoTime() - verifyStart
 
   // toUnpack is performed as part of download
   for (item in toDownload) {
@@ -398,6 +357,7 @@ suspend fun fetchAndUnpackCompiledClasses(
       Span.current().addEvent("failed to cleanup outdated archives", Attributes.of(AttributeKey.stringKey("error"), e.message ?: ""))
     }
 
+    reportStatisticValue("compile-parts:verify:time", TimeUnit.NANOSECONDS.toMillis(verifyTime).toString())
     reportStatisticValue("compile-parts:cleanup:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
     reportStatisticValue("compile-parts:removed:bytes", bytes.toString())
     reportStatisticValue("compile-parts:removed:count", count.toString())
@@ -406,23 +366,17 @@ suspend fun fetchAndUnpackCompiledClasses(
   spanBuilder("fetch compiled classes archives").use {
     val start = System.nanoTime()
 
-    val prefix = metadata.prefix
-    val serverUrl = metadata.serverUrl
-
     val downloadedBytes = AtomicLong()
     val failed: List<Throwable> = if (toDownload.isEmpty()) {
       emptyList()
     }
     else {
-      val httpClientWithoutFollowingRedirects = httpClient.newBuilder().followRedirects(false).build()
-      // 4MB block, x2 of thread count - one buffer to source, another one for target
-      createBufferPool(downloadParallelism * 2).use { bufferPool ->
+      createHttp2ClientSessionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")).use { client ->
         downloadCompilationCache(
-          serverUrl = serverUrl,
-          prefix = prefix,
+          client = client,
+          serverUrl = metadata.serverUrl,
+          prefix = metadata.prefix,
           toDownload = toDownload,
-          client = httpClientWithoutFollowingRedirects,
-          bufferPool = bufferPool,
           downloadedBytes = downloadedBytes,
           skipUnpack = skipUnpack,
           saveHash = saveHash,
@@ -442,10 +396,12 @@ suspend fun fetchAndUnpackCompiledClasses(
   }
 
   val start = System.nanoTime()
-  spanBuilder("unpack compiled classes archives").use(Dispatchers.IO) {
-    toUnpack.forEachConcurrent { item ->
-      spanBuilder("unpack").setAttribute("name", item.name).use {
-        unpackArchive(item, saveHash)
+  spanBuilder("unpack compiled classes archives").use {
+    for (item in toUnpack) {
+      launch {
+        spanBuilder("unpack").setAttribute("name", item.name).use {
+          unpackArchive(item, saveHash)
+        }
       }
     }
   }
@@ -466,55 +422,57 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   }
 
   val start = System.nanoTime()
-  withContext(Dispatchers.IO) {
-    launch {
+  coroutineScope {
+    launch(Dispatchers.IO) {
       spanBuilder("remove stalled directories not present in metadata").setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
         removeStalledDirs(metadata, classOutput)
       }
     }
 
-    items.forEachConcurrent { item ->
-      val out = item.output
-      if (Files.notExists(out)) {
-        span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))
-        return@forEachConcurrent
-      }
-
-      val hashFile = out.resolve(".hash")
-      if (!Files.isRegularFile(hashFile)) {
-        span.addEvent("no .hash file in output directory", Attributes.of(AttributeKey.stringKey("name"), item.name))
-        out.deleteRecursively()
-        return@forEachConcurrent
-      }
-
-      try {
-        val actual = Files.readString(hashFile)
-        if (actual == item.hash) {
-          upToDate.add(item.name)
+    for (item in items) {
+      launch {
+        val out = item.output
+        if (Files.notExists(out)) {
+          span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))
+          return@launch
         }
-        else {
-          span.addEvent(
-            "output directory hash mismatch",
-            Attributes.of(
-              AttributeKey.stringKey("name"), item.name,
-              AttributeKey.stringKey("expected"), item.hash,
-              AttributeKey.stringKey("actual"), actual,
+
+        val hashFile = out.resolve(".hash")
+        if (!Files.isRegularFile(hashFile)) {
+          span.addEvent("no .hash file in output directory", Attributes.of(AttributeKey.stringKey("name"), item.name))
+          out.deleteRecursively()
+          return@launch
+        }
+
+        try {
+          val actual = Files.readString(hashFile)
+          if (actual == item.hash) {
+            upToDate.add(item.name)
+          }
+          else {
+            span.addEvent(
+              "output directory hash mismatch",
+              Attributes.of(
+                AttributeKey.stringKey("name"), item.name,
+                AttributeKey.stringKey("expected"), item.hash,
+                AttributeKey.stringKey("actual"), actual,
+              )
             )
-          )
+            out.deleteRecursively()
+          }
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          span.addEvent("output directory hash calculation failed", Attributes.of(AttributeKey.stringKey("name"), item.name))
+          span.recordException(e, Attributes.of(AttributeKey.stringKey("name"), item.name))
           out.deleteRecursively()
         }
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        span.addEvent("output directory hash calculation failed", Attributes.of(AttributeKey.stringKey("name"), item.name))
-        span.recordException(e, Attributes.of(AttributeKey.stringKey("name"), item.name))
-        out.deleteRecursively()
-      }
     }
   }
-  return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+  return System.nanoTime() - start
 }
 
 private fun CoroutineScope.removeStalledDirs(
@@ -557,7 +515,7 @@ private fun CoroutineScope.removeStalledDirs(
 private val sharedDigest = MessageDigest.getInstance("SHA-256", java.security.Security.getProvider("SUN"))
 internal fun sha256() = sharedDigest.clone() as MessageDigest
 
-private fun computeHash(file: Path): String {
+internal fun computeHash(file: Path): String {
   val messageDigest = sha256()
   FileChannel.open(file, READ_OPERATION).use { channel ->
     val fileSize = channel.size()
@@ -583,7 +541,7 @@ private fun computeHash(file: Path): String {
 // we cannot change file extension or prefix, so, add suffix
 internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "-z"
 
-data class PackAndUploadItem(
+internal data class PackAndUploadItem(
   @JvmField val output: Path,
   @JvmField val name: String,
   @JvmField val archive: Path,
@@ -604,7 +562,7 @@ internal data class FetchAndUnpackItem(
  * URL for each part should be constructed like: <pre>${serverUrl}/${prefix}/${files.key}/${files.value}.jar</pre>
  */
 @Serializable
-private data class CompilationPartsMetadata(
+internal data class CompilationPartsMetadata(
   @JvmField @SerialName("server-url") val serverUrl: String,
   @JvmField val branch: String,
   @JvmField val prefix: String,

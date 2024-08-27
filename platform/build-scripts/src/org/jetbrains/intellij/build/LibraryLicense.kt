@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build
@@ -110,8 +110,7 @@ data class LibraryLicense(
     private const val APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
     private val PREDEFINED_LICENSE_URLS = mapOf("Apache 2.0" to APACHE_LICENSE_URL)
 
-    @JvmStatic
-    val JETBRAINS_OWN = "JetBrains"
+    const val JETBRAINS_OWN = "JetBrains"
 
     /**
      * Denotes version of a library built from custom revision
@@ -123,7 +122,6 @@ data class LibraryLicense(
      * so there is no way to give a link to their sites.
      * For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
      */
-    @JvmStatic
     fun jetbrainsLibrary(libraryName: String): LibraryLicense {
       return LibraryLicense(
         libraryName = libraryName,

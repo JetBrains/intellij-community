@@ -3,7 +3,6 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.stream.JsonReader
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -11,12 +10,14 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.source
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
 import org.jetbrains.intellij.build.io.copyFile
@@ -37,6 +38,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
 private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
+private val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
 internal class PortableCompilationCacheUploader(
   private val context: CompilationContext,

@@ -1,38 +1,53 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.util.lang.ByteBufferCleaner
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.getOrElse
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 
-internal class DirectFixedSizeByteBufferPool(private val bufferSize: Int, maxPoolSize: Int) : AutoCloseable {
-  private val pool = Channel<ByteBuffer>(capacity = maxPoolSize)
+internal class DirectFixedSizeByteBufferPool(private val bufferSize: Int, private val maxPoolSize: Int) : AutoCloseable {
+  private val pool = ConcurrentLinkedQueue<ByteBuffer>()
+  private val count = AtomicInteger()
+  @JvmField
+  val semaphore: Semaphore = Semaphore(maxPoolSize)
 
-  fun allocate(): ByteBuffer {
-    val result = pool.tryReceive()
-    return when {
-      result.isSuccess -> result.getOrThrow()
-      result.isClosed -> throw IllegalStateException("Pool is closed")
-      else -> ByteBuffer.allocateDirect(bufferSize)
+  private fun allocate(): ByteBuffer {
+    val result = pool.poll() ?: return ByteBuffer.allocateDirect(bufferSize)
+    count.decrementAndGet()
+    return result
+  }
+
+  suspend inline fun <T> withBuffer(task: (buffer: ByteBuffer) -> T): T {
+    return semaphore.withPermit {
+      val buffer = allocate()
+      try {
+        task(buffer)
+      }
+      finally {
+        release(buffer)
+      }
     }
   }
 
-  fun release(buffer: ByteBuffer) {
+  private fun release(buffer: ByteBuffer) {
     buffer.clear()
     buffer.order(ByteOrder.BIG_ENDIAN)
-    pool.trySend(buffer).getOrElse {
-      // if the pool is full, we simply discard the buffer
-      ByteBufferCleaner.unmapBuffer(buffer)
+    if (count.incrementAndGet() < maxPoolSize) {
+      pool.offer(buffer)
+    }
+    else {
+      count.decrementAndGet()
+      unmapBuffer(buffer)
     }
   }
 
-  // pool is not expected to be used during releaseAll call
   override fun close() {
     while (true) {
-      ByteBufferCleaner.unmapBuffer(pool.tryReceive().getOrNull() ?: break)
+      unmapBuffer(pool.poll() ?: return)
     }
-    pool.close()
   }
 }

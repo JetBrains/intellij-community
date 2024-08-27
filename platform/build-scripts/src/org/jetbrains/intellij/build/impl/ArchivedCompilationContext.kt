@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputsStorage
+import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
 import java.nio.file.Path
@@ -17,7 +17,7 @@ import kotlin.io.path.writeLines
 @ApiStatus.Internal
 class ArchivedCompilationContext(
   private val delegate: CompilationContext,
-  private val storage: ArchivedCompilationOutputsStorage = ArchivedCompilationOutputsStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory).apply {
+  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory).apply {
     delegate.options.pathToCompiledClassesArchivesMetadata?.let {
       this.loadMetadataFile(it)
     }

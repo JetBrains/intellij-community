@@ -4,10 +4,8 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
-import com.intellij.util.io.DigestUtil.updateContentHash
 import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
