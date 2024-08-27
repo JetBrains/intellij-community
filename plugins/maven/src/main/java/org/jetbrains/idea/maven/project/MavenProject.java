@@ -2,9 +2,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -1179,17 +1176,6 @@ public class MavenProject {
 
   public @NotNull List<MavenRemoteRepository> getRemoteRepositories() {
     return myState.myRemoteRepositories;
-  }
-
-  /**
-   * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
-    final List<MavenImporter> importers = MavenImporter.getSuitableImporters(this);
-    // getSuitableImporters() guarantees that all returned importers require the same module type
-    return importers.size() > 0 ? importers.get(0).getModuleType() : StdModuleTypes.JAVA;
   }
 
   public @NotNull Pair<String, String> getClassifierAndExtension(@NotNull MavenArtifact artifact, @NotNull MavenExtraArtifactType type) {
