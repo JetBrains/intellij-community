@@ -1,18 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.ui.JBColor
-import com.intellij.ui.JBColor.namedColor
-import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefScrollbarsHelper
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import java.awt.Color
 
@@ -33,24 +23,17 @@ internal object PreviewLAFThemeStyles {
    * @return String containing generated CSS rules.
    */
   fun createStylesheet(): String {
-    val scheme = obtainColorScheme()
-    val contrastedForeground = scheme.defaultForeground.contrast(0.1)
+    val scheme = PreviewStyleScheme.fromCurrentTheme()
 
-    val panelBackground = UIUtil.getPanelBackground()
+    val separatorColor = scheme.separatorColor.webRgba()
+    val infoForeground = scheme.infoForegroundColor.webRgba()
 
-    val linkActiveForeground = JBUI.CurrentTheme.Link.Foreground.ENABLED
-    val separatorColor = namedColor("Group.separatorColor", panelBackground).webRgba()
-    val infoForeground = namedColor("Component.infoForeground", contrastedForeground).webRgba()
-
-    val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
-    val fontSize = JBCefApp.normalizeScaledSize(defaultFontSize)
-    val backgroundColor = scheme.defaultBackground.webRgba()
-    val scale = service<UISettings>().currentIdeScale
+    val backgroundColor = scheme.backgroundColor.webRgba()
     // language=CSS
     return """
     :root {
-      ${Variables.FontSize}: ${fontSize}px;
-      ${Variables.Scale}: ${scale};
+      ${Variables.FontSize}: ${scheme.fontSize}px;
+      ${Variables.Scale}: ${scheme.scale};
     }
 
     body {
@@ -61,11 +44,11 @@ internal object PreviewLAFThemeStyles {
     }
     
     body, p, blockquote, ul, ol, dl, table, pre, code, tr  {
-        color: ${scheme.defaultForeground.webRgba()};
+        color: ${scheme.foregroundColor.webRgba()};
     }
     
     a {
-        color: ${linkActiveForeground.webRgba()};
+        color: ${scheme.linkActiveForegroundColor.webRgba()};
     }
     
     table td, table th {
@@ -85,11 +68,11 @@ internal object PreviewLAFThemeStyles {
     }
     
     blockquote {
-      border-left: 2px solid ${linkActiveForeground.webRgba(alpha = 0.4)};
+      border-left: 2px solid ${scheme.linkActiveForegroundColor.webRgba(alpha = 0.4)};
     }
     
     blockquote, code, pre {
-      background-color: ${markdownFenceBackground.webRgba(markdownFenceBackground.alpha / 255.0)};
+      background-color: ${scheme.fenceBackgroundColor.webRgba(scheme.fenceBackgroundColor.alpha / 255.0)};
     }
     
     ${JBCefScrollbarsHelper.buildScrollbarsStyle()}
@@ -97,28 +80,7 @@ internal object PreviewLAFThemeStyles {
     """.trimIndent()
   }
 
-  private fun obtainColorScheme(): EditorColorsScheme {
-    val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
-    return manager.schemeManager.activeScheme ?: DefaultColorSchemesManager.getInstance().firstScheme
-  }
-
   private fun Color.webRgba(alpha: Double = this.alpha.toDouble()): String {
     return "rgba($red, $green, $blue, $alpha)"
-  }
-
-  /**
-   * Simple linear contrast function.
-   *
-   * 0 < coefficient < 1 results in reduced contrast.
-   * coefficient > 1 results in increased contrast.
-   */
-  private fun Color.contrast(coefficient: Double): Color {
-    @Suppress("UseJBColor")
-    return Color(
-      (coefficient * (red - 128) + 128).toInt(),
-      (coefficient * (green - 128) + 128).toInt(),
-      (coefficient * (blue - 128) + 128).toInt(),
-      alpha
-    )
   }
 }
