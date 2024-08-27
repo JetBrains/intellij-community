@@ -774,7 +774,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(
       name = "JetBrains Jewel IDE LaF Bridge",
       url = "https://github.com/JetBrains/jewel",
-      libraryName = "jetbrains.jewel.ide.laf.bridge.241"
+      libraryName = "jetbrains.jewel.ide.laf.bridge.242"
     )
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
