@@ -312,10 +312,10 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
 }
 
 internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean = false): Runnable {
-  var command = captureClientIdInRunnable(r)
   if (isContextAwareComputation(r)) {
-    return command
+    return r
   }
+  var command = captureClientIdInRunnable(r)
   val childContext =
     if (forceUseContextJob) createChildContextWithContextJob(r.toString())
     //TODO: do we really need .toString() here? It allocates ~6 Gb during indexing
@@ -326,10 +326,10 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
 
 @ApiStatus.Internal
 fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnable, Condition<*>> {
-  var command = captureClientIdInRunnable(r)
   if (isContextAwareComputation(r)) {
-    return JBPair.create(command, expired)
+    return JBPair.create(r, expired)
   }
+  var command = captureClientIdInRunnable(r)
   val childContext = createChildContext(r.toString())
   var expired = expired
   command = ContextRunnable(childContext, command)
@@ -365,10 +365,10 @@ private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job
 }
 
 internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
-  val callable = captureClientIdInCallable(c)
   if (isContextAwareComputation(c)) {
-    return FutureTask(callable)
+    return FutureTask(c)
   }
+  val callable = captureClientIdInCallable(c)
   val childContext = createChildContext(c.toString())
   val wrappedCallable = ContextCallable(false, childContext, callable)
   val cont = childContext.continuation
@@ -389,10 +389,10 @@ internal fun <T, R> capturePropagationContext(function: Function<T, R>): Functio
 }
 
 internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callable<V>, ns: Long): MyScheduledFutureTask<V> {
-  val callable = captureClientIdInCallable(c)
   if (isContextAwareComputation(c)) {
-    return wrapper.MyScheduledFutureTask(callable, ns)
+    return wrapper.MyScheduledFutureTask(c, ns)
   }
+  val callable = captureClientIdInCallable(c)
   val childContext = createChildContext("$c (scheduled: $ns)")
   val wrappedCallable = ContextCallable(false, childContext, callable)
 
