@@ -519,6 +519,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     }
     int pageSize = storage.pageSize();
     if (payloadSize > pageSize - RecordLayout.RECORD_HEADER_SIZE) {
+      //TODO RC: throw FileTooBigException instead if illegal argument
       throw new IllegalArgumentException("payloadSize(=" + payloadSize + ") is too big: " +
                                          "record with header must fit pageSize(=" + pageSize + ")");
     }

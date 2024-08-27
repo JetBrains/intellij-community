@@ -122,7 +122,7 @@ public class AppendOnlyLogFactory implements StorageFactory<AppendOnlyLogOverMMa
     );
   }
 
-  public AppendOnlyLogFactory failFileIfIncompatible() {
+  public AppendOnlyLogFactory failIfFileIncompatible() {
     return new AppendOnlyLogFactory(
       pageSize, ensureDataVersion, expectedDataVersion, failInsteadOfRecovery,
       /* eagerlyCheckFileCompatibility: */ true,

@@ -43,7 +43,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
  * [content] stores records (contentHash, compressed | uncompressed content)
  * [content.hashToId] stores mapping from contentHash to [content] records with such contentHash
  * <p>
- * Compresses (currently: java.util.zip or lz4) content larger than threshold, configured in the ctor.
+ * Compresses (currently: java.util.zip or lz4) content larger than the threshold, configured in the ctor.
  * <p/>
  * Max record size (compressed) is limited by the pageSize.
  * <p>
@@ -140,7 +140,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
     contentStorage = AppendOnlyLogFactory.withDefaults()
       .pageSize(pageSize)
-      .failFileIfIncompatible()
+      .failIfFileIncompatible()
       .failIfDataFormatVersionNotMatch(storageFormatVersion)
       .open(storagePath);
 
