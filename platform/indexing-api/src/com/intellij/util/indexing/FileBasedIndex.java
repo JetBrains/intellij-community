@@ -141,11 +141,11 @@ public abstract class FileBasedIndex {
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
    */
   public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
-                                               @NotNull K dataKey,
-                                               @Nullable VirtualFile inFile,
-                                               @NotNull ValueProcessor<? super V> processor,
-                                               @NotNull GlobalSearchScope filter,
-                                               @Nullable IdFilter idFilter) {
+                                      @NotNull K dataKey,
+                                      @Nullable VirtualFile inFile,
+                                      @NotNull ValueProcessor<? super V> processor,
+                                      @NotNull GlobalSearchScope filter,
+                                      @Nullable IdFilter idFilter) {
     return processValues(indexId, dataKey, inFile, processor, filter);
   }
 
@@ -215,7 +215,7 @@ public abstract class FileBasedIndex {
   /**
    * Executes command and allow its to have an index access in dumb mode.
    * Inside the command it's safe to call index related stuff and
-   * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
+   * {@link com.intellij.openapi.project.IndexNotReadyException} is not expected to happen here.
    *
    * <p> Please use {@link DumbModeAccessType#ignoreDumbMode(Runnable)} or {@link DumbModeAccessType#ignoreDumbMode(ThrowableComputable)}
    * since they produce less boilerplate code.
