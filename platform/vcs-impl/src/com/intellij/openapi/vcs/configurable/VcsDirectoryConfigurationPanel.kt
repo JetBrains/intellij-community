@@ -37,12 +37,12 @@ import java.awt.Component
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.io.File
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
+import kotlin.Throws
 
 class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
@@ -151,7 +151,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
     initializeModel()
 
-    vcsComboBox = buildVcsesComboBox(allSupportedVcss)
+    vcsComboBox = buildVcsesComboBox(project, allSupportedVcss)
     vcsComboBox.addItemListener {
       if (mappingTable.isEditing) {
         mappingTable.stopEditing()
@@ -471,11 +471,11 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
     @JvmStatic
     fun buildVcsesComboBox(project: Project): ComboBox<AbstractVcs?> {
       val allVcses = ProjectLevelVcsManager.getInstance(project).allSupportedVcss
-      return buildVcsesComboBox(allVcses.asList())
+      return buildVcsesComboBox(project, allVcses.asList())
     }
 
-    private fun buildVcsesComboBox(allVcses: List<AbstractVcs>): ComboBox<AbstractVcs?> {
-      val comboBox = ComboBox((allVcses + null).toTypedArray())
+    private fun buildVcsesComboBox(project: Project, allVcses: List<AbstractVcs>): ComboBox<AbstractVcs?> {
+      val comboBox = ComboBox((allVcses + null).sortedWith(SuggestedVcsComparator.create(project)).toTypedArray())
       comboBox.renderer = SimpleListCellRenderer.create(VcsBundle.message("none.vcs.presentation")) { obj: AbstractVcs? -> obj?.displayName }
       return comboBox
     }

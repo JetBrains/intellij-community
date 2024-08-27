@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,9 +68,13 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
 
   @NotNull
   private static VcsDirectoryMapping suggestDefaultMapping(@NotNull Project project) {
+    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss();
+    ContainerUtil.sort(vcses, SuggestedVcsComparator.create(project));
+    String defaultVcsName = vcses.length > 0 ? vcses[0].getName() : "";
+
     String basePath = project.getBasePath();
-    if (basePath == null) return VcsDirectoryMapping.createDefault("");
-    return new VcsDirectoryMapping(basePath, "");
+    if (basePath == null) return VcsDirectoryMapping.createDefault(defaultVcsName);
+    return new VcsDirectoryMapping(basePath, defaultVcsName);
   }
 
   @Override

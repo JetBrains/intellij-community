@@ -5688,6 +5688,9 @@ c:com.intellij.openapi.vcs.configurable.ShelfStorageConfigurationDialog
 - p:doValidate():com.intellij.openapi.ui.ValidationInfo
 - p:getHelpId():java.lang.String
 - p:postponeValidation():Z
+f:com.intellij.openapi.vcs.configurable.SuggestedVcsComparator
+- sf:INSTANCE:com.intellij.openapi.vcs.configurable.SuggestedVcsComparator
+- sf:create(com.intellij.openapi.project.Project):java.util.Comparator
 a:com.intellij.openapi.vcs.configurable.VcsCheckBoxWithSpinnerConfigurable
 - com.intellij.openapi.options.Configurable
 - p:myHighlightInterval:javax.swing.JSpinner
