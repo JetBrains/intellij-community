@@ -342,7 +342,6 @@ fun collectEntityClasses(module: Module): List<EntityTypeDefinition> =
     loadEntityClass(module.classLoader, entityClassName, module.name)
   }?.toList() ?: emptyList()
 
-@Suppress("unused") // API for IJ
 fun collectEntityClasses(classLoader: ClassLoader, module: String): List<EntityTypeDefinition> =
   classLoader.getResourceAsStream(ENTITIES_LIST_PATH)?.metaInfLineSequence()?.mapNotNull { entityClassName ->
     loadEntityClass(classLoader, entityClassName, module)

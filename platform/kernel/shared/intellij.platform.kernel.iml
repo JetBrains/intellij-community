@@ -35,44 +35,8 @@
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="jetbrains.fleet.kernel" type="repository">
-        <properties maven-id="org.jetbrains.fleet:kernel:1.41.0-FL24724_82b058de25568.14">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.41.0-FL24724_82b058de25568.14/kernel-1.41.0-FL24724_82b058de25568.14.jar">
-              <sha256sum>323782f9aa0cb78a0e799908bfba960e104e40de83a0af229421f22bef13ec1f</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.41.0-FL24724_82b058de25568.14/rhizomedb-1.41.0-FL24724_82b058de25568.14.jar">
-              <sha256sum>b15197164a6d7dcb13b1c3fb8356b89addc9a6f7ff73048aecb42db9df0257ce</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
-            <dependency maven-id="com.intellij.platform:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
-            <dependency maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
-            <dependency maven-id="org.jetbrains.fleet:util-core" />
-            <dependency maven-id="org.jetbrains.fleet:rpc" />
-            <dependency maven-id="org.jetbrains.fleet:preferences" />
-            <dependency maven-id="org.jetbrains.fleet:reporting-api" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.41.0-FL24724_82b058de25568.14/kernel-1.41.0-FL24724_82b058de25568.14.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.41.0-FL24724_82b058de25568.14/rhizomedb-1.41.0-FL24724_82b058de25568.14.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.41.0-FL24724_82b058de25568.14/kernel-1.41.0-FL24724_82b058de25568.14-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.41.0-FL24724_82b058de25568.14/rhizomedb-1.41.0-FL24724_82b058de25568.14-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="fleet.kernel" exported="" />
     <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" exported="" name="io.lacuna:bifurcan" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />

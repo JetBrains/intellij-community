@@ -89,6 +89,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
   // do we need it?
   "intellij.platform.sqlite",
+  //"fleet.rpc.server",
 )
 
 @Suppress("RemoveRedundantQualifierName")
@@ -264,6 +265,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   val productPluginContentModules = processAndGetProductPluginContentModules(
     context = context,
     layout = layout,
+
     includedPlatformModulesPartialList = (layout.includedModules.asSequence().map { it.moduleName } + computeImplicitRequiredModules(
       explicit = explicitModuleNames,
       layout = layout,
@@ -624,6 +626,9 @@ private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.rider", listOf(
     "intellij.platform.debugger.modulesView"
   ),
+  "intellij.platform.rpc.backend", listOf(
+    "fleet.rpc.server",
+  )
 )
 
 internal object ModuleIncludeReasons {

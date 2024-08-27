@@ -19,11 +19,11 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
 import kotlin.coroutines.CoroutineContext
 
-suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend CoroutineScope.() -> T) {
-  val entityClasses = listOf(Kernel::class.java.classLoader).flatMap {
+suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
+  val entityClasses = listOf(Transactor::class.java.classLoader).flatMap {
     collectEntityClasses(it, PluginUtil.getPluginId(it).idString)
   }
-  fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
+  withTransactor(entityClasses, middleware = middleware) { _ ->
     withRete {
       body()
     }
@@ -65,7 +65,7 @@ fun CoroutineScope.handleEntityTypes() {
 }
 
 fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
-  return kernel + this[Rete]!! + this[DbSource.ContextElement]!!
+  return transactor + this[Rete]!! + this[DbSource.ContextElement]!!
 }
 
 val CommonInstructionSet: InstructionSet =
@@ -89,7 +89,7 @@ val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
 suspend fun updateDbInTheEventDispatchThread(): Nothing {
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     try {
-      kernel().log.collect { event ->
+      transactor().log.collect { event ->
         DbContext.threadLocal.set(DbContext<DB>(event.db, null))
       }
       awaitCancellation()
