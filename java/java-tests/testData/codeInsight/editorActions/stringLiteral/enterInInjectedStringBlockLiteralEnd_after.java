@@ -5,7 +5,7 @@ class Test {
   @Language("JAVA")
   String block = """
     int a = 1;
-    
+    <caret>
     """;
 
 }

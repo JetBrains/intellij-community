@@ -3,20 +3,19 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,53 +35,50 @@ public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDeleg
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     Document document = file.getFileDocument();
+    Project project = editor.getProject();
+    if (project == null) return Result.Continue;
     if (!(document instanceof DocumentWindow)) return Result.Continue;
-    HostPosition host = getHost(dataContext);
-    if (host == null || host.originalFile() == file || host.originalEditor() == editor) return Result.Continue;
-    if (host.originalFile().getLanguage() != JavaLanguage.INSTANCE) return Result.Continue;
-    PsiElement psiElement = host.originalFile().findElementAt(host.offset());
+    Editor originalEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+    PsiFile originalFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    if (originalFile == file || originalEditor == editor) return Result.Continue;
+    if (originalFile.getLanguage() != JavaLanguage.INSTANCE) return Result.Continue;
+    int originalOffset = originalEditor.getCaretModel().getOffset();
+    PsiElement psiElement = originalFile.findElementAt(originalOffset);
     if (!(psiElement instanceof PsiJavaToken textBlock && textBlock.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL)) {
       return Result.Continue;
     }
     PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(textBlock, PsiLiteralExpression.class);
     if (literalExpression == null) return Result.Continue;
-    int endIndex = host.offset() - psiElement.getTextRange().getStartOffset();
+    int endIndex = originalOffset - psiElement.getTextRange().getStartOffset();
     String text = psiElement.getText();
     if (endIndex >= text.length() || endIndex < 0) return Result.Continue;
     String firstPart = text.substring(0, endIndex);
     if (!firstPart.contains("\n")) return Result.Continue;
-    Document originalDocument = host.originalEditor().getDocument();
-    int lineNumber = originalDocument.getLineNumber(host.offset());
+    Document originalDocument = originalEditor.getDocument();
+    int lineNumber = originalDocument.getLineNumber(originalOffset);
     int lineStartOffset = originalDocument.getLineStartOffset(lineNumber);
     RangeMarker marker =
       originalDocument.createRangeMarker(lineStartOffset, originalDocument.getLineEndOffset(lineNumber));
     marker.setGreedyToRight(true);
     myRangeMarker = marker;
     String previousIndent = PsiLiteralUtil.getTextBlockIndentString(literalExpression);
-    if (previousIndent != null && previousIndent.length() > host.offset() - lineStartOffset) {
-      previousIndent = previousIndent.substring(0, host.offset() - lineStartOffset);
+    if (previousIndent != null && previousIndent.length() > originalOffset - lineStartOffset) {
+      previousIndent = previousIndent.substring(0, originalOffset - lineStartOffset);
     }
     myPreviousIndent = previousIndent;
     return Result.Continue;
   }
 
-  @NotNull
-  private static String collectIndent(@NotNull Document document, int offset) {
+  private static int getIndent(@NotNull Document document, int offset) {
     int lineNumber = document.getLineNumber(offset);
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     int lineEndOffset = document.getLineEndOffset(lineNumber);
-    String currentLine = document.getText(new TextRange(lineStartOffset, lineEndOffset));
-    int indent = 0;
-    StringBuilder builder = new StringBuilder();
-    while (indent < currentLine.length() && StringUtil.isWhiteSpace(currentLine.charAt(indent))) {
-      builder.append(currentLine.charAt(indent));
-      indent++;
+    String fullText = document.getText();
+    int whiteSpaceIndex = lineStartOffset;
+    while (whiteSpaceIndex < lineEndOffset && StringUtil.isWhiteSpace(fullText.charAt(whiteSpaceIndex))) {
+      whiteSpaceIndex++;
     }
-    return builder.toString();
-  }
-
-  private static int getIndent(@NotNull Document document, int offset) {
-    return collectIndent(document, offset).length();
+    return whiteSpaceIndex - lineStartOffset;
   }
 
 
@@ -91,22 +87,26 @@ public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDeleg
     try {
       Document document = file.getFileDocument();
       if (!(document instanceof DocumentWindow)) return Result.Continue;
-      HostPosition host = getHost(dataContext);
-      if (host == null || host.originalFile() == file || host.originalEditor() == editor) return Result.Continue;
-      if (host.originalFile().getLanguage() != JavaLanguage.INSTANCE) return Result.Continue;
+      Project project = editor.getProject();
+      if (project == null) return Result.Continue;
+      Editor originalEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+      PsiFile originalFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+      if (originalFile == file || originalEditor == editor) return Result.Continue;
+      if (originalFile.getLanguage() != JavaLanguage.INSTANCE) return Result.Continue;
       if (myRangeMarker == null || myPreviousIndent == null) return Result.Continue;
-      PsiElement psiElement = host.originalFile().findElementAt(host.offset());
+      int originalOffset = originalEditor.getCaretModel().getOffset();
+      PsiElement psiElement = originalFile.findElementAt(originalOffset);
       if (!(psiElement instanceof PsiJavaToken javaToken && javaToken.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL)) {
         return Result.Continue;
       }
-      Document originalDocument = host.originalEditor().getDocument();
-      PsiDocumentManager.getInstance(host.originalFile().getProject()).commitDocument(file.getFileDocument());
-      PsiDocumentManager.getInstance(host.originalFile().getProject()).commitDocument(originalDocument);
+      Document originalDocument = originalEditor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(file.getFileDocument());
+      PsiDocumentManager.getInstance(project).commitDocument(originalDocument);
       RangeMarker rangeMarker = myRangeMarker;
       String previousIndent = myPreviousIndent;
       if (!rangeMarker.isValid()) return Result.Continue;
       TextRange changedRange = rangeMarker.getTextRange();
-      int lineNumber = originalDocument.getLineNumber(host.offset());
+      int lineNumber = originalDocument.getLineNumber(originalOffset);
       if (lineNumber - 1 < 0) return Result.Continue;
       int firstChangedLineNumber = originalDocument.getLineNumber(changedRange.getStartOffset());
       int lastChangedLineNumber = originalDocument.getLineNumber(changedRange.getEndOffset());
@@ -125,21 +125,5 @@ public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDeleg
       myPreviousIndent = null;
       myRangeMarker = null;
     }
-  }
-
-  private record HostPosition(@NotNull PsiFile originalFile, @NotNull Editor originalEditor, int offset) {
-  }
-
-  @Nullable
-  private static HostPosition getHost(@NotNull DataContext dataContext) {
-    Editor data = CommonDataKeys.HOST_EDITOR.getData(dataContext);
-    if (!(data instanceof EditorEx originalEditor)) return null;
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return null;
-    VirtualFile virtualFile = originalEditor.getVirtualFile();
-    if (virtualFile == null) return null;
-    PsiFile originalFile = PsiManager.getInstance(project).findFile(virtualFile);
-    if (originalFile == null) return null;
-    return new HostPosition(originalFile, originalEditor, originalEditor.getCaretModel().getOffset());
   }
 }

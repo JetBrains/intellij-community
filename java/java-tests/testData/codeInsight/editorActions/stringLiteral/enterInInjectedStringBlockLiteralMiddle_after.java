@@ -4,9 +4,9 @@ class Test {
 
   @Language("JAVA")
   String block = """
-    class A{
-    
-    }
-    """;
+  class A{
+    <caret>
+  }
+  """;
 
 }
