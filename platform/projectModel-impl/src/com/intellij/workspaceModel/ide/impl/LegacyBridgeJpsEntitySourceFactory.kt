@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.PathManager
@@ -68,12 +68,4 @@ object LegacyBridgeJpsEntitySourceFactory {
     val location = getJpsProjectConfigLocation(project) ?: return null
     return JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(location)
   }
-
-  fun createEntitySourceForArtifact(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {
-    val location = getJpsProjectConfigLocation(project) ?: return NonPersistentEntitySource
-    val internalFile = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(location)
-    if (externalSource == null) return internalFile
-    return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
-  }
-
 }

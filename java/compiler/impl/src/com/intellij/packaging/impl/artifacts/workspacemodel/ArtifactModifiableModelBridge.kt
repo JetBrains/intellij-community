@@ -31,7 +31,6 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.mapInPlace
 import com.intellij.util.text.UniqueNameGenerator
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import io.opentelemetry.api.metrics.Meter
 
 class ArtifactModifiableModelBridge(
@@ -129,7 +128,7 @@ class ArtifactModifiableModelBridge(
 
     val fileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
-    val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
+    val source = LegacyBridgeJpsArtifactEntitySourceFactory.getInstance(project).createEntitySourceForArtifact(externalSource)
 
     val rootElementEntity = rootElement.getOrAddEntityBuilder(diff, source, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
     rootElement.forThisAndFullTree {
