@@ -4,6 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContextOrNull
+import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
@@ -34,11 +35,11 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
     withContext(testElement) {
       runWithModalProgressBlockingContext {
         assertSame(testElement, coroutineContext[TestElementKey])
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
         withContext(Dispatchers.EDT) {
-          assertNull(currentThreadContextOrNull())
+          assertNull(currentThreadOverriddenContextOrNull())
         }
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
       }
     }
   }
@@ -48,9 +49,9 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
     withContext(Dispatchers.EDT) {
       assertFalse(LaterInvocator.isInModalContext())
       runWithModalProgressBlocking {
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
         withContext(Dispatchers.EDT) {
-          assertNull(currentThreadContextOrNull())
+          assertNull(currentThreadOverriddenContextOrNull())
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)

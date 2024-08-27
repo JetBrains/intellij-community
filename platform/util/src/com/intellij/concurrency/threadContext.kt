@@ -105,17 +105,21 @@ private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) ->
 @VisibleForTesting
 @TestOnly
 @ApiStatus.Internal
-fun currentThreadContextOrNull(): CoroutineContext? {
-  return currentThreadContextOrFallback { null }
+fun currentThreadOverriddenContextOrNull(): CoroutineContext? {
+  return tlCoroutineContext.get().context
 }
 
+@ApiStatus.Internal
+fun currentThreadContextOrNull(): CoroutineContext? {
+  return currentThreadContextOrFallback { it?.minusKey(ContinuationInterceptor) }
+}
 
 /**
  * @return current thread context
  */
 fun currentThreadContext(): CoroutineContext {
   checkContextInstalled()
-  return currentThreadContextOrFallback { it?.minusKey(ContinuationInterceptor) } ?: EmptyCoroutineContext
+  return currentThreadContextOrNull() ?: EmptyCoroutineContext
 }
 
 private fun checkContextInstalled() {
