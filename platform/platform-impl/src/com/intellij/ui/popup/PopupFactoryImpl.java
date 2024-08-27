@@ -950,7 +950,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return icon;
     }
 
-    if (icon instanceof EmptyIcon) {
+    if (icon.getClass() == EmptyIcon.class) {
       return icon.getIconWidth() == maxIconWidth && icon.getIconHeight() == maxIconHeight
              ? icon
              : EmptyIcon.create(maxIconWidth, maxIconHeight);
