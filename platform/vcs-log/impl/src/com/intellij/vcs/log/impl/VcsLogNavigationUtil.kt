@@ -91,9 +91,7 @@ object VcsLogNavigationUtil {
                                          root: VirtualFile,
                                          requestFocus: Boolean,
                                          predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
-    VcsProjectLog.waitWhenLogIsReady(project)
-
-    val manager = VcsProjectLog.getInstance(project).logManager ?: return null
+    val manager = VcsProjectLog.awaitLogIsReady(project) ?: return null
     val isLogUpToDate = manager.isLogUpToDate
     if (!manager.containsCommit(hash, root)) {
       if (isLogUpToDate) return null
