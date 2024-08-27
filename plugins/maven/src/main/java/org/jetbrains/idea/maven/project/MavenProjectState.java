@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -18,7 +17,6 @@ import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 class MavenProjectState implements Cloneable, Serializable {
@@ -68,8 +66,6 @@ class MavenProjectState implements Cloneable, Serializable {
   private volatile List<MavenPlugin> myUnresolvedPluginsCache;
   private volatile List<MavenArtifact> myUnresolvedExtensionsCache;
   private volatile List<MavenArtifact> myUnresolvedAnnotationProcessors;
-
-  private transient ConcurrentHashMap<Key<?>, Object> myCache = new ConcurrentHashMap<>();
 
   long getLastReadStamp() {
     return myLastReadStamp;
@@ -187,15 +183,10 @@ class MavenProjectState implements Cloneable, Serializable {
     return myProblemsCache;
   }
 
-  ConcurrentHashMap<Key<?>, Object> getCache() {
-    return myCache;
-  }
-
   @Override
   public MavenProjectState clone() {
     try {
       MavenProjectState result = (MavenProjectState)super.clone();
-      myCache = new ConcurrentHashMap<>();
       result.resetCache();
       return result;
     }
@@ -210,8 +201,6 @@ class MavenProjectState implements Cloneable, Serializable {
     myUnresolvedPluginsCache = null;
     myUnresolvedExtensionsCache = null;
     myUnresolvedAnnotationProcessors = null;
-
-    myCache.clear();
   }
 
   public MavenProjectChanges getChanges(MavenProjectState newState) {
