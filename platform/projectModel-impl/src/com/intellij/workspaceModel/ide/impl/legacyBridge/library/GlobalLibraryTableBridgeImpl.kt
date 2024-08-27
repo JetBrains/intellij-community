@@ -1,20 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
+import com.intellij.platform.workspace.storage.*
 import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
@@ -66,7 +66,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun getPresentation(): LibraryTablePresentation = GLOBAL_LIBRARY_TABLE_PRESENTATION
 
   override fun getModifiableModel(): LibraryTable.ModifiableModel {
-    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
+    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, createEntitySourceForGlobalLibrary())
   }
 
   override fun dispose(): Unit = Disposer.dispose(libraryTableDelegate)
@@ -76,6 +76,12 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable): Unit = libraryTableDelegate.addListener(listener, parentDisposable)
 
   override fun removeListener(listener: LibraryTable.Listener) = libraryTableDelegate.removeListener(listener)
+
+  private fun createEntitySourceForGlobalLibrary(): EntitySource {
+    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+    val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
+    return JpsGlobalFileEntitySource(globalLibrariesFile)
+  }
 
   companion object {
     private val GLOBAL_LIBRARY_TABLE_PRESENTATION: LibraryTablePresentation = object : LibraryTablePresentation() {

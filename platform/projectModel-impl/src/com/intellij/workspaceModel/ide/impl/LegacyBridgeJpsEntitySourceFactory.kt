@@ -1,15 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
-import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -56,12 +57,6 @@ object LegacyBridgeJpsEntitySourceFactory {
       createInternalEntitySourceForProjectLibrary(project)
     }
     return createImportedEntitySource(project, externalSource, internalEntitySource)
-  }
-
-  fun createEntitySourceForGlobalLibrary(): EntitySource {
-    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-    val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
-    return JpsGlobalFileEntitySource(globalLibrariesFile)
   }
 
   private fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
