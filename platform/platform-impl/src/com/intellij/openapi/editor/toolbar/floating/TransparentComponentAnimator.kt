@@ -21,6 +21,15 @@ class TransparentComponentAnimator(
   private val clk = TimerUtil.createNamedTimer("CLK", CLK_DELAY)
   private val state = AtomicReference<State>(State.Invisible)
 
+  var showingTime: Int = SHOWING_TIME_MS
+  var hidingTime: Int = HIDING_TIME_MS
+
+  private val showingCount: Int
+    get() = showingTime / CLK_DELAY
+
+  private val hidingCount: Int
+    get() = hidingTime / CLK_DELAY
+
   private fun startTimerIfNeeded() {
     if (!disposable.isDisposed) {
       if (!clk.isRunning) {
@@ -104,7 +113,7 @@ class TransparentComponentAnimator(
     return when (state) {
       is State.Invisible -> State.Showing(0)
       is State.Visible -> State.Visible(0)
-      is State.Hiding -> State.Showing(SHOWING_COUNT - SHOWING_COUNT * state.count / HIDING_COUNT)
+      is State.Hiding -> State.Showing(showingCount - showingCount * state.count / hidingCount)
       is State.Showing -> state
     }
   }
@@ -114,7 +123,7 @@ class TransparentComponentAnimator(
       is State.Invisible -> State.Invisible
       is State.Visible -> State.Hiding(0)
       is State.Hiding -> state
-      is State.Showing -> State.Hiding(HIDING_COUNT - HIDING_COUNT * state.count / SHOWING_COUNT)
+      is State.Showing -> State.Hiding(hidingCount - hidingCount * state.count / showingCount)
     }
   }
 
@@ -128,11 +137,11 @@ class TransparentComponentAnimator(
         else -> State.Visible(state.count + 1)
       }
       is State.Hiding -> when {
-        state.count + 1 >= HIDING_COUNT -> State.Invisible
+        state.count + 1 >= hidingCount -> State.Invisible
         else -> State.Hiding(state.count + 1)
       }
       is State.Showing -> when {
-        state.count + 1 >= SHOWING_COUNT -> State.Visible(0)
+        state.count + 1 >= showingCount -> State.Visible(0)
         else -> State.Showing(state.count + 1)
       }
     }
@@ -142,8 +151,8 @@ class TransparentComponentAnimator(
     return when (state) {
       is State.Invisible -> 0.0f
       is State.Visible -> 1.0f
-      is State.Hiding -> 1.0f - getOpacity(state.count, HIDING_COUNT)
-      is State.Showing -> getOpacity(state.count, SHOWING_COUNT)
+      is State.Hiding -> 1.0f - getOpacity(state.count, hidingCount)
+      is State.Showing -> getOpacity(state.count, showingCount)
     }
   }
 
@@ -172,8 +181,8 @@ class TransparentComponentAnimator(
 
   companion object {
     private const val CLK_DELAY = 1000 / 60
-    private const val SHOWING_COUNT = 500 / CLK_DELAY
-    private const val HIDING_COUNT = 1000 / CLK_DELAY
+    private const val SHOWING_TIME_MS = 500
+    private const val HIDING_TIME_MS = 1000
 
     private const val RETENTION_CLK_DELAY = 1500
     private const val AUTO_RETENTION_COUNT = 1500 / RETENTION_CLK_DELAY

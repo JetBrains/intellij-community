@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -155,7 +154,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     val instance = HotSwapSessionManager.getInstance(project)
 
     if (component is AbstractFloatingToolbarComponent) {
-      component.putUserData(AbstractFloatingToolbarComponent.CUSTOM_OPACITY_KEY, 0.9f)
+      component.backgroundAlpha = 0.9f
+      component.showingTime = SHOWING_TIME_MS
+      component.hidingTime = HIDING_TIME_MS
     }
     instance.addListener(ChangesListener(component, project), parentDisposable)
   }
@@ -210,6 +211,11 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         component.updateActionsAsync()
       }
     }
+  }
+
+  companion object {
+    private const val SHOWING_TIME_MS = 500
+    private const val HIDING_TIME_MS = 500
   }
 }
 
