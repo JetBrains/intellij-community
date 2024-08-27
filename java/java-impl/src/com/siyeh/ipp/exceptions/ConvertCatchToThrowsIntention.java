@@ -47,6 +47,20 @@ public final class ConvertCatchToThrowsIntention extends PsiBasedModCommandActio
     return owner instanceof PsiMethod;
   }
 
+  private static PsiMethod @NotNull [] getSuperMethods(@NotNull PsiMethod targetMethod) {
+    List<PsiMethod> result = new ArrayList<>();
+    collectSuperMethods(targetMethod, result);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
+  private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<? super PsiMethod> result) {
+    PsiMethod[] superMethods = method.findSuperMethods(true);
+    for (PsiMethod superMethod : superMethods) {
+      result.add(superMethod);
+      collectSuperMethods(superMethod, result);
+    }
+  }
+
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
@@ -54,7 +68,7 @@ public final class ConvertCatchToThrowsIntention extends PsiBasedModCommandActio
     if (method == null) return ModCommand.nop();
     PsiType catchType = catchSection.getCatchType();
     if (catchType == null) return ModCommand.nop();
-    PsiMethod[] superMethods = method.findSuperMethods(true);
+    PsiMethod[] superMethods = getSuperMethods(method);
     if (superMethods.length == 0) {
       return ModCommand.psiUpdate(catchSection, (copyCatchSection, upd) -> {
         deleteCatchAndAddToCurrentMethod(copyCatchSection, catchType);
