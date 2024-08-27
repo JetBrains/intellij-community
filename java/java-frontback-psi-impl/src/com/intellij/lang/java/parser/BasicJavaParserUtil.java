@@ -193,7 +193,7 @@ public final class BasicJavaParserUtil {
                                       final boolean eatAll,
                                       final LanguageLevel level,
                                       Function<LanguageLevel, JavaDocLexer> javaDocLexer,
-                                      Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+                                      Function<LanguageLevel, ? extends Lexer> javaLexer) {
     final PsiElement psi = chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
