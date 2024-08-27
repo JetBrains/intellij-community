@@ -282,11 +282,18 @@ public final class EditorGutterLayout {
     );
 
     List<GutterArea> lineNumbersAreas = List.of(
-      area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth).showIf(this::isLineNumbersShown),
-      areaGap(12).showIf(() -> isLineNumbersShown() && !myEditorGutter.isLineMarkersShown()),
-      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth).showIf(this::isLineNumbersShown),
-      area(ADDITIONAL_LINE_NUMBERS_AREA, EditorGutterComponentImpl.GAP_AFTER_LINE_NUMBERS_WIDTH::get)
-        .showIf(() -> isLineNumbersShown() && myEditorGutter.isLineMarkersShown())
+      area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
+        .showIf(this::isLineNumbersShown),
+      areaGap(12)
+        .showIf(() -> isLineNumbersShown() && !myEditorGutter.isLineMarkersShown()),
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth)
+        .showIf(this::isLineNumbersShown),
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> {
+        // Note: ADDITIONAL_LINE_NUMBERS_AREA rendering depends on this gap
+        return Math.max(myEditorGutter.isLineMarkersShown() ? EditorGutterComponentImpl.GAP_AFTER_LINE_NUMBERS_WIDTH.get() : 0,
+                        myEditorGutter.myAdditionalLineNumberAreaWidth > 0 ? getGapBetweenAreas() : 0);
+      })
+        .showIf(() -> isLineNumbersShown())
     );
 
     List<GutterArea> dfmMarginArea = List.of(
