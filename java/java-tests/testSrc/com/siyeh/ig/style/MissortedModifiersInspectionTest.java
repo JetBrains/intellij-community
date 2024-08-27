@@ -30,6 +30,9 @@ public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCas
   public void testTypeUseWithTypeUseGenerated() {
     doTestQuickFix();
   }
+  public void testTypeUseWithTypeUseGeneratedInline() {
+    doTestQuickFix();
+  }
 
   public void testTypeUseWithTypeUseNotGenerated() {
     doTest();
