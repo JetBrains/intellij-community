@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.IOUtil;
@@ -457,7 +458,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public int storeUnlinkedContent(byte @NotNull [] bytes) {
+  public int storeUnlinkedContent(byte @NotNull [] bytes) throws ContentTooBigException {
     return vfsPeer.writeContentRecord(new ByteArraySequence(bytes));
   }
 
@@ -895,21 +896,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static boolean shouldCache(long len) {
-    //TODO RC: content size is limited by VFSContentStorage pageSize -- storage impl doesn't allow records to cross page
-    //         boundary, hence max record size = (pageSize-recordHeader). Current pageSize=64Mb (see PersistentFSLoader),
-    //         By default, FILE_LENGTH_TO_CACHE_THRESHOLD ~ 20Mb, well below limit, but some users override it to unreasonably
-    //         high values, so the fail-safe here.
-    //         The solution is quite imperfect, though. E.g. hard limit is a 'magic number', which must be == page size
-    //         defined in another class. Also, VFSContentStorage compresses the data, and 64Mb hard limit is for compressed
-    //         size -- which for text files is typically 2-3x smaller than raw size -- which means in practice this limit
-    //         is 2-3x too restrictive.
-    //         Better solution would be for VFSContentStorage to throw a special kind of exception on overflow -- something
-    //         like FileTooBigException, instead of generic IllegalArgumentException currently -- catch this exception here,
-    //         in PersistentFSImpl, log warning, and does not store such a large content. This way actual implementation limit
-    //         is encapsulated in the storage implementation, and not exposed.
-    int hardContentSizeLimit = 64 * IOUtil.MiB - 4;
-    if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD
-        || len >= hardContentSizeLimit) {
+    if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
       return false;
     }
     return true;
@@ -971,7 +958,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void storeContentToStorage(long fileLength,
                                      @NotNull VirtualFile file,
                                      byte @NotNull [] bytes,
-                                     int byteLength) throws IOException {
+                                     int byteLength) throws IOException, ContentTooBigException {
     int fileId = getFileId(file);
 
     if (byteLength == fileLength) {
@@ -984,9 +971,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void updateContentForFile(int fileId,
-                                    @NotNull ByteArraySequence newContent) throws IOException {
+                                    @NotNull ByteArraySequence newContent) throws IOException, ContentTooBigException {
     //VFS content storage is append-only, hence storing could be done outside the lock:
-    int newContentId = vfsPeer.writeContentRecord(newContent);
+    int newContentId;
+    try {
+      newContentId = vfsPeer.writeContentRecord(newContent);
+    }
+    catch (ContentTooBigException e) {
+      LOG.warn("file[" + fileId + "]: content[" + newContent.length() + "b uncompressed] is too big -- don't store it in VFS", e);
+      newContentId = 0;
+    }
 
     ReadWriteLock contentLoadingLock = contentLoadingSegmentedLock[fileId % contentLoadingSegmentedLock.length];
     contentLoadingLock.writeLock().lock();
@@ -996,6 +990,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     finally {
       contentLoadingLock.writeLock().unlock();
     }
+
   }
 
   /** Method is obsolete, migrate to {@link #contentHashIfStored(VirtualFile)} instance method */
