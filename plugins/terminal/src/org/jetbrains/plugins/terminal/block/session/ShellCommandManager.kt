@@ -88,7 +88,7 @@ internal class ShellCommandManager(
     val startedCommand = this.startedCommand
     if (commandEndMarker != null) {
       debug { "Received command_finished event, waiting for command end marker" }
-      ShellCommandEndMarkerListener(session) {
+      ShellCommandEndMarkerListener(terminalTextBuffer, commandEndMarker, parentDisposable) {
         fireCommandFinished(startedCommand, exitCode)
         this.startedCommand = null
       }

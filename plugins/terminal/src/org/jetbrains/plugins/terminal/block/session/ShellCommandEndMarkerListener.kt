@@ -19,22 +19,6 @@ internal class ShellCommandEndMarkerListener(
   private val onFound: () -> Unit,
 ) {
 
-  @Deprecated(
-    "Does not really requires session",
-    replaceWith = ReplaceWith(
-      "ShellCommandEndMarkerListener(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker, session as Disposable, onFound)"
-    )
-  )
-  constructor(
-    session: BlockTerminalSession,
-    onFound: () -> Unit,
-  ) : this(
-    session.model.textBuffer,
-    session.commandBlockIntegration.commandEndMarker,
-    session as Disposable,
-    onFound
-  )
-
   private val disposable: Disposable = Disposer.newDisposable(parentDisposable, ShellCommandEndMarkerListener::class.java.simpleName)
   private val found: AtomicBoolean = AtomicBoolean(false)
 
