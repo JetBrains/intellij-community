@@ -420,7 +420,7 @@ data class ClientId(val value: String) {
 
     @JvmStatic
     private fun assertClientIdMismatch(assertInfo: Pair<ClientIdContextElement?, Throwable>) {
-      val currentClientIdElement = currentThreadContextOrNull()?.clientIdContextElement
+      val currentClientIdElement = currentThreadContext().clientIdContextElement
       if (assertInfo.first != currentClientIdElement) {
         logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'", assertInfo.second))
       }
@@ -428,7 +428,7 @@ data class ClientId(val value: String) {
 
     private fun captureInfoForAssertion(): Pair<ClientIdContextElement?, Throwable> {
       // TODO: drop capturing of Throwable because of performance
-      val clientIdContextElement = currentThreadContextOrNull()?.clientIdContextElement
+      val clientIdContextElement = currentThreadContext().clientIdContextElement
       return clientIdContextElement to Throwable("'$clientIdContextElement' captured at")
     }
 
