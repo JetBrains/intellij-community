@@ -1,5 +1,5 @@
 // FILE: buildSrc/src/main/kotlin/MyTask.kt
-// "EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts MyTask"
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "module1/build.gradle.kts MyTask"
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 

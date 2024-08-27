@@ -18,7 +18,10 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import org.jetbrains.kotlin.idea.test.TestFiles
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.io.File
@@ -116,4 +119,52 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
     }
 
     class TestFile internal constructor(val path: String, val content: String)
+
+    companion object {
+        @JvmStatic
+        protected val GRADLE_VERSION_CATALOGS_FIXTURE = GradleTestFixtureBuilder.create("version-catalogs-kotlin-dsl") { gradleVersion ->
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("version-catalogs-kotlin-dsl")
+                includeBuild("includedBuild1")
+            }
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
+            withFile(
+                "gradle/libs.versions.toml",
+                /* language=TOML */
+                """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
+                [plugins]
+                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+                [versions]
+                test_library-version = "1.0"
+                kotlin = "1.9.24"
+                """.trimIndent()
+            )
+            // included build files
+            withSettingsFile(relativeModulePath = "includedBuild1", useKotlinDsl = true) {
+                setProjectName("includedBuild1")
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "includedBuild1", useKotlinDsl = true) {
+                withKotlinMultiplatformPlugin()
+                withMavenCentral()
+            }
+            withFile(
+                "includedBuild1/gradle/libs.versions.toml",
+                /* language=TOML */
+                """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
+                [plugins]
+                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+                [versions]
+                test_library-version = "1.0"
+                kotlin = "1.9.24"
+                """.trimIndent()
+            )
+        }
+    }
 }
