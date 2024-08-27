@@ -25,8 +25,18 @@ object CheckboxIcon {
   fun createAndScale(color: Color): ColorIcon = JBUIScale.scaleIcon(create(color))
 
   @JvmStatic
-  fun createAndScaleCheckbox(color: Color): WithColor {
-    return JBUIScale.scaleIcon(WithColor(iconSize, color, arcSize))
+  fun createAndScaleCheckbox(color: Color): JBScalableIcon {
+    return createAndScaleCheckbox(color, true)
+  }
+
+  @JvmStatic
+  fun createAndScaleCheckbox(color: Color, isSelected: Boolean): JBScalableIcon {
+    if (isSelected) {
+      return JBUIScale.scaleIcon(WithColor(iconSize, color, arcSize))
+    }
+    else {
+      return JBUIScale.scaleIcon(ColorIcon(iconSize, iconSize, iconSize, iconSize, color, false, arcSize))
+    }
   }
 
   private const val iconSize = 14
@@ -36,11 +46,8 @@ object CheckboxIcon {
     get() = if (ExperimentalUI.isNewUI()) 4 else 0
 
 
-  class WithColor(size: Int, color: Color, arc: Int) : ColorIcon(size, size, size, size, color, false, arc) {
-    private var mySelected = false
+  class WithColor(private val size: Int, color: Color, arc: Int) : ColorIcon(size, size, size, size, color, false, arc) {
     private var mySizedIcon: SizedIcon
-
-    fun isSelected() = mySelected
 
     init {
       val icon = if (ExperimentalUI.isNewUI()) {
@@ -52,10 +59,6 @@ object CheckboxIcon {
       mySizedIcon = SizedIcon(icon, checkMarkSize, checkMarkSize)
     }
 
-    fun prepare(selected: Boolean) {
-      mySelected = selected
-    }
-
     override fun withIconPreScaled(preScaled: Boolean): WithColor {
       mySizedIcon = mySizedIcon.withIconPreScaled(preScaled) as SizedIcon
       return super.withIconPreScaled(preScaled) as WithColor
@@ -64,10 +67,12 @@ object CheckboxIcon {
     override fun paintIcon(component: Component, g: Graphics, i: Int, j: Int) {
       super.paintIcon(component, g, i, j)
 
-      if (mySelected) {
-        val offset = (iconWidth - mySizedIcon.iconWidth) / 2
-        mySizedIcon.paintIcon(component, g, i + offset, j + offset)
-      }
+      val offset = (iconWidth - mySizedIcon.iconWidth) / 2
+      mySizedIcon.paintIcon(component, g, i + offset, j + offset)
+    }
+
+    override fun copy(): ColorIcon {
+      return WithColor(size, iconColor, arcSize)
     }
   }
 }
