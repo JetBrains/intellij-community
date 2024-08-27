@@ -168,6 +168,8 @@
     <ifs.suggester
       implementation="training.featuresSuggester.suggesters.CopyPasteSuggester"/>
     <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.QuickEvaluateSuggester"/>
+    <ifs.suggester
       implementation="training.featuresSuggester.suggesters.SurroundWithSuggester"/>
     <ifs.suggester
       implementation="training.featuresSuggester.suggesters.UnwrapSuggester"/>
@@ -226,5 +228,7 @@
   <applicationListeners>
     <listener class="training.featuresSuggester.listeners.EditorActionsListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="training.featuresSuggester.listeners.EvaluationListener"
+              topic="com.intellij.xdebugger.XEvaluationListener"/>
   </applicationListeners>
 </idea-plugin>

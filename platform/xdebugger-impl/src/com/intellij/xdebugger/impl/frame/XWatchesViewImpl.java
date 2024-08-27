@@ -34,10 +34,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -295,6 +292,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       myEvaluateComboBox.saveTextInHistory();
       XDebugSession session = getSession(getTree());
+      if (session != null) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(XEvaluationListener.TOPIC)
+          .inlineEvaluatorInvoked(session, expression);
+      }
+      else {
+        LOG.error("No session available while trying evaluate " + expression);
+      }
       myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
       DebuggerEvaluationStatisticsCollector.INLINE_EVALUATE.log(getTree().getProject());
     }

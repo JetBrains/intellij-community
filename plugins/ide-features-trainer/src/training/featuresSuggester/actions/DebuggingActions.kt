@@ -3,6 +3,7 @@ package training.featuresSuggester.actions
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 
@@ -53,6 +54,12 @@ data class BeforeDebugSessionResumedAction(
   override val project: Project,
   override val timeMillis: Long
 ) : DebugSessionAction()
+
+data class InlineEvaluatorInvokedAction(
+  override val project: Project,
+  val expression: XExpression,
+  override val timeMillis: Long
+) : DebugAction()
 
 // -------------------------------------Breakpoint Actions--------------------------------------------------------------
 abstract class BreakpointAction : DebugAction() {
