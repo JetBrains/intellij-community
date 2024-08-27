@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -95,13 +95,14 @@ public abstract class DebuggerUtils {
         return String.valueOf(((PrimitiveValue)value).charValue());
       }
       if (value instanceof ObjectReference objRef) {
-        if (value instanceof ArrayReference arrayRef) {
-          final StringJoiner joiner = new StringJoiner(",", "[", "]");
-          for (final Value element : arrayRef.getValues()) {
-            joiner.add(getValueAsString(evaluationContext, element));
-          }
-          return joiner.toString();
-        }
+        // We can not pretty print arrays here, otherwise evaluation may fail unexpectedly, check IDEA-358202
+        //if (value instanceof ArrayReference arrayRef) {
+        //  final StringJoiner joiner = new StringJoiner(",", "[", "]");
+        //  for (final Value element : arrayRef.getValues()) {
+        //    joiner.add(getValueAsString(evaluationContext, element));
+        //  }
+        //  return joiner.toString();
+        //}
 
         final DebugProcess debugProcess = evaluationContext.getDebugProcess();
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
