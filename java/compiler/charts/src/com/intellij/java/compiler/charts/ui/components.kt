@@ -16,6 +16,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 interface ChartComponent {
   fun background(g2d: ChartGraphics, settings: ChartSettings)
@@ -74,7 +75,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
         end = max(rect.x + rect.width, end)
       }
     }
-    return if (start < end) (end - clip.x).toInt() else 0
+    return if (start < end) (end - clip.x).roundToInt() else 0
   }
 
   override fun height(): Double = clip.height
@@ -101,7 +102,8 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
 
   private fun ChartGraphics.drawChart(
     data: MutableMap<EventKey, List<Event>>,
-    settings: ChartSettings) {
+    settings: ChartSettings,
+  ) {
     for ((key, events) in data.asSequence()
       .filter { state.filter.test(it.key) }
       .filter {
@@ -159,9 +161,9 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
 }
 
 class ChartUsage(private val zoom: Zoom, private val name: String, internal val state: UsageModel) : ChartComponent {
-  private val model: NavigableSet<StatisticData> = TreeSet()
+  internal val model: NavigableSet<StatisticData> = TreeSet()
 
-  lateinit var unit: String
+  lateinit var format: (StatisticData) -> String
   lateinit var color: UsageColor
 
   internal lateinit var clip: Rectangle2D
@@ -190,11 +192,31 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     drawUsageChart(model, settings, g2d)
   }
 
+  fun drawPoint(g2d: ChartGraphics, data: StatisticData, settings: ChartSettings) {
+    val border = 5
+    val height = clip.height - border
+    val y0 = clip.y + height + border
+
+    val radius = 4
+    val (x, y) = getXY(data, settings, y0, height)
+    g2d.withColor(color.border) {
+      fillOval(x.roundToInt() - radius, y.roundToInt() - radius, radius * 2, radius * 2)
+    }
+    g2d.withColor(color.background) {
+      drawOval(x.roundToInt() - radius, y.roundToInt() - radius, radius * 2, radius * 2)
+    }
+    g2d.withColor(settings.font.color) {
+      val text = format(data)
+      val bounds = getStringBounds(text)
+      drawString(text, x.roundToInt() - bounds.width.roundToInt() / 2, maxOf(y.roundToInt() - bounds.height.roundToInt(), bounds.height.roundToInt() + 30))
+    }
+  }
+
   override fun width(settings: ChartSettings): Int {
     model.addAll(state.model.getAndClean())
     if (model.isEmpty()) return 0
     val (end, _) = getXY(model.last(), settings, 0.0, 0.0)
-    return (end - clip.x).toInt()
+    return (end - clip.x).roundToInt()
   }
 
   override fun height(): Double = clip.height
@@ -220,7 +242,9 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
   }
 
   private fun filterData(data: NavigableSet<StatisticData>, settings: ChartSettings): NavigableSet<StatisticData> {
-    val filtered: NavigableSet<StatisticData> = TreeSet(data.filter { statistic -> inViewport(statistic.time, statistic.time, settings, zoom, clip) })
+    val filtered: NavigableSet<StatisticData> = data.asSequence()
+      .filter { statistic -> inViewport(statistic.time, statistic.time, settings, zoom, clip) }
+      .toCollection(TreeSet())
     if (filtered.isEmpty()) return filtered
 
     (0..5).forEach { i ->
@@ -248,9 +272,11 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     return path(data, settings, setFirstPoint, setLastPoint)
   }
 
-  private fun path(data: NavigableSet<StatisticData>, settings: ChartSettings,
-                   before: (Path2D, Double, Double, Double) -> Unit,
-                   after: (Path2D, Double, Double) -> Unit): Path2D? {
+  private fun path(
+    data: NavigableSet<StatisticData>, settings: ChartSettings,
+    before: (Path2D, Double, Double, Double) -> Unit,
+    after: (Path2D, Double, Double) -> Unit,
+  ): Path2D? {
     if (data.isEmpty()) return null
     val neighborhood = DoubleArray(8) { Double.NaN }
     val border = 5
@@ -307,8 +333,8 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
     g2d.withAntialiasing {
       val size = UIUtil.getFontSize(settings.font.size) + padding
 
-      val from = (clip.x.toInt() / distance).toInt() * distance
-      val to = from + clip.width.toInt() + clip.x.toInt() % distance
+      val from = (clip.x.roundToInt() / distance) * distance
+      val to = from + clip.width.roundToInt() + clip.x.roundToInt() % distance
 
       withColor(COLOR_LINE) {
         for (x in from..to step distance) {
@@ -332,7 +358,7 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
         withFont(UIUtil.getLabelFont(settings.font.size)) {
           for (x in from..to step distance) {
             val time = Formats.formatDuration((TimeUnit.NANOSECONDS.toMillis(zoom.toDuration(x)) / trim) * trim)
-            drawString(time, x + padding, (clip.y + size).toInt())
+            drawString(time, x + padding, (clip.y + size).roundToInt())
           }
         }
       }

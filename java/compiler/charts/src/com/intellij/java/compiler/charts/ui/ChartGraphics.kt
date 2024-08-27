@@ -10,6 +10,7 @@ import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
+import kotlin.math.roundToInt
 
 class ChartGraphics(val graphics: Graphics2D, val offsetX: Double, val offsetY: Double) {
   constructor(graphics: Graphics2D, offsetX: Int, offsetY: Int): this(graphics, offsetX.toDouble(), offsetY.toDouble())
@@ -18,7 +19,10 @@ class ChartGraphics(val graphics: Graphics2D, val offsetX: Double, val offsetY: 
   fun draw(s: Shape) = graphics.draw(move(s))
   fun clip(s: Shape) = graphics.clip(move(s))
   fun drawString(str: String, x: Float, y: Float) = graphics.drawString(str, x + offsetX.toFloat(), y + offsetY.toFloat())
-  fun drawString(str: String, x: Int, y: Int) = graphics.drawString(str, x + offsetX.toInt(), y + offsetY.toInt())
+  fun drawString(str: String, x: Int, y: Int) = graphics.drawString(str, x + offsetX.roundToInt(), y + offsetY.roundToInt())
+  fun fillOval(x: Int, y: Int, width: Int, height: Int) = graphics.fillOval(x + offsetX.roundToInt(), y + offsetY.roundToInt(), width, height)
+  fun drawOval(x: Int, y: Int, width: Int, height: Int) = graphics.drawOval(x + offsetX.roundToInt(), y + offsetY.roundToInt(), width, height)
+
   fun fontMetrics() = graphics.fontMetrics
   fun create(): ChartGraphics = ChartGraphics(graphics.create() as Graphics2D, offsetX, offsetY)
   fun moveTo(offsetX: Double, offsetY: Double): ChartGraphics = ChartGraphics(graphics, -offsetX, -offsetY)
@@ -72,6 +76,8 @@ class ChartGraphics(val graphics: Graphics2D, val offsetX: Double, val offsetY: 
     graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
   }
+
+  fun getStringBounds(text: String): Rectangle2D = fontMetrics().getStringBounds(text, graphics)
 
   private fun move(s: Shape): Shape = when (s) {
     is Line2D -> move(s)

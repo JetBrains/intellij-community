@@ -6,6 +6,7 @@ import javax.swing.JViewport
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class Zoom {
   private var userScale = -1.0
@@ -46,7 +47,7 @@ class Zoom {
   internal fun shouldCacheImage() = System.currentTimeMillis() - lastCorrectionTime > ZOOM_CACHING_DELAY
 
   private fun correctedViewPosition(newPosition: Double, x: Int, duration: Long): Int {
-    val correctedX = Math.round(max(0.0, newPosition)).toInt()
+    val correctedX = max(0.0, newPosition).roundToInt()
     val index = listOf(abs(duration - toDuration(correctedX + x)),
                        abs(duration - toDuration(correctedX + x + 1)),
                        abs(duration - toDuration(correctedX + x - 1)),
@@ -68,7 +69,7 @@ class Zoom {
   fun adjustDynamic(totalDuration: Int, window: Int) = adjustDynamic(totalDuration.toDouble(), window.toDouble())
 
   fun adjustDynamic(totalDuration: Double, window: Double) {
-    dynamicScale = max(normalize(secondsToScale(totalDuration / NANOS, Math.round(window - 10).toInt())),
+    dynamicScale = max(normalize(secondsToScale(totalDuration / NANOS, (window - 10).roundToInt())),
                        secondsToScale(60.0, AXIS_DISTANCE_PX))
   }
 

@@ -8,6 +8,7 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
+import kotlin.math.roundToInt
 
 class CompilationChartsViewport(private val zoom: Zoom) : JBViewport() {
   override fun createZooming(): ZoomingDelegate = CompilationChartsZoomingDelegate(view as JComponent, this, zoom)
@@ -21,7 +22,7 @@ class CompilationChartsViewport(private val zoom: Zoom) : JBViewport() {
       val point = magnificationPoint ?: return
 
       val scale: Double = scale(magnification)
-      val xOffset = (point.x - point.x * scale).toInt()
+      val xOffset = (point.x - point.x * scale).roundToInt()
       val yOffset = 0
 
       val clip: Rectangle = g.clipBounds
