@@ -287,6 +287,15 @@ sealed class K2MoveModel {
                 }
             }
 
+            fun sourceFileName(): String {
+                val firstElem = elementsToMove.firstOrNull() as KtElement
+                return when (firstElem) {
+                    is KtFile -> firstElem.name
+                    is KtNamedDeclaration -> "${firstElem.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"
+                    else -> error("Element to move should be a file or declaration")
+                }
+            }
+
             val inSourceRoot = inSourceRoot(elementsToMove)
             return when {
                 (elementsToMove.all { it is KtFile } && targetContainer is PsiDirectory)
@@ -311,16 +320,14 @@ sealed class K2MoveModel {
                     val targetFile = targetContainer?.containingFile
                     val target = if (targetFile is KtFile) {
                         K2MoveTargetModel.File(targetFile)
+                    } else if (targetContainer is PsiDirectory) {
+                        val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
+                        K2MoveTargetModel.File(sourceFileName(), pkg, targetContainer)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val firstElem = elementsToMove.firstOrNull() as KtElement
-                        val fileName = when (firstElem) {
-                            is KtFile -> firstElem.name
-                            is KtNamedDeclaration -> "${firstElem.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"
-                            else -> error("Element to move should be a file or declaration")
-                        }
                         val containingFile = firstElem.containingKtFile
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
-                        K2MoveTargetModel.File(fileName, containingFile.packageFqName, psiDirectory)
+                        K2MoveTargetModel.File(sourceFileName(), containingFile.packageFqName, psiDirectory)
                     }
                     Declarations(project, source, target, inSourceRoot, moveCallBack)
                 }

@@ -319,7 +319,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Bar")
         val targetElement = moveDeclarationsModel.target.pkgName
-        assertEquals("a", targetElement.asString())
+        assertEquals("b", targetElement.asString())
     }
 
 
