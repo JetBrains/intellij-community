@@ -3,9 +3,6 @@ package com.jetbrains.python.debugger.pydev
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ConcurrencyUtil
-import com.jetbrains.python.debugger.pydev.RecurrentTaskExecutor.Companion.FIXED_THREAD_POOL_SIZE
-import com.jetbrains.python.debugger.pydev.RecurrentTaskExecutor.Companion.PERFORM_TASK_ATTEMPT_DELAY
-import com.jetbrains.python.debugger.pydev.RecurrentTaskExecutor.RecurrentTask
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -42,6 +39,7 @@ import kotlin.concurrent.withLock
  *   is no longer needed to shutdown the executor service and stop the task
  *   threads.
  */
+@Deprecated("Use ScheduledTaskExecutor instead")
 class RecurrentTaskExecutor<out T>(threadsName: String,
                                    private val recurrentTask: RecurrentTask<T>,
                                    private val callback: Callback<T>) {

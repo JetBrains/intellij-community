@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -21,6 +22,8 @@ import com.jetbrains.python.tables.TableCommandType;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
@@ -44,7 +47,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   private final CompositeRemoteDebuggerCloseListener myCompositeListener = new CompositeRemoteDebuggerCloseListener();
 
-  private final RecurrentTaskExecutor<RemoteDebugger> myExecutor;
+  private final ScheduledExecutorService myScheduler;
 
   public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
@@ -53,24 +56,32 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     myPort = port;
 
     String connectionThreadsName = "Debugger connection threads (" + host + ":" + port + ")";
-    myExecutor = new RecurrentTaskExecutor<>(connectionThreadsName, this::tryToConnectRemoteDebugger, this::onRemoteDebuggerConnected);
+
+    myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor(connectionThreadsName);
+
+    Runnable task = () -> {
+      try {
+        tryToConnectRemoteDebugger();
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    };
+
+    myScheduler.scheduleAtFixedRate(task, 0, 500, TimeUnit.MILLISECONDS);
   }
 
   /**
-   * Should either successfully connect to the debugger script and return the
-   * {@link RemoteDebugger} or throw {@link IOException} because of the
+   * Should either successfully connect to the debugger script or throw {@link IOException} because of the
    * connection error or the socket timeout error.
    * <p>
    * We assume that debugger is successfully connected if the Python debugger
-   * script responded on `CMD_VERSION` command (see
-   * {@link RemoteDebugger#handshake()}).
+   * script responded on `CMD_VERSION` command (see {@link RemoteDebugger#handshake()}).
    *
-   * @return the successfully connected {@link RemoteDebugger}
    * @throws Exception if the connection or timeout error occurred
    * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
    */
-  @NotNull
-  private RemoteDebugger tryToConnectRemoteDebugger() throws Exception {
+  private void tryToConnectRemoteDebugger() throws Exception {
     RemoteDebugger debugger = new RemoteDebugger(myDebugProcess, myHost, myPort) {
       @Override
       protected void onProcessCreatedEvent(int commandSequence) {
@@ -81,11 +92,10 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
         catch (PyDebuggerException e) {
           LOG.info(e);
         }
-        myExecutor.incrementRequests();
       }
     };
     debugger.waitForConnect();
-    return debugger;
+    onRemoteDebuggerConnected(debugger);
   }
 
   private void onRemoteDebuggerConnected(@NotNull RemoteDebugger debugger) {
@@ -122,10 +132,6 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
     myDebuggerStatusHolder.onConnecting();
 
-    // increment the number of debugger connection request initially
-    myExecutor.incrementRequests();
-
-    // waiting for the first connected thread
     if (!myDebuggerStatusHolder.awaitWhileConnecting()) {
       throw new PyDebuggerException("The process terminated before IDE established connection with Python debugger script");
     }
@@ -135,7 +141,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public void close() {
     myDebuggerStatusHolder.onDisconnectionInitiated();
 
-    myExecutor.dispose();
+    myScheduler.shutdownNow();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.close();
@@ -152,7 +158,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public void disconnect() {
     myDebuggerStatusHolder.onDisconnectionInitiated();
 
-    myExecutor.dispose();
+    myScheduler.shutdownNow();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.disconnect();
