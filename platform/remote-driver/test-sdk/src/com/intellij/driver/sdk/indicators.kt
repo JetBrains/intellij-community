@@ -55,7 +55,8 @@ private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duratio
   var smartLongEnoughStart: Instant? = null
 
   waitFor("Indicators", timeout) {
-    if (!isProjectOpened() || runCatching { areIndicatorsVisible(projectGet.invoke()) }.getOrElse { false }) {
+    val project = runCatching { projectGet.invoke() }.getOrNull()
+    if (project == null || !isProjectOpened(project) || areIndicatorsVisible(project)) {
       smartLongEnoughStart = null
       return@waitFor false
     }

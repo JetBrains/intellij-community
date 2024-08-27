@@ -20,13 +20,12 @@ fun Driver.singleProject(rdTarget: RdTarget = RdTarget.DEFAULT): Project {
   }
 }
 
-fun Driver.isProjectOpened(): Boolean {
+fun Driver.isProjectOpened(project: Project? = null): Boolean {
   return withContext {
-    val openProjects = service<ProjectManager>().getOpenProjects()
+    val projectToCheck = project ?: getOpenProjects().singleOrNull()
 
-    if (openProjects.size == 1
-        && openProjects[0].isInitialized()) {
-      val ideFrame = getIdeFrame(openProjects.single())
+    if (projectToCheck?.isInitialized() == true) {
+      val ideFrame = getIdeFrame(projectToCheck)
       return@withContext ideFrame?.getComponent()?.isVisible() == true
     }
     return@withContext false
