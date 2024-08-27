@@ -109,9 +109,10 @@ internal class ArrayListIjentRelativePath private constructor(
 
   companion object {
     val EMPTY = ArrayListIjentRelativePath(listOf())
+    private val REGEX = Regex("""[/\\]""")
 
     fun parse(raw: String): IjentPathResult<ArrayListIjentRelativePath> =
-      build(raw.splitToSequence(Regex("""[/\\]""")).filter(String::isNotEmpty).iterator())
+      build(raw.splitToSequence(REGEX).filter(String::isNotEmpty).iterator())
 
     fun build(parts: List<String>): IjentPathResult<ArrayListIjentRelativePath> =
       build(parts.iterator())
