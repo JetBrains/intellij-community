@@ -20,7 +20,10 @@ import com.intellij.util.keyFMap.KeyFMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -391,6 +394,12 @@ public final class VfsData {
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     volatile int @NotNull [] childrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
+    /**
+     * Sorted by id.
+     * Assigned under lock(this) only; never modified in-place.
+     * Computed lazily.
+     */
+    volatile int @Nullable [] sortedChildrenIds = null;
     volatile boolean allChildrenLoaded;
 
     // assigned under lock(this) only; accessed/modified map contents under lock(myAdoptedNames)
@@ -507,6 +516,11 @@ public final class VfsData {
              ", myChildrenIds=" + Arrays.toString(childrenIds) +
              ", myAdoptedNames=" + adoptedNames +
              '}';
+    }
+
+    void setChildrenIds(int @NotNull [] childrenIds) {
+      this.sortedChildrenIds = null;
+      this.childrenIds = childrenIds;
     }
   }
 }
