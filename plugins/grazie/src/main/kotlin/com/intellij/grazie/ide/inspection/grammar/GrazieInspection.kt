@@ -55,6 +55,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
    */
   @Suppress("CompanionObjectInExtension")
   companion object {
+    private const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT = 50_000
+    private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
+
     private val hasSpellChecking: Boolean by lazy {
       try {
         Class.forName("com.intellij.spellchecker.ui.SpellCheckingEditorCustomization")
@@ -81,13 +84,16 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     @JvmStatic
     fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean {
       if (texts.isEmpty()) return false
-      if (texts.sumOf { it.length } > 50_000) return true
+      if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
 
-      val allInFile = CachedValuesManager.getProjectPsiDependentCache(texts[0].containingFile) {
+      val file = texts[0].containingFile
+      if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
+
+      val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
         findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
       }
       val checkedDomains = checkedDomains()
-      return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > 200_000
+      return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
     }
 
     @JvmStatic
