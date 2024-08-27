@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.core.script
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
@@ -15,8 +14,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.util.application
-import com.intellij.util.concurrency.ThreadingAssertions.assertNoReadAccess
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
@@ -125,10 +122,11 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
             // TODO: review the usages of this method
             val defaultScriptingSupport = defaultScriptingSupport(file.project)
-            when(file) {
+            when (file) {
                 is KtFile -> {
                     defaultScriptingSupport.updateScriptDependenciesSynchronously(file)
                 }
+
                 else -> {
                     val project = file.project
                     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
@@ -137,7 +135,7 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
                             injectedLanguageManager.enumerate(element) { psi, _ ->
                                 defaultScriptingSupport.updateScriptDependenciesSynchronously(psi)
                             }
-                          super.visitElement(element)
+                            super.visitElement(element)
                         }
                     }.visitFile(file)
                 }
@@ -163,14 +161,15 @@ object ClasspathToVfsConverter {
 
     private val cache = ConcurrentHashMap<String, Pair<FileType, VirtualFile?>>()
 
-    private val Path.fileType: FileType get(){
-        return when {
-          notExists() -> FileType.NOT_EXISTS
-          isDirectory() -> FileType.DIRECTORY
-          isRegularFile() -> FileType.REGULAR_FILE
-          else -> FileType.UNKNOWN
+    private val Path.fileType: FileType
+        get() {
+            return when {
+                notExists() -> FileType.NOT_EXISTS
+                isDirectory() -> FileType.DIRECTORY
+                isRegularFile() -> FileType.REGULAR_FILE
+                else -> FileType.UNKNOWN
+            }
         }
-    }
 
     fun clearCaches() = cache.clear()
 
@@ -180,19 +179,21 @@ object ClasspathToVfsConverter {
         val newType = path.fileType
 
         //we cannot use `refreshAndFindFileByPath` under read lock
-        fun VirtualFileSystem.findLocalFileByPath(filePath: String): VirtualFile? =
-            if ((ApplicationManager.getApplication() as? ApplicationEx)?.holdsReadLock() == true) {
+        fun VirtualFileSystem.findLocalFileByPath(filePath: String): VirtualFile? {
+            var application = ApplicationManager.getApplication()
+
+            return if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
                 findFileByPath(filePath)
             } else {
                 refreshAndFindFileByPath(filePath)
             }
+        }
 
         fun compute(filePath: String): Pair<FileType, VirtualFile?> {
-            return newType to when(newType) {
-                FileType.NOT_EXISTS -> null
+            return newType to when (newType) {
+                FileType.NOT_EXISTS, FileType.UNKNOWN -> null
                 FileType.DIRECTORY -> StandardFileSystems.local()?.findLocalFileByPath(filePath)
                 FileType.REGULAR_FILE -> StandardFileSystems.jar()?.findLocalFileByPath(filePath + URLUtil.JAR_SEPARATOR)
-                FileType.UNKNOWN -> null
             }
         }
 
