@@ -26,10 +26,10 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.*;
 import java.util.*;
@@ -105,20 +105,22 @@ public class MavenProject {
                                                     boolean keepPreviousArtifacts) {
     MavenProjectState newState = myState.clone();
 
-    newState.myLastReadStamp = myState.myLastReadStamp + 1;
+    newState.incLastReadStamp();
 
     boolean keepPreviousPlugins = keepPreviousArtifacts;
 
-    doUpdateState(newState,
-                  readerResult.mavenModel,
-                  readerResult.readingProblems,
-                  readerResult.activatedProfiles,
-                  Set.of(),
-                  readerResult.nativeModelMap,
-                  settings,
-                  keepPreviousArtifacts,
-                  false,
-                  keepPreviousPlugins
+    newState.doUpdateState(
+      readerResult.mavenModel,
+      readerResult.readingProblems,
+      readerResult.activatedProfiles,
+      Set.of(),
+      readerResult.nativeModelMap,
+      settings,
+      keepPreviousArtifacts,
+      false,
+      keepPreviousPlugins,
+      getDirectory(),
+      myFile.getExtension()
     );
 
     return setState(newState);
@@ -138,20 +140,36 @@ public class MavenProject {
     MavenProjectState newState = myState.clone();
 
     if (null != dependencyHash) {
-      newState.myDependencyHash = dependencyHash;
+      newState.setDependencyHash(dependencyHash);
     }
 
-    doUpdateState(newState,
-                  model,
-                  readingProblems,
-                  activatedProfiles,
-                  unresolvedArtifactIds,
-                  nativeModelMap,
-                  settings,
-                  keepPreviousArtifacts,
-                  true,
-                  keepPreviousPlugins
+    newState.doUpdateState(
+      model,
+      readingProblems,
+      activatedProfiles,
+      unresolvedArtifactIds,
+      nativeModelMap,
+      settings,
+      keepPreviousArtifacts,
+      true,
+      keepPreviousPlugins,
+      getDirectory(),
+      myFile.getExtension()
     );
+
+    return setState(newState);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public MavenProjectChanges updateState(
+    @NotNull List<MavenArtifact> dependencies,
+    @NotNull Properties properties,
+    @NotNull List<MavenPlugin> plugins
+    ) {
+    MavenProjectState newState = myState.clone();
+
+    newState.doUpdateState(dependencies, properties, plugins);
 
     return setState(newState);
   }
@@ -161,61 +179,9 @@ public class MavenProject {
   public MavenProjectChanges updateState(@NotNull Collection<@NotNull MavenProjectProblem> readingProblems) {
     MavenProjectState newState = myState.clone();
 
-    newState.myReadingProblems = readingProblems;
+    newState.setReadingProblems(readingProblems);
 
     return setState(newState);
-  }
-
-  private void doUpdateState(MavenProjectState newState,
-                             @NotNull MavenModel model,
-                             @NotNull Collection<@NotNull MavenProjectProblem> readingProblems,
-                             @NotNull MavenExplicitProfiles activatedProfiles,
-                             @NotNull Set<MavenId> unresolvedArtifactIds,
-                             @NotNull Map<@NotNull String, @Nullable String> nativeModelMap,
-                             @NotNull MavenGeneralSettings settings,
-                             boolean keepPreviousArtifacts,
-                             boolean keepPreviousProfiles,
-                             boolean keepPreviousPlugins) {
-    newState.myReadingProblems = readingProblems;
-    newState.myLocalRepository = settings.getEffectiveLocalRepository();
-    newState.myActivatedProfilesIds = activatedProfiles;
-
-    newState.myMavenId = model.getMavenId();
-    if (model.getParent() != null) {
-      newState.myParentId = model.getParent().getMavenId();
-    }
-
-    newState.myPackaging = model.getPackaging();
-    newState.myName = model.getName();
-
-    newState.myFinalName = model.getBuild().getFinalName();
-    newState.myDefaultGoal = model.getBuild().getDefaultGoal();
-
-    newState.myBuildDirectory = model.getBuild().getDirectory();
-    newState.myOutputDirectory = model.getBuild().getOutputDirectory();
-    newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
-
-    doSetFolders(newState, model.getBuild());
-
-    newState.myFilters = model.getBuild().getFilters();
-    newState.myProperties = model.getProperties();
-
-    doSetResolvedAttributes(newState, model, unresolvedArtifactIds, keepPreviousArtifacts, keepPreviousPlugins);
-
-    MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
-
-    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
-    Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
-    if (keepPreviousProfiles && newState.myProfilesIds != null) {
-      Set<String> mergedProfiles = new HashSet<>(newState.myProfilesIds);
-      mergedProfiles.addAll(newProfiles);
-      newState.myProfilesIds = new ArrayList<>(mergedProfiles);
-    }
-    else {
-      newState.myProfilesIds = newProfiles;
-    }
-
-    newState.myModelMap = nativeModelMap;
   }
 
   private MavenProjectChanges setState(MavenProjectState newState) {
@@ -247,123 +213,15 @@ public class MavenProject {
     return snapshot.myState.getChanges(myState);
   }
 
-  private static void doSetResolvedAttributes(MavenProjectState state,
-                                              MavenModel model,
-                                              Set<MavenId> unresolvedArtifactIds,
-                                              boolean keepPreviousArtifacts,
-                                              boolean keepPreviousPlugins) {
-    Set<MavenId> newUnresolvedArtifacts = new HashSet<>();
-    LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<>();
-    LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<>();
-    LinkedHashSet<MavenArtifactNode> newDependencyTree = new LinkedHashSet<>();
-    LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<>();
-    LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<>();
-    LinkedHashSet<MavenArtifact> newAnnotationProcessors = new LinkedHashSet<>();
-
-    if (keepPreviousArtifacts) {
-      if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
-      if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
-      if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
-      if (state.myDependencyTree != null) newDependencyTree.addAll(state.myDependencyTree);
-      if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
-      if (state.myAnnotationProcessors != null) newAnnotationProcessors.addAll(state.myAnnotationProcessors);
-    }
-
-    if (keepPreviousPlugins) {
-      if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
-    }
-
-    newUnresolvedArtifacts.addAll(unresolvedArtifactIds);
-    newRepositories.addAll(model.getRemoteRepositories());
-    newDependencyTree.addAll(model.getDependencyTree());
-    newDependencies.addAll(model.getDependencies());
-    newPlugins.addAll(model.getPlugins());
-    newExtensions.addAll(model.getExtensions());
-
-    state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
-    state.myRemoteRepositories = new ArrayList<>(newRepositories);
-    state.myDependencies = new ArrayList<>(newDependencies);
-    state.myDependencyTree = new ArrayList<>(newDependencyTree);
-    state.myPlugins = new ArrayList<>(newPlugins);
-    state.myExtensions = new ArrayList<>(newExtensions);
-    state.myAnnotationProcessors = new ArrayList<>(newAnnotationProcessors);
-  }
-
   @ApiStatus.Internal
   public MavenProjectChanges setFolders(MavenGoalExecutionResult.Folders folders) {
     MavenProjectState newState = myState.clone();
-    doSetFolders(newState, folders.getSources(), folders.getTestSources(), folders.getResources(), folders.getTestResources());
+    newState.doSetFolders(folders.getSources(), folders.getTestSources(), folders.getResources(), folders.getTestResources());
     return setState(newState);
   }
 
-  private static void doSetFolders(MavenProjectState newState, MavenBuild build) {
-    doSetFolders(newState, build.getSources(), build.getTestSources(), build.getResources(), build.getTestResources());
-  }
-
-  private static void doSetFolders(MavenProjectState newState,
-                                   List<String> sources,
-                                   List<String> testSources,
-                                   List<MavenResource> resources,
-                                   List<MavenResource> testResources) {
-    newState.mySources = sources;
-    newState.myTestSources = testSources;
-
-    newState.myResources = resources;
-    newState.myTestResources = testResources;
-  }
-
-  private Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
-    String basePath = baseDir + "/";
-    Map<String, String> result = new LinkedHashMap<>();
-    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, basePath).entrySet()) {
-      result.put(new MavenPathWrapper(basePath + each.getKey()).getPath(), each.getValue());
-    }
-    return result;
-  }
-
-  private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel, String basePath) {
-    String extension = StringUtil.notNullize(myFile.getExtension());
-    LinkedHashMap<String, String> result = new LinkedHashMap<>();
-    for (String name : mavenModel.getModules()) {
-      name = name.trim();
-
-      if (name.length() == 0) continue;
-
-      String originalName = name;
-      // module name can be relative and contain either / of \\ separators
-
-      name = FileUtil.toSystemIndependentName(name);
-
-      String finalName = name;
-      boolean fullPathInModuleName = ContainerUtil.exists(MavenConstants.POM_EXTENSIONS, ext -> finalName.endsWith('.' + ext));
-      if (!fullPathInModuleName) {
-        if (!name.endsWith("/")) name += "/";
-        name += MavenConstants.POM_EXTENSION + '.' + extension;
-      }
-      else {
-        String systemDependentName = FileUtil.toSystemDependentName(basePath + name);
-        if (new File(systemDependentName).isDirectory()) {
-          name += "/" + MavenConstants.POM_XML;
-        }
-      }
-
-      result.put(name, originalName);
-    }
-    return result;
-  }
-
-  private static Collection<String> collectProfilesIds(Collection<MavenProfile> profiles) {
-    if (profiles == null) return Collections.emptyList();
-
-    Set<String> result = new HashSet<>(profiles.size());
-    for (MavenProfile each : profiles) {
-      result.add(each.getId());
-    }
-    return result;
-  }
-
   public long getLastReadStamp() {
-    return myState.myLastReadStamp;
+    return myState.getLastReadStamp();
   }
 
   public @NotNull VirtualFile getFile() {
@@ -391,51 +249,51 @@ public class MavenProject {
   }
 
   public boolean hasReadingProblems() {
-    return !myState.myReadingProblems.isEmpty();
+    return !myState.getReadingProblems().isEmpty();
   }
 
   public @Nullable @NlsSafe String getName() {
-    return myState.myName;
+    return myState.getName();
   }
 
   public @NotNull @NlsSafe String getDisplayName() {
     MavenProjectState state = myState;
-    if (StringUtil.isEmptyOrSpaces(state.myName)) {
-      return StringUtil.notNullize(state.myMavenId.getArtifactId());
+    if (StringUtil.isEmptyOrSpaces(state.getName())) {
+      return StringUtil.notNullize(state.getMavenId().getArtifactId());
     }
-    return state.myName;
+    return state.getName();
   }
 
   public @NotNull Map<String, String> getModelMap() {
-    return myState.myModelMap;
+    return myState.getModelMap();
   }
 
   public @NotNull MavenId getMavenId() {
-    return myState.myMavenId;
+    return myState.getMavenId();
   }
 
   boolean isNew() {
-    return null == myState.myMavenId;
+    return null == myState.getMavenId();
   }
 
   public @Nullable MavenId getParentId() {
-    return myState.myParentId;
+    return myState.getParentId();
   }
 
   public @NotNull @NlsSafe String getPackaging() {
-    return myState.myPackaging;
+    return myState.getPackaging();
   }
 
   public @NotNull @NlsSafe String getFinalName() {
-    return myState.myFinalName;
+    return myState.getFinalName();
   }
 
   public @Nullable @NlsSafe String getDefaultGoal() {
-    return myState.myDefaultGoal;
+    return myState.getDefaultGoal();
   }
 
   public @NotNull @NlsSafe String getBuildDirectory() {
-    return myState.myBuildDirectory;
+    return myState.getBuildDirectory();
   }
 
   public @NotNull @NlsSafe String getGeneratedSourcesDirectory(boolean testSources) {
@@ -644,31 +502,31 @@ public class MavenProject {
   }
 
   public @NotNull @NlsSafe String getOutputDirectory() {
-    return myState.myOutputDirectory;
+    return myState.getOutputDirectory();
   }
 
   public @NotNull @NlsSafe String getTestOutputDirectory() {
-    return myState.myTestOutputDirectory;
+    return myState.getTestOutputDirectory();
   }
 
   public @NotNull List<@NlsSafe String> getSources() {
-    return myState.mySources;
+    return myState.getSources();
   }
 
   public @NotNull List<@NlsSafe String> getTestSources() {
-    return myState.myTestSources;
+    return myState.getTestSources();
   }
 
   public @NotNull List<MavenResource> getResources() {
-    return myState.myResources;
+    return myState.getResources();
   }
 
   public @NotNull List<MavenResource> getTestResources() {
-    return myState.myTestResources;
+    return myState.getTestResources();
   }
 
   public @NotNull List<@NlsSafe String> getFilters() {
-    return myState.myFilters;
+    return myState.getFilters();
   }
 
   public List<@NlsSafe String> getFilterPropertiesFiles() {
@@ -707,13 +565,12 @@ public class MavenProject {
   public void setConfigFileError(@Nullable String message) {
     if (message != null) {
       String mavenConfigPath = myFile.getPath() + "/" + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH;
-      myState.myReadingProblems.add(new MavenProjectProblem(mavenConfigPath, message, SYNTAX, true));
+      myState.getReadingProblems().add(new MavenProjectProblem(mavenConfigPath, message, SYNTAX, true));
     }
   }
 
   public @Nullable String getConfigFileError() {
-    return myState
-      .myReadingProblems.stream().filter(p -> p.getPath().endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
+    return myState.getReadingProblems().stream().filter(p -> p.getPath().endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH))
       .map(p -> p.getDescription())
       .findFirst()
       .orElse(null);
@@ -731,7 +588,7 @@ public class MavenProject {
   }
 
   public @NotNull List<MavenProjectProblem> getProblems() {
-    var problems = myState.myProblemsCache;
+    var problems = myState.getProblemsCache();
     if (null != problems) return problems;
 
     return collectProblems(null);
@@ -739,140 +596,12 @@ public class MavenProject {
 
   @ApiStatus.Internal
   public @NotNull List<MavenProjectProblem> collectProblems(Predicate<File> fileExistsPredicate) {
-    MavenProjectState state = myState;
-    synchronized (state) {
-      if (state.myProblemsCache == null) {
-        state.myProblemsCache = collectProblems(myFile, state, fileExistsPredicate);
-      }
-      return state.myProblemsCache;
-    }
+    return myState.collectProblems(myFile, fileExistsPredicate);
   }
 
   public @NotNull List<MavenProjectProblem> getCacheProblems() {
-    List<MavenProjectProblem> problemsCache = myState.myProblemsCache;
+    List<MavenProjectProblem> problemsCache = myState.getProblemsCache();
     return problemsCache == null ? Collections.emptyList() : problemsCache;
-  }
-
-  private static List<MavenProjectProblem> collectProblems(VirtualFile file, MavenProjectState state, Predicate<File> fileExistsPredicate) {
-    List<MavenProjectProblem> result = new ArrayList<>();
-
-    validateParent(file, state, result);
-    result.addAll(state.myReadingProblems);
-
-    for (Map.Entry<String, String> each : state.myModulesPathsAndNames.entrySet()) {
-      if (LocalFileSystem.getInstance().findFileByPath(each.getKey()) == null) {
-        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound", each.getValue())));
-      }
-    }
-
-    validateDependencies(file, state, result, fileExistsPredicate);
-    validateExtensions(file, state, result);
-    validatePlugins(file, state, result);
-
-    return result;
-  }
-
-  private static void validateParent(VirtualFile file, MavenProjectState state, List<MavenProjectProblem> result) {
-    if (!isParentResolved(state)) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.parentNotFound", state.myParentId)));
-    }
-  }
-
-  private static void validateDependencies(VirtualFile file,
-                                           MavenProjectState state,
-                                           List<MavenProjectProblem> result,
-                                           Predicate<File> fileExistsPredicate) {
-    for (MavenArtifact each : getUnresolvedDependencies(state, fileExistsPredicate)) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedDependency",
-                                                                          each.getDisplayStringWithType())));
-    }
-  }
-
-  private static void validateExtensions(VirtualFile file, MavenProjectState state, List<MavenProjectProblem> result) {
-    for (MavenArtifact each : getUnresolvedExtensions(state)) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedExtension",
-                                                                          each.getDisplayStringSimple())));
-    }
-  }
-
-  private static void validatePlugins(VirtualFile file, MavenProjectState state, List<MavenProjectProblem> result) {
-    for (MavenPlugin each : getUnresolvedPlugins(state)) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedPlugin", each)));
-    }
-  }
-
-  private static MavenProjectProblem createDependencyProblem(VirtualFile file, String description) {
-    return new MavenProjectProblem(file.getPath(), description, MavenProjectProblem.ProblemType.DEPENDENCY, false);
-  }
-
-  private static boolean isParentResolved(MavenProjectState state) {
-    return !state.myUnresolvedArtifactIds.contains(state.myParentId);
-  }
-
-  private static List<MavenArtifact> getUnresolvedDependencies(MavenProjectState state, Predicate<File> fileExistsPredicate) {
-    synchronized (state) {
-      if (state.myUnresolvedDependenciesCache == null) {
-        List<MavenArtifact> result = new ArrayList<>();
-        for (MavenArtifact each : state.myDependencies) {
-          boolean resolved = each.isResolved(fileExistsPredicate);
-          each.setFileUnresolved(!resolved);
-          if (!resolved) result.add(each);
-        }
-        state.myUnresolvedDependenciesCache = result;
-      }
-      return state.myUnresolvedDependenciesCache;
-    }
-  }
-
-  private static List<MavenArtifact> getUnresolvedExtensions(MavenProjectState state) {
-    synchronized (state) {
-      if (state.myUnresolvedExtensionsCache == null) {
-        List<MavenArtifact> result = new ArrayList<>();
-        for (MavenArtifact each : state.myExtensions) {
-          // Collect only extensions that were attempted to be resolved.
-          // It is because embedder does not even try to resolve extensions that
-          // are not necessary.
-          if (state.myUnresolvedArtifactIds.contains(each.getMavenId())
-              && !pomFileExists(state.myLocalRepository, each)) {
-            result.add(each);
-          }
-        }
-        state.myUnresolvedExtensionsCache = result;
-      }
-      return state.myUnresolvedExtensionsCache;
-    }
-  }
-
-  private static List<MavenArtifact> getUnresolvedAnnotationProcessors(MavenProjectState state) {
-    synchronized (state) {
-      if (state.myUnresolvedAnnotationProcessors == null) {
-        List<MavenArtifact> result = new ArrayList<>();
-        for (MavenArtifact each : state.myAnnotationProcessors) {
-          if (!each.isResolved()) result.add(each);
-        }
-        state.myUnresolvedAnnotationProcessors = result;
-      }
-      return state.myUnresolvedAnnotationProcessors;
-    }
-  }
-
-  private static boolean pomFileExists(File localRepository, MavenArtifact artifact) {
-    return MavenArtifactUtil.hasArtifactFile(localRepository, artifact.getMavenId(), "pom");
-  }
-
-  private static List<MavenPlugin> getUnresolvedPlugins(MavenProjectState state) {
-    synchronized (state) {
-      if (state.myUnresolvedPluginsCache == null) {
-        List<MavenPlugin> result = new ArrayList<>();
-        for (MavenPlugin each : getDeclaredPlugins(state)) {
-          if (!MavenArtifactUtil.hasArtifactFile(state.myLocalRepository, each.getMavenId())) {
-            result.add(each);
-          }
-        }
-        state.myUnresolvedPluginsCache = result;
-      }
-      return state.myUnresolvedPluginsCache;
-    }
   }
 
   public @NotNull List<VirtualFile> getExistingModuleFiles() {
@@ -892,31 +621,31 @@ public class MavenProject {
   }
 
   public @NotNull Map<String, String> getModulesPathsAndNames() {
-    return myState.myModulesPathsAndNames;
+    return myState.getModulesPathsAndNames();
   }
 
   public @NotNull Collection<String> getProfilesIds() {
-    return myState.myProfilesIds;
+    return myState.getProfilesIds();
   }
 
   public @NotNull MavenExplicitProfiles getActivatedProfilesIds() {
-    return myState.myActivatedProfilesIds;
+    return myState.getActivatedProfilesIds();
   }
 
   public @Nullable String getDependencyHash() {
-    return myState.myDependencyHash;
+    return myState.getDependencyHash();
   }
 
   public @NotNull List<MavenArtifact> getDependencies() {
-    return myState.myDependencies;
+    return myState.getDependencies();
   }
 
   public @NotNull List<MavenArtifact> getExternalAnnotationProcessors() {
-    return myState.myAnnotationProcessors;
+    return myState.getAnnotationProcessors();
   }
 
   public @NotNull List<MavenArtifactNode> getDependencyTree() {
-    return myState.myDependencyTree;
+    return myState.getDependencyTree();
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -956,11 +685,11 @@ public class MavenProject {
   }
 
   public void addDependencies(@NotNull Collection<MavenArtifact> dependencies) {
-    updateState(newState -> newState.myDependencies.addAll(dependencies));
+    updateState(newState -> newState.getDependencies().addAll(dependencies));
   }
 
   public void addAnnotationProcessors(@NotNull Collection<MavenArtifact> annotationProcessors) {
-    updateState(newState -> newState.myAnnotationProcessors.addAll(annotationProcessors));
+    updateState(newState -> newState.getAnnotationProcessors().addAll(annotationProcessors));
   }
 
   public @NotNull List<MavenArtifact> findDependencies(@NotNull MavenProject depProject) {
@@ -980,27 +709,19 @@ public class MavenProject {
   }
 
   public boolean hasUnresolvedArtifacts() {
-    MavenProjectState state = myState;
-    return !isParentResolved(state)
-           || !getUnresolvedDependencies(state, null).isEmpty()
-           || !getUnresolvedExtensions(state).isEmpty()
-           || !getUnresolvedAnnotationProcessors(state).isEmpty();
+    return myState.hasUnresolvedArtifacts();
   }
 
   public boolean hasUnresolvedPlugins() {
-    return !getUnresolvedPlugins(myState).isEmpty();
+    return !myState.getUnresolvedPlugins().isEmpty();
   }
 
   public @NotNull List<MavenPlugin> getPlugins() {
-    return myState.myPlugins;
+    return myState.getPlugins();
   }
 
   public @NotNull List<MavenPlugin> getDeclaredPlugins() {
-    return getDeclaredPlugins(myState);
-  }
-
-  private static List<MavenPlugin> getDeclaredPlugins(MavenProjectState state) {
-    return ContainerUtil.findAll(state.myPlugins, mavenPlugin -> !mavenPlugin.isDefault());
+    return myState.getDeclaredPlugins();
   }
 
   public @Nullable Element getPluginConfiguration(@Nullable String groupId, @Nullable String artifactId) {
@@ -1042,7 +763,7 @@ public class MavenProject {
   }
 
   public @Nullable String getSourceEncoding() {
-    return myState.myProperties.getProperty("project.build.sourceEncoding");
+    return myState.getProperties().getProperty("project.build.sourceEncoding");
   }
 
   public @Nullable String getResourceEncoding(Project project) {
@@ -1106,13 +827,13 @@ public class MavenProject {
       .map(languageLevel -> languageLevel == null ? LanguageLevel.HIGHEST : languageLevel)
       .max(Comparator.naturalOrder())
       .map(l -> l.toJavaVersion().toFeatureString())
-      .orElseGet(() -> myState.myProperties.getProperty("maven.compiler." + level));
+      .orElseGet(() -> myState.getProperties().getProperty("maven.compiler." + level));
   }
 
   private String getCompilerLevel(String level, Element config) {
     String result = MavenJDOMUtil.findChildValueByPath(config, level);
     if (result == null) {
-      result = myState.myProperties.getProperty("maven.compiler." + level);
+      result = myState.getProperties().getProperty("maven.compiler." + level);
     }
     return result;
   }
@@ -1132,7 +853,7 @@ public class MavenProject {
   }
 
   public @NotNull Properties getProperties() {
-    return myState.myProperties;
+    return myState.getProperties();
   }
 
   public @NotNull Map<String, String> getMavenConfig() {
@@ -1169,11 +890,11 @@ public class MavenProject {
   }
 
   public @NotNull File getLocalRepository() {
-    return myState.myLocalRepository;
+    return myState.getLocalRepository();
   }
 
   public @NotNull List<MavenRemoteRepository> getRemoteRepositories() {
-    return myState.myRemoteRepositories;
+    return myState.getRemoteRepositories();
   }
 
   public @NotNull Pair<String, String> getClassifierAndExtension(@NotNull MavenArtifact artifact, @NotNull MavenExtraArtifactType type) {
@@ -1195,12 +916,12 @@ public class MavenProject {
   }
 
   public @Nullable <V> V getCachedValue(Key<V> key) {
-    @SuppressWarnings("unchecked") V v = (V)myState.myCache.get(key);
+    @SuppressWarnings("unchecked") V v = (V)myState.getCache().get(key);
     return v;
   }
 
   public @NotNull <V> V putCachedValue(Key<V> key, @NotNull V value) {
-    Object oldValue = myState.myCache.putIfAbsent(key, value);
+    Object oldValue = myState.getCache().putIfAbsent(key, value);
     if (oldValue != null) {
       @SuppressWarnings("unchecked") V v = (V)oldValue;
       return v;
@@ -1210,28 +931,6 @@ public class MavenProject {
 
   @Override
   public String toString() {
-    return null == myState.myMavenId ? myFile.getPath() : getMavenId().toString();
-  }
-
-  public class Updater {
-    public Updater setDependencies(@NotNull List<MavenArtifact> dependencies) {
-      myState.myDependencies = dependencies;
-      return this;
-    }
-
-    public Updater setProperties(@NotNull Properties properties) {
-      myState.myProperties = properties;
-      return this;
-    }
-
-    public Updater setPlugins(@NotNull List<MavenPlugin> plugins) {
-      myState.myPlugins.clear();
-      myState.myPlugins.addAll(plugins);
-      return this;
-    }
-  }
-
-  public Updater updater() {
-    return new Updater();
+    return null == myState.getMavenId() ? myFile.getPath() : getMavenId().toString();
   }
 }

@@ -250,12 +250,13 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
     applyReadStateToMavenProject(projectData.mavenModel, projectData.mavenProject)
 
-    projectData.mavenProject.updater()
-      .setDependencies(dependencies)
-      .setPlugins(projectData.plugins.values.toList())
-      .setProperties(Properties().apply {
+    projectData.mavenProject.updateState(
+      dependencies.toList(),
+      Properties().apply {
         putAll(projectData.properties)
-      })
+      },
+      projectData.plugins.values.toList(),
+    )
   }
 
   private fun CoroutineScope.interpolate(
