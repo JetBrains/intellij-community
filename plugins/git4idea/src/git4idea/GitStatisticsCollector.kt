@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
@@ -105,6 +106,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
         }
       }
       catch (e: Exception) {
+        if (e is ControlFlowException) throw e
         LOG.warn(e)
       }
       val remoteTypes = HashMultiset.create(repository.remotes.map { getRemoteServerType(it) })
