@@ -19,7 +19,6 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 internal class ShellCommandManager(
-  private val session: BlockTerminalSession,
   private val commandEndMarker: String?,
   private val terminal: Terminal,
   private val shellIntegration: ShellIntegration,
@@ -28,7 +27,6 @@ internal class ShellCommandManager(
 ) {
 
   constructor(session: BlockTerminalSession) : this(
-    session,
     session.commandBlockIntegration.commandEndMarker,
     session.controller,
     session.shellIntegration,
