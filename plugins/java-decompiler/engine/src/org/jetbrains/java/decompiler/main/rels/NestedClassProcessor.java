@@ -915,7 +915,7 @@ public class NestedClassProcessor {
         case Exprent.EXPRENT_FIELD -> res = classname.equals(((FieldExprent)expr).getClassname());
         case Exprent.EXPRENT_INVOCATION -> res = classname.equals(((InvocationExprent)expr).getClassName());
         case Exprent.EXPRENT_NEW -> {
-          VarType newType = expr.getExprType();
+          VarType newType = ((NewExprent)expr).getNewType();
           res = newType.getType() == CodeConstants.TYPE_OBJECT && classname.equals(newType.getValue());
         }
         case Exprent.EXPRENT_VAR -> {

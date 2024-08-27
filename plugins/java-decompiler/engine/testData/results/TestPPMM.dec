@@ -1,0 +1,70 @@
+package pkg;
+
+public class TestPPMM {
+   public void ipp() {
+      int a = 0;
+      ++a;
+      ++a;
+      ++a;
+      ++a;
+   }
+
+   public void ppi() {
+      int a = 0;
+      ++a;
+      ++a;
+      ++a;
+      ++a;
+   }
+
+   public void imm() {
+      int a = 0;
+      --a;
+      --a;
+      --a;
+      --a;
+   }
+
+   public void mmi() {
+      int a = 0;
+      --a;
+      --a;
+      --a;
+      --a;
+   }
+
+   public void ippf() {
+      int a = 0;
+      t(a++);
+      t(a++);
+      t(a++);
+      t(a++);
+   }
+
+   public void ppif() {
+      int a = 0;
+      t(++a);
+      t(++a);
+      t(++a);
+      t(++a);
+   }
+
+   public void immf() {
+      int a = 0;
+      t(a--);
+      t(a--);
+      t(a--);
+      t(a--);
+   }
+
+   public void mmif() {
+      int a = 0;
+      t(--a);
+      t(--a);
+      t(--a);
+      t(--a);
+   }
+
+   private static void t(int x) {
+   }
+}

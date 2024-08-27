@@ -10,13 +10,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 public class PPandMMHelper {
 
   private boolean exprentReplaced;
   private VarProcessor varProc;
-  private Map<VarVersionPair, VarVersionPair> remaps = new HashMap<>();
+  private DirectGraph dgraph;
 
   public PPandMMHelper(VarProcessor varProc) {
     this.varProc = varProc;
@@ -25,10 +27,10 @@ public class PPandMMHelper {
   public boolean findPPandMM(RootStatement root) {
 
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
-    DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+    this.dgraph = flatthelper.buildDirectGraph(root);
 
     LinkedList<DirectNode> stack = new LinkedList<>();
-    stack.add(dgraph.first);
+    stack.add(this.dgraph.first);
 
     HashSet<DirectNode> setVisited = new HashSet<>();
 
@@ -47,8 +49,6 @@ public class PPandMMHelper {
 
       stack.addAll(node.successors);
     }
-
-    updateVersions(dgraph);
 
     return res;
   }
@@ -124,7 +124,7 @@ public class PPandMMHelper {
           if (econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
             Exprent left = as.getLeft();
 
-            VarType condtype = econd.getExprType();
+            VarType condtype = left.getExprType();
             if (exprsEqual(left, econd) && (midlayer == null || midlayer.equals(condtype))) {
               FunctionExprent ret = new FunctionExprent(
                 func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
@@ -134,7 +134,7 @@ public class PPandMMHelper {
               exprentReplaced = true;
 
               if (!left.equals(econd)) {
-                remaps.put(new VarVersionPair((VarExprent)left), new VarVersionPair((VarExprent)econd));
+                updateVersions(this.dgraph, new VarVersionPair((VarExprent)left), new VarVersionPair((VarExprent)econd));
               }
 
               return ret;
@@ -162,13 +162,13 @@ public class PPandMMHelper {
 
     VarExprent v1 = (VarExprent)e1;
     VarExprent v2 = (VarExprent)e2;
-    return varProc.getVarOriginalIndex(v1.getIndex()) == varProc.getVarOriginalIndex(v2.getIndex())
-            && Objects.equals(v1.getVarType(), v2.getVarType());
+    return varProc.getVarOriginalIndex(v1.getIndex()) == varProc.getVarOriginalIndex(v2.getIndex());
+    // TODO: Verify the types are in the same 'family' {byte->short->int}
+    //        && Objects.equals(v1.getVarType(), v2.getVarType());
   }
 
 
-  private void updateVersions(DirectGraph graph) {
-    if (remaps.isEmpty()) return;
+  private void updateVersions(DirectGraph graph, final VarVersionPair oldVVP, final VarVersionPair newVVP) {
     graph.iterateExprents(new DirectGraph.ExprentIterator() {
       @Override
       public int processExprent(Exprent exprent) {
@@ -178,10 +178,9 @@ public class PPandMMHelper {
         for (Exprent expr : lst) {
           if (expr.type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)expr;
-            VarVersionPair nvar = remaps.get(new VarVersionPair(var));
-            if (nvar != null) {
-              var.setIndex(nvar.var);
-              var.setVersion(nvar.version);
+            if (var.getIndex() == oldVVP.var && var.getVersion() == oldVVP.version) {
+              var.setIndex(newVVP.var);
+              var.setVersion(newVVP.version);
             }
           }
         }

@@ -504,7 +504,12 @@ public class ConstExprent extends Exprent {
   public void getBytecodeRange(BitSet values) {
     measureBytecode(values);
   }
-  
+
+  @Override
+  public String toString() {
+    return "const(" + toJava(0, new BytecodeMappingTracer()) + ")";
+  }
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
