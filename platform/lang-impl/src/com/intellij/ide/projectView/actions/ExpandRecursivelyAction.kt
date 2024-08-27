@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView.actions
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -20,6 +21,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
 import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 @Experimental
 class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
@@ -29,11 +31,20 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
     val c = e.dataContext.getData(CONTEXT_COMPONENT) as? JTree? ?: return
     val selection = c.selectionPaths ?: return
     TreeUtil.promiseExpand(c, Int.MAX_VALUE) { path ->
-      // This unusual isDescendant condition is needed because TreeUtil won't even visit
-      // children if the parent doesn't match, so it'll just stop at the root node.
-      // So even though the parents of the selected paths are obviously already expanded,
-      // we still need to include them.
-      selection.any { it.isDescendant(path) || path.isDescendant(it) }
+      selection.any { selectedPath ->
+        // N.B.: isDescendant is very poorly named: a.isDescendant(b) means "b is a descendant of a".
+        when {
+          // Descendants of the selected paths are expanded.
+          selectedPath.isDescendant(path) -> true
+          // This unusual isDescendant condition is needed because TreeUtil won't even visit
+          // children if the parent doesn't match, so it'll just stop at the root node.
+          // So even though the parents of the selected paths are obviously already expanded,
+          // we still need to include them.
+          path.isDescendant(selectedPath) -> true
+          // Some irrelevant path from other parts of the tree, do not expand.
+          else -> false
+        }
+      }
     }
   }
 
