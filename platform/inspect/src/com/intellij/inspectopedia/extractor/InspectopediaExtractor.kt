@@ -98,7 +98,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         try {
           val language = wrapper.language
           availablePlugins.get(pluginId)!!.inspections.add(Inspection(
-            id = wrapper.shortName,
+            id = wrapper.tool.alternativeID ?: wrapper.id,
             name = wrapper.displayName,
             severity = wrapper.defaultLevel.name,
             language = language,
