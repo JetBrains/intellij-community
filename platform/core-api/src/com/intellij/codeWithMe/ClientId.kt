@@ -422,7 +422,10 @@ data class ClientId(val value: String) {
     private fun assertClientIdMismatch(assertInfo: Pair<ClientIdContextElement?, Throwable>) {
       val currentClientIdElement = currentThreadContext().clientIdContextElement
       if (assertInfo.first != currentClientIdElement) {
-        logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'", assertInfo.second))
+        logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'", assertInfo.second.also { throwable ->
+          val currentThrowable = currentClientIdElement?.creationTrace
+          if (currentThrowable != null) throwable.initCause(currentThrowable)
+        }))
       }
     }
 
