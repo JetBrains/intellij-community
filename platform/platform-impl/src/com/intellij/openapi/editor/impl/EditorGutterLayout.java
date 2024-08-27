@@ -183,8 +183,6 @@ public final class EditorGutterLayout {
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize)
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0),
-      //areaGap(1)
-      //  .showIf(() -> myEditorGutter.getLeftFreePaintersAreaWidth() + myEditorGutter.getRightFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown()),
       area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
         .showIf(() -> myEditorGutter.isLineMarkersShown()),
       area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
@@ -193,7 +191,6 @@ public final class EditorGutterLayout {
     );
 
     List<GutterArea> lineNumbersAreas = List.of(
-      //areaGap(4).as(EditorMouseEventArea.LINE_NUMBERS_AREA).showIf(this::isLineNumbersShown),
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
         .showIf(this::isLineNumbersShown),
       areaGap(12)
