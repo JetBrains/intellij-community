@@ -126,7 +126,31 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.openFileInEditor(getTestFile("module-info.class"))
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
       val infos = myFixture.doHighlighting()
+        .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
       assertEquals(5, infos.size)
+      val texts = infos.map { it.text }.toSet()
+      assertContainsElements(texts,
+                             "module",
+                             "requires",
+                             "exports",
+      )
+    })
+  }
+
+  fun testNameHighlightingInsideCompiledFileWithRecords() {
+    myFixture.setReadEditorMarkupModel(true)
+    val testFile = getTestFile("RecordHighlighting.class")
+    testFile.parent.children ; testFile.parent.refresh(false, true)  // inner classes
+    myFixture.openFileInEditor(testFile)
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
+      val infos = myFixture.doHighlighting()
+        .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
+      val texts = infos.map { it.text }.toSet()
+      assertContainsElements(texts,
+                             "sealed",
+                             "record",
+                             "permits",
+      )
     })
   }
 
