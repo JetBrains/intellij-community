@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.xdebugger.Obsolescent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,10 +54,8 @@ public abstract class XExecutionStack {
     return myIcon;
   }
 
-  @Nullable
-  public final void setIcon(Icon icon) {
-    myIcon = icon;
-  }
+  @ApiStatus.Internal
+  public final void setIcon(Icon icon) { myIcon = icon; }
 
   /**
    * Override this method to provide an icon with optional tooltip and popup actions. This icon will be shown on the editor gutter to the
