@@ -16,8 +16,6 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -141,10 +139,6 @@ class MavenProjectState implements Cloneable, Serializable {
     return myPlugins;
   }
 
-  List<MavenArtifact> getExtensions() {
-    return myExtensions;
-  }
-
   List<MavenArtifact> getDependencies() {
     return myDependencies;
   }
@@ -185,28 +179,12 @@ class MavenProjectState implements Cloneable, Serializable {
     return myReadingProblems;
   }
 
-  Set<MavenId> getUnresolvedArtifactIds() {
-    return myUnresolvedArtifactIds;
-  }
-
   File getLocalRepository() {
     return myLocalRepository;
   }
 
   List<MavenProjectProblem> getProblemsCache() {
     return myProblemsCache;
-  }
-
-  List<MavenArtifact> getUnresolvedDependenciesCache() {
-    return myUnresolvedDependenciesCache;
-  }
-
-  List<MavenPlugin> getUnresolvedPluginsCache() {
-    return myUnresolvedPluginsCache;
-  }
-
-  List<MavenArtifact> getUnresolvedExtensionsCache() {
-    return myUnresolvedExtensionsCache;
   }
 
   ConcurrentHashMap<Key<?>, Object> getCache() {
@@ -259,11 +237,6 @@ class MavenProjectState implements Cloneable, Serializable {
     result.setHasPluginChanges(repositoryChanged || !Comparing.equal(myPlugins, newState.myPlugins));
     result.setHasPropertyChanges(!Comparing.equal(myProperties, newState.myProperties));
     return result;
-  }
-
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    in.defaultReadObject();
-    myCache = new ConcurrentHashMap<>();
   }
 
   void doUpdateState(@NotNull MavenModel model,
@@ -579,7 +552,6 @@ class MavenProjectState implements Cloneable, Serializable {
     }
   }
 
-  @NotNull
   void doUpdateState(
     @NotNull List<MavenArtifact> dependencies,
     @NotNull Properties properties,
