@@ -3,10 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -21,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.namecache.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.util.ExceptionUtil;
@@ -1303,7 +1301,7 @@ public final class FSRecordsImpl implements Closeable {
    * If the same content (bytes) was already stored -- method could return id of already existing record, without allocating
    * & storing new record.
    */
-  int writeContentRecord(@NotNull ByteArraySequence content) {
+  int writeContentRecord(@NotNull ByteArraySequence content) throws ContentTooBigException {
     try {
       return contentAccessor.writeContentRecord(content);
     }

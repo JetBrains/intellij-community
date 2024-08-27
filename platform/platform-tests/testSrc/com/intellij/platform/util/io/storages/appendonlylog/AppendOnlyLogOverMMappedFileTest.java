@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -257,7 +258,7 @@ public class AppendOnlyLogOverMMappedFileTest {
 
     assertThrows(
       "Log must throws exception if full record (payload+header) doesn't fit into a page, ",
-      IllegalArgumentException.class,
+      ContentTooBigException.class,
       () -> appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize + 1)
     );
   }

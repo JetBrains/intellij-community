@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -54,7 +55,7 @@ public final class PersistentFSContentAccessor {
    * If the same content (bytes) was already stored -- method could return id of already existing record, without allocating
    * & storing new record.
    */
-  int writeContentRecord(@NotNull ByteArraySequence content) throws IOException {
+  int writeContentRecord(@NotNull ByteArraySequence content) throws IOException, ContentTooBigException {
     return connection.getContents().storeRecord(content);
   }
 

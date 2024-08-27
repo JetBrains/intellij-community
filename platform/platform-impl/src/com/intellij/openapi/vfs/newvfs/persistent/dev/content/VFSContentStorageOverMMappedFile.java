@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -174,7 +175,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   }
 
   @Override
-  public int storeRecord(@NotNull ByteArraySequence bytes) throws IOException {
+  public int storeRecord(@NotNull ByteArraySequence bytes) throws IOException, ContentTooBigException {
     byte[] cryptoHash = PersistentFSContentAccessor.calculateHash(bytes);
     int hash = hashCodeOf(cryptoHash);
     ByteBuffer cryptoHashWrapped = ByteBuffer.wrap(cryptoHash);
