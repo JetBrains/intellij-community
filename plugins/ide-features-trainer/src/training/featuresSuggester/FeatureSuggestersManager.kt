@@ -38,8 +38,8 @@ internal class FeatureSuggestersManager(private val project: Project) : Disposab
   }
 
   private fun handleAction(action: Action) {
-    val language = action.language ?: return
-    val suggesters = FeatureSuggester.suggesters.filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
+    val language = action.language
+    val suggesters = FeatureSuggester.suggesters.filter { it.languages.find { id -> id == Language.ANY.id || id == language?.id } != null }
     for (suggester in suggesters) {
       if (suggester.isEnabled()) {
         processSuggester(suggester, action)
