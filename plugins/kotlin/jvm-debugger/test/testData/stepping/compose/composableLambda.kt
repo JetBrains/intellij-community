@@ -27,14 +27,19 @@ fun composeTest(test: @Composable () -> Unit) {
     }
 }
 
-fun main() = composeTest {
-    Foo {
-        //Breakpoint!
-        println("")
+fun main() {
+    //Breakpoint!
+    println("1")
 
+    composeTest {
         Foo {
             //Breakpoint!
-            println("")
+            println("2")
+
+            Foo {
+                //Breakpoint!
+                println("3")
+            }
         }
     }
 }

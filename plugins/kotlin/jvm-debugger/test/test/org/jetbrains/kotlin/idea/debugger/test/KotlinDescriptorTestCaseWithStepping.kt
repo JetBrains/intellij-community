@@ -120,7 +120,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         instructions.forEach(this::process)
     }
 
-    internal fun doOnBreakpoint(action: SuspendContextImpl.() -> Unit) {
+    protected fun doOnBreakpoint(action: SuspendContextImpl.() -> Unit) {
         super.onBreakpoint {
             try {
                 initContexts(it)

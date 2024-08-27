@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test/compose")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/variables/compose")
-public class K2ComposeVariablePrintingTestGenerated extends AbstractK2ComposeVariablePrintingTest {
+@TestMetadata("../testData/stepping/compose")
+public class K2ComposeSteppingTestGenerated extends AbstractK2ComposeSteppingTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -32,6 +32,6 @@ public class K2ComposeVariablePrintingTestGenerated extends AbstractK2ComposeVar
 
     @TestMetadata("composableLambda.kt")
     public void testComposableLambda() throws Exception {
-        runTest("../testData/variables/compose/composableLambda.kt");
+        runTest("../testData/stepping/compose/composableLambda.kt");
     }
 }

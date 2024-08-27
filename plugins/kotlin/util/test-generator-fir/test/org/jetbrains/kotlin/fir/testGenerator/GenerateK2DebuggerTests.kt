@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentAut
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentHighlightingTest
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeVariablePrintingTest
+import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeSteppingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -147,8 +147,8 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
 internal fun MutableTWorkspace.generateK2ComposeDebuggerTests() {
     testGroup("jvm-debugger/test/compose", testDataPath = "../testData", category = DEBUGGER) {
-        testClass<AbstractK2ComposeVariablePrintingTest> {
-            model("variables/compose")
+        testClass<AbstractK2ComposeSteppingTest> {
+            model("stepping/compose")
         }
     }
 }
