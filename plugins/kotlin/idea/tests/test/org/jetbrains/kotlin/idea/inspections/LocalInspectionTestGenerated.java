@@ -17983,6 +17983,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/abstractFunctionParameter.kt");
             }
 
+            @TestMetadata("actualClassParameter.kt")
+            public void testActualClassParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/actualClassParameter.kt");
+            }
+
+            @TestMetadata("actualFunctionParameter.kt")
+            public void testActualFunctionParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/actualFunctionParameter.kt");
+            }
+
             @TestMetadata("annotationConstructor.kt")
             public void testAnnotationConstructor() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/annotationConstructor.kt");
@@ -18096,6 +18106,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("enumSecondaryConstructor.kt")
             public void testEnumSecondaryConstructor() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
+            }
+
+            @TestMetadata("expectClassParameter.kt")
+            public void testExpectClassParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/expectClassParameter.kt");
             }
 
             @TestMetadata("expectFunctionParameter.kt")

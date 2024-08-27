@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -75,17 +74,21 @@ object K2UnusedSymbolUtil {
           if (ownerFunction is KtConstructor<*>) {
               // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
               val containingClass = declaration.containingClass()
-              if (containingClass?.isData() == true) return false
-              // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
-              if (containingClass?.isValue() == true && declaration.hasValOrVar()) return false
-              // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
-              if (containingClass?.isInline() == true && declaration.hasValOrVar()) return false
+              if (containingClass != null) {
+                  if (containingClass.isData()) return false
+                  // constructor parameters-fields of value class are considered used because they are implicitly used in equals() (???)
+                  if (containingClass.isValue() && declaration.hasValOrVar()) return false
+                  // constructor parameters-fields of inline class are considered used because they are implicitly used in equals() (???)
+                  if (containingClass.isInline() && declaration.hasValOrVar()) return false
+                  if (isExpectedOrActual(containingClass)) return false;
+              }
           }
           else if (ownerFunction is KtFunctionLiteral) {
               // do not highlight unused in .forEach { (a,b) -> {} }
               return false
           }
-          else if (ownerFunction is KtFunction && isEffectivelyAbstractFunction(ownerFunction)) {
+          else if (ownerFunction is KtFunction &&
+              (isEffectivelyAbstractFunction(ownerFunction) || isExpectedOrActual(ownerFunction))) {
               return false
           }
       }
@@ -100,6 +103,12 @@ object K2UnusedSymbolUtil {
       }
       return !owner.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }
+
+    private fun isExpectedOrActual(owner: KtModifierListOwner): Boolean {
+        val modifierList = owner.modifierList
+        return modifierList != null && (
+                modifierList.hasModifier(KtTokens.EXPECT_KEYWORD) || modifierList.hasModifier(KtTokens.ACTUAL_KEYWORD))
+    }
 
     private fun isEffectivelyAbstractFunction(ownerFunction: KtFunction): Boolean {
         val modifierList = ownerFunction.modifierList
@@ -638,7 +647,7 @@ object K2UnusedSymbolUtil {
       return when {
           symbol is KaConstructorSymbol -> {
               val classSymbol = symbol.containingDeclaration as? KaNamedClassSymbol ?: return false
-              !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
+              !classSymbol.isInline && !(classSymbol.visibility == KaSymbolVisibility.PRIVATE)
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
           symbol !is KaNamedFunctionSymbol -> true
@@ -695,10 +704,9 @@ object K2UnusedSymbolUtil {
   }
 
   private fun hasPlatformImplementations(declaration: KtNamedDeclaration): Boolean {
-      if (!declaration.hasExpectModifier()) return false
+      return declaration.hasExpectModifier()
 
       // TODO: K2 counterpart of `hasActualsFor` is missing. Update this function after implementing it.
-      return true
   }
 
   private fun classOrObjectHasTextUsages(classOrObject: KtClassOrObject): Boolean {
