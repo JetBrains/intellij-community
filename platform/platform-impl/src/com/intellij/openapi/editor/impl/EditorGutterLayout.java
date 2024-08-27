@@ -273,10 +273,12 @@ public final class EditorGutterLayout {
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0)
     );
 
-    List<GutterArea> dfmMarginArea = List.of(
-      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
+    List<GutterArea> extraLeftFreePainters = List.of(
+      area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
+        .showIf(() -> myEditorGutter.isLineMarkersShown()),
+      area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
-        .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0)
+        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown())
     );
 
     List<GutterArea> lineNumbersAreas = List.of(
@@ -287,12 +289,10 @@ public final class EditorGutterLayout {
         .showIf(() -> isLineNumbersShown() && myEditorGutter.isLineMarkersShown())
     );
 
-    List<GutterArea> extraLeftFreePainters = List.of(
-      area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
-        .showIf(() -> myEditorGutter.isLineMarkersShown()),
-      area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
+    List<GutterArea> dfmMarginArea = List.of(
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
-        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown())
+        .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0)
     );
 
     List<GutterArea> iconRelatedAreas = List.of(
