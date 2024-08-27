@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
-internal object LinkedProjectPathsTestsFeature : TestFeature<LinkedProjectPaths> {
+object LinkedProjectPathsTestsFeature : TestFeature<LinkedProjectPaths> {
     override fun createDefaultConfiguration(): LinkedProjectPaths = LinkedProjectPaths(mutableSetOf())
 
     override fun KotlinMppTestsContext.beforeImport() {

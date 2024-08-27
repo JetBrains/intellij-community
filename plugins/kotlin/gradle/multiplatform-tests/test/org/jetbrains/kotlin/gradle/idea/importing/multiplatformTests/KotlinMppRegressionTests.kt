@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
@@ -105,7 +106,7 @@ class KotlinMppRegressionTests : AbstractKotlinMppGradleImportingTest() {
             // Using jvmToolchain API to select the JDK
             allowAccessToDirsIfExists("/Library/Java/")
             publish("producer")
-            onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker)
+            onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker, GradleProjectsPublishingTestsFeature)
         }
     }
 }

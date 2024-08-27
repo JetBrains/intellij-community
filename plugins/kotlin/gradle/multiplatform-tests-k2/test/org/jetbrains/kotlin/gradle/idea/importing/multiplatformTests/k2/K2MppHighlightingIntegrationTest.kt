@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.test.TestMetadata
@@ -22,7 +23,7 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
 
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideHighlightsBelow = HighlightSeverity.ERROR
-        onlyCheckers(HighlightingChecker)
+        onlyCheckers(HighlightingChecker, GradleProjectsPublishingTestsFeature)
         hideLineMarkers = true
     }
 
