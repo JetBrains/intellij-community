@@ -64,19 +64,13 @@ private fun DefaultTabShowcase() {
                     content = { tabState ->
                         val iconProvider = rememberResourcePainterProvider(AllIconsKeys.Actions.Find)
                         val icon by iconProvider.getPainter(Stateful(tabState))
-                        SimpleTabContent(
-                            label = "Default Tab $id",
-                            state = tabState,
-                            icon = icon,
-                        )
+                        SimpleTabContent(label = "Default Tab $id", state = tabState, icon = icon)
                     },
                     onClose = {
                         tabIds = tabIds.toMutableList().apply { removeAt(index) }
                         if (selectedTabIndex >= index) {
                             val maxPossibleIndex = max(0, tabIds.lastIndex)
-                            selectedTabIndex =
-                                (selectedTabIndex - 1)
-                                    .coerceIn(0..maxPossibleIndex)
+                            selectedTabIndex = (selectedTabIndex - 1).coerceIn(0..maxPossibleIndex)
                         }
                     },
                     onClick = { selectedTabIndex = index },
@@ -88,10 +82,7 @@ private fun DefaultTabShowcase() {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
-        tabIds =
-            tabIds
-                .toMutableList()
-                .apply { add(insertionIndex, nextTabId) }
+        tabIds = tabIds.toMutableList().apply { add(insertionIndex, nextTabId) }
         selectedTabIndex = insertionIndex
     }
 }
@@ -125,24 +116,20 @@ private fun EditorTabShowcase() {
                         )
                         Box(
                             modifier =
-                                Modifier
-                                    .size(12.dp)
-                                    .thenIf(tabState.isHovered) {
-                                        drawWithCache {
-                                            onDrawBehind {
-                                                drawCircle(color = Color.Magenta.copy(alpha = .4f), radius = 6.dp.toPx())
-                                            }
+                                Modifier.size(12.dp).thenIf(tabState.isHovered) {
+                                    drawWithCache {
+                                        onDrawBehind {
+                                            drawCircle(color = Color.Magenta.copy(alpha = .4f), radius = 6.dp.toPx())
                                         }
-                                    },
+                                    }
+                                },
                         )
                     },
                     onClose = {
                         tabIds = tabIds.toMutableList().apply { removeAt(index) }
                         if (selectedTabIndex >= index) {
                             val maxPossibleIndex = max(0, tabIds.lastIndex)
-                            selectedTabIndex =
-                                (selectedTabIndex - 1)
-                                    .coerceIn(0..maxPossibleIndex)
+                            selectedTabIndex = (selectedTabIndex - 1).coerceIn(0..maxPossibleIndex)
                         }
                     },
                     onClick = { selectedTabIndex = index },
@@ -154,10 +141,7 @@ private fun EditorTabShowcase() {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
-        tabIds =
-            tabIds
-                .toMutableList()
-                .apply { add(insertionIndex, nextTabId) }
+        tabIds = tabIds.toMutableList().apply { add(insertionIndex, nextTabId) }
         selectedTabIndex = insertionIndex
     }
 }
@@ -171,15 +155,8 @@ private fun TabStripWithAddButton(
     Row(verticalAlignment = Alignment.CenterVertically) {
         TabStrip(tabs, style, modifier = Modifier.weight(1f))
 
-        IconButton(
-            onClick = onAddClick,
-            modifier = Modifier.size(JewelTheme.defaultTabStyle.metrics.tabHeight),
-        ) {
-            Icon(
-                resource = "expui/general/add.svg",
-                contentDescription = "Add a tab",
-                StandaloneSampleIcons::class.java,
-            )
+        IconButton(onClick = onAddClick, modifier = Modifier.size(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
+            Icon(key = AllIconsKeys.General.Add, contentDescription = "Add a tab")
         }
     }
 }
