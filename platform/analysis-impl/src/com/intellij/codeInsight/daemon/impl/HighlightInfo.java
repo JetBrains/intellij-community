@@ -76,6 +76,7 @@ public class HighlightInfo implements Segment {
   private static final byte UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK = 0x20;
 
   // this HighlightInfo was created during visiting PsiElement with this range
+  @Deprecated
   private RangeMarker visitingRange;
 
   @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK, UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
@@ -1086,16 +1087,19 @@ public class HighlightInfo implements Segment {
   void setUnresolvedReferenceQuickFixesComputed() {
     setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
   }
+  @ApiStatus.Internal
   boolean isFromAnnotator() {
     return HighlightInfoUpdaterImpl.isAnnotatorToolId(toolId);
   }
-
+  @ApiStatus.Internal
   boolean isFromInspection() {
     return HighlightInfoUpdaterImpl.isInspectionToolId(toolId);
   }
+  @ApiStatus.Internal
   boolean isFromHighlightVisitor() {
     return HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId);
   }
+  @ApiStatus.Internal
   boolean isInjectionRelated() {
     return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
   }
