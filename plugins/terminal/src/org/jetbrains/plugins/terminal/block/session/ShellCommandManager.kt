@@ -147,10 +147,8 @@ internal class ShellCommandManager(
    * on command termination.
    */
   private fun clearTerminal() {
-    session.terminalStarterFuture.getNow(null)?.let {
-      debug { "force clearing terminal" }
-      session.model.clearAllAndMoveCursorToTopLeftCorner(it.terminal)
-    }
+    debug { "force clearing terminal" }
+    session.model.clearAllAndMoveCursorToTopLeftCorner(terminal)
   }
 
   private fun fireInitialized(rawShellInfo: String) {
