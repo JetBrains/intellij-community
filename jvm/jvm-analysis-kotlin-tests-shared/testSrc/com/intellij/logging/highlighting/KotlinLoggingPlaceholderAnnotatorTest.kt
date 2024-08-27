@@ -223,4 +223,63 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     }
   """.trimIndent())
   }
+
+  fun `test lazy init`() = doTest("""
+      import org.apache.logging.log4j.LogBuilder
+      import org.apache.logging.log4j.LogManager
+      import org.apache.logging.log4j.Logger
+
+      class LazyInitializer {
+
+          internal class StaticInitializerBuilder2 {
+              init {
+                  log.log("{}", 1)
+              }
+
+              companion object {
+                  private val log: LogBuilder
+
+                  init {
+                      if (1 == 1) {
+                          log = LogManager.getLogger().atDebug()
+                      } else {
+                          log = LogManager.getFormatterLogger().atDebug()
+                      }
+                  }
+              }
+          }
+
+          internal class ConstructorInitializer {
+              private val log: Logger
+
+              constructor() {
+                  log = LogManager.getLogger()
+              }
+
+              constructor(i) {
+                  log = LogManager.getLogger()
+              }
+
+              fun test() {
+                log.info("<placeholder>{}</placeholder>", 1)
+              }
+          }
+
+          internal class ConstructorInitializer2 {
+              private val log: Logger
+
+              constructor() {
+                  log = LogManager.getFormatterLogger()
+              }
+
+              constructor(i: Int) {
+                  log = LogManager.getLogger()
+              }
+
+              fun test() {
+                log.info("{}", 1)
+              }
+          }
+      }
+      """.trimIndent())
 }
