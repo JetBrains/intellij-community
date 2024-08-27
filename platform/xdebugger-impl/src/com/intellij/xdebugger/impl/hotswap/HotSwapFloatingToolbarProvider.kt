@@ -189,10 +189,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
             }
             return@launch
           }
-          HotSwapVisibleStatus.NO_CHANGES, HotSwapVisibleStatus.HIDDEN -> HotSwapButtonAction.HIDE
+          HotSwapVisibleStatus.NO_CHANGES -> HotSwapButtonAction.HIDE
           HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
-          HotSwapVisibleStatus.SESSION_COMPLETED -> HotSwapButtonAction.HIDE_NOW
-          null -> HotSwapButtonAction.HIDE_NOW
+          HotSwapVisibleStatus.SESSION_COMPLETED, HotSwapVisibleStatus.HIDDEN, null -> HotSwapButtonAction.HIDE_NOW
         }
         if (action == HotSwapButtonAction.SHOW) {
           hotSwapAction.status = HotSwapButtonStatus.READY
