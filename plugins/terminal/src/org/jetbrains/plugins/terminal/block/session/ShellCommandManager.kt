@@ -10,6 +10,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.clearAllAndMoveCursorToTopLeftCorner
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -148,7 +149,7 @@ internal class ShellCommandManager(
    */
   private fun clearTerminal() {
     debug { "force clearing terminal" }
-    session.model.clearAllAndMoveCursorToTopLeftCorner(terminal)
+    clearAllAndMoveCursorToTopLeftCorner(terminal)
   }
 
   private fun fireInitialized(rawShellInfo: String) {

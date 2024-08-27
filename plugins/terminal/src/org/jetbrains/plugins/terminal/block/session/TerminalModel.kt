@@ -147,10 +147,6 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
 
   //-------------------MODIFICATION METHODS------------------------------------------------
 
-  internal fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
-    terminal.eraseInDisplay(3)
-    terminal.cursorPosition(1, 1)
-  }
 
   fun lockContent() = textBuffer.lock()
 
@@ -239,6 +235,11 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
       finally {
         unlock()
       }
+    }
+
+    internal fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
+      terminal.eraseInDisplay(3)
+      terminal.cursorPosition(1, 1)
     }
   }
 }
