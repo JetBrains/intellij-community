@@ -1,13 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.freeze.XFreezeThreadHandler;
 import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.ApiStatus;
+import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
+import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerSupport extends DebuggerSupport {
@@ -34,6 +40,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final DebuggerActionHandler mySmartStepIntoHandler;
   private final XMarkObjectActionHandler myMarkObjectActionHandler;
   private final EditBreakpointActionHandler myEditBreakpointActionHandler;
+  private final DebuggerActionHandler myFreezeThreadHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -91,6 +98,32 @@ public class XDebuggerSupport extends DebuggerSupport {
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
     myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
+    myFreezeThreadHandler = new XDebuggerActionHandler() {
+      @Override
+      protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+        XFreezeThreadHandler handler = session.getDebugProcess().getFreezeThreadHandler();
+        return handler != null && handler.canFreezeSingleThread(session, dataContext);
+      }
+
+      @Override
+      protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+        XFreezeThreadHandler handler = session.getDebugProcess().getFreezeThreadHandler();
+        if (handler == null)
+          return;
+        handler.freezeSingleThread(session, dataContext);
+      }
+
+      @Override
+      public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+        final XDebugSession session = DebuggerUIUtil.getSession(event);
+        if (session == null)
+          return true;
+        XFreezeThreadHandler handler = session.getDebugProcess().getFreezeThreadHandler();
+        if (handler == null)
+          return true;
+        return handler.isFreezeSingleThreadHidden(project, event);
+      }
+    };
   }
 
   @Override
@@ -219,5 +252,11 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActionHandler;
+  }
+
+  @NotNull
+  @Override
+  public DebuggerActionHandler getFreezeThreadHandler() {
+    return myFreezeThreadHandler;
   }
 }
