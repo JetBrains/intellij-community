@@ -6,13 +6,14 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -106,6 +107,7 @@ object K2CreateFunctionFromUsageBuilder {
             }
         }
         if (receiverExpression != null || computeImplicitReceiverClass(calleeExpression) != null) {
+            val explicitReceiverType = receiverExpression?.expressionType
             val implicitReceiverType = computeImplicitReceiverType(calleeExpression)
             val containerClassForExtension: KtElement =
                 implicitReceiverType?.convertToClass() ?: calleeExpression.getNonStrictParentOfType<KtClassOrObject>()
@@ -113,18 +115,25 @@ object K2CreateFunctionFromUsageBuilder {
             val jvmClassWrapper = JvmClassWrapperForKtClass(containerClassForExtension)
             val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
             val modifiers = computeModifiers(defaultContainerPsi?:calleeExpression.containingFile, calleeExpression, callExpression, shouldCreateCompanionClass, true)
-            requests.add(jvmClassWrapper to CreateMethodFromKotlinUsageRequest(
+            val request = CreateMethodFromKotlinUsageRequest(
                 callExpression,
                 modifiers,
                 receiverExpression,
-                receiverType = implicitReceiverType,
+                receiverType = explicitReceiverType ?: implicitReceiverType,
                 isExtension = true,
                 isAbstractClassOrInterface = false,
                 isForCompanion = shouldCreateCompanionClass,
-            ))
+            )
+            if (!hasExtensionFunction(containerClassForExtension, request.methodName)) {
+                requests.add(jvmClassWrapper to request)
+            }
         }
         }
         return requests
+    }
+
+    private fun hasExtensionFunction(containerClassForExtension: KtElement, name: @NlsSafe String): Boolean {
+        return containerClassForExtension.containingFile.children.find { it.isExtensionDeclaration() && it is PsiNamedElement && it.name == name} != null
     }
 
     context (KaSession)
