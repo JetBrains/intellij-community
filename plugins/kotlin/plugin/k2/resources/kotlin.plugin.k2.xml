@@ -33,6 +33,10 @@
 
   <xi:include href="extensions.xml"/>
 
+  <xi:include href="ultimate-plugin.k2.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
 
     <supportAvailability implementation="org.jetbrains.kotlin.idea.highlighter.ScriptingSupportAvailability"/>
