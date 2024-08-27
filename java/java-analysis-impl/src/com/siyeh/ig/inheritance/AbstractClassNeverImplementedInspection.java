@@ -48,10 +48,10 @@ public final class AbstractClassNeverImplementedInspection extends BaseInspectio
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (InheritanceUtil.hasImplementation(aClass)) {
+      if (aClass.isDeprecated()) {
         return;
       }
-      if (aClass.isDeprecated()) {
+      if (InheritanceUtil.hasImplementation(aClass)) {
         return;
       }
       registerClassError(aClass);
