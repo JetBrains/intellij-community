@@ -223,8 +223,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
       String className = virtualFile.getNameWithoutExtension();
       Set<VirtualFile> visitedRoots = new HashSet<>();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
-        if (!(entry instanceof LibraryOrSdkOrderEntry)) continue;
-        for (VirtualFile rootFile : ((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)) {
+        if (!(entry instanceof LibraryOrSdkOrderEntry libraryOrSdkEntry)) continue;
+        for (VirtualFile rootFile : libraryOrSdkEntry.getRootFiles(OrderRootType.CLASSES)) {
           if (visitedRoots.add(rootFile)) {
             VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
             PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
