@@ -31,6 +31,7 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
@@ -253,7 +254,8 @@ private fun checkLauncher() {
   if (
     (SystemInfo.isWindows || SystemInfo.isLinux) &&
     !System.getProperty("ide.native.launcher").toBoolean() &&
-    !ExternalUpdateManager.isCreatingDesktopEntries()
+    !ExternalUpdateManager.isCreatingDesktopEntries() &&
+    !PlatformUtils.isJetBrainsClient() //our tools, which start JetBrains Client, aren't migrated to the new launcher yet (see GTW-9619)
   ) {
     val baseName = ApplicationNamesInfo.getInstance().scriptName
     val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
