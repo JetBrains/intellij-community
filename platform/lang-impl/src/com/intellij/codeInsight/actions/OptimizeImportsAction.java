@@ -215,7 +215,7 @@ public final class OptimizeImportsAction extends AnAction {
   }
 
   private static boolean isOptimizeImportsAvailable(@NotNull PsiFile file) {
-    return !OptimizeImportsProcessor.collectOptimizers(file).isEmpty();
+    return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
   private static Boolean isProcessVcsChangedText(Project project, @NlsContexts.Label String text, boolean hasChanges) {

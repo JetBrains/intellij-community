@@ -4,6 +4,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -91,7 +92,7 @@ public final class LayoutCodeDialog extends DialogWrapper {
   }
 
   private void setUpActions() {
-    boolean canOptimizeImports = !OptimizeImportsProcessor.collectOptimizers(myFile).isEmpty();
+    boolean canOptimizeImports = !LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty();
     myOptimizeImportsCb.setVisible(canOptimizeImports);
     if (canOptimizeImports) {
       myOptimizeImportsCb.setSelected(myLastRunOptions.getLastOptimizeImports());
