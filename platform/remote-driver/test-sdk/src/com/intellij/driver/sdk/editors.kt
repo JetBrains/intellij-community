@@ -110,7 +110,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
     if (fileToOpen == null) {
       throw IllegalArgumentException("Fail to find file $relativePath")
     }
-    openEditor(file = fileToOpen)
+    openEditor(fileToOpen, project)
     fileToOpen
   }
   else {
@@ -128,6 +128,6 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
     }
   }
   if (waitForCodeAnalysis) {
-    waitForCodeAnalysis(file = openedFile)
+    waitForCodeAnalysis(project, openedFile)
   }
 }
