@@ -161,7 +161,7 @@ sealed class K2MoveRenameUsageInfo(
          */
         internal var KtElement.nonUpdatableUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(Key.create("NON_UPDATABLE_INTERNAL_USAGE_INFO"))
 
-        private fun PsiElement.internalUsageElements() = collectDescendantsOfType<KDocName>() +
+        fun PsiElement.internalUsageElements() = collectDescendantsOfType<KDocName>() +
                 collectDescendantsOfType<KtReferenceExpression>() +
                 collectDescendantsOfType<KtForExpression>()
 

@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceMod
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.updatableUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
@@ -100,7 +100,7 @@ fun createCopyTarget(
 ): Pair<KtFile, Map<KtNamedDeclaration, KtNamedDeclaration>> {
     /** Collects physical to non-physical usage-infos. */
     fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
-        return collectDescendantsOfType<KtReferenceExpression>().mapNotNull { element ->
+        return internalUsageElements().mapNotNull { element ->
             val usageInfo = element.internalUsageInfo
             val referencedElement = (usageInfo as? K2MoveRenameUsageInfo.Source)?.referencedElement ?: return@mapNotNull null
             val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
