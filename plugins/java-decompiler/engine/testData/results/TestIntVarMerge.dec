@@ -4,7 +4,7 @@ public class TestIntVarMerge {
    public int test1() {
       int var1 = 7;// 5
       var1 = 23 * var1;// 6
-      var1 = var1 * 23;// 7
+      var1 *= 23;// 7
       return var1;// 8
    }
 
@@ -28,10 +28,8 @@ class 'pkg/TestIntVarMerge' {
       5      5
       6      5
       7      5
-      8      6
       9      6
       a      6
-      b      6
       c      6
       d      7
       e      7

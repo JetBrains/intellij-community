@@ -3,7 +3,7 @@ package pkg;
 public class TestVarType {
    public void byteint() {
       int i = 75;
-      i = i + 5;
-      i = i + 500;
+      i += 5;
+      i += 500;
    }
 }

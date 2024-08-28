@@ -171,7 +171,7 @@ public final class Integer extends Number implements Comparable<Integer> {
             }
 
             int var8;
-            for(int var7 = var6 / var1; var4 < var5; var2 = var2 - var8) {// 575 576 589
+            for(int var7 = var6 / var1; var4 < var5; var2 -= var8) {// 575 576 589
                var8 = Character.digit(var0.charAt(var4++), var1);// 578
                if (var8 < 0) {// 579
                   throw NumberFormatException.forInputString(var0);// 580
@@ -181,7 +181,7 @@ public final class Integer extends Number implements Comparable<Integer> {
                   throw NumberFormatException.forInputString(var0);// 583
                }
 
-               var2 = var2 * var1;// 585
+               var2 *= var1;// 585
                if (var2 < var6 + var8) {// 586
                   throw NumberFormatException.forInputString(var0);// 587
                }
@@ -388,11 +388,11 @@ public final class Integer extends Number implements Comparable<Integer> {
    }
 
    public static int highestOneBit(int var0) {
-      var0 = var0 | var0 >> 1;// 1348
-      var0 = var0 | var0 >> 2;// 1349
-      var0 = var0 | var0 >> 4;// 1350
-      var0 = var0 | var0 >> 8;// 1351
-      var0 = var0 | var0 >> 16;// 1352
+      var0 |= var0 >> 1;// 1348
+      var0 |= var0 >> 2;// 1349
+      var0 |= var0 >> 4;// 1350
+      var0 |= var0 >> 8;// 1351
+      var0 |= var0 >> 16;// 1352
       return var0 - (var0 >>> 1);// 1353
    }
 
@@ -425,7 +425,7 @@ public final class Integer extends Number implements Comparable<Integer> {
             var0 <<= 2;
          }
 
-         var1 = var1 - (var0 >>> 31);// 1404
+         var1 -= var0 >>> 31;// 1404
          return var1;// 1405
       }
    }
@@ -464,11 +464,11 @@ public final class Integer extends Number implements Comparable<Integer> {
    }
 
    public static int bitCount(int var0) {
-      var0 = var0 - (var0 >>> 1 & 1431655765);// 1446
+      var0 -= var0 >>> 1 & 1431655765;// 1446
       var0 = (var0 & 858993459) + (var0 >>> 2 & 858993459);// 1447
       var0 = var0 + (var0 >>> 4) & 252645135;// 1448
-      var0 = var0 + (var0 >>> 8);// 1449
-      var0 = var0 + (var0 >>> 16);// 1450
+      var0 += var0 >>> 8;// 1449
+      var0 += var0 >>> 16;// 1450
       return var0 & 63;// 1451
    }
 
@@ -1066,9 +1066,7 @@ class 'java/lang/Integer' {
       d5      180
       d6      180
       d7      180
-      d8      183
       d9      183
-      da      183
       db      183
       dc      184
       dd      184
@@ -1082,10 +1080,8 @@ class 'java/lang/Integer' {
       e7      185
       e8      185
       e9      185
-      ea      173
       eb      173
       ec      173
-      ed      173
       ee      173
       f5      191
       f6      191
@@ -1674,37 +1670,27 @@ class 'java/lang/Integer' {
    }
 
    method 'highestOneBit (I)I' {
-      0      390
       1      390
       2      390
       3      390
-      4      390
       5      390
-      6      391
       7      391
       8      391
       9      391
-      a      391
       b      391
-      c      392
       d      392
       e      392
       f      392
-      10      392
       11      392
-      12      393
       13      393
       14      393
       15      393
       16      393
-      17      393
       18      393
-      19      394
       1a      394
       1b      394
       1c      394
       1d      394
-      1e      394
       1f      394
       20      395
       21      395
@@ -1772,12 +1758,10 @@ class 'java/lang/Integer' {
       3e      423
       40      424
       42      424
-      43      427
       44      427
       45      427
       46      427
       47      427
-      48      427
       49      427
       4a      428
       4b      428
@@ -1848,14 +1832,12 @@ class 'java/lang/Integer' {
    }
 
    method 'bitCount (I)I' {
-      0      466
       1      466
       2      466
       3      466
       4      466
       5      466
       6      466
-      7      466
       8      466
       9      467
       a      467
@@ -1878,19 +1860,15 @@ class 'java/lang/Integer' {
       1b      468
       1c      468
       1d      468
-      1e      469
       1f      469
       20      469
       21      469
       22      469
-      23      469
       24      469
-      25      470
       26      470
       27      470
       28      470
       29      470
-      2a      470
       2b      470
       2c      471
       2d      471

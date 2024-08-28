@@ -232,7 +232,7 @@ public class o {
       }
 
       if (var1 < 0) {
-         var1 = var1 * -1;
+         var1 *= -1;
 
          try {
             if (var2.length() < var1) {
@@ -268,7 +268,7 @@ public class o {
       }
 
       if (var1 < 0) {
-         var1 = var1 * -1;
+         var1 *= -1;
 
          try {
             if (var2.length() < var1) {

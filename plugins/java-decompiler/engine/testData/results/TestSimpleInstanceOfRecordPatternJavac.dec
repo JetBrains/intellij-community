@@ -17,11 +17,11 @@ public class TestSimpleInstanceOfRecordPatternJavac {
 
       try {
          if (o instanceof R(String var11)) {// 18
-            a = a + 34;// 19
+            a += 34;// 19
          }
       } catch (Exception var8) {// 21
          if (o instanceof R(String s1)) {// 22
-            a = a + 34;// 23
+            a += 34;// 23
          }
       }
 
