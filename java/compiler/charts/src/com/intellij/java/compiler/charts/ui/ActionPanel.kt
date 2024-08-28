@@ -83,6 +83,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
       })
       border = JBUI.Borders.empty(1)
       BoxLayout(this, BoxLayout.LINE_AXIS)
+      background = COLOR_BACKGROUND
     }
   }
 

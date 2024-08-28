@@ -15,7 +15,7 @@ val COLOR_PRODUCTION_BLOCK_DISABLED: JBColor = JBColor(Color(0xd7e4fd), Color(0x
 val COLOR_PRODUCTION_BORDER: JBColor = JBColor(Color(0x4781fa), Color(0x4978d6))
 val COLOR_PRODUCTION_BORDER_SELECTED: JBColor = JBColor.BLUE
 
-val COLOR_BACKGROUND: JBColor = JBColor.WHITE
+val COLOR_BACKGROUND: Color = JBColor.background()
 val COLOR_BACKGROUND_ODD: JBColor = JBColor.WHITE
 val COLOR_BACKGROUND_EVEN: JBColor = JBColor(Color(0xeeeeee), Color(0x3e4042))
 
