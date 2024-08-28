@@ -7,6 +7,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -232,7 +233,8 @@ public class SearchResults implements DocumentListener, CaretListener {
 
       long documentTimeStamp = editor.getDocument().getModificationStamp();
 
-      UIUtil.invokeLaterIfNeeded(() -> {
+      UIUtil.invokeLaterIfNeeded(() ->
+        WriteIntentReadAction.run((Runnable)() -> {
         if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
           searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
           result.setDone();
@@ -240,7 +242,7 @@ public class SearchResults implements DocumentListener, CaretListener {
         else {
           result.setRejected();
         }
-      });
+      }));
     });
     return result;
   }
