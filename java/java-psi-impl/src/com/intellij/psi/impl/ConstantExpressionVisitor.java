@@ -4,10 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.ConstantEvaluationOverflowException;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,6 +93,10 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
 
   @Override
   public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+    if (PsiUtilCore.hasErrorElementChild(expression)) {
+      myResult = null;
+      return;
+    }
     PsiExpression[] operands = expression.getOperands();
     Object lValue = getStoredValue(operands[0]);
     if (lValue == null) {
