@@ -452,11 +452,15 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     }
 
     for (key, value) in remote_dev_env_var_values {
+        let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
         if let Ok(old_value) = env::var(key) {
-            let backup_key = format!("INTELLIJ_ORIGINAL_ENV_{key}");
             debug!("'{key}' has already been assigned the value {old_value}, overriding to {value}. \
                         Old value will be preserved for child processes.");
             env::set_var(backup_key, old_value)
+        }
+        else {
+            debug!("'{key}' was set to {value}. It will be unset for child processes.");
+            env::set_var(backup_key, "")
         }
 
         env::set_var(key, value)
