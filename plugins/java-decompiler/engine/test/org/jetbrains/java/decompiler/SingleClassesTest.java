@@ -53,7 +53,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
     doTest("pkg/TestConstants");
   }
 
-  //todo fix after merging
   @Test public void testInteger() {
     DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
     doTest("java/lang/Integer");
@@ -149,6 +148,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
 
   //todo fix after merging
   //todo fix ++i
+  //todo fix nested variables
   //@Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
   @Test public void testSwitchWrapReturnJavac() { doTest("pkg/TestSwitchWrapReturnJavac"); }
 

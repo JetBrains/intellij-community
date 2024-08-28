@@ -1,37 +1,39 @@
 package pkg;
 
+import java.util.Objects;
+
 public class TestSwitchNestedDeconstructionsJavac {
    public static void main(String[] args) {
    }// 6
 
    public static void testNestedSwitches(Object o) {
       switch (o) {// 14
-         case R2(String s, String var5) when s.length() > 123456789:// 15
+         case R2(String s, String s2) when s.length() > 123456789:// 15
             if (s.length() == 2) {// 16
                System.out.println(o);// 17
             }
 
             return;// 42
-         case R2(String s, String var6) when s.length() > 2:// 20
+         case R2(String s, String s2) when s.length() > 2:// 20
             if (s.length() == 2) {// 21
                System.out.println(o);// 22
             }
 
             return;
-         case R2(String s, Object var24) when s.length() > 45:// 25
+         case R2(String s, Object var29) when s.length() > 45:// 25
             if (s.length() == 2) {// 26
                System.out.println(o);// 27
             }
 
             return;
-         case R2(Object s, Object var23) when s.hashCode() > 7:// 30
-            if (s.hashCode() == 2) {// 31
+         case R2(Object var19, Object var28) when var19.hashCode() > 7:// 30
+            if (var19.hashCode() == 2) {// 31
                System.out.println(o);// 32
             }
 
             return;
-         case R2(Object s, Object var25):
-            if (s.hashCode() == 2) {// 36
+         case R2(Object ob, Object var30):
+            if (ob.hashCode() == 2) {// 35 36
                System.out.println(o);// 37
             }
 
@@ -44,7 +46,7 @@ public class TestSwitchNestedDeconstructionsJavac {
 
    public static void testStringString(Object o) {
       switch (o) {// 45
-         case R2(String var4, String s2):
+         case R2(String s1, String s2):
             if (s2.isEmpty()) {// 47
                System.out.println("3");// 48
             }
@@ -59,14 +61,14 @@ public class TestSwitchNestedDeconstructionsJavac {
 
    public static void testNestedLevel2(Object o) {
       switch (o) {// 57
-         case R2(String s, String var5) when var5.length() > 11:// 58
+         case R2(String s, String s2) when s2.length() > 11:// 58
             if (s.length() == 9) {// 59
                System.out.println(o);// 60
             }
 
             return;// 70
-         case R2(Object s, R1(String var8)) when var8.length() > 7:// 63
-            if (s.hashCode() == 2) {// 64
+         case R2(Object ob, R1(String s2)) when s2.length() > 7:
+            if (ob.hashCode() == 2) {// 63 64
                System.out.println(o);// 65
             }
 
@@ -79,19 +81,19 @@ public class TestSwitchNestedDeconstructionsJavac {
 
    public static void testNumberString(Object o) {
       switch (o) {// 73
-         case R2(String s, String var5) when var5.length() > 10:// 74
+         case R2(String s, String s2) when s2.length() > 10:// 74
             if (s.length() == 9) {// 75
                System.out.println(o);// 76
             }
 
             return;// 91
-         case R2(Number s, String var7) when var7.length() > 9:// 79
+         case R2(Number s, String s2) when s2.length() > 9:// 79
             if (s.hashCode() == 9) {// 80
                System.out.println(o);// 81
             }
 
             return;
-         case R2(String s, Object var18) when s.length() > 7:// 84
+         case R2(String s, Object var24) when s.length() > 7:// 84
             if (s.length() == 2) {// 85
                System.out.println(o);// 86
             }
@@ -105,8 +107,8 @@ public class TestSwitchNestedDeconstructionsJavac {
 
    public static void test2DeepDeconstruction(Object o) {
       switch (o) {// 94
-         case R1(R1(String var5)) when var5.hashCode() == 5 -> System.out.println("123456789");// 95 96
-         case R1(String var6) when var6.hashCode() == 3 -> System.out.println("3");// 98 99
+         case R1(R1(String s)) when s.hashCode() == 5 -> System.out.println("123456789");// 95 96
+         case R1(String s) when s.hashCode() == 3 -> System.out.println("3");// 98 99
          default -> System.out.println("3");
       }
 
@@ -115,28 +117,28 @@ public class TestSwitchNestedDeconstructionsJavac {
 
    public static void testDoubleLongCase(Object o) {
       switch (o) {// 107
-         case R2(String s, String var5) when s.length() > 3:// 108
+         case R2(String s, String s2) when s.length() > 3:// 108
             if (s.length() == 2) {// 109
                System.out.println(o);// 110
             }
             break;
-         case R2(String s, String var6) when s.length() > 4:// 113
+         case R2(String s, String s2) when s.length() > 4:// 113
             if (s.length() == 2) {// 114
                System.out.println(o);// 115
             }
             break;
-         case R2(String s, Object var29) when s.length() > 3:// 118
+         case R2(String s, Object var54) when s.length() > 3:// 118
             if (s.length() == 2) {// 119
                System.out.println(o);// 120
             }
             break;
-         case R2(Object s, Object var28) when s.hashCode() > 3:// 123
-            if (s.hashCode() == 2) {// 124
+         case R2(Object var30, Object var53) when var30.hashCode() > 3:// 123
+            if (var30.hashCode() == 2) {// 124
                System.out.println(o);// 125
             }
             break;
-         case R2(Object s, Object var30):
-            if (s.hashCode() == 2) {// 129
+         case R2(Object ob, Object var55):
+            if (ob.hashCode() == 2) {// 128 129
                System.out.println(o);// 130
             }
             break;
@@ -146,32 +148,32 @@ public class TestSwitchNestedDeconstructionsJavac {
       }
 
       switch (o) {// 136
-         case R2(String s, String var5) when s.length() > 3:// 137
+         case R2(String var27, String var28) when s.length() > 3:// 137
             if (s.length() == 2) {// 138
                System.out.println(o);// 139
             }
 
             return;// 164
-         case R2(String s, String var6) when s.length() > 4:// 142
+         case R2(String var27, String var29) when s.length() > 4:// 142
             if (s.length() == 2) {// 143
                System.out.println(o);// 144
             }
 
             return;
-         case R2(String s, Object var33) when s.length() > 3:// 147
+         case R2(String var27, Object var58) when s.length() > 3:// 147
             if (s.length() == 2) {// 148
                System.out.println(o);// 149
             }
 
             return;
-         case R2(Object s, Object var32) when s.hashCode() > 3:// 152
-            if (s.hashCode() == 2) {// 153
+         case R2(Object var32, Object var57) when var32.hashCode() > 3:// 152
+            if (var32.hashCode() == 2) {// 153
                System.out.println(o);// 154
             }
 
             return;
-         case R2(Object s, Object var34):
-            if (s.hashCode() == 2) {// 158
+         case R2(Object var36, Object var59):
+            if (var36.hashCode() == 2) {// 157 158
                System.out.println(o);// 159
             }
 
@@ -186,16 +188,80 @@ public class TestSwitchNestedDeconstructionsJavac {
       try {
          System.out.println("1");// 168
       } catch (Exception var16) {// 169
-         switch (o2) {// 170
-            case R2(Number var6, String var7):
-               System.out.println("10");// 171 172
-               return;// 180
-            case R2(String var8, Number var9):
-               System.out.println(o);// 174 175 177
-               return;
-            default:
-               System.out.println(o);
-               return;
+         Objects.requireNonNull(o2);// 170
+         Object var3 = o2;
+         byte var4 = 0;
+
+         label64:
+         while(true) {
+            //$FF: var4->value
+            //0->pkg/TestSwitchNestedDeconstructionsJavac$R2
+            //1->java/lang/Object
+            switch (((Class)var3).typeSwitch<invokedynamic>(var3, var4)) {
+               case 0:
+                  R2 var5 = (R2)var3;
+                  R2 var10000 = var5;
+
+                  try {
+                     var18 = var10000.o();
+                  } catch (Throwable var15) {// 177
+                     throw new MatchException(var15.toString(), var15);
+                  }
+
+                  Object ob = var18;
+                  byte var11 = 0;
+
+                  while(true) {
+                     //$FF: var11->value
+                     //0->java/lang/Number
+                     //1->java/lang/String
+                     switch (((Class)ob).typeSwitch<invokedynamic>(ob, var11)) {
+                        case -1:
+                        default:
+                           var4 = 1;
+                           continue label64;
+                        case 0:
+                           Number s = (Number)ob;// 171
+                           var10000 = var5;
+
+                           try {
+                              var22 = var10000.o2();
+                           } catch (Throwable var13) {
+                              throw new MatchException(var13.toString(), var13);
+                           }
+
+                           Object var17 = var22;
+                           if (var17 instanceof String s2) {
+                              System.out.println("10");// 172
+                              return;// 180
+                           }
+
+                           var11 = 1;
+                           continue;
+                        case 1:
+                     }
+
+                     String s = (String)ob;// 174
+                     var10000 = var5;
+
+                     try {
+                        var20 = var10000.o2();
+                     } catch (Throwable var14) {
+                        throw new MatchException(var14.toString(), var14);
+                     }
+
+                     Object var12 = var20;
+                     if (var12 instanceof Number s2) {
+                        System.out.println(o);// 175
+                        return;
+                     }
+
+                     var11 = 2;
+                  }
+               default:
+                  System.out.println(o);
+                  return;
+            }
          }
       }
 
@@ -229,813 +295,892 @@ public class TestSwitchNestedDeconstructionsJavac {
 
 class 'pkg/TestSwitchNestedDeconstructionsJavac' {
    method 'main ([Ljava/lang/String;)V' {
-      0      4
+      0      6
    }
 
    method 'testNestedSwitches (Ljava/lang/Object;)V' {
-      0      7
-      10      7
-      9b      8
-      9c      8
-      9d      8
-      9e      8
-      9f      8
-      a0      8
-      a1      8
-      a2      8
-      ab      9
-      ac      9
-      ad      9
-      ae      9
-      af      9
-      b0      9
-      b1      9
-      b4      10
-      b5      10
-      b6      10
-      b7      10
-      b8      10
-      b9      10
-      ba      10
-      c5      14
-      c6      14
-      c7      14
-      c8      14
-      c9      14
-      ca      14
-      cb      14
-      d4      15
-      d5      15
-      d6      15
-      d7      15
-      d8      15
-      d9      15
-      da      15
-      dd      16
-      de      16
-      df      16
-      e0      16
-      e1      16
-      e2      16
-      e3      16
-      eb      20
-      ec      20
-      ed      20
-      ee      20
-      ef      20
-      f0      20
-      f1      20
-      f2      20
-      fb      21
-      fc      21
-      fd      21
-      fe      21
-      ff      21
-      100      21
-      101      21
-      104      22
-      105      22
-      106      22
-      107      22
-      108      22
-      109      22
-      10a      22
-      122      26
-      123      26
-      124      26
-      125      26
-      126      26
-      127      26
-      128      26
-      129      26
-      132      27
-      133      27
-      134      27
-      135      27
-      136      27
-      137      27
-      138      27
-      13b      28
-      13c      28
-      13d      28
-      13e      28
-      13f      28
-      140      28
-      141      28
-      166      33
-      167      33
-      168      33
-      169      33
-      16a      33
-      16b      33
-      16c      33
-      16f      34
-      170      34
-      171      34
-      172      34
-      173      34
-      174      34
-      175      34
-      17c      39
-      17d      39
-      17e      39
-      17f      39
-      180      39
-      181      39
-      182      39
-      197      13
+      0      9
+      10      9
+      9b      10
+      9c      10
+      9d      10
+      9e      10
+      9f      10
+      a0      10
+      a1      10
+      a2      10
+      ab      11
+      ac      11
+      ad      11
+      ae      11
+      af      11
+      b0      11
+      b1      11
+      b4      12
+      b5      12
+      b6      12
+      b7      12
+      b8      12
+      b9      12
+      ba      12
+      c5      16
+      c6      16
+      c7      16
+      c8      16
+      c9      16
+      ca      16
+      cb      16
+      d4      17
+      d5      17
+      d6      17
+      d7      17
+      d8      17
+      d9      17
+      da      17
+      dd      18
+      de      18
+      df      18
+      e0      18
+      e1      18
+      e2      18
+      e3      18
+      eb      22
+      ec      22
+      ed      22
+      ee      22
+      ef      22
+      f0      22
+      f1      22
+      f2      22
+      fb      23
+      fc      23
+      fd      23
+      fe      23
+      ff      23
+      100      23
+      101      23
+      104      24
+      105      24
+      106      24
+      107      24
+      108      24
+      109      24
+      10a      24
+      114      28
+      115      28
+      124      28
+      125      28
+      126      28
+      127      28
+      128      28
+      129      28
+      134      29
+      135      29
+      136      29
+      137      29
+      138      29
+      13b      30
+      13c      30
+      13d      30
+      13e      30
+      13f      30
+      140      30
+      141      30
+      157      35
+      158      35
+      168      35
+      169      35
+      16a      35
+      16b      35
+      16c      35
+      16f      36
+      170      36
+      171      36
+      172      36
+      173      36
+      174      36
+      175      36
+      17c      41
+      17d      41
+      17e      41
+      17f      41
+      180      41
+      181      41
+      182      41
+      197      15
    }
 
    method 'testStringString (Ljava/lang/Object;)V' {
-      0      45
-      10      45
-      53      47
-      54      47
-      55      47
-      56      47
-      57      47
-      58      47
-      59      47
-      5a      47
-      5b      47
-      5c      47
-      5d      47
-      5e      47
-      5f      47
-      63      48
-      64      48
-      65      48
-      66      48
-      67      48
-      68      48
-      69      48
-      6a      48
-      6e      52
-      6f      52
-      70      52
-      71      52
-      72      52
-      73      52
-      74      52
-      75      52
-      76      53
-      79      56
-      7a      56
-      7b      56
-      7c      56
-      7d      56
-      7e      56
-      7f      56
-      80      56
-      81      57
-      82      57
-      83      57
-      84      57
-      85      57
-      86      57
-      87      57
-      88      57
-      89      57
-      8a      57
-      8b      57
-      8c      57
-      8d      57
-      8e      57
-      8f      57
-      90      57
-      91      57
+      0      47
+      10      47
+      53      49
+      54      49
+      55      49
+      56      49
+      57      49
+      58      49
+      59      49
+      5a      49
+      5b      49
+      5c      49
+      5d      49
+      5e      49
+      5f      49
+      63      50
+      64      50
+      65      50
+      66      50
+      67      50
+      68      50
+      69      50
+      6a      50
+      6e      54
+      6f      54
+      70      54
+      71      54
+      72      54
+      73      54
+      74      54
+      75      54
+      76      55
+      79      58
+      7a      58
+      7b      58
+      7c      58
+      7d      58
+      7e      58
+      7f      58
+      80      58
+      81      59
+      82      59
+      83      59
+      84      59
+      85      59
+      86      59
+      87      59
+      88      59
+      89      59
+      8a      59
+      8b      59
+      8c      59
+      8d      59
+      8e      59
+      8f      59
+      90      59
+      91      59
    }
 
    method 'testNestedLevel2 (Ljava/lang/Object;)V' {
-      0      60
-      10      60
-      70      61
-      71      61
-      72      61
-      73      61
-      74      61
-      75      61
-      76      61
-      77      61
-      80      62
-      81      62
-      82      62
-      83      62
-      84      62
-      85      62
-      86      62
-      87      62
-      8a      63
-      8b      63
-      8c      63
-      8d      63
-      8e      63
-      8f      63
-      90      63
-      c3      67
-      c4      67
-      c5      67
-      c6      67
-      c7      67
-      c8      67
-      c9      67
-      ca      67
-      d3      68
-      d4      68
-      d5      68
-      d6      68
-      d7      68
-      d8      68
-      d9      68
-      dc      69
-      dd      69
-      de      69
-      df      69
-      e0      69
-      e1      69
-      e2      69
-      ee      74
-      ef      74
-      f0      74
-      f1      74
-      f2      74
-      f3      74
-      f4      74
-      109      66
+      0      62
+      10      62
+      70      63
+      71      63
+      72      63
+      73      63
+      74      63
+      75      63
+      76      63
+      77      63
+      80      64
+      81      64
+      82      64
+      83      64
+      84      64
+      85      64
+      86      64
+      87      64
+      8a      65
+      8b      65
+      8c      65
+      8d      65
+      8e      65
+      8f      65
+      90      65
+      94      70
+      95      70
+      c3      69
+      c4      69
+      c5      69
+      c6      69
+      c7      69
+      c8      69
+      c9      69
+      ca      69
+      d5      70
+      d6      70
+      d7      70
+      d8      70
+      d9      70
+      dc      71
+      dd      71
+      de      71
+      df      71
+      e0      71
+      e1      71
+      e2      71
+      ee      76
+      ef      76
+      f0      76
+      f1      76
+      f2      76
+      f3      76
+      f4      76
+      109      68
    }
 
    method 'testNumberString (Ljava/lang/Object;)V' {
-      0      80
-      10      80
-      74      81
-      75      81
-      76      81
-      77      81
-      78      81
-      79      81
-      7a      81
-      7b      81
-      84      82
-      85      82
-      86      82
-      87      82
-      88      82
-      89      82
-      8a      82
-      8b      82
-      8e      83
-      8f      83
-      90      83
-      91      83
-      92      83
-      93      83
-      94      83
-      b4      87
-      b5      87
-      b6      87
-      b7      87
-      b8      87
-      b9      87
-      ba      87
-      bb      87
-      c4      88
-      c5      88
-      c6      88
-      c7      88
-      c8      88
-      c9      88
-      ca      88
-      cb      88
-      ce      89
-      cf      89
-      d0      89
-      d1      89
-      d2      89
-      d3      89
-      d4      89
-      e9      93
-      ea      93
-      eb      93
-      ec      93
-      ed      93
-      ee      93
-      ef      93
-      f0      93
-      f9      94
-      fa      94
-      fb      94
-      fc      94
-      fd      94
-      fe      94
-      ff      94
-      102      95
-      103      95
-      104      95
-      105      95
-      106      95
-      107      95
-      108      95
-      114      100
-      115      100
-      116      100
-      117      100
-      118      100
-      119      100
-      11a      100
-      12f      86
+      0      82
+      10      82
+      74      83
+      75      83
+      76      83
+      77      83
+      78      83
+      79      83
+      7a      83
+      7b      83
+      84      84
+      85      84
+      86      84
+      87      84
+      88      84
+      89      84
+      8a      84
+      8b      84
+      8e      85
+      8f      85
+      90      85
+      91      85
+      92      85
+      93      85
+      94      85
+      b4      89
+      b5      89
+      b6      89
+      b7      89
+      b8      89
+      b9      89
+      ba      89
+      bb      89
+      c4      90
+      c5      90
+      c6      90
+      c7      90
+      c8      90
+      c9      90
+      ca      90
+      cb      90
+      ce      91
+      cf      91
+      d0      91
+      d1      91
+      d2      91
+      d3      91
+      d4      91
+      e9      95
+      ea      95
+      eb      95
+      ec      95
+      ed      95
+      ee      95
+      ef      95
+      f0      95
+      f9      96
+      fa      96
+      fb      96
+      fc      96
+      fd      96
+      fe      96
+      ff      96
+      102      97
+      103      97
+      104      97
+      105      97
+      106      97
+      107      97
+      108      97
+      114      102
+      115      102
+      116      102
+      117      102
+      118      102
+      119      102
+      11a      102
+      12f      88
    }
 
    method 'test2DeepDeconstruction (Ljava/lang/Object;)V' {
-      0      106
-      10      106
-      71      107
-      72      107
-      73      107
-      74      107
-      75      107
-      76      107
-      77      107
-      80      107
-      81      107
-      82      107
-      83      107
-      84      107
-      85      107
-      86      107
-      87      107
-      92      108
-      93      108
-      94      108
-      95      108
-      96      108
-      97      108
-      98      108
-      a1      108
-      a2      108
-      a3      108
-      a4      108
-      a5      108
-      a6      108
-      a7      108
-      a8      108
-      b1      109
-      b2      109
-      b3      109
-      b4      109
-      b5      109
-      b6      109
-      b7      109
-      b8      109
-      bc      112
-      bd      112
-      be      112
-      bf      112
-      c0      112
-      c1      112
-      c2      112
-      c3      112
-      c4      113
-      c5      113
-      c6      113
-      c7      113
-      c8      113
-      c9      113
-      ca      113
-      cb      113
-      cc      113
-      cd      113
-      ce      113
-      cf      113
-      d0      113
-      d1      113
-      d2      113
-      d3      113
-      d4      113
+      0      108
+      10      108
+      71      109
+      72      109
+      73      109
+      74      109
+      75      109
+      76      109
+      77      109
+      80      109
+      81      109
+      82      109
+      83      109
+      84      109
+      85      109
+      86      109
+      87      109
+      92      110
+      93      110
+      94      110
+      95      110
+      96      110
+      97      110
+      98      110
+      a1      110
+      a2      110
+      a3      110
+      a4      110
+      a5      110
+      a6      110
+      a7      110
+      a8      110
+      b1      111
+      b2      111
+      b3      111
+      b4      111
+      b5      111
+      b6      111
+      b7      111
+      b8      111
+      bc      114
+      bd      114
+      be      114
+      bf      114
+      c0      114
+      c1      114
+      c2      114
+      c3      114
+      c4      115
+      c5      115
+      c6      115
+      c7      115
+      c8      115
+      c9      115
+      ca      115
+      cb      115
+      cc      115
+      cd      115
+      ce      115
+      cf      115
+      d0      115
+      d1      115
+      d2      115
+      d3      115
+      d4      115
    }
 
    method 'testDoubleLongCase (Ljava/lang/Object;)V' {
-      0      116
-      10      116
-      9b      117
-      9c      117
-      9d      117
-      9e      117
-      9f      117
-      a0      117
-      a1      117
-      aa      118
-      ab      118
-      ac      118
-      ad      118
-      ae      118
-      af      118
-      b0      118
-      b3      119
-      b4      119
-      b5      119
-      b6      119
-      b7      119
-      b8      119
-      b9      119
-      c4      122
-      c5      122
-      c6      122
-      c7      122
-      c8      122
-      c9      122
-      ca      122
-      d3      123
-      d4      123
-      d5      123
-      d6      123
-      d7      123
-      d8      123
-      d9      123
-      dc      124
-      dd      124
-      de      124
-      df      124
-      e0      124
-      e1      124
-      e2      124
-      ea      127
-      eb      127
-      ec      127
-      ed      127
-      ee      127
-      ef      127
-      f0      127
-      f9      128
-      fa      128
-      fb      128
-      fc      128
-      fd      128
-      fe      128
-      ff      128
-      102      129
-      103      129
-      104      129
-      105      129
-      106      129
-      107      129
-      108      129
-      120      132
-      121      132
-      122      132
-      123      132
-      124      132
-      125      132
-      126      132
-      12f      133
-      130      133
-      131      133
-      132      133
-      133      133
-      134      133
-      135      133
-      138      134
-      139      134
-      13a      134
-      13b      134
-      13c      134
-      13d      134
-      13e      134
-      163      138
-      164      138
-      165      138
-      166      138
-      167      138
-      168      138
-      169      138
-      16c      139
-      16d      139
-      16e      139
-      16f      139
-      170      139
-      171      139
-      172      139
-      179      143
-      17a      143
-      17b      143
-      17c      143
-      17d      143
-      17e      143
-      17f      143
-      180      144
-      183      147
-      193      147
-      21b      148
-      21c      148
-      21d      148
-      21e      148
-      21f      148
-      220      148
-      221      148
-      22a      149
-      22b      149
-      22c      149
-      22d      149
-      22e      149
-      22f      149
-      230      149
-      233      150
-      234      150
-      235      150
-      236      150
-      237      150
-      238      150
-      239      150
-      244      154
-      245      154
-      246      154
-      247      154
-      248      154
-      249      154
-      24a      154
-      253      155
-      254      155
-      255      155
-      256      155
-      257      155
-      258      155
-      259      155
-      25c      156
-      25d      156
-      25e      156
-      25f      156
-      260      156
-      261      156
-      262      156
-      26a      160
-      26b      160
-      26c      160
-      26d      160
-      26e      160
-      26f      160
-      270      160
-      279      161
-      27a      161
-      27b      161
-      27c      161
-      27d      161
-      27e      161
-      27f      161
-      282      162
-      283      162
-      284      162
-      285      162
-      286      162
-      287      162
-      288      162
-      2a0      166
-      2a1      166
-      2a2      166
-      2a3      166
-      2a4      166
-      2a5      166
-      2a6      166
-      2af      167
-      2b0      167
-      2b1      167
-      2b2      167
-      2b3      167
-      2b4      167
-      2b5      167
-      2b8      168
-      2b9      168
-      2ba      168
-      2bb      168
-      2bc      168
-      2bd      168
-      2be      168
-      2e3      173
-      2e4      173
-      2e5      173
-      2e6      173
-      2e7      173
-      2e8      173
-      2e9      173
-      2ec      174
-      2ed      174
-      2ee      174
-      2ef      174
-      2f0      174
-      2f1      174
-      2f2      174
-      2f9      179
-      2fa      179
-      2fb      179
-      2fc      179
-      2fd      179
-      2fe      179
-      2ff      179
-      314      153
+      0      118
+      10      118
+      9b      119
+      9c      119
+      9d      119
+      9e      119
+      9f      119
+      a0      119
+      a1      119
+      aa      120
+      ab      120
+      ac      120
+      ad      120
+      ae      120
+      af      120
+      b0      120
+      b3      121
+      b4      121
+      b5      121
+      b6      121
+      b7      121
+      b8      121
+      b9      121
+      c4      124
+      c5      124
+      c6      124
+      c7      124
+      c8      124
+      c9      124
+      ca      124
+      d3      125
+      d4      125
+      d5      125
+      d6      125
+      d7      125
+      d8      125
+      d9      125
+      dc      126
+      dd      126
+      de      126
+      df      126
+      e0      126
+      e1      126
+      e2      126
+      ea      129
+      eb      129
+      ec      129
+      ed      129
+      ee      129
+      ef      129
+      f0      129
+      f9      130
+      fa      130
+      fb      130
+      fc      130
+      fd      130
+      fe      130
+      ff      130
+      102      131
+      103      131
+      104      131
+      105      131
+      106      131
+      107      131
+      108      131
+      112      134
+      113      134
+      122      134
+      123      134
+      124      134
+      125      134
+      126      134
+      131      135
+      132      135
+      133      135
+      134      135
+      135      135
+      138      136
+      139      136
+      13a      136
+      13b      136
+      13c      136
+      13d      136
+      13e      136
+      154      140
+      155      140
+      165      140
+      166      140
+      167      140
+      168      140
+      169      140
+      16c      141
+      16d      141
+      16e      141
+      16f      141
+      170      141
+      171      141
+      172      141
+      179      145
+      17a      145
+      17b      145
+      17c      145
+      17d      145
+      17e      145
+      17f      145
+      180      146
+      183      149
+      193      149
+      21b      150
+      21c      150
+      21d      150
+      21e      150
+      21f      150
+      220      150
+      221      150
+      22a      151
+      22b      151
+      22c      151
+      22d      151
+      22e      151
+      22f      151
+      230      151
+      233      152
+      234      152
+      235      152
+      236      152
+      237      152
+      238      152
+      239      152
+      244      156
+      245      156
+      246      156
+      247      156
+      248      156
+      249      156
+      24a      156
+      253      157
+      254      157
+      255      157
+      256      157
+      257      157
+      258      157
+      259      157
+      25c      158
+      25d      158
+      25e      158
+      25f      158
+      260      158
+      261      158
+      262      158
+      26a      162
+      26b      162
+      26c      162
+      26d      162
+      26e      162
+      26f      162
+      270      162
+      279      163
+      27a      163
+      27b      163
+      27c      163
+      27d      163
+      27e      163
+      27f      163
+      282      164
+      283      164
+      284      164
+      285      164
+      286      164
+      287      164
+      288      164
+      292      168
+      293      168
+      2a2      168
+      2a3      168
+      2a4      168
+      2a5      168
+      2a6      168
+      2b1      169
+      2b2      169
+      2b3      169
+      2b4      169
+      2b5      169
+      2b8      170
+      2b9      170
+      2ba      170
+      2bb      170
+      2bc      170
+      2bd      170
+      2be      170
+      2d4      175
+      2d5      175
+      2e5      175
+      2e6      175
+      2e7      175
+      2e8      175
+      2e9      175
+      2ec      176
+      2ed      176
+      2ee      176
+      2ef      176
+      2f0      176
+      2f1      176
+      2f2      176
+      2f9      181
+      2fa      181
+      2fb      181
+      2fc      181
+      2fd      181
+      2fe      181
+      2ff      181
+      314      155
    }
 
    method 'testTryWithDoubleDo (Ljava/lang/Object;Ljava/lang/Object;)V' {
-      0      186
-      1      186
-      2      186
-      3      186
-      4      186
-      5      186
-      b      187
-      c      188
-      1e      188
-      81      190
-      82      190
-      83      190
-      84      190
-      85      190
-      86      190
-      87      190
-      88      190
-      89      190
-      8a      190
-      8b      190
-      8c      190
-      8d      190
-      8e      190
-      b2      193
-      b3      193
-      b4      193
-      b5      193
-      b6      193
-      b7      193
-      b8      193
-      b9      193
-      ba      193
-      bb      193
-      bc      193
-      bd      193
-      be      193
-      ce      196
-      cf      196
-      d0      196
-      d1      196
-      d2      196
-      d3      196
-      d4      196
-      e9      191
+      0      188
+      1      188
+      2      188
+      3      188
+      4      188
+      5      188
+      b      189
+      c      190
+      e      190
+      f      190
+      10      190
+      12      191
+      13      192
+      14      192
+      15      192
+      16      199
+      17      196
+      18      196
+      19      199
+      1a      199
+      1b      199
+      1c      199
+      1d      199
+      1e      196
+      30      201
+      31      201
+      32      201
+      33      201
+      34      201
+      35      201
+      36      202
+      38      205
+      3b      210
+      3c      210
+      3d      211
+      3e      211
+      3f      211
+      40      217
+      41      217
+      42      214
+      43      214
+      44      217
+      45      217
+      46      217
+      47      217
+      48      217
+      49      214
+      64      223
+      65      223
+      66      223
+      67      223
+      68      223
+      69      223
+      6a      223
+      6b      224
+      6d      227
+      70      232
+      71      232
+      72      233
+      73      233
+      74      233
+      75      233
+      76      233
+      77      233
+      7f      233
+      80      233
+      81      234
+      82      234
+      83      234
+      84      234
+      85      234
+      86      234
+      87      234
+      88      234
+      89      234
+      8a      234
+      8b      234
+      8c      234
+      8d      234
+      8e      234
+      95      243
+      96      243
+      97      243
+      98      243
+      99      243
+      9a      243
+      9b      243
+      9c      244
+      9e      247
+      a1      252
+      a2      252
+      a3      253
+      a4      253
+      a5      253
+      a6      253
+      a7      253
+      a8      253
+      b0      253
+      b1      253
+      b2      254
+      b3      254
+      b4      254
+      b5      254
+      b6      254
+      b7      254
+      b8      254
+      b9      254
+      ba      254
+      bb      254
+      bc      254
+      bd      254
+      be      254
+      c5      220
+      c6      220
+      c7      220
+      c8      221
+      ce      261
+      cf      261
+      d0      261
+      d1      261
+      d2      261
+      d3      261
+      d4      261
+      db      206
+      e1      207
+      e2      207
+      e3      207
+      e8      207
+      e9      235
    }
 }
 
 class 'pkg/TestSwitchNestedDeconstructionsJavac$R1' {
    method '<init> (Ljava/lang/Object;)V' {
-      4      205
-      5      205
-      6      205
-      7      205
-      8      205
-      9      206
+      4      271
+      5      271
+      6      271
+      7      271
+      8      271
+      9      272
    }
 
    method 'o ()Ljava/lang/Object;' {
-      0      209
-      1      209
-      2      209
-      3      209
-      4      209
+      0      275
+      1      275
+      2      275
+      3      275
+      4      275
    }
 }
 
 class 'pkg/TestSwitchNestedDeconstructionsJavac$R2' {
    method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
-      4      215
-      5      215
-      6      215
-      7      215
-      8      215
-      9      216
-      a      216
-      b      216
-      c      216
-      d      216
-      e      217
+      4      281
+      5      281
+      6      281
+      7      281
+      8      281
+      9      282
+      a      282
+      b      282
+      c      282
+      d      282
+      e      283
    }
 
    method 'o ()Ljava/lang/Object;' {
-      0      220
-      1      220
-      2      220
-      3      220
-      4      220
+      0      286
+      1      286
+      2      286
+      3      286
+      4      286
    }
 
    method 'o2 ()Ljava/lang/Object;' {
-      0      224
-      1      224
-      2      224
-      3      224
-      4      224
+      0      290
+      1      290
+      2      290
+      3      290
+      4      290
    }
 }
 
 Lines mapping:
-6 <-> 5
-8 <-> 210
-14 <-> 8
-15 <-> 9
-16 <-> 10
-17 <-> 11
-20 <-> 15
-21 <-> 16
-22 <-> 17
-25 <-> 21
-26 <-> 22
-27 <-> 23
-30 <-> 27
-31 <-> 28
-32 <-> 29
-36 <-> 34
-37 <-> 35
-40 <-> 40
-42 <-> 14
-45 <-> 46
-46 <-> 58
-47 <-> 48
-48 <-> 49
-51 <-> 53
-53 <-> 57
-57 <-> 61
-58 <-> 62
-59 <-> 63
-60 <-> 64
-63 <-> 68
-64 <-> 69
-65 <-> 70
-68 <-> 75
-70 <-> 67
-73 <-> 81
-74 <-> 82
-75 <-> 83
-76 <-> 84
-79 <-> 88
-80 <-> 89
-81 <-> 90
-84 <-> 94
-85 <-> 95
-86 <-> 96
-89 <-> 101
-91 <-> 87
-94 <-> 107
-95 <-> 108
-96 <-> 108
-98 <-> 109
-99 <-> 109
-101 <-> 114
-103 <-> 113
-107 <-> 117
-108 <-> 118
-109 <-> 119
-110 <-> 120
-113 <-> 123
-114 <-> 124
-115 <-> 125
-118 <-> 128
-119 <-> 129
-120 <-> 130
-123 <-> 133
-124 <-> 134
-125 <-> 135
-129 <-> 139
-130 <-> 140
-133 <-> 144
-136 <-> 148
-137 <-> 149
-138 <-> 150
-139 <-> 151
-142 <-> 155
-143 <-> 156
-144 <-> 157
-147 <-> 161
-148 <-> 162
-149 <-> 163
-152 <-> 167
-153 <-> 168
-154 <-> 169
-158 <-> 174
-159 <-> 175
-162 <-> 180
-164 <-> 154
-168 <-> 187
-169 <-> 188
-170 <-> 189
-171 <-> 191
-172 <-> 191
-174 <-> 194
-175 <-> 194
-177 <-> 194
-180 <-> 192
-183 <-> 225
+6 <-> 7
+8 <-> 276
+14 <-> 10
+15 <-> 11
+16 <-> 12
+17 <-> 13
+20 <-> 17
+21 <-> 18
+22 <-> 19
+25 <-> 23
+26 <-> 24
+27 <-> 25
+30 <-> 29
+31 <-> 30
+32 <-> 31
+35 <-> 36
+36 <-> 36
+37 <-> 37
+40 <-> 42
+42 <-> 16
+45 <-> 48
+46 <-> 60
+47 <-> 50
+48 <-> 51
+51 <-> 55
+53 <-> 59
+57 <-> 63
+58 <-> 64
+59 <-> 65
+60 <-> 66
+63 <-> 71
+64 <-> 71
+65 <-> 72
+68 <-> 77
+70 <-> 69
+73 <-> 83
+74 <-> 84
+75 <-> 85
+76 <-> 86
+79 <-> 90
+80 <-> 91
+81 <-> 92
+84 <-> 96
+85 <-> 97
+86 <-> 98
+89 <-> 103
+91 <-> 89
+94 <-> 109
+95 <-> 110
+96 <-> 110
+98 <-> 111
+99 <-> 111
+101 <-> 116
+103 <-> 115
+107 <-> 119
+108 <-> 120
+109 <-> 121
+110 <-> 122
+113 <-> 125
+114 <-> 126
+115 <-> 127
+118 <-> 130
+119 <-> 131
+120 <-> 132
+123 <-> 135
+124 <-> 136
+125 <-> 137
+128 <-> 141
+129 <-> 141
+130 <-> 142
+133 <-> 146
+136 <-> 150
+137 <-> 151
+138 <-> 152
+139 <-> 153
+142 <-> 157
+143 <-> 158
+144 <-> 159
+147 <-> 163
+148 <-> 164
+149 <-> 165
+152 <-> 169
+153 <-> 170
+154 <-> 171
+157 <-> 176
+158 <-> 176
+159 <-> 177
+162 <-> 182
+164 <-> 156
+168 <-> 189
+169 <-> 190
+170 <-> 191
+171 <-> 224
+172 <-> 235
+174 <-> 244
+175 <-> 255
+177 <-> 207
+180 <-> 236
+183 <-> 291
 Not mapped:
-35
 54
 97
 100
 104
-128
-157
 173
 176
 179

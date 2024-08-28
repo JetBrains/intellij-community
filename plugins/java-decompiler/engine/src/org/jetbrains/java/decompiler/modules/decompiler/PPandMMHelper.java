@@ -17,7 +17,7 @@ import java.util.List;
 public class PPandMMHelper {
 
   private boolean exprentReplaced;
-  private VarProcessor varProc;
+  private final VarProcessor varProc;
   private DirectGraph dgraph;
 
   public PPandMMHelper(VarProcessor varProc) {
@@ -157,18 +157,18 @@ public class PPandMMHelper {
   }
 
   private boolean varsEqual(Exprent e1, Exprent e2) {
-    if (!(e1 instanceof VarExprent)) return false;
-    if (!(e2 instanceof VarExprent)) return false;
+    if (!(e1 instanceof VarExprent v1)) return false;
+    if (!(e2 instanceof VarExprent v2)) return false;
 
-    VarExprent v1 = (VarExprent)e1;
-    VarExprent v2 = (VarExprent)e2;
-    return varProc.getVarOriginalIndex(v1.getIndex()) == varProc.getVarOriginalIndex(v2.getIndex());
+    Integer index1 = varProc.getVarOriginalIndex(v1.getIndex());
+    Integer index2 = varProc.getVarOriginalIndex(v2.getIndex());
+    return index1 != null && index1.equals(index2);
     // TODO: Verify the types are in the same 'family' {byte->short->int}
     //        && Objects.equals(v1.getVarType(), v2.getVarType());
   }
 
 
-  private void updateVersions(DirectGraph graph, final VarVersionPair oldVVP, final VarVersionPair newVVP) {
+  private static void updateVersions(DirectGraph graph, final VarVersionPair oldVVP, final VarVersionPair newVVP) {
     graph.iterateExprents(new DirectGraph.ExprentIterator() {
       @Override
       public int processExprent(Exprent exprent) {

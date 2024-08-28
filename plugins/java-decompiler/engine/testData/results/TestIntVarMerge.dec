@@ -11,7 +11,7 @@ public class TestIntVarMerge {
    public void test2() {
       int var1 = 3;// 12
       System.out.println(var1);// 13
-      var1 = var1 + 1;// 14
+      ++var1;// 14
       System.out.println(var1);// 15
       ++var1;// 16
       System.out.println(var1);// 17

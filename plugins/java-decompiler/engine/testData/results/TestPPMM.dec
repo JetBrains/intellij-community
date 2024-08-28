@@ -43,10 +43,14 @@ public class TestPPMM {
 
    public void ppif() {
       int a = 0;
-      t(++a);
-      t(++a);
-      t(++a);
-      t(++a);
+      ++a;
+      t(a);
+      ++a;
+      t(a);
+      ++a;
+      t(a);
+      ++a;
+      t(a);
    }
 
    public void immf() {
@@ -59,10 +63,14 @@ public class TestPPMM {
 
    public void mmif() {
       int a = 0;
-      t(--a);
-      t(--a);
-      t(--a);
-      t(--a);
+      --a;
+      t(a);
+      --a;
+      t(a);
+      --a;
+      t(a);
+      --a;
+      t(a);
    }
 
    private static void t(int x) {
