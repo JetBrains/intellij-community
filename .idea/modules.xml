@@ -274,7 +274,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/wear-pairing/intellij.android.wear-pairing.iml" filepath="$PROJECT_DIR$/android/wear-pairing/intellij.android.wear-pairing.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/wear-pairing/intellij.android.wear-pairing.tests.iml" filepath="$PROJECT_DIR$/android/wear-pairing/intellij.android.wear-pairing.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/wear-whs/intellij.android.wear-whs.iml" filepath="$PROJECT_DIR$/android/wear-whs/intellij.android.wear-whs.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/wear-whs/intellij.android.wear-whs.tests.iml" filepath="$PROJECT_DIR$/android/wear-whs/intellij.android.wear-whs.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/whats-new-assistant/intellij.android.whats-new-assistant.iml" filepath="$PROJECT_DIR$/android/whats-new-assistant/intellij.android.whats-new-assistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/whats-new-assistant/intellij.android.whats-new-assistant-test.iml" filepath="$PROJECT_DIR$/android/whats-new-assistant/intellij.android.whats-new-assistant-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/android/wizard/intellij.android.wizard.iml" />
