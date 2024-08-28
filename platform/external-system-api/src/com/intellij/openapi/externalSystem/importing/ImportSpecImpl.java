@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public class ImportSpecImpl implements ImportSpec {
+public final class ImportSpecImpl implements ImportSpec {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
