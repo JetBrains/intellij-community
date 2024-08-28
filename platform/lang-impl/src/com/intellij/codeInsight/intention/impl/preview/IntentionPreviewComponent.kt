@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.CodeInsightBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.Disposable
@@ -24,7 +25,7 @@ internal class IntentionPreviewComponent(parent: Disposable) :
   val multiPanel: MultiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent {
       return when (key) {
-        LOADING_PREVIEW -> LOADING_LABEL
+        LOADING_PREVIEW -> createHtmlPanel(IntentionPreviewInfo.Html(message("intention.preview.loading.preview")))
         else -> previewComponent!! // It's set in IntentionPreviewPopupUpdateProcessor#select 
       }
     }
@@ -40,8 +41,14 @@ internal class IntentionPreviewComponent(parent: Disposable) :
     const val NO_PREVIEW: Int = -1
     const val LOADING_PREVIEW: Int = -2
     private val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
-    internal var NO_PREVIEW_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.no.available.text")))
-    private var LOADING_LABEL = createHtmlPanel(IntentionPreviewInfo.Html(CodeInsightBundle.message("intention.preview.loading.preview")))
+
+    internal fun createNoPreviewPanel(): JPanel {
+      val panel = createHtmlPanel(IntentionPreviewInfo.Html(message("intention.preview.no.available.text")))
+      panel.putClientProperty("NO_PREVIEW", true)
+      return panel
+    }
+    
+    internal fun JComponent.isNoPreviewPanel(): Boolean = this.getClientProperty("NO_PREVIEW") != null
 
     internal fun createHtmlPanel(htmlInfo: IntentionPreviewInfo.Html): JPanel {
       val targetSize = IntentionPreviewPopupUpdateProcessor.MIN_WIDTH * UIUtil.getLabelFont().size.coerceAtMost(24) / 12
