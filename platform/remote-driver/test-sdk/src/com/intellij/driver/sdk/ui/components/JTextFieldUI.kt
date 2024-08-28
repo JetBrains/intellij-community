@@ -17,6 +17,9 @@ class JTextFieldUI(data: ComponentData) : UiComponent(data) {
   var text: String
     get() = textFieldComponent.getText()
     set(value) = driver.withContext(OnDispatcher.EDT) { textFieldComponent.setText (value) }
+  fun appendText(appendString: String){
+    text += appendString
+  }
 }
 
 @Remote("javax.swing.JTextField")

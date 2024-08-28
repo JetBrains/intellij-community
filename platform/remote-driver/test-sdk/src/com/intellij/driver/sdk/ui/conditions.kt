@@ -21,6 +21,11 @@ infix fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
+infix fun <T : UiComponent> T.shouldBeNoExceptions(condition: T.() -> Unit): T {
+  return shouldBeNoExceptions(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
+}
+
+
 fun <T : UiComponent> T.shouldBe(message: String, condition: T.() -> Boolean, timeout: Duration): T {
   return should(message = message, timeout = timeout, condition = condition)
 }
@@ -48,6 +53,31 @@ fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean, timeout: Duration
 
 fun <T : UiComponent> T.shouldHave(message: String, condition: T.() -> Boolean, timeout: Duration): T {
   return should(message = message, timeout = timeout, condition = condition)
+}
+
+fun <T : UiComponent> T.shouldBeNoExceptions(
+  message: String? = null,
+  timeout: Duration = DEFAULT_FIND_TIMEOUT,
+  condition: T.() -> Unit,
+): T {
+  var lastException: Throwable? = null
+  try {
+    waitFor(message, timeout) {
+      try {
+        this.condition()
+        true
+      }
+      catch (e: Throwable) {
+        lastException = e
+        false
+      }
+    }
+  }
+  catch (e: WaitForException) {
+    lastException?.let { throw it }
+    throw WaitForException(e.timeout, e.errorMessage)
+  }
+  return this
 }
 
 fun <T : UiComponent> T.should(message: String? = null,
