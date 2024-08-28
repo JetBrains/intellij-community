@@ -25,8 +25,8 @@ interface ChartComponent {
   fun height(): Double
 }
 
-class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : ChartComponent {
-  private val model: MutableMap<EventKey, List<Event>> = mutableMapOf()
+class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, threadAddedEvent: () -> Unit) : ChartComponent {
+  private val model: ModulesCollection = ModulesCollection(threadAddedEvent)
   var selected: EventKey? = null
 
   var height: Double = 25.5
@@ -57,37 +57,35 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
   }
 
   override fun width(settings: ChartSettings): Int {
-    model.putAll(state.model.getAndClean())
+    model.addAll(state.model.getAndClean())
     var start = clip.x + clip.width
     var end = clip.x
 
-    for ((_, events) in model.asSequence().filter {
-      inViewport(it.value.filterIsInstance<StartEvent>().firstOrNull()?.target?.time,
-                 it.value.filterIsInstance<FinishEvent>().firstOrNull()?.target?.time,
-                 settings,
-                 zoom,
-                 clip)
-    }) {
-      val startEvent = events.filterIsInstance<StartEvent>().firstOrNull()
-      if (startEvent != null) {
-        val rect = getRectangle(startEvent, events.filterIsInstance<FinishEvent>().firstOrNull(), settings)
-        start = min(rect.x, start)
-        end = max(rect.x + rect.width, end)
+    model.list().forEachIndexed { thread, events ->
+      events.forEach { event ->
+        if (inViewport(event.start.target.time,
+                       event.finish?.target?.time,
+                       settings, zoom, clip)) {
+          val rect = getRectangle(event, thread, settings)
+          start = min(rect.x, start)
+          end = max(rect.x + rect.width, end)
+        }
       }
     }
     return if (start < end) (end - clip.x).roundToInt() else 0
   }
 
   override fun height(): Double = clip.height
+  fun rows(): Int = model.list().size
 
   override fun background(g2d: ChartGraphics, settings: ChartSettings) {
-    model.putAll(state.model.getAndClean())
+    model.addAll(state.model.getAndClean())
     g2d.withColor(settings.background) {
       fill(clip)
     }
-    for (row in 0 until state.threads) {
-      val cell = Rectangle2D.Double(clip.x, height * row + clip.y, clip.width, height)
-      g2d.withColor(background.color(row)) {
+    model.list().forEachIndexed { thread, _ ->
+      val cell = Rectangle2D.Double(clip.x, height * thread + clip.y, clip.width, height)
+      g2d.withColor(background.color(thread)) {
         fill(cell)
       }
     }
@@ -95,68 +93,115 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
 
   override fun component(g2d: ChartGraphics, settings: ChartSettings) {
     g2d.withAntialiasing {
-      model.putAll(state.model.getAndClean())
+      model.addAll(state.model.getAndClean())
       drawChart(model, settings)
     }
   }
 
   private fun ChartGraphics.drawChart(
-    data: MutableMap<EventKey, List<Event>>,
+    data: ModulesCollection,
     settings: ChartSettings,
   ) {
-    for ((key, events) in data.asSequence()
-      .filter { state.filter.test(it.key) }
-      .filter {
-        inViewport(it.value.filterIsInstance<StartEvent>().firstOrNull()?.target?.time,
-                   it.value.filterIsInstance<FinishEvent>().firstOrNull()?.target?.time,
-                   settings,
-                   zoom,
-                   clip)
-      }
-      .filter { !isSmall(it.value, state) }) {
-      val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: continue
-      val end = events.filterIsInstance<FinishEvent>().firstOrNull()
-      val rect = getRectangle(start, end, settings)
+    data.list().forEachIndexed { thread, events ->
+      events.forEach{event ->
+        if(state.filter.test(event.key) &&
+           inViewport(event.start.target.time,
+                      event.finish?.target?.time,
+                      settings, zoom, clip) &&
+           !isSmall(event, state)) {
 
-      settings.mouse.module(rect, key, mutableMapOf(
-        "duration" to Formats.formatDuration(((end?.target?.time ?: System.nanoTime()) - start.target.time) / 1_000_000),
-        "name" to start.target.name,
-        "type" to start.target.type,
-        "test" to start.target.isTest.toString(),
-        "fileBased" to start.target.isFileBased.toString(),
-      ))
 
-      withColor(block.color(start)) { // module
-        fill(rect)
-      }
-      withColor(if (selected == key) block.selected(start) else block.outline(start)) { // module border
-        draw(rect)
-      }
-      create().withColor(settings.font.color) {
-        withFont(UIUtil.getLabelFont(settings.font.size)) { // name
-          clip(rect)
-          drawString(" ${start.target.name}", rect.x.toFloat(), (rect.y + (height - block.padding * 2) / 2 + fontMetrics().ascent / 2).toFloat())
+          val rect = getRectangle(event, thread, settings)
+
+          settings.mouse.module(rect, event.key, mutableMapOf(
+            "duration" to Formats.formatDuration(((event.finish?.target?.time ?: state.currentTime) - event.start.target.time) / 1_000_000),
+            "name" to event.start.target.name,
+            "type" to event.start.target.type,
+            "test" to event.start.target.isTest.toString(),
+            "fileBased" to event.start.target.isFileBased.toString(),
+          ))
+
+          withColor(block.color(event.start)) { // module
+            fill(rect)
+          }
+          withColor(if (selected == event.key) block.selected(event.start) else block.outline(event.start)) { // module border
+            draw(rect)
+          }
+          create().withColor(settings.font.color) {
+            withFont(UIUtil.getLabelFont(settings.font.size)) { // name
+              clip(rect)
+              drawString(" ${event.start.target.name}", rect.x.toFloat(), (rect.y + (height - block.padding * 2) / 2 + fontMetrics().ascent / 2).toFloat())
+            }
+          }
+
         }
       }
     }
   }
 
-  private fun isSmall(events: List<Event>, state: ChartModel): Boolean {
+  private fun isSmall(event: ProgressEvent, state: ChartModel): Boolean {
     val filter = state.filter
     if (filter is Filter && filter.text.isEmpty()) {
-      val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: return false
-      val finish = events.filterIsInstance<FinishEvent>().firstOrNull() ?: return false
-      return zoom.toPixels(finish.target.time) - zoom.toPixels(start.target.time) < 2
+      val finish = event.finish ?: return false
+      return zoom.toPixels(finish.target.time) - zoom.toPixels(event.start.target.time) < 2
     }
     else {
       return false
     }
   }
 
-  private fun getRectangle(start: StartEvent, end: FinishEvent?, settings: ChartSettings): Rectangle2D {
-    val x0 = zoom.toPixels(start.target.time - settings.duration.from)
-    val x1 = zoom.toPixels((end?.target?.time ?: System.nanoTime()) - settings.duration.from)
-    return Rectangle2D.Double(x0, (start.threadNumber * height), x1 - x0, height)
+  private fun getRectangle(event: ProgressEvent, thread: Int, settings: ChartSettings): Rectangle2D {
+    val x0 = zoom.toPixels(event.start.target.time - settings.duration.from)
+    val x1 = zoom.toPixels((event.finish?.target?.time ?: state.currentTime) - settings.duration.from)
+    return Rectangle2D.Double(x0, (thread * height), x1 - x0, height)
+  }
+
+  private class ModulesCollection(private val threadAddedEvent: () -> Unit) {
+    private val index = HashMap<EventKey, Pair<Int, Int>>()
+    private val events: MutableList<MutableList<ProgressEvent>> = mutableListOf()
+
+    fun add(event: ProgressEvent) {
+      index[event.key]?.let { (thread, position) ->
+        events[thread][position] = event
+        return
+      }
+
+      for ((idx, thread) in events.withIndex()) {
+        if (canBeAdded(thread, event)) {
+          thread.add(event)
+          index[event.key] = Pair(idx, thread.size - 1)
+          return
+        }
+      }
+      events.add(mutableListOf(event))
+      index[event.key] = Pair(events.size - 1, 0)
+      threadAddedEvent()
+    }
+
+    fun addAll(events: Map<EventKey, List<Event>>) = events
+      .map { (key, data) ->
+        val start = data.filterIsInstance<StartEvent>().firstOrNull()
+        val finish = data.filterIsInstance<FinishEvent>().firstOrNull()
+        if (start != null) ProgressEvent(key, start, finish) else null
+      }.filterNotNull()
+      .sortedWith(compareBy({ it.finish == null },
+                            { it.start.target.time },
+                            { (it.finish?.target?.time ?: 0) * -1 }))
+      .forEach { event ->
+        add(event)
+      }
+
+    fun list(): List<List<ProgressEvent>> = events
+
+    private fun canBeAdded(thread: MutableList<ProgressEvent>, event: ProgressEvent): Boolean =
+      thread.all { !it.overlaps(event) }
+  }
+
+  private data class ProgressEvent(val key: EventKey, val start: StartEvent, val finish: FinishEvent?) {
+    fun overlaps(other: ProgressEvent): Boolean {
+      return this.start.target.time <= (other.finish?.target?.time ?: Long.MAX_VALUE) &&
+             other.start.target.time <= (this.finish?.target?.time ?: Long.MAX_VALUE)
+    }
   }
 }
 
@@ -183,13 +228,25 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
       fill(clip)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(0.0, clip.y, clip.width, clip.y))
+      draw(Line2D.Double(clip.x, clip.y, clip.width, clip.y))
     }
   }
 
   override fun component(g2d: ChartGraphics, settings: ChartSettings) {
     model.addAll(state.model.getAndClean())
-    drawUsageChart(model, settings, g2d)
+
+    val filtered = filterData(model, settings)
+    val path = path(filtered, settings) ?: return
+    val border = border(filtered, settings) ?: return
+
+    g2d.withColor(color.background) {
+      fill(path)
+    }
+    g2d.withStroke(BasicStroke(USAGE_BORDER)) {
+      withColor(color.border) {
+        draw(border)
+      }
+    }
   }
 
   fun drawPoint(g2d: ChartGraphics, data: StatisticData, settings: ChartSettings) {
@@ -220,26 +277,6 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
   }
 
   override fun height(): Double = clip.height
-
-  private fun drawUsageChart(
-    data: NavigableSet<StatisticData>,
-    settings: ChartSettings,
-    g2d: ChartGraphics,
-  ): Boolean {
-    val filtered = filterData(data, settings)
-    val path = path(filtered, settings) ?: return true
-    val border = border(filtered, settings) ?: return true
-
-    g2d.withColor(color.background) {
-      fill(path)
-    }
-    g2d.withStroke(BasicStroke(USAGE_BORDER)) {
-      withColor(color.border) {
-        draw(border)
-      }
-    }
-    return false
-  }
 
   private fun filterData(data: NavigableSet<StatisticData>, settings: ChartSettings): NavigableSet<StatisticData> {
     val filtered: NavigableSet<StatisticData> = data.asSequence()
@@ -293,6 +330,8 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
       neighborhood.shiftLeftByTwo(px, py)
       path.curveTo(neighborhood)
     }
+    neighborhood.shiftLeftByTwo(Double.NaN, Double.NaN)
+    path.curveTo(neighborhood)
 
     after(path, x0, y0)
     return path

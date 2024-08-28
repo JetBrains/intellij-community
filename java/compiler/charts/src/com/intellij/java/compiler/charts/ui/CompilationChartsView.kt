@@ -45,7 +45,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
       diagrams.statistic.time(vm.modules.start)
       diagrams.statistic.time(vm.modules.end)
-      diagrams.statistic.thread(vm.modules.threadCount)
 
       panel.updateLabel(vm.modules.get().keys, vm.filter.value)
     }
@@ -69,12 +68,12 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-      diagrams.smartDraw(true)
+      diagrams.smartDraw(true, false)
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-      diagrams.smartDraw(true)
+      diagrams.smartDraw(true, false)
     }
 
     vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
@@ -83,8 +82,8 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
   }
 }
 
-data class Statistic(var start: Long, var end: Long, var maxMemory: Long, var threadCount: Int, var maxCpu: Long = 100) {
-  constructor() : this(Long.MAX_VALUE, 0, 0, 0, 0)
+data class Statistic(var start: Long, var end: Long, var maxMemory: Long, var maxCpu: Long = 100) {
+  constructor() : this(Long.MAX_VALUE, 0, 0, 0)
 
   fun time(time: Long?) {
     if (time == null) return
@@ -100,9 +99,5 @@ data class Statistic(var start: Long, var end: Long, var maxMemory: Long, var th
   fun cpu(cpu: Long?) {
     if (cpu == null) return
     if (maxCpu < cpu) maxCpu = cpu
-  }
-
-  fun thread(count: Int) {
-    if (threadCount < count) threadCount = count
   }
 }

@@ -13,36 +13,23 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 class CompilationChartsViewModel(val lifetime: Lifetime) {
-  val modules: Modules = Modules(Long.MAX_VALUE, 0, 0, RdMap())
+  val modules: Modules = Modules(Long.MAX_VALUE, 0, RdMap())
   val statistics: Statistics = Statistics()
   val cpuMemory: RdProperty<CpuMemoryStatisticsType> = RdProperty(CpuMemoryStatisticsType.MEMORY)
   val filter: RdProperty<Filter> = RdProperty(Filter())
   val scrollToEndEvent: RdProperty<ScrollToEndEvent> = RdProperty(ScrollToEndEvent())
 
-  private val threadIndexes: MutableMap<Long, Int> = ConcurrentHashMap()
-
   fun requestScrollToEnd() = scrollToEndEvent.set(ScrollToEndEvent())
 
   fun started(values: List<StartTarget>) {
     values.forEach { value ->
-      modules.add(Modules.StartEvent(value, index(value.thread)))
+      modules.add(Modules.StartEvent(value))
     }
   }
 
   fun finished(values: List<FinishTarget>) {
     values.forEach { value ->
-      modules.add(Modules.FinishEvent(value, index(value.thread)))
-    }
-  }
-
-  private fun index(threadId: Long): Int {
-    val index: Int? = threadIndexes[threadId]
-    if (index != null) return index
-    synchronized(threadIndexes) {
-      val updateAndGetIndex = { threadId: Long ->
-        threadIndexes.size.also { newIndex -> threadIndexes[threadId] = newIndex }
-      }
-      return threadIndexes[threadId] ?: updateAndGetIndex(threadId)
+      modules.add(Modules.FinishEvent(value))
     }
   }
 
@@ -56,11 +43,10 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
     statistics.memoryUsed.add(StatisticData(value.time, value.heapUsed))
   }
 
-  data class Modules(var start: Long, var end: Long, var threadCount: Int, private val events: RdMap<EventKey, PersistentList<Event>>) {
+  data class Modules(var start: Long, var end: Long, private val events: RdMap<EventKey, PersistentList<Event>>) {
     fun add(event: Event) {
       if (start > event.target.time) start = event.target.time
       if (end < event.target.time) end = event.target.time
-      if (threadCount <= event.threadNumber) threadCount = event.threadNumber + 1
 
       events.compute(event.key) { _, list ->
         list?.add(event) ?: persistentListOf(event)
@@ -71,15 +57,14 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
 
     interface Event {
       val target: TargetEvent
-      val threadNumber: Int
 
       val key: EventKey
         get() = EventKey(target.name, target.type, target.isTest)
     }
 
     data class EventKey(val name: String, val type: String, val test: Boolean)
-    data class StartEvent(override val target: StartTarget, override val threadNumber: Int) : Event
-    data class FinishEvent(override val target: FinishTarget, override val threadNumber: Int) : Event
+    data class StartEvent(override val target: StartTarget) : Event
+    data class FinishEvent(override val target: FinishTarget) : Event
   }
 
   data class StatisticData(val time: Long, val data: Long) : Comparable<StatisticData> {

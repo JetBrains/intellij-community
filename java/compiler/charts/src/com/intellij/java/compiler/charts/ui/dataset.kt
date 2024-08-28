@@ -28,13 +28,12 @@ class ChartModel {
     set(value) {
       field = value
       value.values.flatten().forEach {
-        threads = max(threads, it.threadNumber)
         start = min(start, it.target.time)
         end = max(end, it.target.time)
       }
     }
   internal var filter: Predicate<EventKey> = Filter()
-  internal var threads: Int = 0
+  internal var currentTime: Long = 0
   internal var start: Long = Long.MAX_VALUE
   internal var end: Long = Long.MIN_VALUE
 }

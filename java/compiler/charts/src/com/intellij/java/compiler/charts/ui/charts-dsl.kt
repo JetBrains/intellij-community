@@ -19,13 +19,13 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-fun charts(vm: CompilationChartsViewModel, zoom: Zoom, init: Charts.() -> Unit): Charts {
-  return Charts(vm, zoom).apply(init)
+fun charts(vm: CompilationChartsViewModel, zoom: Zoom, cleanCache: () -> Unit, init: Charts.() -> Unit): Charts {
+  return Charts(vm, zoom, cleanCache).apply(init)
 }
 
-class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom) {
+class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom, cleanCache: () -> Unit) {
   private val model: DataModel = DataModel(this)
-  internal val progress: ChartProgress = ChartProgress(zoom, model.chart)
+  internal val progress: ChartProgress = ChartProgress(zoom, model.chart, cleanCache)
   internal lateinit var usage: ChartUsage
   internal lateinit var axis: ChartAxis
   internal var settings: ChartSettings = ChartSettings()
@@ -123,7 +123,7 @@ class ChartSettings {
 
 internal data class MaxSize(val width: Double, val height: Double) {
   constructor(width: Long, height: Double) : this(width.toDouble(), height)
-  constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.state.threads + 1) * progress.height)
+  constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.rows()) * progress.height)
 }
 
 class CompilationChartsModuleInfo(private val vm: CompilationChartsViewModel, private val component: CompilationChartsDiagramsComponent) : MouseAdapter() {
@@ -202,12 +202,12 @@ class CompilationChartsModuleInfo(private val vm: CompilationChartsViewModel, pr
           point.y <= charts.usage.clip.y + charts.usage.clip.height) {
         statistic = search(point)
         if (statistic != null) {
-          component.smartDraw()
+          component.smartDraw(false, false)
         }
       } else {
         if (statistic != null) {
           statistic = null
-          component.smartDraw()
+          component.smartDraw(false, false)
         }
       }
     }

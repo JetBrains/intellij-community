@@ -17,7 +17,7 @@ val COLOR_PRODUCTION_BORDER_SELECTED: JBColor = JBColor.BLUE
 
 val COLOR_BACKGROUND: JBColor = JBColor.WHITE
 val COLOR_BACKGROUND_ODD: JBColor = JBColor.WHITE
-val COLOR_BACKGROUND_EVEN: JBColor = JBColor(Color(0xfefefe), Color(0x3e4042))
+val COLOR_BACKGROUND_EVEN: JBColor = JBColor(Color(0xeeeeee), Color(0x3e4042))
 
 val COLOR_TEXT: JBColor = JBColor(Color(0x1d1d1d), Color(0xbfbfbf))
 val COLOR_LINE: JBColor = JBColor.LIGHT_GRAY

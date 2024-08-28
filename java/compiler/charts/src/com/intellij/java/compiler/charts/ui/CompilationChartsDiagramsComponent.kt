@@ -6,6 +6,8 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemorySta
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
 import com.intellij.java.compiler.charts.ui.CompilationChartsModuleInfo.CompilationChartsUsageInfo
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -43,6 +45,8 @@ class CompilationChartsDiagramsComponent(
   private val charts: Charts
   private val images: MutableMap<Int, BufferedImage> = HashMap()
   private val imageRequestCount: MutableMap<Int, Int> = HashMap()
+  private var colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme()
+  private var flush: Boolean = true
 
   private val focusableEmptyButton = JButton().apply {
     preferredSize = Dimension(0, 0)
@@ -54,14 +58,14 @@ class CompilationChartsDiagramsComponent(
 
   private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
     MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
-      format = {stat -> "${stat.data/(1024 * 1024)} MB"}
+      format = { stat -> "${stat.data / (1024 * 1024)} MB" }
       color {
         background = COLOR_MEMORY
         border = COLOR_MEMORY_BORDER
       }
     },
     CPU to ChartUsage(zoom, "cpu", UsageModel()).apply {
-      format = {stat -> "${stat.data} %"}
+      format = { stat -> "${stat.data} %" }
       color {
         background = COLOR_CPU
         border = COLOR_CPU_BORDER
@@ -73,14 +77,14 @@ class CompilationChartsDiagramsComponent(
     addMouseWheelListener { e ->
       if (e.isControlDown) {
         zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
-        smartDraw(true)
+        smartDraw(true, false)
       }
       else {
         e.component.parent.dispatchEvent(e)
       }
     }
 
-    charts = charts(vm, zoom) {
+    charts = charts(vm, zoom, { cleanCache() }) {
       progress {
         height = ROW_HEIGHT
 
@@ -125,15 +129,22 @@ class CompilationChartsDiagramsComponent(
       .scheduleWithFixedDelay({ smartDraw() }, 0, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
   }
 
-  internal fun smartDraw(clean: Boolean = false) {
+  internal fun cleanCache() {
+    images.clear()
+    imageRequestCount.clear()
+  }
+
+  internal fun smartDraw(clean: Boolean = false, flush: Boolean = true) {
+    if (this.flush) this.flush = flush
     if (clean) {
-      images.clear()
-      imageRequestCount.clear()
+      cleanCache()
       charts.settings.mouse.clear()
     }
-    // todo check new data
-    // todo check viewport position
-    // todo check zoom
+    val currentGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme()
+    if (colorScheme != currentGlobalScheme) {
+      cleanCache()
+      colorScheme = currentGlobalScheme
+    }
     revalidate()
     repaint()
   }
@@ -142,11 +153,12 @@ class CompilationChartsDiagramsComponent(
     if (g2d !is Graphics2D) return
     charts.model {
       progress {
-        model = modules.data
+        model = if (flush) modules.data else mutableMapOf()
         filter = modules.filter
+        currentTime = if (flush) System.nanoTime() else currentTime
       }
       usage(usages[cpuMemory]!!) {
-        model = stats[cpuMemory]!!
+        model = if (flush) stats[cpuMemory]!! else mutableSetOf()
         maximum = cpuMemory.max(vm.statistics)
       }
     }
@@ -160,6 +172,7 @@ class CompilationChartsDiagramsComponent(
         }
         img.setupRenderingHints()
       }
+      flush = true
     }
     usageInfo.draw(ChartGraphics(g2d, 0, 0))
   }
@@ -201,7 +214,8 @@ class CompilationChartsDiagramsComponent(
           val counter = imageRequestCount.compute(index) { _, v -> (v ?: 0) + 1 } ?: 1
           if (counter < IMAGE_CACHE_ACTIVATION_COUNT) {
             draw(g2d)
-          } else {
+          }
+          else {
             val img = UIUtil.createImage(this, area.width.roundToInt(), area.height.roundToInt(), BufferedImage.TYPE_INT_ARGB)
             images[index] = img
             val chartGraphics = ChartGraphics(img.createGraphics(), -area.x, -area.y)
