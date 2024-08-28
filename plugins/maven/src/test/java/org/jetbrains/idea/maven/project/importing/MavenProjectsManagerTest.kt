@@ -540,10 +540,10 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
       override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
         for (each in updated) {
-          log.append("updated: ").append(each.first.getDisplayName()).append(" ")
+          log.append("updated: ").append(each.first.displayName).append(" ")
         }
         for (each in deleted) {
-          log.append("deleted: ").append(each.getDisplayName()).append(" ")
+          log.append("deleted: ").append(each.displayName).append(" ")
         }
       }
     })

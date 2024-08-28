@@ -464,8 +464,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   private final class MyProjectsListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(final List<? extends MavenProject> ignored,
-                                            final List<? extends MavenProject> unignored,
+    public void projectsIgnoredStateChanged(final List<MavenProject> ignored,
+                                            final List<MavenProject> unignored,
                                             boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
@@ -476,7 +476,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     }
 
     @Override
-    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
+    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
       scheduleUpdateProjects(MavenUtil.collectFirsts(updated), new ArrayList<>(deleted));
     }
 

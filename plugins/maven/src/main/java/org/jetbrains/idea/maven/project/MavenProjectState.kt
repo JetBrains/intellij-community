@@ -499,4 +499,12 @@ internal class MavenProjectState : Cloneable, Serializable {
   private fun pomFileExists(localRepository: File, artifact: MavenArtifact): Boolean {
     return hasArtifactFile(localRepository, artifact.mavenId, "pom")
   }
+
+  fun addDependencies(dependencies: Collection<MavenArtifact>) {
+    this.dependencies += dependencies
+  }
+
+  fun addAnnotationProcessors(annotationProcessors: Collection<MavenArtifact>) {
+    this.annotationProcessors += annotationProcessors
+  }
 }

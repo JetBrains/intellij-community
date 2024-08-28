@@ -290,7 +290,7 @@ class MavenProject(val file: VirtualFile) {
         else if (("none".equals(procMode, ignoreCase = true))) ProcMode.NONE else ProcMode.BOTH
       }
 
-      val compilerArgument: String = compilerConfiguration.getChildTextTrim("compilerArgument")
+      val compilerArgument: String? = compilerConfiguration.getChildTextTrim("compilerArgument")
       if ("-proc:none" == compilerArgument) {
         return ProcMode.NONE
       }
@@ -431,16 +431,10 @@ class MavenProject(val file: VirtualFile) {
       return res
     }
 
-  var configFileError: String?
+  val configFileError: String?
     get() = myState.readingProblems.filter { it.path.endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH) }
       .map { it.description }
       .firstOrNull()
-    set(message) {
-      if (message != null) {
-        val mavenConfigPath: String = file.path + "/" + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH
-        myState.readingProblems.add(MavenProjectProblem(mavenConfigPath, message, MavenProjectProblem.ProblemType.SYNTAX, true))
-      }
-    }
 
   fun resetCache() {
     // todo a bit hacky
@@ -564,11 +558,11 @@ class MavenProject(val file: VirtualFile) {
   }
 
   fun addDependencies(dependencies: Collection<MavenArtifact>) {
-    updateState { newState: MavenProjectState -> newState.dependencies.addAll(dependencies) }
+    updateState { it.addDependencies(dependencies) }
   }
 
-  fun addAnnotationProcessors(annotationProcessors: Collection<MavenArtifact?>) {
-    updateState { newState: MavenProjectState -> newState.annotationProcessors.addAll(annotationProcessors) }
+  fun addAnnotationProcessors(annotationProcessors: Collection<MavenArtifact>) {
+    updateState { it.addAnnotationProcessors(annotationProcessors) }
   }
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
@@ -795,12 +789,12 @@ class MavenProject(val file: VirtualFile) {
     }
 
   fun <V> getCachedValue(key: Key<V>): V? {
-    val v: V? = myState.cache.get(key) as V?
+    val v: V? = myState.cache[key] as V?
     return v
   }
 
   fun <V> putCachedValue(key: Key<V>, value: V): V {
-    val oldValue: Any? = myState.cache.putIfAbsent(key, value)
+    val oldValue: Any? = myState.cache.putIfAbsent(key, value as Any)
     if (oldValue != null) {
       val v: V = oldValue as V
       return v
@@ -844,7 +838,7 @@ class MavenProject(val file: VirtualFile) {
     private fun getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig: Element): Map<String, String> {
       val res: MutableMap<String, String> = LinkedHashMap()
 
-      val compilerArgument: String = compilerConfig.getChildText("compilerArgument")
+      val compilerArgument: String? = compilerConfig.getChildText("compilerArgument")
       addAnnotationProcessorOptionFromParameterString(compilerArgument, res)
 
       val compilerArgs: Element? = compilerConfig.getChild("compilerArgs")
@@ -870,7 +864,7 @@ class MavenProject(val file: VirtualFile) {
       return res
     }
 
-    private fun addAnnotationProcessorOptionFromParameterString(compilerArguments: String, res: MutableMap<String, String>) {
+    private fun addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
       if (!StringUtil.isEmptyOrSpaces(compilerArguments)) {
         val parametersList: ParametersList = ParametersList()
         parametersList.addParametersString(compilerArguments)
@@ -902,7 +896,7 @@ class MavenProject(val file: VirtualFile) {
       }
       val res: LinkedHashMap<String, String> = LinkedHashMap()
       if (cfg != null) {
-        val compilerArguments: String = cfg.getChildText("compilerArguments")
+        val compilerArguments = cfg.getChildText("compilerArguments")
         addAnnotationProcessorOptionFromParameterString(compilerArguments, res)
 
         val optionsElement: Element? = cfg.getChild("options")

@@ -216,7 +216,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problems = root.getProblems()
+    val problems = root.problems
     assertFalse(problems.isEmpty())
     assertModuleLibDeps("project", "Maven: group:artifact:1")
   }
@@ -237,7 +237,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problems = root.getProblems()
+    val problems = root.problems
     UsefulTestCase.assertSize(1, problems)
     assertTrue(problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
   }
@@ -260,7 +260,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                               """.trimIndent())
 
     val root = rootProjects[0]
-    val problems = root.getProblems()
+    val problems = root.problems
     UsefulTestCase.assertSize(2, problems)
     assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
     assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
@@ -668,7 +668,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                               """.trimIndent())
 
     val root = rootProjects[0]
-    val problems = root.getProblems()
+    val problems = root.problems
     UsefulTestCase.assertSize(1, problems)
     forMaven3 {
       val description = if (mavenVersionIsOrMoreThan("3.9.8"))
@@ -773,7 +773,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
 
     forMaven3 {
-      var problems = getModules(root)[0].getProblems()
+      var problems = getModules(root)[0].problems
       UsefulTestCase.assertSize(1, problems)
       val description = if (mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin xxx:xxx:1 or one of its dependencies could not be resolved"
@@ -781,7 +781,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
         "Could not find artifact xxx:xxx:jar:1"
       assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
 
-      problems = getModules(root)[1].getProblems()
+      problems = getModules(root)[1].problems
       UsefulTestCase.assertSize(1, problems)
       val description2 = if (mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin yyy:yyy:1 or one of its dependencies could not be resolved"
@@ -791,12 +791,12 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     }
 
     forMaven4 {
-      var problems = getModules(root)[0].getProblems()
+      var problems = getModules(root)[0].problems
       assertTrue(
         problems[0]!!.description!!.contains("Plugin xxx:xxx:1 or one of its dependencies could not be resolved")
         || problems[0]!!.description!!.contains("xxx:xxx:jar:1 was not found")
       )
-      problems = getModules(root)[1].getProblems()
+      problems = getModules(root)[1].problems
       assertTrue(
         problems[0]!!.description!!.contains("Plugin yyy:yyy:1 or one of its dependencies could not be resolved")
         || problems[0]!!.description!!.contains("yyy:yyy:jar:1 was not found")
@@ -873,7 +873,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
 
     val root = rootProjects[0]
-    val problems = root.getProblems()
+    val problems = root.problems
 
     forMaven3 {
       UsefulTestCase.assertSize(2, problems)
@@ -938,7 +938,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun assertProblems(project: MavenProject, vararg expectedProblems: String) {
     val actualProblems: MutableList<String?> = ArrayList()
-    for (each in project.getProblems()) {
+    for (each in project.problems) {
       actualProblems.add(each.description)
     }
     assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
@@ -946,7 +946,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun assertContainsProblems(project: MavenProject, vararg expectedProblems: String) {
     val actualProblems: MutableList<String?> = ArrayList()
-    for (each in project.getProblems()) {
+    for (each in project.problems) {
       actualProblems.add(each.description)
     }
     UsefulTestCase.assertContainsElements(actualProblems, *expectedProblems)

@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
@@ -38,7 +37,6 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -389,7 +387,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingProblems())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -407,7 +405,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingProblems())
       }
     }
   }

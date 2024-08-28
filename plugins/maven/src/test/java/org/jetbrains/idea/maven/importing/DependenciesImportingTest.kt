@@ -1410,8 +1410,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     val root = projectsTree.rootProjects[0]
     val modules = projectsTree.getModules(root)
 
-    assertOrderedElementsAreEqual(root.getProblems())
-    assertTrue(modules[0].getProblems()[0].description!!.contains("Unresolved dependency: 'xxx:yyy:pom:1'"))
+    assertOrderedElementsAreEqual(root.problems)
+    assertTrue(modules[0].problems[0].description!!.contains("Unresolved dependency: 'xxx:yyy:pom:1'"))
   }
 
   @Test

@@ -75,7 +75,6 @@ class MavenProjectResolver(private val myProject: Project) {
       try {
         val userProperties = Properties()
         for (mavenProject in mavenProjectsInBaseDir) {
-          mavenProject.configFileError = null
           for (mavenImporter in MavenImporter.getSuitableImporters(mavenProject)) {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
           }
@@ -365,7 +364,7 @@ class MavenProjectResolver(private val myProject: Project) {
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
     val changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot)
-    mavenProjectCandidate.getProblems() // need for fill problem cache
+    mavenProjectCandidate.problems // need for fill problem cache
     tree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject)
     if (!mavenProjectCandidate.hasReadingProblems()) {
       if (null != nativeMavenProject) {

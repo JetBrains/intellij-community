@@ -35,12 +35,12 @@ public class MavenModificationTracker extends SimpleModificationTracker {
       }
 
       @Override
-      public void projectsIgnoredStateChanged(List<? extends MavenProject> ignored, List<? extends MavenProject> unignored, boolean fromImport) {
+      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
         incModificationCount();
       }
 
       @Override
-      public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
+      public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         incModificationCount();
       }
 
