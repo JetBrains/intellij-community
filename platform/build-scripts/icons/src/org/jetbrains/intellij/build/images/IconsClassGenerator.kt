@@ -133,6 +133,17 @@ internal open class IconsClassGenerator(
           IconClassInfo(packageName, "StudioIllustrations", Path.of(sourceRoot, "icons/StudioIllustrations.java"), imagesI),
         )
       }
+      "intellij.android.ml-api" -> {
+        val packageName = "icons"
+        val sourceRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).single().file.absolutePath
+        val resourceRoot = module.getSourceRoots(JavaResourceRootType.RESOURCE).single()
+
+        var imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
+        val imagesA = imageCollector.collectSubDir(resourceRoot, "icons", includePhantom = true)
+        imageCollector.printUsedIconRobots()
+
+        return listOf(IconClassInfo(packageName, "AIPluginIcons", Path.of(sourceRoot, "icons/AIPluginIcons.java"), imagesA))
+      }
       else -> {
         val imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
         val images = imageCollector.collect(module, includePhantom = true)
