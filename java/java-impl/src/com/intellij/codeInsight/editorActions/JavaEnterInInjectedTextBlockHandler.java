@@ -13,11 +13,12 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,18 +40,16 @@ public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDeleg
     if (project == null) return Result.Continue;
     if (!(document instanceof DocumentWindow)) return Result.Continue;
     Editor originalEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
-    PsiFile originalFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-    if (originalFile == file || originalEditor == editor) return Result.Continue;
-    if (originalFile.getLanguage() != JavaLanguage.INSTANCE) return Result.Continue;
-    int originalOffset = originalEditor.getCaretModel().getOffset();
-    PsiElement psiElement = originalFile.findElementAt(originalOffset);
-    if (!(psiElement instanceof PsiJavaToken textBlock && textBlock.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL)) {
+    if (originalEditor == editor) return Result.Continue;
+    PsiLanguageInjectionHost hostElement = InjectedLanguageManager.getInstance(project).getInjectionHost(file);
+    if (!(hostElement instanceof PsiLiteralExpression literalExpression &&
+          literalExpression.getLanguage() == JavaLanguage.INSTANCE &&
+          literalExpression.isTextBlock())) {
       return Result.Continue;
     }
-    PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(textBlock, PsiLiteralExpression.class);
-    if (literalExpression == null) return Result.Continue;
-    int endIndex = originalOffset - psiElement.getTextRange().getStartOffset();
-    String text = psiElement.getText();
+    int originalOffset = originalEditor.getCaretModel().getOffset();
+    int endIndex = originalOffset - hostElement.getTextRange().getStartOffset();
+    String text = hostElement.getText();
     if (endIndex >= text.length() || endIndex < 0) return Result.Continue;
     String firstPart = text.substring(0, endIndex);
     if (!firstPart.contains("\n")) return Result.Continue;
@@ -69,61 +68,40 @@ public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDeleg
     return Result.Continue;
   }
 
-  private static int getIndent(@NotNull Document document, int offset) {
-    int lineNumber = document.getLineNumber(offset);
-    int lineStartOffset = document.getLineStartOffset(lineNumber);
-    int lineEndOffset = document.getLineEndOffset(lineNumber);
-    String fullText = document.getText();
-    int whiteSpaceIndex = lineStartOffset;
-    while (whiteSpaceIndex < lineEndOffset && StringUtil.isWhiteSpace(fullText.charAt(whiteSpaceIndex))) {
-      whiteSpaceIndex++;
-    }
-    return whiteSpaceIndex - lineStartOffset;
-  }
-
-
   @Override
   public Result postProcessEnter(@NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
-    try {
-      Document document = file.getFileDocument();
-      if (!(document instanceof DocumentWindow)) return Result.Continue;
-      Project project = editor.getProject();
-      if (project == null) return Result.Continue;
-      Editor originalEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
-      PsiFile originalFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
-      if (originalFile == file || originalEditor == editor) return Result.Continue;
-      if (originalFile.getLanguage() != JavaLanguage.INSTANCE) return Result.Continue;
-      if (myRangeMarker == null || myPreviousIndent == null) return Result.Continue;
-      int originalOffset = originalEditor.getCaretModel().getOffset();
-      PsiElement psiElement = originalFile.findElementAt(originalOffset);
-      if (!(psiElement instanceof PsiJavaToken javaToken && javaToken.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL)) {
-        return Result.Continue;
-      }
-      Document originalDocument = originalEditor.getDocument();
-      PsiDocumentManager.getInstance(project).commitDocument(file.getFileDocument());
-      PsiDocumentManager.getInstance(project).commitDocument(originalDocument);
-      RangeMarker rangeMarker = myRangeMarker;
-      String previousIndent = myPreviousIndent;
-      if (!rangeMarker.isValid()) return Result.Continue;
-      TextRange changedRange = rangeMarker.getTextRange();
-      int lineNumber = originalDocument.getLineNumber(originalOffset);
-      if (lineNumber - 1 < 0) return Result.Continue;
-      int firstChangedLineNumber = originalDocument.getLineNumber(changedRange.getStartOffset());
-      int lastChangedLineNumber = originalDocument.getLineNumber(changedRange.getEndOffset());
-      boolean hasChanges = false;
-      for (int i = firstChangedLineNumber; i <= lastChangedLineNumber; i++) {
-        int lineStartOffset = originalDocument.getLineStartOffset(i);
-        if (getIndent(originalDocument, lineStartOffset) >= previousIndent.length()) {
-          continue;
-        }
-        hasChanges = true;
-        originalDocument.replaceString(lineStartOffset, lineStartOffset, previousIndent);
-      }
-      return hasChanges ? Result.Stop : Result.Continue;
+    RangeMarker rangeMarker = myRangeMarker;
+    String previousIndent = myPreviousIndent;
+    myPreviousIndent = null;
+    myRangeMarker = null;
+    if (rangeMarker == null || previousIndent == null) return Result.Continue;
+    Document document = file.getFileDocument();
+    if (!(document instanceof DocumentWindow)) return Result.Continue;
+    Project project = editor.getProject();
+    if (project == null) return Result.Continue;
+    Editor originalEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+    PsiLanguageInjectionHost hostElement = InjectedLanguageManager.getInstance(project).getInjectionHost(file);
+    if (!(hostElement instanceof PsiLiteralExpression literalExpression &&
+          literalExpression.getLanguage() == JavaLanguage.INSTANCE &&
+          literalExpression.isTextBlock())) {
+      return Result.Continue;
     }
-    finally {
-      myPreviousIndent = null;
-      myRangeMarker = null;
+    Document originalDocument = originalEditor.getDocument();
+    PsiDocumentManager.getInstance(project).commitDocument(file.getFileDocument());
+    PsiDocumentManager.getInstance(project).commitDocument(originalDocument);
+    if (!rangeMarker.isValid()) return Result.Continue;
+    TextRange changedRange = rangeMarker.getTextRange();
+    int originalOffset = originalEditor.getCaretModel().getOffset();
+    int lineNumber = originalDocument.getLineNumber(originalOffset);
+    if (lineNumber - 1 < 0) return Result.Continue;
+    int firstChangedLineNumber = originalDocument.getLineNumber(changedRange.getStartOffset());
+    int lastChangedLineNumber = originalDocument.getLineNumber(changedRange.getEndOffset());
+    boolean hasChanges = false;
+    for (int i = firstChangedLineNumber + 1; i <= lastChangedLineNumber; i++) {
+      int lineStartOffset = originalDocument.getLineStartOffset(i);
+      hasChanges = true;
+      originalDocument.replaceString(lineStartOffset, lineStartOffset, previousIndent);
     }
+    return hasChanges ? Result.Stop : Result.Continue;
   }
 }

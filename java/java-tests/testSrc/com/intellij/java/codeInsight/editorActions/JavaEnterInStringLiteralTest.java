@@ -48,6 +48,19 @@ public class JavaEnterInStringLiteralTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testEnterInInjectedStringBlockLiteralMiddleTabs() {
+    CommonCodeStyleSettings settings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();
+    boolean oldProperty = indentOptions.USE_TAB_CHARACTER;
+    try {
+      indentOptions.USE_TAB_CHARACTER = true;
+      doTest();
+    }
+    finally {
+      indentOptions.USE_TAB_CHARACTER = oldProperty;
+    }
+  }
+
   public void testEnterInInjectedStringBlockLiteralEnd() {
     doTest();
   }
