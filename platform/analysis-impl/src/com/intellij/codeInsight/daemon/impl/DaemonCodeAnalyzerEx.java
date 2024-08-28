@@ -74,6 +74,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract boolean hasVisibleLightBulbOrPopup();
 
+  @ApiStatus.Internal
   public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                                              @NotNull Document document,
                                                              @NotNull ProgressIndicator progress);
@@ -82,13 +83,29 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract @NotNull FileStatusMap getFileStatusMap();
 
+  /**
+   * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
+   * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
+   */
+  @ApiStatus.Internal
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 
+  @ApiStatus.Internal
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
+
+  /**
+   * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
+   * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
+   */
+  @ApiStatus.Internal
   public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
   @ApiStatus.Internal
   public abstract void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo, @NotNull HighlightInfo newInfo, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
-
+  /**
+   * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
+   * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
+   */
+  @ApiStatus.Internal
   abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
     getFileStatusMap().markFileScopeDirty(document, new TextRange(0, document.getTextLength()), document.getTextLength(), reason);
