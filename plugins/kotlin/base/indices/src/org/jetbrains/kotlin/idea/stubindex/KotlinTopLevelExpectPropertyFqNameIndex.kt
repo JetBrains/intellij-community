@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 class KotlinTopLevelExpectPropertyFqNameIndex internal constructor() : StringStubIndexExtension<KtProperty>() {
     companion object Helper : KotlinStringStubIndexHelper<KtProperty>(KtProperty::class.java) {
         override val indexKey: StubIndexKey<String, KtProperty> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex")
+            StubIndexKey.createIndexKey(KotlinTopLevelExpectPropertyFqNameIndex::class.simpleName!!)
     }
 
     override fun getKey(): StubIndexKey<String, KtProperty> = indexKey
