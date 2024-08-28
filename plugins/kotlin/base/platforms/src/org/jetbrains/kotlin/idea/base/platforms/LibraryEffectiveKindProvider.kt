@@ -25,6 +25,7 @@ import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.io.*
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider.LibraryKindScanner
@@ -95,7 +96,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                         override fun visitFile(file: VirtualFile): Boolean {
                             ProgressManager.checkCanceled()
                             scannerVisitor.visitFile(file)
-                            return scannerVisitor.result == null
+                            return scannerVisitor.result == null || scannerVisitor.result == KnownLibraryKindForIndex.COMMON
                         }
                     })
                     val result = scannerVisitor.result
@@ -135,8 +136,8 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                             result = KnownLibraryKindForIndex.JS
 
                         result == null &&
-                                nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION) &&
-                                fileType == KotlinBuiltInFileType ->
+                                (fileType == KlibMetaFileType ||
+                                        nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION) && fileType == KotlinBuiltInFileType) ->
                             result = KnownLibraryKindForIndex.COMMON
 
                         else -> Unit
@@ -163,7 +164,9 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                 override fun createVisitor(indexableSetOrigin: IndexableSetOrigin): IndexableFileScanner.IndexableFileVisitor? {
                     if (indexableSetOrigin is LibraryOrigin) {
                         return object : IndexableFileScanner.IndexableFileVisitor {
-                            override fun visitFile(fileOrDir: VirtualFile) = scannerVisitor.visitFile(fileOrDir)
+                            override fun visitFile(fileOrDir: VirtualFile) {
+                                scannerVisitor.visitFile(fileOrDir)
+                            }
 
                             override fun visitingFinished() {
                                 val roots = indexableSetOrigin.classRoots
@@ -187,7 +190,7 @@ private class KotlinLibraryKindGistProvider {
 
     private fun createGist(): VirtualFileGist<PersistentLibraryKind<*>> = GistManager.getInstance().newVirtualFileGist(
         "kotlin-library-kind",
-        1,
+        2,
         object : DataExternalizer<PersistentLibraryKind<*>> {
             override fun save(out: DataOutput, value: PersistentLibraryKind<*>) {
                 val kindId = value.kindId
@@ -203,12 +206,19 @@ private class KotlinLibraryKindGistProvider {
         }
     ) { _, file ->
         val classRoots = file.getUserData(CLASS_ROOTS_KEY) ?: arrayOf(file)
-        LibraryKindScanner.runScannerOutsideScanningSession(classRoots)
-        var platformKind: PersistentLibraryKind<*>? = file.getUserData(LIBRARY_KIND_KEY)
+        // obtain platform from `/*/manifest` file from klib-like archive
+        var platformKind: PersistentLibraryKind<*>? = file.takeIf { it.isKLibRootCandidate() }
+            ?.let { IdePlatformKindProjectStructure.getLibraryPlatformKind(it) }
+            ?.let { IdePlatformKindProjectStructure.getLibraryKind(it) }
+
+        // otherwise try to guess the platform based on content of archive - does it have js specific files, or common
+        if (platformKind == null) {
+            LibraryKindScanner.runScannerOutsideScanningSession(classRoots)
+            platformKind = file.getUserData(LIBRARY_KIND_KEY)
+        }
+        // as the final resort - we consider them as a regular jar JVM library
         if (platformKind == NEEDS_TO_BE_CLARIFIED_KIND) {
-            val matchingPlatformKind = IdePlatformKindProjectStructure.getLibraryPlatformKind(file)
-                ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
-            platformKind = IdePlatformKindProjectStructure.getLibraryKind(matchingPlatformKind)
+            platformKind = IdePlatformKindProjectStructure.getLibraryKind(JvmPlatforms.defaultJvmPlatform.idePlatformKind)
         }
         platformKind
     }

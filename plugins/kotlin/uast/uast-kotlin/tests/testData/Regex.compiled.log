@@ -98,6 +98,10 @@ UClass (name = Regex)
         UBlockExpression
     UMethod (name = writeReplace)
         UBlockExpression
+    UMethod (name = findAll$lambda$1)
+        UParameter (name = this$0)
+        UParameter (name = $input)
+        UParameter (name = $startIndex)
     UClass (name = Companion)
         UMethod (name = Companion)
         UMethod (name = fromLiteral)

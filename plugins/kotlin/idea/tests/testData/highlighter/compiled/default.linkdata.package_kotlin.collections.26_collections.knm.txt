@@ -21,3 +21,9 @@ package kotlin.collections
 
 <symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">inline</symbolName> fun <<symbolName descr="null">S</symbolName>, <symbolName descr="null">T</symbolName> : <symbolName descr="null">S</symbolName>, <symbolName descr="null">K</symbolName>, <symbolName descr="null">M</symbolName> : kotlin.collections.<symbolName descr="null">MutableMap</symbolName><in <symbolName descr="null">K</symbolName>, <symbolName descr="null">S</symbolName>>> kotlin.collections.<symbolName descr="null">Grouping</symbolName><<symbolName descr="null">T</symbolName>, <symbolName descr="null">K</symbolName>>.<symbolName descr="null">reduceTo</symbolName>(<symbolName descr="null">destination</symbolName>: <symbolName descr="null">M</symbolName>, <symbolName descr="null">operation</symbolName>: (<symbolName descr="null">K</symbolName>, <symbolName descr="null">S</symbolName>, <symbolName descr="null">T</symbolName>) -> <symbolName descr="null">S</symbolName>): <symbolName descr="null">M</symbolName> { /* compiled code */ }
 
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">public</symbolName> interface <symbolName descr="null">Grouping</symbolName><<symbolName descr="null">T</symbolName>, <symbolName descr="null">out</symbolName> <symbolName descr="null">K</symbolName>> {
+    <symbolName descr="null">public</symbolName> <symbolName descr="null">abstract</symbolName> fun <symbolName descr="null">keyOf</symbolName>(<symbolName descr="null">element</symbolName>: <symbolName descr="null">T</symbolName>): <symbolName descr="null">K</symbolName>
+
+    <symbolName descr="null">public</symbolName> <symbolName descr="null">abstract</symbolName> fun <symbolName descr="null">sourceIterator</symbolName>(): kotlin.collections.<symbolName descr="null">Iterator</symbolName><<symbolName descr="null">T</symbolName>>
+}
+
