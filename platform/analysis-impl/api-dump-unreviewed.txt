@@ -581,11 +581,8 @@ com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 - <init>():V
-- a:addFileLevelHighlight(I,com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.psi.PsiFile,com.intellij.openapi.editor.markup.RangeHighlighter):V
-- a:cleanFileLevelHighlights(I,com.intellij.psi.PsiFile):V
 - a:getFileStatusMap():com.intellij.codeInsight.daemon.impl.FileStatusMap
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-- a:hasFileLevelHighlights(I,com.intellij.psi.PsiFile):Z
 - a:hasVisibleLightBulbOrPopup():Z
 - a:isErrorAnalyzingFinished(com.intellij.psi.PsiFile):Z
 - s:isHighlightingCompleted(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):Z
@@ -593,7 +590,6 @@ a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - s:processHighlights(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.util.Processor):Z
 - s:processHighlights(com.intellij.openapi.editor.ex.MarkupModelEx,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.util.Processor):Z
 - pa:progressIsAdvanced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,D):V
-- a:runMainPasses(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 c:com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 - com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 - com.intellij.openapi.progress.StandardProgressIndicator
