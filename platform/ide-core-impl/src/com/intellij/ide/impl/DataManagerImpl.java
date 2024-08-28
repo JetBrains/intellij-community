@@ -146,11 +146,6 @@ public class DataManagerImpl extends DataManager {
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
     }
-
-    if (dataProvider instanceof BackgroundableDataProvider) {
-      dataProvider = ((BackgroundableDataProvider)dataProvider).createBackgroundDataProvider();
-    }
-
     return dataProvider;
   }
 
