@@ -59,8 +59,6 @@ internal class MavenProjectState : Cloneable, Serializable {
   var properties: Properties? = null
     private set
 
-  private var myPlugins: List<MavenPlugin> = emptyList()
-
   var extensions: List<MavenArtifact> = emptyList()
     private set
 
@@ -90,23 +88,19 @@ internal class MavenProjectState : Cloneable, Serializable {
 
   var dependencyHash: String? = null
 
-  private var myReadingProblems: Collection<MavenProjectProblem> = emptySet()
-
   var unresolvedArtifactIds: Set<MavenId> = emptySet()
     private set
 
   var localRepository: File? = null
     private set
 
-  val plugins: List<MavenPlugin>
-    get() = myPlugins
+  var plugins: List<MavenPlugin> = emptyList()
+    private set
 
-  var readingProblems: Collection<MavenProjectProblem>
-    get() = myReadingProblems
-    set(readingProblems) {
-      this.myReadingProblems = readingProblems
-    }
+  var readingProblems: Collection<MavenProjectProblem> = emptySet()
+    private set
 
+  // TODO: remove
   public override fun clone(): MavenProjectState {
     try {
       val result = super.clone() as MavenProjectState
@@ -135,7 +129,7 @@ internal class MavenProjectState : Cloneable, Serializable {
     val repositoryChanged = !Comparing.equal(localRepository, newState.localRepository)
 
     result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(dependencies, newState.dependencies))
-    result.setHasPluginChanges(repositoryChanged || !Comparing.equal<List<MavenPlugin>?>(myPlugins, newState.myPlugins))
+    result.setHasPluginChanges(repositoryChanged || !Comparing.equal<List<MavenPlugin>>(plugins, newState.plugins))
     result.setHasPropertyChanges(!Comparing.equal(properties, newState.properties))
     return result
   }
@@ -153,7 +147,7 @@ internal class MavenProjectState : Cloneable, Serializable {
     directory: String,
     fileExtension: String?,
   ) {
-    myReadingProblems = readingProblems
+    this.readingProblems = readingProblems
     localRepository = settings.effectiveLocalRepository
     activatedProfilesIds = activatedProfiles
 
@@ -179,7 +173,7 @@ internal class MavenProjectState : Cloneable, Serializable {
 
     doSetResolvedAttributes(model, unresolvedArtifactIds, keepPreviousArtifacts, keepPreviousPlugins)
 
-    MavenModelPropertiesPatcher.patch(properties, myPlugins)
+    MavenModelPropertiesPatcher.patch(properties, plugins)
 
     modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension)
     profilesIds = collectProfilesIds(model.profiles) + if (keepPreviousProfiles) profilesIds else emptySet()
@@ -252,7 +246,7 @@ internal class MavenProjectState : Cloneable, Serializable {
     }
 
     if (keepPreviousPlugins) {
-      newPlugins.addAll(myPlugins)
+      newPlugins.addAll(plugins)
     }
 
     newUnresolvedArtifacts.addAll(unresolvedArtifactIds)
@@ -266,7 +260,7 @@ internal class MavenProjectState : Cloneable, Serializable {
     remoteRepositories = ArrayList(newRepositories)
     dependencies = ArrayList(newDependencies)
     dependencyTree = ArrayList(newDependencyTree)
-    myPlugins = ArrayList(newPlugins)
+    plugins = ArrayList(newPlugins)
     extensions = ArrayList(newExtensions)
     annotationProcessors = ArrayList(newAnnotationProcessors)
   }
@@ -295,7 +289,7 @@ internal class MavenProjectState : Cloneable, Serializable {
   val isParentResolved: Boolean
     get() = !unresolvedArtifactIds.contains(parentId)
 
-  val declaredPlugins: List<MavenPlugin> get() = myPlugins.filter { !it.isDefault }
+  val declaredPlugins: List<MavenPlugin> get() = plugins.filter { !it.isDefault }
 
   fun doUpdateState(
     dependencies: List<MavenArtifact>,
@@ -304,7 +298,7 @@ internal class MavenProjectState : Cloneable, Serializable {
   ) {
     this.dependencies = dependencies
     this.properties = properties
-    myPlugins = plugins
+    this.plugins = plugins
   }
 
   private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
