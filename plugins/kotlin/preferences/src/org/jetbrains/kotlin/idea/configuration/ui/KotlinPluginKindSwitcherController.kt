@@ -66,23 +66,25 @@ class KotlinPluginKindSwitcherController {
                 )
                 text(text)
             }
-            row {
-                val text = KotlinPreferencesBundle.message(
-                    "label.plugin.will.be.switched.after.ide.restart",
-                    currentPluginMode.other.pluginModeDescription,
-                )
-                text(text)
-            }
-            row {
-                link(
-                    IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect", productName)
-                ) {
-                    suggestRestart(productName)
+            if (VMOptions.canWriteOptions()) {
+                row {
+                    val text = KotlinPreferencesBundle.message(
+                        "label.plugin.will.be.switched.after.ide.restart",
+                        currentPluginMode.other.pluginModeDescription,
+                    )
+                    text(text)
                 }
-            }
-            row {
-                link(KotlinPreferencesBundle.message("link.label.cancel.switching")) {
-                    cancelSwitching()
+                row {
+                    link(
+                        IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect", productName)
+                    ) {
+                        suggestRestart(productName)
+                    }
+                }
+                row {
+                    link(KotlinPreferencesBundle.message("link.label.cancel.switching")) {
+                        cancelSwitching()
+                    }
                 }
             }
         }
@@ -90,12 +92,27 @@ class KotlinPluginKindSwitcherController {
             row {
                 checkBox(KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin")).also {
                     checkBox = it.component
+                    enabled(VMOptions.canWriteOptions())
                 }.onChanged {
                     chosenKind = KotlinPluginMode.of(it.isSelected)
                 }.gap(RightGap.SMALL)
                 icon(AllIcons.General.Beta).align(AlignY.BOTTOM)
                 updateCheckBoxToChosenKind()
-                comment(KotlinPreferencesBundle.message("kotlin.plugin.type.restart.required.comment"))
+                if (VMOptions.canWriteOptions()) {
+                    comment(KotlinPreferencesBundle.message("kotlin.plugin.type.restart.required.comment"))
+                }
+            }
+
+            if (!VMOptions.canWriteOptions()) {
+                row {
+                    icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
+                    text(
+                        KotlinPreferencesBundle.message(
+                            "text.k2.based.kotlin.plugin.vmoptions.are.not.writable.0.1",
+                            USE_K2_PLUGIN_VM_OPTION_PREFIX,
+                            1.takeIf { useK2Plugin == true } ?: 2)
+                    )
+                }
             }
 
             row {
@@ -122,21 +139,18 @@ class KotlinPluginKindSwitcherController {
     }
 
     private fun updatePanels() {
-        currentPluginPanel.visible(pluginKindWillBeSwitchedAfterRestart)
-        pluginTypeChooserPanel.visible(!pluginKindWillBeSwitchedAfterRestart)
+        val visible = VMOptions.canWriteOptions() && pluginKindWillBeSwitchedAfterRestart
+        currentPluginPanel.visible(visible)
+        pluginTypeChooserPanel.visible(!visible)
     }
 
     private fun updateCheckBoxToChosenKind() {
         checkBox.isSelected = chosenKind == KotlinPluginMode.K2
     }
 
-
     companion object {
 
-        fun createIfPluginSwitchIsPossible(): KotlinPluginKindSwitcherController? {
-            return if (VMOptions.canWriteOptions()) KotlinPluginKindSwitcherController()
-            else null
-        }
+        fun createIfPluginSwitchIsPossible(): KotlinPluginKindSwitcherController? = KotlinPluginKindSwitcherController()
 
         fun suggestRestart(productName: String) {
             val application = ApplicationManager.getApplication() as ApplicationEx
@@ -159,7 +173,7 @@ class KotlinPluginKindSwitcherController {
 const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="
 
 private var useK2Plugin: Boolean?
-    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ false)?.toBoolean()
+    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ KotlinPluginModeProvider.isK2Mode())?.toBoolean()
     set(value) {
         VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, value?.toString())
     }
