@@ -417,4 +417,46 @@ public final class SecondaryFunctionsHelper {
 
     return null;
   }
+
+  // Updates assignments to make them compound assignments if possible
+  public static void updateAssignments(Statement stat) {
+    List<Object> objects = new ArrayList<>(stat.getExprents() == null ? stat.getSequentialObjects() : stat.getExprents());
+
+    for (Object obj : objects) {
+      if (obj instanceof Statement) {
+        updateAssignments((Statement) obj);
+      } else if (obj instanceof Exprent) {
+        Exprent exprent = (Exprent) obj;
+
+        if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+          AssignmentExprent assignment = (AssignmentExprent) exprent;
+
+          List<Exprent> params = exprent.getAllExprents();
+
+          Exprent lhs = params.get(0);
+          Exprent rhs = params.get(1);
+
+          // Check for expressions that are standard assignments where the left hand side is a variable and the right hand side is a function
+          if (assignment.getCondType() == -1 && lhs.type == Exprent.EXPRENT_VAR && rhs.type == Exprent.EXPRENT_FUNCTION) {
+            VarExprent lhsVar = (VarExprent) lhs;
+            FunctionExprent rhsFunc = (FunctionExprent) rhs;
+
+            List<Exprent> funcParams = rhsFunc.getAllExprents();
+
+            // Make sure that the function is a mathematical or bitwise function and function's lhs is a variable
+            if (rhsFunc.getFuncType() <= FunctionExprent.FUNCTION_USHR && funcParams.get(0).type == Exprent.EXPRENT_VAR) {
+              VarExprent lhsVarFunc = (VarExprent) funcParams.get(0);
+
+              // Check if the left hand side of the assignment and the left hand side of the function are the same variable
+              if (lhsVar.getIndex() == lhsVarFunc.getIndex()) {
+                // If all the checks succeed, set the assignment to be a compound assignment and set the right to the right hand side of the function
+                assignment.setCondType(rhsFunc.getFuncType());
+                assignment.setRight(funcParams.get(1));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }

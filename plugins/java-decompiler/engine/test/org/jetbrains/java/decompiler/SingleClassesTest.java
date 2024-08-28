@@ -242,9 +242,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
 
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
-
   @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
-
+  @Test public void testCompoundAssignment() { doTest("pkg/TestCompoundAssignment"); }
   @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
 
   @Test public void testPreserveAssignmentToRecord() { doTest("pkg/PreserveAssignmentToRecord"); }

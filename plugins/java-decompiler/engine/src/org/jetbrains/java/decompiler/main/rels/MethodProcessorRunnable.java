@@ -243,6 +243,7 @@ public class MethodProcessorRunnable implements Runnable {
     varProc.setVarDefinitions(root);
 
     cancellationManager.checkCanceled();
+    SecondaryFunctionsHelper.updateAssignments(root);
 
     // must be the last invocation, because it makes the statement structure inconsistent
     // FIXME: new edge type needed
