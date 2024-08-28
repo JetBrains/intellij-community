@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @Service(Service.Level.APP)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
-internal class MarkdownPreviewSettings: SimplePersistentStateComponent<MarkdownPreviewSettings.State>(State()) {
+class MarkdownPreviewSettings: SimplePersistentStateComponent<MarkdownPreviewSettings.State>(State()) {
   class State: BaseState() {
     var fontSize by property(defaultFontSize)
   }

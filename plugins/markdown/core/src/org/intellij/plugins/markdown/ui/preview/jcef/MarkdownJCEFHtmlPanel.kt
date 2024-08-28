@@ -24,10 +24,7 @@ import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.application
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
@@ -41,6 +38,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable.Companion.fontSizeOptions
 import org.intellij.plugins.markdown.ui.preview.*
+import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
 import org.intellij.plugins.markdown.ui.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
@@ -101,6 +99,8 @@ class MarkdownJCEFHtmlPanel(
     styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
   )
 
+  private val updateHandler = MarkdownUpdateHandler.Debounced()
+
   private fun buildIndexContent(): String {
     // language=HTML
     return """
@@ -125,18 +125,6 @@ class MarkdownJCEFHtmlPanel(
   private var previousRenderClosure: String = ""
 
   private val coroutineScope = project?.let(MarkdownPluginScope::createChildScope) ?: MarkdownApplicationScope.createChildScope()
-
-  private sealed interface PreviewRequest {
-    data class Update(
-      val content: String,
-      val initialScrollOffset: Int,
-      val document: VirtualFile?,
-    ) : PreviewRequest
-
-    data class ReloadWithOffset(val offset: Int) : PreviewRequest
-  }
-
-  private val updateViewRequests = MutableSharedFlow<PreviewRequest>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val projectRoot = coroutineScope.async(context = Dispatchers.Default) {
     if (virtualFile != null && project != null) {
@@ -186,7 +174,7 @@ class MarkdownJCEFHtmlPanel(
       val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
 
       loadIndexContent()
-      updateViewRequests.debounce(20.milliseconds).collectLatest { request ->
+      updateHandler.requests.collectLatest { request ->
         when (request) {
           is PreviewRequest.Update -> {
             val (html, initialScrollOffset, document) = request
@@ -239,7 +227,7 @@ class MarkdownJCEFHtmlPanel(
   }
 
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
-    check(updateViewRequests.tryEmit(PreviewRequest.Update(content = html, initialScrollOffset, document)))
+    updateHandler.setContent(html, initialScrollOffset, document)
   }
 
   @ApiStatus.Internal
@@ -253,7 +241,7 @@ class MarkdownJCEFHtmlPanel(
   }
 
   override fun reloadWithOffset(offset: Int) {
-    check(updateViewRequests.tryEmit(PreviewRequest.ReloadWithOffset(offset)))
+    updateHandler.reloadWithOffset(offset)
   }
 
   override fun dispose() {

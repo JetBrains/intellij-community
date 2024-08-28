@@ -10,3 +10,14 @@
   - name: intellij.markdown.xml
   - name: intellij.markdown.model
   - name: intellij.markdown.spellchecker
+- name: lib/modules/intellij.markdown.compose.preview.jar
+  contentModules:
+  - name: intellij.markdown.compose.preview
+    libraries:
+      jetbrains-jewel-markdown-laf-bridge-styling:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-markdown-ide-laf-bridge-styling-241/0.19.7/jewel-markdown-ide-laf-bridge-styling-241-0.19.7.jar
+        size: 28320
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-markdown-core-241/0.19.7/jewel-markdown-core-241-0.19.7.jar
+        size: 294476
+      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark/0.22.0/commonmark-0.22.0.jar
+        size: 193845

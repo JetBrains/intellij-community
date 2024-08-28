@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.markdown.model" />
     <orderEntry type="module" module-name="intellij.markdown.spellchecker" />
     <orderEntry type="module" module-name="intellij.markdown.xml" />
+    <orderEntry type="module" module-name="intellij.markdown.compose.preview" />
   </component>
 </module>

@@ -22,7 +22,7 @@ import javax.swing.JComponent
 @Suppress("FunctionName")
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalJewelApi::class)
 @Experimental
-internal fun JBComposePanel(
+fun JBComposePanel(
   content: @Composable () -> Unit
 ): JComponent {
   if (ApplicationManager.getApplication().isInternal) {
