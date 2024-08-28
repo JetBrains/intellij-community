@@ -6,6 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -1203,6 +1204,11 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       JVMName contextClass = null;
 
       if (psiMethod != null) {
+        if (AnnotationUtil.isAnnotated(psiMethod, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+          throw new EvaluateRuntimeException(new UnsupportedExpressionException(
+            JavaDebuggerBundle.message("evaluation.error.signature.polymorphic.call.evaluation.not.supported")));
+        }
+
         PsiClass methodPsiClass = psiMethod.getContainingClass();
         contextClass = JVMNameUtil.getJVMQualifiedName(methodPsiClass);
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
