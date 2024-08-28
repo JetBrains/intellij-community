@@ -3,7 +3,10 @@
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
   "targetPackage": "bar",
   "targetSourceRoot": "B/src",
+  "withRuntime": "true",
+  "modulesWithRuntime": ["B"],
+  "modulesWithCommonRuntime": ["A"],
   "moveExpectedActuals": "false",
   "enabledInK1": "false",
-  "enabledInK2": "true"
+  "enabledInK2": "false"
 }

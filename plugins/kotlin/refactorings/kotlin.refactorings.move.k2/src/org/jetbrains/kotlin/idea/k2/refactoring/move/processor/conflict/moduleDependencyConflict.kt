@@ -2,24 +2,21 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.*
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.getContainer
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 private fun PsiElement.createAccessibilityConflictInternal(
@@ -46,20 +43,18 @@ private fun PsiElement.createAccessibilityConflictUnMoved(referencedDeclaration:
 
 internal fun checkModuleDependencyConflictsForNonMovedUsages(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
-    oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
-    usages: List<MoveRenameUsageInfo>
+    usages: List<MoveRenameUsageInfo>,
+    targetModule: PsiDirectory
 ): MultiMap<PsiElement, String> {
     return usages
-        .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) }
-        .mapNotNull { usage ->
+        .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) }
+        .mapNotNull { usageInfo ->
             tryFindConflict {
-                val usageElement = usage.element ?: return@tryFindConflict null
-                val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
+                val usageElement = usageInfo.element ?: return@tryFindConflict null
+                val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
                 if (referencedDeclaration.isInternal) return@tryFindConflict null
-                val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@tryFindConflict null
-                val targetModule = declarationCopy.containingModule() ?: return@tryFindConflict null
                 val resolveScope = usageElement.resolveScope
-                if (resolveScope.isSearchInModuleContent(targetModule, false)) return@tryFindConflict null
+                if (resolveScope.isSearchInModuleContent(targetModule.module ?: return@tryFindConflict null, false)) return@tryFindConflict null
                 usageElement.createAccessibilityConflictUnMoved(referencedDeclaration)
             }
         }.toMultiMap()
@@ -67,23 +62,20 @@ internal fun checkModuleDependencyConflictsForNonMovedUsages(
 
 fun checkModuleDependencyConflictsForInternalUsages(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
-    fakeTarget: KtFile
+    target: PsiDirectory
 ): MultiMap<PsiElement, String> {
-    return fakeTarget
-        .collectDescendantsOfType<KtSimpleNameExpression>()
-        .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
-        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) }
-        .mapNotNull { (usageInfo, refExprCopy) ->
-            tryFindConflict {
-                val usageElement = usageInfo.element ?: return@tryFindConflict null
-                val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
-                if (referencedDeclaration is KtNamedDeclaration && referencedDeclaration.isInternal) return@tryFindConflict null
-                analyzeCopy(refExprCopy, KaDanglingFileResolutionMode.PREFER_SELF) {
-                    if (refExprCopy.mainReference.resolveToSymbol() == null) {
-                        val module = refExprCopy.containingModule() ?: return@analyzeCopy null
-                        usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)
-                    } else null
+    return allDeclarationsToMove.flatMap { containing ->
+        containing.internalUsageElements()
+            .mapNotNull { refExpr -> refExpr.internalUsageInfo ?: return@mapNotNull null }
+            .filter { usageInfo -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) }
+            .mapNotNull { usageInfo ->
+                tryFindConflict {
+                    val usageElement = usageInfo.element ?: return@tryFindConflict null
+                    val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
+                    if (referencedDeclaration.isInternal) return@tryFindConflict null
+                    if (target.resolveScope.contains(referencedDeclaration)) return@tryFindConflict null
+                    usageElement.createAccessibilityConflictInternal(referencedDeclaration, target.module ?: return@tryFindConflict null)
                 }
             }
-        }.toMultiMap()
+    }.toMultiMap()
 }

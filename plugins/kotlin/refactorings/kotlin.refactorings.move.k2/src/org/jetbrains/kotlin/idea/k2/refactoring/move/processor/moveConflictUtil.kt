@@ -83,8 +83,8 @@ internal fun findAllMoveConflicts(
         putAllValues(checkMoveActualDeclarationIntoCommonModule(declarationsToCheck, targetModule))
         putAllValues(checkVisibilityConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
         putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
-        putAllValues(checkModuleDependencyConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
-        putAllValues(checkModuleDependencyConflictsForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
+        putAllValues(checkModuleDependencyConflictsForInternalUsages(allDeclarationsToMove, targetDir))
+        putAllValues(checkModuleDependencyConflictsForNonMovedUsages(allDeclarationsToMove, usages, targetDir))
     }
 }
 
