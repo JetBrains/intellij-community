@@ -22,7 +22,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
   private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(
     DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF);
   private static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
-    DOC_TAG_VALUE_TOKEN, JAVA_CODE_REFERENCE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER));
+    DOC_TAG_VALUE_TOKEN, JAVA_CODE_REFERENCE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, DOC_SHARP, DOC_LBRACKET, DOC_RBRACKET, DOC_LPAREN, DOC_RPAREN));
 
   public PsiDocTagImpl() {
     super(DOC_TAG);

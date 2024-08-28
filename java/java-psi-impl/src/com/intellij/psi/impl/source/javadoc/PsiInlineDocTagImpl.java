@@ -24,7 +24,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
   private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF);
   static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
     JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, WHITE_SPACE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, DOC_COMMENT_BAD_CHARACTER,
-    DOC_SNIPPET_TAG_VALUE));
+    DOC_SNIPPET_TAG_VALUE, DOC_SHARP, DOC_LBRACKET, DOC_RBRACKET, DOC_LPAREN, DOC_RPAREN));
 
   public PsiInlineDocTagImpl() {
     super(DOC_INLINE_TAG);
