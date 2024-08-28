@@ -570,22 +570,25 @@ object Switcher : BaseSwitcherAction(null) {
       )
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
-          val filePath = Path(it.file.presentableUrl).parent?.pathString
-          val result = filePath?.let { filePath ->
+          val parentPath = Path(it.file.presentableUrl).parent
+          val result = if (parentPath == null || parentPath.nameCount == 0) "" else {
+            val filePath = parentPath.pathString
             val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
             if (projectPath != null && FileUtil.isAncestor(projectPath, filePath, true)) {
-              return@let FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
+              val locationRelativeToProjectDir = FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
+              if (locationRelativeToProjectDir != null && Path(locationRelativeToProjectDir).nameCount != 0) locationRelativeToProjectDir else filePath
             }
-            if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
-              FileUtil.getLocationRelativeToUserHome(filePath)
+            else if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
+              val locationRelativeToUserHome = FileUtil.getLocationRelativeToUserHome(filePath)
+              if (Path(locationRelativeToUserHome).nameCount != 0) locationRelativeToUserHome else filePath
             }
             else {
               filePath
             }
-          } ?: ""
+          }
 
           ListItemData(item = it,
-                       mainText = it.mainText,
+                       mainText = VfsPresentationUtil.getPresentableNameForUI(it.project, it.file),
                        statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
                        pathText = result,
                        backgroundColor = VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
