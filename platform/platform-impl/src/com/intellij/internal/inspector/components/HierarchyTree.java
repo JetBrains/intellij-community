@@ -6,6 +6,8 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -342,9 +344,17 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           if (component.isDoubleBuffered()) {
             append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-          if (DataManagerImpl.getDataProviderEx(component) != null) {
+          if (component instanceof UiDataProvider) {
+            append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append("ui-data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+          else if (component instanceof DataProvider) {
             append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+          else if (DataManagerImpl.getDataProviderEx(component) != null) {
+            append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append("with data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           }
 
           componentNode.setText(toString());
