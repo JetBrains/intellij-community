@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.name.FqName
-import java.util.*
 
 private const val FUNCTION_BODY_TEMPLATE = "New Kotlin Function Body.kt"
 private const val PROPERTY_INITIALIZER_TEMPLATE = "New Kotlin Property Initializer.kt"
@@ -29,9 +28,11 @@ fun getFunctionBodyTextFromTemplate(
     returnType: String,
     classFqName: FqName? = null
 ): String {
-    val fileTemplate = FileTemplateManager.getInstance(project)!!.getCodeTemplate(kind.templateFileName)
+    val fileTemplateManager = FileTemplateManager.getInstance(project)
+    val fileTemplate = fileTemplateManager.getCodeTemplate(kind.templateFileName)
 
-    val properties = Properties()
+    val properties = fileTemplateManager.defaultProperties
+    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType)
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType)
     if (classFqName != null) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, classFqName.asString())
