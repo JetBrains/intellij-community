@@ -75,12 +75,28 @@ function verify_statically_linked() {
   export CARGO_HOME=/home/builder/.cargo
   export RUSTUP_HOME=/home/builder/.rustup
 
-  cargo build -v -v --release --target x86_64-unknown-linux-musl --offline --target-dir "$out_dir"
+  cargo build -v -v --release --target x86_64-unknown-linux-musl --offline --target-dir "$out_dir/restarter"
 
-  verify_statically_linked  "$out_dir/x86_64-unknown-linux-musl/release/restarter"
+  verify_statically_linked  "$out_dir/restarter/x86_64-unknown-linux-musl/release/restarter"
 
-  cp "$out_dir/x86_64-unknown-linux-musl/release/restarter" $dist_dir/.
+  cp "$out_dir/restarter/x86_64-unknown-linux-musl/release/restarter" $dist_dir/.
   chmod +x $dist_dir/restarter
+)
+
+# Build Launcher
+(
+  mkdir $out_dir/launcher && cd $out_dir/launcher
+  cp -r $top/tools/idea/native/XPlatLauncher/. ./
+
+  export PATH="/home/builder/.cargo/bin:$PATH"
+  export CARGO_HOME=/home/builder/.cargo
+  export RUSTUP_HOME=/home/builder/.rustup
+
+  cargo build -v -v --release --target x86_64-unknown-linux-gnu --target-dir "$out_dir/launcher"
+
+  verify_glibc "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher"
+  cp "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher" $dist_dir/launcher
+  chmod +x $dist_dir/launcher
 )
 
 echo "Done Building IntelliJ Linux Tools!"
