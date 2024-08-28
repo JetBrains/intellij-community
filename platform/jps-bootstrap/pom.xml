@@ -23,7 +23,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.2.1-jre</version>
+      <version>33.3.0-jre</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
