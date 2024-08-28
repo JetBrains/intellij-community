@@ -72,6 +72,8 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFrom
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.project.PROJECT_ID
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -1285,6 +1287,8 @@ private suspend fun initProject(
     }
 
     project.putUserDataIfAbsent(PROJECT_PATH, file)
+    project.putUserDataIfAbsent(PROJECT_ID, ProjectId.create())
+
     project.registerComponents()
     registerComponentActivity?.end()
 
