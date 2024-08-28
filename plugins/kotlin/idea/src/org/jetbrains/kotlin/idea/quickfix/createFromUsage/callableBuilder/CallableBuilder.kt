@@ -491,16 +491,16 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 val modifierList = callableInfo.modifierList?.copied() ?: psiFactory.createEmptyModifierList()
                 val visibilityKeyword = modifierList.visibilityModifierType()
                 if (visibilityKeyword == null) {
-                    val defaultVisibility =
-                        CreateFromUsageUtil.modifierToString(CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
-                            containingElement,
-                            callableInfo.isAbstract,
-                            config.isExtension,
-                            (callableInfo.kind == CallableKind.CONSTRUCTOR),
-                            config.originalElement
-                        ))
-                    append(defaultVisibility)
-                    if (isNotEmpty()) append(" ")
+                    CreateFromUsageUtil.visibilityModifierToString(CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
+                        containingElement,
+                        callableInfo.isAbstract,
+                        config.isExtension,
+                        (callableInfo.kind == CallableKind.CONSTRUCTOR),
+                        config.originalElement
+                    ))?.let {
+                        append(it)
+                        append(" ")
+                    }
                 }
 
                 // TODO: Get rid of isAbstract

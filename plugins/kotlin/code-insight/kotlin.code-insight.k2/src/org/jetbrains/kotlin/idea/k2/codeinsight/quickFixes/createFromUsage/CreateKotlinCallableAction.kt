@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.request.CreateExecutableFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -144,9 +143,7 @@ internal class CreateKotlinCallableAction(
         val container = getContainer()
         if (call == null || container == null) return null
         val modifierListAsString =
-            request.modifiers.filter { it != JvmModifier.PUBLIC }.joinToString(
-                separator = " ",
-                transform = { modifier -> CreateFromUsageUtil.modifierToString(modifier) })
+            request.modifiers.mapNotNull(CreateFromUsageUtil::visibilityModifierToString).joinToString(separator = " ")
         return buildString {
             append(modifierListAsString)
             if (abstract) {

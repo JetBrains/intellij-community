@@ -93,9 +93,7 @@ object K2CreateParameterFromUsageBuilder {
         }
 
         override fun startInWriteAction(): Boolean = false
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-            return originalExprPointer.element != null
-        }
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = originalExprPointer.element != null
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
         context(KaSession)
@@ -111,7 +109,7 @@ object K2CreateParameterFromUsageBuilder {
                 (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
             }
             val approximatedType = approximateWithResolvableType(type, physicalExpression)
-            if (approximatedType != null && approximatedType != builtinTypes.unit) { return approximatedType }
+            if (approximatedType != null && !approximatedType.semanticallyEquals(builtinTypes.unit)) { return approximatedType }
 
             expression.expectedType?.let { return it }
             val binaryExpression = expression.getAssignmentByLHS()

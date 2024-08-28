@@ -48,11 +48,13 @@ object K2CreateLocalVariableFromUsageBuilder {
         }
     }
 
-
-    internal class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, private val propertyName: String = refExpr.getReferencedName()) : IntentionAction {
+    internal class CreateLocalFromUsageAction(
+        refExpr: KtNameReferenceExpression,
+        private val propertyName: String = refExpr.getReferencedName()
+    ) : IntentionAction {
         val pointer: SmartPsiElementPointer<KtNameReferenceExpression> = SmartPointerManager.createPointer(refExpr)
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)
-        private var declarationText:String = computeDeclarationText()
+        private var declarationText: String = computeDeclarationText()
 
         @OptIn(KaExperimentalApi::class)
         private fun computeDeclarationText(): String {
@@ -105,9 +107,7 @@ object K2CreateLocalVariableFromUsageBuilder {
         }
 
         override fun startInWriteAction(): Boolean = false
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-            return pointer.element != null
-        }
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
     }
 

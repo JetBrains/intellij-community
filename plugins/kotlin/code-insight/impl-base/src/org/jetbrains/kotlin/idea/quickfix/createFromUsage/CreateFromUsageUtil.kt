@@ -148,15 +148,22 @@ object CreateFromUsageUtil {
         } else null
     }
 
-    private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
+    private val visibilityModifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
       JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
       JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
       JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
-      JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
+      JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD,
     )
-    fun modifierToString(modifier: JvmModifier?):String {
-        return modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?: ""
-    }
+
+    fun visibilityModifierToString(modifier: JvmModifier?): String? =
+        visibilityModifierToKotlinToken[modifier]?.takeIf { it != KtTokens.PUBLIC_KEYWORD }?.value
+
+    private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> =
+        visibilityModifierToKotlinToken + mapOf(JvmModifier.ABSTRACT to KtTokens.ABSTRACT_KEYWORD)
+
+    fun jvmModifierToKotlin(modifier: JvmModifier?): KtModifierKeywordToken? =
+        modifierToKotlinToken[modifier]
+
     private fun calcNecessaryEmptyLines(decl: KtDeclaration, after: Boolean): Int {
         var lineBreaksPresent = 0
         var neighbor: PsiElement? = null
