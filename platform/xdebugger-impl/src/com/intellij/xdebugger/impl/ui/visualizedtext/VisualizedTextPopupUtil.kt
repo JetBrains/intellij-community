@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XFullValueEvaluator
@@ -163,6 +164,7 @@ object VisualizedTextPopupUtil {
 
       val panel = JBTabbedPane()
       panel.tabComponentInsets = JBUI.emptyInsets()
+      WindowMoveListener(panel).installTo(panel)
 
       for ((tab, component) in tabsAndComponents) {
         panel.addTab(tab.name, component)
