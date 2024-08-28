@@ -48,18 +48,10 @@ public class ImportSpecBuilder {
   }
 
   /**
-   * @deprecated see {@link ImportSpecBuilder#forceWhenUptodate(boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public ImportSpecBuilder forceWhenUptodate() {
-    return forceWhenUptodate(true);
-  }
-
-  /**
    * @deprecated it does nothing from
    * 16.02.2017, 16:42, ebef09cdbbd6ace3c79d3e4fb63028bac2f15f75
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ImportSpecBuilder forceWhenUptodate(boolean force) {
     return this;
   }

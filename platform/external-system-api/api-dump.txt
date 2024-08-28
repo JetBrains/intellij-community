@@ -350,7 +350,6 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - createDirectoriesForEmptyContentRoots():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - dontNavigateToError():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - dontReportRefreshErrors():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-- forceWhenUptodate():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - forceWhenUptodate(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - navigateToError():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - *:projectResolverPolicy(com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
