@@ -9,10 +9,12 @@ import com.intellij.platform.kernel.withKernel
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
 import fleet.kernel.shared
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides the ability to control how projects are stored in Rhizome DB
  */
+@ApiStatus.Internal
 abstract class ProjectEntitiesStorage {
 
   /**
