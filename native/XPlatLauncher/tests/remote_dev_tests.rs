@@ -37,9 +37,9 @@ mod tests {
 
     #[test]
     fn remote_dev_unknown_command_without_project_path_test() {
-        let output = run_launcher(LauncherRunSpec::remote_dev().with_args(&["testCommand"])).stdout;
+        let launch_result = run_launcher(LauncherRunSpec::remote_dev().with_args(&["testCommand"]));
 
-        assert!(output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"), "output:\n{}", output);
+        check_output(&launch_result, |output| output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
     }
 
     #[test]
@@ -56,9 +56,9 @@ mod tests {
 
     #[test]
     fn remote_dev_known_command_with_project_path_test_2() {
-        let output = run_launcher(LauncherRunSpec::remote_dev().with_args(&["run"])).stdout;
+        let launch_result = run_launcher(LauncherRunSpec::remote_dev().with_args(&["run"]));
 
-        assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
+        check_output(&launch_result, |output| !output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"));
     }
 
     #[test]
@@ -80,18 +80,18 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let env = HashMap::from([("REMOTE_DEV_NEW_UI_ENABLED", "1")]);
         let remote_dev_command = &["run", &test.project_dir.display().to_string()];
-        let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env));
 
-        assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
+        check_output(&launch_result, |output| !output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
     }
 
     #[test]
     fn remote_dev_new_ui_test_shared_configs() {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let remote_dev_command = &["run", &test.project_dir.display().to_string()];
-        let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command));
 
-        assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
+        check_output(&launch_result, |output| !output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
     }
 
     #[test]
@@ -124,10 +124,9 @@ mod tests {
         prepare_font_config_dir(&test.dist_root);
         let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
         let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command));
-        let output = launch_result.stdout;
 
         let expected_output = format!("FONTCONFIG_PATH={}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
-        assert!(output.contains(&expected_output));
+        check_output(&launch_result, |output| output.contains(&expected_output));
     }
 
     #[test]
@@ -137,9 +136,13 @@ mod tests {
         let env = HashMap::from([("FONTCONFIG_PATH", "/some/existing/path")]);
         prepare_font_config_dir(&test.dist_root);
         let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
-        let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(&env).with_args(remote_dev_command)).stdout;
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(&env).with_args(remote_dev_command));
 
         let expected_output = format!("FONTCONFIG_PATH=/some/existing/path:{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
-        assert!(output.contains(&expected_output));
+        check_output(&launch_result, |output| output.contains(&expected_output));
+    }
+
+    fn check_output<Check>(run_result: &LauncherRunResult, check: Check) where Check: FnOnce(&String) -> bool{
+        assert!(check(&run_result.stdout), "stdout:\n{}\nstderr:\n{}", run_result.stdout, run_result.stderr)
     }
 }
