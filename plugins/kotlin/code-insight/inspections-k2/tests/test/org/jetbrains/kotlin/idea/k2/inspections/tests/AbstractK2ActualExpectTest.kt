@@ -5,11 +5,12 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.configureMultiPlatformModuleStructure
 import java.io.File
 abstract class AbstractK2ActualExpectTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
 
     fun doTest(testPath: String) {
-        configureModuleStructure(testPath)
+        myFixture.configureMultiPlatformModuleStructure(testPath)
 
         val configFile = File(testPath)
         assertExists(configFile)
