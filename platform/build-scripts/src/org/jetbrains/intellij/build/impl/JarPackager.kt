@@ -44,6 +44,7 @@ private val libsThatUsedInJps = java.util.Set.of(
   "ASM",
   "netty-buffer",
   "netty-codec-http",
+  "netty-codec-protobuf",
   "netty-handler-proxy",
   "gson",
   "Log4J",

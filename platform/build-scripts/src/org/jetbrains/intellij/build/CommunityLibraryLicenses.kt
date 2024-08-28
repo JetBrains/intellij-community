@@ -860,11 +860,13 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/loomchild/segment")
       .mit("https://github.com/loomchild/segment/blob/master/LICENSE.txt")
       .suppliedByPersons("Jarek Lipski"),
-    LibraryLicense(name = "netty-buffer", libraryName = "netty-buffer", url = "https://netty.io").apache()
+    LibraryLicense(name = "netty-buffer", libraryName = "netty-buffer", url = "https://netty.io").apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
       .suppliedByOrganizations("The Netty project"),
-    LibraryLicense(name = "netty-codec-http", libraryName = "netty-codec-http", url = "https://netty.io").apache()
+    LibraryLicense(name = "netty-codec-http", libraryName = "netty-codec-http", url = "https://netty.io").apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
       .suppliedByOrganizations("The Netty project"),
-    LibraryLicense(name = "netty-handler-proxy", libraryName = "netty-handler-proxy", url = "https://netty.io").apache()
+    LibraryLicense(name = "netty-codec-protobuf", libraryName = "netty-codec-protobuf", url = "https://netty.io").apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
+      .suppliedByOrganizations("The Netty project"),
+    LibraryLicense(name = "netty-handler-proxy", libraryName = "netty-handler-proxy", url = "https://netty.io").apache("https://github.com/netty/netty/blob/4.1/LICENSE.txt")
       .suppliedByOrganizations("The Netty project"),
     LibraryLicense(libraryName = "ngram-slp", url = "https://github.com/SLP-team/SLP-Core")
       .mit("https://github.com/SLP-team/SLP-Core/blob/master/LICENSE")

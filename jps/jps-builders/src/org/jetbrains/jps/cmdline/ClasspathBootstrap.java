@@ -20,6 +20,7 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
@@ -58,7 +59,8 @@ public final class ClasspathBootstrap {
     EventLoopGroup.class, // netty transport
     AddressResolverGroup.class, // netty resolver
     ByteBufAllocator.class, // netty buffer
-    ProtobufDecoder.class,  // netty codec
+    ByteToMessageDecoder.class, // netty codec http
+    ProtobufDecoder.class,  // netty codec protobuf
     Message.class, // protobuf
   };
 

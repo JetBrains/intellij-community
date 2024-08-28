@@ -132,5 +132,11 @@
 - name: lib/modules/intellij.java.vcs.jar
   contentModules:
   - name: intellij.java.vcs
+- name: lib/netty-codec-protobuf.jar
+  projectLibraries:
+  - name: netty-codec-protobuf
+    files:
+    - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
+    reason: withProjectLibrary
 - name: lib/rt/debugger-agent.jar
 - name: lib/sa-jdwp.jar

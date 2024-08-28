@@ -76,10 +76,33 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
 
   for (it in listOf(
-    "jna", "OroMatcher", "ASM", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-    "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "slf4j-api", "plexus-utils",
-    "jetbrains-annotations", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
-    "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml", "caffeine", "jetbrains.kotlinx.metadata.jvm"
+    "jna",
+    "OroMatcher",
+    "ASM",
+    "protobuf",
+    "cli-parser",
+    "Log4J",
+    "jgoodies-forms",
+    "Eclipse",
+    "netty-codec-http",
+    "netty-codec-protobuf",
+    "lz4-java",
+    "commons-codec",
+    "commons-logging",
+    "http-client",
+    "slf4j-api",
+    "plexus-utils",
+    "jetbrains-annotations",
+    "gson",
+    "jps-javac-extension",
+    "fastutil-min",
+    "kotlin-stdlib",
+    "commons-lang3",
+    "maven-resolver-provider",
+    "netty-buffer",
+    "aalto-xml",
+    "caffeine",
+    "jetbrains.kotlinx.metadata.jvm"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }

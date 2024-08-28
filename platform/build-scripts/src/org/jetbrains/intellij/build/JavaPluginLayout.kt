@@ -15,6 +15,8 @@ object JavaPluginLayout {
 
       spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
 
+      spec.withProjectLibrary("netty-codec-protobuf", "netty-codec-protobuf.jar")
+
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       spec.withModule("intellij.platform.jps.build", "jps-builders.jar")
       spec.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
