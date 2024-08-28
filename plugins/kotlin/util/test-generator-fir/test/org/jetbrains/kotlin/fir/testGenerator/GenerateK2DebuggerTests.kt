@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCom
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeSteppingTest
+import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2MultiplatformCodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -133,6 +134,10 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
         testClass<AbstractK2CodeFragmentCompletionTest> {
             model("basic/codeFragments", pattern = KT)
+        }
+
+        testClass<AbstractK2MultiplatformCodeFragmentCompletionTest> {
+            model("basic/codeFragmentsMultiplatform", pattern = KT)
         }
     }
 
