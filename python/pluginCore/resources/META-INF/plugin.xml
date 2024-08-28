@@ -459,8 +459,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <registryKey defaultValue="true" description="Use a single port for communication between PyCharm and the debugger"
                  restartRequired="false" key="python.debug.use.single.port"/>
 
-    <registryKey defaultValue="29781" description="Default Python debugger port" restartRequired="false"
-                 key="python.debug.default.port" />
+    <registryKey defaultValue="29781" description="Python debugger port number" restartRequired="false"
+                 key="python.debugger.port" />
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
