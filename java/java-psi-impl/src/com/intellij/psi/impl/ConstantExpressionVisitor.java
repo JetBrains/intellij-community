@@ -557,7 +557,9 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
 
       myVisitedVars.add(variable);
       try {
-        myResult = variable instanceof PsiVariableEx? ((PsiVariableEx) variable).computeConstantValue(myVisitedVars) : null;
+        myResult = variable instanceof PsiVariableEx && !(variable instanceof PsiEnumConstant) 
+                   ? ((PsiVariableEx) variable).computeConstantValue(myVisitedVars)
+                   : null;
         if (myResult == null && myAuxEvaluator != null) myResult = myAuxEvaluator.computeExpression(expression, this);
         return;
       }
