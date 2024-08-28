@@ -81,7 +81,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     ThreadingAssertions.assertEventDispatchThread();
-    try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
+    ourIsCapturingSnapshot = true;
+    try (AccessToken ignore1 = ProhibitAWTEvents.start("getData");
+         AccessToken ignore2 = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
       int count = ActivityTracker.getInstance().getCount();
       if (ourPrevMapEventCount != count ||
           ourDataKeysIndices.size() != DataKey.allKeysCount() ||
@@ -99,35 +101,26 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       Component topParent = components.isEmpty() ? component : UIUtil.getParent(components.get(0));
       FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
 
-      if (components.isEmpty()) {
-        myCachedData = initial;
-        myDataKeysCount = ourDataKeysIndices.size();
+      int keyCount;
+      FList<ProviderData> cachedData;
+      MySink sink = new MySink();
+      while (true) {
+        sink.keys = null;
+        cachedData = cacheComponentsData(sink, components, initial, myDataManager);
+        cachedData = runSnapshotRules(sink, component, cachedData);
+        keyCount = sink.keys == null ? DataKey.allKeysCount() : sink.keys.length;
+        // retry if providers add new keys
+        if (keyCount == DataKey.allKeysCount()) break;
       }
-      else {
-        int keyCount;
-        FList<ProviderData> cachedData;
-        MySink sink = new MySink();
-        ourIsCapturingSnapshot = true;
-        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
-          while (true) {
-            sink.keys = null;
-            cachedData = cacheComponentsData(sink, components, initial, myDataManager);
-            cachedData = runSnapshotRules(sink, component, cachedData);
-            keyCount = sink.keys == null ? DataKey.allKeysCount() : sink.keys.length;
-            // retry if providers add new keys
-            if (keyCount == DataKey.allKeysCount()) break;
-          }
-        }
-        finally {
-          ourIsCapturingSnapshot = false;
-        }
-        myDataKeysCount = keyCount;
-        myCachedData = cachedData;
-        ourInstances.add(this);
-        ourComponents.add(component);
-      }
+      myDataKeysCount = keyCount;
+      myCachedData = cachedData;
+      ourInstances.add(this);
+      ourComponents.add(component);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourPrevMapEventCount = count;
+    }
+    finally {
+      ourIsCapturingSnapshot = false;
     }
   }
 
@@ -355,6 +348,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
                                                                   @NotNull FList<ProviderData> initial,
                                                                   @NotNull DataManagerImpl dataManager) {
     FList<ProviderData> cachedData = initial;
+    if (components.isEmpty()) return cachedData;
     long start = System.currentTimeMillis();
     for (Component comp : components) {
       sink.map = null;
