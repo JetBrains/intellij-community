@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -15,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -253,14 +256,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         myCustomManager.checkServerTrusted(chain, authType);
       }
       catch (CertificateException e) {
-        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, remoteHost, parameters)) {
+        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, remoteHost, parameters, authType)) {
           throw lastCertificateException != null ? lastCertificateException : e;
         }
       }
     }
   }
 
-  private boolean confirmAndUpdate(final X509Certificate[] chain, String remoteHost, @NotNull CertificateConfirmationParameters parameters) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain, String remoteHost, @NotNull CertificateConfirmationParameters parameters, String authType) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
     // IDEA-123467 and IDEA-123335 workaround
@@ -283,18 +286,23 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     boolean accepted = false;
+    Set<X509Certificate> selectedCerts = new HashSet<>();
     if (parameters.myAskUser) {
-
       String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectX500Principal().toString() +
                        ", issuer: " + endPoint.getIssuerX500Principal().toString();
       if (parameters.myAskOrRejectReason != null) {
         acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
       LOG.info(acceptLogMessage);
-      accepted = CertificateManager.Companion.showAcceptDialog(() -> {
-        // TODO may be another kind of warning, if default trust store is missing
-        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, remoteHost, parameters.myCertificateDetails);
-      });
+      CertificateWarningDialogProvider dialogProvider = CertificateWarningDialogProvider.Companion.getInstance();
+      if (dialogProvider == null) {
+        LOG.warn("Accepting dialog wasn't shown, because DialogProvider in unavailable now");
+      } else {
+        accepted = CertificateManager.Companion.showAcceptDialog(() -> {
+          // TODO may be another kind of warning, if default trust store is missing
+          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, selectedCerts);
+        });
+      }
     }
     else {
       String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectX500Principal().toString() +
@@ -307,7 +315,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     if (accepted) {
       LOG.info("Certificate was accepted by user");
       if (parameters.myAddToKeyStore) {
-        myCustomManager.addCertificate(endPoint);
+        selectedCerts.forEach(myCustomManager::addCertificate);
       }
       if (parameters.myOnUserAcceptCallback != null) {
         parameters.myOnUserAcceptCallback.run();
@@ -513,6 +521,19 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
       catch (KeyStoreException e) {
         return null;
+      }
+      finally {
+        myReadLock.unlock();
+      }
+    }
+    
+    public List<String> getAliases() {
+      myReadLock.lock();
+      try {
+        return Collections.list(myKeyStore.aliases());
+      }
+      catch (KeyStoreException e) {
+        return Collections.emptyList();
       }
       finally {
         myReadLock.unlock();

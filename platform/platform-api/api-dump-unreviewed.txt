@@ -12217,6 +12217,7 @@ f:com.intellij.util.net.ssl.ConfirmingTrustManager$MutableTrustManager
 - checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String):V
 - containsCertificate(java.lang.String):Z
 - getAcceptedIssuers():java.security.cert.X509Certificate[]
+- getAliases():java.util.List
 - getCertificate(java.lang.String):java.security.cert.X509Certificate
 - getCertificates():java.util.List
 - removeCertificate(java.lang.String):Z

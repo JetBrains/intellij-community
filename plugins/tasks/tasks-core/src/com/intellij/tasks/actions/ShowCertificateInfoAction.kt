@@ -1,44 +1,91 @@
-package com.intellij.tasks.actions;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.tasks.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.util.net.ssl.CertificateManager;
-import com.intellij.util.net.ssl.CertificateWarningDialog;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.Messages
+import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.net.ssl.CertificateWarningDialogProvider
+import com.intellij.util.net.ssl.ConfirmingTrustManager
+import java.security.KeyStoreException
+import java.security.cert.X509Certificate
+import kotlin.Throws
 
-import java.security.cert.X509Certificate;
-import java.util.List;
-
-/**
- * @author Mikhail Golubev
- */
-@SuppressWarnings("HardCodedStringLiteral")
-public class ShowCertificateInfoAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance(ShowCertificateInfoAction.class);
-
-  @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    try {
-      CertificateManager manager = CertificateManager.getInstance();
-      List<X509Certificate> certificates = manager.getCustomTrustManager().getCertificates();
+@Suppress("HardCodedStringLiteral")
+class ShowCertificateInfoAction : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    try { 
+      val manager = CertificateManager.getInstance()
+      manager.cacertsPath
+      val certificates = manager.customTrustManager.getCertificates()
       if (certificates.isEmpty()) {
-        Messages.showInfoMessage(String.format("Key store '%s' is empty", manager.getCacertsPath()), "No Certificates Available");
-      } else {
-        CertificateWarningDialog dialog = CertificateWarningDialog.createUntrustedCertificateWarning(certificates.get(0));
-        LOG.debug("Accepted: " + dialog.showAndGet());
+        Messages.showInfoMessage(String.format("Key store '%s' is empty", manager.cacertsPath), "No Certificates Available")
+      }
+      else {
+        val certificate = certificates[110]
+        val certHierarchy = mutableListOf<X509Certificate>(certificate)
+        getRootCertificate(certificate, manager.customTrustManager, certHierarchy)
+        val dialog = CertificateWarningDialogProvider.getInstance()?.createCertificateWarningDialog(certHierarchy, manager.customTrustManager, "test.com", "RSA", mutableSetOf<X509Certificate>())
+        if (dialog == null) {
+          Messages.showInfoMessage("Dialog cannot be shown now", "Internal Error")
+          return
+        }
+        LOG.debug("Accepted: " + dialog.showAndGet())
       }
     }
-    catch (Exception logged) {
-      LOG.error(logged);
+    catch (logged: Exception) {
+      LOG.error(logged)
     }
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+  @Throws(KeyStoreException::class)
+  private fun getRootCertificate(endEntityCertificate: X509Certificate, manager: ConfirmingTrustManager.MutableTrustManager, certificates: MutableList<X509Certificate>): X509Certificate? {
+    val issuerCertificate: X509Certificate? = findIssuerCertificate(endEntityCertificate, manager)
+    if (issuerCertificate != null) {
+      certificates.add(issuerCertificate)
+      if (isRoot(issuerCertificate)) {
+        return issuerCertificate
+      }
+      else {
+        return getRootCertificate(issuerCertificate, manager, certificates)
+      }
+    }
+    return null
+  }
+
+  private fun isRoot(certificate: X509Certificate): Boolean {
+    try {
+      certificate.verify(certificate.publicKey)
+      return certificate.keyUsage != null && certificate.keyUsage[5]
+    }
+    catch (_: Exception) {
+      return false
+    }
+  }
+
+  @Throws(KeyStoreException::class)
+  private fun findIssuerCertificate(certificate: X509Certificate, manager: ConfirmingTrustManager.MutableTrustManager): X509Certificate? {
+    val aliases = manager.aliases
+    val resolveCertificate = { alias: String -> manager.getCertificate(alias) }
+    aliases.forEach { alias ->
+      val cert = resolveCertificate(alias)
+      if (cert is X509Certificate) {
+        val x509Cert = cert
+        if (x509Cert.getSubjectX500Principal() == certificate.getIssuerX500Principal()) {
+          return x509Cert
+        }
+      }
+    }
+    return null
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(ShowCertificateInfoAction::class.java)
   }
 }
 

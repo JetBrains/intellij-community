@@ -1311,6 +1311,8 @@
 
     <applicationService serviceInterface="com.intellij.ide.ui.ToolbarSettings"
                         serviceImplementation="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings"/>
+    <applicationService serviceInterface="com.intellij.util.net.ssl.CertificateWarningDialogProvider"
+                        serviceImplementation="com.intellij.net.ssl.CertificateWarningDialogProviderImpl"/>
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.MyRawTypedHandler"/>
 
