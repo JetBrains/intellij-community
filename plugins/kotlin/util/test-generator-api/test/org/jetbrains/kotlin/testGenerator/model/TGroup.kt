@@ -53,6 +53,7 @@ enum class GroupCategory {
     DEBUGGER,
     J2K,
     ANALYSIS_API,
+    INJECTION,
 }
 
 fun MutableTWorkspace.testGroup(

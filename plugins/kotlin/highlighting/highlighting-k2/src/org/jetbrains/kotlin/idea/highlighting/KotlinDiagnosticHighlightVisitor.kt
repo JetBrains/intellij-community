@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -37,6 +38,10 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder?>>
     private var holder: HighlightInfoHolder? = null
     override fun suitableForFile(file: PsiFile): Boolean {
+        if (file.viewProvider is InjectedFileViewProvider) {
+            // do not highlight errors in injected code
+            return false
+        }
         return file is KtFile
     }
 

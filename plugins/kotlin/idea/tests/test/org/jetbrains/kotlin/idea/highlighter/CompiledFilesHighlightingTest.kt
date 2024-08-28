@@ -34,7 +34,7 @@ import java.io.File
 @RunWith(JUnit3RunnerWithInners::class)
 @TestMetadata("testData/highlighter/compiled")
 class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
-    @TestMetadata("kotlin/collections/GroupingKt.kotlin_metadata")
+    @TestMetadata("default/linkdata/package_kotlin.collections/26_collections.knm")
     fun testKotlinCollectionsGroupingKtKotlinMetadata() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlibCommon,

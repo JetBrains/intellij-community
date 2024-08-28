@@ -21,7 +21,7 @@ import java.util.*
 
 @ApiStatus.Internal
 internal fun VirtualFile.isKLibRootCandidate(): Boolean {
-    return (!FileTypeRegistry.getInstance().isFileOfType(this, ArchiveFileType.INSTANCE) || extension == KLIB_FILE_EXTENSION) && isDirectory
+    return (nameSequence.endsWith(KLIB_FILE_EXTENSION_WITH_DOT) || !FileTypeRegistry.getInstance().isFileOfType(this, ArchiveFileType.INSTANCE)) && isDirectory
 }
 
 @ApiStatus.Internal
@@ -29,7 +29,9 @@ fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Bo
     // The virtual file for a library packed in a ZIP file will have path like "/some/path/to/the/file.klib!/",
     // and therefore will be recognized by VFS as a directory (isDirectory == true).
     // So, first, let's check the file type and file extension.
-    if (!isKLibRootCandidate()) {
+    if (!isKLibRootCandidate() &&
+        !nameSequence.endsWith("jar") // TODO: KTIJ-30828 Workaround for kotlin-stdlib-common.jar that is effectively klib
+    ) {
         return false
     }
 

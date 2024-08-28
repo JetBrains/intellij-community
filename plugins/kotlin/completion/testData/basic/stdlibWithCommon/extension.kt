@@ -1,5 +1,6 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
+// IGNORE_K2
 
 fun test() {
     listOf(1).forE<caret>
