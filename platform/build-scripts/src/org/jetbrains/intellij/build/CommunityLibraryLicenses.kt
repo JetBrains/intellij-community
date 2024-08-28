@@ -252,6 +252,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "bouncy-castle-provider", url = "https://www.bouncycastle.org")
       .mit("https://www.bouncycastle.org/license.html")
       .suppliedByOrganizations("The Legion of the Bouncy Castle Inc."),
+    LibraryLicense(name = "Brotli", libraryName = "brotli-dec", url = "https://github.com/google/brotli")
+      .mit(licenseUrl = "https://github.com/google/brotli/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
     LibraryLicense(
       name = "caffeine", libraryName = "caffeine",
       url = "https://github.com/ben-manes/caffeine"
@@ -779,23 +782,9 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(
-      name = "Jetbrains Jewel IDE LaF Bridge",
-      url = "https://github.com/JetBrains/jewel",
-      libraryName = "jetbrains-jewel-ide-laf-bridge"
-    )
-      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(
-      name = "Jetbrains Jewel Int UI Standalone",
-      url = "https://github.com/JetBrains/jewel",
-      libraryName = "jetbrains-jewel-int-ui-standalone",
-    )
-      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(
-      name = "Jetbrains Jewel Markdown IDE LaF Bridge",
-      url = "https://github.com/JetBrains/jewel",
-      libraryName = "jetbrains-jewel-markdown-laf-bridge-styling",
+      name = "JetBrains Jewel Markdown IDE LaF Bridge Styling",
+                   url = "https://github.com/JetBrains/jewel",
+                   libraryName = "jewel-markdown-ide-laf-bridge-styling-242"
     )
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
