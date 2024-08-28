@@ -22,7 +22,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 24)
+  private val GROUP = EventLogGroup(GROUP_ID, 25)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -105,7 +105,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  internal fun logBlockTerminalTimeSpanFinished(project: Project, shellType: ShellType, timeSpanType: TimeSpanType, duration: Duration) {
+  internal fun logBlockTerminalTimeSpanFinished(project: Project?, shellType: ShellType, timeSpanType: TimeSpanType, duration: Duration) {
     timespanFinishedEvent.log(project, shellType, timeSpanType, duration.inWholeMilliseconds)
   }
 
@@ -231,7 +231,8 @@ enum class TerminalCommandGenerationEvent {
 
 internal enum class TimeSpanType(val description: String) {
   FROM_STARTUP_TO_SHOWN_CURSOR("time from startup to terminal cursor shown in initialization block"),
-  FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input")
+  FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input"),
+  FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED("time from command submitted by user to command visually started")
 }
 
 private const val GROUP_ID = "terminalShell"
