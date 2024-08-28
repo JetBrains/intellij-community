@@ -995,10 +995,11 @@ class JavaToJKTreeBuilder(
 
         fun PsiLocalVariable.toJK(): JKLocalVariable {
             val codeBlock = parentOfType<PsiCodeBlock>()
+            val immutableVariables = immutableVariables[codeBlock]
             val mutability = when {
                 hasModifierProperty(PsiModifier.FINAL) -> IMMUTABLE
-                immutableVariables[codeBlock]?.any { it == this } == true -> IMMUTABLE
-                immutableVariables[codeBlock] != null -> MUTABLE
+                immutableVariables?.contains(this) == true -> IMMUTABLE
+                immutableVariables != null -> MUTABLE
                 codeBlock != null -> IMMUTABLE
                 else -> UNKNOWN
             }

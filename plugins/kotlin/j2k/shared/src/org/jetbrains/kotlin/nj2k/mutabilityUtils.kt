@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.MINUSMINUS
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.PLUSPLUS
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVariable>? {
+internal fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVariable>? {
     if (body == null) return null
     val flow = LocalCanBeFinal.getControlFlow(body) ?: return null
     val start = flow.getStartOffset(body)
@@ -38,18 +38,15 @@ fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVariable>? {
             super.visitCodeBlock(block)
             val declared = getDeclaredVariables(block)
             if (declared.isEmpty()) return
-            var anchor: PsiElement? = block
+            var anchor: PsiElement = block
             if (block.getParent() is PsiSwitchBlock) {
                 anchor = block.getParent()
 
                 //special case: switch legs
                 val writeRefs = SyntaxTraverser.psiTraverser().withRoot(block)
                     .filter(PsiReferenceExpression::class.java)
-                    .filter { ref: PsiReferenceExpression? ->
-                        PsiUtil.isOnAssignmentLeftHand(
-                            ref!!
-                        )
-                    }.toSet()
+                    .filter { ref -> PsiUtil.isOnAssignmentLeftHand(ref) }
+                    .toSet()
                 for (ref in writeRefs) {
                     val resolve = ref.resolve()
                     if (resolve is PsiVariable && declared.contains(resolve) && resolve.hasInitializer()) {
@@ -57,7 +54,7 @@ fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVariable>? {
                     }
                 }
             }
-            val from = flow.getStartOffset(anchor!!)
+            val from = flow.getStartOffset(anchor)
             val codeBlockEnd = flow.getEndOffset(anchor)
             val ssa = ControlFlowUtil.getSSAVariables(flow, from, codeBlockEnd, true)
             for (psiVariable in ssa) {
@@ -167,7 +164,7 @@ fun getImmutableLocalVariablesInBlock(body: PsiCodeBlock?): Set<PsiVariable>? {
     return HashSet(result)
 }
 
-fun canBeImmutable(variable: PsiVariable): Boolean {
+internal fun canBeImmutable(variable: PsiVariable): Boolean {
     if (variable.getInitializer() != null || variable is PsiParameter) {
         // parameters have an implicit initializer
         return !VariableAccessUtils.variableIsAssigned(variable)
