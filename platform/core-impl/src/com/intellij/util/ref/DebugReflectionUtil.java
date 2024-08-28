@@ -229,7 +229,7 @@ public final class DebugReflectionUtil {
      * when null, it can be computed from field.getName()
      */
     private final String fieldName;
-    private final BackLink<?> backLink;
+    final BackLink<?> backLink;
     private final int depth;
 
     BackLink(@NotNull V value, @Nullable Field field, @Nullable String fieldName, @Nullable BackLink<?> backLink) {
@@ -252,6 +252,10 @@ public final class DebugReflectionUtil {
       return result.toString();
     }
 
+    String getFieldName() {
+      return this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
+    }
+
     void print(@NotNull StringBuilder result) {
       String valueStr;
       Object value = this.value;
@@ -270,9 +274,8 @@ public final class DebugReflectionUtil {
         valueStr = "(" + e.getMessage() + " while computing .toString())";
       }
 
-      Field field = this.field;
-      String fieldName = this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
-      result.append("via '").append(fieldName).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass()).append("\n");
+      result.append("via '").append(getFieldName()).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass())
+        .append("\n");
     }
   }
 }

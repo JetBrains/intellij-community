@@ -38,7 +38,7 @@ fun assertReferenced(root: Any, referenced: Any) {
   val rootSupplier: Supplier<Map<Any, String>> = Supplier {
     mapOf(root to "root")
   }
-  LeakHunter.processLeaks(rootSupplier, referenced.javaClass, null) { leaked, _ ->
+  LeakHunter.processLeaks(rootSupplier, referenced.javaClass, null, null) { leaked, _ ->
     foundObjects.add(leaked)
     true
   }

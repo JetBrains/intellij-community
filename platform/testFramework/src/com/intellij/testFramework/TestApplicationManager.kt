@@ -15,7 +15,10 @@ import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -39,6 +42,7 @@ import com.intellij.testFramework.common.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
+import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
@@ -179,6 +183,10 @@ class TestApplicationManager private constructor() {
      */
     @JvmStatic
     fun disposeApplicationAndCheckForLeaks() {
+      disposeApplicationAndCheckForLeaks(emptyList())
+    }
+    @JvmStatic
+    fun disposeApplicationAndCheckForLeaks(ignoredTraverseEntries : List<IgnoredTraverseEntry>) {
       val edtThrowable = runInEdtAndGet {
         runAllCatching(
           { PlatformTestUtil.cleanupAllProjects() },
@@ -194,7 +202,7 @@ class TestApplicationManager private constructor() {
           { UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS) },
           {
             if (ApplicationManager.getApplication() != null) {
-              assertNonDefaultProjectsAreNotLeaked()
+              assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries)
             }
           },
           {
