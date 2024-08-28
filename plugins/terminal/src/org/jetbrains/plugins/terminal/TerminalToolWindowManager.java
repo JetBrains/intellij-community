@@ -318,7 +318,7 @@ public final class TerminalToolWindowManager implements Disposable {
         .workingDirectory(currentWorkingDir)
         .shellCommand(tabState != null ? tabState.myShellCommand : null)
         .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
-        .startupMoment$intellij_terminal(startupMoment)
+        .startupMoment(startupMoment)
         .build();
       widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
       widget.getTerminalTitle().change(state -> {

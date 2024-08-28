@@ -47,6 +47,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
     fun initialTermSize(initialTermSize: TermSize?) = also { this.initialTermSize = initialTermSize }
     fun widget(widget: TerminalWidget?) = also { this.widget = widget }
     fun shellIntegration(shellIntegration: ShellIntegration?) = also { this.shellIntegration = shellIntegration }
+    @JvmName("startupMoment")
     internal fun startupMoment(startupMoment: TerminalStartupMoment?) = also { this.startupMoment = startupMoment }
 
     fun modify(modifier: (Builder) -> Unit): Builder = also {
