@@ -537,25 +537,10 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
         myResult = null;
         return;
       }
-      qualifierExpression = ((PsiReferenceExpression) qualifierExpression).getQualifierExpression();
+      qualifierExpression = qualifier.getQualifierExpression();
     }
 
     PsiElement resolvedExpression = expression.resolve();
-    if (resolvedExpression instanceof PsiEnumConstant) {
-      String constant = ((PsiEnumConstant)resolvedExpression).getName();
-      PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
-      if (qualifier == null) return;
-      PsiElement element = qualifier.resolve();
-      if (!(element instanceof PsiClass)) return;
-      String name = ClassUtil.getJVMClassName((PsiClass)element);
-      try {
-        Class aClass = Class.forName(name);
-        //noinspection unchecked
-        myResult = Enum.valueOf(aClass, constant);
-      }
-      catch (Throwable ignore) { }
-      return;
-    }
     if (resolvedExpression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable) resolvedExpression;
       // avoid cycles
