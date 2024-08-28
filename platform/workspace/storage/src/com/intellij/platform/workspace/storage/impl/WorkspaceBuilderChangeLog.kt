@@ -110,14 +110,14 @@ internal class WorkspaceBuilderChangeLog {
           references = replaceEntity.references.copy(newParents = newAddedParents, removedParents = newRemovedParents))
       }
       else {
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), newAddedParents, newRemovedParents))
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newParents = newAddedParents, removedParents = newRemovedParents))
       }
     }
 
     if (existingChange == null) {
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), mapOf(newConnectionId to newParentId), emptyMap())
+        ChangeEntry.ReplaceEntity.References(newParents = mapOf(newConnectionId to newParentId))
       )
     }
     else {
@@ -176,14 +176,14 @@ internal class WorkspaceBuilderChangeLog {
           references = replaceEntity.references.copy(newParents = newAddedParents, removedParents = newRemovedParents))
       }
       else {
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), newAddedParents, newRemovedParents))
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newParents = newAddedParents, removedParents = newRemovedParents))
       }
     }
 
     if (existingChange == null) {
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(emptySet(), emptySet(), emptyMap(), emptyMap(), mapOf(removedConnectionId to removedParentId))
+        ChangeEntry.ReplaceEntity.References(removedParents = mapOf(removedConnectionId to removedParentId))
       )
     }
     else {
@@ -259,9 +259,7 @@ internal class WorkspaceBuilderChangeLog {
       }
       else {
         val ordering = mapOf(addedChildConnectionId to newOrder)
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren,
-                                                                             ordering,
-                                                                             emptyMap(), emptyMap()))
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, ordering))
       }
     }
 
@@ -269,8 +267,7 @@ internal class WorkspaceBuilderChangeLog {
       val ordering = mapOf(addedChildConnectionId to LinkedHashSet<ChildEntityId>().also { it.add(addedChildId) })
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(setOf(addedChildConnectionId to addedChildId), emptySet(),
-                                             ordering, emptyMap(), emptyMap())
+        ChangeEntry.ReplaceEntity.References(setOf(addedChildConnectionId to addedChildId), emptySet(), ordering)
       )
     }
     else {
@@ -348,7 +345,7 @@ internal class WorkspaceBuilderChangeLog {
       }
       else {
         val ordering = mapOf(removedChildConnectionId to newOrder)
-        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, ordering, emptyMap(), emptyMap()))
+        replaceEntity.copy(references = ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, ordering))
       }
     }
 
@@ -356,8 +353,7 @@ internal class WorkspaceBuilderChangeLog {
       val ordering = mapOf(removedChildConnectionId to LinkedHashSet<ChildEntityId>())
       changeLog[entityId] = ChangeEntry.ReplaceEntity(
         null,
-        ChangeEntry.ReplaceEntity.References(emptySet(), setOf(removedChildConnectionId to removedChildId), ordering, emptyMap(),
-                                             emptyMap())
+        ChangeEntry.ReplaceEntity.References(removedChildren = setOf(removedChildConnectionId to removedChildId), childrenOrdering = ordering)
       )
     }
     else {
@@ -538,11 +534,11 @@ internal sealed class ChangeEntry {
     )
 
     data class References(
-      val newChildren: Set<Pair<ConnectionId, ChildEntityId>>,
-      val removedChildren: Set<Pair<ConnectionId, ChildEntityId>>,
-      val childrenOrdering: Map<ConnectionId, LinkedHashSet<ChildEntityId>>,
-      val newParents: Map<ConnectionId, ParentEntityId>,
-      val removedParents: Map<ConnectionId, ParentEntityId>,
+      val newChildren: Set<Pair<ConnectionId, ChildEntityId>> = emptySet(),
+      val removedChildren: Set<Pair<ConnectionId, ChildEntityId>> = emptySet(),
+      val childrenOrdering: Map<ConnectionId, LinkedHashSet<ChildEntityId>> = emptyMap(),
+      val newParents: Map<ConnectionId, ParentEntityId> = emptyMap(),
+      val removedParents: Map<ConnectionId, ParentEntityId> = emptyMap(),
     ) {
       fun isEmpty(): Boolean {
         return newChildren.isEmpty()
