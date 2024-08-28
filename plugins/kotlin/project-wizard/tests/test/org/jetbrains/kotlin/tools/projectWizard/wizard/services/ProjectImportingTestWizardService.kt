@@ -58,7 +58,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
                             importingErrorDetails = errorDetails
                         }
                     }
-                }).forceWhenUptodate()
+                })
         )
 
         return importingErrorMessage?.let { message ->
