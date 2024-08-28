@@ -41,6 +41,7 @@ public final class VariableNameGenerator {
    * @param type type of newly generated variable
    * @return this generator
    */
+  @Contract("_ -> this")
   public VariableNameGenerator byType(@Nullable PsiType type) {
     if (type != null) {
       SuggestedNameInfo info = myManager.suggestVariableName(myKind, null, null, type, true);
@@ -58,6 +59,7 @@ public final class VariableNameGenerator {
    * @param expression expression which value will be stored to the new variable
    * @return this generator
    */
+  @Contract("_ -> this")
   public VariableNameGenerator byExpression(@Nullable PsiExpression expression) {
     if (expression != null) {
       SuggestedNameInfo info = myManager.suggestVariableName(myKind, null, expression, null, true);
@@ -71,6 +73,7 @@ public final class VariableNameGenerator {
    * @param name of the collection/array which element is represented by newly generated variable
    * @return this generator
    */
+  @Contract("_ -> this")
   public VariableNameGenerator byCollectionName(@Nullable String name) {
     if (name != null) {
       PsiExpression expr = JavaPsiFacade.getElementFactory(myContext.getProject()).createExpressionFromText(name + "[0]", myContext);
@@ -84,6 +87,7 @@ public final class VariableNameGenerator {
    * @param names base names which could be used to generate variable name
    * @return this generator
    */
+  @Contract("_ -> this")
   public VariableNameGenerator byName(@NonNls String... names) {
     for (String name : names) {
       if (name != null) {
