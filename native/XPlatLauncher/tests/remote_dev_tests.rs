@@ -122,11 +122,11 @@ mod tests {
     fn remote_dev_font_config_added_test() {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         prepare_font_config_dir(&test.dist_root);
-        let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
-        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command));
 
-        let expected_output = format!("FONTCONFIG_PATH={}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
-        check_output(&launch_result, |output| output.contains(&expected_output));
+        let expected_path_value = format!("{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+        let env = HashMap::new();
+        check_env_variable(&test, &env, "FONTCONFIG_PATH", expected_path_value);
+        check_env_variable(&test, &env, "INTELLIJ_ORIGINAL_ENV_FONTCONFIG_PATH", "\n".to_string());
     }
 
     #[test]
@@ -135,10 +135,16 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let env = HashMap::from([("FONTCONFIG_PATH", "/some/existing/path")]);
         prepare_font_config_dir(&test.dist_root);
-        let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
-        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(&env).with_args(remote_dev_command));
+        let expected_path_value = format!("/some/existing/path:{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+        check_env_variable(&test, &env, "FONTCONFIG_PATH", expected_path_value);
+        check_env_variable(&test, &env, "INTELLIJ_ORIGINAL_ENV_FONTCONFIG_PATH", "/some/existing/path".to_string());
+    }
 
-        let expected_output = format!("FONTCONFIG_PATH=/some/existing/path:{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+    fn check_env_variable(test: &TestEnvironment, env: &HashMap<&str, &str>, variable_name: &str, expected_value: String) {
+        let remote_dev_command = &["printEnvVar", variable_name];
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(env).with_args(remote_dev_command));
+
+        let expected_output = format!("{}={}", variable_name, expected_value);
         check_output(&launch_result, |output| output.contains(&expected_output));
     }
 
