@@ -207,9 +207,9 @@ class MavenProject(val file: VirtualFile) {
 
   val displayName: @NlsSafe String
     get() {
-      val state: MavenProjectState = myState
-      if (StringUtil.isEmptyOrSpaces(state.name)) {
-        return StringUtil.notNullize(state.mavenId!!.artifactId)
+      val state = myState
+      if (state.name.isNullOrBlank()) {
+        return state.mavenId!!.artifactId ?: ""
       }
       return state.name!!
     }
@@ -259,7 +259,7 @@ class MavenProject(val file: VirtualFile) {
         }
 
         if (!File(out).isAbsolute) {
-          out = directory + '/' + out
+          out = "$directory/$out"
         }
 
         return out
@@ -463,8 +463,7 @@ class MavenProject(val file: VirtualFile) {
 
   val cacheProblems: List<MavenProjectProblem>
     get() {
-      val problemsCache: List<MavenProjectProblem>? = myState.problemsCache
-      return if (problemsCache == null) emptyList() else problemsCache
+      return myState.problemsCache ?: emptyList()
     }
 
   val existingModuleFiles: List<VirtualFile>
@@ -520,7 +519,7 @@ class MavenProject(val file: VirtualFile) {
       return myState.dependencyTree
     }
 
-  @get:Suppress("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection")
   val supportedPackagings: Set<String>
     get() {
       val result = mutableSetOf(MavenConstants.TYPE_POM, MavenConstants.TYPE_JAR, "ejb", "ejb-client", "war", "ear", "bundle", "maven-plugin")
@@ -554,7 +553,7 @@ class MavenProject(val file: VirtualFile) {
     }
 
   fun addDependency(dependency: MavenArtifact) {
-    addDependencies(java.util.List.of(dependency))
+    addDependencies(listOf(dependency))
   }
 
   fun addDependencies(dependencies: Collection<MavenArtifact>) {
@@ -696,16 +695,13 @@ class MavenProject(val file: VirtualFile) {
 
   private fun getCompilerLevel(level: String): String? {
     val configs: List<Element> = compilerConfigs
-    if (configs.size == 1) return getCompilerLevel(level, configs.get(0))
+    if (configs.size == 1) return getCompilerLevel(level, configs[0])
 
-    return configs.stream()
-      .map { element: Element? -> findChildValueByPath(element, level) }
-      .filter { obj: String? -> Objects.nonNull(obj) }
-      .map { propertyValue: String? -> LanguageLevel.parse(propertyValue) }
-      .map { languageLevel: LanguageLevel? -> if (languageLevel == null) LanguageLevel.HIGHEST else languageLevel }
-      .max(Comparator.naturalOrder())
-      .map({ l: LanguageLevel -> l.toJavaVersion().toFeatureString() })
-      .orElseGet({ myState.properties!!.getProperty("maven.compiler.$level") })
+    return configs
+      .mapNotNull { findChildValueByPath(it, level) }
+      .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
+      .maxWithOrNull(Comparator.naturalOrder())
+      ?.toJavaVersion()?.toFeatureString() ?: myState.properties!!.getProperty("maven.compiler.$level")
   }
 
   private fun getCompilerLevel(level: String, config: Element): String? {
@@ -789,15 +785,13 @@ class MavenProject(val file: VirtualFile) {
     }
 
   fun <V> getCachedValue(key: Key<V>): V? {
-    val v: V? = myState.cache[key] as V?
-    return v
+    return myState.cache[key] as V?
   }
 
   fun <V> putCachedValue(key: Key<V>, value: V): V {
-    val oldValue: Any? = myState.cache.putIfAbsent(key, value as Any)
+    val oldValue = myState.cache.putIfAbsent(key, value as Any)
     if (oldValue != null) {
-      val v: V = oldValue as V
-      return v
+      return oldValue as V
     }
     return value
   }
@@ -824,7 +818,7 @@ class MavenProject(val file: VirtualFile) {
       try {
         ByteArrayInputStream(bytes).use { bs ->
           ObjectInputStream(bs).use { os ->
-            val result: MavenProject = MavenProject(file)
+            val result = MavenProject(file)
             result.myState = os.readObject() as MavenProjectState
             return result
           }
@@ -854,9 +848,9 @@ class MavenProject(val file: VirtualFile) {
       if (compilerArguments != null) {
         for (e: Element in compilerArguments.children) {
           var name: String = e.name
-          name = StringUtil.trimStart(name, "-")
+          name = name.removePrefix("-")
 
-          if (name.length > 1 && name.get(0) == 'A') {
+          if (name.length > 1 && name[0] == 'A') {
             res[name.substring(1)] = e.textTrim
           }
         }
@@ -865,8 +859,8 @@ class MavenProject(val file: VirtualFile) {
     }
 
     private fun addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
-      if (!StringUtil.isEmptyOrSpaces(compilerArguments)) {
-        val parametersList: ParametersList = ParametersList()
+      if (!compilerArguments.isNullOrBlank()) {
+        val parametersList = ParametersList()
         parametersList.addParametersString(compilerArguments)
 
         for (param: String in parametersList.parameters) {
@@ -911,7 +905,7 @@ class MavenProject(val file: VirtualFile) {
 
     @JvmStatic
     fun readConfigFile(baseDir: File?, kind: ConfigFileKind): Map<String, String> {
-      val configFile: File = File(baseDir, FileUtil.toSystemDependentName(kind.myRelativeFilePath))
+      val configFile = File(baseDir, FileUtil.toSystemDependentName(kind.myRelativeFilePath))
 
       val parametersList: ParametersList = ParametersList()
       if (configFile.isFile) {
@@ -921,8 +915,8 @@ class MavenProject(val file: VirtualFile) {
         catch (ignore: IOException) {
         }
       }
-      val config: Map<String, String> = parametersList.getProperties(kind.myValueIfMissing)
-      return if (config.isEmpty()) emptyMap() else config
+      val config = parametersList.getProperties(kind.myValueIfMissing)
+      return config.ifEmpty { emptyMap() }
     }
   }
 }
