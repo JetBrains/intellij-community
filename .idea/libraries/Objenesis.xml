@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="Objenesis" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.objenesis:objenesis:3.3">
+    <properties include-transitive-deps="false" maven-id="org.objenesis:objenesis:3.4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar">
-          <sha256sum>02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4.jar">
+          <sha256sum>95488102feaf2e2858adf6b299353677dac6c15294006f8ed1c5556f8e3cd251</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.4/objenesis-3.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
