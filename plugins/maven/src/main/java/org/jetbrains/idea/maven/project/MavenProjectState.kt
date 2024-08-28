@@ -2,22 +2,13 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import java.io.File
-import java.io.ObjectInputStream
-import java.io.Serial
 import java.io.Serializable
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Predicate
-import kotlin.concurrent.Volatile
 
 internal class MavenProjectState : Cloneable, Serializable {
   var lastReadStamp: Long = 0
@@ -69,7 +60,9 @@ internal class MavenProjectState : Cloneable, Serializable {
     private set
 
   private var myPlugins: List<MavenPlugin> = emptyList()
-  private var myExtensions: List<MavenArtifact> = emptyList()
+
+  var extensions: List<MavenArtifact> = emptyList()
+    private set
 
   var dependencies: List<MavenArtifact> = emptyList()
     private set
@@ -98,29 +91,11 @@ internal class MavenProjectState : Cloneable, Serializable {
   var dependencyHash: String? = null
 
   private var myReadingProblems: Collection<MavenProjectProblem> = emptySet()
-  private var myUnresolvedArtifactIds: Set<MavenId> = emptySet()
+
+  var unresolvedArtifactIds: Set<MavenId> = emptySet()
+    private set
 
   var localRepository: File? = null
-    private set
-
-  @Volatile
-  var problemsCache: List<MavenProjectProblem>? = null
-    private set
-
-  @Volatile
-  private var myUnresolvedDependenciesCache: List<MavenArtifact>? = null
-
-  @Volatile
-  private var myUnresolvedPluginsCache: List<MavenPlugin>? = null
-
-  @Volatile
-  private var myUnresolvedExtensionsCache: List<MavenArtifact>? = null
-
-  @Volatile
-  private var myUnresolvedAnnotationProcessors: List<MavenArtifact>? = null
-
-  @Transient
-  var cache = ConcurrentHashMap<Key<*>, Any>()
     private set
 
   val plugins: List<MavenPlugin>
@@ -135,28 +110,11 @@ internal class MavenProjectState : Cloneable, Serializable {
   public override fun clone(): MavenProjectState {
     try {
       val result = super.clone() as MavenProjectState
-      result.resetCache()
       return result
     }
     catch (e: CloneNotSupportedException) {
       throw RuntimeException(e)
     }
-  }
-
-  @Serial
-  private fun readObject(inputStream: ObjectInputStream) {
-    inputStream.defaultReadObject()
-    cache = ConcurrentHashMap<Key<*>, Any>()
-  }
-
-  fun resetCache() {
-    problemsCache = null
-    myUnresolvedDependenciesCache = null
-    myUnresolvedPluginsCache = null
-    myUnresolvedExtensionsCache = null
-    myUnresolvedAnnotationProcessors = null
-
-    cache.clear()
   }
 
   fun getChanges(newState: MavenProjectState): MavenProjectChanges {
@@ -285,11 +243,11 @@ internal class MavenProjectState : Cloneable, Serializable {
     val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
 
     if (keepPreviousArtifacts) {
-      newUnresolvedArtifacts.addAll(myUnresolvedArtifactIds)
+      newUnresolvedArtifacts.addAll(this.unresolvedArtifactIds)
       newRepositories.addAll(remoteRepositories)
       newDependencies.addAll(dependencies)
       newDependencyTree.addAll(dependencyTree)
-      newExtensions.addAll(myExtensions)
+      newExtensions.addAll(extensions)
       newAnnotationProcessors.addAll(annotationProcessors)
     }
 
@@ -304,12 +262,12 @@ internal class MavenProjectState : Cloneable, Serializable {
     newPlugins.addAll(model.plugins)
     newExtensions.addAll(model.extensions)
 
-    myUnresolvedArtifactIds = newUnresolvedArtifacts
+    this.unresolvedArtifactIds = newUnresolvedArtifacts
     remoteRepositories = ArrayList(newRepositories)
     dependencies = ArrayList(newDependencies)
     dependencyTree = ArrayList(newDependencyTree)
     myPlugins = ArrayList(newPlugins)
-    myExtensions = ArrayList(newExtensions)
+    extensions = ArrayList(newExtensions)
     annotationProcessors = ArrayList(newAnnotationProcessors)
   }
 
@@ -334,143 +292,10 @@ internal class MavenProjectState : Cloneable, Serializable {
     this.testResources = testResources
   }
 
-  private fun doCollectProblems(file: VirtualFile, fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
-    val result: MutableList<MavenProjectProblem> = ArrayList()
-
-    validateParent(file, result)
-    result.addAll(myReadingProblems)
-
-    for ((key, value) in modulesPathsAndNames) {
-      if (LocalFileSystem.getInstance().findFileByPath(key) == null) {
-        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound",
-                                                                            value)))
-      }
-    }
-
-    validateDependencies(file, result, fileExistsPredicate)
-    validateExtensions(file, result)
-    validatePlugins(file, result)
-
-    return result
-  }
-
-  private fun validateParent(file: VirtualFile, result: MutableList<MavenProjectProblem>) {
-    if (!isParentResolved) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.parentNotFound",
-                                                                          parentId)))
-    }
-  }
-
-  private fun validateDependencies(
-    file: VirtualFile,
-    result: MutableList<MavenProjectProblem>,
-    fileExistsPredicate: Predicate<File>?,
-  ) {
-    for (each in getUnresolvedDependencies(fileExistsPredicate)) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedDependency",
-                                                                          each.displayStringWithType)))
-    }
-  }
-
-  private fun validateExtensions(file: VirtualFile, result: MutableList<MavenProjectProblem>) {
-    for (each in unresolvedExtensions) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedExtension",
-                                                                          each.displayStringSimple)))
-    }
-  }
-
-  private fun validatePlugins(file: VirtualFile, result: MutableList<MavenProjectProblem>) {
-    for (each in unresolvedPlugins) {
-      result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedPlugin", each)))
-    }
-  }
-
-  private val isParentResolved: Boolean
-    get() = !myUnresolvedArtifactIds.contains(parentId)
-
-  fun hasUnresolvedArtifacts(): Boolean {
-    return !isParentResolved
-           || !getUnresolvedDependencies(null).isEmpty()
-           || !unresolvedExtensions.isEmpty()
-           || !unresolvedAnnotationProcessors.isEmpty()
-  }
-
-  private fun getUnresolvedDependencies(fileExistsPredicate: Predicate<File>?): List<MavenArtifact> {
-    synchronized(this) {
-      if (myUnresolvedDependenciesCache == null) {
-        val result: MutableList<MavenArtifact> = ArrayList()
-        for (each in dependencies) {
-          val resolved = each.isResolved(fileExistsPredicate)
-          each.isFileUnresolved = !resolved
-          if (!resolved) result.add(each)
-        }
-        myUnresolvedDependenciesCache = result
-      }
-      return myUnresolvedDependenciesCache!!
-    }
-  }
-
-  private val unresolvedExtensions: List<MavenArtifact>
-    get() {
-      synchronized(this) {
-        if (myUnresolvedExtensionsCache == null) {
-          val result: MutableList<MavenArtifact> = ArrayList()
-          for (each in myExtensions) {
-            // Collect only extensions that were attempted to be resolved.
-            // It is because embedder does not even try to resolve extensions that
-            // are not necessary.
-            if (myUnresolvedArtifactIds.contains(each.mavenId)
-                && !pomFileExists(localRepository!!, each)
-            ) {
-              result.add(each)
-            }
-          }
-          myUnresolvedExtensionsCache = result
-        }
-        return myUnresolvedExtensionsCache!!
-      }
-    }
-
-  private val unresolvedAnnotationProcessors: List<MavenArtifact>
-    get() {
-      synchronized(this) {
-        if (myUnresolvedAnnotationProcessors == null) {
-          val result: MutableList<MavenArtifact> = ArrayList()
-          for (each in annotationProcessors) {
-            if (!each.isResolved) result.add(each)
-          }
-          myUnresolvedAnnotationProcessors = result
-        }
-        return myUnresolvedAnnotationProcessors!!
-      }
-    }
-
-  val unresolvedPlugins: List<MavenPlugin>
-    get() {
-      synchronized(this) {
-        if (myUnresolvedPluginsCache == null) {
-          val result: MutableList<MavenPlugin> = ArrayList()
-          for (each in declaredPlugins) {
-            if (!hasArtifactFile(localRepository!!, each.mavenId)) {
-              result.add(each)
-            }
-          }
-          myUnresolvedPluginsCache = result
-        }
-        return myUnresolvedPluginsCache!!
-      }
-    }
+  val isParentResolved: Boolean
+    get() = !unresolvedArtifactIds.contains(parentId)
 
   val declaredPlugins: List<MavenPlugin> get() = myPlugins.filter { !it.isDefault }
-
-  fun collectProblems(file: VirtualFile, fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
-    synchronized(this) {
-      if (problemsCache == null) {
-        problemsCache = doCollectProblems(file, fileExistsPredicate)
-      }
-      return problemsCache!!
-    }
-  }
 
   fun doUpdateState(
     dependencies: List<MavenArtifact>,
@@ -490,14 +315,6 @@ internal class MavenProjectState : Cloneable, Serializable {
       result.add(each.id)
     }
     return result
-  }
-
-  private fun createDependencyProblem(file: VirtualFile, description: String): MavenProjectProblem {
-    return MavenProjectProblem(file.path, description, MavenProjectProblem.ProblemType.DEPENDENCY, false)
-  }
-
-  private fun pomFileExists(localRepository: File, artifact: MavenArtifact): Boolean {
-    return hasArtifactFile(localRepository, artifact.mavenId, "pom")
   }
 
   fun addDependencies(dependencies: Collection<MavenArtifact>) {
