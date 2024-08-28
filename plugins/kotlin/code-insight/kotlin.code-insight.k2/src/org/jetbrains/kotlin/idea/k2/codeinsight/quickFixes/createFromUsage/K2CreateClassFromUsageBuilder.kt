@@ -41,7 +41,7 @@ object K2CreateClassFromUsageBuilder {
 
         var expectedType: ExpectedKotlinType?
         var superClassName:String?
-        var returnTypeString = ""
+        var returnTypeString: String
         var superClass: KtClass?
         analyze(refExpr) {
             expectedType = refExpr.getExpectedKotlinType()
@@ -157,11 +157,10 @@ object K2CreateClassFromUsageBuilder {
             else -> getTargetParentsByQualifier(fullCallExpr, true, receiver)
         }
 
-        if (targetParents.isEmpty()) return Pair(emptyList(), emptyList())
         val parent = element.parent
         val typeReference = parent.getNonStrictParentOfType<KtTypeReference>()
-        if (parent is KtClassLiteralExpression && parent.receiverExpression == element || typeReference != null) {
-            val hasTypeArguments = ((fullParent as? KtUserType)?.getTypeArgumentsAsTypes() ?: emptyList()).isNotEmpty()
+        if (parent is KtClassLiteralExpression && parent.receiverExpression == element || typeReference != null || parent is KtCallExpression) {
+            val hasTypeArguments = ((fullParent as? KtUserType)?.getTypeArgumentsAsTypes() ?: (parent as? KtCallExpression)?.typeArguments ?: emptyList()).isNotEmpty()
             val isQualifier = (fullParent.parent as? KtUserType)?.qualifier == fullParent
             val inTypeBound = typeReference != null && (
               (typeReference.parent as? KtTypeParameter)?.extendsBound == typeReference ||

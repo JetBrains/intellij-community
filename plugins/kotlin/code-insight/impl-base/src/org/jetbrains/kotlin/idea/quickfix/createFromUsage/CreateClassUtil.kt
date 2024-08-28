@@ -251,7 +251,7 @@ object CreateClassUtil {
     fun getFullCallExpression(element: KtSimpleNameExpression): KtExpression? {
         return element.parent.let {
             when {
-                it is KtCallExpression && it.calleeExpression == element -> return null
+                it is KtCallExpression && it.calleeExpression == element -> null
                 it is KtQualifiedExpression && it.selectorExpression == element -> it
                 else -> element
             }
