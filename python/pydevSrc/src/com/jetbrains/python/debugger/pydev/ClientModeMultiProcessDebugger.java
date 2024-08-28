@@ -15,15 +15,14 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
@@ -47,7 +46,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   private final CompositeRemoteDebuggerCloseListener myCompositeListener = new CompositeRemoteDebuggerCloseListener();
 
-  private final ScheduledExecutorService myScheduler;
+  private final @NotNull ExecutorService myExecutor;
 
   public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
@@ -55,9 +54,9 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     myHost = host;
     myPort = port;
 
-    String connectionThreadsName = "Debugger connection threads (" + host + ":" + port + ")";
+    String connectionThreadsName = "Debugger connection thread (" + host + ":" + port + ")";
 
-    myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor(connectionThreadsName);
+    myExecutor = ConcurrencyUtil.newSingleThreadExecutor(connectionThreadsName);
 
     Runnable task = () -> {
       try {
@@ -68,7 +67,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
       }
     };
 
-    myScheduler.scheduleAtFixedRate(task, 0, 500, TimeUnit.MILLISECONDS);
+    myExecutor.execute(task);
   }
 
   /**
@@ -88,6 +87,14 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
         try {
           ProcessCreatedMsgReceivedCommand command = new ProcessCreatedMsgReceivedCommand(this, commandSequence);
           command.execute();
+          myExecutor.execute(() -> {
+            try {
+              tryToConnectRemoteDebugger();
+            }
+            catch (Exception e) {
+              LOG.info(e);
+            }
+          });
         }
         catch (PyDebuggerException e) {
           LOG.info(e);
@@ -141,8 +148,6 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public void close() {
     myDebuggerStatusHolder.onDisconnectionInitiated();
 
-    myScheduler.shutdownNow();
-
     for (ProcessDebugger d : allDebuggers()) {
       d.close();
     }
@@ -157,8 +162,6 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   @Override
   public void disconnect() {
     myDebuggerStatusHolder.onDisconnectionInitiated();
-
-    myScheduler.shutdownNow();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.disconnect();

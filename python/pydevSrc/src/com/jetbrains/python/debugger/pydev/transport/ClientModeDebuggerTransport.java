@@ -12,11 +12,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -78,48 +77,65 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
         "Inappropriate state of Python debugger for connecting to Python debugger: " + myState + "; " + State.INIT + " is expected");
     }
 
+    /*
+    The server socket on the debugger side might not be open yet, so we need to retry the connection multiple times.
+    Ideally, the debugger would print a message to stdout when the socket is ready, and we would connect after that.
+    However, capturing stdout from the process at this point is not straightforward. Hence, we use this retry workaround.
+    */
+    var attempts = 0;
+    var maxRetries = 10;
+    var retryInterval = TimeUnit.MILLISECONDS.toMillis(500);
     boolean connected = false;
-    try {
-      Socket clientSocket = new Socket();
-      clientSocket.setSoTimeout(HANDSHAKE_TIMEOUT_IN_MILLIS);
-      clientSocket.connect(new InetSocketAddress(myHost, myPort), CONNECTION_TIMEOUT_IN_MILLIS);
 
-      synchronized (mySocketObject) {
-        mySocket = clientSocket;
-        myState = State.CONNECTED;
-      }
-
-      DebuggerReader debuggerReader;
+    do {
       try {
-        myDebuggerReader = debuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
-      }
-      catch (IOException e) {
-        LOG.debug("Failed to create debugger reader", e);
-        throw e;
-      }
+        Socket clientSocket = new Socket();
+        clientSocket.setSoTimeout(HANDSHAKE_TIMEOUT_IN_MILLIS);
+        clientSocket.connect(new InetSocketAddress(myHost, myPort), CONNECTION_TIMEOUT_IN_MILLIS);
 
-      try {
-        myDebugger.handshake();
+        synchronized (mySocketObject) {
+          mySocket = clientSocket;
+          myState = State.CONNECTED;
+        }
 
-        debuggerReader.connectionApproved();
-        connected = true;
+        DebuggerReader debuggerReader;
+        try {
+          myDebuggerReader = debuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
+        }
+        catch (IOException e) {
+          LOG.debug("Failed to create debugger reader", e);
+          throw e;
+        }
 
-        // after successful connection turn back original timeout
-        clientSocket.setSoTimeout(0);
-      }
-      catch (PyDebuggerException e) {
-        LOG.debug(String.format("[%d] Handshake failed", hashCode()));
-      }
-      finally {
-        if (!connected) {
-          debuggerReader.close();
+        try {
+          myDebugger.handshake();
+
+          debuggerReader.connectionApproved();
+          connected = true;
+
+          // After a successful connection turn back original timeout.
+          clientSocket.setSoTimeout(0);
+        }
+        catch (PyDebuggerException e) {
+          LOG.debug(String.format("[%d] Handshake failed", hashCode()));
+        }
+        finally {
+          if (!connected) {
+            debuggerReader.close();
+          }
         }
       }
-    }
-    catch (ConnectException | SocketTimeoutException e) {
-      myState = State.DISCONNECTED;
-      throw new IOException("Failed to connect to debugger script", e);
-    }
+      catch (IOException e) {
+        attempts++;
+        try {
+          Thread.sleep(retryInterval);
+        }
+        catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          LOG.debug("Connection to the debugger thread is interrupted during the retry delay", e);
+        }
+      }
+    } while (attempts < maxRetries && !connected);
 
     if (!connected) {
       myState = State.DISCONNECTED;
