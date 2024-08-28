@@ -56,28 +56,32 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun createImportFixesForExpressionLazy(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> = sequence {
-        analyze(expression) {
-            val file = expression.containingKtFile
-            if (file.hasUnresolvedImportWhichCanImport(expression)) return@sequence
+    private fun createImportFixesForExpressionLazy(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
+        val file = expression.containingKtFile
 
-            val quickFixService = KotlinQuickFixService.getInstance()
-            val diagnostics = expression
+        val diagnostics = analyze(expression) {
+            if (file.hasUnresolvedImportWhichCanImport(expression)) return@analyze emptyList()
+
+            expression
                 .diagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
                 .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
+        }
 
-            for (diagnostic in diagnostics) {
-                val importFixes = quickFixService.getImportQuickFixesFor(diagnostic)
-                for (importFix in importFixes) {
-                    val element = importFix.element ?: continue
+        val quickFixService = KotlinQuickFixService.getInstance()
 
-                    // obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
-                    if (!file.hasUnresolvedImportWhichCanImport(element)) {
-                        yield(importFix)
-                    }
+        return diagnostics
+            .asSequence()
+            .flatMap {
+                analyze(expression) {
+                    quickFixService.getImportQuickFixesFor(it)
+                }
+            }.filter { importFix ->
+                analyze(expression) {
+                    val element = importFix.element
+                    // Obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
+                    element != null && !file.hasUnresolvedImportWhichCanImport(element)
                 }
             }
-        }
     }
 }
 
