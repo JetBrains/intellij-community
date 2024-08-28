@@ -1086,9 +1086,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean updateQualifierOnEquality(DfaVariableValue target, DfaValue value) {
-    DfType constraint = target.getDescriptor().getQualifierConstraintFromValue(this, value);
     DfaVariableValue qualifier = target.getQualifier();
-    return qualifier == null || meetDfType(qualifier, constraint);
+    if (qualifier == null) return true;
+    DfType constraint = target.getDescriptor().getQualifierConstraintFromValue(this, value);
+    return meetDfType(qualifier, constraint);
   }
 
   private boolean propagateConstant(DfaVariableValue value, DfConstantType<?> constant) {
