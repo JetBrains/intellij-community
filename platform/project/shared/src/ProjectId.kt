@@ -20,7 +20,7 @@ val PROJECT_ID = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
  */
 @Serializable
 @ApiStatus.Internal
-class ProjectId(private val id: UID) {
+data class ProjectId(private val id: UID) {
 
   /**
    * This API is necessary only for Split Mode, functionality that uses RD Protocol
