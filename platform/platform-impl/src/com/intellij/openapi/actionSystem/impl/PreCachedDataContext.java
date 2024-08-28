@@ -199,9 +199,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     int keyIndex; // for use with `nullsByContextRules` only, always != -1
     ProviderData map = myCachedData.get(0);
     if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
-        return getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
-      });
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, new ContextRuleProvider());
       if (answer != null) {
         map.computedData.put(dataId, answer);
         map.nullsByRules.clear(keyIndex);
@@ -252,11 +250,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       }
       if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
 
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, id -> {
-        if (Objects.equals(id, dataId)) return null;
-        Object o = map.uiSnapshot.get(id);
-        return o != null ? o : map.computedData.get(id);
-      });
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, map);
 
       if (answer == null) {
         map.nullsByRules.set(keyIndex);
@@ -605,12 +599,35 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  private static final class ProviderData {
+  private class ContextRuleProvider implements DataProvider, DataValidators.SourceWrapper {
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      return getDataInner(dataId, !CommonDataKeys.PROJECT.is(dataId), true);
+    }
+
+    @Override
+    public @NotNull Object unwrapSource() {
+      return PreCachedDataContext.this;
+    }
+  }
+
+  private static final class ProviderData implements DataProvider, DataValidators.SourceWrapper {
     final Map<String, Object> uiSnapshot = new ConcurrentHashMap<>();
     final Map<String, Object> computedData = new ConcurrentHashMap<>();
     // to avoid lots of nulls in maps
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
     final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      Object o = uiSnapshot.get(dataId);
+      return o != null ? o : computedData.get(dataId);
+    }
+
+    @Override
+    public @NotNull Object unwrapSource() {
+      return Collections.emptyMap();
+    }
   }
 
   private static final class ComponentRef {
