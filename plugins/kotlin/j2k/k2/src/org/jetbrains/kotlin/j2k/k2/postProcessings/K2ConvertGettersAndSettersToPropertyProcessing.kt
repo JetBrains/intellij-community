@@ -661,6 +661,9 @@ private class ClassConverter(
         moveAccessorAnnotationsToProperty(ktProperty)
         removeRedundantPropertyAccessors(ktProperty)
         convertGetterToSingleExpressionBody(ktProperty.getter)
+        if (ktProperty.getter != null || ktProperty.setter != null) {
+            ktProperty.removeModifier(CONST_KEYWORD)
+        }
     }
 
     private fun removeRedundantPropertyAccessors(property: KtProperty) {
