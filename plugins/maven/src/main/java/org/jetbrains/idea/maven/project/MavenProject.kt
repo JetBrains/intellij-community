@@ -587,11 +587,6 @@ class MavenProject(val file: VirtualFile) {
     }
   }
 
-  val cacheProblems: List<MavenProjectProblem>
-    get() {
-      return problems
-    }
-
   val existingModuleFiles: List<VirtualFile>
     get() {
       val fs: LocalFileSystem = LocalFileSystem.getInstance()
