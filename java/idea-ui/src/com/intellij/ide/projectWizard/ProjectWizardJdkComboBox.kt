@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -81,15 +80,36 @@ sealed class ProjectWizardJdkIntent {
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
   sdkProperty: GraphProperty<Sdk?>,
-  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
 ): Cell<ProjectWizardJdkComboBox> {
-  val baseData = requireNotNull(baseData) {
-    "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
-  }
+  return projectWizardJdkComboBox(
+    row, sdkProperty, sdkDownloadTaskProperty,
+    {
+      requireNotNull(baseData) {
+        "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
+      }.path
+    },
+    { sdk -> context.projectJdk = sdk },
+    context.disposable,
+    context.projectJdk,
+  )
+}
+
+fun projectWizardJdkComboBox(
+  row: Row,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  projectLocation: () -> String,
+  setProjectJdk: (Sdk?) -> Unit,
+  disposable: Disposable,
+  projectJdk: Sdk? = null,
+  sdkFilter: (Sdk) -> Boolean = { true },
+): Cell<ProjectWizardJdkComboBox> {
   val sdkPropertyId = StdModuleTypes.JAVA
   val selectedJdkProperty = "jdk.selected.${sdkPropertyId.id}"
 
-  val combo = ProjectWizardJdkComboBox(context.projectJdk, context.disposable)
+  val combo = ProjectWizardJdkComboBox(projectJdk, disposable)
+  combo.filterItems { sdkFilter(it) }
 
   return row.cell(combo)
     .columns(COLUMNS_LARGE)
@@ -103,7 +123,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
       val intent = it.selectedItem
 
       if (isWindows) {
-        val wslJDKValidation = validateJdkAndProjectCompatibility(intent, baseData)
+        val wslJDKValidation = validateJdkAndProjectCompatibility(intent, projectLocation)
         if (wslJDKValidation != null) return@validationOnApply wslJDKValidation
       }
 
@@ -123,7 +143,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
         registerJdk(selected.home, combo)
       }
 
-      context.projectJdk = sdkProperty.get()
+      setProjectJdk.invoke(sdkProperty.get())
 
       when (selected) {
         is NoJdk -> JdkComboBoxCollector.noJdkSelected()
@@ -152,7 +172,7 @@ private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): Valid
   }
 }
 
-private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, baseData: NewProjectWizardBaseData): ValidationInfo? {
+private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, location: () -> String): ValidationInfo? {
   val path = when (intent) {
     is DownloadJdk -> intent.task.plannedHomeDir
     is ExistingJdk -> intent.jdk.homePath
@@ -160,7 +180,7 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
     else -> null
   }
 
-  val isProjectWSL = WslPath.isWslUncPath(baseData.path)
+  val isProjectWSL = WslPath.isWslUncPath(location.invoke())
 
   if (path != null && WslPath.isWslUncPath(path) != isProjectWSL) {
     return when (isProjectWSL) {
@@ -406,6 +426,16 @@ class ProjectWizardJdkComboBox(
       else -> anObject
     }
     super.setSelectedItem(toSelect)
+  }
+
+  fun filterItems(sdkFilter: (Sdk) -> Boolean) {
+    registered.removeAll { !sdkFilter(it.jdk) }
+    for (i in itemCount - 1 downTo 0) {
+      val item = getItemAt(i)
+      if (item is ExistingJdk && !sdkFilter(item.jdk)) {
+        removeItemAt(i)
+      }
+    }
   }
 
   val lastRegisteredJdkIndex
