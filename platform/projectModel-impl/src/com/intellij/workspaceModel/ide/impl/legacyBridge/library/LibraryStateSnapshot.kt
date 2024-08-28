@@ -13,10 +13,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.libraryProperties
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.ArrayUtil
@@ -98,7 +95,7 @@ internal class LibraryStateSnapshot(
   val externalSource: ProjectModelExternalSource?
     get() = (libraryEntity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
 
-  private fun collectFiles(libraryEntity: LibraryEntity): Map<Any, FileContainerDescription> = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
+  private fun collectFiles(libraryEntity: LibraryEntity): Map<LibraryRootTypeId, FileContainerDescription> = libraryEntity.roots.groupBy { it.type }.mapValues { (_, roots) ->
     val urls = roots.filter { it.inclusionOptions == LibraryRoot.InclusionOptions.ROOT_ITSELF }.map { it.url }
     val jarDirs = roots
       .filter { it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF }
