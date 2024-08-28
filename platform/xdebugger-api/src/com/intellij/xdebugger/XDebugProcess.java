@@ -16,7 +16,6 @@ import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
-import com.intellij.xdebugger.freeze.XFreezeThreadHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -157,15 +156,6 @@ public abstract class XDebugProcess {
   @ApiStatus.Experimental
   @Nullable
   public XDropFrameHandler getDropFrameHandler() {
-    return null;
-  }
-
-  /**
-   * Implement {@link XFreezeThreadHandler} and return its instance from this method to enable Freeze Thread action.
-   */
-  @ApiStatus.Experimental
-  @Nullable
-  public XFreezeThreadHandler getFreezeThreadHandler() {
     return null;
   }
 
