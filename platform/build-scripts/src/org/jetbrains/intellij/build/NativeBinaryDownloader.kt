@@ -17,6 +17,21 @@ object NativeBinaryDownloader {
   private const val PACKAGING = "tar.gz"
   private const val LICENSE_FILE_NAME = "xplat-launcher-third-party-licenses.html"
 
+  // Android Studio (b/342419219): we build platform binaries from source instead of downloading them from JetBrains.
+  private fun findFileForAndroidStudio(fileName: String, context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
+    val resourcesDir = context.paths.communityHomeDirRoot.communityRoot.resolve("platform/build-scripts/resources")
+    val path = when (os) {
+      OsFamily.LINUX -> resourcesDir.resolve("linux/${arch.dirName}/$fileName")
+      OsFamily.MACOS -> resourcesDir.resolve("mac/$fileName")
+      OsFamily.WINDOWS -> {
+        val ext = if (fileName.contains('.')) "" else ".exe"
+        resourcesDir.resolve("win/${arch.dirName}/$fileName$ext")
+      }
+    }
+    check(path.exists()) { "Android Studio (b/342419219): expected prebuilt binary at: $path" }
+    return path
+  }
+
   /**
    * Attempts to locate a local debug build of cross-platform launcher when in the development mode
    * and [org.jetbrains.intellij.build.BuildOptions.useLocalLauncher] is set to `true`.
@@ -26,6 +41,11 @@ object NativeBinaryDownloader {
    * Returns a pair of paths `(executable, license)` for the given platform.
    */
   suspend fun getLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path> {
+    return Pair(
+      findFileForAndroidStudio("launcher", context, os, arch),
+      findFileForAndroidStudio("launcher_licenses.html", context, os, arch),
+    )
+    /* Android Studio (b/342419219): we build platform binaries from source instead of downloading them from JetBrains.
     if (context.options.isInDevelopmentMode && context.options.useLocalLauncher) {
       val localLauncher = findLocalLauncher(context, os)
       if (localLauncher != null) return localLauncher
@@ -35,6 +55,7 @@ object NativeBinaryDownloader {
     val executableFile = findExecutable(archiveFile, unpackedDir, os, arch, "xplat-launcher")
     val licenseFile = findFile(archiveFile, unpackedDir, "license/${LICENSE_FILE_NAME}")
     return executableFile to licenseFile
+    */
   }
 
   private fun findLocalLauncher(context: BuildContext, os: OsFamily): Pair<Path, Path>? {
@@ -58,11 +79,15 @@ object NativeBinaryDownloader {
    * Downloads and unpacks the restarter tarball and returns a path to an executable for the given platform.
    */
   suspend fun getRestarter(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path {
+    return findFileForAndroidStudio("restarter", context, os, arch)
+    /* Android Studio (b/342419219): we build platform binaries from source instead of downloading them from JetBrains.
     val (archiveFile, unpackedDir) = downloadAndUnpack(context, "restarterBuild", RESTARTER_ID)
     return findExecutable(archiveFile, unpackedDir, os, arch, "restarter")
+    */
   }
 
   private suspend fun downloadAndUnpack(context: BuildContext, propertyName: String, artifactId: String): Pair<Path, Path> {
+    error("Android Studio (b/342419219): platform binaries should be built from source instead of downloaded from JetBrains")
     val communityRoot = context.paths.communityHomeDirRoot
     val version = context.dependenciesProperties.property(propertyName)
     val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, GROUP_ID, artifactId, version, PACKAGING)
