@@ -51,7 +51,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   }
 
   @Override
-  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
+  public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
     return ReflectionUtil.isAssignable(XmlElement.class, elementClass);
   }
 

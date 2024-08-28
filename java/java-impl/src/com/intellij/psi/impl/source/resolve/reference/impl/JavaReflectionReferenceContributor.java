@@ -92,7 +92,7 @@ public final class JavaReflectionReferenceContributor extends PsiReferenceContri
     }
 
     @Override
-    public PsiReference @NotNull [] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
+    public PsiReference @NotNull [] getReferencesByString(@NotNull String str, @NotNull PsiElement position, int offsetInPosition) {
       if (StringUtil.isEmpty(str)) {
         return PsiReference.EMPTY_ARRAY;
       }
