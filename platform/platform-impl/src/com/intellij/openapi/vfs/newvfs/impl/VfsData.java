@@ -391,6 +391,7 @@ public final class VfsData {
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
      *
+     * @see DirectoryData#setChildrenIds(int[])
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     volatile int @NotNull [] childrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
@@ -518,6 +519,9 @@ public final class VfsData {
              '}';
     }
 
+    /**
+     * Must be called in synchronized(VfsData)
+     */
     void setChildrenIds(int @NotNull [] childrenIds) {
       this.sortedChildrenIds = null;
       this.childrenIds = childrenIds;
