@@ -25,13 +25,6 @@ abstract class ProjectEntitiesStorage {
   suspend fun createEntity(project: Project) = withKernel {
     val projectId = project.projectId()
 
-    // TODO it shouldn't be here
-    change {
-      shared {
-        register(ProjectEntity)
-      }
-    }
-
     change {
       val projectEntity = shared {
         /*
