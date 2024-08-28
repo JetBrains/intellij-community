@@ -95,6 +95,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testWhenPatterns() {
     doTest();
   }
+  public void testPrecalculatedTrimValue() { doTest(); }
   public void testSwitchNullability() {
     doTest();
   }

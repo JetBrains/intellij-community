@@ -797,17 +797,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
     }
-    for (Map.Entry<DfaVariableValue, DfType> entry : new ArrayList<>(myVariableTypes.entrySet())) {
-      DfaVariableValue knownVar = entry.getKey();
-      if (knownVar.getQualifier() == var) {
-        if (!meetDfType(knownVar, knownVar.getDescriptor().restrictFromState(var, this))) {
-          return false;
-        }
-      }
-    }
+    if (!restrictDependentVariables(var)) return false;
     if (!updateDependentVariables(var, newType)) return false;
     if (!correctRelatedValues(var, newType)) return false;
     if (newType instanceof DfConstantType && !propagateConstant(var, (DfConstantType<?>)newType)) return false;
+    return true;
+  }
+
+  private boolean restrictDependentVariables(@NotNull DfaVariableValue var) {
+    for (Map.Entry<DfaVariableValue, DfType> entry : new ArrayList<>(myVariableTypes.entrySet())) {
+      DfaVariableValue knownVar = entry.getKey();
+      while (knownVar != null) {
+        if (knownVar.getQualifier() == var) {
+          if (!meetDfType(knownVar, knownVar.getDescriptor().restrictFromState(var, this))) {
+            return false;
+          }
+        }
+        knownVar = knownVar.getQualifier();
+      }
+    }
     return true;
   }
 
