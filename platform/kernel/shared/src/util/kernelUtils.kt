@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
@@ -62,6 +63,21 @@ fun handleEntityTypes(transactor: Transactor, coroutineScope: CoroutineScope) {
 
 fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
   return transactor + this[Rete]!! + this[DbSource.ContextElement]!!
+}
+
+/**
+ * The latest change is indefinitely stored in [Novelty] with all changed entities.
+ * For example, if an entity was removed it and all its fields
+ * will be present in [Novelty.retractions] until a new change happens.
+ *
+ * This might lead to some objects not being collected by GC until the last change is replaced by a new one.
+ *
+ * This method invokes an empty change on DB to push the last one out of memory.
+ * Don't use this method unless there are problems with objects stuck in [Novelty]
+ */
+@ApiStatus.Internal
+suspend fun Kernel.flushLatestChange() {
+  this.changeSuspend {  }
 }
 
 val CommonInstructionSet: InstructionSet =

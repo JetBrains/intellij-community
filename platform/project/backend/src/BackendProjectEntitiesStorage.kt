@@ -2,10 +2,12 @@
 package com.intellij.platform.project.backend
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.kernel.util.flushLatestChange
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.project.asEntityOrNull
 import fleet.kernel.change
+import fleet.kernel.kernel
 import fleet.kernel.shared
 
 internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
@@ -15,5 +17,9 @@ internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
         project.asEntityOrNull()?.delete()
       }
     }
+
+    // Removing ProjectEntity and LocalProjectEntity is the last operation in most of the tests
+    // Without calling "flushLatestChange" kernel keeps the project, which causes "testProjectLeak" failures
+    kernel().flushLatestChange()
   }
 }
