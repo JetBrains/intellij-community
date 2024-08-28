@@ -304,8 +304,7 @@ object CommunityRepositoryModules {
       // modules:
       // adt-ui.jar
       spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
-      spec.withModuleLibrary("jetbrains-jewel-int-ui-standalone", "intellij.android.adt.ui.compose", "jewel-int-ui-standalone.jar")
-      spec.withModuleLibrary("jetbrains-jewel-ide-laf-bridge", "intellij.android.adt.ui.compose", "jewel-ide-laf-bridge.jar")
+      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-242", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-242.jar")
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
@@ -436,6 +435,7 @@ object CommunityRepositoryModules {
       //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
       spec.withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.model", "android.jar")
+      spec.withModuleLibrary("brotli-dec", "intellij.android.app-inspection.inspectors.network.model", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
       spec.withModule("intellij.android.server-flags", "android.jar")
       spec.withModule("intellij.android.codenavigation", "android.jar")
