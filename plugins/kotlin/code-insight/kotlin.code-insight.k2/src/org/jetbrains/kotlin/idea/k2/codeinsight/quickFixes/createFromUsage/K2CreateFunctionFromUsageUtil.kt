@@ -66,7 +66,7 @@ object K2CreateFunctionFromUsageUtil {
     internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
     context (KaSession)
-    internal fun KtExpression.resolveExpression(): KaSymbol? {
+    fun KtExpression.resolveExpression(): KaSymbol? {
         mainReference?.resolveToSymbol()?.let { return it }
         val call = resolveToCall()?.calls?.singleOrNull() ?: return null
         return if (call is KaCallableMemberCall<*, *>) call.symbol else null

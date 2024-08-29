@@ -7651,6 +7651,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontMergeConvertedOptionsToAnotherCompilerOptions.gradle.kts");
             }
 
+            @TestMetadata("dontReplaceIfOptionValueIsWrong.gradle.kts")
+            public void testDontReplaceIfOptionValueIsWrong_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceIfOptionValueIsWrong.gradle.kts");
+            }
+
             @TestMetadata("dontReplaceInKtFile.kt")
             public void testDontReplaceInKtFile() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceInKtFile.kt");
@@ -7754,11 +7759,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("minusAssign.gradle.kts")
             public void testMinusAssign_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/minusAssign.gradle.kts");
-            }
-
-            @TestMetadata("replaceOnlyKotlinOptionsIfOptionValueIsWrong.gradle.kts")
-            public void testReplaceOnlyKotlinOptionsIfOptionValueIsWrong_gradle() throws Exception {
-                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/replaceOnlyKotlinOptionsIfOptionValueIsWrong.gradle.kts");
             }
 
             @TestMetadata("subprojects.gradle.kts")

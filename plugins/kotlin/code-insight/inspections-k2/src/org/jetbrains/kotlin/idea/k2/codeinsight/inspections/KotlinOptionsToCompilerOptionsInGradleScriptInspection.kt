@@ -12,6 +12,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,6 +23,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.AbstractKotlinGradleScriptInspection
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -30,7 +34,10 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-private val dslsInWhichDontConvertKotlinOptions = listOf("android", "allprojects", "subprojects")
+private val kotlinCompileTasksNames = setOf("org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile",
+                                            "org.jetbrains.kotlin.gradle.tasks.KotlinCompile",
+                                            "org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile",
+                                            "org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile")
 
 internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : AbstractKotlinGradleScriptInspection() {
 
@@ -47,6 +54,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
@@ -58,6 +66,17 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 if (isDescendantOfDslInWhichReplacementIsNotNeeded(expression)) return
 
                 val expressionParent = expression.parent
+
+                if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests on Gradle build scripts
+                    analyze(expression) {
+                        val jvmClassForKotlinCompileTask = expression.resolveToCall()
+                            ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol?.containingJvmClassName
+                            ?: expression.resolveExpression()?.containingSymbol?.importableFqName?.toString() ?: return
+                        if (!kotlinCompileTasksNames.contains(jvmClassForKotlinCompileTask)) {
+                            return
+                        }
+                    }
+                }
                 when (expressionParent) {
                     is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources`
                         val parentOfExpressionParent = expressionParent.parent
@@ -74,6 +93,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                         }
                          */
                     }
+
                     else -> return
                 }
 
@@ -97,15 +117,14 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
     private fun isDescendantOfDslInWhichReplacementIsNotNeeded(ktExpression: KtExpression): Boolean {
         val scriptText = ktExpression.containingFile.text
-        for (dslElement in dslsInWhichDontConvertKotlinOptions) {
-            if (scriptText.contains(dslElement)) {
+            if (scriptText.contains("android")) {
                 ktExpression.prevLeafs.forEach {
-                    if (dslElement == it.text) {
+                    if ("android" == it.text) {
+                        println("android")
                         return true
                     }
                 }
             }
-        }
         return false
     }
 }
@@ -166,6 +185,7 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
 
         expressionsToFix.forEach {
             val newExpression = KtPsiFactory(project).createExpression(it.replacement)
+
             val replacedElement = it.expressionToReplace.replaced(newExpression)
 
             val classToImport = it.classToImport

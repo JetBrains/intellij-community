@@ -1,4 +1,5 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -24,5 +25,5 @@ kotlin {
 }
 
 tasks.getByName<KotlinCompile>("compileKotlin") {
-    compilerOptions.apiVersion = "9"
+    compilerOptions.apiVersion.set(KotlinVersion.fromVersion("9"))
 }

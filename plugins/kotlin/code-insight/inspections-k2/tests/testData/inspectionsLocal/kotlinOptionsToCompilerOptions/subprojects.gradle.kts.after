@@ -1,4 +1,5 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -17,9 +18,9 @@ subprojects {
     }
 
     tasks.withType<KotlinCompile>().all {
-        <caret>kotlinOptions {
-            freeCompilerArgs = listOf("-Xjsr305=strict")
-            jvmTarget = "11"
+        compilerOptions {
+            freeCompilerArgs.set(listOf("-Xjsr305=strict"))
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 }

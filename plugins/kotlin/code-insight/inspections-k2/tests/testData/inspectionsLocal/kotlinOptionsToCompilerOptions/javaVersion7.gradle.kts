@@ -22,6 +22,5 @@ tasks.test {
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.<caret>kotlinOptions {
-    // Kotlin doesn't support jvmTarget = 1.7, we don't convert it properly intentionally
     jvmTarget = JavaVersion.VERSION_1_7.toString()
 }

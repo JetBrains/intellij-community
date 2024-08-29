@@ -129,13 +129,19 @@ private fun getCompilerOptionForVersionValue(
 ): CompilerOption? {
   val processedOptionValue = optionValue.removeSurrounding("\"", "\"")
   val convertedValue = versionOptionData.mappingRule.apply(processedOptionValue)
-  if (convertedValue != null) {
-    val compilerOptionValue = "${versionOptionData.newOptionType}${convertedValue}"
-    replacement.append(
-      "$optionName.$operationReplacer($compilerOptionValue)"
-    )
-    return CompilerOption(replacement.toString(), versionOptionData.fqClassName, compilerOptionValue)
+  val compilerOptionValue = if (convertedValue != null) {
+    "${versionOptionData.newOptionType}${convertedValue}"
   }
+  else if (optionName.contains("jvmTarget")) {
+    "JvmTarget.fromString(${optionValue})"
+  }
+  else {
+    "KotlinVersion.fromVersion(${optionValue})"
+  }
+  replacement.append(
+    "$optionName.$operationReplacer($compilerOptionValue)"
+  )
+  return CompilerOption(replacement.toString(), versionOptionData.fqClassName, compilerOptionValue)
   return null
 }
 

@@ -1,4 +1,5 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -23,5 +24,5 @@ tasks.test {
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
     // We don't support the target 1.7 and thus don't convert it
-    jvmTarget = "1.7"
+    jvmTarget.set(JvmTarget.fromString("1.7"))
 }
