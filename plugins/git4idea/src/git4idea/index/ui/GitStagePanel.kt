@@ -13,17 +13,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
+import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
-import com.intellij.openapi.vcs.changes.ui.ChangesTree.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.ui.SideBorder
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -63,11 +65,12 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.JPanel
 
-internal class GitStagePanel(private val tracker: GitStageTracker,
-                             private val isVertical: () -> Boolean,
-                             disposableParent: Disposable,
-                             private val activate: () -> Unit) :
-  JPanel(BorderLayout()), UiDataProvider, Disposable {
+internal class GitStagePanel(
+  private val tracker: GitStageTracker,
+  private val isVertical: () -> Boolean,
+  disposableParent: Disposable,
+  private val activate: () -> Unit,
+) : JPanel(BorderLayout()), UiDataProvider, Disposable {
   private val project = tracker.project
   private val disposableFlag = Disposer.newCheckedDisposable()
 
@@ -78,16 +81,17 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val commitPanel: GitStageCommitPanel
   private val changesStatusPanel: Wrapper
 
+  private val mainPanelContent = Wrapper()
   private val treeMessageSplitter: Splitter
-  private val commitDiffSplitter: OnePixelSplitter
 
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
-  private var splitPreview: GitStageDiffRequestProcessor? = null
+  private var splitPreview: ShelveSplitterDiffPreview? = null
   private val editorTabPreview: GitStageEditorDiffPreview
 
   private val state: GitStageTracker.State
     get() = tracker.state
+  private var isDisposed = false
 
   private var hasPendingUpdates = false
 
@@ -115,6 +119,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions())
+    toolbarGroup.add(Separator.getInstance())
+    toolbarGroup.add(MyToggleDetailsAction())
     toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
     toolbar.targetComponent = tree
 
@@ -131,6 +137,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       .addToCenter(createScrollPane(tree, sideBorder))
       .addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this)
+
     val treePanelWithToolbar = JPanel(BorderLayout())
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
     treePanelWithToolbar.add(progressStripe, BorderLayout.CENTER)
@@ -143,9 +150,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     changesStatusPanel = Wrapper()
     changesStatusPanel.minimumSize = JBUI.emptySize()
 
-    commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
-    commitDiffSplitter.firstComponent = treeMessageSplitter
-    add(commitDiffSplitter, BorderLayout.CENTER)
+    mainPanelContent.setContent(treeMessageSplitter)
+
+    add(mainPanelContent, BorderLayout.CENTER)
     add(changesStatusPanel, BorderLayout.SOUTH)
 
     editorTabPreview = GitStageEditorDiffPreview(_tree, tracker, toolbar.component, activate)
@@ -220,26 +227,24 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     if (disposableFlag.isDisposed) return
 
     val isVertical = isVertical()
-    val isWithSplitPreview = !isVertical
-
-    val isMessageSplitterVertical = isVertical || isWithSplitPreview
+    val hasSplitterPreview = !isVertical
+    val isPreviewPanelShown = hasSplitterPreview && VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN
+    val isMessageSplitterVertical = isVertical || isPreviewPanelShown;
     if (treeMessageSplitter.orientation != isMessageSplitterVertical) {
       treeMessageSplitter.orientation = isMessageSplitterVertical
     }
 
-    val needUpdatePreviews = isWithSplitPreview != (splitPreview != null)
+    val needUpdatePreviews = hasSplitterPreview != (splitPreview != null)
     if (!needUpdatePreviews) return
 
-    if (!isWithSplitPreview) {
-      commitDiffSplitter.secondComponent = null
-      splitPreview?.let { Disposer.dispose(it) }
-      splitPreview = null
+    if (hasSplitterPreview) {
+      val preview = ShelveSplitterDiffPreview()
+      setPreviewVisible(preview, VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
+      splitPreview = preview
     }
     else {
-      val processor = GitStageDiffRequestProcessor(_tree, tracker, false)
-      processor.setToolbarVerticalSizeReferent(toolbar.component)
-      commitDiffSplitter.secondComponent = processor.component
-      splitPreview = processor
+      splitPreview?.let { Disposer.dispose(it) }
+      splitPreview = null
     }
   }
 
@@ -262,6 +267,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   }
 
   override fun dispose() {
+    isDisposed = true
     Disposer.dispose(editorTabPreview)
 
     splitPreview?.let { Disposer.dispose(it) }
@@ -275,6 +281,60 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         .appendLine(AllIcons.General.ContextHelp, message("stage.default.status.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
           HelpManager.getInstance().invokeHelp(HELP_ID)
         }
+    }
+  }
+
+  private inner class ShelveSplitterDiffPreview : DiffPreview, Disposable {
+    private val processor: GitStageDiffRequestProcessor
+    private val splitterComponent: PreviewDiffSplitterComponent
+
+    init {
+      processor = GitStageDiffRequestProcessor(_tree, tracker, false)
+      processor.setToolbarVerticalSizeReferent(toolbar.component)
+
+      splitterComponent = PreviewDiffSplitterComponent(processor, "git.stage.commit.diff.splitter")
+
+      splitterComponent.firstComponent = treeMessageSplitter
+      mainPanelContent.setContent(splitterComponent)
+    }
+
+    override fun dispose() {
+      Disposer.dispose(processor)
+
+      if (!this@GitStagePanel.isDisposed) {
+        mainPanelContent.setContent(treeMessageSplitter)
+      }
+    }
+
+    override fun openPreview(requestFocus: Boolean): Boolean {
+      return splitterComponent.openPreview(requestFocus)
+    }
+
+    override fun closePreview() {
+      splitterComponent.closePreview()
+    }
+  }
+
+  private inner class MyToggleDetailsAction : ShowDiffPreviewAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabledAndVisible = splitPreview != null
+    }
+
+    override fun isSelected(e: AnActionEvent): Boolean {
+      return VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN
+    }
+    
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state
+
+      val preview = splitPreview ?: return
+      setPreviewVisible(preview, state)
+      updateLayout()
     }
   }
 
