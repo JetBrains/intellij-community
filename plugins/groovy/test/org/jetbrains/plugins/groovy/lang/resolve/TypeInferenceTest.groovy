@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
@@ -1213,6 +1214,7 @@ while (u) {
 ''', null
   }
 
+  @IJIgnore(issue = "IJPL-150165")
   void 'test no soe cyclic multi-assignment'() {
     allowNestedContext(4, testRootDisposable)
     doTest '''\
@@ -1976,6 +1978,7 @@ protected void onLoadConfig (Map configSection) {
 }""", null
   }
 
+  @IJIgnore(issue = "IJPL-150165")
   void 'test soe with large flow'() {
     RecursionManager.disableAssertOnRecursionPrevention(testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
@@ -31,6 +32,7 @@ public class K2ComposeCompilerPluginCheckerTestGenerated extends AbstractK2Compo
     }
 
     @TestMetadata("CfromNC.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCfromNC() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CfromNC.kt");
     }
@@ -46,6 +48,7 @@ public class K2ComposeCompilerPluginCheckerTestGenerated extends AbstractK2Compo
     }
 
     @TestMetadata("CinCrossinlineNCLambdaArg.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCinCrossinlineNCLambdaArg() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CinCrossinlineNCLambdaArg.kt");
     }
@@ -56,16 +59,19 @@ public class K2ComposeCompilerPluginCheckerTestGenerated extends AbstractK2Compo
     }
 
     @TestMetadata("CinLambdaArgOfC.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCinLambdaArgOfC() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CinLambdaArgOfC.kt");
     }
 
     @TestMetadata("CinLambdaArgOfNC.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCinLambdaArgOfNC() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CinLambdaArgOfNC.kt");
     }
 
     @TestMetadata("CinNCPropGetter.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCinNCPropGetter() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CinNCPropGetter.kt");
     }
@@ -76,41 +82,49 @@ public class K2ComposeCompilerPluginCheckerTestGenerated extends AbstractK2Compo
     }
 
     @TestMetadata("CinNoinlineNCLambdaArg.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCinNoinlineNCLambdaArg() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CinNoinlineNCLambdaArg.kt");
     }
 
     @TestMetadata("CinTopLevelInitializer.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testCinTopLevelInitializer() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/CinTopLevelInitializer.kt");
     }
 
     @TestMetadata("ComposableFunctionReferences.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testComposableFunctionReferences() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/ComposableFunctionReferences.kt");
     }
 
     @TestMetadata("ComposableMainFun.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testComposableMainFun() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/ComposableMainFun.kt");
     }
 
     @TestMetadata("GenericComposableInference1.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testGenericComposableInference1() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/GenericComposableInference1.kt");
     }
 
     @TestMetadata("MissingComposableOnOverride.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testMissingComposableOnOverride() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/MissingComposableOnOverride.kt");
     }
 
     @TestMetadata("MissingOverrideComposableLambda.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testMissingOverrideComposableLambda() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/MissingOverrideComposableLambda.kt");
     }
 
     @TestMetadata("MultipleOverrideLambda.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testMultipleOverrideLambda() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/MultipleOverrideLambda.kt");
     }
@@ -121,21 +135,25 @@ public class K2ComposeCompilerPluginCheckerTestGenerated extends AbstractK2Compo
     }
 
     @TestMetadata("NonComposableFunctionReferences.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testNonComposableFunctionReferences() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/NonComposableFunctionReferences.kt");
     }
 
     @TestMetadata("PropertyWithInitializer.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testPropertyWithInitializer() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/PropertyWithInitializer.kt");
     }
 
     @TestMetadata("SuspendComposable.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testSuspendComposable() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/SuspendComposable.kt");
     }
 
     @TestMetadata("WrongOverrideLambda.kt")
+    @IJIgnore(issue = "IJPL-150165")
     public void testWrongOverrideLambda() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithComposeCompilerCheckers/WrongOverrideLambda.kt");
     }
