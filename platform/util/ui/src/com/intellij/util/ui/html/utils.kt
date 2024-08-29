@@ -7,14 +7,8 @@ import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import java.util.*
 import javax.swing.SizeRequirements
-import javax.swing.text.AttributeSet
-import javax.swing.text.BoxView
-import javax.swing.text.GlyphView
-import javax.swing.text.View
-import javax.swing.text.html.BlockView
-import javax.swing.text.html.CSS
-import javax.swing.text.html.HTMLDocument
-import javax.swing.text.html.StyleSheet
+import javax.swing.text.*
+import javax.swing.text.html.*
 import javax.swing.text.html.StyleSheet.BoxPainter
 
 @Suppress("UseDPIAwareInsets")
@@ -174,6 +168,34 @@ internal fun createCssAttribute(name: String, defaultValue: String?, inherited: 
   return attribute
 }
 
+internal fun Document.tryRunUnderWriteLock(action: () -> Unit) {
+  if (currWriter == Thread.currentThread()) {
+    action()
+  } else if (!notifyingListeners) {
+    writeLock()
+    try {
+      action()
+    }
+    finally {
+      writeUnlock()
+    }
+  }
+}
+
+private val Document.notifyingListeners: Boolean get() =
+  documentNotifyingListenersField.get(this) as Boolean
+
+private val Document.currWriter: Thread get() =
+  documentCurrWriterField.get(this) as Thread
+
+private fun Document.writeLock() {
+  documentWriteLockMethod.invoke(this)
+}
+
+private fun Document.writeUnlock() {
+  documentWriteUnlockMethod.invoke(this)
+}
+
 private val cssAttributesExList by lazy(LazyThreadSafetyMode.PUBLICATION) {
   CssAttributesEx::class.java.fields
     .mapNotNull { it.get(null) as? CSS.Attribute }
@@ -238,6 +260,26 @@ private val boxPainterBgField by lazy(LazyThreadSafetyMode.PUBLICATION) {
 private val JustificationInfoClass by lazy(LazyThreadSafetyMode.PUBLICATION) {
   GlyphView::class.java.declaredClasses
     .find { it.simpleName == "JustificationInfo" }!!
+}
+
+private val documentNotifyingListenersField by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  AbstractDocument::class.java.getDeclaredField("notifyingListeners")
+    .also { it.isAccessible = true }
+}
+
+private val documentCurrWriterField by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  AbstractDocument::class.java.getDeclaredField("currWriter")
+    .also { it.isAccessible = true }
+}
+
+private val documentWriteLockMethod by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  AbstractDocument::class.java.getDeclaredMethod("writeLock")
+    .also { it.isAccessible = true }
+}
+
+private val documentWriteUnlockMethod by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  AbstractDocument::class.java.getDeclaredMethod("writeUnlock")
+    .also { it.isAccessible = true }
 }
 
 internal data class JustificationInfo(
