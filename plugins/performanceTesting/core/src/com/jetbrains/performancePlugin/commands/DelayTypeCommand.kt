@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.internal.performance.LatencyRecord
@@ -8,11 +9,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.actionSystem.LatencyListener
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
@@ -96,6 +97,16 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
       if (calculateAnalyzesTime) {
         val spanRef = Ref<Span>(PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span)).startSpan())
         job.set(DaemonCodeAnalyzerListener.listen(projectConnection, spanRef, 0, null))
+        launch {
+          while (!job.get().isDone()) {
+            FileEditorManager.getInstance(context.getProject()).getSelectedTextEditor().let { editor ->
+              withContext(Dispatchers.EDT) {
+                LookupManager.getActiveLookup(editor)?.hideLookup(true)
+              }
+            }
+            delay(1.seconds)
+          }
+        }
       }
 
       if (!latencyRecorder.samples.isEmpty) {
