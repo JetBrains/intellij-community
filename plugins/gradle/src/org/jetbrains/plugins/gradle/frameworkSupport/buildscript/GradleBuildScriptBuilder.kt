@@ -54,7 +54,8 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun applyPlugin(plugin: String): BSB
   fun applyPluginFrom(path: String): BSB
 
-  fun withPlugin(id: String, version: String? = null): BSB
+  fun withPlugin(id: String) = withPlugin(id, null)
+  fun withPlugin(id: String, version: String?): BSB
 
   fun withJavaPlugin(): BSB
   fun withJavaLibraryPlugin(): BSB

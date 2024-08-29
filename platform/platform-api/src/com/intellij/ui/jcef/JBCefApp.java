@@ -404,6 +404,10 @@ public final class JBCefApp {
     return SettingsHelper.isOffScreenRenderingModeEnabled();
   }
 
+  public @Nullable CefSettings getCefSettings() {
+    return myCefSettings;
+  }
+
   /**
    * Throws {@code IllegalStateException} if the off-screen rendering mode is not enabled.
    * <p>

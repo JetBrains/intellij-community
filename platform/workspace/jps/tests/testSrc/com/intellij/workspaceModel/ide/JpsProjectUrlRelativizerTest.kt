@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityStorageSerializer
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.url.UrlRelativizerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
@@ -21,9 +22,9 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
+import com.intellij.workspaceModel.ide.impl.createJpsProjectUrlRelativizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.ide.impl.jps.serialization.sampleFileBasedProjectFile
@@ -52,7 +53,7 @@ class JpsProjectUrlRelativizerTest {
   private lateinit var serializer: EntityStorageSerializer
   private lateinit var projectData: LoadedProjectData
   private lateinit var project: Project
-  private lateinit var urlRelativizer: JpsProjectUrlRelativizer
+  private lateinit var urlRelativizer: UrlRelativizerImpl
 
   @Before
   fun setUp() {
@@ -65,11 +66,11 @@ class JpsProjectUrlRelativizerTest {
 
     projectData = copyAndLoadProject(sampleFileBasedProjectFile, virtualFileManager)
     project = PlatformTestUtil.loadAndOpenProject(projectData.projectDir.toPath(), disposableRule.disposable)
-    urlRelativizer = JpsProjectUrlRelativizer(project)
+    urlRelativizer = createJpsProjectUrlRelativizer(project) as UrlRelativizerImpl
     serializer = EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(project),
+      urlRelativizer = createJpsProjectUrlRelativizer(project),
       ""
     )
   }
@@ -149,7 +150,7 @@ class JpsProjectUrlRelativizerTest {
     val otherProjectDir = tempDirectory.newDirectory()
     val otherProject = PlatformTestUtil.loadAndOpenProject(otherProjectDir.toPath(), disposableRule.disposable)
     assertNotEquals(otherProject.basePath!!, project.basePath!!)
-    val otherPathRelativizer = JpsProjectUrlRelativizer(otherProject)
+    val otherPathRelativizer = createJpsProjectUrlRelativizer(otherProject)
 
     // Finally, deserialize cache
     val otherSerializer = EntityStorageSerializerImpl(

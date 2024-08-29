@@ -844,6 +844,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
+    super.visitImportModuleStatement(statement);
+    if (!hasErrorResults()) add(checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS));
+    if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
+  }
+
+  @Override
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     super.visitKeyword(keyword);
     PsiElement parent = keyword.getParent();
@@ -924,7 +931,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitMethod(method);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
-    if (!hasErrorResults()) add(HighlightMethodUtil.checkRecursiveConstructorInvocation(method));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkSafeVarargsAnnotation(method, myLanguageLevel));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkRecordAccessorDeclaration(method));
     if (!hasErrorResults()) HighlightMethodUtil.checkRecordConstructorDeclaration(method, myErrorSink);
@@ -980,18 +986,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           if (!superMethodSignatures.isEmpty()) {
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
               if (!hasErrorResults()) {
-                add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true, myFile,
-                                                                    null));
+                add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true, myFile, null));
               }
               if (!hasErrorResults()) add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
             }
             if (!hasErrorResults()) {
-              add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true,
-                                                                        null));
+              add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true, null));
             }
             if (aClass != null && !hasErrorResults()) {
-              add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, aClass,
-                                                                    null));
+              add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, aClass, null));
             }
           }
         }

@@ -34,7 +34,7 @@ See Also
 Copying
 =======
 This manual page is copyright 2005 Bryan O'Sullivan.
-Mercurial is copyright 2005-2021 Olivia Mackall.
+Mercurial is copyright 2005-2024 Olivia Mackall.
 Free use of this software is granted under the terms of the GNU General
 Public License version 2 or any later version.
 

@@ -2400,6 +2400,7 @@ e:com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType
 - java.lang.Enum
 - sf:INT32:com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType
 - sf:INT64:com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType
+- additionMayOverflow(J,J):Z
 - bits():I
 - bytes():I
 - cast(J):J

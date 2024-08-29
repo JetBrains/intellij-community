@@ -44,7 +44,7 @@ class KotlinPluginKindSwitcherController {
         useK2Plugin = chosenKind == KotlinPluginMode.K2
         updatePanels()
         if (pluginKindWillBeSwitchedAfterRestart) {
-            suggestRestart()
+            suggestRestart(productName)
         }
     }
 
@@ -77,7 +77,7 @@ class KotlinPluginKindSwitcherController {
                 link(
                     IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect", productName)
                 ) {
-                    suggestRestart()
+                    suggestRestart(productName)
                 }
             }
             row {
@@ -130,21 +130,6 @@ class KotlinPluginKindSwitcherController {
         checkBox.isSelected = chosenKind == KotlinPluginMode.K2
     }
 
-    private fun suggestRestart() {
-        val application = ApplicationManager.getApplication() as ApplicationEx
-
-        val result = Messages.showOkCancelDialog(
-            IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect", productName),
-            IdeBundle.message("dialog.title.restart.required"),
-            IdeBundle.message("button.now", if (application.isRestartCapable()) 0 else 1),
-            IdeBundle.message("button.later", if (application.isRestartCapable()) 0 else 1),
-            Messages.getQuestionIcon()
-        )
-
-        if (result == Messages.OK) {
-            application.restart(/* exitConfirmed = */ true)
-        }
-    }
 
     companion object {
 
@@ -152,10 +137,26 @@ class KotlinPluginKindSwitcherController {
             return if (VMOptions.canWriteOptions()) KotlinPluginKindSwitcherController()
             else null
         }
+
+        fun suggestRestart(productName: String) {
+            val application = ApplicationManager.getApplication() as ApplicationEx
+
+            val result = Messages.showOkCancelDialog(
+                IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect", productName),
+                IdeBundle.message("dialog.title.restart.required"),
+                IdeBundle.message("button.now", if (application.isRestartCapable()) 0 else 1),
+                IdeBundle.message("button.later", if (application.isRestartCapable()) 0 else 1),
+                Messages.getQuestionIcon()
+            )
+
+            if (result == Messages.OK) {
+                application.restart(/* exitConfirmed = */ true)
+            }
+        }
     }
 }
 
-private const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="
+const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="
 
 private var useK2Plugin: Boolean?
     get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ false)?.toBoolean()

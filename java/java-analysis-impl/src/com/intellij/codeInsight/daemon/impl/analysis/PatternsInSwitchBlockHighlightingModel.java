@@ -188,6 +188,9 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
             info.registerFix(fix, null, null, null, null);
           }
         }
+        if (patternType instanceof PsiPrimitiveType) {
+          HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, info);
+        }
         errorSink.accept(info);
         return true;
       }
@@ -205,6 +208,9 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
             (!IncompleteModelUtil.isPotentiallyConvertible(mySelectorType, patternType, label))) {
           HighlightInfo.Builder error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
+          if (mySelectorType instanceof PsiPrimitiveType) {
+            HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, error);
+          }
           errorSink.accept(error);
           return true;
         }
@@ -731,7 +737,14 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       }
     }
     else {
-      errorSink.accept(createCompletenessInfoForSwitch(!elements.isEmpty()));
+      HighlightInfo.Builder completenessInfoForSwitch = createCompletenessInfoForSwitch(!elements.isEmpty());
+      if (mySelectorKind == SelectorKind.BOOLEAN) {
+        IntentionAction fix = getFixFactory().createAddMissingBooleanPrimitiveBranchesFix(myBlock);
+        if (fix != null) {
+          completenessInfoForSwitch.registerFix(fix, null, null, null, null);
+        }
+      }
+      errorSink.accept(completenessInfoForSwitch);
     }
   }
 
@@ -937,6 +950,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     AtomicBoolean reported = new AtomicBoolean();
     if (switchModel instanceof PatternsInSwitchBlockHighlightingModel patternsInSwitchModel) {
       if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_UNCONDITIONAL;
+      if (switchModel.getSwitchSelectorKind() == SelectorKind.BOOLEAN && hasTrueAndFalse(labelElements))  return COMPLETE_WITH_UNCONDITIONAL;
       if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
       //it is necessary,
       // because deconstruction patterns don't cover cases when some of their components are null and deconstructionPattern too

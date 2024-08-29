@@ -19,6 +19,7 @@ import com.intellij.platform.ml.feature.FeatureSelector
 import com.intellij.platform.ml.impl.logs.LanguageSpecific
 import com.intellij.platform.ml.impl.logs.Versioned
 import com.intellij.platform.ml.logs.AnalysisMethods
+import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.EntireSessionLoggingStrategy
 import com.intellij.platform.ml.logs.schema.BooleanEventField
 import com.intellij.platform.ml.logs.schema.EventField
@@ -154,7 +155,7 @@ class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> 
 }
 
 object RandomModelSeedAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
-  private val SEED = IntEventField("random_seed", null)
+  private val SEED = IntEventField("random_seed", NO_DESCRIPTION)
 
   override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<Double>, mlModel: RandomModel): List<EventPair<*>> {
     return listOf(SEED with mlModel.seed)
@@ -229,9 +230,9 @@ private class MockTaskApproachBuilder : LogDrivenModelInference.Builder<RandomMo
 
 private class VeryUselessSessionAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
   companion object {
-    val ON_BEFORE_STARTED = BooleanEventField("on_before_started", null)
-    val ON_SESSION_STARTED = BooleanEventField("on_session_started", null)
-    val ON_SESSION_FINISHED = BooleanEventField("on_session_finished", null)
+    val ON_BEFORE_STARTED = BooleanEventField("on_before_started", NO_DESCRIPTION)
+    val ON_SESSION_STARTED = BooleanEventField("on_session_started", NO_DESCRIPTION)
+    val ON_SESSION_FINISHED = BooleanEventField("on_session_finished", NO_DESCRIPTION)
   }
 
   override val declaration: List<EventField<*>> = listOf(

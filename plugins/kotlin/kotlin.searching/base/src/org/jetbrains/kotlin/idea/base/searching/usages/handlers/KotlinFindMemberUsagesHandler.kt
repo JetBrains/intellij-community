@@ -30,7 +30,6 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
-import com.siyeh.ig.psiutils.FunctionalExpressionUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -356,12 +355,14 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     if (!overriders.all(processor)) {
                         false
                     } else {
-                        val psiClass = when (element) {
-                            is KtNamedFunction -> element.toPossiblyFakeLightMethods().singleOrNull()
-                            else -> null
-                        }?.containingClass
+                        val psiClass = runReadAction {
+                            when (element) {
+                                is KtNamedFunction -> element.toPossiblyFakeLightMethods().singleOrNull()
+                                else -> null
+                            }?.containingClass?.takeIf { LambdaUtil.isFunctionalClass(it) }
+                        }
 
-                        if (psiClass != null && LambdaUtil.isFunctionalClass(psiClass)) {
+                        if (psiClass != null) {
                             FunctionalExpressionSearch.search(psiClass, options.searchScope).all(processor)
                         } else {
                             true

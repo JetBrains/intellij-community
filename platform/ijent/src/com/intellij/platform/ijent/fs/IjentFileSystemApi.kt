@@ -99,11 +99,15 @@ sealed interface IjentFileSystemApi {
     interface Other : SameFileError, IjentFsError.Other
   }
 
-  suspend fun fileReader(path: IjentPath.Absolute): IjentFsResult<
+  /**
+   * Opens file only for reading
+   */
+  suspend fun openForReading(path: IjentPath.Absolute): IjentFsResult<
     IjentOpenedFile.Reader,
     FileReaderError>
 
   sealed interface FileReaderError : IjentFsError {
+    interface AlreadyExists : FileReaderError, IjentFsError.AlreadyExists
     interface DoesNotExist : FileReaderError, IjentFsError.DoesNotExist
     interface PermissionDenied : FileReaderError, IjentFsError.PermissionDenied
     interface NotDirectory : FileReaderError, IjentFsError.NotDirectory
@@ -112,28 +116,55 @@ sealed interface IjentFileSystemApi {
   }
 
   /**
-   * If [append] is false, the file is erased.
+   * Opens file only for writing
    */
-  suspend fun fileWriter(
-    path: IjentPath.Absolute,
-    append: Boolean,
-    truncateExisting: Boolean,
-    creationMode: FileWriterCreationMode,
+  suspend fun openForWriting(
+    options: WriteOptions
   ): IjentFsResult<
     IjentOpenedFile.Writer,
     FileWriterError>
 
+  interface WriteOptions
+
+  fun writeOptionsBuilder(path: IjentPath.Absolute) : WriteOptionsBuilder
+
+  interface WriteOptionsBuilder {
+    /**
+     * Whether to append new data to the end of file.
+     * Default: `false`
+     */
+    fun append(shouldAppend: Boolean) : WriteOptionsBuilder
+
+    /**
+     * Whether to remove contents from the existing file.
+     * Default: `false`
+     */
+    fun truncateExisting(shouldTruncate: Boolean): WriteOptionsBuilder
+
+    /**
+     * Defines the behavior if the written file does not exist
+     * Default: [FileWriterCreationMode.ONLY_OPEN_EXISTING]
+     */
+    fun creationMode(mode: FileWriterCreationMode): WriteOptionsBuilder
+
+    fun build() : WriteOptions
+  }
+
+  enum class FileWriterCreationMode {
+    ALLOW_CREATE, ONLY_CREATE, ONLY_OPEN_EXISTING,
+  }
+
   sealed interface FileWriterError : IjentFsError {
     interface DoesNotExist : FileWriterError, IjentFsError.DoesNotExist
+    interface AlreadyExists : FileWriterError, IjentFsError.AlreadyExists
     interface PermissionDenied : FileWriterError, IjentFsError.PermissionDenied
     interface NotDirectory : FileWriterError, IjentFsError.NotDirectory
     interface NotFile : FileWriterError, IjentFsError.NotFile
     interface Other : FileWriterError, IjentFsError.Other
   }
 
-  enum class FileWriterCreationMode {
-    ALLOW_CREATE, ONLY_CREATE, ONLY_OPEN_EXISTING,
-  }
+  suspend fun openForReadingAndWriting(options: WriteOptions) : IjentFsResult<IjentOpenedFile.ReaderWriter, FileWriterError>
+
 
   @Throws(DeleteException::class)
   suspend fun deleteDirectory(path: IjentPath.Absolute, removeContent: Boolean)
@@ -205,7 +236,7 @@ sealed interface IjentOpenedFile {
 
   sealed interface SeekError : IjentFsError {
     interface InvalidValue : SeekError, IjentFsError
-    interface FileNotOpened : SeekError, IjentFsError.FileNotOpened
+    interface UnknownFile : SeekError, IjentFsError.UnknownFile
     interface Other : SeekError, IjentFsError.Other
   }
 
@@ -217,10 +248,22 @@ sealed interface IjentOpenedFile {
   interface Reader : IjentOpenedFile {
 
     /**
+     * Reads data from the current position of the file (see [tell])
+     *
      * If the remote file is read completely, then this function returns [ReadResult] with [ReadResult.EOF].
-     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes]
+     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes].
+     * Note, that [ReadResult.Bytes] can be `0` if [buf] cannot accept new data.
+     *
+     * This operation modifies the file's cursor, i.e. [tell] may show different results before and after this function is invoked.
      */
     suspend fun read(buf: ByteBuffer): IjentFsResult<ReadResult, ReadError>
+
+    /**
+     * Reads data from the position [offset] of the file.
+     *
+     * This operation does not modify the file's cursor, i.e. [tell] will show the same result before and after this function is invoked.
+     */
+    suspend fun read(buf: ByteBuffer, offset: Long) : IjentFsResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
       interface EOF : ReadResult
@@ -230,7 +273,7 @@ sealed interface IjentOpenedFile {
     }
 
     sealed interface ReadError : IjentFsError {
-      interface FileNotOpened : ReadError, IjentFsError.FileNotOpened
+      interface UnknownFile : ReadError, IjentFsError.UnknownFile
       interface InvalidValue : ReadError, IjentFsError
       interface Other : ReadError, IjentFsError.Other
     }
@@ -241,13 +284,18 @@ sealed interface IjentOpenedFile {
       Int,
       WriteError>
 
+    suspend fun write(buf: ByteBuffer, pos: Long): IjentFsResult<
+      Int,
+      WriteError>
+
     sealed interface WriteError : IjentFsError {
+      interface InvalidValue : WriteError, IjentFsError
       sealed interface ResourceExhausted : WriteError, IjentFsError.Other {
         interface DiskQuotaExceeded : ResourceExhausted, IjentFsError.Other
         interface FileSizeExceeded : ResourceExhausted, IjentFsError.Other
         interface NoSpaceLeft : ResourceExhausted, IjentFsError.Other
       }
-      interface FileNotOpened : WriteError, IjentFsError.FileNotOpened
+      interface UnknownFile : WriteError, IjentFsError.UnknownFile
       interface Other : WriteError, IjentFsError.Other
     }
 
@@ -263,16 +311,22 @@ sealed interface IjentOpenedFile {
     }
 
     @Throws(TruncateException::class)
-    suspend fun truncate()
+    suspend fun truncate(size: Long)
 
     sealed class TruncateException(
       where: IjentPath.Absolute,
       additionalMessage: @NlsSafe String,
     ) : IjentFsIOException(where, additionalMessage) {
+      class UnknownFile(where: IjentPath.Absolute) : TruncateException(where, "Could not find opened file"), IjentFsError.UnknownFile
+      class NegativeOffset(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
+      class OffsetTooBig(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
+      class ReadOnlyFs(where: IjentPath.Absolute) : TruncateException(where, "File system is read-only")
       class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
         : TruncateException(where, additionalMessage), IjentFsError.Other
     }
   }
+
+  interface ReaderWriter : Reader, Writer
 }
 
 interface IjentFileSystemPosixApi : IjentFileSystemApi {
@@ -290,6 +344,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   ) : IjentFsIOException(where, additionalMessage) {
     class DirAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
     class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
+    class ParentNotFound(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.DoesNotExist
     class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.PermissionDenied
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.Other
   }

@@ -485,6 +485,12 @@ public final class TypeConstraints {
     }
 
     @Override
+    public @Nullable PsiType getPsiType(Project project) {
+      PsiType[] types = StreamEx.of(mySupers).map(st -> st.getPsiType(project)).distinct().toArray(PsiType.EMPTY_ARRAY);
+      return types.length == 0 ? null : PsiIntersectionType.createIntersection(types);
+    }
+
+    @Override
     public boolean isFinal() {
       return true;
     }

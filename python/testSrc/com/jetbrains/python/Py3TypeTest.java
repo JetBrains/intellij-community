@@ -1845,6 +1845,85 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testTypeGuardCannotBeReturned() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 return is_str_list(val)
+              
+             def func2(val):
+                 expr = func1(val)                    
+             """);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    final Project project = expr.getProject();
+    final PsiFile containingFile = expr.getContainingFile();
+    final PyType type = TypeEvalContext.userInitiated(project, containingFile).getType(expr);
+    assertFalse("type is instance of PyNarrowedType ", type instanceof PyNarrowedType);
+  }
+
+  public void testTypeGuardResultIsAssigned()  {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                                                    
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 if x and b:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardResultIsAssignedButValIsReassigned() {
+    doTest("int",
+           """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 val = 1
+                 if x and b:
+                     expr = val
+             """);
+  }
+
+
+  public void testTypeGuardResultIsAssignedButValIsReassignedSometimes() {
+    doTest("int | list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 if x:
+                     val = 1
+                 if b:
+                     expr = val
+             """);
+  }
+
+
+
   public void testTypeGuardBool() {
     doTest("bool",
            """
@@ -2002,6 +2081,115 @@ public class Py3TypeTest extends PyTestCase {
                  else:
                      expr = val
                      """);
+  }
+
+  public void testFailedTypeGuardCheckDoesntAffectOriginalType() {
+    doTest("list[int] | list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[int] | List[str]):
+                 if not is_str_list(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testFailedTypeIsCheckDoesAffectOriginalType() {
+    doTest("list[int]",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+             def func1(val: List[int] | List[str]):
+                 if not is_str_list(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testNoReturn() {
+    doTest("Bar",
+           """
+             from typing import NoReturn
+             
+             class Foo:
+                 def stop(self) -> NoReturn:
+                     raise RuntimeError('no way')
+             
+             class Bar:
+                 ...
+             
+             def foo(x):
+                 f = Foo()
+                 if not isinstance(x, Bar):
+                     f.stop()
+                 expr = x # expr is Bar, not Union[Bar, Any]
+             """);
+  }
+
+  public void testTypeIs1() {
+    doTest("str", """
+             from typing import Any, Callable, Literal, Mapping, Sequence, TypeVar, Union
+             from typing_extensions import TypeIs
+             
+             
+             def is_str1(val: Union[str, int]) -> TypeIs[str]:
+                 return isinstance(val, str)
+             
+             
+             def func1(val: Union[str, int]):
+                 if is_str1(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testTypeIs2() {
+    doTest("int", """
+             from typing import Any, Callable, Literal, Mapping, Sequence, TypeVar, Union
+             from typing_extensions import TypeIs
+             
+             
+             def is_str1(val: Union[str, int]) -> TypeIs[str]:
+                 return isinstance(val, str)
+             
+             
+             def func1(val: Union[str, int]):
+                 if is_str1(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  public void testTypeIs3() {
+    doTest("list[str] | list[int]", """
+      from typing import Any, Callable, Literal, Mapping, Sequence, TypeVar, Union
+      from typing_extensions import TypeIs
+      
+      def is_list(val: object) -> TypeIs[list[Any]]:
+          return isinstance(val, list)
+      
+      
+      def func3(val: dict[str, str] | list[str] | list[int] | Sequence[int]):
+          if is_list(val):
+              expr = val
+          else:
+              pass
+      """);
   }
 
   // PY-61137

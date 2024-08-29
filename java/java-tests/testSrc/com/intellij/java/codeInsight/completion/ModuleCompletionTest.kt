@@ -3,8 +3,7 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.testFramework.NeedsIndex
 import org.assertj.core.api.Assertions.assertThat
 import java.util.jar.JarFile
@@ -135,6 +134,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkResult("package whatever;\nclass Foo<TParam> { TParam<caret> p; }")
   }
 
+
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)
@@ -142,8 +142,9 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkResult(expected)
   }
 
-  private fun variants(text: String, vararg variants: String) {
-    myFixture.configureByText("module-info.java", text)
+  private fun variants(text: String, vararg variants: String) = fileVariants("module-info.java", text, *variants)
+  private fun fileVariants(fileName: String, text: String, vararg variants: String) {
+    myFixture.configureByText(fileName, text)
     myFixture.completeBasic()
     assertThat(myFixture.lookupElementStrings).containsExactlyInAnyOrder(*variants)
   }

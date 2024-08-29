@@ -54,6 +54,7 @@ public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory 
       JavaElementType.IMPORT_LIST,
       JavaElementType.IMPORT_STATEMENT,
       JavaElementType.IMPORT_STATIC_STATEMENT,
+      JavaElementType.IMPORT_MODULE_STATEMENT,
       JavaElementType.MODIFIER_LIST,
       JavaElementType.ANNOTATION,
       JavaElementType.NAME_VALUE_PAIR,

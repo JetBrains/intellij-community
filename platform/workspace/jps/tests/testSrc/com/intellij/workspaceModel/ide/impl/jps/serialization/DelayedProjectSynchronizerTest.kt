@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
@@ -36,10 +37,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -251,10 +249,11 @@ class DelayedProjectSynchronizerTest {
 
   private fun getSerializerForProjectData(projectData: LoadedProjectData): EntityStorageSerializer {
     val currentProject = PlatformTestUtil.loadAndOpenProject(projectData.projectDir.toPath(), disposableRule.disposable)
+    val relativizer = if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) createJpsProjectUrlRelativizer(currentProject) else null
     return EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(currentProject),
+      urlRelativizer = relativizer,
       ""
     )
   }

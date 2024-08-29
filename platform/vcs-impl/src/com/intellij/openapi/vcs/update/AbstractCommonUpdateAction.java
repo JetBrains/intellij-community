@@ -486,7 +486,8 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
                               : NotificationType.INFORMATION;
 
 
-      return STANDARD_NOTIFICATION.createNotification(title, content.toString(), type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
+      return VcsNotifier.standardNotification()
+        .createNotification(title, content.toString(), type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
@@ -590,7 +591,8 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
           type = NotificationType.INFORMATION;
         }
         VcsNotifier.getInstance(myProject).notify(
-          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
+          VcsNotifier.standardNotification().createNotification(content, type)
+            .setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 

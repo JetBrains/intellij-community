@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.JsQueryHandler
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.url
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector
 import com.intellij.util.Urls.newFromEncoded
@@ -43,25 +44,26 @@ internal sealed class WhatsNewContent {
     }
   }
 
-  data class ContentVersion(val year: Int, val release: Int, val eap: Int?, val hash: String?) : Comparable<ContentVersion> {
+  // Year and release have to be strings, because this is the ApplicationInfo.xml format. "release" might be a string like "2.1".
+  data class ContentVersion(val year: String, val release: String, val eap: Int?, val hash: String?) : Comparable<ContentVersion> {
 
     companion object {
       fun parse(text: String): ContentVersion? {
         val components = text.split("-")
         when (components.size) {
           3 -> {
-            val year = components[0].toIntOrNull()
-            val release = components[1].toIntOrNull()
+            val year = components[0]
+            val release = components[1]
             val eap = components[2].toIntOrNull()
-            if (year != null && release != null && eap != null)
+            if (year.isNotEmpty() && release.isNotEmpty() && eap != null)
               return ContentVersion(year, release, eap, null)
           }
           4 -> {
-            val year = components[0].toIntOrNull()
-            val release = components[1].toIntOrNull()
+            val year = components[0]
+            val release = components[1]
             val eap = components[2].toIntOrNull()
             val hash = components[3]
-            if (year != null && release != null && eap != null)
+            if (year.isNotEmpty() && release.isNotEmpty() && eap != null)
               return ContentVersion(year, release, eap, hash)
           }
         }
@@ -82,7 +84,7 @@ internal sealed class WhatsNewContent {
       year == other.year && release == other.release && eap == other.eap
 
     override operator fun compareTo(other: ContentVersion): Int {
-      val result = compareValuesBy(this, other, { it.year }, { it.release })
+      val result = compareValuesBy(this, other, { it.year }, { Version.parseVersion(it.release) })
       return when {
         result != 0 -> result
         eap == null && other.eap != null -> 1
@@ -145,8 +147,8 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
 
   private fun parseUrl(link: String): ContentVersion? {
     val parseResult = linkRegEx.matchEntire(link)?.let {
-      val year = it.groups[it.groups.size - 3]?.value?.toInt() ?: return@let null
-      val release = it.groups[it.groups.size - 2]?.value?.toInt() ?: return@let null
+      val year = it.groups[it.groups.size - 3]?.value ?: return@let null
+      val release = it.groups[it.groups.size - 2]?.value ?: return@let null
       val eap = it.groups[it.groups.size - 1]?.value?.toInt() ?: return@let null
       ContentVersion(year, release, eap, null)
     }
@@ -159,7 +161,7 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
       parseResult != null -> parseResult
       ApplicationInfo.getInstance().isEAP -> null
       else -> ApplicationInfo.getInstance().let {
-        ContentVersion(it.majorVersion.toInt(), it.minorVersion.toInt(), eap = null, hash = null)
+        ContentVersion(it.majorVersion, it.minorVersion, eap = null, hash = null)
       }
     }
   }
@@ -266,8 +268,8 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
   override fun getVersion(): ContentVersion {
     val buildNumber = ApplicationInfo.getInstance().getBuild()
     return ContentVersion(
-      ApplicationInfo.getInstance().majorVersion.toInt(),
-      ApplicationInfo.getInstance().minorVersion.toInt(),
+      ApplicationInfo.getInstance().majorVersion,
+      ApplicationInfo.getInstance().minorVersion,
       if (buildNumber.components.size > 2) buildNumber.components[1] else buildNumber.components.last(),
       contentHash
     )

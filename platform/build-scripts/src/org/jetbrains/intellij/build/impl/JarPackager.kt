@@ -838,7 +838,8 @@ private class NativeFileHandlerImpl(private val context: BuildContext, private v
            name.endsWith(".exe") ||
            name.endsWith(".dll") ||
            name.endsWith(".node") ||
-           name.endsWith(".tbd")
+           name.endsWith(".tbd") ||
+           name.endsWith("pty4j-unix-spawn-helper")
   }
 
   @Suppress("SpellCheckingInspection", "GrazieInspection")

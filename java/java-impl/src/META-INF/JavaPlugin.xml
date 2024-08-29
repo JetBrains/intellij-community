@@ -451,6 +451,8 @@
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeFactory"
                         serviceImplementation="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeImpl$Factory"/>
+    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"
+                        serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphHelperImpl"/>
 
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
@@ -1131,6 +1133,7 @@
     <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider" order="before fileList"/>
     <enterHandlerDelegate implementation="com.intellij.javadoc.EnterInJavadocParamDescriptionHandler"/>
     <enterHandlerDelegate implementation="com.intellij.javadoc.JavadocSnippetEnterHandler" order="before EnterBetweenBracesHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.javadoc.JavaDocMarkdownEnterHandler" order="after EnterInLineCommentHandler" />
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.JavaMethodNavigationOffsetProvider"/>
     <dom.customAnnotationChecker implementation="com.intellij.util.xml.impl.ExtendsClassChecker"/>

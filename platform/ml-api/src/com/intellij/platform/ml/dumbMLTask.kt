@@ -5,6 +5,7 @@ import com.intellij.platform.ml.analysis.SessionAnalyser
 import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.feature.FeatureSelector
+import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.schema.BooleanEventField
 import com.intellij.platform.ml.logs.schema.EventField
 import com.intellij.platform.ml.logs.schema.EventPair
@@ -118,7 +119,7 @@ interface DumbModelWrapper : DumbPredictionsMode {
 @ApiStatus.Internal
 class DumbModeAnalyser<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>(), DumbPredictionsMode {
   companion object {
-    val IS_DUMB_MODEL = BooleanEventField("is_dumb_model", null)
+    val IS_DUMB_MODEL = BooleanEventField("is_dumb_model", NO_DESCRIPTION)
   }
 
   override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<P>, mlModel: M): List<EventPair<*>> {

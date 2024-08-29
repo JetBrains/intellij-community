@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -48,7 +47,8 @@ sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresenta
         }
     }
 
-    protected fun createPanel(project: Project, element: PsiElement, dataFlowToThis: Boolean): JPanel {
+    protected fun createPanel(element: PsiElement, dataFlowToThis: Boolean): JPanel {
+        val project = element.project
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND) ?: error("Can't find ToolWindowId.FIND")
         val params = createParams(element)
 
@@ -69,7 +69,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresenta
         }
     }
 
-    public override fun updateLayoutLater(project: Project, infos: List<UsageInfo>?) {
+    public override fun updateLayoutLater(infos: List<UsageInfo>?) {
         if (infos.isNullOrEmpty()) {
             removeAll()
             val title = UsageViewBundle.message("select.the.usage.to.preview")
@@ -80,7 +80,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresenta
                 Disposer.dispose(panel as Disposable)
             }
 
-            val panel = createPanel(project, element, isInflow)
+            val panel = createPanel(element, isInflow)
             Disposer.register(this, panel as Disposable)
             removeAll()
             add(panel, BorderLayout.CENTER)

@@ -32,6 +32,10 @@ object IjentFsResultImpl {
     IjentFileSystemApi.StatError.DoesNotExist,
     IjentFileSystemApi.CanonicalizeError.DoesNotExist
 
+  data class AlreadyExists(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.FileReaderError.AlreadyExists,
+    IjentFileSystemApi.FileWriterError.AlreadyExists
+
   class PermissionDenied(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.CanonicalizeError.PermissionDenied,
     IjentFileSystemApi.FileReaderError.PermissionDenied,
@@ -57,10 +61,11 @@ object IjentFsResultImpl {
 
   data class InvalidValue(override val where: IjentPath.Absolute, override val message: String) :
     IjentOpenedFile.Reader.ReadError.InvalidValue,
+    IjentOpenedFile.Writer.WriteError.InvalidValue,
     IjentOpenedFile.SeekError.InvalidValue
 
-  data class FileNotOpened(override val where: IjentPath.Absolute, override val message: String) :
-    IjentOpenedFile.Reader.ReadError.FileNotOpened,
-    IjentOpenedFile.Writer.WriteError.FileNotOpened,
-    IjentOpenedFile.SeekError.FileNotOpened
+  data class UnknownFile(override val where: IjentPath.Absolute, override val message: String) :
+    IjentOpenedFile.Reader.ReadError.UnknownFile,
+    IjentOpenedFile.Writer.WriteError.UnknownFile,
+    IjentOpenedFile.SeekError.UnknownFile
 }

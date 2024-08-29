@@ -39,6 +39,23 @@ object WebAnimationUtils {
 
   fun createVideoHtmlPage(videoBase64: String, background: Color): String {
     val componentId = "video"
+    val scriptText =
+      """
+        document.addEventListener("DOMContentLoaded", function() {
+            let video = document.getElementById("$componentId");
+
+            window.playVideo = function() {
+                video.play();
+            }
+
+            window.pauseVideo = function() {
+                video.pause();
+            }
+        });
+    """.trimIndent()
+
+    val script = HtmlChunk.tag("script").addRaw(scriptText)
+
     val videoTag = HtmlChunk.tag("video")
       .attr("id", componentId)
       .attr("autoplay")
@@ -47,7 +64,10 @@ object WebAnimationUtils {
       .child(HtmlChunk.tag("source")
                .attr("type", "video/webm")
                .attr("src", "data:video/webm;base64,$videoBase64"))
-    val body = HtmlChunk.body().child(videoTag)
+    val body = HtmlChunk.body()
+      .child(script)
+      .child(videoTag)
+
     return createSingleContentHtmlPage(body, background, componentId)
   }
 

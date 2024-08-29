@@ -1,0 +1,12 @@
+class Test {
+  int i;
+
+    void handle() {
+    System.out.println(i);
+    run();
+  }
+
+    void run() {}
+}
+class Other {
+}

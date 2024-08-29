@@ -12,10 +12,8 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -420,5 +418,20 @@ public final class JavaDocUtil {
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
     return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
+  }
+
+  public static boolean isDanglingDocComment(@NotNull PsiDocComment comment, boolean ignoreCopyright) {
+    if (comment.getOwner() != null || TemplateLanguageUtil.isInsideTemplateFile(comment)) {
+      return false;
+    }
+    if (isInsidePackageInfo(comment) &&
+        PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement &&
+        "package-info.java".equals(comment.getContainingFile().getName())) {
+      return false;
+    }
+    if (ignoreCopyright && comment.getPrevSibling() == null && comment.getParent() instanceof PsiFile) {
+      return false;
+    }
+    return true;
   }
 }

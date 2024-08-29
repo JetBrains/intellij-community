@@ -67,6 +67,36 @@ The following bundle <compression> engines can be used:
 
 .. bundlecompressionmarker
 
+The compression engines can be prepended with ``stream`` to create a streaming bundle.
+These are bundles that are extremely efficient to produce and consume,
+but do not have guaranteed compatibility with older clients.
+
+Available Options
+=================
+
+The following options exist:
+
+changegroup
+    Include the changegroup data in the bundle (default to True).
+
+cg.version
+    Select the version of the changegroup to use. Available options are : 01, 02
+    or 03. By default it will be automatically selected according to the current
+    repository format.
+
+obsolescence
+    Include obsolescence-markers relevant to the bundled changesets.
+
+phases
+    Include phase information relevant to the bundled changesets.
+
+revbranchcache
+    Include the "tags-fnodes" cache inside the bundle.
+
+tagsfnodescache
+    Include the "tags-fnodes" cache inside the bundle.
+
+
 Examples
 ========
 
@@ -82,3 +112,10 @@ Examples
 
 ``zstd-v1``
     This errors because ``zstd`` is not supported for ``v1`` types.
+
+``none-streamv2``
+    Produce a ``v2`` streaming bundle with no compression.
+
+``zstd-v2;obsolescence=true;phases=true``
+    Produce a ``v2`` bundle with zstandard compression which includes
+    obsolescence markers and phases.

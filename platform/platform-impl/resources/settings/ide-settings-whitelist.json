@@ -199,7 +199,6 @@
     "Pythonid:app:PyCodeInsightSettings.insert_type_docstub",
     "Pythonid:app:PyCodeInsightSettings.parenthesise_on_enter",
     "Pythonid:app:PyCodeInsightSettings.prefer_from_import",
-    "Pythonid:app:PyCondaPackageService.*",
     "Pythonid:app:PyDuplocatorSettings.distinguish_fields",
     "Pythonid:app:PyDuplocatorSettings.distinguish_functions",
     "Pythonid:app:PyDuplocatorSettings.distinguish_literals",

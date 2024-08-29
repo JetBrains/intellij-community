@@ -14,11 +14,14 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
@@ -27,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -47,6 +51,29 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       test()
     } finally {
       JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, emptyList())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23) {
+      highlight("Test.java", """
+        <error descr="Module Import Declarations are not supported at language level '23'">import module java.sql;</error>
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationUnresolvedModule() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      addFile("moodule-info.java", "module current.module.name {}")
+      highlight("Test.java", """
+        import module M2;
+        import module current.module.name;
+        import module <error descr="Module is not in dependencies: M3">M3</error>;
+        import module <error descr="Module not found: M4">M4</error>;
+        
+        class Test {}
+      """.trimIndent())
     }
   }
 
@@ -722,6 +749,74 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
         }
         """.trimIndent())
+  }
+
+  fun testImportModule() {
+    addFile("module-info.java", """
+      module current.module.name { 
+        requires first.module.name; 
+      }""".trimIndent())
+    addFile("module-info.java", """
+      module first.module.name { 
+        requires transitive first.auto.module.name;
+        requires second.auto.module.name;
+      }""".trimIndent(), M2)
+    addFile("module-info.java", "module second.module.name {}", M4)
+
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: first.auto.module.name\n", module = M5)
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: second.auto.module.name\n", module = M6)
+
+    ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!,
+                                             ModuleManager.getInstance(project).findModuleByName(M5.moduleName)!!)
+    ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!,
+                                             ModuleManager.getInstance(project).findModuleByName(M6.moduleName)!!)
+
+
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("A.java", """
+        import module current.module.name;
+        import module first.module.name;
+        <error descr="Module 'second.module.name' fails to read 'current.module.name'">import module second.module.name;</error>
+        import module first.auto.module.name;
+        <error descr="Module 'second.auto.module.name' fails to read 'current.module.name'">import module second.auto.module.name;</error>
+        
+        public class A {
+        }
+        """.trimIndent())
+    }
+  }
+
+  fun testImportModuleWithoutTopModule() {
+    addFile("module-info.java", """
+      module first.module.name { 
+        requires transitive first.auto.module.name;
+        requires second.auto.module.name;
+      }""".trimIndent(), M2)
+    addFile("module-info.java", "module second.module.name {}", M4)
+    addFile("module-info.java", "module third.module.name {}", M3)
+
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: first.auto.module.name\n", module = M5)
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: second.auto.module.name\n", module = M6)
+
+    ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!,
+                                             ModuleManager.getInstance(project).findModuleByName(M5.moduleName)!!)
+    ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!,
+                                             ModuleManager.getInstance(project).findModuleByName(M6.moduleName)!!)
+
+
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("A.java", """
+        import module <error descr="Module not found: current.module.name">current.module.name</error>;
+        import module first.module.name;
+        import module second.module.name;
+        import module <error descr="Module is not in dependencies: third.module.name">third.module.name</error>;
+        import module first.auto.module.name;
+        import module second.auto.module.name;
+        
+        public class A {
+        }
+        """.trimIndent())
+    }
   }
 
   fun testAutomaticModuleFromManifestHighlighting() {

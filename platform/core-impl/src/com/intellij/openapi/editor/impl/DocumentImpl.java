@@ -644,7 +644,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.subtext(startOffset, endOffset);
-    if (!wholeTextReplaced && getUserData(IGNORE_RANGE_GUARDS_ON_FULL_UPDATE) != Boolean.TRUE) {
+    boolean isForceIgnoreGuardsOnFullUpdate = getUserData(IGNORE_RANGE_GUARDS_ON_FULL_UPDATE) == Boolean.TRUE && wholeTextReplaced;
+    if (!isForceIgnoreGuardsOnFullUpdate) {
       RangeMarker guard = getRangeGuard(startOffset, endOffset);
       if (guard != null) {
         throwGuardedFragment(guard, startOffset, sToDelete, changedPart);

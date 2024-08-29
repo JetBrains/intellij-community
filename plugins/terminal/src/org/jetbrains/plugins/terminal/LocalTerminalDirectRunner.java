@@ -254,7 +254,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         .setDirectory(workingDir)
         .setInitialColumns(initialTermSize != null ? initialTermSize.getColumns() : null)
         .setInitialRows(initialTermSize != null ? initialTermSize.getRows() : null)
-        .setUseWinConPty(LocalPtyOptions.shouldUseWinConPty());
+        .setUseWinConPty(LocalPtyOptions.shouldUseWinConPty())
+        .setSpawnProcessUsingJdkOnMacIntel(Registry.is("run.processes.using.pty.helper.on.mac.intel", true));
       PtyProcess process = builder.start();
       LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
                + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));

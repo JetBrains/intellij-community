@@ -63,6 +63,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * </li>
    * </ul>
    * </p>
+   * <hr>
    *
    * Runs the given process synchronously in calling thread, associating this thread with the specified progress indicator.
    * This means that it'll be returned by {@link ProgressManager#getProgressIndicator()} inside the {@code process},
@@ -80,6 +81,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * See {@link ProgressIndicator} notice.
    * See {@link #runProcess(Runnable, ProgressIndicator)} notice.
    * </p>
+   * <hr>
    *
    * Performs the given computation synchronously in calling thread and returns its result, associating this thread with the specified progress indicator.
    * This means that it'll be returned by {@link ProgressManager#getProgressIndicator()} inside the {@code process},
@@ -170,6 +172,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>or {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.</li>
    * </ul>
    * </p>
+   * <hr>
    *
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
@@ -194,6 +197,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * See {@link ProgressIndicator} notice.
    * See {@link #runProcessWithProgressSynchronously(Runnable, String, boolean, Project)} notice.
    * </p>
+   * <hr>
    *
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
@@ -219,6 +223,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * See {@link ProgressIndicator} notice.
    * See {@link #runProcessWithProgressSynchronously(Runnable, String, boolean, Project)} notice.
    * </p>
+   * <hr>
    *
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
@@ -272,6 +277,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * Please find appropriate replacements in the respective Task documentation:
    * {@link Task.Backgroundable}, {@link Task.Modal}, {@link Task.WithResult}, {@link Task.ConditionalModal}.
    * </p>
+   * <hr>
    *
    * Runs a specified {@code task} in either background/foreground thread and shows a progress dialog.
    *
@@ -291,6 +297,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * See {@link ProgressIndicator} notice.
    * See {@link Task.WithResult} notice.
    * </p>
+   * <hr>
    *
    * Runs a specified computation with a modal progress dialog.
    */
@@ -336,6 +343,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * See {@link ProgressIndicator} notice.
    * See {@link #runProcess(Runnable, ProgressIndicator)} notice.
    * </p>
+   * <hr>
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
    *        The methods {@link ProgressIndicator#start()} or {@link ProgressIndicator#stop()} are not called because it's assumed the {@code progress} is already running.
@@ -361,6 +369,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * See {@link ProgressIndicator} notice.
    * Use {@link com.intellij.openapi.application.ReadAction#computeCancellable} instead.
    * </p>
+   * <hr>
    *
    * This method attempts to run provided action synchronously in a read action, so that, if possible, it wouldn't impact any pending,
    * executing or future write actions (for this to work effectively the action should invoke {@link ProgressManager#checkCanceled()} or

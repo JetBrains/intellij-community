@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.TextUI;
+import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
@@ -118,6 +119,13 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
       accessibleContext = new AccessibleJBTextField();
     }
     return accessibleContext;
+  }
+
+  @Override
+  protected Document createDefaultModel() {
+    Document model = super.createDefaultModel();
+    UIUtil.disableTextLayoutIfNeeded(model);
+    return model;
   }
 
   private class AccessibleJBTextField extends AccessibleJTextField {

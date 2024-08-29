@@ -20,17 +20,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.psi.util.ImportsUtil.getAllImplicitImports;
+
 class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiJavaFile myFile;
   private final List<PsiImportStatementBase> importStatements;
   private final List<PsiImportStatementBase> usedImportStatements = new ArrayList<>();
+  private final List<PsiImportStatementBase> implicitlyUsedImportStatements = new ArrayList<>();
 
   ImportsAreUsedVisitor(@NotNull PsiJavaFile file) {
     myFile = file;
@@ -40,6 +44,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     } else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       this.importStatements = new ArrayList<>(Arrays.asList(importStatements));
+      this.implicitlyUsedImportStatements.addAll(getAllImplicitImports(file));
       this.importStatements.sort(ImportStatementComparator.getInstance());
     }
   }
@@ -84,6 +89,9 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     if (findImport(member, usedImportStatements) != null) {
       return;
     }
+    if (findImport(member, implicitlyUsedImportStatements) != null) {
+      return;
+    }
     final PsiImportStatementBase foundImport = findImport(member, importStatements);
     if (foundImport != null) {
       importStatements.remove(foundImport);
@@ -91,6 +99,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
+  @Nullable
   private PsiImportStatementBase findImport(@NotNull PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
     final String memberQualifiedName;
     final String memberPackageName;
@@ -126,6 +135,12 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
       else {
         if (hasOnDemandImportConflict) {
           continue;
+        }
+        if (importStatement instanceof PsiImportModuleStatement psiImportModuleStatement &&
+            !member.hasModifierProperty(PsiModifier.STATIC)) {
+          if (psiImportModuleStatement.findImportedPackage(memberPackageName) != null) {
+            return importStatement;
+          }
         }
         final PsiElement target = importStatement.resolve();
         if (target instanceof PsiPackage aPackage) {

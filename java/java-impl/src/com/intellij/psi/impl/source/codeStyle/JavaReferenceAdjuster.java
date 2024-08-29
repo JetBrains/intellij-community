@@ -90,7 +90,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
 
               PsiFile file = ref.getContainingFile();
               if (file instanceof PsiJavaFile) {
-                if (ImportHelper.isImplicitlyImported(qName, (PsiJavaFile)file)) {
+                if (ImportHelper.isImplicitlyImported(psiClass, (PsiJavaFile)file)) {
                   if (isShort) return element;
                   return makeShortReference((CompositeElement)element, psiClass, addImports);
                 }

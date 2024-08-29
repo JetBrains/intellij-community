@@ -6,7 +6,7 @@
       <with attribute="implementationClass" implements="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.ide.newUiOnboarding"
-                    beanClass="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBean"
+                    beanClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingBean"
                     dynamic="true">
     </extensionPoint>
   </extensionPoints>
@@ -21,20 +21,21 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivity"/>
-    <meetNewUiCustomization implementation="com.intellij.platform.ide.newUiOnboarding.MeetNewUiOnboardingCustomization"/>
+    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStartupActivity"/>
+    <meetNewUiCustomization implementation="com.intellij.platform.ide.newUiOnboarding.newUi.MeetNewUiOnboardingCustomization"/>
     <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
                  description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStatistics"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics"/>
     <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingAppListener" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingAppListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <actions resource-bundle="messages.NewUiOnboardingBundle">
-    <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.StartNewUiOnboardingAction"/>
+    <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUi.StartNewUiOnboardingAction"/>
   </actions>
 </idea-plugin>

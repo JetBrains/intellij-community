@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
@@ -193,17 +193,35 @@ public class BasicFileParser {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    boolean isStatic = expect(builder, JavaTokenType.STATIC_KEYWORD);
-    IElementType type = isStatic ? myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT :
-                        myJavaElementTypeContainer.IMPORT_STATEMENT;
-
-    boolean isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
-    if (isOk) {
-      semicolon(builder);
+    IElementType type = getImportType(builder);
+    boolean isStatic = type == myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
+    boolean isModule = type == myJavaElementTypeContainer.IMPORT_MODULE_STATEMENT;
+    final boolean isOk;
+    if (isModule) {
+      isOk = myParser.getModuleParser().parseName(builder) != null;
+    } else {
+      isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
     }
+    if (isOk) semicolon(builder);
 
     done(statement, type, myWhiteSpaceAndCommentSetHolder);
     return statement;
+  }
+
+  private @NotNull IElementType getImportType(@NotNull PsiBuilder builder) {
+    IElementType type = builder.getTokenType();
+    if (type == JavaTokenType.STATIC_KEYWORD) {
+      builder.advanceLexer();
+      return myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
+    }
+    if (type == JavaTokenType.IDENTIFIER &&
+        PsiKeyword.MODULE.equals(builder.getTokenText()) &&
+        builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
+      builder.remapCurrentToken(JavaTokenType.MODULE_KEYWORD);
+      builder.advanceLexer();
+      return myJavaElementTypeContainer.IMPORT_MODULE_STATEMENT;
+    }
+    return myJavaElementTypeContainer.IMPORT_STATEMENT;
   }
 
   @NotNull

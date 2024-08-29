@@ -9,6 +9,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.FsAndUs
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
 import java.io.IOException
@@ -93,7 +94,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     // TODO Handle options and attrs
     val fs = registeredFileSystems[path.ijentId] ?: throw FileSystemNotFoundException()
 
-    require(!(READ in options && WRITE in options)) { "READ + WRITE not allowed" }
     require(!(READ in options && APPEND in options)) { "READ + APPEND not allowed" }
     require(!(APPEND in options && TRUNCATE_EXISTING in options)) { "APPEND + TRUNCATE_EXISTING not allowed" }
 
@@ -101,18 +101,23 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
 
+      val writeOptions = fs.ijent.fs
+        .writeOptionsBuilder(path.ijentPath)
+        .append(APPEND in options)
+        .truncateExisting(TRUNCATE_EXISTING in options)
+        .creationMode(when {
+          CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
+          CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
+          else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
+        }).build()
+
+
       fs.fsBlocking {
-        IjentNioFileChannel.createWriting(
-          fs,
-          path.ijentPath,
-          append = APPEND in options,
-          truncate = TRUNCATE_EXISTING in options,
-          creationMode = when {
-            CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
-            CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
-            else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
-          },
-        )
+        if (READ in options) {
+          IjentNioFileChannel.createReadingWriting(fs, writeOptions)
+        } else {
+          IjentNioFileChannel.createWriting(fs, writeOptions)
+        }
       }
     }
     else {
@@ -167,9 +172,12 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           is IjentFileSystemWindowsApi -> TODO()
         }
       }
-    } catch (e : IjentFileSystemPosixApi.CreateDirectoryException) {
+    }
+    catch (e : CreateDirectoryException) {
       when (e) {
-        is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists, is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
+        is CreateDirectoryException.DirAlreadyExists,
+        is CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
+        is CreateDirectoryException.ParentNotFound -> throw NoSuchFileException(dir.toString(), null, "Parent directory not found")
         else -> throw IOException(e)
       }
     }
@@ -190,7 +198,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption) {
     if (StandardCopyOption.ATOMIC_MOVE in options) {
-      throw UnsupportedOperationException("Atomic move is not supported yet")
+      throw UnsupportedOperationException("Unsupported copy option")
     }
     ensureIjentNioPath(source)
     ensureIjentNioPath(target)

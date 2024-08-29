@@ -1,22 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportListStub;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> implements PsiImportList {
   private volatile Map<String,PsiImportStatement> myClassNameToImportMap;
   private volatile Map<String,PsiImportStatement> myPackageNameToImportMap;
+  private volatile Map<String,PsiImportModuleStatement> myModuleNameToImportMap;
   private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap;
 
   public PsiImportListImpl(PsiImportListStub stub) {
@@ -33,6 +34,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
     clone.myClassNameToImportMap = null;
     clone.myPackageNameToImportMap = null;
     clone.myNameToSingleImportMap = null;
+    clone.myModuleNameToImportMap = null;
     return clone;
   }
 
@@ -41,11 +43,13 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
     myClassNameToImportMap = null;
     myPackageNameToImportMap = null;
     myNameToSingleImportMap = null;
+    myModuleNameToImportMap = null;
     super.subtreeChanged();
   }
 
   private static final TokenSet IMPORT_STATEMENT_BIT_SET = TokenSet.create(JavaElementType.IMPORT_STATEMENT);
   private static final TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(JavaElementType.IMPORT_STATIC_STATEMENT);
+  private static final TokenSet IMPORT_MODULE_STATEMENT_BIT_SET = TokenSet.create(JavaElementType.IMPORT_MODULE_STATEMENT);
 
   @Override
   public PsiImportStatement @NotNull [] getImportStatements() {
@@ -54,11 +58,12 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
 
   @Override
   public PsiImportStaticStatement @NotNull [] getImportStaticStatements() {
-    final PsiImportStaticStatement[] explicitStaticImports =
-      getStubOrPsiChildren(IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
-    final PsiImportStaticStatement[] implicitStaticImports =
-      PsiImplUtil.getImplicitStaticImports(getContainingFile());
-    return ArrayUtil.mergeArrays(explicitStaticImports, implicitStaticImports);
+    return getStubOrPsiChildren(IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
+  }
+
+  @Override
+  public PsiImportModuleStatement @NotNull [] getImportModuleStatements() {
+    return getStubOrPsiChildren(IMPORT_MODULE_STATEMENT_BIT_SET, PsiImportModuleStatementImpl.ARRAY_FACTORY);
   }
 
   @Override
@@ -93,7 +98,20 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   }
 
   @Override
-  public PsiImportStatementBase findSingleImportStatement(String name) {
+  public @Nullable PsiImportModuleStatement findImportModuleStatement(String name) {
+    while (true) {
+      Map<String, PsiImportModuleStatement> map = myModuleNameToImportMap;
+      if (map == null) {
+        initializeMaps();
+      }
+      else {
+        return map.get(name);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable PsiImportStatementBase findSingleImportStatement(String name) {
     while (true) {
       Map<String, PsiImportStatementBase> map = myNameToSingleImportMap;
       if (map == null) {
@@ -114,6 +132,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
     Map<String, PsiImportStatement> classNameToImportMap = new HashMap<>();
     Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<>();
     Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<>();
+    Map<String, PsiImportModuleStatement> moduleNameToImportMap = new HashMap<>();
     PsiImportStatement[] imports = getImportStatements();
     for (PsiImportStatement anImport : imports) {
       String qName = anImport.getQualifiedName();
@@ -139,9 +158,18 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
       }
     }
 
+    PsiImportModuleStatement[] importModules = getImportModuleStatements();
+    for (PsiImportModuleStatement importModule : importModules) {
+      String referenceName = importModule.getReferenceName();
+      if (referenceName != null) {
+        moduleNameToImportMap.put(referenceName, importModule);
+      }
+    }
+
     myClassNameToImportMap = classNameToImportMap;
     myPackageNameToImportMap = packageNameToImportMap;
     myNameToSingleImportMap = nameToSingleImportMap;
+    myModuleNameToImportMap = moduleNameToImportMap;
   }
 
   @Override

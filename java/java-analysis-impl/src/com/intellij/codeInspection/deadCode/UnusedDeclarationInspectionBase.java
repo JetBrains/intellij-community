@@ -246,6 +246,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
 
+      if(element instanceof PsiImplicitClass) return true;
+
       return owner instanceof RefClass &&
              (isAddAppletEnabled() && ((RefClass)owner).isApplet()
               || isAddServletEnabled() && ((RefClass)owner).isServlet());
@@ -264,6 +266,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
     Project project = element.getProject();
     if (element instanceof PsiClass aClass) {
+      if (element instanceof PsiImplicitClass) return true;
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       if (isAddAppletEnabled()) {
         PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));

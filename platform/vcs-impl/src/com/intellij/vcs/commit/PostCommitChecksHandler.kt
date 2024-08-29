@@ -42,7 +42,7 @@ class PostCommitChecksHandler(val project: Project) {
     fun getInstance(project: Project): PostCommitChecksHandler = project.service()
   }
 
-  private val postCommitCheckErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
+  private val postCommitCheckErrorNotifications = SingletonNotificationManager(VcsNotifier.importantNotification().displayId,
                                                                                NotificationType.WARNING)
 
   private val pendingCommits = mutableListOf<StaticCommitInfo>()
@@ -72,8 +72,10 @@ class PostCommitChecksHandler(val project: Project) {
     }
   }
 
-  private suspend fun runPostCommitChecks(commitInfo: StaticCommitInfo,
-                                          commitChecks: List<CommitCheck>) {
+  private suspend fun runPostCommitChecks(
+    commitInfo: StaticCommitInfo,
+    commitChecks: List<CommitCheck>,
+  ) {
     try {
       withBackgroundProgress(project, VcsBundle.message("post.commit.checks.progress.text")) {
         reportSequentialProgress { reporter ->
@@ -134,8 +136,10 @@ class PostCommitChecksHandler(val project: Project) {
     }
   }
 
-  private suspend fun runCommitChecks(commitChecks: List<CommitCheck>,
-                                      postCommitInfo: PostCommitInfo): List<CommitProblem> {
+  private suspend fun runCommitChecks(
+    commitChecks: List<CommitCheck>,
+    postCommitInfo: PostCommitInfo,
+  ): List<CommitProblem> {
     val problems = mutableListOf<CommitProblem>()
 
     if (commitChecks.any { !DumbService.getInstance(project).isUsableInCurrentContext(it) }) {
@@ -265,7 +269,7 @@ class PostCommitChecksHandler(val project: Project) {
 
 internal class PostCommitInfo(
   commitInfo: StaticCommitInfo,
-  staticChanges: List<Change>
+  staticChanges: List<Change>,
 ) : CommitInfo {
   override val commitContext: CommitContext = commitInfo.commitContext
   override val isVcsCommit: Boolean = commitInfo.isVcsCommit

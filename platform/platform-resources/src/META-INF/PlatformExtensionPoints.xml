@@ -563,5 +563,9 @@
 
     <extensionPoint name="proxySettingsOverrideProvider" interface="com.intellij.util.net.ProxySettingsOverrideProvider" dynamic="true"/>
     <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.ide.navigationToolbar.NavBarLeftSideExtension"/>
+
+    <extensionPoint name="recentProjectsBranchesProvider"
+                    interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

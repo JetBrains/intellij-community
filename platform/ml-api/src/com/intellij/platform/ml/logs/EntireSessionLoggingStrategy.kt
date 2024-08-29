@@ -35,8 +35,8 @@ class EntireSessionLoggingStrategy<P : Any, F>(
       NestableSessionFields(sessionStructureAnalysisDeclaration.first(), sessionStructureAnalysisDeclaration.drop(1), predictionField,
                             predictionTransformer)
 
-    val fieldSessionStructure = ObjectEventField("structure", null, sessionStructureFields)
-    val fieldSession = ObjectEventField("session", null, ObjectDescription(sessionAnalysisDeclaration))
+    val fieldSessionStructure = ObjectEventField("structure", NO_DESCRIPTION, sessionStructureFields)
+    val fieldSession = ObjectEventField("session", NO_DESCRIPTION, ObjectDescription(sessionAnalysisDeclaration))
 
     val fusLogger = componentRegister.registerComponent(componentPrefix, listOf(fieldSession, fieldSessionStructure))
 
@@ -52,8 +52,8 @@ class EntireSessionLoggingStrategy<P : Any, F>(
   }
 
   companion object {
-    val DOUBLE: MLSessionLoggingStrategy<Double> = EntireSessionLoggingStrategy(DoubleEventField("prediction", null)) { it }
-    val UNIT: MLSessionLoggingStrategy<Unit> = EntireSessionLoggingStrategy(BooleanEventField("prediction", null)) { null }
+    val DOUBLE: MLSessionLoggingStrategy<Double> = EntireSessionLoggingStrategy(DoubleEventField("prediction", NO_DESCRIPTION)) { it }
+    val UNIT: MLSessionLoggingStrategy<Unit> = EntireSessionLoggingStrategy(BooleanEventField("prediction", NO_DESCRIPTION)) { null }
   }
 }
 
@@ -64,8 +64,8 @@ private abstract class SessionFields<P : Any> : ObjectDescription() {
 }
 
 private data class AdditionalTierFields(val description: TierDescriptionFields) : ObjectDescription() {
-  private val fieldInstanceId = IntEventField("id", null)
-  private val fieldDescription = ObjectEventField("description", null, description)
+  private val fieldInstanceId = IntEventField("id", NO_DESCRIPTION)
+  private val fieldDescription = ObjectEventField("description", NO_DESCRIPTION, description)
 
   constructor(descriptionFeatures: Set<FeatureDeclaration<*>>)
     : this(TierDescriptionFields(used = FeatureSet(descriptionFeatures),
@@ -87,9 +87,9 @@ private data class MainTierFields(
   val description: TierDescriptionFields,
   val analysis: FeatureSet,
 ) : ObjectDescription() {
-  private val fieldInstanceId = IntEventField("id", null)
-  private val fieldDescription = ObjectEventField("description", null, description)
-  private val fieldAnalysis = ObjectEventField("analysis", null, analysis)
+  private val fieldInstanceId = IntEventField("id", NO_DESCRIPTION)
+  private val fieldDescription = ObjectEventField("description", NO_DESCRIPTION, description)
+  private val fieldAnalysis = ObjectEventField("analysis", NO_DESCRIPTION, analysis)
 
   constructor(descriptionFeatures: Set<FeatureDeclaration<*>>, analysisFeatures: Set<FeatureDeclaration<*>>)
     : this(TierDescriptionFields(used = FeatureSet(descriptionFeatures),
@@ -116,7 +116,7 @@ private class MainTierSet<P : Any>(mainTierScheme: PerTier<AnalysedTierScheme>) 
     tier to MainTierFields(tierScheme.description, tierScheme.analysis)
   }
   val fieldPerTier: PerTier<ObjectEventField> = tiersDeclarations.entries.associate { (tier, tierFields) ->
-    tier to ObjectEventField(tier.name, null, tierFields)
+    tier to ObjectEventField(tier.name, NO_DESCRIPTION, tierFields)
   }
 
   init {
@@ -140,7 +140,7 @@ private class AdditionalTierSet<P : Any>(additionalTierScheme: PerTier<Described
     tier to AdditionalTierFields(tierScheme.description)
   }
   val fieldPerTier: PerTier<ObjectEventField> = tiersDeclarations.entries.associate { (tier, tierFields) ->
-    tier to ObjectEventField(tier.name, null, tierFields)
+    tier to ObjectEventField(tier.name, NO_DESCRIPTION, tierFields)
   }
 
   init {
@@ -165,8 +165,8 @@ private data class PredictionSessionFields<P : Any, F>(
   val fieldPrediction: EventField<F>,
   val serializePrediction: (P?) -> F?,
 ) : SessionFields<P>() {
-  private val fieldMainInstances = ObjectEventField("main", null, declarationMainTierSet)
-  private val fieldAdditionalInstances = ObjectEventField("additional", null, declarationAdditionalTierSet)
+  private val fieldMainInstances = ObjectEventField("main", NO_DESCRIPTION, declarationMainTierSet)
+  private val fieldAdditionalInstances = ObjectEventField("additional", NO_DESCRIPTION, declarationAdditionalTierSet)
 
   constructor(levelScheme: AnalysedLevelScheme,
               fieldPrediction: EventField<F>,
@@ -203,9 +203,9 @@ private data class NestableSessionFields<P : Any, F>(
   val declarationAdditionalTierSet: AdditionalTierSet<P>,
   val declarationNestedSession: SessionFields<P>,
 ) : SessionFields<P>() {
-  private val fieldMainInstances = ObjectEventField("main", null, declarationMainTierSet)
-  private val fieldAdditionalInstances = ObjectEventField("additional", null, declarationAdditionalTierSet)
-  private val fieldNestedSessions = ObjectListEventField("nested", null, declarationNestedSession)
+  private val fieldMainInstances = ObjectEventField("main", NO_DESCRIPTION, declarationMainTierSet)
+  private val fieldAdditionalInstances = ObjectEventField("additional", NO_DESCRIPTION, declarationAdditionalTierSet)
+  private val fieldNestedSessions = ObjectListEventField("nested", NO_DESCRIPTION, declarationNestedSession)
 
   constructor(levelScheme: AnalysedLevelScheme,
               deeperLevelsSchemes: List<AnalysedLevelScheme>,

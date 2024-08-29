@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
@@ -14,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private class WebPreviewEditorProvider : AsyncFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is WebPreviewVirtualFile
@@ -27,10 +25,10 @@ private class WebPreviewEditorProvider : AsyncFileEditorProvider {
     document: Document?,
     editorCoroutineScope: CoroutineScope,
   ): FileEditor {
-    val editor = WebPreviewFileEditor(file as WebPreviewVirtualFile)
     val fileDocumentManager = serviceAsync<FileDocumentManager>()
-    editorCoroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+    val editor = withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       fileDocumentManager.saveAllDocuments()
+      WebPreviewFileEditor(file as WebPreviewVirtualFile)
     }
     editor.reloadPage()
     return editor

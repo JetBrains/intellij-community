@@ -5,7 +5,6 @@
 
 '''commands to sign and verify changesets'''
 
-from __future__ import absolute_import
 
 import binascii
 import os
@@ -65,7 +64,7 @@ help.CATEGORY_ORDER.insert(
 help.CATEGORY_NAMES[_HELP_CATEGORY] = b'Signing changes (GPG)'
 
 
-class gpg(object):
+class gpg:
     def __init__(self, path, key=None):
         self.path = path
         self.key = (key and b" --local-user \"%s\"" % key) or b""
@@ -302,13 +301,13 @@ def sign(ui, repo, *revs, **opts):
 
 def _dosign(ui, repo, *revs, **opts):
     mygpg = newgpg(ui, **opts)
-    opts = pycompat.byteskwargs(opts)
+
     sigver = b"0"
     sigmessage = b""
 
-    date = opts.get(b'date')
+    date = opts.get('date')
     if date:
-        opts[b'date'] = dateutil.parsedate(date)
+        opts['date'] = dateutil.parsedate(date)
 
     if revs:
         nodes = [repo.lookup(n) for n in revs]
@@ -336,40 +335,39 @@ def _dosign(ui, repo, *revs, **opts):
         sigmessage += b"%s %s %s\n" % (hexnode, sigver, sig)
 
     # write it
-    if opts[b'local']:
+    if opts['local']:
         repo.vfs.append(b"localsigs", sigmessage)
         return
 
-    if not opts[b"force"]:
-        msigs = match.exact([b'.hgsigs'])
+    msigs = match.exact([b'.hgsigs'])
+
+    if not opts["force"]:
         if any(repo.status(match=msigs, unknown=True, ignored=True)):
             raise error.Abort(
                 _(b"working copy of .hgsigs is changed "),
                 hint=_(b"please commit .hgsigs manually"),
             )
 
-    sigsfile = repo.wvfs(b".hgsigs", b"ab")
-    sigsfile.write(sigmessage)
-    sigsfile.close()
+    with repo.wvfs(b".hgsigs", b"ab") as sigsfile:
+        sigsfile.write(sigmessage)
 
     if b'.hgsigs' not in repo.dirstate:
-        repo[None].add([b".hgsigs"])
+        with repo.dirstate.changing_files(repo):
+            repo[None].add([b".hgsigs"])
 
-    if opts[b"no_commit"]:
+    if opts["no_commit"]:
         return
 
-    message = opts[b'message']
+    message = opts['message']
     if not message:
         # we don't translate commit messages
         message = b"\n".join(
             [b"Added signature for changeset %s" % short(n) for n in nodes]
         )
     try:
-        editor = cmdutil.getcommiteditor(
-            editform=b'gpg.sign', **pycompat.strkwargs(opts)
-        )
+        editor = cmdutil.getcommiteditor(editform=b'gpg.sign', **opts)
         repo.commit(
-            message, opts[b'user'], opts[b'date'], match=msigs, editor=editor
+            message, opts['user'], opts['date'], match=msigs, editor=editor
         )
     except ValueError as inst:
         raise error.Abort(pycompat.bytestr(inst))

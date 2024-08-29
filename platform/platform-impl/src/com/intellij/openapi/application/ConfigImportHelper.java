@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.migrations.AIAssistant241;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.PythonProMigration242;
@@ -225,6 +226,11 @@ public final class ConfigImportHelper {
         var configImportOptions = new ConfigImportOptions(log);
         configImportOptions.importSettings = settings;
         configImportOptions.mergeVmOptions = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
+        
+        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit` 
+           with com.intellij.platform.impl.toolkit.IdeToolkit which depends on `Application` */
+        configImportOptions.setHeadless(AppMode.isRemoteDevHost());
+        
         if (!guessedOldConfigDirs.fromSameProduct) {
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -280,21 +286,19 @@ public final class ConfigImportHelper {
     // TODO remove hack, should we support vmoptions import in per project?
     // TODO If so, we need to patch restarter.
     if (vmOptionFileChanged && !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
-      log.info("The vmoptions file has changed, restarting...");
-      List<String> properties = new ArrayList<>();
-      properties.add(FIRST_SESSION_KEY);
-      if (isConfigImported()) {
-        properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+      if (!AppMode.isRemoteDevHost()) {
+        if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
+          log.info("The vmoptions file has changed, restarting...");
+          writeOptionsForRestart(newConfigDir, log);
+          restart(args);
+        }
+        else {
+          log.info("The vmoptions file has changed, but restart is switched off by " + settings);
+        }
       }
-
-      if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
-        try {
-          new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
-        }
-        catch (IOException e) {
-          log.error("cannot write config migration marker file to " + newConfigDir, e);
-        }
-        restart(args);
+      else {
+        //todo restore restarting for the backend process after GTW-9531 is fixed
+        log.warn("The vmoptions file has changed, but the backend process wasn't restarted; custom vmoptions will be used on the next run only");
       }
     }
   }
@@ -354,6 +358,27 @@ public final class ConfigImportHelper {
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
     return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
+  }
+
+  public static void writeOptionsForRestartIfNeeded(@NotNull Logger log) {
+    if (isFirstSession() && isConfigImported()) {
+      writeOptionsForRestart(PathManager.getConfigDir(), log);
+    }
+  }
+
+  private static void writeOptionsForRestart(@NotNull Path newConfigDir, @NotNull Logger log) {
+    List<String> properties = new ArrayList<>();
+    properties.add(FIRST_SESSION_KEY);
+    if (isConfigImported()) {
+      properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+    }
+
+    try {
+      new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+    }
+    catch (IOException e) {
+      log.error("cannot write config migration marker file to " + newConfigDir, e);
+    }
   }
 
   private static void restart(List<String> args) {
@@ -1168,7 +1193,7 @@ public final class ConfigImportHelper {
     if (options.headless) {
       PluginDownloader.runSynchronouslyInBackground(() -> {
         ProgressIndicator progressIndicator =
-          options.headlessProgressIndicator == null ? new EmptyProgressIndicator() : options.headlessProgressIndicator;
+          options.headlessProgressIndicator == null ? new EmptyProgressIndicator(ModalityState.nonModal()) : options.headlessProgressIndicator;
         downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, progressIndicator);
       });
     }

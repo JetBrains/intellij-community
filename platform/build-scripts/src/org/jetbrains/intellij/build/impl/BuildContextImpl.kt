@@ -84,7 +84,7 @@ class BuildContextImpl internal constructor(
     get() = productProperties.rootModuleForModularLoader != null && options.useModularLoader
 
   override val generateRuntimeModuleRepository: Boolean
-    get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
+    get() = useModularLoader || options.generateRuntimeModuleRepository
 
   private var builtinModulesData: BuiltinModulesFileData? = null
 

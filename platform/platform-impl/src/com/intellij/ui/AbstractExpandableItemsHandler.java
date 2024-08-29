@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -62,7 +63,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   };
 
-  private boolean myEnabled = Registry.is("ide.expansion.hints.enabled");
+  private boolean myEnabled = LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("ide.expansion.hints.enabled");
   private final MovablePopup myPopup;
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
@@ -125,7 +126,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       @Override
       public void mouseExited(MouseEvent event) {
         // don't hide the hint if mouse exited to it
-        if (Registry.is("ide.hide.expandable.tooltip.owner.mouse.exit") || myTipComponent.getMousePosition() == null) {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("ide.hide.expandable.tooltip.owner.mouse.exit") || myTipComponent.getMousePosition() == null) {
           hideHint();
         }
       }

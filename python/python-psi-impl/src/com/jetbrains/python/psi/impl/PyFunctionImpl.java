@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
@@ -17,13 +16,11 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -48,6 +45,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.getGenericTypeForClass;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
@@ -152,7 +150,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
-        return derefType(returnTypeRef, typeProvider);
+        return PyTypingTypeProvider.removeNarrowedTypeIfNeeded(derefType(returnTypeRef, typeProvider));
       }
     }
 
@@ -166,7 +164,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         inferredType = getReturnStatementType(context);
       }
     }
-    return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
+    return PyTypingTypeProvider.removeNarrowedTypeIfNeeded(PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType));
   }
 
   @Override
@@ -214,6 +212,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (PyTypeChecker.hasGenerics(type, context)) {
       final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
+        PyClass containingClass = getContainingClass();
+        if (containingClass != null && type instanceof PySelfType) {
+          PyType genericType = getGenericTypeForClass(context, containingClass);
+          if (genericType != null) {
+            type = genericType;
+          }
+        }
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
         type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);

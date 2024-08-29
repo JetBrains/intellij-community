@@ -415,7 +415,7 @@ class MacDistributionBuilder(
 
               for (item in extraFiles) {
                 when(val content = item.content) {
-                  is LocalDistFileContent -> zipOutStream.entry("${zipRoot}/${item.relativePath}", content.file)
+                  is LocalDistFileContent -> zipOutStream.entry("${zipRoot}/${item.relativePath}", content.file, if (content.isExecutable) executableFileUnixMode else -1)
                   is InMemoryDistFileContent -> zipOutStream.entry("${zipRoot}/${item.relativePath}", content.data)
                 }
               }

@@ -6,12 +6,11 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingBean
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WebAnimationUtils
@@ -97,7 +97,8 @@ object NewUiOnboardingUtil {
       createPopup = {
         val dataContext = DataManager.getInstance().getDataContext(button)
         val event = AnActionEvent.createFromDataContext(ActionPlaces.NEW_UI_ONBOARDING, action.templatePresentation.clone(), dataContext)
-        ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+        performActionUpdate(action, event)
+
         val popup = action.createPopup(event)
         popup?.addListener(object : JBPopupListener {
           override fun beforeShown(event: LightweightWindowEvent) {
@@ -153,17 +154,26 @@ object NewUiOnboardingUtil {
     val action = button.action
     val context = DataManager.getInstance().getDataContext(button)
     val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.NEW_UI_ONBOARDING, button.presentation, context)
-    var popup: JBPopup? = null
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      // wrap popup creation into SlowOperations.ACTION_PERFORM, otherwise there can be a lot of exceptions
-      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
-        popup = doCreatePopup(event)
-        if (popup != null) {
-          Toggleable.setSelected(button.presentation, true)
-        }
+    performActionUpdate(action, event)
+
+    var popup: JBPopup?
+    // wrap popup creation into SlowOperations.ACTION_PERFORM, otherwise there can be a lot of exceptions
+    SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+      popup = doCreatePopup(event)
+      if (popup != null) {
+        Toggleable.setSelected(button.presentation, true)
       }
     }
     return popup
+  }
+
+  private suspend fun performActionUpdate(action: AnAction, event: AnActionEvent) {
+    val dispatcher = if (action.actionUpdateThread == ActionUpdateThread.BGT) Dispatchers.Default else Dispatchers.EDT
+    withContext(dispatcher) {
+      readAction {
+        ActionUtil.performDumbAwareUpdate(action, event, false)
+      }
+    }
   }
 
   fun convertPointToFrame(project: Project, source: Component, point: Point): RelativePoint? {

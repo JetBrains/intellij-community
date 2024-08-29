@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
-
 public final class AllVcses implements AllVcsesI, Disposable {
   private static final Logger LOG = Logger.getInstance(AllVcses.class);
 
@@ -277,7 +275,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(message, NotificationType.WARNING)
+    Notification notification = VcsNotifier.importantNotification().createNotification(message, NotificationType.WARNING)
       .setDisplayId(VcsNotificationIdsHolder.OBSOLETE_PLUGIN_UNBUNDLED)
       .addAction(NotificationAction.createSimpleExpiring(VcsBundle.message("action.NotificationAction.AllVcses.text.install"),
                                                          () -> installPlugin(vcs)))
@@ -315,7 +313,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
       private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull @NlsContexts.NotificationContent String message) {
         String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
-        Notification notification = IMPORTANT_ERROR_NOTIFICATION
+        Notification notification = VcsNotifier.importantNotification()
           .createNotification(title, message, NotificationType.ERROR)
           .setDisplayId(VcsNotificationIdsHolder.SUGGESTED_PLUGIN_INSTALL_FAILED)
           .addAction(

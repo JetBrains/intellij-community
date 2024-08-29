@@ -1091,7 +1091,11 @@ class EditorWindow internal constructor(
     // don't check focus in unit test mode
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       val owner = IdeFocusManager.getInstance(owner.manager.project).focusOwner
-      if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.selectedEditor!!.component)) {
+      if (owner == null) {
+        return false
+      }
+      val component = composite.selectedEditor?.component
+      if (component == null || !SwingUtilities.isDescendingFrom(owner, component)) {
         return false
       }
     }

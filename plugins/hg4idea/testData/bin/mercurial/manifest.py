@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import heapq
 import itertools
@@ -18,7 +17,6 @@ from .node import (
     hex,
     nullrev,
 )
-from .pycompat import getattr
 from . import (
     encoding,
     error,
@@ -85,7 +83,7 @@ def _text(it):
     return b''.join(lines)
 
 
-class lazymanifestiter(object):
+class lazymanifestiter:
     def __init__(self, lm):
         self.pos = 0
         self.lm = lm
@@ -108,7 +106,7 @@ class lazymanifestiter(object):
     __next__ = next
 
 
-class lazymanifestiterentries(object):
+class lazymanifestiterentries:
     def __init__(self, lm):
         self.lm = lm
         self.pos = 0
@@ -159,7 +157,7 @@ def _cmp(a, b):
 _manifestflags = {b'', b'l', b't', b'x'}
 
 
-class _lazymanifest(object):
+class _lazymanifest:
     """A pure python manifest backed by a byte string.  It is supplimented with
     internal lists as it is modified, until it is compacted back to a pure byte
     string.
@@ -474,7 +472,7 @@ except AttributeError:
 
 
 @interfaceutil.implementer(repository.imanifestdict)
-class manifestdict(object):
+class manifestdict:
     def __init__(self, nodelen, data=b''):
         self._nodelen = nodelen
         self._lm = _lazymanifest(nodelen, data)
@@ -797,7 +795,7 @@ _noop = lambda s: None
 
 
 @interfaceutil.implementer(repository.imanifestdict)
-class treemanifest(object):
+class treemanifest:
     def __init__(self, nodeconstants, dir=b'', text=b''):
         self._dir = dir
         self.nodeconstants = nodeconstants
@@ -827,9 +825,7 @@ class treemanifest(object):
     def _loadalllazy(self):
         selfdirs = self._dirs
         subpath = self._subpath
-        for d, (node, readsubtree, docopy) in pycompat.iteritems(
-            self._lazydirs
-        ):
+        for d, (node, readsubtree, docopy) in self._lazydirs.items():
             if docopy:
                 selfdirs[d] = readsubtree(subpath(d), node).copy()
             else:
@@ -868,11 +864,11 @@ class treemanifest(object):
           differs, load it in both
         """
         toloadlazy = []
-        for d, v1 in pycompat.iteritems(t1._lazydirs):
+        for d, v1 in t1._lazydirs.items():
             v2 = t2._lazydirs.get(d)
             if not v2 or v2[0] != v1[0]:
                 toloadlazy.append(d)
-        for d, v1 in pycompat.iteritems(t2._lazydirs):
+        for d, v1 in t2._lazydirs.items():
             if d not in t1._lazydirs:
                 toloadlazy.append(d)
 
@@ -954,7 +950,7 @@ class treemanifest(object):
             if p in self._files:
                 yield self._subpath(p), n
             else:
-                for f, sn in pycompat.iteritems(n):
+                for f, sn in n.items():
                     yield f, sn
 
     iteritems = items
@@ -1105,11 +1101,10 @@ class treemanifest(object):
             def _copyfunc(s):
                 self._load()
                 s._lazydirs = {
-                    d: (n, r, True)
-                    for d, (n, r, c) in pycompat.iteritems(self._lazydirs)
+                    d: (n, r, True) for d, (n, r, c) in self._lazydirs.items()
                 }
                 sdirs = s._dirs
-                for d, v in pycompat.iteritems(self._dirs):
+                for d, v in self._dirs.items():
                     sdirs[d] = v.copy()
                 s._files = dict.copy(self._files)
                 s._flags = dict.copy(self._flags)
@@ -1137,7 +1132,7 @@ class treemanifest(object):
             t1._load()
             t2._load()
             self._loaddifflazy(t1, t2)
-            for d, m1 in pycompat.iteritems(t1._dirs):
+            for d, m1 in t1._dirs.items():
                 if d in t2._dirs:
                     m2 = t2._dirs[d]
                     _filesnotin(m1, m2)
@@ -1250,7 +1245,7 @@ class treemanifest(object):
                 ret._flags[fn] = self._flags[fn]
 
         visit = self._loadchildrensetlazy(visit)
-        for dir, subm in pycompat.iteritems(self._dirs):
+        for dir, subm in self._dirs.items():
             if visit and dir[:-1] not in visit:
                 continue
             m = subm._matches_inner(match)
@@ -1295,15 +1290,15 @@ class treemanifest(object):
             t2._load()
             self._loaddifflazy(t1, t2)
 
-            for d, m1 in pycompat.iteritems(t1._dirs):
+            for d, m1 in t1._dirs.items():
                 m2 = t2._dirs.get(d, emptytree)
                 stack.append((m1, m2))
 
-            for d, m2 in pycompat.iteritems(t2._dirs):
+            for d, m2 in t2._dirs.items():
                 if d not in t1._dirs:
                     stack.append((emptytree, m2))
 
-            for fn, n1 in pycompat.iteritems(t1._files):
+            for fn, n1 in t1._files.items():
                 fl1 = t1._flags.get(fn, b'')
                 n2 = t2._files.get(fn, None)
                 fl2 = t2._flags.get(fn, b'')
@@ -1312,7 +1307,7 @@ class treemanifest(object):
                 elif clean:
                     result[t1._subpath(fn)] = None
 
-            for fn, n2 in pycompat.iteritems(t2._files):
+            for fn, n2 in t2._files.items():
                 if fn not in t1._files:
                     fl2 = t2._flags.get(fn, b'')
                     result[t2._subpath(fn)] = ((None, b''), (n2, fl2))
@@ -1362,9 +1357,7 @@ class treemanifest(object):
         """
         self._load()
         flags = self.flags
-        lazydirs = [
-            (d[:-1], v[0], b't') for d, v in pycompat.iteritems(self._lazydirs)
-        ]
+        lazydirs = [(d[:-1], v[0], b't') for d, v in self._lazydirs.items()]
         dirs = [(d[:-1], self._dirs[d]._node, b't') for d in self._dirs]
         files = [(f, self._files[f], flags(f)) for f in self._files]
         return _text(sorted(dirs + files + lazydirs))
@@ -1393,7 +1386,7 @@ class treemanifest(object):
         visit = self._loadchildrensetlazy(visit)
         if visit == b'this' or visit == b'all':
             visit = None
-        for d, subm in pycompat.iteritems(self._dirs):
+        for d, subm in self._dirs.items():
             if visit and d[:-1] not in visit:
                 continue
             subp1 = getnode(m1, d)
@@ -1416,7 +1409,7 @@ class treemanifest(object):
         self._load()
         # OPT: use visitchildrenset to avoid loading everything.
         self._loadalllazy()
-        for d, subm in pycompat.iteritems(self._dirs):
+        for d, subm in self._dirs.items():
             for subtree in subm.walksubtrees(matcher=matcher):
                 yield subtree
 
@@ -1556,7 +1549,7 @@ class FastdeltaUnavailable(Exception):
 
 
 @interfaceutil.implementer(repository.imanifeststorage)
-class manifestrevlog(object):
+class manifestrevlog:
     """A revlog that stores manifest texts. This is responsible for caching the
     full-text manifest contents.
     """
@@ -1595,7 +1588,7 @@ class manifestrevlog(object):
         self._fulltextcache = manifestfulltextcache(cachesize)
 
         if tree:
-            assert self._treeondisk, b'opts is %r' % opts
+            assert self._treeondisk, (tree, b'opts is %r' % opts)
 
         radix = b'00manifest'
         if tree:
@@ -1621,11 +1614,19 @@ class manifestrevlog(object):
         )
 
         self.index = self._revlog.index
-        self._generaldelta = self._revlog._generaldelta
+
+    def get_revlog(self):
+        """return an actual revlog instance if any
+
+        This exist because a lot of code leverage the fact the underlying
+        storage is a revlog for optimization, so giving simple way to access
+        the revlog instance helps such code.
+        """
+        return self._revlog
 
     def _setupmanifestcachehooks(self, repo):
         """Persist the manifestfulltextcache on lock release"""
-        if not util.safehasattr(repo, b'_wlockref'):
+        if not hasattr(repo, '_wlockref'):
             return
 
         self._fulltextcache._opener = repo.wcachevfs
@@ -1819,11 +1820,11 @@ class manifestrevlog(object):
     def checksize(self):
         return self._revlog.checksize()
 
-    def revision(self, node, _df=None, raw=False):
-        return self._revlog.revision(node, _df=_df, raw=raw)
+    def revision(self, node):
+        return self._revlog.revision(node)
 
-    def rawdata(self, node, _df=None):
-        return self._revlog.rawdata(node, _df=_df)
+    def rawdata(self, node):
+        return self._revlog.rawdata(node)
 
     def revdiff(self, rev1, rev2):
         return self._revlog.revdiff(rev1, rev2)
@@ -1842,6 +1843,7 @@ class manifestrevlog(object):
         assumehaveparentrevisions=False,
         deltamode=repository.CG_DELTAMODE_STD,
         sidedata_helpers=None,
+        debug_info=None,
     ):
         return self._revlog.emitrevisions(
             nodes,
@@ -1850,6 +1852,7 @@ class manifestrevlog(object):
             assumehaveparentrevisions=assumehaveparentrevisions,
             deltamode=deltamode,
             sidedata_helpers=sidedata_helpers,
+            debug_info=debug_info,
         )
 
     def addgroup(
@@ -1860,6 +1863,8 @@ class manifestrevlog(object):
         alwayscache=False,
         addrevisioncb=None,
         duplicaterevisioncb=None,
+        debug_info=None,
+        delta_base_reuse_policy=None,
     ):
         return self._revlog.addgroup(
             deltas,
@@ -1868,6 +1873,8 @@ class manifestrevlog(object):
             alwayscache=alwayscache,
             addrevisioncb=addrevisioncb,
             duplicaterevisioncb=duplicaterevisioncb,
+            debug_info=debug_info,
+            delta_base_reuse_policy=delta_base_reuse_policy,
         )
 
     def rawsize(self, rev):
@@ -1914,7 +1921,7 @@ class manifestrevlog(object):
 
 
 @interfaceutil.implementer(repository.imanifestlog)
-class manifestlog(object):
+class manifestlog:
     """A collection class representing the collection of manifest snapshots
     referenced by commits in the repository.
 
@@ -2013,7 +2020,7 @@ class manifestlog(object):
 
 
 @interfaceutil.implementer(repository.imanifestrevisionwritable)
-class memmanifestctx(object):
+class memmanifestctx:
     def __init__(self, manifestlog):
         self._manifestlog = manifestlog
         self._manifestdict = manifestdict(manifestlog.nodeconstants.nodelen)
@@ -2043,7 +2050,7 @@ class memmanifestctx(object):
 
 
 @interfaceutil.implementer(repository.imanifestrevisionstored)
-class manifestctx(object):
+class manifestctx:
     """A class representing a single revision of a manifest, including its
     contents, its parent revs, and its linkrev.
     """
@@ -2123,7 +2130,7 @@ class manifestctx(object):
 
 
 @interfaceutil.implementer(repository.imanifestrevisionwritable)
-class memtreemanifestctx(object):
+class memtreemanifestctx:
     def __init__(self, manifestlog, dir=b''):
         self._manifestlog = manifestlog
         self._dir = dir
@@ -2158,7 +2165,7 @@ class memtreemanifestctx(object):
 
 
 @interfaceutil.implementer(repository.imanifestrevisionstored)
-class treemanifestctx(object):
+class treemanifestctx:
     def __init__(self, manifestlog, dir, node):
         self._manifestlog = manifestlog
         self._dir = dir
@@ -2249,7 +2256,7 @@ class treemanifestctx(object):
             m0 = self._manifestlog.get(self._dir, store.node(r0)).read()
             m1 = self.read()
             md = treemanifest(self._manifestlog.nodeconstants, dir=self._dir)
-            for f, ((n0, fl0), (n1, fl1)) in pycompat.iteritems(m0.diff(m1)):
+            for f, ((n0, fl0), (n1, fl1)) in m0.diff(m1).items():
                 if n1:
                     md[f] = n1
                     if fl1:

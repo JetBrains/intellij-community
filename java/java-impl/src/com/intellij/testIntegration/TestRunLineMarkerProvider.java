@@ -40,7 +40,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
         if (!isTestClass(psiClass)) return null;
         String url = "java:suite://" + ClassUtil.getJVMClassName(psiClass);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        return getInfo(state, true, PsiMethodUtil.findMainInClass(psiClass) != null ? 1 : 0);
+        return getInfo(state, true, PsiMethodUtil.hasMainInClass(psiClass) ? 1 : 0);
       }
       if (element instanceof PsiMethod psiMethod) {
         PsiClass containingClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);

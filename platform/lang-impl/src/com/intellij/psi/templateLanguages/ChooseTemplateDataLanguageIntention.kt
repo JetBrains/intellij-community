@@ -3,11 +3,13 @@ package com.intellij.psi.templateLanguages
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.LangBundle
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings.getTemplateableLanguages
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.containers.ContainerUtil
 
 internal class ChooseTemplateDataLanguageIntention : IntentionAction {
   override fun startInWriteAction(): Boolean {
@@ -29,7 +31,8 @@ internal class ChooseTemplateDataLanguageIntention : IntentionAction {
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     if (file == null || editor == null || file.viewProvider !is ConfigurableTemplateLanguageFileViewProvider) return
 
-    ListPopupImpl(project, TemplateDataLanguageChooserPopupStep(getTemplateableLanguages(), file.virtualFile, project))
+    val sortedLanguages = ContainerUtil.sorted(getTemplateableLanguages(), Comparator.comparing { obj: Language -> obj.displayName })
+    ListPopupImpl(project, TemplateDataLanguageChooserPopupStep(sortedLanguages, file.virtualFile, project))
       .showInBestPositionFor(editor)
   }
 }

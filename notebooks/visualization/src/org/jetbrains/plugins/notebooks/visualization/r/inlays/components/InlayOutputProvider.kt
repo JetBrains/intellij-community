@@ -16,7 +16,7 @@ interface InlayOutputProvider {
    */
   fun shouldLimitHeight() = true
 
-  fun create(parent: Disposable, editor: Editor, clearAction: () -> Unit): InlayOutput
+  fun create(parent: Disposable, editor: Editor): InlayOutput
 
   companion object {
     val EP = ExtensionPointName.create<InlayOutputProvider>("com.intellij.datavis.inlays.components.inlayOutputProvider")

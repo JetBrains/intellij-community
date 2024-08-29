@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from .i18n import _
 from . import bookmarks, error, obsutil, scmutil, stack
@@ -65,9 +64,8 @@ def _destupdateobs(repo, clean):
         # replaced changesets: same as divergent except we know there
         # is no conflict
         #
-        # pruned changeset: no update is done; though, we could
-        #     consider updating to the first non-obsolete parent,
-        #     similar to what is current done for 'hg prune'
+        # pruned changeset: update to the closest non-obsolete ancestor,
+        # similar to what 'hg prune' currently does
 
         if successors:
             # flatten the list here handles both divergent (len > 1)
@@ -77,8 +75,15 @@ def _destupdateobs(repo, clean):
             # get the max revision for the given successors set,
             # i.e. the 'tip' of a set
             node = repo.revs(b'max(%ln)', successors).first()
-            if bookmarks.isactivewdirparent(repo):
-                movemark = repo[b'.'].node()
+        else:
+            p1 = p1.p1()
+            while p1.obsolete():
+                p1 = p1.p1()
+            node = p1.node()
+
+        if node is not None and bookmarks.isactivewdirparent(repo):
+            movemark = repo[b'.'].node()
+
     return node, movemark, None
 
 

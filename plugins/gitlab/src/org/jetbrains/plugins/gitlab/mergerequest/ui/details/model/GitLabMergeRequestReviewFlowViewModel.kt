@@ -146,7 +146,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val userCanMerge: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canMerge }
     .modelFlow(scope, LOG)
 
-  private val isMergeable: SharedFlow<Boolean> = mergeRequest.details.map { it.isMergeable }
+  private val isMergeable: SharedFlow<Boolean> = mergeRequest.details.map { it.isMergeable && it.diffRefs?.headSha != null }
     .modelFlow(scope, LOG)
   private val shouldBeRebased: SharedFlow<Boolean> = mergeRequest.details.map { it.shouldBeRebased }
     .modelFlow(scope, LOG)

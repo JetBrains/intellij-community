@@ -16,10 +16,7 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.saveBundledPluginsState
-import com.intellij.ide.ui.IconMapLoader
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.NotRoamableUiSettings
-import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -93,7 +90,7 @@ internal suspend fun loadApp(
   logDeferred: Deferred<Logger>,
   appRegisteredJob: CompletableDeferred<Unit>,
   args: List<String>,
-  initAwtToolkitAndEventQueueJob: Job
+  initAwtToolkitAndEventQueueJob: Job,
 ): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
@@ -108,6 +105,15 @@ internal suspend fun loadApp(
       ApplicationManager.setApplication(app)
     }
 
+    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("language and region")) {
+        getLanguageAndRegionDialogIfNeeded(euaDocumentDeferred.await())
+      }
+    }
+    
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
       null
     }
@@ -116,6 +122,7 @@ internal suspend fun loadApp(
         prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope)
       }
     }
+
 
     initServiceContainerJob.join()
 
@@ -189,6 +196,7 @@ internal suspend fun loadApp(
       if (!app.isHeadlessEnvironment) {
         euaTaskDeferred?.await()?.let {
           cssInit?.join()
+          languageAndRegionTaskDeferred?.await()?.invoke()
           it()
         }
       }

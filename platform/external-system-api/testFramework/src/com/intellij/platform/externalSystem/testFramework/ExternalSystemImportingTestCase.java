@@ -50,7 +50,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -118,52 +117,35 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
-  }
-
-  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
-    assertGeneratedSources(moduleName, JavaSourceRootType.SOURCE, expectedSources);
-  }
-
-  protected void assertGeneratedTestSources(String moduleName, String... expectedSources) {
-    assertGeneratedSources(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
-  }
-
-  private void assertGeneratedSources(String moduleName, JavaSourceRootType type, String... expectedSources) {
-    final ContentEntry[] contentRoots = getContentRoots(moduleName);
-    String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
-    List<String> actual = new ArrayList<>();
-
-    for (ContentEntry contentRoot : contentRoots) {
-      rootUrl = VirtualFileManager.extractPath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
-      for (SourceFolder f : contentRoot.getSourceFolders(type)) {
-        String folderUrl = VirtualFileManager.extractPath(f.getUrl());
-
-        if (folderUrl.startsWith(rootUrl)) {
-          int length = rootUrl.length() + 1;
-          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
-        }
-
-        JavaSourceRootProperties properties = f.getJpsElement().getProperties(type);
-        if (properties != null && properties.isForGeneratedSources()) {
-          actual.add(folderUrl);
-        }
-      }
-    }
-
-    assertOrderedElementsAreEqual(actual, Arrays.asList(expectedSources));
+    assertSourceFolders(moduleName, JavaSourceRootType.SOURCE, Arrays.asList(expectedSources));
   }
 
   protected void assertResources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
+    assertSourceFolders(moduleName, JavaResourceRootType.RESOURCE, Arrays.asList(expectedSources));
   }
 
   protected void assertTestSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
+    assertSourceFolders(moduleName, JavaSourceRootType.TEST_SOURCE, Arrays.asList(expectedSources));
   }
 
   protected void assertTestResources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
+    assertSourceFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, Arrays.asList(expectedSources));
+  }
+
+  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
+    assertGeneratedSourceFolders(moduleName, JavaSourceRootType.SOURCE, Arrays.asList(expectedSources));
+  }
+
+  protected void assertGeneratedTestSources(String moduleName, String... expectedSources) {
+    assertGeneratedSourceFolders(moduleName, JavaSourceRootType.TEST_SOURCE, Arrays.asList(expectedSources));
+  }
+
+  protected void assertGeneratedResources(String moduleName, String... expectedSources) {
+    assertGeneratedResourceFolders(moduleName, JavaResourceRootType.RESOURCE, Arrays.asList(expectedSources));
+  }
+
+  protected void assertGeneratedTestResources(String moduleName, String... expectedSources) {
+    assertGeneratedResourceFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, Arrays.asList(expectedSources));
   }
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
@@ -186,35 +168,63 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
   }
 
-  private void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
-    final ContentEntry[] contentRoots = getContentRoots(moduleName);
-    Arrays.sort(contentRoots, Comparator.comparing(ContentEntry::getUrl));
-    final String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
-    doAssertContentFolders(rootUrl, contentRoots, rootType, expected);
+  private void assertSourceFolders(
+    @NotNull String moduleName,
+    @NotNull JpsModuleSourceRootType<?> rootType,
+    @NotNull List<String> expected
+  ) {
+    assertSourceFolders(moduleName, rootType, __ -> true, expected);
   }
 
-  protected static List<SourceFolder> doAssertContentFolders(@Nullable String rootUrl,
-                                                             ContentEntry[] contentRoots,
-                                                             @NotNull JpsModuleSourceRootType<?> rootType,
-                                                             String... expected) {
-    List<SourceFolder> result = new ArrayList<>();
-    List<String> actual = new ArrayList<>();
-    for (ContentEntry contentRoot : contentRoots) {
-      for (SourceFolder f : contentRoot.getSourceFolders(rootType)) {
-        rootUrl = VirtualFileManager.extractPath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
-        String folderUrl = VirtualFileManager.extractPath(f.getUrl());
-        if (folderUrl.startsWith(rootUrl)) {
-          int length = rootUrl.length() + 1;
-          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
-        }
+  private void assertGeneratedSourceFolders(
+    @NotNull String moduleName,
+    @NotNull JavaSourceRootType rootType,
+    @NotNull List<String> expectedSources
+  ) {
+    assertSourceFolders(moduleName, rootType, it -> isGeneratedSource(it, rootType), expectedSources);
+  }
 
-        actual.add(folderUrl);
-        result.add(f);
+  private void assertGeneratedResourceFolders(
+    @NotNull String moduleName,
+    @NotNull JavaResourceRootType rootType,
+    @NotNull List<String> expectedSources
+  ) {
+    assertSourceFolders(moduleName, rootType, it -> isGeneratedResource(it, rootType), expectedSources);
+  }
+
+  private static boolean isGeneratedSource(
+    @NotNull SourceFolder sourceFolder,
+    @NotNull JavaSourceRootType rootType
+  ) {
+    var element = sourceFolder.getJpsElement();
+    var properties = element.getProperties(rootType);
+    return properties != null && properties.isForGeneratedSources();
+  }
+
+  private static boolean isGeneratedResource(
+    @NotNull SourceFolder sourceFolder,
+    @NotNull JavaResourceRootType rootType
+  ) {
+    var element = sourceFolder.getJpsElement();
+    var properties = element.getProperties(rootType);
+    return properties != null && properties.isForGeneratedSources();
+  }
+
+  private void assertSourceFolders(
+    @NotNull String moduleName,
+    @NotNull JpsModuleSourceRootType<?> rootType,
+    @NotNull Predicate<SourceFolder> sourceFolderFilter,
+    @NotNull List<String> expectedSources
+  ) {
+    var actualSources = new ArrayList<String>();
+    for (var contentRoot : getContentRoots(moduleName)) {
+      for (var sourceFolder : contentRoot.getSourceFolders(rootType)) {
+        if (sourceFolderFilter.test(sourceFolder)) {
+          actualSources.add(VirtualFileManager.extractPath(sourceFolder.getUrl()));
+        }
       }
     }
-
-    assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
-    return result;
+    assertUnorderedElementsAreEqual(actualSources, expectedSources);
   }
 
   private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {

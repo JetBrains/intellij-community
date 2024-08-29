@@ -183,6 +183,22 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testUnknownTag() { doTestMethod(); }
   public void testUnknownClassTag() { doTestClass(); }
   public void testReflectConstructor() { useJava10(); doTestAtCaret(); }
+  public void testMarkdownGeneralFeatures() { doTestClass(); }
+  public void testMarkdownCodeBlock(){ doTestClass(); }
+  public void testMarkdownReferenceLink(){ doTestClass(); }
+  public void testMarkdownInheritDoc() {
+    configureByFile();
+    PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[1];
+    verifyJavaDoc(outerClass.getMethods()[0]);
+  }
+  public void testMarkdownInlineWithTags(){
+    configureByFile();
+    PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
+    verifyJavaDoc(outerClass.getMethods()[0]);
+  }
+  public void testMarkdownJepExample(){
+    doTestMethod();
+  }
 
   public void testRepeatableAnnotations() {
     useJava8();

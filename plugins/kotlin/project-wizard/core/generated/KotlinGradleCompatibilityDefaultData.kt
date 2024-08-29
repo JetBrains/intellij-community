@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompat
  */
 internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilityState(
     kotlinVersions = listOf(
+        "2.0.10",
         "2.0.0",
         "1.9.24",
         "1.9.23",

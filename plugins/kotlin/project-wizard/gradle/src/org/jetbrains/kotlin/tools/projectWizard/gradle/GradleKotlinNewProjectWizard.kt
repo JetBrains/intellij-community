@@ -7,7 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -44,6 +43,7 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
+import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
@@ -287,7 +287,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
-                addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+                addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
                 addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
             }
             createKotlinContentRoots()

@@ -5,8 +5,8 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-public final class JavaDocTokenTypes implements DocCommentTokenTypes {
-  public static final DocCommentTokenTypes INSTANCE = new JavaDocTokenTypes();
+public final class JavaDocTokenTypes implements JavaDocCommentTokenTypes {
+  public static final JavaDocCommentTokenTypes INSTANCE = new JavaDocTokenTypes();
   private final TokenSet mySpaceCommentsSet = TokenSet.create(JavaDocTokenType.DOC_SPACE, JavaDocTokenType.DOC_COMMENT_DATA);
 
   private JavaDocTokenTypes() { }
@@ -104,5 +104,35 @@ public final class JavaDocTokenTypes implements DocCommentTokenTypes {
   @Override
   public IElementType commentLeadingAsterisks() {
     return JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
+  }
+
+  @Override
+  public IElementType codeFence() {
+    return JavaDocTokenType.DOC_CODE_FENCE;
+  }
+
+  @Override
+  public IElementType rightBracket() {
+    return JavaDocTokenType.DOC_RBRACKET;
+  }
+
+  @Override
+  public IElementType leftBracket() {
+    return JavaDocTokenType.DOC_LBRACKET;
+  }
+
+  @Override
+  public IElementType leftParenthesis() {
+    return JavaDocTokenType.DOC_LPAREN;
+  }
+
+  @Override
+  public IElementType rightParenthesis() {
+    return JavaDocTokenType.DOC_RPAREN;
+  }
+
+  @Override
+  public IElementType sharp() {
+    return JavaDocTokenType.DOC_SHARP;
   }
 }

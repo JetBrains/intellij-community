@@ -1,0 +1,19 @@
+PsiJavaFile:CodeBlockMarkdown02.java
+  PsiDocComment
+    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+    PsiWhiteSpace(' ')
+    PsiMarkdownCodeBlock:
+      PsiDocToken:DOC_CODE_FENCE('```')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_COMMENT_DATA('~~~')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' Inside squigly code block, but the backtick codeblock has priority')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_COMMENT_DATA('~~~')
+  PsiImportList
+    <empty list>

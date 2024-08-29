@@ -36,11 +36,22 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
     myFixture.addClass(nullMarked);
     myFixture.addFileToProject("module-info.java", """
       import org.jspecify.annotations.NullMarked;
-            
+
       @NullMarked
       module jspecifysample {
       	requires org.jspecify;
       }""");
+    doTest();
+  }
+
+  public void testJSpecifyNullMarkedLocals() {
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target(ElementType.CLASS)
+        public @interface NullMarked {}""";
+    myFixture.addClass(nullMarked);
     doTest();
   }
 }

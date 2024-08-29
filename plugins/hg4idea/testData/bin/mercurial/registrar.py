@@ -5,13 +5,12 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
+from typing import Any, List, Optional, Tuple
 from . import (
     configitems,
     error,
     pycompat,
-    util,
 )
 
 # unlike the other registered items, config options are neither functions or
@@ -22,7 +21,7 @@ from . import (
 configitem = configitems.getitemregister
 
 
-class _funcregistrarbase(object):
+class _funcregistrarbase:
     """Base of decorator to register a function for specific purpose
 
     This decorator stores decorated functions into own dict 'table'.
@@ -65,7 +64,7 @@ class _funcregistrarbase(object):
             msg = b'duplicate registration for name: "%s"' % name
             raise error.ProgrammingError(msg)
 
-        if func.__doc__ and not util.safehasattr(func, '_origdoc'):
+        if func.__doc__ and not hasattr(func, '_origdoc'):
             func._origdoc = func.__doc__.strip()
             doc = pycompat.sysbytes(func._origdoc)
             func.__doc__ = pycompat.sysstr(self._formatdoc(decl, doc))
@@ -525,7 +524,7 @@ class internalmerge(_funcregistrarbase):
         precheck=None,
         binary=False,
         symlink=False,
-    ):
+    ):  # pytype: disable=signature-mismatch
         func.mergetype = mergetype
         func.onfailure = onfailure
         func.precheck = precheck
@@ -535,3 +534,30 @@ class internalmerge(_funcregistrarbase):
 
         # actual capabilities, which this internal merge tool has
         func.capabilities = {b"binary": binarycap, b"symlink": symlinkcap}
+
+
+class verify_check(_funcregistrarbase):
+    """Decorator to register a check for admin::verify
+
+    options is a list of (name, default value, help) to be passed to the check
+    """
+
+    def __init__(self, table=None, alias_table=None):
+        super().__init__(table)
+        if alias_table is None:
+            self._alias_table = {}
+        else:
+            self._alias_table = alias_table
+
+    def _extrasetup(
+        self,
+        name,
+        func,
+        alias: Optional[bytes] = None,
+        options: Optional[List[Tuple[bytes, Any, bytes]]] = None,
+    ):
+        func.alias = alias
+        func.options = options
+
+        if alias:
+            self._alias_table[alias] = name

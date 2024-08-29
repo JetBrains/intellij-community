@@ -212,9 +212,6 @@ public class ComparisonFailureData {
     failureData = createFileComparisonData(assertion);
     if (failureData != null) return failureData;
 
-    failureData = createFileComparisonFailure(assertion);
-    if (failureData != null) return failureData;
-
     failureData = createJunitComparisonFailure(assertion);
     if (failureData != null) return failureData;
 
@@ -225,19 +222,6 @@ public class ComparisonFailureData {
   private static ComparisonFailureData createFileComparisonData(Throwable assertion) {
     if (assertion instanceof FileComparisonData) {
       final FileComparisonData comparisonFailure = (FileComparisonData)assertion;
-      String actual = comparisonFailure.getActualStringPresentation();
-      String expected = comparisonFailure.getExpectedStringPresentation();
-      if (actual != null && expected != null) {
-        return new ComparisonFailureData(expected, actual, comparisonFailure.getFilePath(), comparisonFailure.getActualFilePath());
-      }
-    }
-    return null;
-  }
-
-  @SuppressWarnings("deprecation")
-  private static ComparisonFailureData createFileComparisonFailure(Throwable assertion) {
-    if (assertion instanceof FileComparisonFailure) {
-      final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
       String actual = comparisonFailure.getActualStringPresentation();
       String expected = comparisonFailure.getExpectedStringPresentation();
       if (actual != null && expected != null) {

@@ -419,6 +419,11 @@ private fun getIgnoredNames(): Set<String> {
   }
   set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
   set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
+  /**
+   * merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
+   * to provide a correctly merged version in plugin.
+   */
+  set.add("META-INF/services/com.oracle.truffle.api.TruffleLanguage${'$'}Provider")
   return java.util.Set.copyOf(set)
 }
 

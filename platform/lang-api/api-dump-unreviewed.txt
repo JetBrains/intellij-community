@@ -3885,6 +3885,7 @@ e:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 - sf:BLOCK_COMMENT_ADD_SPACE:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 - sf:BLOCK_COMMENT_AT_FIRST_COLUMN:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 - sf:LINE_COMMENT_ADD_SPACE:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
+- sf:LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 - sf:LINE_COMMENT_ADD_SPACE_ON_REFORMAT:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 - sf:LINE_COMMENT_AT_FIRST_COLUMN:com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption
 - s:valueOf(java.lang.String):com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable$CommenterOption

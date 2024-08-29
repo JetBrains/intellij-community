@@ -1,0 +1,27 @@
+PsiJavaFile:ReferenceLinkMarkdown04.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiDocToken:DOC_LBRACKET('[')
+      PsiDocToken:DOC_COMMENT_DATA('label but not reference link')
+      PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_LPAREN('(')
+      PsiDocToken:DOC_COMMENT_DATA('http://...')
+      PsiDocToken:DOC_RPAREN(')')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

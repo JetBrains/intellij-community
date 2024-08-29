@@ -83,7 +83,7 @@
 
     <registryKey key="kotlin.k2.show.fir.statusbar.icon"
                  description="Show K2 mode tree icon in the status bar"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="false"/>
 
     <!-- shared completion -->

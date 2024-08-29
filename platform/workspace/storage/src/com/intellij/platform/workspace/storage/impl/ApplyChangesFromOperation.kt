@@ -84,7 +84,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
             target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
               // As we generate a remove event for each cascade removed entities, we can remove entities one by one
-              target.removeSingleEntity(sourceEntityId.id)
+              target.removeSingleEntity(sourceEntityId.id, true, true)
             }
           }
         }

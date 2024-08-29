@@ -17,17 +17,18 @@
 16(17) WRITE ACCESS: checkit
 17(18) element: PyAssignmentStatement
 18(19) READ ACCESS: foo
-19(20) WRITE ACCESS: x
-20(21) element: PyAssignmentStatement
-21(22) element: PyBinaryExpression
-22(23) READ ACCESS: checkit
-23(24,26) READ ACCESS: foo
-24(31) element: null. Condition: checkit(foo):false
-26(25) ASSERTTYPE ACCESS: foo
-25(27) element: null. Condition: checkit(foo):true
-27(28) element: PySubscriptionExpression
-28(29,30) READ ACCESS: foo
-29(31) element: null. Condition: foo[123]:false
-30(31) element: null. Condition: foo[123]:true
-31(32) WRITE ACCESS: y
-32() element: null
+19(20) element: PyCallExpression: foo.bar
+20(21) WRITE ACCESS: x
+21(22) element: PyAssignmentStatement
+22(23) element: PyBinaryExpression
+23(24) READ ACCESS: checkit
+24(25) READ ACCESS: foo
+25(26,27) element: PyCallExpression: checkit
+26(32) element: null. Condition: checkit(foo):false
+27(28) element: null. Condition: checkit(foo):true
+28(29) element: PySubscriptionExpression
+29(30,31) READ ACCESS: foo
+30(32) element: null. Condition: foo[123]:false
+31(32) element: null. Condition: foo[123]:true
+32(33) WRITE ACCESS: y
+33() element: null

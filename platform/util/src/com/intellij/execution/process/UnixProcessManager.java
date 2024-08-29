@@ -62,7 +62,11 @@ public final class UnixProcessManager {
   @ReviseWhenPortedToJDK("9")
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (JavaVersion.current().feature >= 9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+      if (JavaVersion.current().feature >= 9 &&
+          ("java.lang.ProcessImpl".equals(process.getClass().getName()) ||
+           "com.pty4j.unix.UnixPtyProcess".equals(process.getClass().getName())
+          )
+      ) {
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
       else {
@@ -120,6 +124,9 @@ public final class UnixProcessManager {
   }
 
   public static int sendSignal(int pid, int signal) {
+    if (pid <= 0) {
+      throw new IllegalArgumentException("Invalid PID: " + pid + " (killing all user processes in one shot is prohibited here)");
+    }
     checkCLib();
     return Java8Helper.C_LIB.kill(pid, signal);
   }

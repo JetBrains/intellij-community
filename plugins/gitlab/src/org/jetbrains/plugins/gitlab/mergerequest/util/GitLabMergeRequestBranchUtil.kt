@@ -14,7 +14,7 @@ object GitLabMergeRequestBranchUtil {
 
     if (sourceRemoteDescriptor != null) {
       // Public fork / regular branch
-      return GitRemoteBranchesUtil.findRemoteBranch(mapping.gitRepository, sourceRemoteDescriptor, details.sourceBranch)
+      return GitRemoteBranchesUtil.findOrCreateRemoteBranch(mapping.gitRepository, sourceRemoteDescriptor, details.sourceBranch)
     } else {
       // Private/deleted fork, can still fetch using special MR head ref
       val targetRemoteDescriptor = details.getTargetRemoteDescriptor(mapping.repository.serverPath)
@@ -26,7 +26,7 @@ object GitLabMergeRequestBranchUtil {
   private suspend fun findTargetRemoteBranch(mapping: GitLabProjectMapping, details: GitLabMergeRequestFullDetails): GitRemoteBranch? {
     val targetRemoteDescriptor = details.getTargetRemoteDescriptor(mapping.repository.serverPath)
 
-    return GitRemoteBranchesUtil.findRemoteBranch(mapping.gitRepository, targetRemoteDescriptor, details.targetBranch)
+    return GitRemoteBranchesUtil.findOrCreateRemoteBranch(mapping.gitRepository, targetRemoteDescriptor, details.targetBranch)
   }
 
   suspend fun fetchAndCheckoutBranch(mapping: GitLabProjectMapping, details: GitLabMergeRequestFullDetails) {

@@ -1,0 +1,31 @@
+PsiJavaFile:SeeTag13Markdown.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocTag:@see
+        PsiDocToken:DOC_TAG_NAME('@see')
+        PsiWhiteSpace(' ')
+        PsiDocToken:DOC_COMMENT_DATA('<a href="package-summary.html')
+        PsiDocToken:DOC_SHARP('#')
+        PsiDocToken:DOC_COMMENT_DATA('charenc">Character encodings</a>')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

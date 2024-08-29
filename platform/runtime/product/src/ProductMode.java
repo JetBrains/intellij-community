@@ -22,12 +22,7 @@ public enum ProductMode {
    * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
    * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
    */
-  BACKEND("backend"),
-
-  /**
-   * Use the special mode 'nova' to report CLion nova (radler) engine, for local ide only.
-   */
-  NOVA("nova");
+  BACKEND("backend");
 
   private final String myId;
 

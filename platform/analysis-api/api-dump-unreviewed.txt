@@ -2361,7 +2361,6 @@ c:com.intellij.lang.annotation.AnnotationSession
 - com.intellij.openapi.util.UserDataHolder
 - <init>(com.intellij.psi.PsiFile):V
 - getFile():com.intellij.psi.PsiFile
-- getHighlightRange():com.intellij.openapi.util.TextRange
 - getMinimumSeverity():com.intellij.lang.annotation.HighlightSeverity
 - getPriorityRange():com.intellij.openapi.util.TextRange
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
@@ -3120,6 +3119,7 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - a:getSelectedEditors():com.intellij.openapi.fileEditor.FileEditor[]
 - a:getSelectedFiles():com.intellij.openapi.vfs.VirtualFile[]
 - a:getSelectedTextEditor():com.intellij.openapi.editor.Editor
+- *:getSelectedTextEditor(Z):com.intellij.openapi.editor.Editor
 - *:getSelectedTextEditorWithRemotes():com.intellij.openapi.editor.Editor[]
 - hasOpenFiles():Z
 - a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z

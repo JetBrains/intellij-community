@@ -68,7 +68,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectExImpl#dispose()} was called but not completed yet)
    * <br>
    * The result is only valid inside read action because the application/project/module can be disposed at any moment.
-   * (see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">more details on read actions</a>)
+   * (see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">more details on read actions</a>)
    */
   boolean isDisposed();
 

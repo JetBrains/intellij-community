@@ -16,21 +16,13 @@
 # mbp: "you know that thing where cvs gives you conflict markers?"
 # s: "i hate that."
 
-from __future__ import absolute_import
 
 from .i18n import _
-from .node import nullrev
 from . import (
     error,
     mdiff,
-    pycompat,
-    util,
 )
 from .utils import stringutil
-
-
-class CantReprocessAndShowBase(Exception):
-    pass
 
 
 def intersect(ra, rb):
@@ -60,16 +52,14 @@ def compare_range(a, astart, aend, b, bstart, bend):
     """Compare a[astart:aend] == b[bstart:bend], without slicing."""
     if (aend - astart) != (bend - bstart):
         return False
-    for ia, ib in zip(
-        pycompat.xrange(astart, aend), pycompat.xrange(bstart, bend)
-    ):
+    for ia, ib in zip(range(astart, aend), range(bstart, bend)):
         if a[ia] != b[ib]:
             return False
     else:
         return True
 
 
-class Merge3Text(object):
+class Merge3Text:
     """3-way merge of texts.
 
     Given strings BASE, OTHER, THIS, tries to produce a combined text
@@ -89,72 +79,6 @@ class Merge3Text(object):
         self.a = a
         self.b = b
 
-    def merge_lines(
-        self,
-        name_a=None,
-        name_b=None,
-        name_base=None,
-        start_marker=b'<<<<<<<',
-        mid_marker=b'=======',
-        end_marker=b'>>>>>>>',
-        base_marker=None,
-        localorother=None,
-        minimize=False,
-    ):
-        """Return merge in cvs-like form."""
-        self.conflicts = False
-        newline = b'\n'
-        if len(self.a) > 0:
-            if self.a[0].endswith(b'\r\n'):
-                newline = b'\r\n'
-            elif self.a[0].endswith(b'\r'):
-                newline = b'\r'
-        if name_a and start_marker:
-            start_marker = start_marker + b' ' + name_a
-        if name_b and end_marker:
-            end_marker = end_marker + b' ' + name_b
-        if name_base and base_marker:
-            base_marker = base_marker + b' ' + name_base
-        merge_regions = self.merge_regions()
-        if minimize:
-            merge_regions = self.minimize(merge_regions)
-        for t in merge_regions:
-            what = t[0]
-            if what == b'unchanged':
-                for i in range(t[1], t[2]):
-                    yield self.base[i]
-            elif what == b'a' or what == b'same':
-                for i in range(t[1], t[2]):
-                    yield self.a[i]
-            elif what == b'b':
-                for i in range(t[1], t[2]):
-                    yield self.b[i]
-            elif what == b'conflict':
-                if localorother == b'local':
-                    for i in range(t[3], t[4]):
-                        yield self.a[i]
-                elif localorother == b'other':
-                    for i in range(t[5], t[6]):
-                        yield self.b[i]
-                else:
-                    self.conflicts = True
-                    if start_marker is not None:
-                        yield start_marker + newline
-                    for i in range(t[3], t[4]):
-                        yield self.a[i]
-                    if base_marker is not None:
-                        yield base_marker + newline
-                        for i in range(t[1], t[2]):
-                            yield self.base[i]
-                    if mid_marker is not None:
-                        yield mid_marker + newline
-                    for i in range(t[5], t[6]):
-                        yield self.b[i]
-                    if end_marker is not None:
-                        yield end_marker + newline
-            else:
-                raise ValueError(what)
-
     def merge_groups(self):
         """Yield sequence of line groups.  Each one is a tuple:
 
@@ -170,7 +94,7 @@ class Merge3Text(object):
         'b', lines
              Lines taken from b
 
-        'conflict', base_lines, a_lines, b_lines
+        'conflict', (base_lines, a_lines, b_lines)
              Lines from base were changed to either a or b and conflict.
         """
         for t in self.merge_regions():
@@ -184,9 +108,11 @@ class Merge3Text(object):
             elif what == b'conflict':
                 yield (
                     what,
-                    self.base[t[1] : t[2]],
-                    self.a[t[3] : t[4]],
-                    self.b[t[5] : t[6]],
+                    (
+                        self.base[t[1] : t[2]],
+                        self.a[t[3] : t[4]],
+                        self.b[t[5] : t[6]],
+                    ),
                 )
             else:
                 raise ValueError(what)
@@ -280,67 +206,6 @@ class Merge3Text(object):
                 ia = aend
                 ib = bend
 
-    def minimize(self, merge_regions):
-        """Trim conflict regions of lines where A and B sides match.
-
-        Lines where both A and B have made the same changes at the beginning
-        or the end of each merge region are eliminated from the conflict
-        region and are instead considered the same.
-        """
-        for region in merge_regions:
-            if region[0] != b"conflict":
-                yield region
-                continue
-            # pytype thinks this tuple contains only 3 things, but
-            # that's clearly not true because this code successfully
-            # executes. It might be wise to rework merge_regions to be
-            # some kind of attrs type.
-            (
-                issue,
-                z1,
-                z2,
-                a1,
-                a2,
-                b1,
-                b2,
-            ) = region  # pytype: disable=bad-unpacking
-            alen = a2 - a1
-            blen = b2 - b1
-
-            # find matches at the front
-            ii = 0
-            while (
-                ii < alen and ii < blen and self.a[a1 + ii] == self.b[b1 + ii]
-            ):
-                ii += 1
-            startmatches = ii
-
-            # find matches at the end
-            ii = 0
-            while (
-                ii < alen
-                and ii < blen
-                and self.a[a2 - ii - 1] == self.b[b2 - ii - 1]
-            ):
-                ii += 1
-            endmatches = ii
-
-            if startmatches > 0:
-                yield b'same', a1, a1 + startmatches
-
-            yield (
-                b'conflict',
-                z1,
-                z2,
-                a1 + startmatches,
-                a2 - endmatches,
-                b1 + startmatches,
-                b2 - endmatches,
-            )
-
-            if endmatches > 0:
-                yield b'same', a2 - endmatches, a2
-
     def find_sync_regions(self):
         """Return a list of sync regions, where both descendants match the base.
 
@@ -403,39 +268,136 @@ class Merge3Text(object):
         return sl
 
 
-def _verifytext(text, path, ui, opts):
+def _verifytext(input):
     """verifies that text is non-binary (unless opts[text] is passed,
     then we just warn)"""
-    if stringutil.binary(text):
-        msg = _(b"%s looks like a binary file.") % path
-        if not opts.get('quiet'):
-            ui.warn(_(b'warning: %s\n') % msg)
-        if not opts.get('text'):
-            raise error.Abort(msg)
-    return text
+    if stringutil.binary(input.text()):
+        msg = _(b"%s looks like a binary file.") % input.fctx.path()
+        raise error.Abort(msg)
 
 
-def _picklabels(defaults, overrides):
-    if len(overrides) > 3:
-        raise error.Abort(_(b"can only specify three labels."))
-    result = defaults[:]
-    for i, override in enumerate(overrides):
-        result[i] = override
-    return result
+def _format_labels(*inputs):
+    pad = max(len(input.label) if input.label else 0 for input in inputs)
+    labels = []
+    for input in inputs:
+        if input.label:
+            if input.label_detail:
+                label = (
+                    (input.label + b':').ljust(pad + 1)
+                    + b' '
+                    + input.label_detail
+                )
+            else:
+                label = input.label
+            # 8 for the prefix of conflict marker lines (e.g. '<<<<<<< ')
+            labels.append(stringutil.ellipsis(label, 80 - 8))
+        else:
+            labels.append(None)
+    return labels
 
 
-def is_not_null(ctx):
-    if not util.safehasattr(ctx, "node"):
-        return False
-    return ctx.rev() != nullrev
+def _detect_newline(m3):
+    if len(m3.a) > 0:
+        if m3.a[0].endswith(b'\r\n'):
+            return b'\r\n'
+        elif m3.a[0].endswith(b'\r'):
+            return b'\r'
+    return b'\n'
 
 
-def _mergediff(m3, name_a, name_b, name_base):
+def _minimize(a_lines, b_lines):
+    """Trim conflict regions of lines where A and B sides match.
+
+    Lines where both A and B have made the same changes at the beginning
+    or the end of each merge region are eliminated from the conflict
+    region and are instead considered the same.
+    """
+    alen = len(a_lines)
+    blen = len(b_lines)
+
+    # find matches at the front
+    ii = 0
+    while ii < alen and ii < blen and a_lines[ii] == b_lines[ii]:
+        ii += 1
+    startmatches = ii
+
+    # find matches at the end
+    ii = 0
+    while ii < alen and ii < blen and a_lines[-ii - 1] == b_lines[-ii - 1]:
+        ii += 1
+    endmatches = ii
+
+    lines_before = a_lines[:startmatches]
+    new_a_lines = a_lines[startmatches : alen - endmatches]
+    new_b_lines = b_lines[startmatches : blen - endmatches]
+    lines_after = a_lines[alen - endmatches :]
+    return lines_before, new_a_lines, new_b_lines, lines_after
+
+
+def render_minimized(
+    m3,
+    name_a=None,
+    name_b=None,
+    start_marker=b'<<<<<<<',
+    mid_marker=b'=======',
+    end_marker=b'>>>>>>>',
+):
+    """Return merge in cvs-like form."""
+    newline = _detect_newline(m3)
+    conflicts = False
+    if name_a:
+        start_marker = start_marker + b' ' + name_a
+    if name_b:
+        end_marker = end_marker + b' ' + name_b
+    merge_groups = m3.merge_groups()
+    lines = []
+    for what, group_lines in merge_groups:
+        if what == b'conflict':
+            conflicts = True
+            base_lines, a_lines, b_lines = group_lines
+            minimized = _minimize(a_lines, b_lines)
+            lines_before, a_lines, b_lines, lines_after = minimized
+            lines.extend(lines_before)
+            lines.append(start_marker + newline)
+            lines.extend(a_lines)
+            lines.append(mid_marker + newline)
+            lines.extend(b_lines)
+            lines.append(end_marker + newline)
+            lines.extend(lines_after)
+        else:
+            lines.extend(group_lines)
+    return lines, conflicts
+
+
+def render_merge3(m3, name_a, name_b, name_base):
+    """Render conflicts as 3-way conflict markers."""
+    newline = _detect_newline(m3)
+    conflicts = False
+    lines = []
+    for what, group_lines in m3.merge_groups():
+        if what == b'conflict':
+            base_lines, a_lines, b_lines = group_lines
+            conflicts = True
+            lines.append(b'<<<<<<< ' + name_a + newline)
+            lines.extend(a_lines)
+            lines.append(b'||||||| ' + name_base + newline)
+            lines.extend(base_lines)
+            lines.append(b'=======' + newline)
+            lines.extend(b_lines)
+            lines.append(b'>>>>>>> ' + name_b + newline)
+        else:
+            lines.extend(group_lines)
+    return lines, conflicts
+
+
+def render_mergediff(m3, name_a, name_b, name_base):
+    """Render conflicts as conflict markers with one snapshot and one diff."""
+    newline = _detect_newline(m3)
     lines = []
     conflicts = False
-    for group in m3.merge_groups():
-        if group[0] == b'conflict':
-            base_lines, a_lines, b_lines = group[1:]
+    for what, group_lines in m3.merge_groups():
+        if what == b'conflict':
+            base_lines, a_lines, b_lines = group_lines
             base_text = b''.join(base_lines)
             b_blocks = list(
                 mdiff.allblocks(
@@ -472,95 +434,100 @@ def _mergediff(m3, name_a, name_b, name_base):
                         for line in lines2[block[2] : block[3]]:
                             yield b'+' + line
 
-            lines.append(b"<<<<<<<\n")
+            lines.append(b"<<<<<<<" + newline)
             if matching_lines(a_blocks) < matching_lines(b_blocks):
-                lines.append(b"======= %s\n" % name_a)
+                lines.append(b"======= " + name_a + newline)
                 lines.extend(a_lines)
-                lines.append(b"------- %s\n" % name_base)
-                lines.append(b"+++++++ %s\n" % name_b)
+                lines.append(b"------- " + name_base + newline)
+                lines.append(b"+++++++ " + name_b + newline)
                 lines.extend(diff_lines(b_blocks, base_lines, b_lines))
             else:
-                lines.append(b"------- %s\n" % name_base)
-                lines.append(b"+++++++ %s\n" % name_a)
+                lines.append(b"------- " + name_base + newline)
+                lines.append(b"+++++++ " + name_a + newline)
                 lines.extend(diff_lines(a_blocks, base_lines, a_lines))
-                lines.append(b"======= %s\n" % name_b)
+                lines.append(b"======= " + name_b + newline)
                 lines.extend(b_lines)
-            lines.append(b">>>>>>>\n")
+            lines.append(b">>>>>>>" + newline)
             conflicts = True
         else:
-            lines.extend(group[1])
+            lines.extend(group_lines)
     return lines, conflicts
 
 
-def simplemerge(ui, localctx, basectx, otherctx, **opts):
+def _resolve(m3, sides):
+    lines = []
+    for what, group_lines in m3.merge_groups():
+        if what == b'conflict':
+            for side in sides:
+                lines.extend(group_lines[side])
+        else:
+            lines.extend(group_lines)
+    return lines
+
+
+class MergeInput:
+    def __init__(self, fctx, label=None, label_detail=None):
+        self.fctx = fctx
+        self.label = label
+        # If the "detail" part is set, then that is rendered after the label and
+        # separated by a ':'. The label is padded to make the ':' aligned among
+        # all merge inputs.
+        self.label_detail = label_detail
+        self._text = None
+
+    def text(self):
+        if self._text is None:
+            # Merges were always run in the working copy before, which means
+            # they used decoded data, if the user defined any repository
+            # filters.
+            #
+            # Maintain that behavior today for BC, though perhaps in the future
+            # it'd be worth considering whether merging encoded data (what the
+            # repository usually sees) might be more useful.
+            self._text = self.fctx.decodeddata()
+        return self._text
+
+    def set_text(self, text):
+        self._text = text
+
+
+def simplemerge(
+    local,
+    base,
+    other,
+    mode=b'merge',
+    allow_binary=False,
+):
     """Performs the simplemerge algorithm.
 
     The merged result is written into `localctx`.
     """
 
-    def readctx(ctx):
-        # Merges were always run in the working copy before, which means
-        # they used decoded data, if the user defined any repository
-        # filters.
-        #
-        # Maintain that behavior today for BC, though perhaps in the future
-        # it'd be worth considering whether merging encoded data (what the
-        # repository usually sees) might be more useful.
-        return _verifytext(ctx.decodeddata(), ctx.path(), ui, opts)
+    if not allow_binary:
+        _verifytext(local)
+        _verifytext(base)
+        _verifytext(other)
 
-    mode = opts.get('mode', b'merge')
-    name_a, name_b, name_base = None, None, None
-    if mode != b'union':
-        name_a, name_b, name_base = _picklabels(
-            [localctx.path(), otherctx.path(), None], opts.get('label', [])
-        )
-
-    try:
-        localtext = readctx(localctx)
-        basetext = readctx(basectx)
-        othertext = readctx(otherctx)
-    except error.Abort:
-        return 1
-
-    m3 = Merge3Text(basetext, localtext, othertext)
-    extrakwargs = {
-        b"localorother": opts.get("localorother", None),
-        b'minimize': True,
-    }
+    m3 = Merge3Text(base.text(), local.text(), other.text())
+    conflicts = False
     if mode == b'union':
-        extrakwargs[b'start_marker'] = None
-        extrakwargs[b'mid_marker'] = None
-        extrakwargs[b'end_marker'] = None
-    elif name_base is not None:
-        extrakwargs[b'base_marker'] = b'|||||||'
-        extrakwargs[b'name_base'] = name_base
-        extrakwargs[b'minimize'] = False
-
-    if mode == b'mergediff':
-        lines, conflicts = _mergediff(m3, name_a, name_b, name_base)
+        lines = _resolve(m3, (1, 2))
+    elif mode == b'union-other-first':
+        lines = _resolve(m3, (2, 1))
+    elif mode == b'local':
+        lines = _resolve(m3, (1,))
+    elif mode == b'other':
+        lines = _resolve(m3, (2,))
     else:
-        lines = list(
-            m3.merge_lines(
-                name_a=name_a, name_b=name_b, **pycompat.strkwargs(extrakwargs)
-            )
-        )
-        conflicts = m3.conflicts
-
-    # merge flags if necessary
-    flags = localctx.flags()
-    localflags = set(pycompat.iterbytestr(flags))
-    otherflags = set(pycompat.iterbytestr(otherctx.flags()))
-    if is_not_null(basectx) and localflags != otherflags:
-        baseflags = set(pycompat.iterbytestr(basectx.flags()))
-        commonflags = localflags & otherflags
-        addedflags = (localflags ^ otherflags) - baseflags
-        flags = b''.join(sorted(commonflags | addedflags))
+        if mode == b'mergediff':
+            labels = _format_labels(local, other, base)
+            lines, conflicts = render_mergediff(m3, *labels)
+        elif mode == b'merge3':
+            labels = _format_labels(local, other, base)
+            lines, conflicts = render_merge3(m3, *labels)
+        else:
+            labels = _format_labels(local, other)
+            lines, conflicts = render_minimized(m3, *labels)
 
     mergedtext = b''.join(lines)
-    if opts.get('print'):
-        ui.fout.write(mergedtext)
-    else:
-        localctx.write(mergedtext, flags)
-
-    if conflicts and not mode == b'union':
-        return 1
+    return mergedtext, conflicts

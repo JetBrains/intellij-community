@@ -24,10 +24,12 @@ import java.util.function.Supplier
  * Ranges are null if update didn't start yet, in which case there are no new commits to display,
  * and the error notification is shown from the GitUpdateProcess itself.
  */
-class GitUpdateSession(private val project: Project,
-                       private val notificationData: GitUpdateInfoAsLog.NotificationData?,
-                       private val result: Boolean,
-                       private val skippedRoots: Map<GitRepository, String>) : UpdateSession {
+class GitUpdateSession(
+  private val project: Project,
+  private val notificationData: GitUpdateInfoAsLog.NotificationData?,
+  private val result: Boolean,
+  private val skippedRoots: Map<GitRepository, String>,
+) : UpdateSession {
 
   override fun getExceptions(): List<VcsException> {
     return emptyList()
@@ -86,9 +88,11 @@ class GitUpdateSession(private val project: Project,
     }
   }
 
-  private fun prepareNotification(updatedFilesNumber: Int,
-                                  updatedCommitsNumber: Int,
-                                  filteredCommitsNumber: Int?): Notification {
+  private fun prepareNotification(
+    updatedFilesNumber: Int,
+    updatedCommitsNumber: Int,
+    filteredCommitsNumber: Int?,
+  ): Notification {
     val title: String
     var content: String?
     val type: NotificationType
@@ -115,7 +119,7 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type).also { it.setDisplayId(displayId) }
+    return VcsNotifier.standardNotification().createNotification(title, content, type).also { it.setDisplayId(displayId) }
   }
 }
 

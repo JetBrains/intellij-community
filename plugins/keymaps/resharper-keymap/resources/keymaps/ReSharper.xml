@@ -195,6 +195,9 @@
   <action id="SwitchHeaderSource">
     <keyboard-shortcut first-keystroke="alt O"/>
   </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
 
   <!--  Rider-specific actions-->
 

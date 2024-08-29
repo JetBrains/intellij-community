@@ -23,6 +23,16 @@ fun plugin(outDir: Path, @Language("XML") descriptor: String) {
   outDir.resolve("${rawDescriptor.id!!}/${PluginManagerCore.PLUGIN_XML_PATH}").write(descriptor.trimIndent())
 }
 
+fun dependencyXml(outDir: Path, ownerId: String, filename: String, @Language("XML") descriptor: String) {
+   try {
+    readModuleDescriptorForTest(descriptor.toByteArray())
+  }
+  catch (e: Throwable) {
+    throw RuntimeException("Cannot parse:\n ${descriptor.trimIndent().prependIndent("  ")}", e)
+  }
+  outDir.resolve("${ownerId}/${PluginManagerCore.META_INF}${filename}").write(descriptor.trimIndent())
+}
+
 fun module(outDir: Path, ownerId: String, moduleId: String, @Language("XML") descriptor: String) {
   try {
     readModuleDescriptorForTest(descriptor.toByteArray())

@@ -23,6 +23,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,17 +143,25 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
     }
     final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
     if (aClass != containingClass || !ClassUtils.isInsideClassBody(element, aClass)) {
-      PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      PsiJavaFile psiJavaFile = (PsiJavaFile)file;
+      PsiImportList importList = psiJavaFile.getImportList();
       if (importList == null) {
         return false;
       }
       boolean alreadyImported = false;
-      for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-        if (!statement.isOnDemand()) continue;
-        PsiClass staticResolve = statement.resolveTargetClass();
-        if (aClass == staticResolve) {
-          alreadyImported = true;
-          break;
+      String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName != null &&
+          ImportUtils.createImplicitImportChecker(psiJavaFile).isImplicitlyImported(new ImportUtils.Import(qualifiedName + ".*", true))) {
+        alreadyImported = true;
+      }
+      if (!alreadyImported) {
+        for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+          if (!statement.isOnDemand()) continue;
+          PsiClass staticResolve = statement.resolveTargetClass();
+          if (aClass == staticResolve) {
+            alreadyImported = true;
+            break;
+          }
         }
       }
       if (!alreadyImported) {

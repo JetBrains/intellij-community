@@ -6,6 +6,7 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.platform.ijent.fs.*
 import com.intellij.util.text.nullize
 import java.io.IOException
+import java.nio.channels.NonWritableChannelException
 import java.nio.file.*
 
 /**
@@ -40,16 +41,21 @@ internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemExcep
 @Throws(FileSystemException::class)
 internal fun IjentFsError.throwFileSystemException(): Nothing {
   throw when (this) {
-    is IjentFsError.DoesNotExist, is IjentFsError.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsError.DoesNotExist -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsError.NotFile -> FileSystemException(where.toString(), null, "Is a directory")
     is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
     is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())
     is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
-    is IjentFsError.FileNotOpened -> IOException("File is not opened")
-    is IjentOpenedFile.SeekError.InvalidValue -> TODO()
+    is IjentFsError.UnknownFile -> IOException("File is not opened")
+    is IjentOpenedFile.SeekError.InvalidValue -> throw IllegalArgumentException(message)
     is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
-    is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
+    is IjentOpenedFile.Reader.ReadError.InvalidValue -> throw IllegalArgumentException(message)
     is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
+    is IjentOpenedFile.Writer.TruncateException.NegativeOffset,
+    is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
+    is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> throw NonWritableChannelException()
+    is IjentOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
   }
 }
 

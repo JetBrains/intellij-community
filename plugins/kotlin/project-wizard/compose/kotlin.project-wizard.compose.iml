@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.core" />
   </component>
 </module>

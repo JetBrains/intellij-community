@@ -6,9 +6,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
-
-import errno
 
 from .i18n import _
 from .node import (
@@ -25,20 +22,26 @@ from . import (
     obsutil,
     pathutil,
     phases,
-    pycompat,
     requirements,
     scmutil,
+    transaction,
     util,
 )
 from .utils import (
     hashutil,
-    stringutil,
     urlutil,
 )
 
 
 def backupbundle(
-    repo, bases, heads, node, suffix, compress=True, obsolescence=True
+    repo,
+    bases,
+    heads,
+    node,
+    suffix,
+    compress=True,
+    obsolescence=True,
+    tmp_backup=False,
 ):
     """create a bundle with the specified revisions as a backup"""
 
@@ -85,6 +88,7 @@ def backupbundle(
         contentopts,
         vfs,
         compression=comp,
+        allow_internal=tmp_backup,
     )
 
 
@@ -92,7 +96,7 @@ def _collectfiles(repo, striprev):
     """find out the filelogs affected by the strip"""
     files = set()
 
-    for x in pycompat.xrange(striprev, len(repo)):
+    for x in range(striprev, len(repo)):
         files.update(repo[x].files())
 
     return sorted(files)
@@ -201,6 +205,7 @@ def strip(ui, repo, nodelist, backup=True, topic=b'backup'):
             b'temp',
             compress=False,
             obsolescence=False,
+            tmp_backup=True,
         )
 
     with ui.uninterruptible():
@@ -213,6 +218,7 @@ def strip(ui, repo, nodelist, backup=True, topic=b'backup'):
                 oldfiles = set(tr._offsetmap.keys())
                 oldfiles.update(tr._newfiles)
 
+                repo._phasecache.register_strip(repo, tr, striprev)
                 tr.startgroup()
                 cl.strip(striprev, tr)
                 stripmanifest(repo, striprev, tr, files)
@@ -234,7 +240,6 @@ def strip(ui, repo, nodelist, backup=True, topic=b'backup'):
                 deleteobsmarkers(repo.obsstore, stripobsidx)
                 del repo.obsstore
                 repo.invalidatevolatilesets()
-                repo._phasecache.filterunknown(repo)
 
             if tmpbundlefile:
                 ui.note(_(b"adding branch\n"))
@@ -263,19 +268,7 @@ def strip(ui, repo, nodelist, backup=True, topic=b'backup'):
                 bmchanges = [(m, repo[newbmtarget].node()) for m in updatebm]
                 repo._bookmarks.applychanges(repo, tr, bmchanges)
 
-            # remove undo files
-            for undovfs, undofile in repo.undofiles():
-                try:
-                    undovfs.unlink(undofile)
-                except OSError as e:
-                    if e.errno != errno.ENOENT:
-                        ui.warn(
-                            _(b'error removing %s: %s\n')
-                            % (
-                                undovfs.join(undofile),
-                                stringutil.forcebytestr(e),
-                            )
-                        )
+            transaction.cleanup_undo_files(repo.ui.warn, repo.vfs_map)
 
         except:  # re-raises
             if backupfile:
@@ -351,8 +344,26 @@ def _bookmarkmovements(repo, tostrip):
 def _createstripbackup(repo, stripbases, node, topic):
     # backup the changeset we are about to strip
     vfs = repo.vfs
-    cl = repo.changelog
-    backupfile = backupbundle(repo, stripbases, cl.heads(), node, topic)
+    unfi = repo.unfiltered()
+    to_node = unfi.changelog.node
+    # internal changeset are internal implementation details that should not
+    # leave the repository and not be exposed to the users. In addition feature
+    # using them requires to be resistant to strip. See test case for more
+    # details.
+    all_backup = unfi.revs(
+        b"(%ln)::(%ld) and not _internal()",
+        stripbases,
+        unfi.changelog.headrevs(),
+    )
+    if not all_backup:
+        return None
+
+    def to_nodes(revs):
+        return [to_node(r) for r in revs]
+
+    bases = to_nodes(unfi.revs("roots(%ld)", all_backup))
+    heads = to_nodes(unfi.revs("heads(%ld)", all_backup))
+    backupfile = backupbundle(repo, bases, heads, node, topic)
     repo.ui.status(_(b"saved backup bundle to %s\n") % vfs.join(backupfile))
     repo.ui.log(
         b"backupbundle", b"saved backup bundle to %s\n", vfs.join(backupfile)
@@ -380,7 +391,7 @@ def safestriproots(ui, repo, nodes):
     return [c.node() for c in repo.set(b'roots(%ld)', tostrip)]
 
 
-class stripcallback(object):
+class stripcallback:
     """used as a transaction postclose callback"""
 
     def __init__(self, ui, repo, backup, topic):
@@ -433,15 +444,12 @@ def manifestrevlogs(repo):
     if scmutil.istreemanifest(repo):
         # This logic is safe if treemanifest isn't enabled, but also
         # pointless, so we skip it if treemanifest isn't enabled.
-        for t, unencoded, encoded, size in repo.store.datafiles():
-            if unencoded.startswith(b'meta/') and unencoded.endswith(
-                b'00manifest.i'
-            ):
-                dir = unencoded[5:-12]
-                yield repo.manifestlog.getstorage(dir)
+        for entry in repo.store.data_entries():
+            if entry.is_revlog and entry.is_manifestlog:
+                yield repo.manifestlog.getstorage(entry.target_id)
 
 
-def rebuildfncache(ui, repo):
+def rebuildfncache(ui, repo, only_data=False):
     """Rebuilds the fncache file from repo history.
 
     Missing entries will be added. Extra entries will be removed.
@@ -465,28 +473,40 @@ def rebuildfncache(ui, repo):
         newentries = set()
         seenfiles = set()
 
-        progress = ui.makeprogress(
-            _(b'rebuilding'), unit=_(b'changesets'), total=len(repo)
-        )
-        for rev in repo:
-            progress.update(rev)
+        if only_data:
+            # Trust the listing of .i from the fncache, but not the .d. This is
+            # much faster, because we only need to stat every possible .d files,
+            # instead of reading the full changelog
+            for f in fnc:
+                if f[:5] == b'data/' and f[-2:] == b'.i':
+                    seenfiles.add(f[5:-2])
+                    newentries.add(f)
+                    dataf = f[:-2] + b'.d'
+                    if repo.store._exists(dataf):
+                        newentries.add(dataf)
+        else:
+            progress = ui.makeprogress(
+                _(b'rebuilding'), unit=_(b'changesets'), total=len(repo)
+            )
+            for rev in repo:
+                progress.update(rev)
 
-            ctx = repo[rev]
-            for f in ctx.files():
-                # This is to minimize I/O.
-                if f in seenfiles:
-                    continue
-                seenfiles.add(f)
+                ctx = repo[rev]
+                for f in ctx.files():
+                    # This is to minimize I/O.
+                    if f in seenfiles:
+                        continue
+                    seenfiles.add(f)
 
-                i = b'data/%s.i' % f
-                d = b'data/%s.d' % f
+                    i = b'data/%s.i' % f
+                    d = b'data/%s.d' % f
 
-                if repo.store._exists(i):
-                    newentries.add(i)
-                if repo.store._exists(d):
-                    newentries.add(d)
+                    if repo.store._exists(i):
+                        newentries.add(i)
+                    if repo.store._exists(d):
+                        newentries.add(d)
 
-        progress.complete()
+            progress.complete()
 
         if requirements.TREEMANIFEST_REQUIREMENT in repo.requirements:
             # This logic is safe if treemanifest isn't enabled, but also

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.*;
@@ -40,6 +41,7 @@ public interface BasicJavaElementType {
   IElementType BASIC_IMPORT_LIST = new IJavaElementType("IMPORT_LIST");
   IElementType BASIC_IMPORT_STATEMENT = new IJavaElementType("IMPORT_STATEMENT");
   IElementType BASIC_IMPORT_STATIC_STATEMENT = new IJavaElementType("IMPORT_STATIC_STATEMENT");
+  IElementType BASIC_IMPORT_MODULE_STATEMENT = new IJavaElementType("IMPORT_MODULE_STATEMENT");
   IElementType BASIC_MODIFIER_LIST = new IJavaElementType("MODIFIER_LIST");
   IElementType BASIC_ANNOTATION = new IJavaElementType("ANNOTATION");
   IElementType BASIC_NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR", true);

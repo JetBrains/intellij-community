@@ -96,13 +96,18 @@ public final class ApplicationNamesInfo {
   private static void setQodanaProductAttributes(XmlElement data) {
     XmlElement namesNode = data.getChild("names");
     assert namesNode != null;
-    String qodanaProductName = System.getProperty("qodana.product.name");
+    String qodanaProductName = System.getProperty("qodana.product.name", "Qodana");
     namesNode.attributes.put("product", qodanaProductName);
     namesNode.attributes.put("fullname", qodanaProductName);
 
     XmlElement buildNode = data.getChild("build");
     assert buildNode != null;
-    buildNode.attributes.put("number", System.getProperty("qodana.build.number"));
+    buildNode.attributes.put("number", System.getProperty("qodana.build.number", "QD-SNAPSHOT"));
+
+    String qodanaEap = System.getProperty("qodana.eap", "false");
+    XmlElement versionNode = data.getChild("version");
+    assert versionNode != null;
+    versionNode.attributes.put("eap", qodanaEap);
   }
 
   @ApiStatus.Internal

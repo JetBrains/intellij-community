@@ -11,9 +11,11 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 
 internal object ConstantSchemaValidation: JsonSchemaValidation {
-  override fun validate(propValue: JsonValueAdapter, schema: JsonSchemaObject, schemaType: JsonSchemaType?, consumer: JsonValidationHost, options: JsonComplianceCheckerOptions) {
+  override fun validate(propValue: JsonValueAdapter, schema: JsonSchemaObject, schemaType: JsonSchemaType?, consumer: JsonValidationHost, options: JsonComplianceCheckerOptions): Boolean {
     if (schema.constantSchema == false) {
       consumer.error(JsonBundle.message("schema.validation.constant.schema"), propValue.delegate.parent, JsonErrorPriority.LOW_PRIORITY)
+      return false
     }
+    return true
   }
 }

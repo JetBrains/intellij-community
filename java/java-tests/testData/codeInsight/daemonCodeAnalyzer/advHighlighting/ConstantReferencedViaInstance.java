@@ -4,7 +4,7 @@ class Example extends Zuper{
   }
 
   Example() {
-    super(new <error descr="Cannot reference 'Inner' before supertype constructor has been called">Inner</error>().i);
+    super(new <error descr="Cannot reference 'Inner' before superclass constructor is called">Inner</error>().i);
   }
 }
 

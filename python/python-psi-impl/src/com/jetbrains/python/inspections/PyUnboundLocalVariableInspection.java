@@ -98,7 +98,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
       }
       final ScopeVariable variable;
       try {
-        variable = scope.getDeclaredVariable(anchor, name);
+        variable = scope.getDeclaredVariable(anchor, name, myTypeEvalContext);
       }
       catch (DFALimitExceededException e) {
         largeFunctions.add(owner);
@@ -123,7 +123,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
           return;
         }
-        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node)) {
+        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node, myTypeEvalContext)) {
           return;
         }
         if (owner instanceof PyFile) {
@@ -167,7 +167,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
              ) != null;
     }
 
-    private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {
+    private boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {
       final String nodeName = node.getReferencedName();
       final Scope scope = ControlFlowCache.getScope(owner);
       final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
@@ -183,7 +183,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
           final PsiElement element = rwInstruction.getElement();
           if (element != null && name != null && name.equals(nodeName) && instruction.num() < num) {
             try {
-              if (scope.getDeclaredVariable(element, name) == null) {
+              if (scope.getDeclaredVariable(element, name, myTypeEvalContext) == null) {
                 final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                 if (access.isReadAccess()) {
                   first.set(false);

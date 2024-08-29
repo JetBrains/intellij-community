@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.imports;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,10 +6,14 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collections;
@@ -20,24 +24,32 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/imports/globalInspection";
   }
 
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_23;
+  }
+
   public void testInnerClassImport() {
-    myFixture.addClass("package pkg;" +
-                       "interface Action {" +
-                       "    interface SuperInnerInterface {}" +
-                       "}");
-    myFixture.addClass("package pkg;" +
-                       "class ConceteAction implements Action {" +
-                       "    interface SubInnerInterface {}" +
-                       "}");
-     doTest("package pkg;" +
-           "/*Unused import 'import pkg.Action.SuperInnerInterface;'*/import pkg.Action.SuperInnerInterface;/**/" +
-           "import static pkg.ConceteAction.*;" +
-           "class Main {" +
-           "    SubInnerInterface innerClass;" +
-           "    void k()  {" +
-           "        new SuperInnerInterface() { };" +
-           "    }" +
-           "}");
+    myFixture.addClass("""
+                         package pkg;
+                         interface Action {
+                             interface SuperInnerInterface {}
+                         }""");
+    myFixture.addClass("""
+                         package pkg;
+                         class ConceteAction implements Action {
+                             interface SubInnerInterface {}
+                         }""");
+     doTest("""
+              package pkg;
+              /*Unused import 'import pkg.Action.SuperInnerInterface;'*/import pkg.Action.SuperInnerInterface;/**/
+              import static pkg.ConceteAction.*;
+              class Main {
+                  SubInnerInterface innerClass;
+                  void k()  {
+                      new SuperInnerInterface() { };
+                  }
+              }""");
   }
 
   public void testShadowedImports() {
@@ -45,33 +57,36 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package java.util; public class List {}");
     myFixture.addClass("package java.awt; public class List { public static final int ABORT = 1; }");
     myFixture.addClass("package java.awt; public class Component {}");
-    doTest("package test;" +
-           "import java.util.*;" +
-           "import java.awt.*;" +
-           "import java.awt.List;" +
-           "class Bar2 extends Component {" +
-           "  void foo() {" +
-           "    new Hashtable();" +
-           "    System.out.println(List.ABORT);" +
-           "  }" +
-           "}");
+    doTest("""
+             package test;
+             import java.util.*;
+             import java.awt.*;
+             import java.awt.List;
+             class Bar2 extends Component {
+               void foo() {
+                 new Hashtable();
+                 System.out.println(List.ABORT);
+               }
+             }""");
   }
 
   public void testStaticImport() {
-    doTest("/*Unused import 'import java.util.Map.*;'*/import java.util.Map.*;/**/" +
-           "import static java.util.Map.*;" +
-           "class X { " +
-           "  void m(Entry e) {}" +
-           "}");
+    doTest("""
+             /*Unused import 'import java.util.Map.*;'*/import java.util.Map.*;/**/
+             import static java.util.Map.*;
+             class X {
+               void m(Entry e) {}
+             }""");
   }
 
   public void testStaticImport2() {
-    doTest("import static java.lang.Math.*;" +
-           "class X {" +
-           "    static {" +
-           "        System.out.println(\"\"+PI);" +
-           "    }" +
-           "}");
+    doTest("""
+             import static java.lang.Math.*;
+             class X {
+                 static {
+                     System.out.println(""+PI);
+                 }
+             }""");
   }
 
   public void testExactStaticImport() {
@@ -111,14 +126,16 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testStaticImportOnDemandConflict1() {
-    myFixture.addClass("package a;" +
-                       "public class Parent {" +
-                       "  public static final int FOOBAR = 1;" +
-                       "  public static class FooBar {}" +
-                       "}");
-    myFixture.addClass("package a;" +
-                       "public class FooBar {" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         public class Parent {
+                           public static final int FOOBAR = 1;
+                           public static class FooBar {}
+                         }""");
+    myFixture.addClass("""
+                         package a;
+                         public class FooBar {
+                         }""");
     doTest("""
              package b;
              import a.*;
@@ -134,14 +151,16 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testStaticImportOnDemandConflict2() {
-    myFixture.addClass("package a;" +
-                       "public class Parent {" +
-                       "  public static final int FOOBAR = 1;" +
-                       "  public static class FooBar {}" +
-                       "}");
-    myFixture.addClass("package a;" +
-                       "public class FooBar {" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         public class Parent {
+                           public static final int FOOBAR = 1;
+                           public static class FooBar {}
+                         }""");
+    myFixture.addClass("""
+                         package a;
+                         public class FooBar {
+                         }""");
     doTest("""
              package b;
              import a.*;
@@ -157,13 +176,15 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testInherited() {
-    myFixture.addClass("package a;" +
-                       "class GrandParent {" +
-                       "  public static final int FOOBAR = 1;" +
-                       "}");
-    myFixture.addClass("package a;" +
-                       "public class Parent extends GrandParent {" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         class GrandParent {
+                           public static final int FOOBAR = 1;
+                         }""");
+    myFixture.addClass("""
+                         package a;
+                         public class Parent extends GrandParent {
+                         }""");
     doTest("""
              package b;
              import static a.Parent.*;
@@ -175,40 +196,44 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testNoWarning() {
-    doTest("import java.util.List;" +
-           "import java.util.ArrayList;" +
-           "import static java.lang.Integer.SIZE;" +
-           "class X {" +
-           "    private final List<Integer> list = new ArrayList<Integer>(SIZE);" +
-           "    public void add(int i) {" +
-           "        list.add(i);" +
-           "    }" +
-           "}");
+    doTest("""
+             import java.util.List;
+             import java.util.ArrayList;
+             import static java.lang.Integer.SIZE;
+             class X {
+                 private final List<Integer> list = new ArrayList<Integer>(SIZE);
+                 public void add(int i) {
+                     list.add(i);
+                 }
+             }""");
   }
 
   public void testInnerClassAndMethod() {
     myFixture.addClass("package one; public class X { public class Inner {} public static void method() {}}");
-    doTest("package one;" +
-           "import static one.X.*; " +
-           "import one.X.*;" +
-           " class Y { " +
-           "    void m() {" +
-           "        method(); " +
-           "        Inner inner = new X().new Inner();" +
-           "    }" +
-           "}");
+    doTest("""
+             package one;
+             import static one.X.*
+             import one.X.*;
+              class Y {
+                 void m() {
+                     method();
+                     Inner inner = new X().new Inner();
+                 }
+             }""");
   }
 
   public void testRedundantImport() {
-    doTest("/*Unused import 'import java.util.ArrayList;'*/import java.util.ArrayList;/**/" +
-           "import java.util.ArrayList;" +
-           "class X { " +
-           "    void foo(ArrayList l) {}" +
-           "}");
+    doTest("""
+             /*Unused import 'import java.util.ArrayList;'*/import java.util.ArrayList;/**/
+             import java.util.ArrayList;
+             class X {
+                 void foo(ArrayList l) {}
+             }""");
   }
 
   public void testNoWarn() {
     myFixture.addClass("package java.awt; public class List extends Component {}");
+    myFixture.addClass("package java.awt; public class Component {}");
     doTest("""
              import javax.swing.*;
              import java.awt.*;
@@ -224,49 +249,94 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testOrderIsNotImportant() {
-    doTest("package a;" +
-           "import java.util.*;" +
-           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
-           "class X {{" +
-           "  List list = new ArrayList();" +
-           "}}");
+    doTest("""
+             package a;
+             import java.util.*;
+             /*Unused import 'import java.util.List;'*/import java.util.List;/**/
+             class X {{
+               List list = new ArrayList();
+             }}""");
 
   }
 
   public void testConflictInSamePackage() {
     myFixture.addClass("package a; public class List {}");
-    doTest("package a;" +
-           "import java.util.List;" +
-           "import java.util.*;" +
-           "class X {{" +
-           "  List list = new ArrayList();" +
-           "}}");
+    doTest("""
+             package a;
+             import java.util.List;
+             import java.util.*;
+             class X {{
+               List list = new ArrayList();
+             }}""");
   }
 
   public void testUsedButUnresolved() {
-    doTest("package a;" +
-           "import java.util.List1;" +
-           "class X {{" +
-           "  List1 list = null;" +
-           "}}");
+    doTest("""
+             package a;
+             import java.util.List1;
+             class X {{
+               List1 list = null;
+             }}""");
   }
 
   public void testNoConflictInSamePackage() {
-    doTest("package a;" +
-           "/*Unused import 'import java.util.List;'*/import java.util.List;/**/" +
-           "import java.util.*;" +
-           "class X {{" +
-           "  List list = new ArrayList();" +
-           "}}");
+    doTest("""
+             package a;
+             /*Unused import 'import java.util.List;'*/import java.util.List;/**/
+             import java.util.*;
+             class X {{
+               List list = new ArrayList();
+             }}""");
   }
 
   public void testModuleInfo() {
     myFixture.addClass("package a; public class A {}");
-    myFixture.addFileToProject("module-info.java", "import a.A;\n" +
-                                                   "module my {" +
-                                                   "  uses A;" +
-                                                   "}");
+    myFixture.addFileToProject("module-info.java", """
+      import a.A;
+      
+      module my {
+        uses A;
+      }""");
     doTest();
+  }
+
+  public void testRedundantModuleImport() {
+    doTest("""
+      /*Unused import 'import module java.base;'*/import module java.base;/**/
+      import java.util.List;
+      import java.util.ArrayList;
+      
+      class Main {
+          public static void main(String[] args) {
+              List<String> a = new ArrayList<>();
+          }
+      }""");
+  }
+
+  public void testImplicitLangImport() {
+    doTest("""
+      import java.util.List;
+      import java.util.ArrayList;
+      /*Unused import 'import java.lang.String;'*/import java.lang.String;/**/
+      
+      class Main {
+          public static void main(String[] args) {
+              List<String> a = new ArrayList<>();
+          }
+      }""");
+  }
+
+  public void testRedundantImportWithImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(),
+                           () -> {
+                             doTest("""
+                                      /*Unused import 'import java.util.List;'*/import java.util.List;/**/
+                                      
+                                      public static void main(String[] args) {
+                                          List<String> a = new ArrayList<>();
+                                      }
+                                      """);
+                           });
   }
 
   private void doTest(String classText) {

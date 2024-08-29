@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
 import com.intellij.ide.ui.UISettings
@@ -207,7 +207,7 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
     }
   }
 
-  open suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: IdeMainMenuActionGroup()
+  open suspend fun getMainMenuActionGroup(): ActionGroup? = customMenuGroup ?: createIdeMainMenuActionGroup()
 
   override fun getMenuCount(): Int {
     @Suppress("IfThenToElvis", "SENSELESS_COMPARISON")

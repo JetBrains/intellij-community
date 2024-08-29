@@ -706,12 +706,8 @@ public final class PyUtil {
     if (isInitMethod(function)) {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
-        for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
-          final PyType providedClassType = provider.getGenericType(cls, context);
-          if (providedClassType != null) {
-            return providedClassType;
-          }
-        }
+        PyType providedClassType = getGenericTypeForClass(context, cls);
+        if (providedClassType != null) return providedClassType;
 
         final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
         if (classType != null) {
@@ -721,6 +717,16 @@ public final class PyUtil {
     }
 
     return context.getReturnType(function);
+  }
+
+  public static @Nullable PyType getGenericTypeForClass(@NotNull TypeEvalContext context, PyClass cls) {
+    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
+      final PyType providedClassType = provider.getGenericType(cls, context);
+      if (providedClassType != null) {
+        return providedClassType;
+      }
+    }
+    return null;
   }
 
   /**

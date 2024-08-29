@@ -100,6 +100,10 @@ public abstract class YAMLPasteTest extends BasePlatformTestCase {
     doTest("- line1\n- line2\n- line3");
   }
 
+  public void testPasteLinesIntoFilledSequence() {
+    doTest("just-text");
+  }
+
   public void testPasteItem_zeroIndent() {
     doTest(ZERO_INDENT_SAMPLE);
   }

@@ -1,4 +1,3 @@
-// "Convert into implicitly declared class" "false"
 package a;
 
 public class beforeWithPackag<caret>e {

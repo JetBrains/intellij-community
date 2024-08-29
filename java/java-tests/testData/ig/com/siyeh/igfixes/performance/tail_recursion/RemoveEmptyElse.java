@@ -30,7 +30,7 @@ class Compared {
       //13
     }
     else {
-      ///14
+      //14
       return compareResult;
     }
     //15

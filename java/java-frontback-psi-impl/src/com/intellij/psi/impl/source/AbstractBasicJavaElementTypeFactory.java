@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.tree.IElementType;
@@ -74,6 +74,8 @@ public abstract class AbstractBasicJavaElementTypeFactory {
     public final IElementType IMPORT_STATEMENT;
 
     public final IElementType IMPORT_STATIC_STATEMENT;
+
+    public final IElementType IMPORT_MODULE_STATEMENT;
 
     public final IElementType MODIFIER_LIST;
 
@@ -264,6 +266,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
                                     IElementType IMPORT_LIST,
                                     IElementType IMPORT_STATEMENT,
                                     IElementType IMPORT_STATIC_STATEMENT,
+                                    IElementType IMPORT_MODULE_STATEMENT,
                                     IElementType MODIFIER_LIST,
                                     IElementType ANNOTATION,
                                     IElementType NAME_VALUE_PAIR,
@@ -376,6 +379,7 @@ public abstract class AbstractBasicJavaElementTypeFactory {
       this.IMPORT_LIST = IMPORT_LIST;
       this.IMPORT_STATEMENT = IMPORT_STATEMENT;
       this.IMPORT_STATIC_STATEMENT = IMPORT_STATIC_STATEMENT;
+      this.IMPORT_MODULE_STATEMENT = IMPORT_MODULE_STATEMENT;
       this.MODIFIER_LIST = MODIFIER_LIST;
       this.ANNOTATION = ANNOTATION;
       this.NAME_VALUE_PAIR = NAME_VALUE_PAIR;

@@ -40,12 +40,14 @@ import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getComponentSizeInitializedFuture
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.*
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
@@ -246,19 +248,32 @@ internal class BlockTerminalView(
   }
 
   private fun updateTerminalSize() {
-    val newSize = getTerminalSize() ?: return
-    controller.resize(newSize)
+    if (getTerminalSizeInitializedFuture().isDone) {
+      val newSize = getTerminalSize() ?: return
+      controller.resize(newSize)
+    }
   }
 
   override fun getTerminalSize(): TermSize? {
     val (width, charSize) = if (alternateBufferView != null) {
       alternateBufferView!!.let { it.terminalWidth to it.charSize }
     }
-    else outputView.let { it.terminalWidth to it.charSize }
+    else {
+      // Use the width of the prompt as a target, because it can be reduced by the side action toolbar.
+      // Need to take the reduced width to not intersect with the toolbar.
+      promptView.let { it.terminalWidth to it.charSize }
+    }
     return if (width > 0 && component.height > 0) {
       TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
     }
     else null
+  }
+
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
+    // Wait for terminal component size initialization to get the correct terminal height
+    val componentSizeInitializedFuture = getComponentSizeInitializedFuture(component)
+    val terminalWidthInitializedFuture = promptView.getTerminalWidthInitializedFuture()
+    return CompletableFuture.allOf(componentSizeInitializedFuture, terminalWidthInitializedFuture)
   }
 
   override fun isFocused(): Boolean {

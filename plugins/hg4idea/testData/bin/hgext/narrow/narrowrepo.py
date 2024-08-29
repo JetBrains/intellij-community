@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from mercurial import wireprototypes
 
@@ -20,8 +19,8 @@ def wraprepo(repo):
             dirstate = super(narrowrepository, self)._makedirstate()
             return narrowdirstate.wrapdirstate(self, dirstate)
 
-        def peer(self):
-            peer = super(narrowrepository, self).peer()
+        def peer(self, *args, **kwds):
+            peer = super(narrowrepository, self).peer(*args, **kwds)
             peer._caps.add(wireprototypes.NARROWCAP)
             peer._caps.add(wireprototypes.ELLIPSESCAP)
             return peer

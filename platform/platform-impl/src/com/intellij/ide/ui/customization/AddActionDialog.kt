@@ -40,10 +40,11 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
                 !(action is ActionStub && action.className == EmptyAction::class.qualifiedName) &&
                 !(action is ActionGroupStub && action.actionClass == EmptyActionGroup::class.qualifiedName)
     }
+    rootGroup.children.add(0, Separator.getInstance())
     val root = ActionsTreeUtil.createNode(rootGroup)
     this.model = DefaultTreeModel(root)
     isRootVisible = false
-    cellRenderer = CustomizableActionsPanel.createDefaultRenderer()
+    cellRenderer = CustomizableActionsPanel.createDefaultRenderer(true)
     addTreeSelectionListener { e -> browseComboBox.selectIconForNode(e.path.lastPathComponent as DefaultMutableTreeNode) }
   }
 

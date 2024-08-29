@@ -34,6 +34,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import org.jetbrains.annotations.Nls;
@@ -277,7 +278,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
 
     for (final PsiElement ref : refsToInline) {
       final List<PsiElement> elems = new ArrayList<>();
-      final List<Instruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false);
+      final List<Instruction> latestDefs = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), ref, false, false, TypeEvalContext.codeInsightFallback(project));
       for (Instruction i : latestDefs) {
         elems.add(i.getElement());
       }
@@ -385,7 +386,7 @@ public final class PyInlineLocalHandler extends InlineActionHandler {
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
       try {
-        final List<Instruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true, true);
+        final List<Instruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local.getName(), expr, true, true, TypeEvalContext.codeInsightFallback(project));
         if (candidates.size() == 1) {
           final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
           return Pair.create(expression, false);

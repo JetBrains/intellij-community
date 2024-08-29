@@ -58,8 +58,10 @@ public class IfCanBePrimitivePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testComparisonWithPrimitives1() { doTest(); }
   public void testComparisonWithPrimitives2() { doTest(); }
   public void testComparisonWithPrimitives3() { doTest(); }
+  public void testComparisonWithPrimitivesUsedTwice() { doTest(); }
 
   public void testComparisonNonPrimitive() { assertQuickfixNotAvailable(); }
   public void testDoubleComparison() { assertQuickfixNotAvailable(); }
   public void testPrimitiveDominates() { assertQuickfixNotAvailable(); }
+  public void testVariableAssigned() { assertQuickfixNotAvailable(); }
 }

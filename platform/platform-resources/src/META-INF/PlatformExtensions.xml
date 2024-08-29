@@ -182,8 +182,8 @@ Android Studio: b/282808067 -->
                  defaultValue="false"/>
     <registryKey key="ide.welcome.screen.branch.name"
                  restartRequired="true"
-                 description="New inspection widget with pencils functionality"
-                 defaultValue="false"/>
+                 description="Show current branch names for recent projects"
+                 defaultValue="true"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
@@ -927,6 +927,7 @@ Android Studio: don't register IntelliJ fork -->
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
     <statistics.projectUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.project.IntelliJProjectUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScreenCloneCollector"/>
@@ -1038,7 +1039,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.ReadmeShownUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileChooser.impl.FileChooserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.editor.markup.InspectionsFUS"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.documentation.DocumentationInteractionCollector"/>
 
     <applicationService
       serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
@@ -1071,6 +1071,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <applicationService serviceInterface="com.intellij.ide.util.TipAndTrickManager"
                         serviceImplementation="com.intellij.ide.util.TipAndTrickManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.ide.ui.localization.statistics.StartupStatisticsListener"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
     <postStartupActivity implementation="com.intellij.ide.actions.EssentialHighlightingNotifier"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
@@ -1125,6 +1126,7 @@ Android Studio: b/285867050 -->
     <search.topHitProvider implementation="com.intellij.ide.ui.UISimpleSettingsProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.AppearanceOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.SystemOptionsTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.LanguageOptionsProvider"/>
     <search.projectOptionsTopHitProvider implementation="com.intellij.ui.tabs.FileColorsOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.EditorOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.EditorOptionsTopHitProvider$Ex"/>
@@ -1572,7 +1574,7 @@ Android Studio: b/285867050 -->
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.LanguagePluginDetectionStartupActivity"/>
-    <notificationGroup id="Language Plugins Notifications" displayType="NONE" bundle="messages.IdeBundle"
+    <notificationGroup id="Language Plugins Notifications" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.language.plugin"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider"

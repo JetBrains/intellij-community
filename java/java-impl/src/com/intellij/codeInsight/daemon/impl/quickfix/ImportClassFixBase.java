@@ -34,10 +34,10 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,10 +232,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   private void filerByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile file) {
-    String packageName = StringUtil.getPackageName(getQualifiedName(myReferenceElement));
+    String qualifiedName = getQualifiedName(myReferenceElement);
+    String packageName = StringUtil.getPackageName(qualifiedName);
     if (!packageName.isEmpty() &&
-        file instanceof PsiJavaFile &&
-        !ArrayUtil.contains(packageName, ((PsiJavaFile)file).getImplicitlyImportedPackages())) {
+        file instanceof PsiJavaFile javaFile &&
+        !ImportUtils.createImplicitImportChecker(javaFile).isImplicitlyImported(new ImportUtils.Import(qualifiedName, false))) {
       classList.removeIf(aClass -> {
         String classQualifiedName = aClass.getQualifiedName();
         return classQualifiedName != null && !packageName.equals(StringUtil.getPackageName(classQualifiedName));
@@ -271,9 +272,17 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     PsiImportStatementBase[] importStatements = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
     Set<String> unresolvedImports = new HashSet<>(importStatements.length);
     for (PsiImportStatementBase statement : importStatements) {
-      PsiJavaCodeReferenceElement ref = statement.getImportReference();
-      String name = ref == null ? null : ref.getReferenceName();
-      if (name != null && ref.resolve() == null) unresolvedImports.add(name);
+      if (statement instanceof PsiImportModuleStatement importModuleStatement) {
+        PsiJavaModuleReferenceElement refElement = importModuleStatement.getModuleReference();
+        if (refElement != null) {
+          PsiJavaModuleReference ref = refElement.getReference();
+          if (ref != null && ref.resolve() == null) unresolvedImports.add(importModuleStatement.getReferenceName());
+        }
+      } else {
+        PsiJavaCodeReferenceElement ref = statement.getImportReference();
+        String name = ref == null ? null : ref.getReferenceName();
+        if (name != null && ref.resolve() == null) unresolvedImports.add(name);
+      }
     }
     if (unresolvedImports.isEmpty()) return;
     list.removeIf(aClass -> {

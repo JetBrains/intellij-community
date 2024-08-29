@@ -657,6 +657,7 @@ f:com.intellij.ide.Prefs
 - sf:OCEANIA:com.intellij.ide.Region
 - externalName():java.lang.String
 - s:fromExternalName(java.lang.String):com.intellij.ide.Region
+- getDisplayKey():java.lang.String
 - getDisplayName():java.lang.String
 - getDisplayOrdinal():I
 - s:valueOf(java.lang.String):com.intellij.ide.Region
@@ -1958,6 +1959,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:SECONDARY_ICON:com.intellij.openapi.util.Key
 - sf:SECONDARY_TEXT:com.intellij.openapi.util.Key
 - sf:SUPPRESS_SUBMENU:com.intellij.openapi.util.Key
+- sf:TOOLTIP_TEXT:com.intellij.openapi.util.Key
 - sf:clearActions(javax.swing.JComponent):V
 - sf:copyFrom(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.openapi.actionSystem.AnAction
 - sf:copyRegisteredShortcuts(javax.swing.JComponent,javax.swing.JComponent):V
@@ -8506,6 +8508,7 @@ c:com.intellij.ui.components.JBTextField
 - <init>(I):V
 - <init>(java.lang.String):V
 - <init>(java.lang.String,I):V
+- p:createDefaultModel():javax.swing.text.Document
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
@@ -9686,6 +9689,7 @@ f:com.intellij.ui.hover.HoverUtilsKt
 f:com.intellij.ui.jcef.JBCefApp
 - createClient():com.intellij.ui.jcef.JBCefClient
 - createMessageRouter(org.cef.browser.CefMessageRouter$CefMessageRouterConfig):org.cef.browser.CefMessageRouter
+- getCefSettings():org.cef.CefSettings
 - s:getForceDeviceScaleFactor():D
 - s:getInstance():com.intellij.ui.jcef.JBCefApp
 - s:getNotificationGroup():com.intellij.notification.NotificationGroup
@@ -9700,6 +9704,12 @@ com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - a:getDomainName():java.lang.String
 - a:getSchemeName():java.lang.String
 - a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
+*f:com.intellij.ui.jcef.JBCefAppArmorUtils
+- <init>():V
+- s:areUnprivilegedUserNamespacesRestricted():Z
+- s:createUnprivilegedUserNamespacesRestrictedBanner():com.intellij.ui.InlineBanner
+- s:getUnprivilegedUserNamespacesRestrictedStubPanel():javax.swing.JPanel
+- s:showUnprivilegedUserNamespacesRestrictedDialog(java.awt.Component):V
 com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
 - sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
 - a:getOptions():java.util.List
@@ -9751,6 +9761,7 @@ a:com.intellij.ui.jcef.JBCefBrowserBase
 - createImmediately():V
 - dispose():V
 - p:dispose(java.lang.Runnable):V
+- getBrowserComponent():java.awt.Component
 - f:getCefBrowser():org.cef.browser.CefBrowser
 - a:getComponent():javax.swing.JComponent
 - s:getFocusedBrowser():com.intellij.ui.jcef.JBCefBrowserBase

@@ -7,10 +7,12 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportStatementStubImpl;
+import com.intellij.psi.impl.source.PsiImportModuleStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.impl.source.tree.java.ImportModuleStatementElement;
 import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -37,6 +39,9 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     if (node instanceof ImportStaticStatementElement) {
       return new PsiImportStaticStatementImpl(node);
     }
+    else if (node instanceof ImportModuleStatementElement) {
+      return new PsiImportModuleStatementImpl(node);
+    }
     else {
       return new PsiImportStatementImpl(node);
     }
@@ -49,7 +54,9 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
 
     for (LighterASTNode child : tree.getChildren(node)) {
       IElementType type = child.getTokenType();
-      if (type == JavaElementType.JAVA_CODE_REFERENCE || type == JavaElementType.IMPORT_STATIC_REFERENCE) {
+      if (type == JavaElementType.JAVA_CODE_REFERENCE ||
+          type == JavaElementType.IMPORT_STATIC_REFERENCE ||
+          type == JavaElementType.MODULE_REFERENCE) {
         refText = JavaSourceUtil.getReferenceText(tree, child);
       }
       else if (type == JavaTokenType.DOT) {
@@ -57,7 +64,8 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
       }
     }
 
-    byte flags = PsiImportStatementStubImpl.packFlags(isOnDemand, node.getTokenType() == JavaElementType.IMPORT_STATIC_STATEMENT);
+    byte flags = PsiImportStatementStubImpl.packFlags(isOnDemand, node.getTokenType() == JavaElementType.IMPORT_STATIC_STATEMENT,
+                                                      node.getTokenType() == JavaElementType.IMPORT_MODULE_STATEMENT);
     return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 

@@ -15,5 +15,13 @@ interface NewUiOnboardingStep {
 
   companion object {
     val EP_NAME: ExtensionPointName<KeyedLazyInstanceEP<NewUiOnboardingStep>> = ExtensionPointName.create("com.intellij.ide.newUiOnboarding.step")
+
+    fun getIfAvailable(stepId: String): NewUiOnboardingStep? {
+      val step = EP_NAME.findFirstSafe { it.key == stepId }?.instance
+      return if (step?.isAvailable() == true) {
+        step
+      }
+      else null
+    }
   }
 }

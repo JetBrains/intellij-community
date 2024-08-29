@@ -37,7 +37,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static git4idea.GitNotificationIdsHolder.BRANCH_DELETION_ROLLBACK_ERROR;
 import static git4idea.util.GitUIUtil.code;
@@ -136,7 +135,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       message.br().append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
     }
 
-    Notification notification = STANDARD_NOTIFICATION.createNotification(message.toString(), NotificationType.INFORMATION);
+    Notification notification = VcsNotifier.standardNotification().createNotification(message.toString(), NotificationType.INFORMATION);
     notification.setDisplayId(GitNotificationIdsHolder.BRANCH_DELETED);
     notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
       notification.expire();

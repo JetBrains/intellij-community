@@ -45,6 +45,11 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/allOpen_oldRegistrar.kt");
     }
 
+    @TestMetadata("compose.kt")
+    public void testCompose() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/compose.kt");
+    }
+
     @TestMetadata("lombok.kt")
     public void testLombok() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");

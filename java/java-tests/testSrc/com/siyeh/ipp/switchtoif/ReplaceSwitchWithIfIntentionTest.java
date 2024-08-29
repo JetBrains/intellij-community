@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.switchtoif;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -37,6 +38,30 @@ public class ReplaceSwitchWithIfIntentionTest extends IPPTestCase {
 
   public void testReplaceEnum() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, () -> {
+      doTest();
+    });
+  }
+
+  public void testReplaceWithBoolean1() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(), () -> {
+      doTest();
+    });
+  }
+
+  public void testReplaceWithBoolean2() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(), () -> {
+      doTest();
+    });
+  }
+
+  public void testReplaceWithBoolean3() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(), () -> {
+      doTest();
+    });
+  }
+
+  public void testReplaceWithBoolean4() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(), () -> {
       doTest();
     });
   }

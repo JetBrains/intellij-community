@@ -727,6 +727,16 @@ f:com.intellij.buildfiles.ForcedBuildFileAttribute
 - s:belongsToFramework(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
 - s:forceFileToFramework(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):V
 - s:getFrameworkIdOfBuildFile(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- sf:Companion:com.intellij.codeInsight.actions.ReaderModeDefaultsOverride$Companion
+- s:getInstance():com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- a:getShowWarningsDefault():Z
+f:com.intellij.codeInsight.actions.ReaderModeDefaultsOverride$Companion
+- f:getInstance():com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+f:com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl
+- com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- <init>():V
+- getShowWarningsDefault():Z
 com.intellij.codeInsight.actions.ReaderModeSettings
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.codeInsight.actions.ReaderModeSettings$Companion
@@ -4039,7 +4049,6 @@ f:com.intellij.ide.RecentProjectMetaInfo
 - f:getBuild():java.lang.String
 - f:getBuildTimestamp():J
 - f:getColorInfo():com.intellij.ide.RecentProjectColorInfo
-- f:getCurrentBranch():java.lang.String
 - f:getDisplayName():java.lang.String
 - f:getEap():Z
 - f:getFrameTitle():java.lang.String
@@ -4055,7 +4064,6 @@ f:com.intellij.ide.RecentProjectMetaInfo
 - f:setBuild(java.lang.String):V
 - f:setBuildTimestamp(J):V
 - f:setColorInfo(com.intellij.ide.RecentProjectColorInfo):V
-- f:setCurrentBranch(java.lang.String):V
 - f:setDisplayName(java.lang.String):V
 - f:setEap(Z):V
 - f:setFrameTitle(java.lang.String):V
@@ -4628,7 +4636,7 @@ f:com.intellij.ide.actions.HelpTopicsAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isAvailable():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.ImportSettingsFilenameFilter
 - java.io.Serializable
 - java.util.function.Predicate
@@ -4646,7 +4654,7 @@ f:com.intellij.ide.actions.JetBrainsTvAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isAvailable():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.JumpToLastEditAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -4740,7 +4748,7 @@ f:com.intellij.ide.actions.OnlineDocAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isAvailable():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.OpenFileAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.actionSystem.AnAction
@@ -7444,6 +7452,7 @@ f:com.intellij.ide.plugins.PluginNode
 - getChangeNotes():java.lang.String
 - *:getChannel():java.lang.String
 - getDate():J
+- getDefaultTrialPeriod():java.lang.Integer
 - getDependencies():java.util.List
 - getDependencyNames():java.util.Collection
 - getDescription():java.lang.String
@@ -7508,6 +7517,7 @@ f:com.intellij.ide.plugins.PluginNode
 - setConverted(Z):V
 - setDate(java.lang.Long):V
 - setDate(java.lang.String):V
+- setDefaultTrialPeriod(java.lang.Integer):V
 - setDependencies(java.util.List):V
 - setDependencyNames(java.util.Collection):V
 - setDepends(java.util.List,com.intellij.openapi.extensions.PluginId[]):V
@@ -7808,33 +7818,6 @@ f:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getPluginId():java.lang.String
 - f:getVersion():java.lang.String
 - hashCode():I
-f:com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-- <init>():V
-- <init>(java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata):V
-- b:<init>(java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.util.List
-- f:component2():com.intellij.ide.plugins.marketplace.PluginVendorMetadata
-- f:component3():java.lang.String
-- f:component4():java.lang.String
-- f:component5():java.lang.String
-- f:component6():java.lang.String
-- f:component7():java.lang.String
-- f:component8():java.lang.String
-- f:component9():com.intellij.ide.plugins.marketplace.SalesMetadata
-- f:copy(java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata):com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-- bs:copy$default(com.intellij.ide.plugins.marketplace.IntellijPluginMetadata,java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata,I,java.lang.Object):com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-- equals(java.lang.Object):Z
-- f:getBugtrackerUrl():java.lang.String
-- f:getDocumentationUrl():java.lang.String
-- f:getForumUrl():java.lang.String
-- f:getLicenseUrl():java.lang.String
-- f:getReportPluginUrl():java.lang.String
-- f:getSalesInfo():com.intellij.ide.plugins.marketplace.SalesMetadata
-- f:getScreenshots():java.util.List
-- f:getSourceCodeUrl():java.lang.String
-- f:getVendor():com.intellij.ide.plugins.marketplace.PluginVendorMetadata
-- hashCode():I
-- f:toPluginNode(com.intellij.ide.plugins.PluginNode):V
 f:com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.Set,java.util.Set,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
@@ -7962,16 +7945,6 @@ f:com.intellij.ide.plugins.marketplace.ReviewCommentPlugin
 - bs:copy$default(com.intellij.ide.plugins.marketplace.ReviewCommentPlugin,java.lang.String,I,java.lang.Object):com.intellij.ide.plugins.marketplace.ReviewCommentPlugin
 - equals(java.lang.Object):Z
 - f:getLink():java.lang.String
-- hashCode():I
-f:com.intellij.ide.plugins.marketplace.SalesMetadata
-- <init>():V
-- <init>(java.lang.Integer):V
-- b:<init>(java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.lang.Integer
-- f:copy(java.lang.Integer):com.intellij.ide.plugins.marketplace.SalesMetadata
-- bs:copy$default(com.intellij.ide.plugins.marketplace.SalesMetadata,java.lang.Integer,I,java.lang.Object):com.intellij.ide.plugins.marketplace.SalesMetadata
-- equals(java.lang.Object):Z
-- f:getTrialPeriod():java.lang.Integer
 - hashCode():I
 e:com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 - java.lang.Enum
@@ -8788,6 +8761,10 @@ f:com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider
 - com.intellij.ui.EditorNotificationProvider
 - <init>():V
 - collectNotificationData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Function
+f:com.intellij.ide.ui.ButtonPanel
+- javax.swing.JPanel
+- <init>(javax.swing.JButton):V
+- f:getButton():javax.swing.JButton
 f:com.intellij.ide.ui.ColorBlindnessInternalAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -10259,6 +10236,12 @@ com.intellij.ide.util.TipUIUtil$Browser
 - a:getComponent():javax.swing.JComponent
 - a:load(java.lang.String):V
 - a:setText(java.lang.String):V
+com.intellij.ide.vcs.RecentProjectsBranchesProvider
+- sf:Companion:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
+- a:getCurrentBranch(java.lang.String):java.lang.String
+f:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
+- f:getCurrentBranch(java.lang.String):java.lang.String
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 - com.intellij.ide.util.projectWizard.ModuleBuilder
 - sf:Companion:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder$Companion
@@ -29498,9 +29481,6 @@ a:com.intellij.util.ui.update.DisposableUpdate
 - f:run():V
 c:com.intellij.workspaceModel.ide.impl.ApplicationLevelUrlRelativizer
 - <init>():V
-f:com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
-- com.intellij.workspaceModel.ide.impl.ApplicationLevelUrlRelativizer
-- <init>(com.intellij.openapi.project.Project):V
 f:com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator
 - com.intellij.ide.caches.CachesInvalidator
 - <init>():V

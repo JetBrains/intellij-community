@@ -79,6 +79,8 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" exported="" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
+    <orderEntry type="library" name="jetbrains.markdown" level="project" />
   </component>
   <component name="copyright">
     <Base>

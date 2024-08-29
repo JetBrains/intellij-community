@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Ref;
@@ -17,10 +17,10 @@ public final class JavaPsiConstructorUtil {
   private static final @NotNull TokenSet CONSTRUCTOR_CALL_TOKENS = TokenSet.create(JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD);
 
   /**
-   * Finds an explicit call to another constructor within this constructor (either chained or super).
-   * If there are multiple explicit constructor calls (which is incompilable), the first one is returned.
+   * Finds an explicit call to another constructor within the specified constructor (either chained or super).
+   * If there are multiple explicit constructor calls (which does not compile), the first one is returned.
    * @param constructor constructor to search in
-   * @return found this/super constructor method call or null if not found or supplied method is null or not a constructor
+   * @return found this/super constructor method call or null if not found or the supplied method is not a constructor
    */
   @Nullable
   public static PsiMethodCallExpression findThisOrSuperCallInConstructor(@NotNull PsiMethod constructor) {

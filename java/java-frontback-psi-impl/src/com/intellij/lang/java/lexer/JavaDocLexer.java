@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.lexer;
 
-import com.intellij.lexer.DocCommentTokenTypes;
-import com.intellij.lexer.JavaDocTokenTypes;
-import com.intellij.lexer.LexerBase;
-import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.lexer.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -17,7 +15,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     this(JavaDocTokenTypes.INSTANCE, level.isAtLeast(LanguageLevel.JDK_1_5));
   }
 
-  private JavaDocLexer(DocCommentTokenTypes tokenTypes, boolean isJdk15Enabled) {
+  private JavaDocLexer(JavaDocCommentTokenTypes tokenTypes, boolean isJdk15Enabled) {
     super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes), tokenTypes.spaceCommentsTokenSet());
   }
 
@@ -32,6 +30,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     private IElementType myTokenType;
     private boolean myAfterLineBreak;
     private boolean myInLeadingSpace;
+    private boolean myMarkdownMode;
 
     AsteriskStripperLexer(final _JavaDocLexer flex, final DocCommentTokenTypes tokenTypes) {
       myFlex = flex;
@@ -45,7 +44,10 @@ public class JavaDocLexer extends MergingLexerAdapter {
       myBufferEndOffset = endOffset;
       myTokenType = null;
       myTokenEndOffset = startOffset;
+      myAfterLineBreak = false;
+      myInLeadingSpace = false;
       myFlex.reset(myBuffer, startOffset, endOffset, initialState);
+      selectLexerMode(buffer, startOffset);
     }
 
     @Override
@@ -97,6 +99,12 @@ public class JavaDocLexer extends MergingLexerAdapter {
       }
     }
 
+    /** Enables markdown mode if necessary */
+    private void selectLexerMode(@NotNull CharSequence buffer, int startOffset) {
+      myMarkdownMode = StringUtil.startsWith(buffer, startOffset, "///");
+      myFlex.setMarkdownMode(myMarkdownMode);
+    }
+
     private void _locateToken() {
       if (myTokenEndOffset == myBufferEndOffset) {
         myTokenType = null;
@@ -108,9 +116,15 @@ public class JavaDocLexer extends MergingLexerAdapter {
 
       if (myAfterLineBreak) {
         myAfterLineBreak = false;
-        while (myTokenEndOffset < myBufferEndOffset && myBuffer.charAt(myTokenEndOffset) == '*' &&
-               (myTokenEndOffset + 1 >= myBufferEndOffset || myBuffer.charAt(myTokenEndOffset + 1) != '/')) {
-          myTokenEndOffset++;
+
+        if (myMarkdownMode) {
+          while (detectLeadingSlashes()) {
+            myTokenEndOffset += 3;
+          }
+        }else {
+          while (detectLeadingAsterisks()) {
+            myTokenEndOffset++;
+          }
         }
 
         myInLeadingSpace = true;
@@ -150,6 +164,17 @@ public class JavaDocLexer extends MergingLexerAdapter {
       }
 
       flexLocateToken();
+    }
+
+    /** @return true for * or *\/ */
+    private boolean detectLeadingAsterisks() {
+      return myTokenEndOffset < myBufferEndOffset && myBuffer.charAt(myTokenEndOffset) == '*' &&
+      (myTokenEndOffset + 1 >= myBufferEndOffset || myBuffer.charAt(myTokenEndOffset + 1) != '/');
+    }
+
+    /** @return The current token is the start of three leading slashes */
+    private boolean detectLeadingSlashes() {
+      return myTokenEndOffset + 2 < myBufferEndOffset && StringUtil.startsWith(myBuffer, myTokenEndOffset, "///");
     }
 
     private void flexLocateToken() {

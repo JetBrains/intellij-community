@@ -26,9 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# no unicode literals
-from __future__ import absolute_import, division, print_function
-
 import binascii
 import collections
 import ctypes
@@ -37,6 +34,7 @@ import sys
 
 from . import compat
 
+abc = collections.abc
 
 BSER_ARRAY = b"\x00"
 BSER_OBJECT = b"\x01"
@@ -53,17 +51,15 @@ BSER_TEMPLATE = b"\x0b"
 BSER_SKIP = b"\x0c"
 BSER_UTF8STRING = b"\x0d"
 
-if compat.PYTHON3:
-    STRING_TYPES = (str, bytes)
-    unicode = str
+STRING_TYPES = (str, bytes)
+unicode = str
 
-    def tobytes(i):
-        return str(i).encode("ascii")
 
-    long = int
-else:
-    STRING_TYPES = (unicode, str)
-    tobytes = bytes
+def tobytes(i):
+    return str(i).encode("ascii")
+
+
+long = int
 
 # Leave room for the serialization header, which includes
 # our overall length.  To make things simpler, we'll use an
@@ -89,12 +85,12 @@ def _int_size(x):
 def _buf_pos(buf, pos):
     ret = buf[pos]
     # Normalize the return type to bytes
-    if compat.PYTHON3 and not isinstance(ret, bytes):
+    if not isinstance(ret, bytes):
         ret = bytes((ret,))
     return ret
 
 
-class _bser_buffer(object):
+class _bser_buffer:
     def __init__(self, version):
         self.bser_version = version
         self.buf = ctypes.create_string_buffer(8192)
@@ -208,9 +204,7 @@ class _bser_buffer(object):
             self.ensure_size(needed)
             struct.pack_into(b"=cd", self.buf, self.wpos, BSER_REAL, val)
             self.wpos += needed
-        elif isinstance(val, collections.Mapping) and isinstance(
-            val, collections.Sized
-        ):
+        elif isinstance(val, abc.Mapping) and isinstance(val, abc.Sized):
             val_len = len(val)
             size = _int_size(val_len)
             needed = 2 + size
@@ -254,16 +248,11 @@ class _bser_buffer(object):
             else:
                 raise RuntimeError("Cannot represent this mapping value")
             self.wpos += needed
-            if compat.PYTHON3:
-                iteritems = val.items()
-            else:
-                iteritems = val.iteritems()  # noqa: B301 Checked version above
+            iteritems = val.items()
             for k, v in iteritems:
                 self.append_string(k)
                 self.append_recursive(v)
-        elif isinstance(val, collections.Iterable) and isinstance(
-            val, collections.Sized
-        ):
+        elif isinstance(val, abc.Iterable) and isinstance(val, abc.Sized):
             val_len = len(val)
             size = _int_size(val_len)
             needed = 2 + size
@@ -325,7 +314,7 @@ def dumps(obj, version=1, capabilities=0):
 # This is a quack-alike with the bserObjectType in bser.c
 # It provides by getattr accessors and getitem for both index
 # and name.
-class _BunserDict(object):
+class _BunserDict:
     __slots__ = ("_keys", "_values")
 
     def __init__(self, keys, values):
@@ -351,7 +340,7 @@ class _BunserDict(object):
         return len(self._keys)
 
 
-class Bunser(object):
+class Bunser:
     def __init__(self, mutable=True, value_encoding=None, value_errors=None):
         self.mutable = mutable
         self.value_encoding = value_encoding

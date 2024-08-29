@@ -618,18 +618,19 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       generatedSourceDirectorySet.setCompilerOutputPathInherited(sourceDirectorySet.isCompilerOutputPathInherited());
     }
 
-    boolean isIdeaTestSourceSet = sourceSetResolutionContext.ideaTestSourceDirs.containsAll(sourceDirectorySet.getSrcDirs());
-    boolean isKnownTestSourceSet = sourceSetResolutionContext.testSourceSets.contains(sourceSet);
-    boolean isCustomTestSourceSet = (isIdeaTestSourceSet || isKnownTestSourceSet) &&
-                                    !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName());
-    if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName()) || resolveSourceSetDependencies && isCustomTestSourceSet) {
+    if (sourceSetResolutionContext.isJavaTestSourceSet(sourceSet)) {
       if (!sourceSetResolutionContext.isIdeaInheritOutputDirs && sourceSetResolutionContext.ideaTestOutputDir != null) {
         sourceDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
         resourcesDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
       }
-      else {
+      else if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName()) || !resolveSourceSetDependencies) {
         sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/classes"));
         resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/resources"));
+      }
+      else {
+        String outputName = StringUtils.toCamelCase(sourceSet.getName(), true);
+        sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), String.format("out/%s/classes", outputName)));
+        resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), String.format("out/%s/resources", outputName)));
       }
       if (generatedSourceDirectorySet != null) {
         generatedSourceDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());

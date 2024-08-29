@@ -6,6 +6,7 @@ import com.intellij.platform.ml.MLModel
 import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.analysis.SessionAnalyser
 import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.schema.EventField
 import com.intellij.platform.ml.logs.schema.EventPair
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +26,7 @@ interface LanguageSpecific {
 class ModelLanguageAnalyser<M, P : Any> : SessionAnalyser.Default<M, P>()
   where M : MLModel<P>,
         M : LanguageSpecific {
-  private val LANGUAGE = LanguageEventField("model_language", null)
+  private val LANGUAGE = LanguageEventField("model_language", NO_DESCRIPTION)
 
   override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<P>, mlModel: M): List<EventPair<*>> {
     return listOf(LANGUAGE with mlModel.language)

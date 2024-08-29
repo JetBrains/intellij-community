@@ -17,13 +17,11 @@ context of the graph returned. Type is a constant specifying the node type.
 Data depends on type.
 """
 
-from __future__ import absolute_import
 
 from .node import nullrev
 from .thirdparty import attr
 from . import (
     dagop,
-    pycompat,
     smartset,
     util,
 )
@@ -359,7 +357,7 @@ def _drawendinglines(lines, extra, edgemap, seen, state):
 
 
 @attr.s
-class asciistate(object):
+class asciistate:
     """State of ascii() graph rendering"""
 
     seen = attr.ib(init=False, default=attr.Factory(list))
@@ -464,16 +462,16 @@ def ascii(ui, state, type, char, text, coldata):
     # shift_interline is the line containing the non-vertical
     # edges between this entry and the next
     shift_interline = echars[: idx * 2]
-    for i in pycompat.xrange(2 + coldiff):
+    for i in range(2 + coldiff):
         shift_interline.append(b' ')
     count = ncols - idx - 1
     if coldiff == -1:
-        for i in pycompat.xrange(count):
+        for i in range(count):
             shift_interline.extend([b'/', b' '])
     elif coldiff == 0:
         shift_interline.extend(echars[(idx + 1) * 2 : ncols * 2])
     else:
-        for i in pycompat.xrange(count):
+        for i in range(count):
             shift_interline.extend([b'\\', b' '])
 
     # draw edges from the current node to its parents

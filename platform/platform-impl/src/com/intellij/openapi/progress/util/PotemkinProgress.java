@@ -36,6 +36,8 @@ import java.util.function.Consumer;
  * <p>
  * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
  * </p>
+ * <hr>
+ *
  * A progress indicator for write actions. Paints itself explicitly, without resorting to normal Swing's delayed repaint API.
  * Doesn't dispatch Swing events, except for handling manually those that can cancel it or affect the visual presentation.
  */

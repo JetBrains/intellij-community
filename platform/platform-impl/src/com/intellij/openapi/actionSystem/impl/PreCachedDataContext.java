@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -20,7 +21,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -183,7 +183,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
-    boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
+    boolean rulesSuppressed = isEDT && LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     boolean rulesAllowed = !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
     Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
 
@@ -432,13 +432,22 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
           key == PlatformDataKeys.MODALITY_STATE) {
         return;
       }
-      //noinspection unchecked
-      T validated =
-        data == EXPLICIT_NULL ? data :
-        key == PlatformCoreDataKeys.BGT_DATA_PROVIDER ? (T)CompositeDataProvider.compose(
-          (DataProvider)data, map == null ? null : ObjectUtils.tryCast(
-            map.uiSnapshot.get(key.getName()), DataProvider.class)) :
-        (T)DataValidators.validOrNull(data, key.getName(), source);
+      T validated;
+      if (data == EXPLICIT_NULL) {
+        validated = data;
+      }
+      else if (key == PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
+        DataProvider existing = map == null ? null : (DataProvider)map.uiSnapshot.get(key.getName());
+        //noinspection unchecked
+        validated = existing == null ? data :
+                    cachedDataForRules == null ?
+                    (T)CompositeDataProvider.compose((DataProvider)data, existing) :
+                    (T)CompositeDataProvider.compose(existing, (DataProvider)data);
+      }
+      else {
+        //noinspection unchecked
+        validated = (T)DataValidators.validOrNull(data, key.getName(), source);
+      }
       if (validated == null) return;
       if (map == null) map = new ProviderData();
       if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
@@ -468,6 +477,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     @Override
     public <T> void lazy(@NotNull DataKey<T> key, @NotNull Function0<? extends @Nullable T> data) {
       set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, new MyLazy<>(key, data));
+    }
+
+    @Override
+    public <T> void lazyNull(@NotNull DataKey<T> key) {
+      set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, dataId -> key.is(dataId) ? EXPLICIT_NULL : null);
     }
 
     @Override

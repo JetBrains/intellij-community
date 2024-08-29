@@ -17,6 +17,7 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,9 @@ public final class JavadocBlankLinesInspection extends LocalInspectionTool {
             nextWhitespace instanceof PsiWhiteSpace &&
             !isAfterParagraphOrBlockTag(prevWhitespace) &&
             !isBeforeParagraphOrBlockTag(nextWhitespace) &&
-            !isAfterPreTag(token)) {
+            !isAfterPreTag(token) &&
+            !PsiUtil.isInMarkdownDocComment(token)
+            ) {
           holder.problem(token, JavaBundle.message("inspection.javadoc.blank.lines.message"))
             .fix(new InsertParagraphTagFix(token)).register();
         }

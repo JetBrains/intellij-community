@@ -16,7 +16,7 @@ abstract class MavenParentProjectFileAsyncProcessor<RESULT_TYPE>(private val myP
               projectFile: VirtualFile,
               parentDesc: MavenParentDesc?): RESULT_TYPE? {
     var parentDesc = parentDesc
-    val superPom = MavenUtil.getEffectiveSuperPomWithNoRespectToWrapper(myProject)
+    val superPom = MavenUtil.resolveSuperPomFile(myProject, projectFile)
     if (superPom == null || projectFile == superPom) return null
 
     var result: RESULT_TYPE? = null

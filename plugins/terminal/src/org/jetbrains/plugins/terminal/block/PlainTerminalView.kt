@@ -10,9 +10,11 @@ import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getComponentSizeInitializedFuture
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 /**
@@ -53,6 +55,10 @@ internal class PlainTerminalView(
     if (view.component.bounds.isEmpty) return null
     val contentSize = Dimension(view.terminalWidth, view.component.height)
     return TerminalUiUtils.calculateTerminalSize(contentSize, view.charSize)
+  }
+
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
+    return getComponentSizeInitializedFuture(component)
   }
 
   override fun isFocused(): Boolean {

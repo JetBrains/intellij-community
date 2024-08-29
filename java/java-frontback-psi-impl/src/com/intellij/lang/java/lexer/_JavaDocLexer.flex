@@ -1,7 +1,7 @@
   /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lang.java.lexer;
 
-import com.intellij.lexer.DocCommentTokenTypes;
+import com.intellij.lexer.JavaDocCommentTokenTypes;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 
@@ -10,13 +10,20 @@ import com.intellij.psi.tree.IElementType;
 
 %{
   private boolean myJdk15Enabled;
-  private DocCommentTokenTypes myTokenTypes;
+  private JavaDocCommentTokenTypes myTokenTypes;
   private int mySnippetBracesLevel = 0;
+  /* Enable markdown support for java 23 */
+  private boolean myMarkdownMode = false;
 
-  public _JavaDocLexer(boolean isJdk15Enabled, DocCommentTokenTypes tokenTypes) {
+  public _JavaDocLexer(boolean isJdk15Enabled, JavaDocCommentTokenTypes tokenTypes) {
     this((java.io.Reader)null);
     myJdk15Enabled = isJdk15Enabled;
     myTokenTypes = tokenTypes;
+  }
+
+  /** Should be called right after a reset */
+  public void setMarkdownMode(boolean isEnabled) {
+    myMarkdownMode = isEnabled;
   }
 
   public boolean checkAhead(char c) {
@@ -60,9 +67,32 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
 TAG_IDENTIFIER=[^\ \t\f\n\r]+
 INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
 
+// 20 should cover most fences. JFlex doesn't allow unlimited upper bound
+CODE_FENCE_BACKTICKS=(`{3, 20})
+CODE_FENCE_WAVES=(\~{3, 20})
+CODE_FENCE = ({CODE_FENCE_BACKTICKS}|{CODE_FENCE_WAVES})
+
+START_COMMENT_HTML="/**"
+LEADING_TOKEN_HTML=\*
+LEADING_TOKEN_MARKDOWN="///"
+
 %%
 
-<YYINITIAL> "/**" { yybegin(COMMENT_DATA_START); return myTokenTypes.commentStart(); }
+<YYINITIAL> {START_COMMENT_HTML} {
+        if(myMarkdownMode) {
+          return myTokenTypes.badCharacter();
+        }
+        yybegin(COMMENT_DATA_START);
+        return myTokenTypes.commentStart();
+}
+<YYINITIAL> {LEADING_TOKEN_MARKDOWN} {
+        if(myMarkdownMode) {
+          yybegin(COMMENT_DATA_START);
+          return myTokenTypes.commentLeadingAsterisks();
+        }
+        return myTokenTypes.badCharacter();
+}
+
 <COMMENT_DATA_START> {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
 <COMMENT_DATA> {WHITE_DOC_SPACE_NO_LR}+ { return myTokenTypes.commentData(); }
 <COMMENT_DATA> [\n\r]+{WHITE_DOC_SPACE_CHAR}* { return myTokenTypes.space(); }
@@ -90,6 +120,59 @@ INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
 <DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return myTokenTypes.tagValueToken(); }
 <DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return myTokenTypes.tagValueToken(); }
 <DOC_TAG_VALUE_IN_LTGT> [\>] { yybegin(COMMENT_DATA); return myTokenTypes.tagValueGT(); }
+
+<COMMENT_DATA_START, COMMENT_DATA> {
+      {CODE_FENCE} {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return myTokenTypes.codeFence();
+        }
+        return myTokenTypes.commentData();
+      }
+
+      // According to the JFlex user guide, lookahead should be avoided.
+      (\\\[) { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
+      (\\\]) { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
+      (\\\() { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
+      (\\\)) { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
+
+      "#" {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return myTokenTypes.sharp();
+        }
+        return myTokenTypes.commentData();
+      }
+
+      \[ {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return myTokenTypes.leftBracket();
+        }
+        return myTokenTypes.commentData();
+      }
+      \] {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return myTokenTypes.rightBracket();
+        }
+        return myTokenTypes.commentData();
+      }
+      \( {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return myTokenTypes.leftParenthesis();
+        }
+        return myTokenTypes.commentData();
+      }
+      \) {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return myTokenTypes.rightParenthesis();
+        }
+        return myTokenTypes.commentData();
+       }
+}
 
 <COMMENT_DATA_START, COMMENT_DATA, CODE_TAG> "{" {
   if (checkAhead('@')) {
@@ -131,9 +214,24 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
       \" { yybegin(SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES); return myTokenTypes.tagValueQuote(); }
       ' { yybegin(SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES); return myTokenTypes.tagValueQuote(); }
       : { yybegin(SNIPPET_TAG_BODY_DATA); return myTokenTypes.tagValueColon(); }
-      \* { return myTokenTypes.commentLeadingAsterisks(); }
+
+      {LEADING_TOKEN_HTML} {
+        if (myMarkdownMode) {
+          return myTokenTypes.commentData();
+        }
+        return myTokenTypes.commentLeadingAsterisks();
+      }
+      {LEADING_TOKEN_MARKDOWN} {
+        if (myMarkdownMode) {
+          return myTokenTypes.commentLeadingAsterisks();
+        }
+        return myTokenTypes.commentData();
+      }
+
       {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
+
       [^\*] { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return myTokenTypes.commentData(); }
+      [^\/\/\/] { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return myTokenTypes.commentData(); }
 }
 
 <SNIPPET_TAG_BODY_DATA> {
@@ -160,5 +258,10 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
 
 <CODE_TAG, CODE_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(CODE_TAG); return myTokenTypes.space(); }
 
-"*"+"/" { return myTokenTypes.commentEnd(); }
+"*"+"/" {
+    if(myMarkdownMode) {
+      return myTokenTypes.commentData();
+    }
+    return myTokenTypes.commentEnd();
+}
 [^] { return myTokenTypes.badCharacter(); }

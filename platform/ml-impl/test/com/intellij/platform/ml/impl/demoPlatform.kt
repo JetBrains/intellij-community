@@ -17,6 +17,7 @@ import com.intellij.platform.ml.environment.get
 import com.intellij.platform.ml.feature.Feature
 import com.intellij.platform.ml.feature.FeatureDeclaration
 import com.intellij.platform.ml.feature.FeatureFilter
+import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.schema.ClassEventField
 import com.intellij.platform.ml.logs.schema.EventField
 import com.intellij.platform.ml.logs.schema.EventPair
@@ -147,7 +148,7 @@ class GitInformant : EnvironmentExtender<GitRepository> {
 }
 
 class ExceptionLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>() {
-  private val THROWABLE_CLASS = ClassEventField("throwable_class", null)
+  private val THROWABLE_CLASS = ClassEventField("throwable_class", NO_DESCRIPTION)
 
   override val declaration: List<EventField<*>> = listOf(THROWABLE_CLASS)
   override suspend fun onSessionFailedWithException(callParameters: Environment, sessionEnvironment: Environment, exception: Throwable): List<EventPair<*>> {
@@ -156,7 +157,7 @@ class ExceptionLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>()
 }
 
 class FailureLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>() {
-  private val REASON = ClassEventField("reason", null)
+  private val REASON = ClassEventField("reason", NO_DESCRIPTION)
 
   override val declaration: List<EventField<*>> = listOf(REASON)
 

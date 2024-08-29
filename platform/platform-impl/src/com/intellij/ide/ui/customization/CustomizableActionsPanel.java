@@ -4,6 +4,7 @@ package com.intellij.ide.ui.customization;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -337,10 +338,19 @@ public class CustomizableActionsPanel {
   }
 
   static TreeCellRenderer createDefaultRenderer() {
-    return new MyTreeCellRenderer();
+    return createDefaultRenderer(false);
+  }
+
+  static TreeCellRenderer createDefaultRenderer(boolean showSeparatorAsAction) {
+    return new MyTreeCellRenderer(showSeparatorAsAction);
   }
 
   private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+
+    private final boolean myShowSeparatorAsAction;
+
+    private MyTreeCellRenderer(boolean showSeparatorAsAction) { myShowSeparatorAsAction = showSeparatorAsAction; }
+
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -351,17 +361,23 @@ public class CustomizableActionsPanel {
                                       boolean hasFocus) {
       if (value instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        CustomizationUtil.acceptObjectIconAndText(userObject, (text, description, icon) -> {
-          append(text);
-          if (description != null) {
-            append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
-            append(description, SimpleTextAttributes.GRAY_ATTRIBUTES);
-          }
-          // do not show the icon for the top groups
-          if (((DefaultMutableTreeNode)value).getLevel() > 1) {
-            setIcon(icon);
-          }
-        });
+        if (myShowSeparatorAsAction && (userObject instanceof Separator)) {
+          setIcon(AllIcons.General.SeparatorH);
+          append(ActionsBundle.message("action.separator"));
+        }
+        else {
+          CustomizationUtil.acceptObjectIconAndText(userObject, (text, description, icon) -> {
+            append(text);
+            if (description != null) {
+              append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+              append(description, SimpleTextAttributes.GRAY_ATTRIBUTES);
+            }
+            // do not show the icon for the top groups
+            if (((DefaultMutableTreeNode)value).getLevel() > 1) {
+              setIcon(icon);
+            }
+          });
+        }
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));
       }
     }

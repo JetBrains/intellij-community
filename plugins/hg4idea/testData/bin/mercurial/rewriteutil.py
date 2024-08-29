@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import re
 
@@ -22,11 +21,25 @@ from . import (
     obsutil,
     revset,
     scmutil,
-    util,
 )
 
 
 NODE_RE = re.compile(br'\b[0-9a-f]{6,64}\b')
+
+# set of extra entry that should survive a rebase-like operation, extensible by extensions
+retained_extras_on_rebase = {
+    b'source',
+    b'intermediate-source',
+}
+
+
+def preserve_extras_on_rebase(old_ctx, new_extra):
+    """preserve the relevant `extra` entry from old_ctx on rebase-like operation"""
+    new_extra.update(
+        (key, value)
+        for key, value in old_ctx.extra().items()
+        if key in retained_extras_on_rebase
+    )
 
 
 def _formatrevs(repo, revs, maxrevs=4):
@@ -49,9 +62,12 @@ def _formatrevs(repo, revs, maxrevs=4):
     return summary
 
 
-def precheck(repo, revs, action=b'rewrite'):
+def precheck(repo, revs, action=b'rewrite', check_divergence=True):
     """check if revs can be rewritten
     action is used to control the error message.
+
+    check_divergence allows skipping the divergence checks in cases like adding
+    a prune marker (A, ()) to obsstore (which can't be diverging).
 
     Make sure this function is called after taking the lock.
     """
@@ -60,7 +76,7 @@ def precheck(repo, revs, action=b'rewrite'):
         hint = _(b"no changeset checked out")
         raise error.InputError(msg, hint=hint)
 
-    if any(util.safehasattr(r, 'rev') for r in revs):
+    if any(hasattr(r, 'rev') for r in revs):
         repo.ui.develwarn(b"rewriteutil.precheck called with ctx not revs")
         revs = (r.rev() for r in revs)
 
@@ -84,6 +100,9 @@ def precheck(repo, revs, action=b'rewrite'):
             % (action, len(newunstable)),
             hint=hint,
         )
+
+    if not check_divergence:
+        return
 
     if not obsolete.isenabled(repo, obsolete.allowdivergenceopt):
         new_divergence = _find_new_divergence(repo, revs)
@@ -209,9 +228,9 @@ def update_hash_refs(repo, commitmsg, pending=None):
     for h in hashes:
         try:
             fullnode = scmutil.resolvehexnodeidprefix(unfi, h)
-        except error.WdirUnsupported:
-            # Someone has an fffff... in a commit message we're
-            # rewriting. Don't try rewriting that.
+        except (error.WdirUnsupported, error.AmbiguousPrefixLookupError):
+            # Someone has an fffff... or some other prefix that's ambiguous in a
+            # commit message we're rewriting. Don't try rewriting that.
             continue
         if fullnode is None:
             continue

@@ -13,7 +13,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ide.new.project.model.index.case.sensitivity" defaultValue="false" restartRequired="true"
                  description="Enable checking FS sensitivity for paths stored at VFU index"/>
-    <registryKey key="ide.workspace.model.store.relative.paths.in.cache" defaultValue="true" restartRequired="true"
+    <registryKey key="ide.workspace.model.store.relative.paths.in.cache" defaultValue="false" restartRequired="true"
                  description="Enables storing of relative paths instead of absolute paths in the workspace model cache"/>
     <registryKey key="ide.workspace.model.load.cache.from.zip" defaultValue="false" restartRequired="true"
                  description="Enables loading shared workspace model cache from ZIP archive"/>

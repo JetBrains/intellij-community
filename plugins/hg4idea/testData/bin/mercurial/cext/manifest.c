@@ -317,12 +317,7 @@ done:
 	return ret;
 }
 
-#ifdef IS_PY3K
 #define LAZYMANIFESTENTRIESITERATOR_TPFLAGS Py_TPFLAGS_DEFAULT
-#else
-#define LAZYMANIFESTENTRIESITERATOR_TPFLAGS Py_TPFLAGS_DEFAULT \
-	| Py_TPFLAGS_HAVE_ITER
-#endif
 
 static PyTypeObject lazymanifestEntriesIterator = {
 	PyVarObject_HEAD_INIT(NULL, 0) /* header */
@@ -365,12 +360,7 @@ static PyObject *lmiter_iterkeysnext(PyObject *o)
 	return PyBytes_FromStringAndSize(l->start, pl);
 }
 
-#ifdef IS_PY3K
 #define LAZYMANIFESTKEYSITERATOR_TPFLAGS Py_TPFLAGS_DEFAULT
-#else
-#define LAZYMANIFESTKEYSITERATOR_TPFLAGS Py_TPFLAGS_DEFAULT \
-	| Py_TPFLAGS_HAVE_ITER
-#endif
 
 static PyTypeObject lazymanifestKeysIterator = {
 	PyVarObject_HEAD_INIT(NULL, 0) /* header */
@@ -790,7 +780,7 @@ static lazymanifest *lazymanifest_filtercopy(
 	Py_INCREF(copy->pydata);
 	for (i = 0; i < self->numlines; i++) {
 		PyObject *arglist = NULL, *result = NULL;
-		arglist = Py_BuildValue(PY23("(s)", "(y)"),
+		arglist = Py_BuildValue("(y)",
 					self->lines[i].start);
 		if (!arglist) {
 			goto bail;
@@ -955,11 +945,7 @@ static PyMethodDef lazymanifest_methods[] = {
 	{NULL},
 };
 
-#ifdef IS_PY3K
 #define LAZYMANIFEST_TPFLAGS Py_TPFLAGS_DEFAULT
-#else
-#define LAZYMANIFEST_TPFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_SEQUENCE_IN
-#endif
 
 static PyTypeObject lazymanifestType = {
 	PyVarObject_HEAD_INIT(NULL, 0) /* header */

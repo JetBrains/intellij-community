@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 
 class Test {
-    void test(Number code) {
+  String test(Number code) {
       i<caret>f (code == 100) {
         return "Continue";
       } else if (code == 200) {

@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.actions
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
@@ -48,10 +50,14 @@ class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, Action
         HelpTooltip.dispose(this)
         val tooltip = HelpTooltip()
         tooltip.setTitle(myPresentation.text).setShortcut(shortcutText)
-        val expandAllShortcut = KeymapUtil.getShortcutText("ProjectViewExpandAll")
-        if (expandAllShortcut.isNotEmpty()) {
-          tooltip.setDescription(ActionsBundle.message("action.ExpandRecursively.shortcutHint", expandAllShortcut)).installOn(this)
+        val expandAllShortcut = ActionManager.getInstance().getKeyboardShortcut("ProjectViewExpandAll")
+        if (expandAllShortcut != null) {
+          tooltip.setDescription(StringUtil.escapeXmlEntities(ActionsBundle.message(
+            "action.ExpandRecursively.shortcutHint",
+            KeymapUtil.getShortcutText(expandAllShortcut)
+          )))
         }
+        tooltip.installOn(this)
       }
     }
 }

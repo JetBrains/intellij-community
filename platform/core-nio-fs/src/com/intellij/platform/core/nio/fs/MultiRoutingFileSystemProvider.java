@@ -8,13 +8,12 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -183,15 +182,58 @@ public final class MultiRoutingFileSystemProvider
     if (provider1.equals(provider2)) {
       return provider1;
     }
-    else if (provider1 instanceof RoutingAwareFileSystemProvider && ((RoutingAwareFileSystemProvider)provider1).canHandleRouting()) {
+    else if (canHandleRouting(provider1)) {
       return provider1;
     }
-    else if (provider2 instanceof RoutingAwareFileSystemProvider && ((RoutingAwareFileSystemProvider)provider2).canHandleRouting()) {
+    else if (canHandleRouting(provider2)) {
       return provider2;
     }
     else {
       throw new IllegalArgumentException(String.format("Provider mismatch: %s != %s", provider1, provider2));
     }
+  }
+
+  /**
+   * `intellij.platform.util` is not available in the boot classpath.
+   * Hence, concurrent weak maps from the platform can't be used here.
+   */
+  private static final Map<FileSystemProvider, Boolean> ourCanHandleRoutingCache = Collections.synchronizedMap(new WeakHashMap<>());
+
+  private static boolean canHandleRouting(FileSystemProvider provider) {
+    if (provider instanceof RoutingAwareFileSystemProvider) {
+      // `instanceof` is still faster than a successful cache hit.
+      // Even if `instanceof` misses, its negative impact is negligible. See a benchmark in the commit message.
+      return ((RoutingAwareFileSystemProvider)provider).canHandleRouting();
+    }
+    return ourCanHandleRoutingCache.computeIfAbsent(provider, MultiRoutingFileSystemProvider::canHandleRoutingImpl);
+  }
+
+  /**
+   * It often happens with such low-level things like this one that some class/interface gets loaded by two different classloaders:
+   * <ul>
+   *   <li>These particular classes are injected into the boot classpath.</li>
+   *   <li>The classes are loaded by {#link com.intellij.util.lang.PathClassLoader} again.</li>
+   * </ul>
+   * Therefore, the usual expression {@code a instanceof B} doesn't work when {@code a} is an instance of {@code B} loaded by
+   * a different classloader.
+   */
+  private static boolean canHandleRoutingImpl(FileSystemProvider provider) {
+    Class<?> providerClass = provider.getClass();
+    do {
+      for (Class<?> iface : providerClass.getInterfaces()) {
+        if (iface.getName().equals(RoutingAwareFileSystemProvider.class.getName())) {
+          try {
+            return (boolean)iface.getMethod("canHandleRouting").invoke(provider);
+          }
+          catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+      providerClass = providerClass.getSuperclass();
+    }
+    while (providerClass != null);
+    return false;
   }
 
   @Contract("null -> null; !null -> !null")
@@ -202,6 +244,8 @@ public final class MultiRoutingFileSystemProvider
       return null;
     }
     else if (path instanceof MultiRoutingFsPath) {
+      // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
+      // Tricks with classloaders are not expected here.
       return path;
     }
     else {
@@ -213,6 +257,8 @@ public final class MultiRoutingFileSystemProvider
   @Override
   protected @Nullable Path fromDelegatePath(@Nullable Path path) {
     if (path instanceof MultiRoutingFsPath) {
+      // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
+      // Tricks with classloaders are not expected here.
       return ((MultiRoutingFsPath)path).getDelegate();
     }
     else {

@@ -93,11 +93,13 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
         return callParent instanceof PsiStatement || callParent instanceof PsiLocalVariable || expression.isValueCompatible();
       }
 
+      if (callParent instanceof PsiReturnStatement) {
+        return true;
+      }
+      
       PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
       if (statements.length == 1) {
-        return callParent instanceof PsiStatement
-               || callParent instanceof PsiLocalVariable
-               || statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
+        return statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
       }
 
       final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);

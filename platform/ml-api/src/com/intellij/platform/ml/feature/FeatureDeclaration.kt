@@ -14,12 +14,18 @@ import org.jetbrains.annotations.ApiStatus
  * @param name The feature's name that is unique for this tier. It may not contain special symbols.
  * @param type The feature's type.
  * @param T The type of the value, with which the [type] can be instantiated ([FeatureValueType.instantiate]).
+ * @param descriptionProvider long feature description; since the description is not required during the typical application usage, the object allocation is deferred
  */
 @ApiStatus.Internal
 class FeatureDeclaration<T>(
   val name: String,
-  val type: FeatureValueType<T>
+  val type: FeatureValueType<T>,
+  val descriptionProvider: () -> String
 ) {
+
+  @Deprecated("Use primary constructor")
+  constructor(name: String, type: FeatureValueType<T>): this(name, type, { "" })
+
   init {
     require(name.all { it.isLetterOrDigit() || it == '_' }) {
       "Invalid feature name '$name': it shall not contain special symbols"
@@ -36,7 +42,7 @@ class FeatureDeclaration<T>(
    * Shortcut for the feature's instantiation
    */
   infix fun with(value: T): Feature {
-    return type.instantiate(name, value)
+    return type.instantiate(name, value, descriptionProvider)
   }
 
   /**
@@ -66,20 +72,36 @@ class FeatureDeclaration<T>(
   }
 
   companion object {
+    @Deprecated("Use the declaration with description")
     inline fun <reified T : Enum<*>> enum(name: String) = FeatureDeclaration(name, FeatureValueType.Enum(T::class.java))
+    inline fun <reified T : Enum<*>> enum(name: String, noinline descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Enum(T::class.java), descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun int(name: String) = FeatureDeclaration(name, FeatureValueType.Int)
+    fun int(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Int, descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun double(name: String) = FeatureDeclaration(name, FeatureValueType.Double)
+    fun double(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Double, descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun float(name: String) = FeatureDeclaration(name, FeatureValueType.Float)
+    fun float(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Float, descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun long(name: String) = FeatureDeclaration(name, FeatureValueType.Long)
+    fun long(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Long, descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun aClass(name: String) = FeatureDeclaration(name, FeatureValueType.Class)
+    fun aClass(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Class, descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun boolean(name: String) = FeatureDeclaration(name, FeatureValueType.Boolean)
+    fun boolean(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Boolean, descriptionProvider)
 
+    @Deprecated("Use the declaration with description")
     fun categorical(name: String, possibleValues: Set<String>) = FeatureDeclaration(name, FeatureValueType.Categorical(possibleValues))
+    fun categorical(name: String, possibleValues: Set<String>, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Categorical(possibleValues), descriptionProvider)
   }
 }

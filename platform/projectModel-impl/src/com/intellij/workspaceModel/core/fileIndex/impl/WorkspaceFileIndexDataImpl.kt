@@ -156,21 +156,24 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
 
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
     val start = Nanoseconds.now()
-
-    ensureIsUpToDate()
-    val action = { storedFileSet: StoredFileSet ->
-      when (storedFileSet) {
-        is WorkspaceFileSetImpl -> {
-          visitor.visitIncludedRoot(storedFileSet)
+    try {
+      ensureIsUpToDate()
+      //forEach call below isn't inlined, so the lambda is stored in a variable to prevent creation of many identical instances (IJPL-14542)
+      val action = { storedFileSet: StoredFileSet ->
+        when (storedFileSet) {
+          is WorkspaceFileSetImpl -> {
+            visitor.visitIncludedRoot(storedFileSet)
+          }
+          is ExcludedFileSet -> Unit
         }
-        is ExcludedFileSet -> Unit
+      }
+      for (value in fileSets.values) {
+        value.forEach(action)
       }
     }
-    for (value in fileSets.values) {
-      value.forEach(action)
+    finally {
+      WorkspaceFileIndexDataMetrics.visitFileSetsTimeNanosec.addElapsedTime(start)
     }
-
-    WorkspaceFileIndexDataMetrics.visitFileSetsTimeNanosec.addElapsedTime(start)
   }
 
   fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeNanosec.addMeasuredTime {

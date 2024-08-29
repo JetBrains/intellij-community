@@ -237,6 +237,10 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  public void testUnreachableCodeReportedNoReturnInClassMember() {
+    doMultiFileTest();
+  }
+
   // PY-53703
   public void testUnreachableCodeReportedAfterNever() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {

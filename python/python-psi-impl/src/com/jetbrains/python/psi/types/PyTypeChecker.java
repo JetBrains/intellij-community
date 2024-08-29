@@ -35,8 +35,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.jetbrains.python.PyNames.FUNCTION;
-import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.getReturnTypeToAnalyzeAsCallType;
+import static com.jetbrains.python.psi.PyUtil.*;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 public final class PyTypeChecker {
@@ -1252,7 +1251,7 @@ public final class PyTypeChecker {
         final PyParameter param = paramWrapper.getParameter();
         final PyFunction function = as(ScopeUtil.getScopeOwner(param), PyFunction.class);
         assert function != null;
-        if (function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD) {
+        if (isNewMethod(function) || function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD) {
           actualType = PyTypeUtil.toStream(actualType)
             .select(PyClassLikeType.class)
             .map(PyClassLikeType::toClass)
@@ -1271,7 +1270,10 @@ public final class PyTypeChecker {
 
         PyClass containingClass = function.getContainingClass();
         assert containingClass != null;
-        PyCollectionType genericClass = findGenericDefinitionType(containingClass, context);
+        PyType genericClass = findGenericDefinitionType(containingClass, context);
+        if (genericClass instanceof PyInstantiableType<?> instantiableType && (isNewMethod(function) || function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD)) {
+          genericClass = instantiableType.toClass();
+        }
         if (genericClass != null && !match(genericClass, expectedType, context, substitutions)) {
           return null;
         }

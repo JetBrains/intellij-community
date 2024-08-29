@@ -24,7 +24,8 @@ remotenames.hoistedpeer
   namespace (default: 'default')
 """
 
-from __future__ import absolute_import
+
+import collections.abc
 
 from mercurial.i18n import _
 
@@ -35,7 +36,6 @@ from mercurial import (
     extensions,
     logexchange,
     namespaces,
-    pycompat,
     registrar,
     revsetlang,
     smartset,
@@ -44,15 +44,6 @@ from mercurial import (
 )
 
 from mercurial.utils import stringutil
-
-if pycompat.ispy3:
-    import collections.abc
-
-    mutablemapping = collections.abc.MutableMapping
-else:
-    import collections
-
-    mutablemapping = collections.MutableMapping
 
 # Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
 # extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
@@ -82,7 +73,7 @@ configitem(
 )
 
 
-class lazyremotenamedict(mutablemapping):
+class lazyremotenamedict(collections.abc.MutableMapping):
     """
     Read-only dict-like Class to lazily resolve remotename entries
 
@@ -143,10 +134,10 @@ class lazyremotenamedict(mutablemapping):
     def __len__(self):
         return len(self.potentialentries)
 
-    def __setitem__(self):
+    def __setitem__(self, k, v):
         raise NotImplementedError
 
-    def __delitem__(self):
+    def __delitem__(self, k):
         raise NotImplementedError
 
     def _fetchandcache(self, key):
@@ -171,13 +162,13 @@ class lazyremotenamedict(mutablemapping):
         if not self.loaded:
             self._load()
 
-        for k, vtup in pycompat.iteritems(self.potentialentries):
+        for k, vtup in self.potentialentries.items():
             yield (k, [bin(vtup[0])])
 
     items = iteritems
 
 
-class remotenames(object):
+class remotenames:
     """
     This class encapsulates all the remotenames state. It also contains
     methods to access that state in convenient ways. Remotenames are lazy
@@ -208,7 +199,7 @@ class remotenames(object):
         if not self._nodetobmarks:
             bmarktonodes = self.bmarktonodes()
             self._nodetobmarks = {}
-            for name, node in pycompat.iteritems(bmarktonodes):
+            for name, node in bmarktonodes.items():
                 self._nodetobmarks.setdefault(node[0], []).append(name)
         return self._nodetobmarks
 
@@ -219,7 +210,7 @@ class remotenames(object):
         if not self._nodetobranch:
             branchtonodes = self.branchtonodes()
             self._nodetobranch = {}
-            for name, nodes in pycompat.iteritems(branchtonodes):
+            for name, nodes in branchtonodes.items():
                 for node in nodes:
                     self._nodetobranch.setdefault(node, []).append(name)
         return self._nodetobranch
@@ -229,7 +220,7 @@ class remotenames(object):
             marktonodes = self.bmarktonodes()
             self._hoisttonodes = {}
             hoist += b'/'
-            for name, node in pycompat.iteritems(marktonodes):
+            for name, node in marktonodes.items():
                 if name.startswith(hoist):
                     name = name[len(hoist) :]
                     self._hoisttonodes[name] = node
@@ -240,7 +231,7 @@ class remotenames(object):
             marktonodes = self.bmarktonodes()
             self._nodetohoists = {}
             hoist += b'/'
-            for name, node in pycompat.iteritems(marktonodes):
+            for name, node in marktonodes.items():
                 if name.startswith(hoist):
                     name = name[len(hoist) :]
                     self._nodetohoists.setdefault(node[0], []).append(name)
@@ -264,7 +255,7 @@ def wrapprintbookmarks(orig, ui, repo, fm, bmarks):
 
 
 def extsetup(ui):
-    extensions.wrapfunction(bookmarks, b'_printbookmarks', wrapprintbookmarks)
+    extensions.wrapfunction(bookmarks, '_printbookmarks', wrapprintbookmarks)
 
 
 def reposetup(ui, repo):

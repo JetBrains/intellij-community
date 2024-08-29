@@ -2,7 +2,7 @@
     {
         "ideVersion": "2023.1 EAP-INF",
 
-        "kotlinVersion": "2.0.0",
+        "kotlinVersion": "2.0.10",
         "kotlinForComposeVersion": "1.7.20",
         "composeCompilerExtension": "1.4.3",
 

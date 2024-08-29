@@ -8,13 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import com.intellij.internal.statistic.eventLog.events.EventField as IJEventField
 
 @ApiStatus.Internal
-sealed class IJSpecificEventField<T>(name: String, description: String?) : CustomRuleEventField<T>(name, description)
+sealed class IJSpecificEventField<T>(name: String, descriptionProvider: () -> String) : CustomRuleEventField<T>(name, descriptionProvider)
 
 @ApiStatus.Internal
-class VersionEventField(name: String, description: String?) : IJSpecificEventField<Version>(name, description)
+class VersionEventField(name: String, descriptionProvider: () -> String) : IJSpecificEventField<Version>(name, descriptionProvider)
 
 @ApiStatus.Internal
-class LanguageEventField(name: String, description: String?) : IJSpecificEventField<Language>(name, description)
+class LanguageEventField(name: String, descriptionProvider: () -> String) : IJSpecificEventField<Language>(name, descriptionProvider)
 
 @ApiStatus.Internal
-open class CustomEventField<T>(val baseIJEventField: IJEventField<T>) : IJSpecificEventField<T>(baseIJEventField.name, baseIJEventField.description)
+open class CustomEventField<T>(val baseIJEventField: IJEventField<T>) : IJSpecificEventField<T>(baseIJEventField.name, { baseIJEventField.description ?: "" })

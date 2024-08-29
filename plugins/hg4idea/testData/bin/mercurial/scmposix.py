@@ -1,17 +1,23 @@
-from __future__ import absolute_import
-
 import array
 import errno
 import fcntl
 import os
 import sys
+import typing
 
-from .pycompat import getattr
+from typing import (
+    List,
+    Tuple,
+)
+
 from . import (
     encoding,
     pycompat,
     util,
 )
+
+if typing.TYPE_CHECKING:
+    from . import ui as uimod
 
 # BSD 'more' escapes ANSI color sequences by default. This can be disabled by
 # $MORE variable, but there's no compatible option with Linux 'more'. Given
@@ -20,7 +26,7 @@ from . import (
 fallbackpager = b'less'
 
 
-def _rcfiles(path):
+def _rcfiles(path: bytes) -> List[bytes]:
     rcs = [os.path.join(path, b'hgrc')]
     rcdir = os.path.join(path, b'hgrc.d')
     try:
@@ -36,7 +42,7 @@ def _rcfiles(path):
     return rcs
 
 
-def systemrcpath():
+def systemrcpath() -> List[bytes]:
     path = []
     if pycompat.sysplatform == b'plan9':
         root = b'lib/mercurial'
@@ -51,11 +57,9 @@ def systemrcpath():
     return path
 
 
-def userrcpath():
+def userrcpath() -> List[bytes]:
     if pycompat.sysplatform == b'plan9':
         return [encoding.environ[b'home'] + b'/lib/hgrc']
-    elif pycompat.isdarwin:
-        return [os.path.expanduser(b'~/.hgrc')]
     else:
         confighome = encoding.environ.get(b'XDG_CONFIG_HOME')
         if confighome is None or not os.path.isabs(confighome):
@@ -67,7 +71,7 @@ def userrcpath():
         ]
 
 
-def termsize(ui):
+def termsize(ui: "uimod.ui") -> Tuple[int, int]:
     try:
         import termios
 
@@ -90,7 +94,7 @@ def termsize(ui):
         except ValueError:
             pass
         except IOError as e:
-            if e[0] == errno.EINVAL:  # pytype: disable=unsupported-operands
+            if e.errno == errno.EINVAL:
                 pass
             else:
                 raise

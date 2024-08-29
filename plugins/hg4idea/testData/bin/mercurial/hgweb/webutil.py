@@ -6,7 +6,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import copy
 import difflib
@@ -15,7 +14,6 @@ import re
 
 from ..i18n import _
 from ..node import hex, short
-from ..pycompat import setattr
 
 from .common import (
     ErrorResponse,
@@ -57,7 +55,7 @@ def archivelist(ui, nodeid, url=None):
     allowed = ui.configlist(b'web', b'allow-archive', untrusted=True)
     archives = []
 
-    for typ, spec in pycompat.iteritems(archivespecs):
+    for typ, spec in archivespecs.items():
         if typ in allowed or ui.configbool(
             b'web', b'allow' + typ, untrusted=True
         ):
@@ -100,7 +98,7 @@ def _navseq(step, firststep=None):
         step *= 10
 
 
-class revnav(object):
+class revnav:
     def __init__(self, repo):
         """Navigation generation object
 
@@ -212,7 +210,7 @@ def _ctxsgen(context, ctxs):
             b'description': s.description(),
             b'branch': s.branch(),
         }
-        if util.safehasattr(s, b'path'):
+        if hasattr(s, 'path'):
             d[b'file'] = s.path()
         yield d
 
@@ -231,16 +229,16 @@ def difffeatureopts(req, ui, section):
         ui, untrusted=True, section=section, whitespace=True
     )
 
-    for k in (
-        b'ignorews',
-        b'ignorewsamount',
-        b'ignorewseol',
-        b'ignoreblanklines',
+    for kb, ks in (
+        (b'ignorews', 'ignorews'),
+        (b'ignorewsamount', 'ignorewsamount'),
+        (b'ignorewseol', 'ignorewseol'),
+        (b'ignoreblanklines', 'ignoreblanklines'),
     ):
-        v = req.qsparams.get(k)
+        v = req.qsparams.get(kb)
         if v is not None:
             v = stringutil.parsebool(v)
-            setattr(diffopts, k, v if v is not None else True)
+            setattr(diffopts, ks, v if v is not None else True)
 
     return diffopts
 
@@ -721,7 +719,7 @@ def _getcompblockgen(context, leftlines, rightlines, opcodes):
         len1 = lhi - llo
         len2 = rhi - rlo
         count = min(len1, len2)
-        for i in pycompat.xrange(count):
+        for i in range(count):
             yield _compline(
                 type=type,
                 leftlineno=llo + i + 1,
@@ -730,7 +728,7 @@ def _getcompblockgen(context, leftlines, rightlines, opcodes):
                 rightline=rightlines[rlo + i],
             )
         if len1 > len2:
-            for i in pycompat.xrange(llo + count, lhi):
+            for i in range(llo + count, lhi):
                 yield _compline(
                     type=type,
                     leftlineno=i + 1,
@@ -739,7 +737,7 @@ def _getcompblockgen(context, leftlines, rightlines, opcodes):
                     rightline=None,
                 )
         elif len2 > len1:
-            for i in pycompat.xrange(rlo + count, rhi):
+            for i in range(rlo + count, rhi):
                 yield _compline(
                     type=type,
                     leftlineno=None,
@@ -864,7 +862,7 @@ class sessionvars(templateutil.wrapped):
 
     def itermaps(self, context):
         separator = self._start
-        for key, value in sorted(pycompat.iteritems(self._vars)):
+        for key, value in sorted(self._vars.items()):
             yield {
                 b'name': key,
                 b'value': pycompat.bytestr(value),

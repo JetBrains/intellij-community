@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper;
 
 import com.intellij.openapi.application.Application;
@@ -28,7 +28,7 @@ import static com.intellij.util.concurrency.ThreadingAssertions.*;
  * Note that if this happens, you need to update the instrumenter and install the updated version of the devkit to IDEA.
  * <p/>
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
   private ExecutorService mySingleThreadExecutor;

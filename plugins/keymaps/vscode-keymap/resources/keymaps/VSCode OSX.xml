@@ -3,6 +3,9 @@
         <keyboard-shortcut first-keystroke="delete" />
         <keyboard-shortcut first-keystroke="back_space" />
     </action>
+  <action id="EditorDelete">
+    <keyboard-shortcut first-keystroke="DELETE"/>
+  </action>
   <action id="ActivateDebugToolWindow">
     <keyboard-shortcut first-keystroke="shift meta d" />
     <keyboard-shortcut first-keystroke="meta shift y"  />

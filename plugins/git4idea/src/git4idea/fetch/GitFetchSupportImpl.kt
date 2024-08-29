@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitNotificationIdsHolder
@@ -296,9 +295,11 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     fun success() = error == null
   }
 
-  private class FetchResultImpl(val project: Project,
-                                val vcsNotifier: VcsNotifier,
-                                val results: Map<GitRepository, RepoResult>) : GitFetchResult {
+  private class FetchResultImpl(
+    val project: Project,
+    val vcsNotifier: VcsNotifier,
+    val results: Map<GitRepository, RepoResult>,
+  ) : GitFetchResult {
 
     private val isFailed = results.values.any { !it.totallySuccessful() }
 
@@ -325,7 +326,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         failureTitle ?: GitBundle.message("notification.title.fetch.failure")
       }
       val message = buildMessage(failureTitle)
-      val notification = STANDARD_NOTIFICATION.createNotification(title, message, type)
+      val notification = VcsNotifier.standardNotification().createNotification(title, message, type)
       notification.setDisplayId(if (!isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
       vcsNotifier.notify(notification)
     }

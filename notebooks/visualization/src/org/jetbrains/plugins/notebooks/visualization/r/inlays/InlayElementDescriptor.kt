@@ -4,9 +4,6 @@
 
 package org.jetbrains.plugins.notebooks.visualization.r.inlays
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
@@ -42,23 +39,4 @@ interface InlayElementDescriptor {
    * the method is called when inlay output of [psi] is intentionally removed by a user.
    */
   fun cleanup(psi: PsiElement): Future<Void>? = null
-
-  /**
-   * Returns offset in the document, to which an output inlay should be appended.
-   */
-  fun getInlayOffset(psiElement: PsiElement): Int =
-    // By default returns the offset to the last non-whitespace character in psiCell text.
-    psiElement.textRange.endOffset - 1
-
-  fun shouldUpdateInlays(event: DocumentEvent): Boolean =
-    event.oldFragment.contains("\n") || event.newFragment.contains("\n")
-}
-
-interface InlayDescriptorProvider {
-
-  fun getInlayDescriptor(editor: Editor): InlayElementDescriptor?
-
-  companion object {
-    val EP = ExtensionPointName.create<InlayDescriptorProvider>("com.intellij.datavis.inlays.inlayDescriptorProvider")
-  }
 }

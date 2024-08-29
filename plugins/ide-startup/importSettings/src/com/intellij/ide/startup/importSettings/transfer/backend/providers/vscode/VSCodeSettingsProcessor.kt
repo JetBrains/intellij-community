@@ -41,7 +41,20 @@ class VSCodeSettingsProcessor(private val scope: CoroutineScope) {
     private val timeAfterLastModificationToConsiderTheInstanceRecent = Duration.ofHours(365 * 24) // one year
   }
 
-  fun willDetectAtLeastSomething(): Boolean = generalSettingsFile.exists()
+  fun willDetectAtLeastSomething(): Boolean {
+    if (generalSettingsFile.exists())
+      return true
+
+    if (!pluginsDirectory.exists() || !pluginsDirectory.isDirectory)
+      return false
+    val pluginsDirEntries = pluginsDirectory.listFiles() ?: return false  // no extensions and config file
+
+    for (pluginDirEntry in pluginsDirEntries) {
+      if (pluginDirEntry.isDirectory)
+        return true
+    }
+    return false
+  }
 
   fun isInstanceRecentEnough(): Boolean {
     try {

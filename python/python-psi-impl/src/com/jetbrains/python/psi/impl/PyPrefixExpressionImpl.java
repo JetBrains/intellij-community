@@ -44,6 +44,12 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      final PyExpression operand = getOperand();
+      if (operand != null) {
+        final PyType operandType = context.getType(operand);
+        return (operandType instanceof PyNarrowedType) ? ((PyNarrowedType)operandType).negate()
+                                                       : PyBuiltinCache.getInstance(this).getBoolType();
+      }
       return PyBuiltinCache.getInstance(this).getBoolType();
     }
     final boolean isAwait = getOperator() == PyTokenTypes.AWAIT_KEYWORD;

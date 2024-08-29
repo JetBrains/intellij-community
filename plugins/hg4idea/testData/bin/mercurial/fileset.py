@@ -5,13 +5,10 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
-import errno
 import re
 
 from .i18n import _
-from .pycompat import getattr
 from . import (
     error,
     filesetlang,
@@ -504,7 +501,7 @@ methods = {
 }
 
 
-class matchctx(object):
+class matchctx:
     def __init__(self, basectx, ctx, cwd, badfn=None):
         self._basectx = basectx
         self.ctx = ctx
@@ -576,16 +573,14 @@ class matchctx(object):
                     return False
                 try:
                     return predfn(fctx)
-                except (IOError, OSError) as e:
-                    # open()-ing a directory fails with EACCES on Windows
-                    if e.errno in (
-                        errno.ENOENT,
-                        errno.EACCES,
-                        errno.ENOTDIR,
-                        errno.EISDIR,
-                    ):
-                        return False
-                    raise
+                # open()-ing a directory fails with PermissionError on Windows
+                except (
+                    FileNotFoundError,
+                    PermissionError,
+                    NotADirectoryError,
+                    IsADirectoryError,
+                ):
+                    return False
 
         else:
 
@@ -614,7 +609,7 @@ def match(ctx, cwd, expr, badfn=None):
 
 def loadpredicate(ui, extname, registrarobj):
     """Load fileset predicates from specified registrarobj"""
-    for name, func in pycompat.iteritems(registrarobj._table):
+    for name, func in registrarobj._table.items():
         symbols[name] = func
 
 

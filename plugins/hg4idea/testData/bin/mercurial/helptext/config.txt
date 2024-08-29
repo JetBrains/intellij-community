@@ -513,13 +513,18 @@ effect and style see :hg:`help color`.
 ``update.check``
     Determines what level of checking :hg:`update` will perform before moving
     to a destination revision. Valid values are ``abort``, ``none``,
-    ``linear``, and ``noconflict``. ``abort`` always fails if the working
-    directory has uncommitted changes. ``none`` performs no checking, and may
-    result in a merge with uncommitted changes. ``linear`` allows any update
-    as long as it follows a straight line in the revision history, and may
-    trigger a merge with uncommitted changes. ``noconflict`` will allow any
-    update which would not trigger a merge with uncommitted changes, if any
-    are present.
+    ``linear``, and ``noconflict``.
+
+    - ``abort`` always fails if the working directory has uncommitted changes.
+
+    - ``none`` performs no checking, and may result in a merge with uncommitted changes.
+
+    - ``linear`` allows any update as long as it follows a straight line in the
+      revision history, and may trigger a merge with uncommitted changes.
+
+    - ``noconflict`` will allow any update which would not trigger a merge with
+      uncommitted changes, if any are present.
+
     (default: ``linear``)
 
 ``update.requiredest``
@@ -850,6 +855,24 @@ Example for ``~/.hgrc``::
   # (this extension will get loaded from the file specified)
   myfeature = ~/.hgext/myfeature.py
 
+If an extension fails to load, a warning will be issued, and Mercurial will
+proceed. To enforce that an extension must be loaded, one can set the `required`
+suboption in the config::
+
+  [extensions]
+  myfeature = ~/.hgext/myfeature.py
+  myfeature:required = yes
+
+To debug extension loading issue, one can add `--traceback` to their mercurial
+invocation.
+
+A default setting can we set using the special `*` extension key::
+
+  [extensions]
+  *:required = yes
+  myfeature = ~/.hgext/myfeature.py
+  rebase=
+
 
 ``format``
 ----------
@@ -892,29 +915,144 @@ https://www.mercurial-scm.org/wiki/MissingRequirement
 
     Enabled by default.
 
+``use-dirstate-v2``
+    Enable or disable the experimental "dirstate-v2" feature. The dirstate
+    functionality is shared by all commands interacting with the working copy.
+    The new version is more robust, faster and stores more information.
+
+    The performance-improving version of this feature is currently only
+    implemented in Rust (see :hg:`help rust`), so people not using a version of
+    Mercurial compiled with the Rust parts might actually suffer some slowdown.
+    For this reason, such versions will by default refuse to access repositories
+    with "dirstate-v2" enabled.
+
+    This behavior can be adjusted via configuration: check
+    :hg:`help config.storage.dirstate-v2.slow-path` for details.
+
+    Repositories with this on-disk format require Mercurial 6.0 or above.
+
+    By default this format variant is disabled if the fast implementation is not
+    available, and enabled by default if the fast implementation is available.
+
+    To accomodate installations of Mercurial without the fast implementation,
+    you can downgrade your repository. To do so run the following command:
+
+    $ hg debugupgraderepo \
+          --run \
+          --config format.use-dirstate-v2=False \
+          --config storage.dirstate-v2.slow-path=allow
+
+    For a more comprehensive guide, see :hg:`help internals.dirstate-v2`.
+
+``use-dirstate-v2.automatic-upgrade-of-mismatching-repositories``
+   When enabled, an automatic upgrade will be triggered when a repository format
+   does not match its `use-dirstate-v2` config.
+
+   This is an advanced behavior that most users will not need. We recommend you
+   don't use this unless you are a seasoned administrator of a Mercurial install
+   base.
+
+   Automatic upgrade means that any process accessing the repository will
+   upgrade the repository format to use `dirstate-v2`. This only triggers if a
+   change is needed. This also applies to operations that would have been
+   read-only (like hg status).
+
+   If the repository cannot be locked, the automatic-upgrade operation will be
+   skipped. The next operation will attempt it again.
+
+   This configuration will apply for moves in any direction, either adding the
+   `dirstate-v2` format if `format.use-dirstate-v2=yes` or removing the
+   `dirstate-v2` requirement if `format.use-dirstate-v2=no`. So we recommend
+   setting both this value and `format.use-dirstate-v2` at the same time.
+
+``use-dirstate-v2.automatic-upgrade-of-mismatching-repositories:quiet``
+    Hide message when performing such automatic upgrade.
+
+``use-dirstate-tracked-hint``
+    Enable or disable the writing of "tracked key" file alongside the dirstate.
+    (default to disabled)
+
+    That "tracked-hint" can help external automations to detect changes to the
+    set of tracked files. (i.e the result of `hg files` or `hg status -macd`)
+
+    The tracked-hint is written in a new `.hg/dirstate-tracked-hint`. That file
+    contains two lines:
+    - the first line is the file version (currently: 1),
+    - the second line contains the "tracked-hint".
+    That file is written right after the dirstate is written.
+
+    The tracked-hint changes whenever the set of file tracked in the dirstate
+    changes. The general idea is:
+    - if the hint is identical, the set of tracked file SHOULD be identical,
+    - if the hint is different, the set of tracked file MIGHT be different.
+
+    The "hint is identical" case uses `SHOULD` as the dirstate and the hint file
+    are two distinct files and therefore that cannot be read or written to in an
+    atomic way. If the key is identical, nothing garantees that the dirstate is
+    not updated right after the hint file. This is considered a negligible
+    limitation for the intended usecase. It is actually possible to prevent this
+    race by taking the repository lock during read operations.
+
+    They are two "ways" to use this feature:
+
+    1) monitoring changes to the `.hg/dirstate-tracked-hint`, if the file
+    changes, the tracked set might have changed.
+
+    2) storing the value and comparing it to a later value.
+
+
+``use-dirstate-tracked-hint.automatic-upgrade-of-mismatching-repositories``
+   When enabled, an automatic upgrade will be triggered when a repository format
+   does not match its `use-dirstate-tracked-hint` config.
+
+   This is an advanced behavior that most users will not need. We recommend you
+   don't use this unless you are a seasoned administrator of a Mercurial install
+   base.
+
+   Automatic upgrade means that any process accessing the repository will
+   upgrade the repository format to use `dirstate-tracked-hint`. This only
+   triggers if a change is needed. This also applies to operations that would
+   have been read-only (like hg status).
+
+   If the repository cannot be locked, the automatic-upgrade operation will be
+   skipped. The next operation will attempt it again.
+
+   This configuration will apply for moves in any direction, either adding the
+   `dirstate-tracked-hint` format if `format.use-dirstate-tracked-hint=yes` or
+   removing the `dirstate-tracked-hint` requirement if
+   `format.use-dirstate-tracked-hint=no`. So we recommend setting both this
+   value and `format.use-dirstate-tracked-hint` at the same time.
+
+
+``use-dirstate-tracked-hint.automatic-upgrade-of-mismatching-repositories:quiet``
+    Hide message when performing such automatic upgrade.
+
+
 ``use-persistent-nodemap``
     Enable or disable the "persistent-nodemap" feature which improves
-    performance if the rust extensions are available.
+    performance if the Rust extensions are available.
 
-    The "persistence-nodemap" persist the "node -> rev" on disk removing the
+    The "persistent-nodemap" persist the "node -> rev" on disk removing the
     need to dynamically build that mapping for each Mercurial invocation. This
-    significantly reduce the startup cost of various local and server-side
-    operation for larger repository.
+    significantly reduces the startup cost of various local and server-side
+    operation for larger repositories.
 
-    The performance improving version of this feature is currently only
-    implemented in Rust, so people not using a version of Mercurial compiled
-    with the Rust part  might actually suffer some slowdown. For this reason,
-    Such version will by default refuse to access such repositories. That
-    behavior can be controlled by configuration. Check
+    The performance-improving version of this feature is currently only
+    implemented in Rust (see :hg:`help rust`), so people not using a version of
+    Mercurial compiled with the Rust parts might actually suffer some slowdown.
+    For this reason, such versions will by default refuse to access repositories
+    with "persistent-nodemap".
+
+    This behavior can be adjusted via configuration: check
     :hg:`help config.storage.revlog.persistent-nodemap.slow-path` for details.
 
-    Repository with this on-disk format require Mercurial version 5.4 or above.
+    Repositories with this on-disk format require Mercurial 5.4 or above.
 
-    By default this format variant is disabled if fast implementation is not
-    available and enabled by default if the fast implementation is available.
+    By default this format variant is disabled if the fast implementation is not
+    available, and enabled by default if the fast implementation is available.
 
-    To accomodate install of Mercurial without the fast implementation you can
-    downgrade your repository. To do so run the following command:
+    To accomodate installations of Mercurial without the fast implementation,
+    you can downgrade your repository. To do so run the following command:
 
     $ hg debugupgraderepo \
           --run \
@@ -939,12 +1077,36 @@ https://www.mercurial-scm.org/wiki/MissingRequirement
 
     Beware that existing shares will not be upgraded/downgraded, and by
     default, Mercurial will refuse to interact with them until the mismatch
-    is resolved. See :hg:`help config share.safe-mismatch.source-safe` and
-    :hg:`help config share.safe-mismatch.source-not-safe` for details.
+    is resolved. See :hg:`help config.share.safe-mismatch.source-safe` and
+    :hg:`help config.share.safe-mismatch.source-not-safe` for details.
 
     Introduced in Mercurial 5.7.
 
-    Disabled by default.
+    Enabled by default in Mercurial 6.1.
+
+``use-share-safe.automatic-upgrade-of-mismatching-repositories``
+   When enabled, an automatic upgrade will be triggered when a repository format
+   does not match its `use-share-safe` config.
+
+   This is an advanced behavior that most users will not need. We recommend you
+   don't use this unless you are a seasoned administrator of a Mercurial install
+   base.
+
+   Automatic upgrade means that any process accessing the repository will
+   upgrade the repository format to use `share-safe`. This only triggers if a
+   change is needed. This also applies to operation that would have been
+   read-only (like hg status).
+
+   If the repository cannot be locked, the automatic-upgrade operation will be
+   skipped. The next operation will attempt it again.
+
+   This configuration will apply for moves in any direction, either adding the
+   `share-safe` format if `format.use-share-safe=yes` or removing the
+   `share-safe` requirement if `format.use-share-safe=no`. So we recommend
+   setting both this value and `format.use-share-safe` at the same time.
+
+``use-share-safe.automatic-upgrade-of-mismatching-repositories:quiet``
+    Hide message when performing such automatic upgrade.
 
 ``usestore``
     Enable or disable the "store" repository format which improves
@@ -1156,6 +1318,12 @@ be ``$HG_HOOKTYPE=incoming`` and ``$HG_HOOKNAME=incoming.email``.
   changeset to tag is in ``$HG_NODE``. The name of tag is in ``$HG_TAG``. The
   tag is local if ``$HG_LOCAL=1``, or in the repository if ``$HG_LOCAL=0``.
 
+``pretransmit-inline-clone-bundle``
+  Run before transferring an inline clonebundle to the peer.
+  If the exit status is 0, the inline clonebundle will be allowed to be
+  transferred. A non-zero status will cause the transfer to fail.
+  The path of the inline clonebundle is in ``$HG_CLONEBUNDLEPATH``.
+
 ``pretxnopen``
   Run before any new repository transaction is open. The reason for the
   transaction will be in ``$HG_TXNNAME``, and a unique identifier for the
@@ -1269,6 +1437,12 @@ be ``$HG_HOOKTYPE=incoming`` and ``$HG_HOOKNAME=incoming.email``.
   new parent is in ``$HG_PARENT1``. If updating to a merge, the ID of second new
   parent is in ``$HG_PARENT2``. If the update succeeded, ``$HG_ERROR=0``. If the
   update failed (e.g. because conflicts were not resolved), ``$HG_ERROR=1``.
+
+``prelock``
+  run before the store lock is taken, mostly used for test and debug.
+
+``prewlock``
+  run before the working copy lock is taken, mostly used for test and debug.
 
 .. note::
 
@@ -1460,7 +1634,7 @@ proxy.
     in ``http_proxy.no``. (default: False)
 
 ``http``
-----------
+--------
 
 Used to configure access to Mercurial repositories via HTTP.
 
@@ -1748,6 +1922,54 @@ The following sub-options can be defined:
    Revsets specifying bookmarks will not result in the bookmark being
    pushed.
 
+``bookmarks.mode``
+  How bookmark will be dealt during the exchange. It support the following value
+
+  - ``default``: the default behavior, local and remote bookmarks are "merged"
+    on push/pull.
+
+  - ``mirror``: when pulling, replace local bookmarks by remote bookmarks. This
+    is useful to replicate a repository, or as an optimization.
+
+  - ``ignore``: ignore bookmarks during exchange.
+    (This currently only affect pulling)
+
+.. container:: verbose
+
+  ``pulled-delta-reuse-policy``
+  Control the policy regarding deltas sent by the remote during pulls.
+
+  This is an advanced option that non-admin users should not need to understand
+  or set. This option can be used to speed up pulls from trusted central
+  servers, or to fix-up deltas from older servers.
+
+  It supports the following values:
+
+  - ``default``: use the policy defined by
+    `storage.revlog.reuse-external-delta-parent`,
+
+  - ``no-reuse``: start a new optimal delta search for each new revision we add
+    to the repository. The deltas from the server will be reused when the base
+    it applies to is tested (this can be frequent if that base is the one and
+    unique parent of that revision). This can significantly slowdown pulls but
+    will result in an optimized storage space if the remote peer is sending poor
+    quality deltas.
+
+  - ``try-base``: try to reuse the deltas from the remote peer as long as they
+    create a valid delta-chain in the local repository. This speeds up the
+    unbundling process, but can result in sub-optimal storage space if the
+    remote peer is sending poor quality deltas.
+
+  - ``forced``: the deltas from the peer will be reused in all cases, even if
+    the resulting delta-chain is "invalid". This setting will ensure the bundle
+    is applied at minimal CPU cost, but it can result in longer delta chains
+    being created on the client, making revisions potentially slower to access
+    in the future. If you think you need this option, you should make sure you
+    are also talking to the Mercurial developer community to get confirmation.
+
+  See `hg help config.storage.revlog.reuse-external-delta-parent` for a similar
+  global option. That option defines the behavior of `default`.
+
 The following special named paths exist:
 
 ``default``
@@ -1982,29 +2204,76 @@ Alias definitions for revsets. See :hg:`help revsets` for details.
     Currently, only the rebase and absorb commands consider this configuration.
     (EXPERIMENTAL)
 
+``rhg``
+-------
+
+The pure Rust fast-path for Mercurial. See `rust/README.rst` in the Mercurial repository.
+
+``fallback-executable``
+    Path to the executable to run in a sub-process when falling back to
+    another implementation of Mercurial.
+
+``fallback-immediately``
+    Fall back to ``fallback-executable`` as soon as possible, regardless of
+    the `rhg.on-unsupported` configuration. Useful for debugging, for example to
+    bypass `rhg` if the deault `hg` points to `rhg`.
+
+    Note that because this requires loading the configuration, it is possible
+    that `rhg` error out before being able to fall back.
+
+``ignored-extensions``
+    Controls which extensions should be ignored by `rhg`. By default, `rhg`
+    triggers the `rhg.on-unsupported` behavior any unsupported extensions.
+    Users can disable that behavior when they know that a given extension
+    does not need support from `rhg`.
+
+    Expects a list of extension names, or ``*`` to ignore all extensions.
+
+    Note: ``*:<suboption>`` is also a valid extension name for this
+    configuration option.
+    As of this writing, the only valid "global" suboption is ``required``.
+
+``on-unsupported``
+    Controls the behavior of `rhg` when detecting unsupported features.
+
+    Possible values are `abort` (default), `abort-silent` and `fallback`.
+
+    ``abort``
+        Print an error message describing what feature is not supported,
+        and exit with code 252
+
+    ``abort-silent``
+        Silently exit with code 252
+
+    ``fallback``
+        Try running the fallback executable with the same parameters
+        (and trace the fallback reason, use `RUST_LOG=trace` to see).
+
 ``share``
 ---------
 
 ``safe-mismatch.source-safe``
-
     Controls what happens when the shared repository does not use the
     share-safe mechanism but its source repository does.
 
     Possible values are `abort` (default), `allow`, `upgrade-abort` and
-    `upgrade-abort`.
+    `upgrade-allow`.
 
     ``abort``
-    Disallows running any command and aborts
+        Disallows running any command and aborts
     ``allow``
-    Respects the feature presence in the share source
+        Respects the feature presence in the share source
     ``upgrade-abort``
-    tries to upgrade the share to use share-safe; if it fails, aborts
+        Tries to upgrade the share to use share-safe; if it fails, aborts
     ``upgrade-allow``
-    tries to upgrade the share; if it fails, continue by
-    respecting the share source setting
+        Tries to upgrade the share; if it fails, continue by
+        respecting the share source setting
 
-    Check :hg:`help config format.use-share-safe` for details about the
+    Check :hg:`help config.format.use-share-safe` for details about the
     share-safe feature.
+
+``safe-mismatch.source-safe:verbose-upgrade``
+    Display a message when upgrading, (default: True)
 
 ``safe-mismatch.source-safe.warn``
     Shows a warning on operations if the shared repository does not use
@@ -2012,25 +2281,27 @@ Alias definitions for revsets. See :hg:`help revsets` for details.
     (default: True)
 
 ``safe-mismatch.source-not-safe``
-
     Controls what happens when the shared repository uses the share-safe
     mechanism but its source does not.
 
     Possible values are `abort` (default), `allow`, `downgrade-abort` and
-    `downgrade-abort`.
+    `downgrade-allow`.
 
     ``abort``
-    Disallows running any command and aborts
+        Disallows running any command and aborts
     ``allow``
-    Respects the feature presence in the share source
+        Respects the feature presence in the share source
     ``downgrade-abort``
-    tries to downgrade the share to not use share-safe; if it fails, aborts
+        Tries to downgrade the share to not use share-safe; if it fails, aborts
     ``downgrade-allow``
-    tries to downgrade the share to not use share-safe;
-    if it fails, continue by respecting the shared source setting
+        Tries to downgrade the share to not use share-safe;
+        if it fails, continue by respecting the shared source setting
 
-    Check :hg:`help config format.use-share-safe` for details about the
+    Check :hg:`help config.format.use-share-safe` for details about the
     share-safe feature.
+
+``safe-mismatch.source-not-safe:verbose-upgrade``
+    Display a message when upgrading, (default: True)
 
 ``safe-mismatch.source-not-safe.warn``
     Shows a warning on operations if the shared repository uses share-safe,
@@ -2058,6 +2329,21 @@ category impact performance and repository size.
     To fix affected revisions that already exist within the repository, one can
     use :hg:`debug-repair-issue-6528`.
 
+.. container:: verbose
+
+    ``revlog.delta-parent-search.candidate-group-chunk-size``
+        Tune the number of delta bases the storage will consider in the
+        same "round" of search. In some very rare cases, using a smaller value
+        might result in faster processing at the possible expense of storage
+        space, while using larger values might result in slower processing at the
+        possible benefit of storage space. A value of "0" means no limitation.
+
+        default: no limitation
+
+        This is unlikely that you'll have to tune this configuration. If you think
+        you do, consider talking with the mercurial developer community about your
+        repositories.
+
 ``revlog.optimize-delta-parent-choice``
     When storing a merge revision, both parents will be equally considered as
     a possible delta base. This results in better delta selection and improved
@@ -2074,7 +2360,7 @@ category impact performance and repository size.
     Default to True.
 
     For details on the "persistent-nodemap" feature, see:
-    :hg:`help config format.use-persistent-nodemap`.
+    :hg:`help config.format.use-persistent-nodemap`.
 
 ``revlog.persistent-nodemap.slow-path``
     Control the behavior of Merucrial when using a repository with "persistent"
@@ -2086,7 +2372,7 @@ category impact performance and repository size.
     ``abort``: Prevent access to such repositories. (This is the default)
 
     For details on the "persistent-nodemap" feature, see:
-    :hg:`help config format.use-persistent-nodemap`.
+    :hg:`help config.format.use-persistent-nodemap`.
 
 ``revlog.reuse-external-delta-parent``
     Control the order in which delta parents are considered when adding new
@@ -2197,7 +2483,7 @@ Controls generic server settings.
     effectively prevents concurrent pushes.
 
 ``pullbundle``
-    When set, the server will check pullbundle.manifest for bundles
+    When set, the server will check pullbundles.manifest for bundles
     covering the requested heads and common nodes. The first matching
     entry will be streamed to the client.
 
@@ -2534,7 +2820,8 @@ User interface controls.
 ``large-file-limit``
     Largest file size that gives no memory use warning.
     Possible values are integers or 0 to disable the check.
-    (default: 10000000)
+    Value is expressed in bytes by default, one can use standard units for
+    convenience (e.g. 10MB, 0.1GB, etc) (default: 10MB)
 
 ``logtemplate``
     (DEPRECATED) Use ``command-templates.log`` instead.
@@ -2711,6 +2998,80 @@ User interface controls.
 
 ``verbose``
     Increase the amount of output printed. (default: False)
+
+
+``usage``
+---------
+
+``repository-role``
+    What this repository is used for.
+
+    This is used to adjust behavior and performance to best fit the repository purpose.
+
+    Currently recognised values are:
+
+    - ``default``: an all purpose repository
+
+``resources``
+    How aggressive Mercurial can be with resource usage:
+
+    Currently recognised values are:
+
+    - ``default``: the default value currently is equivalent to medium,
+
+    - ``high``: allows for higher cpu, memory and disk-space usage to improve
+      performance of some operations.
+
+    - ``medium``: aims at a moderate resource usage,
+
+    - ``low``: reduces resources usage when possible, decreasing overall
+      performance.
+
+    For finer configuration, see also `usage.resources.cpu`,
+    `usage.resources.disk` and `usage.resources.memory`.
+
+``resources.cpu``
+    How aggressive Mercurial can be in terms of cpu usage:
+
+    Currently recognised values are:
+
+    - ``default``: the default value, inherits the value from `usage.resources`,
+
+    - ``high``: allows for more aggressive cpu usage, improving storage quality
+      and the performance of some operations at the expense of machine load
+
+    - `medium`:  aims at a moderate cpu usage,
+
+    - `low`:  reduces cpu usage when possible, potentially at the expense of
+      slower operations, increased storage and exchange payload.
+
+``resources.disk``
+    How aggressive Mercurial can be in terms of disk usage:
+
+    Currently recognised values are::
+    - ``default``: the default value, inherits the value from `usage.resources`,
+
+    - ``high``: allows for more disk space usage where it can improve performance,
+
+    - ``medium``:  aims at a moderate disk usage,
+
+    - ``low``:  reduces disk usage when possible, decreasing performance in some
+      occasion.
+
+``resources.memory``
+    How aggressive Mercurial can be in terms of memory usage:
+
+    Currently recognised values are::
+
+    - ``default``: the default value, inherits the value from `usage.resources`,
+
+    - ``high``: allows for more aggressive memory usage to improve overall
+      performance,
+
+    - ``medium``:  aims at a moderate memory usage,
+
+    - ``low``: reduces memory usage when possible at the cost of overall
+      performance.
 
 
 ``command-templates``

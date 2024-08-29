@@ -1,5 +1,4 @@
-// "Convert into implicitly declared class" "false"
-public class beforeWithExtendLis<caret>t extends Something {
+public class beforeWithExtendList extends <error descr="Cannot resolve symbol 'Something'">Something</error> {
   public static void main(String[] args) {
     System.out.println("Hello, world!");
   }

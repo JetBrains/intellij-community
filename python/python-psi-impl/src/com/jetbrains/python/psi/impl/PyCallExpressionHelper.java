@@ -341,8 +341,7 @@ public final class PyCallExpressionHelper {
       final List<PyExpression> qualifiers = resolveResult.myOriginalResolveResult.getQualifiers();
 
       final boolean isByInstance = isConstructorCall
-                                   || isQualifiedByInstance(callable, qualifiers, context)
-                                   || callable instanceof PyBoundFunction;
+                                   || isQualifiedByInstance(callable, qualifiers, context);
 
       final PyExpression lastQualifier = ContainerUtil.getLastItem(qualifiers);
       final boolean isByClass = lastQualifier != null && isQualifiedByClass(callable, lastQualifier, context);

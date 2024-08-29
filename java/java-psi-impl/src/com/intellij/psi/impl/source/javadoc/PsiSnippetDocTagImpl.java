@@ -12,6 +12,7 @@ import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
@@ -85,6 +86,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
 
   @Contract(pure = true)
   public @NotNull List<@NotNull TextRange> getContentRanges() {
+    boolean isMarkdown = PsiUtil.isInMarkdownDocComment(this);
     final PsiSnippetDocTagValue valueElement = getValueElement();
     if (valueElement == null) return Collections.emptyList();
 
@@ -104,15 +106,15 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
     final String[] lines = snippetBodyTextRangeRelativeToSnippetTag.substring(getText()).split("\n");
     if (lines.length == 0) return Collections.singletonList(snippetBodyTextRangeRelativeToSnippetTag);
 
-    return getRanges(snippetBodyTextRangeRelativeToSnippetTag, lines);
+    return getRanges(snippetBodyTextRangeRelativeToSnippetTag, lines, isMarkdown);
   }
 
   @Contract(pure = true)
-  private static @NotNull List<@NotNull TextRange> getRanges(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines) {
-    final int firstLine = getFirstNonEmptyLine(lines);
-    final int lastLine = getLastNonEmptyLine(lines);
+  private static @NotNull List<@NotNull TextRange> getRanges(@NotNull TextRange snippetBodyTextRangeRelativeToSnippet, String@NotNull [] lines, boolean isMarkdown) {
+    final int firstLine = getFirstNonEmptyLine(lines, isMarkdown);
+    final int lastLine = getLastNonEmptyLine(lines, isMarkdown);
 
-    int totalMinIndent = getIndent(lines, firstLine, lastLine);
+    int totalMinIndent = getIndent(lines, firstLine, lastLine, isMarkdown);
 
     int startOffset = getStartOffsetOfFirstNonEmptyLine(snippetBodyTextRangeRelativeToSnippet, lines, firstLine);
 
@@ -166,16 +168,16 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndent(String@NotNull [] lines, int firstLine, int lastLine) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndent(String@NotNull [] lines, int firstLine, int lastLine, boolean isMarkdown) {
     int minIndent = Integer.MAX_VALUE;
     for (int i = firstLine; i <= lastLine && i < lines.length; i++) {
       String line = lines[i];
       final int indentLength;
-      if (isEmptyOrSpacesWithLeadingAsterisksOnly(line)) {
+      if (isEmptyOrSpacesWithLeadingAsterisksOnly(line, isMarkdown)) {
         indentLength = line.length();
       }
       else {
-        indentLength = calculateIndent(line);
+        indentLength = calculateIndent(line, isMarkdown);
       }
       if (minIndent > indentLength) minIndent = indentLength;
     }
@@ -184,33 +186,33 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   }
 
   @Contract(pure = true)
-  private static @Range(from = 0, to = Integer.MAX_VALUE) int getLastNonEmptyLine(String@NotNull[] lines) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getLastNonEmptyLine(String@NotNull[] lines, boolean isMarkdown) {
     int lastLine = lines.length - 1;
-    while (lastLine > 0 && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[lastLine])) {
+    while (lastLine > 0 && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[lastLine], isMarkdown)) {
       lastLine --;
     }
     return lastLine;
   }
 
   @Contract(pure = true)
-  private static @Range(from = 0, to = Integer.MAX_VALUE) int getFirstNonEmptyLine(String@NotNull[] lines) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getFirstNonEmptyLine(String@NotNull[] lines, boolean isMarkdown) {
     int firstLine = 0;
-    while (firstLine < lines.length && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[firstLine])) {
+    while (firstLine < lines.length && isEmptyOrSpacesWithLeadingAsterisksOnly(lines[firstLine], isMarkdown)) {
       firstLine ++;
     }
     return firstLine;
   }
 
   @Contract(pure = true)
-  private static boolean isEmptyOrSpacesWithLeadingAsterisksOnly(@NotNull String lines) {
+  private static boolean isEmptyOrSpacesWithLeadingAsterisksOnly(@NotNull String lines, boolean isMarkdown) {
     if (lines.isEmpty()) return true;
-    return lines.matches("^\\s*\\**\\s*$");
+    return lines.matches(isMarkdown ? "^\\s*///\\s*$" : "^\\s*\\**\\s*$");
   }
 
   @Contract(pure = true)
-  private static @Range(from = 0, to = Integer.MAX_VALUE) int calculateIndent(@NotNull String content) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int calculateIndent(@NotNull String content, boolean isMarkdown) {
     if (content.isEmpty()) return 0;
-    final String noIndent = content.replaceAll("^\\s*\\*\\s*", "");
+    final String noIndent = content.replaceAll(isMarkdown ? "^\\s*///\\s*" : "^\\s*\\*\\s*", "");
     return content.length() - noIndent.length();
   }
 

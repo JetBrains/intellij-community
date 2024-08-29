@@ -74,10 +74,8 @@ public class TestMain {
 
     var gson = new GsonBuilder().setPrettyPrinting().create();
     var jsonText = gson.toJson(dump);
-    System.out.println(jsonText);
-
     Files.writeString(outputFile, jsonText);
-    System.out.println("Dumped to " + outputFile.toAbsolutePath());
+    System.out.println("Dumped to " + outputFile.getFileName());
   }
 
   private static void printCwd() {

@@ -14,9 +14,7 @@ import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 
@@ -144,3 +142,30 @@ fun <S : ServerPath> GitRemotesFlow.discoverServers(knownServersFlow: Flow<Set<S
       }
   }
 }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun GitRepository.isInCurrentHistory(rev: Flow<String>, ifEqualReturn: Boolean? = null): Flow<Boolean?> {
+  val repository = this
+  val currentRevFlow = repository.infoFlow().map { it.currentRevision }
+
+  /*
+   * Request for the sync state between current local branch and some other branch state.
+   * Can't just do combineTransform bc it will not cancel previous computation
+   */
+  return currentRevFlow.combine(rev) { currentRev, targetRev ->
+    currentRev to targetRev
+  }.distinctUntilChanged().transformLatest { (currentRev, targetRev) ->
+    when (currentRev) {
+      null -> emit(null) // does not make sense to update on a no-revision head
+      targetRev -> emit(ifEqualReturn)
+      else -> supervisorScope {
+        emit(null)
+        val res = runCatching {
+          GitCodeReviewUtils.testIsAncestor(repository, targetRev, currentRev)
+        }
+        emit(res.getOrNull() ?: false)
+      }
+    }
+  }
+}
+

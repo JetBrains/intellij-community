@@ -246,6 +246,7 @@ public abstract class NullableNotNullManager {
       return new NullabilityAnnotationInfo(memberAnno.annotation, nullability, memberAnno.owner == owner ? null : memberAnno.owner, false);
     }
     if (type instanceof PsiPrimitiveType) return null;
+    if (owner instanceof PsiLocalVariable) return null;
     return findAnnotationInTypeHierarchy(type, annotations);
   }
 

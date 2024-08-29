@@ -11,4 +11,8 @@ class DanglingJavadoc {
   <warning descr="Dangling Javadoc comment">/**</warning>
    * yada yada
    */
+
+  <warning descr="Dangling Javadoc comment">///</warning>
+   /// yada yada
+   ///
 }

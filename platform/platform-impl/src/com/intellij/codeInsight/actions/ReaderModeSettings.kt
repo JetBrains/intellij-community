@@ -27,6 +27,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
+interface ReaderModeDefaultsOverride {
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): ReaderModeDefaultsOverride = ApplicationManager.getApplication().getService(ReaderModeDefaultsOverride::class.java)
+  }
+
+  val showWarningsDefault: Boolean
+}
+
 interface ReaderModeSettings : Disposable {
   companion object {
     private val EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")

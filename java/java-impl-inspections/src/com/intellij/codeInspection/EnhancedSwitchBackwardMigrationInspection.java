@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -211,6 +212,9 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       IntList caseCounts = new IntArrayList();
       StringJoiner joiner = new StringJoiner("\n");
       boolean addDefaultBranch = mySwitchBlock instanceof PsiSwitchExpression;
+      if (mySwitchBlock.getExpression() != null) {
+        addDefaultBranch &= !TypeConversionUtil.isBooleanType(mySwitchBlock.getExpression().getType());
+      }
       for (int i = 0; i < rules.size(); i++) {
         PsiSwitchLabeledRuleStatement rule = rules.get(i);
         CommentTracker ct = new CommentTracker();
@@ -229,7 +233,6 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
         addDefaultBranch &= !SwitchUtils.isDefaultLabel(rule);
-
       }
       if (addDefaultBranch) {
         joiner.add("default:throw new java.lang.IllegalArgumentException();");

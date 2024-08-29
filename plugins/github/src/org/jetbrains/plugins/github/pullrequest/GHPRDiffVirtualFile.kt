@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffService
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
                                         private val project: Project,
@@ -27,7 +28,7 @@ internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
   override fun getPresentablePath(): String = getPresentablePath(repository, pullRequest)
   override fun getPresentableName(): String = GithubBundle.message("pull.request.diff.editor.title", pullRequest.number)
 
-  override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
+  override fun isValid(): Boolean = findProjectVm() != null
 
   override fun createViewer(project: Project): DiffEditorViewer {
     val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
@@ -39,11 +40,9 @@ internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
     processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
     return processor
   }
-}
 
-private fun isFileValid(fileManagerId: String, project: Project, repository: GHRepositoryCoordinates): Boolean {
-  val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository) ?: return false
-  return dataContext.filesManager.id == fileManagerId
+  private fun findProjectVm(): GHPRToolWindowProjectViewModel? =
+    project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
 }
 
 private fun getPresentablePath(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier) =

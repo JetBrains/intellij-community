@@ -21,4 +21,5 @@ public class InlineVariableFixTest extends IGQuickFixesTestCase {
   public void testArrayInitializer() { doTest(); }
   public void testCastForOverloads() { assertQuickfixNotAvailable(); }
   public void testComment() { doTest(); }
+  public void testNewLineInInitializer() { doTest(); }
 }

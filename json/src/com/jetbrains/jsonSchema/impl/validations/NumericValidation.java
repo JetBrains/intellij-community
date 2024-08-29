@@ -13,20 +13,21 @@ import org.jetbrains.annotations.Nullable;
 
 public final class NumericValidation implements JsonSchemaValidation {
   public static final NumericValidation INSTANCE = new NumericValidation();
-  private static void checkNumber(PsiElement propValue,
-                                  JsonSchemaObject schema,
-                                  JsonSchemaType schemaType,
-                                  JsonValidationHost consumer) {
+  private static boolean checkNumber(PsiElement propValue,
+                                     JsonSchemaObject schema,
+                                     JsonSchemaType schemaType,
+                                     JsonValidationHost consumer,
+                                     @NotNull JsonComplianceCheckerOptions options) {
     Number value;
     String valueText = JsonSchemaAnnotatorChecker.getValue(propValue, schema);
-    if (valueText == null) return;
+    if (valueText == null) return true;
     if (JsonSchemaType._integer.equals(schemaType)) {
       value = JsonSchemaType.getIntegerValue(valueText);
       if (value == null) {
         consumer.error(JsonBundle.message("schema.validation.integer.expected"), propValue,
                        JsonValidationError.FixableIssueKind.TypeMismatch,
                        new JsonValidationError.TypeMismatchIssueData(new JsonSchemaType[]{schemaType}), JsonErrorPriority.TYPE_MISMATCH);
-        return;
+        return false;
       }
     }
     else {
@@ -38,8 +39,9 @@ public final class NumericValidation implements JsonSchemaValidation {
           consumer.error(JsonBundle.message("schema.validation.number.expected"), propValue,
                 JsonValidationError.FixableIssueKind.TypeMismatch,
                 new JsonValidationError.TypeMismatchIssueData(new JsonSchemaType[]{schemaType}), JsonErrorPriority.TYPE_MISMATCH);
+          return false;
         }
-        return;
+        return true;
       }
     }
     final Number multipleOf = schema.getMultipleOf();
@@ -49,77 +51,95 @@ public final class NumericValidation implements JsonSchemaValidation {
         final String multipleOfValue = String.valueOf(Math.abs(multipleOf.doubleValue() - multipleOf.intValue()) < 0.000001 ?
                                                       multipleOf.intValue() : multipleOf);
         consumer.error(JsonBundle.message("schema.validation.not.multiple.of", multipleOfValue), propValue, JsonErrorPriority.LOW_PRIORITY);
-        return;
+        return false;
       }
     }
 
-    checkMinimum(schema, value, propValue, consumer);
-    checkMaximum(schema, value, propValue, consumer);
+    return checkMinimum(schema, value, propValue, consumer, options) &
+           checkMaximum(schema, value, propValue, consumer, options);
   }
 
-  private static void checkMaximum(JsonSchemaObject schema,
+  private static boolean checkMaximum(JsonSchemaObject schema,
                                    Number value,
                                    PsiElement propertyValue,
-                                   JsonValidationHost consumer) {
-
+                                   JsonValidationHost consumer,
+                                   @NotNull JsonComplianceCheckerOptions options) {
+    var isValid = true;
     Number exclusiveMaximumNumber = schema.getExclusiveMaximumNumber();
     if (exclusiveMaximumNumber != null) {
       final double doubleValue = exclusiveMaximumNumber.doubleValue();
       if (value.doubleValue() >= doubleValue) {
         consumer.error(JsonBundle.message("schema.validation.greater.than.exclusive.maximum", exclusiveMaximumNumber), propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
     Number maximum = schema.getMaximum();
-    if (maximum == null) return;
+    if (maximum == null) return isValid;
     boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMaximum());
     final double doubleValue = maximum.doubleValue();
     if (isExclusive) {
       if (value.doubleValue() >= doubleValue) {
         consumer.error(JsonBundle.message("schema.validation.greater.than.exclusive.maximum", maximum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
     else {
       if (value.doubleValue() > doubleValue) {
         consumer.error(JsonBundle.message("schema.validation.greater.than.maximum", maximum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
+
+    return isValid;
   }
 
-  private static void checkMinimum(JsonSchemaObject schema,
-                                   Number value,
-                                   PsiElement propertyValue,
-                                   JsonValidationHost consumer) {
+  private static boolean checkMinimum(JsonSchemaObject schema,
+                                      Number value,
+                                      PsiElement propertyValue,
+                                      JsonValidationHost consumer, @NotNull JsonComplianceCheckerOptions options) {
+    var isValid = true;
     // schema v6 - exclusiveMinimum is numeric now
     Number exclusiveMinimumNumber = schema.getExclusiveMinimumNumber();
     if (exclusiveMinimumNumber != null) {
       final double doubleValue = exclusiveMinimumNumber.doubleValue();
       if (value.doubleValue() <= doubleValue) {
         consumer.error(JsonBundle.message("schema.validation.less.than.exclusive.minimum", exclusiveMinimumNumber), propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
 
     Number minimum = schema.getMinimum();
-    if (minimum == null) return;
+    if (minimum == null) return isValid;
     boolean isExclusive = Boolean.TRUE.equals(schema.isExclusiveMinimum());
     final double doubleValue = minimum.doubleValue();
     if (isExclusive) {
       if (value.doubleValue() <= doubleValue) {
         consumer.error(JsonBundle.message("schema.validation.less.than.exclusive.minimum", minimum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
     else {
       if (value.doubleValue() < doubleValue) {
         consumer.error(JsonBundle.message("schema.validation.less.than.minimum", minimum), propertyValue, JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
+
+    return isValid;
   }
 
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
-    checkNumber(propValue.getDelegate(), schema, schemaType, consumer);
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
+    return checkNumber(propValue.getDelegate(), schema, schemaType, consumer, options);
   }
 }

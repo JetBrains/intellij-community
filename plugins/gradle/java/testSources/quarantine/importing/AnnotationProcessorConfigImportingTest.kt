@@ -10,10 +10,11 @@ import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.assertj.core.api.BDDAssertions.then
-import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
@@ -23,19 +24,14 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("4.6+")
   fun `test annotation processor config imported in module per project mode`() {
-    importProjectUsingSingeModulePerGradleProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addPostfix(
-      """
-      apply plugin: 'java'
-      
-      dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.8'
-        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-      }
-    """.trimIndent()).generate())
+    currentExternalProjectSettings.isResolveModulePerSourceSet = false
+
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -51,7 +47,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       then(moduleNames).containsExactly("project")
     }
 
-    importProjectUsingSingeModulePerGradleProject()
+    importProject()
 
     val moduleProcessorProfilesAfterReImport = config.moduleProcessorProfiles
     then(moduleProcessorProfilesAfterReImport)
@@ -61,20 +57,15 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
   @Test
   @TargetVersions("4.6+")
-  fun `test annotation processor modification`() {
-    importProjectUsingSingeModulePerGradleProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addPostfix(
-          """
-      apply plugin: 'java'
-      
-      dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.8'
-        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-      }
-    """.trimIndent()).generate())
+  fun `test annotation processor modification in module per project mode`() {
+    currentExternalProjectSettings.isResolveModulePerSourceSet = false
+
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -83,19 +74,12 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       .describedAs("An annotation processor profile should be created for Gradle module")
       .hasSize(1)
 
-    importProjectUsingSingeModulePerGradleProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addPostfix(
-          """
-      apply plugin: 'java'
-      
-      dependencies {
-        compileOnly 'com.google.dagger:dagger:2.24'
-        annotationProcessor 'com.google.dagger:dagger-compiler:2.24'
-      }
-    """.trimIndent()).generate())
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addDependency("compileOnly", "com.google.dagger:dagger:2.24")
+      addDependency("annotationProcessor", "com.google.dagger:dagger-compiler:2.24")
+    }
 
     val modifiedProfiles = config.moduleProcessorProfiles
 
@@ -116,19 +100,12 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("4.6+")
   fun `test annotation processor config imported in modules per source set mode`() {
-    importProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addPostfix(
-          """
-      apply plugin: 'java'
-      
-      dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.8'
-        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-      }
-    """.trimIndent()).generate())
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -151,25 +128,14 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
     createProjectSubFile("settings.gradle", including("projectA", "projectB"))
 
-    importProject(
-      createBuildScriptBuilder()
-        .addPostfix(
-          """
-            allprojects {
-              apply plugin: 'java'
-              
-              repositories {
-                maven {
-                  url 'https://repo.labs.intellij.net/repo1'
-                }
-              }
-              
-              dependencies {
-                compileOnly 'org.projectlombok:lombok:1.18.8'
-                annotationProcessor 'org.projectlombok:lombok:1.18.8'
-              }
+    importProject {
+      allprojects {
+        withMavenCentral()
+        withJavaPlugin()
+        addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+        addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
       }
-    """.trimIndent()).generate())
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -191,75 +157,66 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   fun `test annotation processor output folders imported properly`() {
 
     // default location for processor output when building by IDEA
-    val ideaGeneratedDir = "generated"
-    createProjectSubFile("src/main/$ideaGeneratedDir/Generated.java",
+    val ideaGeneratedDir = "src/main/generated"
+    createProjectSubFile("$ideaGeneratedDir/Generated.java",
                          "public class Generated {}")
     // default location for processor output when building by Gradle
     val gradleGeneratedDir = "build/generated/sources/annotationProcessor/java/main"
     createProjectSubFile("$gradleGeneratedDir/Generated.java",
                          "public class Generated {}")
 
-    val config = createBuildScriptBuilder()
-      .withJavaPlugin()
-      .withMavenCentral()
-      .addPostfix(
-        """
-      dependencies {
-        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-      }
-    """.trimIndent()).generate()
+    createBuildFile {
+      withJavaPlugin()
+      withMavenCentral()
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
 
     // import with default settings: delegate build to gradle
-    importProject(config)
-    assertSources("project.main", gradleGeneratedDir)
-    assertGeneratedSources("project.main", gradleGeneratedDir)
+    importProject()
+    assertSources("project.main", path(gradleGeneratedDir))
+    assertGeneratedSources("project.main", path(gradleGeneratedDir))
 
     currentExternalProjectSettings.delegatedBuild = false
 
     // import with build by intellij idea
-    importProject(config)
-    assertSources("project.main", ideaGeneratedDir)
-    assertGeneratedSources("project.main", ideaGeneratedDir)
+    importProject()
+    assertSources("project.main", path(ideaGeneratedDir))
+    assertGeneratedSources("project.main", path(ideaGeneratedDir))
 
     // subscribe to build delegation changes in current project
     (ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID) as GradleManager).runActivity(myProject)
     // switch delegation to gradle
     currentExternalProjectSettings.delegatedBuild = true
     GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(true, projectPath)
-    assertSources("project.main", gradleGeneratedDir)
-    assertGeneratedSources("project.main", gradleGeneratedDir)
+    assertSources("project.main", path(gradleGeneratedDir))
+    assertGeneratedSources("project.main", path(gradleGeneratedDir))
 
     // switch delegation to idea
     currentExternalProjectSettings.delegatedBuild = false
     GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(false, projectPath)
-    assertSources("project.main", ideaGeneratedDir)
-    assertGeneratedSources("project.main", ideaGeneratedDir)
+    assertSources("project.main", path(ideaGeneratedDir))
+    assertGeneratedSources("project.main", path(ideaGeneratedDir))
   }
 
   @Test
   @TargetVersions("4.6+")
   fun `test two different annotation processors`() {
     createProjectSubFile("settings.gradle", including("project1", "project2"))
-    importProject(
-      createBuildScriptBuilder()
-        .withMavenCentral()
-        .addPostfix(
-          """
-            |  allprojects { apply plugin: 'java' }
-            |  project("project1") {
-            |      dependencies {
-            |        compileOnly 'org.projectlombok:lombok:1.18.8'
-            |        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-            |      }
-            |  }
-            |  
-            |  project("project2") {
-            |    dependencies {
-            |        compileOnly 'com.google.dagger:dagger:2.24'
-            |        annotationProcessor 'com.google.dagger:dagger-compiler:2.24'
-            |    }
-            |  }
-    """.trimMargin()).generate())
+
+    importProject {
+      allprojects {
+        withMavenCentral()
+        withJavaPlugin()
+      }
+      project("project1") {
+        addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+        addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      }
+      project("project2") {
+        addDependency("compileOnly", "com.google.dagger:dagger:2.24")
+        addDependency("annotationProcessor", "com.google.dagger:dagger-compiler:2.24")
+      }
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -282,20 +239,17 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("4.6+")
    fun `test change modules included in processor profile`() {
-       createProjectSubFile("settings.gradle", including("project1","project2"))
-       importProject(
-         createBuildScriptBuilder()
-           .withMavenCentral()
-           .addPostfix(
-             """
-            |  allprojects { apply plugin: 'java' }
-            |  project("project1") {
-            |      dependencies {
-            |        compileOnly 'org.projectlombok:lombok:1.18.8'
-            |        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-            |      }
-            |  }
-    """.trimMargin()).generate())
+    createProjectSubFile("settings.gradle", including("project1", "project2"))
+    importProject {
+      allprojects {
+        withMavenCentral()
+        withJavaPlugin()
+      }
+      project("project1") {
+        addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+        addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      }
+    }
 
     then((CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl)
            .moduleProcessorProfiles)
@@ -303,19 +257,16 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       .extracting("moduleNames")
       .containsExactly(setOf("project.project1.main"))
 
-    importProject(
-      createBuildScriptBuilder()
-        .withMavenCentral()
-        .addPostfix(
-          """
-            |  allprojects { apply plugin: 'java' }
-            |  project("project2") {
-            |      dependencies {
-            |        compileOnly 'org.projectlombok:lombok:1.18.8'
-            |        annotationProcessor 'org.projectlombok:lombok:1.18.8'
-            |      }
-            |  }
-    """.trimMargin()).generate())
+    importProject {
+      allprojects {
+        withMavenCentral()
+        withJavaPlugin()
+      }
+      project("project2") {
+        addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
+        addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      }
+    }
 
     then((CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl)
            .moduleProcessorProfiles)
@@ -327,18 +278,12 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("4.6+")
   fun `test annotation processor with transitive deps`() {
-    importProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addPostfix(
-          """
-      apply plugin: 'java'
-      
-      dependencies {
-        annotationProcessor 'junit:junit:4.12' // this is not an annotation processor, but has transitive deps
-      }
-    """.trimIndent()).generate())
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      // this is not an annotation processor but has transitive deps
+      addDependency("annotationProcessor", "junit:junit:4.12")
+    }
 
     then((CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl)
            .moduleProcessorProfiles[0]
@@ -350,20 +295,17 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("<=8.1")
   fun `test gradle-apt-plugin settings are imported`() {
-    importProject(
-      createBuildScriptBuilder()
-        .withMavenCentral()
-        .addBuildScriptRepository("maven { url 'https://repo.labs.intellij.net/plugins-gradle-org' }")
-        .addBuildScriptClasspath("net.ltgt.gradle:gradle-apt-plugin:0.21")
-        .addPostfix("""
-          apply plugin: "net.ltgt.apt"
-          apply plugin: 'java'
-          
-          dependencies {
-            compileOnly("org.immutables:value-annotations:2.7.1")
-            annotationProcessor("org.immutables:value:2.7.1")
-          }
-        """.trimIndent()).generate())
+    importProject {
+      withMavenCentral()
+      withBuildScriptRepository {
+        mavenRepository("https://repo.labs.intellij.net/plugins-gradle-org")
+      }
+      addBuildScriptClasspath("net.ltgt.gradle:gradle-apt-plugin:0.21")
+      applyPlugin("net.ltgt.apt")
+      applyPlugin("java")
+      addDependency("compileOnly", "org.immutables:value-annotations:2.7.1")
+      addDependency("annotationProcessor", "org.immutables:value:2.7.1")
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -383,26 +325,20 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
   @Test
   fun `test custom annotation processor configurations are imported`() {
-    importProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addPostfix("""
-      apply plugin: 'java'
-      
-      configurations {
-       apt
-      }
-      
-      dependencies {
-        compileOnly("org.immutables:value-annotations:2.7.1")
-        apt("org.immutables:value:2.7.1")
-      }
-      
-      compileJava {
-        options.annotationProcessorPath = configurations.apt
-      }
-    """.trimIndent()).generate())
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addDependency("compileOnly", "org.immutables:value-annotations:2.7.1")
+      addDependency("apt", "org.immutables:value:2.7.1")
+      addPrefix("""      
+        |configurations {
+        |  apt
+        |}
+        |compileJava {
+        |  options.annotationProcessorPath = configurations.apt
+        |}
+      """.trimMargin())
+    }
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -431,16 +367,78 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     config.addNewProcessorProfile("other").addModuleName(nonGradleModule.name)
 
-    importProject(
-      createBuildScriptBuilder()
-        .withJavaLibraryPlugin()
-        .addCompileOnlyDependency("org.projectlombok:lombok:1.18.8")
-        .addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
-        .generate())
+    importProject {
+      withJavaLibraryPlugin()
+      addCompileOnlyDependency("org.projectlombok:lombok:1.18.8")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
 
     val annotationProcessingConfiguration = config.getAnnotationProcessingConfiguration(nonGradleModule)
 
     then(annotationProcessingConfiguration.name)
       .isEqualTo("other")
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  fun `test annotation processor generated sources`() {
+    val annotationProcessor = "build/generated/sources/annotationProcessor"
+
+    createProjectSubDir("src/main/java")
+    createProjectSubDir("src/main/resources")
+    createProjectSubDir("src/test/java")
+    createProjectSubDir("src/test/resources")
+    createProjectSubDir("src/testFixtures/java")
+    createProjectSubDir("src/testFixtures/resources")
+    createProjectSubDir("$annotationProcessor/java/main")
+    createProjectSubDir("$annotationProcessor/java/test")
+    createProjectSubDir("$annotationProcessor/java/testFixtures")
+
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      withPlugin("java-test-fixtures")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      addDependency("testAnnotationProcessor", "org.projectlombok:lombok:1.18.8")
+      addDependency("testFixturesAnnotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
+
+    assertModules("project", "project.main", "project.test", "project.testFixtures")
+
+    assertContentRoots("project", projectPath)
+    assertSources("project")
+    assertResources("project")
+    assertTestSources("project")
+    assertTestResources("project")
+
+    assertContentRoots("project.main", path("src/main"), path("$annotationProcessor/java/main"))
+    assertSources("project.main", path("src/main/java"), path("$annotationProcessor/java/main"))
+    assertGeneratedSources("project.main", path("$annotationProcessor/java/main"))
+    assertResources("project.main", path("src/main/resources"))
+    assertGeneratedResources("project.main")
+    assertTestSources("project.main")
+    assertGeneratedTestSources("project.main")
+    assertTestResources("project.main")
+    assertGeneratedTestResources("project.main")
+
+    assertContentRoots("project.test", path("src/test"), path("$annotationProcessor/java/test"))
+    assertSources("project.test")
+    assertGeneratedSources("project.test")
+    assertResources("project.test")
+    assertGeneratedResources("project.test")
+    assertTestSources("project.test", path("src/test/java"), path("$annotationProcessor/java/test"))
+    assertGeneratedTestSources("project.test", path("$annotationProcessor/java/test"))
+    assertTestResources("project.test", path("src/test/resources"))
+    assertGeneratedTestResources("project.test")
+
+    assertContentRoots("project.testFixtures", path("src/testFixtures"), path("$annotationProcessor/java/testFixtures"))
+    assertSources("project.testFixtures")
+    assertGeneratedSources("project.testFixtures")
+    assertResources("project.testFixtures")
+    assertGeneratedResources("project.testFixtures")
+    assertTestSources("project.testFixtures", path("src/testFixtures/java"), path("$annotationProcessor/java/testFixtures"))
+    assertGeneratedTestSources("project.testFixtures", path("$annotationProcessor/java/testFixtures"))
+    assertTestResources("project.testFixtures", path("src/testFixtures/resources"))
+    assertGeneratedTestResources("project.testFixtures")
   }
 }

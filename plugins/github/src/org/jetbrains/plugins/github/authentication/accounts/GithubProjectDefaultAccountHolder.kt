@@ -27,7 +27,7 @@ class GithubProjectDefaultAccountHolder(project: Project, parentCs: CoroutineSco
   override fun notifyDefaultAccountMissing() = runInEdt {
     val title = GithubBundle.message("accounts.default.missing")
     GithubUtil.LOG.info("${title}; ${""}")
-    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, NotificationType.WARNING)
+    VcsNotifier.importantNotification().createNotification(title, NotificationType.WARNING)
       .setDisplayId(GithubNotificationIdsHolder.MISSING_DEFAULT_ACCOUNT)
       .addAction(GithubNotifications.getConfigureAction(project))
       .notify(project)

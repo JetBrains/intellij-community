@@ -73,9 +73,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
                           @NotNull ProperTextRange priorityRange,
                           @Nullable Editor editor,
                           boolean runAnnotators,
-                          boolean runVisitors,
-                          boolean highlightErrorElements,
-                          @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+                          boolean runVisitors, boolean highlightErrorElements, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("pass.syntax"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
@@ -231,8 +229,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
     BooleanSupplier runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
                                                                           myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
-    setupAnnotationSession(session, myPriorityRange, myRestrictRange,
-                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    setupAnnotationSession(session, myPriorityRange, getHighlightingSession());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(getFile(), false, session) : null;
     return annotatorRunner == null ? runnable.getAsBoolean() : annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
   }
@@ -299,17 +296,15 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
         return added;
       }
     };
-    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, myRestrictRange,
-                           ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
+    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, getHighlightingSession());
     return holder;
   }
 
   static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
-                                     @NotNull TextRange priorityRange,
-                                     @NotNull TextRange highlightRange,
-                                     @Nullable HighlightSeverity minimumSeverity) {
+                                     @NotNull ProperTextRange priorityRange, @NotNull HighlightingSession highlightingSession) {
+    HighlightSeverity minimumSeverity = ((HighlightingSessionImpl)highlightingSession).getMinimumSeverity();
     ((AnnotationSessionImpl)annotationSession).setMinimumSeverity(minimumSeverity);
-    ((AnnotationSessionImpl)annotationSession).setVR(priorityRange, highlightRange);
+    ((AnnotationSessionImpl)annotationSession).setVR(priorityRange);
   }
 
   private void reportErrorsToWolf(boolean hasErrors) {

@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -1364,7 +1365,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       boolean requiresCommercialIde = false;
 
       if (descriptor instanceof PluginNode plugin) {
-        Integer trialPeriod = plugin.getTrialPeriod();
+        String ideProductCode = ApplicationInfoImpl.getShadowInstanceImpl().getBuild().getProductCode();
+
+        Integer trialPeriod = plugin.getTrialPeriodByProductCode(ideProductCode);
         boolean isFreemium = plugin.getTags().contains(Tags.Freemium.name());
         requiresCommercialIde = plugin.getSuggestedCommercialIde() != null;
 

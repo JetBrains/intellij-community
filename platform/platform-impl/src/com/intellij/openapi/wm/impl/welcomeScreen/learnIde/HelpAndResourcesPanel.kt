@@ -6,6 +6,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.createTitlePanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -52,31 +54,33 @@ class HelpAndResourcesPanel : JPanel() {
   }
 
   private fun addHelpActions() {
-    val whatsNewAction = WhatsNewAction()
-    if (emptyWelcomeScreenEventFromAction(whatsNewAction).presentation.isEnabled) {
-      add(linkLabelByAction(WhatsNewAction()))
-      add(rigid(1, 16))
-    }
-    val helpActions = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
-    val anActionEvent = emptyWelcomeScreenEventFromAction(helpActions)
-    helpActions.getChildren(anActionEvent).forEach {
-      if (it is HelpActionBase && !it.isAvailable) {
+    val presentationFactory = PresentationFactory()
+    val helpActionsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
+    val helpActions = Utils.expandActionGroup(helpActionsGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.WELCOME_SCREEN)
+    helpActions.forEach {
+      val presentation = presentationFactory.getPresentation(it)
+      if (!presentation.isEnabledAndVisible) {
         return@forEach
       }
       if (setOf<String>(HelpTopicsAction::class.java.simpleName, OnlineDocAction::class.java.simpleName,
                         JetBrainsTvAction::class.java.simpleName).any { simpleName -> simpleName == it.javaClass.simpleName }) {
-        add(linkLabelByAction(it).wrapWithUrlPanel())
+        add(linkLabelByAction(it, presentation).wrapWithUrlPanel())
       }
       else {
-        add(linkLabelByAction(it))
-
+        add(linkLabelByAction(it, presentation))
       }
-      add(rigid(1, 6))
+
+      if (it is WhatsNewAction) {
+        add(rigid(1, 16))
+      } else {
+        add(rigid(1, 6))
+      }
     }
   }
 
-  private fun linkLabelByAction(it: AnAction): LinkLabel<Any> {
-    return LinkLabel<Any>(it.templateText, null).apply {
+  private fun linkLabelByAction(it: AnAction, presentation: Presentation): LinkLabel<Any> {
+    @Suppress("DialogTitleCapitalization")
+    return LinkLabel<Any>(presentation.text, null).apply {
       alignmentX = LEFT_ALIGNMENT
       setListener({ _, _ -> performActionOnWelcomeScreen(it) }, null)
     }
@@ -97,7 +101,4 @@ class HelpAndResourcesPanel : JPanel() {
       alignmentX = LEFT_ALIGNMENT
     }
   }
-
-  private fun emptyWelcomeScreenEventFromAction(action: AnAction) =
-    AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
 }

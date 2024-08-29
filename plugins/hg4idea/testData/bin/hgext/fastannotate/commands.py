@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import os
 
@@ -15,11 +14,11 @@ from mercurial import (
     encoding,
     error,
     extensions,
+    logcmdutil,
     patch,
     pycompat,
     registrar,
     scmutil,
-    util,
 )
 
 from . import (
@@ -75,7 +74,7 @@ def _matchpaths(repo, rev, pats, opts, aopts=facontext.defaultopts):
         def bad(x, y):
             raise error.Abort(b"%s: %s" % (x, y))
 
-        ctx = scmutil.revsingle(repo, rev)
+        ctx = logcmdutil.revsingle(repo, rev)
         m = scmutil.match(ctx, pats, opts, badfn=bad)
         for p in ctx.walk(m):
             yield p
@@ -218,7 +217,7 @@ def fastannotate(ui, repo, *pats, **opts):
     paths = list(_matchpaths(repo, rev, pats, opts, aopts))
 
     # for client, prefetch from the server
-    if util.safehasattr(repo, 'prefetchfastannotate'):
+    if hasattr(repo, 'prefetchfastannotate'):
         repo.prefetchfastannotate(paths)
 
     for path in paths:
@@ -273,7 +272,7 @@ def _annotatewrapper(orig, ui, repo, *pats, **opts):
 
     # check if we need to do prefetch (client-side)
     rev = opts.get('rev')
-    if util.safehasattr(repo, 'prefetchfastannotate') and rev is not None:
+    if hasattr(repo, 'prefetchfastannotate') and rev is not None:
         paths = list(_matchpaths(repo, rev, pats, pycompat.byteskwargs(opts)))
         repo.prefetchfastannotate(paths)
 
@@ -317,10 +316,10 @@ def debugbuildannotatecache(ui, repo, *pats, **opts):
         )
     if ui.configbool(b'fastannotate', b'unfilteredrepo'):
         repo = repo.unfiltered()
-    ctx = scmutil.revsingle(repo, rev)
+    ctx = logcmdutil.revsingle(repo, rev)
     m = scmutil.match(ctx, pats, opts)
     paths = list(ctx.walk(m))
-    if util.safehasattr(repo, 'prefetchfastannotate'):
+    if hasattr(repo, 'prefetchfastannotate'):
         # client
         if opts.get(b'REV'):
             raise error.Abort(_(b'--rev cannot be used for client'))

@@ -8,10 +8,12 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.closure
@@ -41,7 +43,11 @@ data class ModuleTestSourceInfo internal constructor(
             }
 
             list.addAll(list.closure { it.expectedBy })
-            list.addAll(module.additionalVisibleModules.mapNotNull { it.productionSourceInfo })
+            list.addAll(module.additionalVisibleModules.mapNotNull { additionalVisibleModule ->
+                additionalVisibleModule.productionSourceInfo ?:
+                // we should consider `testFixture` as an additional visible module for test sources
+                module.testSourceInfo?.let { additionalVisibleModule.testSourceInfo }
+            })
 
             list.toHashSet()
         }

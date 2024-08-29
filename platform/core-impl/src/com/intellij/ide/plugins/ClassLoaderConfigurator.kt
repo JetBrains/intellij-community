@@ -189,8 +189,7 @@ class ClassLoaderConfigurator(
       val subDescriptor = dependency.subDescriptor ?: continue
       if (!isKotlinPlugin(module.pluginId) &&
           isKotlinPlugin(dependency.pluginId) &&
-          isKotlinPluginK2Mode() &&
-          !pluginCanWorkInK2Mode(module)
+          isIncompatibleWithKotlinPlugin(module)
         ) {
         // disable dependencies which optionally deepened on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
         continue

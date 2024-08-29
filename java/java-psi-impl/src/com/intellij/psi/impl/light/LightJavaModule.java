@@ -11,7 +11,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
@@ -196,10 +198,12 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
   private static class LightPackageAccessibilityStatement extends LightElement implements PsiPackageAccessibilityStatement {
     private final String myPackageName;
+    private final PsiJavaCodeReferenceElement myPackageReference;
 
     LightPackageAccessibilityStatement(@NotNull PsiManager manager, @NotNull String packageName) {
       super(manager, JavaLanguage.INSTANCE);
       myPackageName = packageName;
+      myPackageReference = new LightPackageReference(manager, packageName);
     }
 
     @Override
@@ -218,7 +222,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
     @Override
     public @Nullable PsiJavaCodeReferenceElement getPackageReference() {
-      return null;
+      return myPackageReference;
     }
 
     @Override
@@ -295,6 +299,14 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     name = StringUtil.trimLeading(StringUtil.trimTrailing(name, '.'), '.');
 
     return name;
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return JavaResolveUtil.processJavaModuleExports(this, processor, state, lastParent, place);
   }
 
   private static class Patterns {

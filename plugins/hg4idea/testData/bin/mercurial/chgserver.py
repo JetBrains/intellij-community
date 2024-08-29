@@ -39,7 +39,6 @@ Config
   skiphash = False
 """
 
-from __future__ import absolute_import
 
 import inspect
 import os
@@ -49,11 +48,11 @@ import stat
 import struct
 import time
 
-from .i18n import _
-from .pycompat import (
-    getattr,
-    setattr,
+from typing import (
+    Optional,
 )
+
+from .i18n import _
 from .node import hex
 
 from . import (
@@ -135,7 +134,7 @@ def _confighash(ui):
         ignored = set()
     envitems = [
         (k, v)
-        for k, v in pycompat.iteritems(encoding.environ)
+        for k, v in encoding.environ.items()
         if _envre.match(k) and k not in ignored
     ]
     envhash = _hashlist(sorted(envitems))
@@ -197,7 +196,7 @@ def _mtimehash(paths):
     return _hashlist(pycompat.maplist(trystat, paths))[:12]
 
 
-class hashstate(object):
+class hashstate:
     """a structure storing confighash, mtimehash, paths used for mtimehash"""
 
     def __init__(self, confighash, mtimehash, mtimepaths):
@@ -237,7 +236,7 @@ def _newchgui(srcui, csystem, attachio):
             # will behave differently (i.e. write to stdout).
             if (
                 out is not self.fout
-                or not util.safehasattr(self.fout, b'fileno')
+                or not hasattr(self.fout, 'fileno')
                 or self.fout.fileno() != procutil.stdout.fileno()
                 or self._finoutredirected
             ):
@@ -261,9 +260,9 @@ def _loadnewui(srcui, args, cdebug):
     from . import dispatch  # avoid cycle
 
     newui = srcui.__class__.load()
-    for a in [b'fin', b'fout', b'ferr', b'environ']:
+    for a in ['fin', 'fout', 'ferr', 'environ']:
         setattr(newui, a, getattr(srcui, a))
-    if util.safehasattr(srcui, b'_csystem'):
+    if hasattr(srcui, '_csystem'):
         newui._csystem = srcui._csystem
 
     # command line args
@@ -293,7 +292,7 @@ def _loadnewui(srcui, args, cdebug):
     return (newui, newlui)
 
 
-class channeledsystem(object):
+class channeledsystem:
     """Propagate ui.system() request in the following format:
 
     payload length (unsigned int),
@@ -321,7 +320,7 @@ class channeledsystem(object):
 
     def __call__(self, cmd, environ, cwd=None, type=b'system', cmdtable=None):
         args = [type, cmd, util.abspath(cwd or b'.')]
-        args.extend(b'%s=%s' % (k, v) for k, v in pycompat.iteritems(environ))
+        args.extend(b'%s=%s' % (k, v) for k, v in environ.items())
         data = b'\0'.join(args)
         self.out.write(struct.pack(b'>cI', self.channel, len(data)))
         self.out.write(data)
@@ -349,9 +348,9 @@ class channeledsystem(object):
 
 _iochannels = [
     # server.ch, ui.fp, mode
-    (b'cin', b'fin', 'rb'),
-    (b'cout', b'fout', 'wb'),
-    (b'cerr', b'ferr', 'wb'),
+    ('cin', 'fin', 'rb'),
+    ('cout', 'fout', 'wb'),
+    ('cerr', 'ferr', 'wb'),
 ]
 
 
@@ -390,7 +389,17 @@ class chgcmdserver(commandserver.server):
         # tell client to sendmsg() with 1-byte payload, which makes it
         # distinctive from "attachio\n" command consumed by client.read()
         self.clientsock.sendall(struct.pack(b'>cI', b'I', 1))
-        clientfds = util.recvfds(self.clientsock.fileno())
+
+        data, ancdata, msg_flags, address = self.clientsock.recvmsg(1, 256)
+        assert len(ancdata) == 1
+        cmsg_level, cmsg_type, cmsg_data = ancdata[0]
+        assert cmsg_level == socket.SOL_SOCKET
+        assert cmsg_type == socket.SCM_RIGHTS
+        # memoryview.cast() was added in typeshed 61600d68772a, but pytype
+        # still complains
+        # pytype: disable=attribute-error
+        clientfds = memoryview(cmsg_data).cast('i').tolist()
+        # pytype: enable=attribute-error
         self.ui.log(b'chgserver', b'received fds: %r\n', clientfds)
 
         ui = self.ui
@@ -409,22 +418,13 @@ class chgcmdserver(commandserver.server):
             # be unbuffered no matter if it is a tty or not.
             if fn == b'ferr':
                 newfp = fp
-            elif pycompat.ispy3:
+            else:
                 # On Python 3, the standard library doesn't offer line-buffered
                 # binary streams, so wrap/unwrap it.
                 if fp.isatty():
                     newfp = procutil.make_line_buffered(fp)
                 else:
                     newfp = procutil.unwrap_line_buffered(fp)
-            else:
-                # Python 2 uses the I/O streams provided by the C library, so
-                # make it line-buffered explicitly. Otherwise the default would
-                # be decided on first write(), where fout could be a pager.
-                if fp.isatty():
-                    bufsize = 1  # line buffered
-                else:
-                    bufsize = -1  # system default
-                newfp = os.fdopen(fp.fileno(), mode, bufsize)
             if newfp is not fp:
                 setattr(ui, fn, newfp)
             setattr(self, cn, newfp)
@@ -448,23 +448,15 @@ class chgcmdserver(commandserver.server):
         nullfd = os.open(os.devnull, os.O_WRONLY)
         ui = self.ui
         for (ch, fp, fd), (cn, fn, mode) in zip(self._oldios, _iochannels):
-            newfp = getattr(ui, fn)
-            # On Python 2, newfp and fp may be separate file objects associated
-            # with the same fd, so we must close newfp while it's associated
-            # with the client. Otherwise the new associated fd would be closed
-            # when newfp gets deleted. On Python 3, newfp is just a wrapper
-            # around fp even if newfp is not fp, so deleting newfp is safe.
-            if not (pycompat.ispy3 or newfp is fp):
-                newfp.close()
-            # restore original fd: fp is open again
             try:
-                if (pycompat.ispy3 or newfp is fp) and 'w' in mode:
+                if 'w' in mode:
                     # Discard buffered data which couldn't be flushed because
                     # of EPIPE. The data should belong to the current session
                     # and should never persist.
                     os.dup2(nullfd, fp.fileno())
                     fp.flush()
                 os.dup2(fd, fp.fileno())
+                os.close(fd)
             except OSError as err:
                 # According to issue6330, running chg on heavy loaded systems
                 # can lead to EBUSY. [man dup2] indicates that, on Linux,
@@ -477,7 +469,6 @@ class chgcmdserver(commandserver.server):
                     stringutil.forcebytestr(err),
                     fn,
                 )
-            os.close(fd)
             setattr(self, cn, ch)
             setattr(ui, fn, fp)
         os.close(nullfd)
@@ -612,7 +603,7 @@ class chgcmdserver(commandserver.server):
         }
     )
 
-    if util.safehasattr(procutil, b'setprocname'):
+    if hasattr(procutil, 'setprocname'):
 
         def setprocname(self):
             """Change process title"""
@@ -636,13 +627,22 @@ def _hashaddress(address, hashstr):
     return b'%s-%s' % (os.path.join(dirname, basename), hashstr)
 
 
-class chgunixservicehandler(object):
+class chgunixservicehandler:
     """Set of operations for chg services"""
 
     pollinterval = 1  # [sec]
 
+    _hashstate: Optional[hashstate]
+    _baseaddress: Optional[bytes]
+    _realaddress: Optional[bytes]
+
     def __init__(self, ui):
         self.ui = ui
+
+        self._hashstate = None
+        self._baseaddress = None
+        self._realaddress = None
+
         self._idletimeout = ui.configint(b'chgserver', b'idletimeout')
         self._lastactive = time.time()
 

@@ -25,6 +25,7 @@ public final class ExternalSystemDataKeys {
 
   @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<>("external.system.newly.imported");
   @NotNull public static final Key<Boolean> NEWLY_CREATED_PROJECT = new Key<>("external.system.newly.created");
+  @NotNull public static final Key<Boolean> NEWLY_OPENED_PROJECT_WITH_IDE_CACHES = new Key<>("external.system.newly.opened.with.ide.caches");
 
   private ExternalSystemDataKeys() {
   }

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 sealed class EventField<T> {
   abstract val name: String
-  abstract val description: String?
+  abstract val descriptionProvider: () -> String
 
   infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
@@ -42,13 +42,12 @@ class EventPair<T>(val field: EventField<T>, val data: T) {
 }
 
 @ApiStatus.Internal
-class StringEventField(override val name: String, override val description: String?, val possibleValues: List<String>) : EventField<String>() {
+class StringEventField(override val name: String, override val descriptionProvider: () -> String, val possibleValues: List<String>) : EventField<String>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is StringEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
     if (possibleValues != other.possibleValues) return false
 
     return true
@@ -56,7 +55,6 @@ class StringEventField(override val name: String, override val description: Stri
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
     result = 31 * result + possibleValues.hashCode()
     return result
   }
@@ -65,13 +63,13 @@ class StringEventField(override val name: String, override val description: Stri
 @ApiStatus.Internal
 class EnumEventField<T : Enum<*>>(
   override val name: String,
-  override val description: String?,
+  override val descriptionProvider: () -> String,
   val enumClass: Class<T>,
   val transform: (T) -> String
 ) : EventField<T>() {
   companion object {
-    inline fun <reified T : Enum<*>> of(name: String, description: String?, noinline transform: (T) -> String = Enum<*>::name): EnumEventField<T> {
-      return EnumEventField(name, description, T::class.java, transform)
+    inline fun <reified T : Enum<*>> of(name: String, noinline descriptionProvider: () -> String, noinline transform: (T) -> String = Enum<*>::name): EnumEventField<T> {
+      return EnumEventField(name, descriptionProvider, T::class.java, transform)
     }
   }
 
@@ -80,7 +78,6 @@ class EnumEventField<T : Enum<*>>(
     if (other !is EnumEventField<*>) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
     if (enumClass != other.enumClass) return false
     if (transform != other.transform) return false
 
@@ -89,7 +86,6 @@ class EnumEventField<T : Enum<*>>(
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
     result = 31 * result + enumClass.hashCode()
     result = 31 * result + transform.hashCode()
     return result
@@ -97,127 +93,115 @@ class EnumEventField<T : Enum<*>>(
 }
 
 @ApiStatus.Internal
-class IntEventField(override val name: String, override val description: String?) : EventField<Int>() {
+class IntEventField(override val name: String, override val descriptionProvider: () -> String) : EventField<Int>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is IntEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
+    val result = name.hashCode()
     return result
   }
 }
 
 @ApiStatus.Internal
 class LongEventField(override val name: String,
-                     override val description: String?) : EventField<Long>() {
+                     override val descriptionProvider: () -> String) : EventField<Long>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is LongEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
     return result
   }
 }
 
 @ApiStatus.Internal
 class FloatEventField(override val name: String,
-                      override val description: String?) : EventField<Float>() {
+                      override val descriptionProvider: () -> String) : EventField<Float>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is FloatEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
     return result
   }
 }
 
 @ApiStatus.Internal
 class DoubleEventField(override val name: String,
-                       override val description: String?) : EventField<Double>() {
+                       override val descriptionProvider: () -> String) : EventField<Double>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is DoubleEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
+    val result = name.hashCode()
     return result
   }
 }
 
 @ApiStatus.Internal
 class BooleanEventField(override val name: String,
-                        override val description: String?) : EventField<Boolean>() {
+                        override val descriptionProvider: () -> String) : EventField<Boolean>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is BooleanEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
+    val result = name.hashCode()
     return result
   }
 }
 
 @ApiStatus.Internal
 class ClassEventField(override val name: String,
-                      override val description: String?) : EventField<Class<*>>() {
+                      override val descriptionProvider: () -> String) : EventField<Class<*>>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ClassEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
+    val result = name.hashCode()
     return result
   }
 }
 
 @ApiStatus.Internal
 class ObjectEventField(override val name: String,
-                       override val description: String?,
+                       override val descriptionProvider: () -> String,
                        val objectDescription: ObjectDescription) : EventField<ObjectEventData>()
 
 @ApiStatus.Internal
@@ -270,14 +254,13 @@ class ObjectEventData(val values: List<EventPair<*>>) {
 
 @ApiStatus.Internal
 class ObjectListEventField(override val name: String,
-                           override val description: String?,
+                           override val descriptionProvider: () -> String,
                            val internalObjectDescription: ObjectDescription) : EventField<List<ObjectEventData>>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ObjectListEventField) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
     if (internalObjectDescription != other.internalObjectDescription) return false
 
     return true
@@ -285,7 +268,6 @@ class ObjectListEventField(override val name: String,
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
     result = 31 * result + internalObjectDescription.hashCode()
     return result
   }
@@ -293,26 +275,24 @@ class ObjectListEventField(override val name: String,
 
 @ApiStatus.Internal
 class IntListEventField(override val name: String,
-                        override val description: String?) : EventField<List<Int>>()
+                        override val descriptionProvider: () -> String) : EventField<List<Int>>()
 
 @ApiStatus.Internal
 abstract class CustomRuleEventField<T>(
   override val name: String,
-  override val description: String?,
+  override val descriptionProvider: () -> String,
 ) : EventField<T>() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is CustomRuleEventField<*>) return false
 
     if (name != other.name) return false
-    if (description != other.description) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = name.hashCode()
-    result = 31 * result + (description?.hashCode() ?: 0)
+    val result = name.hashCode()
     return result
   }
 }

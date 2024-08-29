@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
@@ -24,6 +25,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.Path
 
 /**
  * This class is used to update entities in [WorkspaceModel] when files referenced from them are moved or renamed.
@@ -36,7 +38,12 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
     for (event in events) {
       when (event) {
         is VFilePropertyChangeEvent, is VFileMoveEvent -> {
-          if (event is VFilePropertyChangeEvent) propertyChanged(event, changedModuleStorePaths)
+          if (event is VFilePropertyChangeEvent) {
+            collectChangedModuleStorePathsAfterDirectoryRename(event, changedModuleStorePaths)
+          }
+          if (event is VFileMoveEvent) {
+            addChangedModuleStorePathAfterImlFileMove(event, changedModuleStorePaths)
+          }
           val (oldUrl, newUrl) = getOldAndNewUrls(event)
           if (oldUrl != newUrl) {
             changedUrlsList.add(Pair(oldUrl, newUrl))
@@ -89,7 +96,7 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
     }
   }
   
-  private fun propertyChanged(event: VFilePropertyChangeEvent, changedModuleStorePaths: ArrayList<Pair<Module, Path>>) {
+  private fun collectChangedModuleStorePathsAfterDirectoryRename(event: VFilePropertyChangeEvent, changedModuleStorePaths: ArrayList<Pair<Module, Path>>) {
     if (!event.file.isDirectory || event.requestor is StateStorage || event.propertyName != VirtualFile.PROP_NAME) return
 
     val parentPath = event.file.parent?.path ?: return
@@ -103,6 +110,15 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
         changedModuleStorePaths.add(
           Pair(module, Paths.get(newAncestorPath, FileUtil.getRelativePath(oldAncestorPath, moduleFilePath, '/'))))
       }
+    }
+  }
+
+  private fun addChangedModuleStorePathAfterImlFileMove(event: VFileMoveEvent, changedModuleStorePaths: MutableList<Pair<Module, Path>>) {
+    if (!event.file.isFile || event.requestor is StateStorage || event.file.extension != ModuleFileType.DEFAULT_EXTENSION) return
+    val module = ModuleManager.getInstance(project).findModuleByName(event.file.nameWithoutExtension) ?: return
+
+    if (module.isLoaded && !module.isDisposed && module.moduleFilePath == event.oldPath) {
+      changedModuleStorePaths.add(Pair(module, Path(event.newPath)))
     }
   }
 

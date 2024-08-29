@@ -40,7 +40,6 @@ nodes that will maximize the number of nodes that will be
 classified with it (since all ancestors or descendants will be marked as well).
 """
 
-from __future__ import absolute_import
 
 import collections
 import random
@@ -100,14 +99,14 @@ def _limitsample(sample, desiredlen, randomize=True):
     """
     if len(sample) <= desiredlen:
         return sample
+    sample = list(sample)
     if randomize:
         return set(random.sample(sample, desiredlen))
-    sample = list(sample)
     sample.sort()
     return set(sample[:desiredlen])
 
 
-class partialdiscovery(object):
+class partialdiscovery:
     """an object representing ongoing discovery
 
     Feed with data from the remote repository, this object keep track of the
@@ -299,6 +298,9 @@ def findcommonheads(
 
     samplegrowth = float(ui.config(b'devel', b'discovery.grow-sample.rate'))
 
+    if audit is not None:
+        audit[b'total-queries'] = 0
+
     start = util.timer()
 
     roundtrips = 0
@@ -377,6 +379,8 @@ def findcommonheads(
         roundtrips += 1
         with remote.commandexecutor() as e:
             fheads = e.callcommand(b'heads', {})
+            if audit is not None:
+                audit[b'total-queries'] += len(sample)
             fknown = e.callcommand(
                 b'known',
                 {
@@ -479,6 +483,8 @@ def findcommonheads(
         sample = list(sample)
 
         with remote.commandexecutor() as e:
+            if audit is not None:
+                audit[b'total-queries'] += len(sample)
             yesno = e.callcommand(
                 b'known',
                 {

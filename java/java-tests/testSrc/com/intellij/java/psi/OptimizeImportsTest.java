@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
@@ -48,7 +50,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return JAVA_23;
   }
 
   @Override
@@ -88,8 +90,146 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
   public void testStringTemplates() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.STRING_TEMPLATES.getMinimumLevel(), () -> {
+      myFixture.addClass("""
+      package java.lang;
+      
+      public interface StringTemplate {
+        Processor<String, RuntimeException> STR = StringTemplate::interpolate;
+      }
+      """);
+      doTest();
+    });
+  }
+
+  public void testImplicitIoImport1() {
+    implicitIoImport();
+  }
+
+  private void implicitIoImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void println(Object obj) {}
+        }
+        """);
+      doTest();
+    });
+  }
+
+  public void testImplicitIoImport2() {
+    implicitIoImport();
+  }
+  
+  public void testImplicitIoImport3() {
+    implicitIoImport();
+  }
+
+  public void testImplicitModulesWithImplicitClass() {
     doTest();
   }
+
+  public void testConflictJavaLang(){
+    myFixture.addClass("package p1; public class String {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictCurrentPackage(){
+    myFixture.addClass("package p2; public class Conflict {}");
+    myFixture.addClass("package p1; public class Conflict {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImport(){
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImportImplicitClass(){
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImportImplicitClass2(){
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictStaticImport(){
+    myFixture.addClass(
+      """
+        package p1;
+        public class A1 {
+          public static void print(Object obj) {}
+          public static void foo() {}
+          public static void foo1() {}
+          public static void foo2() {}
+          public static void foo3() {}
+          public static void foo4() {}
+          public static void foo5() {}
+        }
+        """);
+    myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void print(Object obj) {}
+        }
+        """);
+    doTest();
+  }
+
+  public void testConflictStaticImportWithImplicitClass(){
+    myFixture.addClass(
+      """
+        package p1;
+        public class A1 {
+          public static void print(Object obj) {}
+          public static void foo() {}
+          public static void foo1() {}
+          public static void foo2() {}
+          public static void foo3() {}
+          public static void foo4() {}
+          public static void foo5() {}
+        }
+        """);
+    myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void print(Object obj) {}
+        }
+        """);
+    doTest();
+  }
+
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 

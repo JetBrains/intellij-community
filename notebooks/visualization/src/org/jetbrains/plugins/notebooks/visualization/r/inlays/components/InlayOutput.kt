@@ -31,10 +31,7 @@ import com.intellij.util.ui.JBUI
 import org.cef.browser.CefBrowser
 import org.cef.handler.CefLoadHandlerAdapter
 import org.jetbrains.annotations.Nls
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.ClipboardUtils
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDimensions
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.dataframe.DataFrameCSVAdapter
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
@@ -48,7 +45,11 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class InlayOutput(parent: Disposable, val editor: Editor, private val clearAction: () -> Unit) {
+abstract class InlayOutput(
+  parent: Disposable,
+  val editor: Editor,
+  val actions: List<AnAction>,
+) {
   // Transferring `this` from the constructor to another class violates JMM and leads to undefined behaviour
   // when accessing `toolbarPane` inside constructor and when `toolbarPane` accesses `this`. So, be careful.
   // Since this is an abstract class with many inheritors, the only way to get rid of this issue is to convert
@@ -59,15 +60,8 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
 
   protected val project: Project = editor.project ?: error("Editor should have a project")
 
-  protected open val useDefaultSaveAction: Boolean = true
-  protected open val extraActions: List<AnAction> = emptyList()
-
   /** If the output should occupy as much editor width as possible. */
   open val isFullWidth = true
-
-  val actions: List<AnAction> by lazy {  // Note: eager initialization will cause runtime errors
-    createActions()
-  }
 
   fun getComponent() = toolbarPane
 
@@ -77,8 +71,6 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   abstract fun addData(data: String, type: String)
   abstract fun scrollToTop()
   abstract fun getCollapsedDescription(): String
-
-  abstract fun saveAs()
 
   abstract fun acceptType(type: String): Boolean
 
@@ -115,7 +107,7 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 
   private fun createToolbar(): JComponent {
-    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction())
+    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions)
 
     toolbar.targetComponent = toolbarPane // ToolbarPane will be in context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     toolbar.component.isOpaque = true
@@ -132,94 +124,32 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
     InlayOutputUtil.saveWithFileChooser(project, title, description, extension, defaultName, true, onChoose)
   }
 
-  private fun createActions(): List<AnAction> {
-    return extraActions.toMutableList().apply {
-      if (useDefaultSaveAction) {
-        add(createSaveAsAction())
-      }
-    }
+  /** marker interface for [SaveOutputAction] */
+  interface WithSaveAs {
+    fun saveAs()
   }
 
-  private fun createClearAction(): AnAction {
-    return ToolbarUtil.createAnActionButton<ClearOutputAction>(clearAction::invoke)
+  /** marker interface for [CopyImageToClipboardAction] */
+  interface WithCopyImageToClipboard {
+    fun copyImageToClipboard()
   }
 
-  private fun createSaveAsAction(): AnAction {
-    return ToolbarUtil.createAnActionButton<SaveOutputAction>(this::saveAs)
-  }
-}
+  companion object {
+    fun getToolbarPaneOrNull(e: AnActionEvent): ToolbarPane? =
+      e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarPane
 
-class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
-  private val graphicsPanel = GraphicsPanel(project, parent).apply {
-    isAdvancedMode = true
-  }
+    inline fun <reified T> getInlayOutput(e: AnActionEvent): T? =
+      getToolbarPaneOrNull(e)?.inlayOutput as? T
 
-  override val extraActions = createExtraActions()
-  override val isFullWidth = false
-
-  init {
-    toolbarPane.dataComponent = graphicsPanel.component
-  }
-
-  override fun addToolbar() {
-    super.addToolbar()
-    graphicsPanel.overlayComponent = toolbarPane.toolbarComponent
-  }
-
-  override fun addData(data: String, type: String) {
-    showImageAsync(data, type).onSuccess {
-      SwingUtilities.invokeLater {
-        val maxHeight = graphicsPanel.maximumSize?.height ?: 0
-        val maxWidth = graphicsPanel.maximumSize?.width ?: 0
-        val height = InlayDimensions.calculateInlayHeight(maxWidth, maxHeight, editor)
-        onHeightCalculated?.invoke(height)
-      }
-    }
-  }
-
-  private fun showImageAsync(data: String, type: String): Promise<Unit> {
-    return runAsyncInlay {
-      when (type) {
-        "IMGBase64" -> graphicsPanel.showImageBase64(data)
-        "IMGSVG" -> graphicsPanel.showSvgImage(data)
-        "IMG" -> graphicsPanel.showImage(File(data))
-        else -> Unit
-      }
-    }
-  }
-
-  override fun clear() {
-  }
-
-  override fun scrollToTop() {
-  }
-
-  override fun getCollapsedDescription(): String {
-    return "foo"
-  }
-
-  override fun saveAs() {
-    graphicsPanel.image?.let { image ->
-      InlayOutputUtil.saveImageWithFileChooser(project, image)
-    }
-  }
-
-  override fun acceptType(type: String): Boolean {
-    return type == "IMG" || type == "IMGBase64" || type == "IMGSVG"
-  }
-
-  private fun createExtraActions(): List<AnAction> {
-    return listOf(ToolbarUtil.createAnActionButton<CopyImageToClipboardAction>(this::copyImageToClipboard))
-  }
-
-  private fun copyImageToClipboard() {
-    graphicsPanel.image?.let { image ->
-      ClipboardUtils.copyImageToClipboard(image)
+    fun loadActions(vararg ids: String): List<AnAction> {
+      val actionManager = ActionManager.getInstance()
+      return ids.mapNotNull { actionManager.getAction(it) }
     }
   }
 }
 
-class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputText(parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions(SaveOutputAction.ID)), InlayOutput.WithSaveAs {
 
   private val console = ColoredTextConsole(project, viewer = true)
 
@@ -363,7 +293,8 @@ fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
   }
 }
 
-class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputHtml(parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions(SaveOutputAction.ID)), InlayOutput.WithSaveAs {
 
   private val jbBrowser: JBCefBrowser = JBCefBrowser().also { Disposer.register(parent, it) }
   private val heightJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
@@ -444,7 +375,8 @@ class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Uni
   }
 }
 
-class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
+class InlayOutputTable(val parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions()) {
 
   private val inlayTablePage: InlayTablePage = InlayTablePage()
 
@@ -462,8 +394,6 @@ class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -
   override fun scrollToTop() {}
 
   override fun getCollapsedDescription(): String = "Table output"
-
-  override fun saveAs() {}
 
   override fun acceptType(type: String): Boolean = type == "TABLE"
 }

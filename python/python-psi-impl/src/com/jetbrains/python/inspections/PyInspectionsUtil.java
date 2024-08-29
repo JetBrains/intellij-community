@@ -6,13 +6,17 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class PyInspectionsUtil {
-  public static boolean hasAnyInterruptedControlFlowPaths(@NotNull PsiElement element) {
+  @ApiStatus.Internal
+  public static boolean hasAnyInterruptedControlFlowPaths(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
     if (owner != null) {
       final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
@@ -21,7 +25,7 @@ public final class PyInspectionsUtil {
       if (start >= 0) {
         final Ref<Boolean> resultRef = Ref.create(false);
         ControlFlowUtil.iteratePrev(start, instructions, instruction -> {
-          if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
+          if (CallInstruction.Companion.allPredWithoutNoReturn(instruction, context).isEmpty() && !isFirstInstruction(instruction)) {
             resultRef.set(true);
             return ControlFlowUtil.Operation.BREAK;
           }
@@ -33,6 +37,7 @@ public final class PyInspectionsUtil {
     return false;
   }
 
+  @ApiStatus.Internal
   static boolean isFirstInstruction(Instruction instruction) {
     return instruction.num() == 0;
   }

@@ -466,7 +466,7 @@ public class ShelvedChangesViewManager implements Disposable {
                                                  int shelvedFilesToDeleteSize,
                                                  @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
     HtmlChunk message = constructDeleteSuccessfullyMessage(shelvedFilesToDeleteSize, shelvedListsToDelete);
-    Notification shelfDeletionNotification = new Notification(VcsNotifier.STANDARD_NOTIFICATION.getDisplayId(),
+    Notification shelfDeletionNotification = new Notification(VcsNotifier.standardNotification().getDisplayId(),
                                                               message.toString(),
                                                               NotificationType.INFORMATION);
     shelfDeletionNotification.setDisplayId(VcsNotificationIdsHolder.SHELF_UNDO_DELETE);

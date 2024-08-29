@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.jetbrains.jsonSchema.extension.JsonAnnotationsCollectionMode
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import java.util.concurrent.ConcurrentHashMap
@@ -32,7 +33,13 @@ internal fun getOrComputeAdapterValidityAgainstGivenSchema(value: JsonValueAdapt
     return cachedValue
   }
 
-  val checker = JsonSchemaAnnotatorChecker(value.delegate.project, JsonComplianceCheckerOptions.RELAX_ENUM_CHECK)
+  val checker = JsonSchemaAnnotatorChecker(
+    value.delegate.project,
+    JsonComplianceCheckerOptions(false,
+                                 false,
+                                 false,
+                                 JsonAnnotationsCollectionMode.FIND_FIRST)
+  )
   checker.checkByScheme(value, schema)
   val computedValue = checker.isCorrect
 

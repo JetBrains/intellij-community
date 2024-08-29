@@ -24,7 +24,6 @@ The threshold at which a file is considered a move can be set with the
 #
 # See http://markmail.org/thread/5pxnljesvufvom57 for context.
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (
@@ -57,25 +56,34 @@ def extsetup(ui):
 
 def mvcheck(orig, ui, repo, *pats, **opts):
     """Hook to check for moves at commit time"""
-    opts = pycompat.byteskwargs(opts)
     renames = None
-    disabled = opts.pop(b'no_automv', False)
-    if not disabled:
-        threshold = ui.configint(b'automv', b'similarity')
-        if not 0 <= threshold <= 100:
-            raise error.Abort(_(b'automv.similarity must be between 0 and 100'))
-        if threshold > 0:
-            match = scmutil.match(repo[None], pats, opts)
-            added, removed = _interestingfiles(repo, match)
-            uipathfn = scmutil.getuipathfn(repo, legacyrelativevalue=True)
-            renames = _findrenames(
-                repo, uipathfn, added, removed, threshold / 100.0
-            )
-
+    disabled = opts.pop('no_automv', False)
     with repo.wlock():
+        if not disabled:
+            threshold = ui.configint(b'automv', b'similarity')
+            if not 0 <= threshold <= 100:
+                raise error.Abort(
+                    _(b'automv.similarity must be between 0 and 100')
+                )
+            if threshold > 0:
+                match = scmutil.match(
+                    repo[None], pats, pycompat.byteskwargs(opts)
+                )
+                added, removed = _interestingfiles(repo, match)
+                uipathfn = scmutil.getuipathfn(repo, legacyrelativevalue=True)
+                renames = _findrenames(
+                    repo, uipathfn, added, removed, threshold / 100.0
+                )
+
         if renames is not None:
-            scmutil._markchanges(repo, (), (), renames)
-        return orig(ui, repo, *pats, **pycompat.strkwargs(opts))
+            with repo.dirstate.changing_files(repo):
+                # XXX this should be wider and integrated with the commit
+                # transaction. At the same time as we do the `addremove` logic
+                # for commit.  However we can't really do better with the
+                # current extension structure, and this is not worse than what
+                # happened before.
+                scmutil._markchanges(repo, (), (), renames)
+        return orig(ui, repo, *pats, **opts)
 
 
 def _interestingfiles(repo, matcher):

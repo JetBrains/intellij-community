@@ -89,6 +89,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                      key="INSP.requirement.uninstalled.name" groupKey="INSP.GROUP.requirements" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>
 
+    <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
   </extensions>
 
 
@@ -497,6 +498,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyProjectTomlUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyCompatibilityInspectionCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector"/>

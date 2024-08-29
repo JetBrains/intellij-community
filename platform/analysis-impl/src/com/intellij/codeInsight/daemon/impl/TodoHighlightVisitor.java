@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -21,30 +22,45 @@ import java.util.List;
 import java.util.StringJoiner;
 
 final class TodoHighlightVisitor implements HighlightVisitor {
+  private final Project myProject;
+  private HighlightInfoHolder myHolder;
+
+  TodoHighlightVisitor(@NotNull Project project) {
+    myProject = project;
+  }
+
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
     return true;
   }
 
   @Override
-  public boolean analyze(@NotNull PsiFile psiFile,
+  public boolean analyze(@NotNull PsiFile file,
                          boolean updateWholeFile,
                          @NotNull HighlightInfoHolder holder,
                          @NotNull Runnable action) {
-    action.run();
-    // run unconditionally, because the todo API sucks and is file-level only
-    highlightTodos(psiFile, psiFile.getText(), holder);
+    myHolder = holder;
+
+    try {
+      action.run();
+    }
+    finally {
+      myHolder = null;
+    }
     return true;
   }
 
   @Override
   public void visit(@NotNull PsiElement element) {
+    if (element instanceof PsiFile psiFile && psiFile.getViewProvider().getAllFiles().get(0) == psiFile) {
+      highlightTodos(psiFile, psiFile.getText(), myHolder);
+    }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  @SuppressWarnings("CloneDoesntCallSuperClone")
   @Override
   public @NotNull HighlightVisitor clone() {
-    return new TodoHighlightVisitor();
+    return new TodoHighlightVisitor(myProject);
   }
 
   private static void highlightTodos(@NotNull PsiFile file,
@@ -106,4 +122,5 @@ final class TodoHighlightVisitor implements HighlightVisitor {
   private static boolean shouldHighlightTodos(@NotNull PsiTodoSearchHelper helper, @NotNull PsiFile file) {
     return helper instanceof PsiTodoSearchHelperImpl && ((PsiTodoSearchHelperImpl)helper).shouldHighlightInEditor(file);
   }
+
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.GotItTooltip
@@ -28,11 +29,13 @@ import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 
+@Internal
+val CUSTOM_ORIGINAL_FILE = Key.create<VirtualFile>("custom.original.file")
 private const val WEB_PREVIEW_RELOAD_TOOLTIP_ID: String = "web.preview.reload.on.save"
 
 @Internal
 class WebPreviewFileEditor internal constructor(file: WebPreviewVirtualFile) : UserDataHolderBase(), FileEditor {
-  private val file = file.originalFile
+  private val file = file.getUserData(CUSTOM_ORIGINAL_FILE) ?: file.originalFile
   private val panel: JCEFHtmlPanel
   private val url = file.previewUrl.toExternalForm()
 

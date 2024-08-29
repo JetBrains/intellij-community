@@ -89,7 +89,6 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
-import java.util.function.Supplier
 import javax.swing.Icon
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
@@ -375,6 +374,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
       }
 
+      val bundleSupplier = { bundleName?.let { DynamicBundle.getResourceBundle(module.classLoader, it) } ?: bundle }
+
       when (descriptor) {
         is ActionDescriptorAction -> {
           processActionElement(className = descriptor.className,
@@ -382,7 +383,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                element = element,
                                actionRegistrar = actionRegistrar,
                                module = module,
-                               bundle = bundle,
+                               bundleSupplier = bundleSupplier,
                                keymapToOperations = keymapToOperations,
                                classLoader = module.classLoader)
         }
@@ -392,7 +393,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                               element = element,
                               actionRegistrar = actionRegistrar,
                               module = module,
-                              bundle = bundle,
+                              bundleSupplier = bundleSupplier,
                               keymapToOperations = keymapToOperations,
                               classLoader = module.classLoader)
         }
@@ -401,11 +402,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             ActionDescriptorName.separator -> processSeparatorNode(parentGroup = null,
                                                                    element = element,
                                                                    module = module,
-                                                                   bundle = bundle,
+                                                                   bundleSupplier = bundleSupplier,
                                                                    actionRegistrar = actionRegistrar)
             ActionDescriptorName.reference -> processReferenceNode(element = element,
                                                                    module = module,
-                                                                   bundle = bundle,
+                                                                   bundleSupplier = bundleSupplier,
                                                                    actionRegistrar = actionRegistrar)
             ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
             ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module)
@@ -463,7 +464,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                    element: XmlElement,
                                    actionRegistrar: ActionRegistrar,
                                    module: IdeaPluginDescriptorImpl,
-                                   bundle: ResourceBundle?,
+                                   bundleSupplier: () -> ResourceBundle?,
                                    keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
                                    classLoader: ClassLoader): AnAction? {
     // read ID and register a loaded action
@@ -485,15 +486,15 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val descriptionValue = element.attributes.get(DESCRIPTION)
     val stub = ActionStub(className, id, module, iconPath, ProjectType.create(projectType)) {
       val presentation = Presentation.newTemplatePresentation()
-      presentation.setText(Supplier {
-        computeActionText(bundle = bundle, id = id, elementType = ACTION_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
-      })
-      if (bundle == null) {
+      presentation.setText {
+        computeActionText(bundleSupplier = bundleSupplier, id = id, elementType = ACTION_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
+      }
+      if (bundleSupplier() == null) {
         presentation.description = descriptionValue
       }
       else {
         presentation.setDescription {
-          computeDescription(bundle = bundle,
+          computeDescription(bundleSupplier = bundleSupplier,
                              id = id,
                              elementType = ACTION_ELEMENT_NAME,
                              descriptionValue = descriptionValue,
@@ -524,8 +525,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                               id = stub.id,
                                                               element = child,
                                                               module = module,
-                                                              bundle = bundle)
-        SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = child, module = module, bundle = bundle)
+                                                              bundleSupplier = bundleSupplier)
+        SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = child, module = module, bundleSupplier = bundleSupplier)
         else -> {
           reportActionError(module, "unexpected name of element \"${child.name}\"")
           return null
@@ -544,7 +545,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                   id: String?,
                                   element: XmlElement,
                                   module: IdeaPluginDescriptorImpl,
-                                  bundle: ResourceBundle?,
+                                  bundleSupplier: () -> ResourceBundle?,
                                   keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
                                   actionRegistrar: ActionRegistrar,
                                   classLoader: ClassLoader): AnAction? {
@@ -613,7 +614,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                        description = element.attributes.get(DESCRIPTION),
                                        textValue = element.attributes.get(TEXT_ATTR_NAME),
                                        group = group,
-                                       bundle = bundle,
+                                       bundleSupplier = bundleSupplier,
                                        id = id,
                                        classLoader = classLoader,
                                        iconPath = iconPath,
@@ -642,7 +643,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                 isInternal = child.attributes.get(INTERNAL_ATTR_NAME).toBoolean(),
                                                 element = child,
                                                 module = module,
-                                                bundle = bundle,
+                                                bundleSupplier = bundleSupplier,
                                                 actionRegistrar = actionRegistrar,
                                                 keymapToOperations = keymapToOperations,
                                                 classLoader = classLoader)
@@ -660,7 +661,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             processSeparatorNode(parentGroup = group as DefaultActionGroup,
                                  element = child,
                                  module = module,
-                                 bundle = bundle,
+                                 bundleSupplier = bundleSupplier,
                                  actionRegistrar = actionRegistrar)
           }
           GROUP_ELEMENT_NAME -> {
@@ -683,7 +684,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                id = childId,
                                                element = child,
                                                module = module,
-                                               bundle = bundle,
+                                               bundleSupplier = bundleSupplier,
                                                keymapToOperations = keymapToOperations,
                                                actionRegistrar = actionRegistrar,
                                                classLoader = classLoader)
@@ -715,7 +716,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                          secondary = isSecondary(child))
             }
           }
-          OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = group, id = id, element = child, module = module, bundle = bundle)
+          OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = group, id = id, element = child, module = module, bundleSupplier = bundleSupplier)
           else -> {
             reportActionError(module, "unexpected name of element \"${child.name}\n")
             return null
@@ -735,7 +736,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   private fun processReferenceNode(element: XmlElement,
                                    module: IdeaPluginDescriptor,
-                                   bundle: ResourceBundle?,
+                                   bundleSupplier: () -> ResourceBundle?,
                                    actionRegistrar: ActionRegistrar) {
     val action = processReferenceElement(element = element, module = module, actionRegistrar = actionRegistrar) ?: return
     for (child in element.children) {
@@ -747,7 +748,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                               actionRegistrar = actionRegistrar)
       }
       else if (SYNONYM_ELEMENT_NAME == child.name) {
-        processSynonymNode(action = action, element = child, module = module, bundle = bundle)
+        processSynonymNode(action = action, element = child, module = module, bundleSupplier = bundleSupplier)
       }
     }
   }
@@ -828,13 +829,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   private fun processSeparatorNode(parentGroup: DefaultActionGroup?,
                                    element: XmlElement,
                                    module: IdeaPluginDescriptor,
-                                   bundle: ResourceBundle?,
+                                   bundleSupplier: () -> ResourceBundle?,
                                    actionRegistrar: ActionRegistrar) {
     val text = element.attributes.get(TEXT_ATTR_NAME)
     val key = element.attributes.get(KEY_ATTR_NAME)
     val separator = when {
       text != null -> Separator(text)
-      key != null -> createSeparator(bundle, key)
+      key != null -> createSeparator(bundleSupplier, key)
       else -> Separator.getInstance()
     }
     parentGroup?.add(separator, this)
@@ -1552,12 +1553,12 @@ private fun loadIcon(module: PluginDescriptor, iconPath: String, requestor: Stri
 }
 
 @Suppress("HardCodedStringLiteral")
-private fun computeDescription(bundle: ResourceBundle?,
+private fun computeDescription(bundleSupplier: () -> ResourceBundle?,
                                id: String,
                                elementType: String,
                                descriptionValue: String?,
                                classLoader: ClassLoader): @NlsActions.ActionDescription String? {
-  var effectiveBundle = bundle
+  var effectiveBundle = bundleSupplier()
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
@@ -1565,12 +1566,12 @@ private fun computeDescription(bundle: ResourceBundle?,
 }
 
 @Suppress("HardCodedStringLiteral")
-private fun computeActionText(bundle: ResourceBundle?,
+private fun computeActionText(bundleSupplier: () -> ResourceBundle?,
                               id: String,
                               elementType: String,
                               textValue: String?,
                               classLoader: ClassLoader): @NlsActions.ActionText String? {
-  var effectiveBundle = bundle
+  var effectiveBundle = bundleSupplier()
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
@@ -1624,7 +1625,7 @@ private fun obtainActionId(element: XmlElement, className: String?): String {
 private fun processOverrideTextNode(action: AnAction,
                                     id: String,
                                     element: XmlElement,
-                                    module: IdeaPluginDescriptor, bundle: ResourceBundle?) {
+                                    module: IdeaPluginDescriptor, bundleSupplier: () -> ResourceBundle?) {
   val place = element.attributes.get("place")
   if (place == null) {
     reportActionError(module, "$id: override-text specified without place")
@@ -1636,11 +1637,12 @@ private fun processOverrideTextNode(action: AnAction,
     action.copyActionTextOverride(useTextOfPlace, place, id)
   }
   else {
+    val bundle = bundleSupplier()
     val text = element.attributes.get(TEXT_ATTR_NAME)
     if (text.isNullOrEmpty() && bundle != null) {
       val prefix = if (action is ActionGroup) "group" else "action"
       val key = "$prefix.$id.$place.text"
-      action.addTextOverride(place) { BundleBase.message(bundle, key) }
+      action.addTextOverride(place) { BundleBase.message(bundleSupplier()!!, key) }
     }
     else {
       action.addTextOverride(place) { text }
@@ -1648,15 +1650,15 @@ private fun processOverrideTextNode(action: AnAction,
   }
 }
 
-private fun processSynonymNode(action: AnAction, element: XmlElement, module: IdeaPluginDescriptor, bundle: ResourceBundle?) {
+private fun processSynonymNode(action: AnAction, element: XmlElement, module: IdeaPluginDescriptor, bundleSupplier: () -> ResourceBundle?) {
   val text = element.attributes.get(TEXT_ATTR_NAME)
   if (!text.isNullOrEmpty()) {
     action.addSynonym { text }
   }
   else {
     val key = element.attributes.get(KEY_ATTR_NAME)
-    if (key != null && bundle != null) {
-      action.addSynonym { BundleBase.message(bundle, key) }
+    if (key != null && bundleSupplier() != null) {
+      action.addSynonym { BundleBase.message(bundleSupplier()!!, key) }
     }
     else {
       reportActionError(module, "Can't process synonym: neither text nor resource bundle key is specified")
@@ -1664,7 +1666,8 @@ private fun processSynonymNode(action: AnAction, element: XmlElement, module: Id
   }
 }
 
-private fun createSeparator(bundle: ResourceBundle?, key: String): Separator {
+private fun createSeparator(bundleSupplier: () -> ResourceBundle?, key: String): Separator {
+  val bundle = bundleSupplier()
   val text = if (bundle == null) null else AbstractBundle.messageOrNull(bundle, key)
   return if (text == null) Separator.getInstance() else Separator(text)
 }
@@ -1708,7 +1711,7 @@ private fun configureGroupDescriptionAndIcon(presentation: Presentation,
                                              @NlsSafe description: String?,
                                              textValue: String?,
                                              group: ActionGroup,
-                                             bundle: ResourceBundle?,
+                                             bundleSupplier: () -> ResourceBundle?,
                                              id: String,
                                              classLoader: ClassLoader,
                                              iconPath: String?,
@@ -1716,26 +1719,26 @@ private fun configureGroupDescriptionAndIcon(presentation: Presentation,
                                              className: String?) {
   // don't override value which was set in API with empty value from xml descriptor
   presentation.setFallbackPresentationText {
-    computeActionText(bundle = bundle, id = id, elementType = GROUP_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
+    computeActionText(bundleSupplier = bundleSupplier, id = id, elementType = GROUP_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
   }
 
   // description
-  if (bundle == null) {
+  if (bundleSupplier() == null) {
     // don't override value which was set in API with empty value from xml descriptor
     if (!description.isNullOrEmpty() || presentation.description == null) {
       presentation.description = description
     }
   }
   else {
-    val descriptionSupplier = Supplier {
-      computeDescription(bundle = bundle,
+    val descriptionSupplier = {
+      computeDescription(bundleSupplier = bundleSupplier,
                          id = id,
                          elementType = GROUP_ELEMENT_NAME,
                          descriptionValue = description,
                          classLoader = classLoader)
     }
     // don't override value which was set in API with empty value from xml descriptor
-    if (!descriptionSupplier.get().isNullOrEmpty() || presentation.description == null) {
+    if (!descriptionSupplier().isNullOrEmpty() || presentation.description == null) {
       presentation.setDescription(descriptionSupplier)
     }
   }

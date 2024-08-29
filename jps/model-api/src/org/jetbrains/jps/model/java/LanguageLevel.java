@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
@@ -28,7 +28,8 @@ public enum LanguageLevel {
   JDK_20(20), JDK_20_PREVIEW(20),
   JDK_21(21), JDK_21_PREVIEW(21),
   JDK_22(22), JDK_22_PREVIEW(22),
-  JDK_X(23),
+  JDK_23(23), JDK_23_PREVIEW(23),
+  JDK_X(24),
   
   ;
 

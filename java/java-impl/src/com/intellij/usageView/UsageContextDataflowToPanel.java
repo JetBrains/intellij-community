@@ -63,7 +63,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   }
 
   @Override
-  public void updateLayoutLater(@NotNull Project project, final @Nullable List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(final @Nullable List<? extends UsageInfo> infos) {
     if (ContainerUtil.isEmpty(infos)) {
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
@@ -79,7 +79,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       PsiElement restored = JavaSliceUsage.createRootUsage(element, createParams(element, isDataflowToThis())).getElement();
       if (restored == null || restored.getContainingFile() == null) return;
 
-      JComponent panel = createPanel(project, element, isDataflowToThis());
+      JComponent panel = createPanel(element, isDataflowToThis());
       myPanel = panel;
       Disposer.register(this, (Disposable)panel);
       removeAll();
@@ -100,7 +100,8 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     return params;
   }
 
-  protected @NotNull JComponent createPanel(@NotNull Project project, @NotNull PsiElement element, final boolean dataFlowToThis) {
+  protected @NotNull JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
+    Project project = element.getProject();
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
     SliceAnalysisParams params = createParams(element, dataFlowToThis);
 

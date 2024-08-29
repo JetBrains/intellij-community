@@ -16,6 +16,7 @@ import java.util.Set;
 public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> {
   @Override
   public boolean eq(@NotNull DFAMap<ScopeVariable> e1, @NotNull DFAMap<ScopeVariable> e2) {
+    if (e1 == PyReachingDefsDfaInstance.UNREACHABLE_MARKER || e2 == PyReachingDefsDfaInstance.UNREACHABLE_MARKER) return e1 == e2;
     if (e1 == PyReachingDefsDfaInstance.INITIAL_MAP && e2 != PyReachingDefsDfaInstance.INITIAL_MAP ||
         e2 == PyReachingDefsDfaInstance.INITIAL_MAP && e1 != PyReachingDefsDfaInstance.INITIAL_MAP) {
       return false;
@@ -31,6 +32,8 @@ public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> 
     if (ins.size() == 1) {
       return ins.get(0);
     }
+
+    ins = ins.stream().filter( e -> e != PyReachingDefsDfaInstance.UNREACHABLE_MARKER).toList();
 
     final Set<String> resultNames = getResultNames(ins);
     if (resultNames == null || resultNames.isEmpty()) {

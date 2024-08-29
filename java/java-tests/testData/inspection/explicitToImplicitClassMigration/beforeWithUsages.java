@@ -1,4 +1,3 @@
-// "Convert into implicitly declared class" "false"
 public class beforeWithUsage<caret>s  {
 
   public static void main(String[] args) {

@@ -3,13 +3,14 @@ package com.intellij.openapi.vcs.ui;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.vcs.VcsNotifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +23,13 @@ import javax.swing.event.HyperlinkEvent;
  * Use the special method or supply additional parameter to the constructor to show the balloon over the Version Control View.
  */
 public class VcsBalloonProblemNotifier implements Runnable {
+  /**
+   * @deprecated Prefer using {@link VcsNotifier#toolWindowNotification()} instead.
+   */
+  @Deprecated
   public static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Common Version Control Messages");
+    Cancellation.forceNonCancellableSectionInClassInitializer(() -> VcsNotifier.toolWindowNotification());
+
   private final Project myProject;
   private final @NotificationContent String myMessage;
   private final MessageType myMessageType;
@@ -74,7 +80,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
         final String name = runnable.toString();
         sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>"); // NON-NLS
       }
-      notification = NOTIFICATION_GROUP.createNotification(sb.toString(), myMessageType.toNotificationType())
+      notification = VcsNotifier.toolWindowNotification().createNotification(sb.toString(), myMessageType.toNotificationType())
         .setListener((currentNotification, event) -> {
           if (HyperlinkEvent.EventType.ACTIVATED.equals(event.getEventType())) {
             if (myNotificationListener.length == 1) {
@@ -96,7 +102,7 @@ public class VcsBalloonProblemNotifier implements Runnable {
         });
     }
     else {
-      notification = NOTIFICATION_GROUP.createNotification(myMessage, myMessageType);
+      notification = VcsNotifier.toolWindowNotification().createNotification(myMessage, myMessageType);
     }
     notification.notify(myProject.isDefault() ? null : myProject);
   }

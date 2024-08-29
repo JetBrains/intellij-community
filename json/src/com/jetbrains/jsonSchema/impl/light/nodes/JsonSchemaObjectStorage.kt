@@ -56,7 +56,7 @@ class JsonSchemaObjectStorage {
 
   private fun isSupportedSchemaFile(maybeSchemaFile: VirtualFile): Boolean {
     return isSupportedSchemaFileType(maybeSchemaFile.fileType)
-           && !isNotLoadedHttpFile(maybeSchemaFile)
+           && (maybeSchemaFile !is HttpVirtualFile || isLoadedHttpFile(maybeSchemaFile))
   }
 
   private fun isSupportedSchemaFileType(fileType: FileType): Boolean {
@@ -65,8 +65,8 @@ class JsonSchemaObjectStorage {
 
   private val supportedFileTypeNames = setOf("JSON", "JSON5", "YAML")
 
-  private fun isNotLoadedHttpFile(maybeHttpFile: VirtualFile): Boolean {
-    return maybeHttpFile is HttpVirtualFile && maybeHttpFile.fileInfo?.state != RemoteFileState.DOWNLOADED
+  private fun isLoadedHttpFile(maybeHttpFile: VirtualFile): Boolean {
+    return maybeHttpFile is HttpVirtualFile && maybeHttpFile.fileInfo?.state == RemoteFileState.DOWNLOADED
   }
 
   private fun VirtualFile.asSchemaId(): SchemaId {

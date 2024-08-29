@@ -23,7 +23,77 @@ def _is_power_of_two(n):
     return (n & (n - 1) == 0) and n != 0
 
 
-class randomaccessfile(object):
+class appender:
+    """the changelog index must be updated last on disk, so we use this class
+    to delay writes to it"""
+
+    def __init__(self, vfs, name, mode, buf):
+        self.data = buf
+        fp = vfs(name, mode)
+        self.fp = fp
+        self.offset = fp.tell()
+        self.size = vfs.fstat(fp).st_size
+        self._end = self.size
+
+    def end(self):
+        return self._end
+
+    def tell(self):
+        return self.offset
+
+    def flush(self):
+        pass
+
+    @property
+    def closed(self):
+        return self.fp.closed
+
+    def close(self):
+        self.fp.close()
+
+    def seek(self, offset, whence=0):
+        '''virtual file offset spans real file and data'''
+        if whence == 0:
+            self.offset = offset
+        elif whence == 1:
+            self.offset += offset
+        elif whence == 2:
+            self.offset = self.end() + offset
+        if self.offset < self.size:
+            self.fp.seek(self.offset)
+
+    def read(self, count=-1):
+        '''only trick here is reads that span real file and data'''
+        ret = b""
+        if self.offset < self.size:
+            s = self.fp.read(count)
+            ret = s
+            self.offset += len(s)
+            if count > 0:
+                count -= len(s)
+        if count != 0:
+            doff = self.offset - self.size
+            self.data.insert(0, b"".join(self.data))
+            del self.data[1:]
+            s = self.data[0][doff : doff + count]
+            self.offset += len(s)
+            ret += s
+        return ret
+
+    def write(self, s):
+        self.data.append(bytes(s))
+        self.offset += len(s)
+        self._end += len(s)
+
+    def __enter__(self):
+        self.fp.__enter__()
+        return self
+
+    def __exit__(self, *args):
+        return self.fp.__exit__(*args)
+
+
+class randomaccessfile:
     """Accessing arbitrary chuncks of data within a file, with some caching"""
 
     def __init__(
@@ -50,22 +120,27 @@ class randomaccessfile(object):
         self._cached_chunk = b''
         self._cached_chunk_position = 0
 
+    @property
+    def is_open(self):
+        """True if any file handle is being held
+
+        Used for assert and debug in the python code"""
+        return (
+            self.reading_handle is not None or self.writing_handle is not None
+        )
+
     def _open(self, mode=b'r'):
         """Return a file object"""
         return self.opener(self.filename, mode=mode)
 
     @contextlib.contextmanager
-    def _open_read(self, existing_file_obj=None):
+    def _read_handle(self):
         """File object suitable for reading data"""
-        # Use explicit file handle, if given.
-        if existing_file_obj is not None:
-            yield existing_file_obj
-
         # Use a file handle being actively used for writes, if available.
         # There is some danger to doing this because reads will seek the
         # file. However, revlog._writeentry performs a SEEK_END before all
         # writes, so we should be safe.
-        elif self.writing_handle:
+        if self.writing_handle:
             yield self.writing_handle
 
         elif self.reading_handle:
@@ -93,7 +168,7 @@ class randomaccessfile(object):
         else:
             yield
 
-    def read_chunk(self, offset, length, existing_file_obj=None):
+    def read_chunk(self, offset, length):
         """Read a chunk of bytes from the file.
 
         Accepts an absolute offset, length to read, and an optional existing
@@ -116,9 +191,9 @@ class randomaccessfile(object):
             relative_start = offset - cache_start
             return util.buffer(self._cached_chunk, relative_start, length)
 
-        return self._read_and_update_cache(offset, length, existing_file_obj)
+        return self._read_and_update_cache(offset, length)
 
-    def _read_and_update_cache(self, offset, length, existing_file_obj=None):
+    def _read_and_update_cache(self, offset, length):
         # Cache data both forward and backward around the requested
         # data, in a fixed size window. This helps speed up operations
         # involving reading the revlog backwards.
@@ -127,7 +202,7 @@ class randomaccessfile(object):
             (offset + length + self.default_cached_chunk_size)
             & ~(self.default_cached_chunk_size - 1)
         ) - real_offset
-        with self._open_read(existing_file_obj) as file_obj:
+        with self._read_handle() as file_obj:
             file_obj.seek(real_offset)
             data = file_obj.read(real_length)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -206,7 +206,8 @@ public class BasicReferenceParser {
 
   @Nullable
   private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
-                                                   boolean isStaticImport, boolean isNew, boolean diamonds, TypeInfo typeInfo) {
+                                                   boolean isStaticImport, boolean isNew, boolean diamonds,
+                                                   TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
@@ -271,8 +272,12 @@ public class BasicReferenceParser {
       }
     }
 
-    refElement.done(isStaticImport ?
-                    myJavaElementTypeContainer.IMPORT_STATIC_REFERENCE : myJavaElementTypeContainer.JAVA_CODE_REFERENCE);
+    if (isStaticImport) {
+      refElement.done(myJavaElementTypeContainer.IMPORT_STATIC_REFERENCE);
+    }
+    else {
+      refElement.done(myJavaElementTypeContainer.JAVA_CODE_REFERENCE);
+    }
     return refElement;
   }
 

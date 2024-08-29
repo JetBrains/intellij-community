@@ -7,7 +7,6 @@
 # GNU General Public License version 2 or any later version.
 """command to split a changeset into smaller ones (EXPERIMENTAL)"""
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 
@@ -22,7 +21,7 @@ from mercurial import (
     commands,
     error,
     hg,
-    pycompat,
+    logcmdutil,
     registrar,
     revsetlang,
     rewriteutil,
@@ -65,17 +64,16 @@ def split(ui, repo, *revs, **opts):
     By default, rebase connected non-obsoleted descendants onto the new
     changeset. Use --no-rebase to avoid the rebase.
     """
-    opts = pycompat.byteskwargs(opts)
     revlist = []
-    if opts.get(b'rev'):
-        revlist.append(opts.get(b'rev'))
+    if opts.get('rev'):
+        revlist.append(opts.get('rev'))
     revlist.extend(revs)
     with repo.wlock(), repo.lock():
         tr = repo.transaction(b'split')
         # If the rebase somehow runs into conflicts, make sure
         # we close the transaction so the user can continue it.
         with util.acceptintervention(tr):
-            revs = scmutil.revrange(repo, revlist or [b'.'])
+            revs = logcmdutil.revrange(repo, revlist or [b'.'])
             if len(revs) > 1:
                 raise error.InputError(_(b'cannot split multiple revisions'))
 
@@ -89,7 +87,7 @@ def split(ui, repo, *revs, **opts):
             if ctx.node() is None:
                 raise error.InputError(_(b'cannot split working directory'))
 
-            if opts.get(b'rebase'):
+            if opts.get('rebase'):
                 # Skip obsoleted descendants and their descendants so the rebase
                 # won't cause conflicts for sure.
                 descendants = list(repo.revs(b'(%d::) - (%d)', rev, rev))
@@ -116,7 +114,7 @@ def split(ui, repo, *revs, **opts):
             wnode = repo[b'.'].node()
             top = None
             try:
-                top = dosplit(ui, repo, tr, ctx, opts)
+                top = dosplit(ui, repo, tr, ctx, **opts)
             finally:
                 # top is None: split failed, need update --clean recovery.
                 # wnode == ctx.node(): wnode split, no need to update.
@@ -128,13 +126,13 @@ def split(ui, repo, *revs, **opts):
                 dorebase(ui, repo, torebase, top)
 
 
-def dosplit(ui, repo, tr, ctx, opts):
+def dosplit(ui, repo, tr, ctx, **opts):
     committed = []  # [ctx]
 
     # Set working parent to ctx.p1(), and keep working copy as ctx's content
     if ctx.node() != repo.dirstate.p1():
         hg.clean(repo, ctx.node(), show_stats=False)
-    with repo.dirstate.parentchange():
+    with repo.dirstate.changing_parents(repo):
         scmutil.movedirstate(repo, ctx.p1())
 
     # Any modified, added, removed, deleted result means split is incomplete
@@ -166,13 +164,13 @@ def dosplit(ui, repo, tr, ctx, opts):
             ) % short(ctx.node())
         opts.update(
             {
-                b'edit': True,
-                b'interactive': True,
-                b'message': header + ctx.description(),
+                'edit': True,
+                'interactive': True,
+                'message': header + ctx.description(),
             }
         )
         origctx = repo[b'.']
-        commands.commit(ui, repo, **pycompat.strkwargs(opts))
+        commands.commit(ui, repo, **opts)
         newctx = repo[b'.']
         # Ensure user didn't do a "no-op" split (such as deselecting
         # everything).

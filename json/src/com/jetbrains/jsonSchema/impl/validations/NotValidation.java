@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
+import com.jetbrains.jsonSchema.extension.JsonAnnotationsCollectionMode;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
@@ -18,20 +19,29 @@ import java.util.Collection;
 public final class NotValidation implements JsonSchemaValidation {
   public static final NotValidation INSTANCE = new NotValidation();
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
     final MatchResult result = consumer.resolve(schema.getNot(), propValue);
-    if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
+    if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return true;
 
     // if 'not' uses reference to owning schema back -> do not check, seems it does not make any sense
     if (result.mySchemas.stream().anyMatch(s -> schema.equals(s)) ||
         result.myExcludingSchemas.stream().flatMap(Collection::stream)
-          .anyMatch(s -> schema.equals(s))) return;
+          .anyMatch(s -> schema.equals(s))) return true;
 
-    final JsonValidationHost checker = consumer.checkByMatchResult(propValue, result, options.withForcedStrict());
-    if (checker == null || checker.isValid()) consumer.error(JsonBundle.message("schema.validation.against.not"), propValue.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
+    final JsonValidationHost checker =
+      consumer.checkByMatchResult(propValue,
+                                  result,
+                                  new JsonComplianceCheckerOptions(options.isCaseInsensitiveEnumCheck(), true, false,
+                                                                   JsonAnnotationsCollectionMode.FIND_FIRST));
+    if (checker == null || checker.isValid()) {
+      consumer.error(JsonBundle.message("schema.validation.against.not"), propValue.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
+      return false;
+    }
+
+    return true;
   }
 }

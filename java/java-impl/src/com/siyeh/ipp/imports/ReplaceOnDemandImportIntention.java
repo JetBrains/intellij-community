@@ -10,6 +10,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -37,19 +38,23 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
   @Override
   protected void invoke(@NotNull PsiElement element) {
     final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
+    replaceOnDemand(importStatementBase);
+  }
+
+  public static void replaceOnDemand(@NotNull PsiImportStatementBase importStatementBase) {
     final PsiJavaFile javaFile = (PsiJavaFile)importStatementBase.getContainingFile();
     final PsiManager manager = importStatementBase.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    if (importStatementBase instanceof PsiImportStatement importStatement) {
+    if (importStatementBase instanceof PsiImportModuleStatement || importStatementBase instanceof PsiImportStatement) {
       final PsiClass[] classes = javaFile.getClasses();
-      final String qualifiedName = importStatement.getQualifiedName();
-      final ClassCollector visitor = new ClassCollector(qualifiedName);
+      final ClassCollector visitor = ClassCollector.create(importStatementBase);
+      if(visitor==null) return;
       for (PsiClass aClass : classes) {
         aClass.accept(visitor);
       }
       final PsiClass[] importedClasses = visitor.getImportedClasses();
       Arrays.sort(importedClasses, new PsiClassComparator());
-      createImportStatements(importStatement, importedClasses, factory::createImportStatement);
+      createImportStatements(importStatementBase, importedClasses, factory::createImportStatement);
     }
     else if (importStatementBase instanceof PsiImportStaticStatement) {
       PsiClass targetClass = ((PsiImportStaticStatement)importStatementBase).resolveTargetClass();
@@ -84,11 +89,20 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
 
   private static class ClassCollector extends JavaRecursiveElementWalkingVisitor {
 
+    @Nullable
     private final String importedPackageName;
+    @Nullable
+    private final PsiImportModuleStatement importModuleStatement;
     private final Set<PsiClass> importedClasses = new HashSet<>();
 
-    ClassCollector(String importedPackageName) {
+    ClassCollector(@NotNull String importedPackageName) {
       this.importedPackageName = importedPackageName;
+      this.importModuleStatement = null;
+    }
+
+    ClassCollector(@NotNull PsiImportModuleStatement importModuleStatement) {
+      this.importedPackageName = null;
+      this.importModuleStatement = importModuleStatement;
     }
 
     @Override
@@ -105,14 +119,33 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
       final String qualifiedName = aClass.getQualifiedName();
       final String packageName =
         ClassUtil.extractPackageName(qualifiedName);
-      if (!importedPackageName.equals(packageName)) {
+      if (importedPackageName != null && importedPackageName.equals(packageName)) {
+        importedClasses.add(aClass);
         return;
       }
-      importedClasses.add(aClass);
+      if (importModuleStatement != null) {
+        PsiPackageAccessibilityStatement aPackage = importModuleStatement.findImportedPackage(packageName);
+        if (aPackage != null) {
+          importedClasses.add(aClass);
+        }
+      }
     }
 
     public PsiClass[] getImportedClasses() {
       return importedClasses.toArray(PsiClass.EMPTY_ARRAY);
+    }
+
+    @Nullable
+    static ClassCollector create(@NotNull PsiImportStatementBase statementBase) {
+      if (statementBase instanceof PsiImportModuleStatement moduleStatement) {
+        return new ClassCollector(moduleStatement);
+      }
+      if (statementBase instanceof PsiImportStatement importStatement) {
+        String qualifiedName = importStatement.getQualifiedName();
+        if (qualifiedName == null) return null;
+        return new ClassCollector(qualifiedName);
+      }
+      return null;
     }
   }
 
@@ -125,6 +158,9 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
       final String qualifiedName2 = class2.getQualifiedName();
       if (qualifiedName1 == null) {
         return -1;
+      }
+      if (qualifiedName2 == null) {
+        return 1;
       }
       return qualifiedName1.compareTo(qualifiedName2);
     }

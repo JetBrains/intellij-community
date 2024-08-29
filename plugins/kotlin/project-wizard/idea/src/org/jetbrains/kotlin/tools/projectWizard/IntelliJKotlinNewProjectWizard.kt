@@ -5,7 +5,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logUseCom
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logUseCompactProjectStructureFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.application.readAction
@@ -23,6 +22,7 @@ import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
+import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog
@@ -138,7 +138,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
-                addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+                addAssets(KotlinAssetsProvider.getKotlinIgnoreAssets())
             }
             if (parent.addSampleCode) {
                 val sourceRootPath = if (parent.useCompactProjectStructure) "src" else "src/main/kotlin"

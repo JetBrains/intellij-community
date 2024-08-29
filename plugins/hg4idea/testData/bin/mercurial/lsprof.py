@@ -1,10 +1,5 @@
-from __future__ import absolute_import, print_function
-
 import _lsprof
 import sys
-
-from .pycompat import getattr
-from . import pycompat
 
 Profiler = _lsprof.Profiler
 
@@ -25,7 +20,7 @@ def profile(f, *args, **kwds):
     return Stats(p.getstats())
 
 
-class Stats(object):
+class Stats:
     """XXX docstring"""
 
     def __init__(self, data):
@@ -120,13 +115,11 @@ _fn2mod = {}
 
 def label(code):
     if isinstance(code, str):
-        if sys.version_info.major >= 3:
-            code = code.encode('latin-1')
-        return code
+        return code.encode('latin-1')
     try:
         mname = _fn2mod[code.co_filename]
     except KeyError:
-        for k, v in list(pycompat.iteritems(sys.modules)):
+        for k, v in list(sys.modules.items()):
             if v is None:
                 continue
             if not isinstance(getattr(v, '__file__', None), str):
@@ -139,7 +132,4 @@ def label(code):
 
     res = '%s:%d(%s)' % (mname, code.co_firstlineno, code.co_name)
 
-    if sys.version_info.major >= 3:
-        res = res.encode('latin-1')
-
-    return res
+    return res.encode('latin-1')

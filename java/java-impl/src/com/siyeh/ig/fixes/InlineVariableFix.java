@@ -54,9 +54,16 @@ public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
       replacedElements.add(expression);
     }
 
-    for (PsiElement element : replacedElements) {
-      updater.highlight(element);
-    }
     new CommentTracker().deleteAndRestoreComments(variable);
+    boolean positioned = false;
+    for (PsiElement element : replacedElements) {
+      if (element.isValid()) {
+        updater.highlight(element);
+        if (!positioned) {
+          positioned = true;
+          updater.moveCaretTo(element);
+        }
+      }
+    }
   }
 }

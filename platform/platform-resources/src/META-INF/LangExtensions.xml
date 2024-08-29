@@ -806,7 +806,7 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.LineMover" id="line" order="last"/>
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler"/>
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInLineCommentHandler" id="EnterInLineCommentHandler"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInBlockCommentHandler" id="blockComment"
                           order="last"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler"
@@ -1762,6 +1762,7 @@
     <documentation.linkHandler implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkHandler"/>
   </extensions>
   <applicationListeners>
+    <listener class="com.intellij.ide.LanguageBundleListener" topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ui.ExperimentalUiAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"

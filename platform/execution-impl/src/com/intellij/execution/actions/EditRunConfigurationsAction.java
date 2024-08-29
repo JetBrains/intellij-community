@@ -26,7 +26,7 @@ public final class EditRunConfigurationsAction extends DumbAwareAction {
       //setup template project configurations
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    RunnerAndConfigurationSettings configurationSettings = e.getData(RunToolbarPopupKt.getRUN_CONFIGURATION_KEY());
+    RunnerAndConfigurationSettings configurationSettings = e.getData(RunToolbarPopupKt.RUN_CONFIGURATION_KEY);
     if (configurationSettings != null) {
       new EditConfigurationsDialog(project, new ProjectRunConfigurationConfigurable(project) {
         @Override
@@ -48,7 +48,7 @@ public final class EditRunConfigurationsAction extends DumbAwareAction {
     // and we don't want to check heavy conditions here
     presentation.setEnabled(true);
 
-    if (e.getData(RunToolbarPopupKt.getRUN_CONFIGURATION_KEY()) != null) {
+    if (e.getData(RunToolbarPopupKt.RUN_CONFIGURATION_KEY) != null) {
       presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
       presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
       if (!ExperimentalUI.isNewUI()) {

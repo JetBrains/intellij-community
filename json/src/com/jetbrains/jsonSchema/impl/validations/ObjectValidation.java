@@ -30,19 +30,22 @@ public final class ObjectValidation implements JsonSchemaValidation {
   public static final ObjectValidation INSTANCE = new ObjectValidation();
 
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
-    checkObject(propValue, schema, consumer, options);
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
+    return checkObject(propValue, schema, consumer, options);
   }
 
-  private static void checkObject(@NotNull JsonValueAdapter value,
-                                  @NotNull JsonSchemaObject schema,
-                                  JsonValidationHost consumer, JsonComplianceCheckerOptions options) {
+  private static boolean checkObject(@NotNull JsonValueAdapter value,
+                                     @NotNull JsonSchemaObject schema,
+                                     JsonValidationHost consumer,
+                                     JsonComplianceCheckerOptions options) {
     final JsonObjectValueAdapter object = value.getAsObject();
-    if (object == null) return;
+    if (object == null) return true;
+
+    var isValid = true;
 
     final List<JsonPropertyAdapter> propertyList = object.getPropertyList();
     final Set<String> set = new HashSet<>();
@@ -56,6 +59,8 @@ public final class ObjectValidation implements JsonSchemaValidation {
                                                                                                       nameValueAdapter), options);
           if (checker != null) {
             consumer.addErrorsFrom(checker);
+            isValid = false;
+            if (options.shouldStopValidationAfterAnyErrorFound()) return false;
           }
         }
       }
@@ -66,10 +71,14 @@ public final class ObjectValidation implements JsonSchemaValidation {
         consumer.error(JsonBundle.message("json.schema.annotation.not.allowed.property", name), property.getDelegate(),
                        JsonValidationError.FixableIssueKind.ProhibitedProperty,
                        new JsonValidationError.ProhibitedPropertyIssueData(name), JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
       else if (ThreeState.UNSURE.equals(pair.getFirst()) && pair.second.getConstantSchema() == null) {
         for (JsonValueAdapter propertyValue : property.getValues()) {
           consumer.checkObjectBySchemaRecordErrors(pair.getSecond(), propertyValue);
+          isValid &= consumer.getErrors().isEmpty();
+          if (!isValid && options.shouldStopValidationAfterAnyErrorFound()) return false;
         }
       }
       set.add(name);
@@ -86,15 +95,21 @@ public final class ObjectValidation implements JsonSchemaValidation {
           consumer.error(JsonBundle.message("schema.validation.missing.required.property.or.properties", data.getMessage(false)),
                          value.getDelegate(), JsonValidationError.FixableIssueKind.MissingProperty, data,
                          JsonErrorPriority.MISSING_PROPS);
+          isValid = false;
+          if (options.shouldStopValidationAfterAnyErrorFound()) return false;
         }
       }
       if (schema.getMinProperties() != null && propertyList.size() < schema.getMinProperties()) {
         consumer.error(JsonBundle.message("schema.validation.number.of.props.less.than", schema.getMinProperties()), value.getDelegate(),
                        JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
       if (schema.getMaxProperties() != null && propertyList.size() > schema.getMaxProperties()) {
         consumer.error(JsonBundle.message("schema.validation.number.of.props.greater.than", schema.getMaxProperties()), value.getDelegate(),
                        JsonErrorPriority.LOW_PRIORITY);
+        isValid = false;
+        if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
       final Map<String, List<String>> dependencies = schema.getPropertyDependencies();
       if (dependencies != null) {
@@ -110,32 +125,35 @@ public final class ObjectValidation implements JsonSchemaValidation {
                 value.getDelegate(),
                 JsonValidationError.FixableIssueKind.MissingProperty,
                 data, JsonErrorPriority.MISSING_PROPS);
+              isValid = false;
+              if (options.shouldStopValidationAfterAnyErrorFound()) return false;
             }
           }
         }
       }
-      final var schemaDependencies = schema.getSchemaDependencyNames();
-      StreamEx.of(schemaDependencies)
-        .forEach(name -> {
-          var dependency = schema.getSchemaDependencyByName(name);
-          if (set.contains(name) && dependency != null) {
-            consumer.checkObjectBySchemaRecordErrors(dependency, value);
-          }
-        });
-
-      reportUnevaluatedPropertiesSchemaViolation(consumer, schema, object);
+      for (String name : StreamEx.of(schema.getSchemaDependencyNames())) {
+        var dependency = schema.getSchemaDependencyByName(name);
+        if (set.contains(name) && dependency != null) {
+          consumer.checkObjectBySchemaRecordErrors(dependency, value);
+          isValid &= consumer.getErrors().isEmpty();
+          if (!isValid && options.shouldStopValidationAfterAnyErrorFound()) return false;
+        }
+      }
     }
+    return checkUnevaluatedPropertiesSchemaViolation(consumer, schema, object, options);
   }
 
-  private static void reportUnevaluatedPropertiesSchemaViolation(@NotNull JsonValidationHost consumer,
-                                                                 @NotNull JsonSchemaObject schemaNode,
-                                                                 @NotNull JsonObjectValueAdapter inspectedObject) {
+  private static boolean checkUnevaluatedPropertiesSchemaViolation(@NotNull JsonValidationHost consumer,
+                                                                   @NotNull JsonSchemaObject schemaNode,
+                                                                   @NotNull JsonObjectValueAdapter inspectedObject,
+                                                                   @NotNull JsonComplianceCheckerOptions options) {
     var unevaluatedPropertiesSchema = schemaNode.getUnevaluatedPropertiesSchema();
-    if (unevaluatedPropertiesSchema == null) return;
+    if (unevaluatedPropertiesSchema == null) return true;
 
     var constantSchemaValue = unevaluatedPropertiesSchema.getConstantSchema();
-    if (Boolean.TRUE.equals(constantSchemaValue)) return;
+    if (Boolean.TRUE.equals(constantSchemaValue)) return true;
 
+    var isValid = true;
     for (JsonPropertyAdapter childPropertyAdapter : inspectedObject.getPropertyList()) {
       if (isCoveredByAdjacentSchemas(consumer, childPropertyAdapter, schemaNode)) {
         continue;
@@ -145,7 +163,10 @@ public final class ObjectValidation implements JsonSchemaValidation {
       if (childPropertyNameAdapter == null) continue;
 
       consumer.checkObjectBySchemaRecordErrors(unevaluatedPropertiesSchema, childPropertyNameAdapter);
+      isValid &= consumer.getErrors().isEmpty();
+      if (!isValid && options.shouldStopValidationAfterAnyErrorFound()) return false;
     }
+    return isValid;
   }
 
   private static boolean isCoveredByAdjacentSchemas(@NotNull JsonValidationHost validationHost,

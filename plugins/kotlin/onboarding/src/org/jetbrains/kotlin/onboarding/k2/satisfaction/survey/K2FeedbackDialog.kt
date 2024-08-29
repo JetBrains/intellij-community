@@ -16,7 +16,7 @@ class K2FeedbackDialog(
 ) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
     /** Increase the additional number when feedback format is changed */
-    override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
+    override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 2
 
     override val zendeskTicketTitle: String = "K2 in-IDE Feedback"
     override val zendeskFeedbackType: String = "K2 in-IDE Feedback"

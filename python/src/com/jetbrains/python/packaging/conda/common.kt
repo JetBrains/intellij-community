@@ -18,9 +18,11 @@ class CondaPackageSpecification(name: String,
                                 version: String?,
                                 relation: PyRequirementRelation? = null) : PythonPackageSpecificationBase(name, version, relation, CondaPackageRepository) {
   override val repository: PyPackageRepository = CondaPackageRepository
+  override var versionSpecs: String? = null
+    get() = if (field != null) "${field}" else if (version != null) "${relation?.presentableText ?: "="}$version" else ""
 
   override fun buildInstallationString(): List<String> {
-    return listOf("$name${if (version != null) "=$version" else ""}")
+    return listOf("\"$name${versionSpecs}\"")
   }
 }
 

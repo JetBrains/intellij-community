@@ -556,7 +556,7 @@ public final class CustomMethodHandlers {
   private static @NotNull DfType objectGetClass(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
     DfaValue qualifier = arguments.myQualifier;
     TypeConstraint fact = TypeConstraint.fromDfType(state.getDfType(qualifier));
-    if (fact instanceof TypeConstraint.Exact) {
+    if (fact instanceof TypeConstraint.Exact && !(fact instanceof TypeConstraints.ExactSubclass)) {
       PsiType qualifierType = fact.getPsiType(factory.getProject());
       PsiType classType = method.getReturnType();
       if (classType != null && qualifierType != null) {

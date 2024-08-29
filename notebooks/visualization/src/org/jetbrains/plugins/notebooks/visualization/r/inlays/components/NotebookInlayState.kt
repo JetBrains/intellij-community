@@ -16,8 +16,6 @@ abstract class NotebookInlayState : JLayeredPane() {
    */
   var onHeightCalculated: ((height: Int) -> Unit)? = null
 
-  var clearAction: () -> Unit = {}
-
   abstract fun clear()
 
   /** Short description of inlay content. */

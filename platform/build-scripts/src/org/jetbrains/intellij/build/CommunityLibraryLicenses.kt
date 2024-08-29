@@ -184,6 +184,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "blockmap",
                    url = "https://github.com/JetBrains/plugin-blockmap-patches")
       .apache("https://github.com/JetBrains/plugin-blockmap-patches/blob/master/LICENSE"),
+    LibraryLicense(name = "Bodymovin", url = "https://github.com/airbnb/lottie-web",
+                   version = "5.5.10", attachedTo = "intellij.platform.ide.newUiOnboarding")
+      .mit("https://github.com/airbnb/lottie-web/blob/master/LICENSE.md"),
     LibraryLicense(libraryName = "bouncy-castle-pgp", url = "https://www.bouncycastle.org")
       .mit("https://www.bouncycastle.org/license.html")
       .suppliedByOrganizations("The Legion of the Bouncy Castle Inc."),
@@ -301,6 +304,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(url = "https://github.com/oshi/oshi", libraryName = "github.oshi.core").mit(
       "https://github.com/oshi/oshi/blob/master/LICENSE")
       .suppliedByOrganizations("The OSHI Project Contributors"),
+    LibraryLicense(name = "googlecode.plist.dd", libraryName = "googlecode.plist.dd", url = "https://github.com/3breadt/dd-plist/")
+      .mit("https://github.com/3breadt/dd-plist/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
@@ -1175,6 +1180,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.analysis-api-platform-interface"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.assignment-compiler-plugin"),
+    jetbrainsLibrary("kotlinc.compose-compiler-plugin"),
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),

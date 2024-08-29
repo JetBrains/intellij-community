@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle
 
-
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import kotlinx.collections.immutable.toPersistentList
@@ -125,7 +124,7 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
                 ).andThen(
                     // This is here temporarily until the Kotlin Multiplatform wizard has been removed
                     compute {
-                        val assets = StandardAssetsProvider().getGradlewAssets() + StandardAssetsProvider().getGradleIgnoreAssets()
+                        val assets = StandardAssetsProvider().getGradlewAssets() + KotlinAssetsProvider.getKotlinGradleIgnoreAssets()
                         AssetsProcessor.getInstance().generateSources(projectPath, assets, emptyMap())
                         Unit
                     }

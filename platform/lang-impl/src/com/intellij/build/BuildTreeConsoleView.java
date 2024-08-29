@@ -969,7 +969,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       tree.addTreeSelectionListener(e -> {
         if (Disposer.isDisposed(myView)) return;
         TreePath path = e.getPath();
-        if (path == null || !e.isAddedPath()) {
+        if (path == null) {
           return;
         }
         TreePath selectionPath = tree.getSelectionPath();

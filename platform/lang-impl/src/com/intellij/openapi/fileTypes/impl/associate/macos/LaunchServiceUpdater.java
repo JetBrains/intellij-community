@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl.associate.macos;
 
-import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
-import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
-import com.intellij.openapi.fileTypes.impl.associate.macos.PListBuddyWrapper.CommandResult;
+import com.intellij.ide.file.PListBuddyWrapper;
+import com.intellij.ide.file.PListProcessingException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -24,6 +26,8 @@ final class LaunchServiceUpdater {
   private final static String UPDATE_FAILURE_MSG = "Launch services PList updated failed, the error is logged.";
 
   private final static Logger LOG = Logger.getInstance(LaunchServiceUpdater.class);
+  private final static String launchServicesPlistPath =
+    SystemProperties.getUserHome() + "/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist";
 
   private final String myBundleId;
   private final Set<String> myUriSet = new HashSet<>();
@@ -45,7 +49,7 @@ final class LaunchServiceUpdater {
     }
   }
 
-  void update() throws OSFileAssociationException {
+  void update() throws PListProcessingException {
     removeExistingEntries();
     for (String uri : myUriSet) {
       createContentTypeEntry(uri);
@@ -55,8 +59,8 @@ final class LaunchServiceUpdater {
     }
   }
 
-  private void removeExistingEntries() throws OSFileAssociationException {
-    PListBuddyWrapper buddy = new PListBuddyWrapper();
+  private void removeExistingEntries() throws PListProcessingException {
+    PListBuddyWrapper buddy = new PListBuddyWrapper(launchServicesPlistPath);
     Document handlers = buddy.readData("LSHandlers");
     Node arrayNode = getTopArrayNode(handlers);
     List<Integer> entriesToRemove = new ArrayList<>();
@@ -72,10 +76,10 @@ final class LaunchServiceUpdater {
     if (!entriesToRemove.isEmpty()) {
       Collections.reverse(entriesToRemove); // Start from the last
       for (Integer index : entriesToRemove) {
-        CommandResult result = buddy.runCommand("Delete LSHandlers:" + index);
-        if (result.retCode != 0) {
-          LOG.warn("PListBuddy returned: " + result.retCode + " for index " + index);
-          throw new OSFileAssociationException(UPDATE_FAILURE_MSG);
+        PListBuddyWrapper.CommandResult result = buddy.runCommand("Delete LSHandlers:" + index);
+        if (result.getRetCode() != 0) {
+          LOG.warn("PListBuddy returned: " + result.getRetCode() + " for index " + index);
+          throw new PListProcessingException(UPDATE_FAILURE_MSG);
         }
       }
     }
@@ -127,16 +131,16 @@ final class LaunchServiceUpdater {
     return null;
   }
 
-  private void createContentTypeEntry(@NotNull String uri) throws OSFileAssociationException {
-    PListBuddyWrapper buddy = new PListBuddyWrapper();
+  private void createContentTypeEntry(@NotNull String uri) throws PListProcessingException {
+    PListBuddyWrapper buddy = new PListBuddyWrapper(launchServicesPlistPath);
     buddy.runCommand(PListBuddyWrapper.OutputType.DEFAULT,
                      "Add LSHandlers:0 dict",
                      "Add LSHandlers:0:LSHandlerContentType string " + uri,
                      "Add LSHandlers:0:LSHandlerRoleAll string " + myBundleId);
   }
 
-  private void createExtensionEntry(@NotNull String extension) throws OSFileAssociationException {
-    PListBuddyWrapper buddy = new PListBuddyWrapper();
+  private void createExtensionEntry(@NotNull String extension) throws PListProcessingException {
+    PListBuddyWrapper buddy = new PListBuddyWrapper(launchServicesPlistPath);
     buddy.runCommand(PListBuddyWrapper.OutputType.DEFAULT,
                      "Add LSHandlers:0 dict",
                      "Add LSHandlers:0:LSHandlerContentTag string " + extension,

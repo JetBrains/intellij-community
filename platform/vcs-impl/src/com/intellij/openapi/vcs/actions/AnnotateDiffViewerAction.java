@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.DiffExtension;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
@@ -45,7 +46,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.BalloonLayoutData;
@@ -163,7 +163,7 @@ public class AnnotateDiffViewerAction {
 
           VcsException exception = loader.getException();
           if (exception != null) {
-            Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+            Notification notification = VcsNotifier.importantNotification()
               .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR)
               .setDisplayId(VcsNotificationIdsHolder.CANNOT_LOAD_ANNOTATIONS);
             showNotification(viewer, notification);

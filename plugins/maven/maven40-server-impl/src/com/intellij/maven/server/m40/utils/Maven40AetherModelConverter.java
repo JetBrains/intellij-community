@@ -43,7 +43,8 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+    result.setDependencyTree(
+      convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
@@ -103,12 +104,11 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     }
 
     Artifact result = RepositoryUtils.toArtifact(dependency.getArtifact());
-    if(result == null) {
+    if (result == null) {
       return null;
     }
     result.setScope(dependency.getScope());
     result.setOptional(dependency.isOptional());
     return result;
   }
-
 }

@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -31,7 +32,7 @@ enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES, WORKSPACE_MODE
 object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP = EventLogGroup("build.gradle.import", 9)
+  val GROUP = EventLogGroup("build.gradle.import", 10)
 
   private val activityIdField = EventFields.Long("ide_activity_id")
   private val importPhaseField = EventFields.Enum<Phase>("phase")
@@ -40,9 +41,10 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
   private val isParallelModelFetch = Boolean("parallel_model_fetch")
   private val isSyncSuccessful = Boolean("sync_successful")
+  private val isFirstSyncWithIdeCaches = Boolean("first_sync_with_ide_caches")
 
   val syncFinishedEvent = GROUP.registerVarargEvent("gradle.sync.finished", activityIdField, DurationMs,
-                                                    isParallelModelFetch, isSyncSuccessful)
+                                                    isParallelModelFetch, isSyncSuccessful, isFirstSyncWithIdeCaches)
   private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
 
 
@@ -68,7 +70,12 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
   private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
 
-  data class GradleSyncDetails(val timestamp: Long, val parallelModelFetchEnabled: Boolean)
+  private class GradleSyncDetails(
+    val timestamp: Long,
+    val parallelModelFetchEnabled: Boolean,
+    val isFirstSyncWithIdeCaches: Boolean?,
+  )
+
   private const val tsCacheCapasity = 100
   private val idToStartTS = object: LinkedHashMap<Long, GradleSyncDetails>(tsCacheCapasity) {
     override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, GradleSyncDetails>?): Boolean {
@@ -78,24 +85,33 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
   @JvmStatic
   fun logSyncStarted(project: Project?, activityId: Long, parallelModelFetchEnabled: Boolean) {
-    idToStartTS[activityId] = GradleSyncDetails(System.currentTimeMillis(), parallelModelFetchEnabled)
+    idToStartTS[activityId] = GradleSyncDetails(
+      System.currentTimeMillis(),
+      parallelModelFetchEnabled,
+      project?.getUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES)
+    )
     syncStartedEvent.log(project, activityId)
   }
 
   @JvmStatic
   fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) {
     val nowTS = System.currentTimeMillis()
-
-    val (duration, parallelModelFetchEnabled) =
-      idToStartTS[activityId]
-        ?.let { Pair(nowTS - it.timestamp, it.parallelModelFetchEnabled) }
-      ?: Pair(-1L, false)
-
-    syncFinishedEvent.log(project,
-                          activityIdField.with(activityId),
-                          DurationMs.with(duration),
-                          isParallelModelFetch.with(parallelModelFetchEnabled),
-                          isSyncSuccessful.with(success))
+    syncFinishedEvent.log(project) {
+      add(activityIdField with activityId)
+      val syncDetails = idToStartTS[activityId]
+      if (syncDetails != null) {
+        add(DurationMs with nowTS - syncDetails.timestamp)
+        add(isParallelModelFetch with syncDetails.parallelModelFetchEnabled)
+        if (syncDetails.isFirstSyncWithIdeCaches != null) {
+          add(isFirstSyncWithIdeCaches with syncDetails.isFirstSyncWithIdeCaches)
+        }
+      }
+      else {
+        add(DurationMs with -1)
+        add(isParallelModelFetch with false)
+      }
+      add(isSyncSuccessful with success)
+    }
   }
 
   @JvmStatic

@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +15,7 @@ public class LightPrimitivePatternsHighlightingTest extends LightJavaCodeInsight
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel());
+    return JAVA_23;
   }
 
   public void testRecordPrimitiveInstanceOfPattern() {

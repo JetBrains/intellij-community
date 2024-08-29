@@ -246,6 +246,7 @@ Android Studio: workaround for b/218317110 */
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
+    "kotlinc.compose-compiler-plugin",
   )
 
   fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {

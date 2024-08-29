@@ -912,9 +912,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return description == null ? getTooltip() : description;
     }
 
-    public @NlsContexts.DetailedDescription String getTooltip() {
-      //noinspection deprecation
-      return (String)myPresentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);
+    public @NlsContexts.Tooltip String getTooltip() {
+      return myPresentation.getClientProperty(ActionUtil.TOOLTIP_TEXT);
     }
 
     @Override
@@ -933,8 +932,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   private static @Nullable Icon scaleIconToSize(@Nullable Icon icon, int maxIconWidth, int maxIconHeight) {
-    if (icon == null || icon instanceof EmptyIcon) {
+    if (icon == null) {
       return icon;
+    }
+
+    if (icon instanceof EmptyIcon) {
+      return icon.getIconWidth() == maxIconWidth && icon.getIconHeight() == maxIconHeight
+             ? icon
+             : EmptyIcon.create(maxIconWidth, maxIconHeight);
     }
 
     float scale = (float)Math.min(maxIconWidth, maxIconHeight) / Math.min(icon.getIconWidth(), icon.getIconHeight());

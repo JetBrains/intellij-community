@@ -15,6 +15,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
@@ -22,7 +24,9 @@ import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 
-internal class IjentWslNioFsToggleStrategy(
+@ApiStatus.Internal
+@VisibleForTesting
+class IjentWslNioFsToggleStrategy(
   multiRoutingFileSystemProvider: FileSystemProvider,
   private val coroutineScope: CoroutineScope,
 ) {

@@ -20,14 +20,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -148,6 +146,9 @@ public final class JsonSchemaMappingsView implements Disposable {
     schemaSelector.setBorder(JBUI.Borders.emptyRight(10));
     JBLabel versionLabel = new JBLabel(JsonBundle.message("json.schema.version.selector.title"));
     mySchemaVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>(JsonSchemaVersion.values()));
+    mySchemaVersionComboBox.setRenderer(
+      SimpleListCellRenderer.create((presentation, value, index) -> { presentation.setText(getPresentableSchemaName(value)); })
+    );
     versionLabel.setLabelFor(mySchemaVersionComboBox);
     versionLabel.setBorder(JBUI.Borders.empty(0, 10));
     builder.addLabeledComponent(versionLabel, mySchemaVersionComboBox);
@@ -350,5 +351,18 @@ public final class JsonSchemaMappingsView implements Disposable {
         myTreeUpdater.updateTree(true);
       }
     }
+  }
+
+  private static @NlsSafe String getPresentableSchemaName(@Nullable JsonSchemaVersion version) {
+    if (version == null) return "unknown";
+    var versionSuffix = switch (version) {
+      case SCHEMA_4 -> "v4";
+      case SCHEMA_6 -> "v6";
+      case SCHEMA_7 -> "v7";
+      case SCHEMA_2019_09 -> "2019.09";
+      case SCHEMA_2020_12 -> "2020.12";
+    };
+
+    return JsonBundle.message("schema.of.version", versionSuffix);
   }
 }

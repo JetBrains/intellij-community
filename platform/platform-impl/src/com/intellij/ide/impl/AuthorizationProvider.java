@@ -18,9 +18,9 @@ public interface AuthorizationProvider {
   record TokenData(
     @NotNull Map<String, String> requestHeaders,
     @Nullable String idToken,
-    @NotNull String refreshToken,
-    @NotNull String exchangeUrl,
-    @NotNull String clientId,
+    @Nullable String refreshToken,
+    @Nullable String exchangeUrl,
+    @Nullable String clientId,
     long expiresInSec) {
   }
   /**

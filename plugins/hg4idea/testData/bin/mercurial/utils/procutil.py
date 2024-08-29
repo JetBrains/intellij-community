@@ -7,7 +7,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import contextlib
 import errno
@@ -19,9 +18,12 @@ import sys
 import threading
 import time
 
+from typing import (
+    BinaryIO,
+)
+
 from ..i18n import _
 from ..pycompat import (
-    getattr,
     open,
 )
 
@@ -30,6 +32,7 @@ from .. import (
     error,
     policy,
     pycompat,
+    typelib,
 )
 
 # Import like this to keep import-checker happy
@@ -60,7 +63,7 @@ class BadFile(io.RawIOBase):
         raise IOError(errno.EBADF, 'Bad file descriptor')
 
 
-class LineBufferedWrapper(object):
+class LineBufferedWrapper:
     def __init__(self, orig):
         self.orig = orig
 
@@ -75,16 +78,38 @@ class LineBufferedWrapper(object):
         return res
 
 
+# pytype: disable=attribute-error
 io.BufferedIOBase.register(LineBufferedWrapper)
+# pytype: enable=attribute-error
 
 
 def make_line_buffered(stream):
-    if pycompat.ispy3 and not isinstance(stream, io.BufferedIOBase):
-        # On Python 3, buffered streams can be expected to subclass
-        # BufferedIOBase. This is definitively the case for the streams
-        # initialized by the interpreter. For unbuffered streams, we don't need
-        # to emulate line buffering.
+    # First, check if we need to wrap the stream.
+    check_stream = stream
+    while True:
+        if isinstance(check_stream, WriteAllWrapper):
+            check_stream = check_stream.orig
+        elif pycompat.iswindows and isinstance(
+            check_stream,
+            # pytype: disable=module-attr
+            platform.winstdout
+            # pytype: enable=module-attr
+        ):
+            check_stream = check_stream.fp
+        else:
+            break
+    if isinstance(check_stream, io.RawIOBase):
+        # The stream is unbuffered, we don't need to emulate line buffering.
         return stream
+    elif isinstance(check_stream, io.BufferedIOBase):
+        # The stream supports some kind of buffering. We can't assume that
+        # lines are flushed. Fall back to wrapping the stream.
+        pass
+    else:
+        raise NotImplementedError(
+            "can't determine whether stream is buffered or not"
+        )
+
     if isinstance(stream, LineBufferedWrapper):
         return stream
     return LineBufferedWrapper(stream)
@@ -97,8 +122,8 @@ def unwrap_line_buffered(stream):
     return stream
 
 
-class WriteAllWrapper(object):
-    def __init__(self, orig):
+class WriteAllWrapper(typelib.BinaryIO_Proxy):
+    def __init__(self, orig: BinaryIO):
         self.orig = orig
 
     def __getattr__(self, attr):
@@ -110,15 +135,18 @@ class WriteAllWrapper(object):
         total_to_write = len(s)
         total_written = 0
         while total_written < total_to_write:
-            total_written += write1(m[total_written:])
+            c = write1(m[total_written:])
+            if c:
+                total_written += c
         return total_written
 
 
+# pytype: disable=attribute-error
 io.IOBase.register(WriteAllWrapper)
+# pytype: enable=attribute-error
 
 
 def _make_write_all(stream):
-    assert pycompat.ispy3
     if isinstance(stream, WriteAllWrapper):
         return stream
     if isinstance(stream, io.BufferedIOBase):
@@ -130,52 +158,32 @@ def _make_write_all(stream):
     return WriteAllWrapper(stream)
 
 
-if pycompat.ispy3:
-    # Python 3 implements its own I/O streams. Unlike stdio of C library,
-    # sys.stdin/stdout/stderr may be None if underlying fd is closed.
+# Python 3 implements its own I/O streams. Unlike stdio of C library,
+# sys.stdin/stdout/stderr may be None if underlying fd is closed.
 
-    # TODO: .buffer might not exist if std streams were replaced; we'll need
-    # a silly wrapper to make a bytes stream backed by a unicode one.
+# TODO: .buffer might not exist if std streams were replaced; we'll need
+# a silly wrapper to make a bytes stream backed by a unicode one.
 
-    if sys.stdin is None:
-        stdin = BadFile()
-    else:
-        stdin = sys.stdin.buffer
-    if sys.stdout is None:
-        stdout = BadFile()
-    else:
-        stdout = _make_write_all(sys.stdout.buffer)
-    if sys.stderr is None:
-        stderr = BadFile()
-    else:
-        stderr = _make_write_all(sys.stderr.buffer)
-
-    if pycompat.iswindows:
-        # Work around Windows bugs.
-        stdout = platform.winstdout(stdout)  # pytype: disable=module-attr
-        stderr = platform.winstdout(stderr)  # pytype: disable=module-attr
-    if isatty(stdout):
-        # The standard library doesn't offer line-buffered binary streams.
-        stdout = make_line_buffered(stdout)
+if sys.stdin is None:
+    stdin = BadFile()
 else:
-    # Python 2 uses the I/O streams provided by the C library.
-    stdin = sys.stdin
-    stdout = sys.stdout
-    stderr = sys.stderr
-    if pycompat.iswindows:
-        # Work around Windows bugs.
-        stdout = platform.winstdout(stdout)  # pytype: disable=module-attr
-        stderr = platform.winstdout(stderr)  # pytype: disable=module-attr
-    if isatty(stdout):
-        if pycompat.iswindows:
-            # The Windows C runtime library doesn't support line buffering.
-            stdout = make_line_buffered(stdout)
-        else:
-            # glibc determines buffering on first write to stdout - if we
-            # replace a TTY destined stdout with a pipe destined stdout (e.g.
-            # pager), we want line buffering.
-            stdout = os.fdopen(stdout.fileno(), 'wb', 1)
+    stdin = sys.stdin.buffer
+if sys.stdout is None:
+    stdout = BadFile()
+else:
+    stdout = _make_write_all(sys.stdout.buffer)
+if sys.stderr is None:
+    stderr = BadFile()
+else:
+    stderr = _make_write_all(sys.stderr.buffer)
 
+if pycompat.iswindows:
+    # Work around Windows bugs.
+    stdout = platform.winstdout(stdout)  # pytype: disable=module-attr
+    stderr = platform.winstdout(stderr)  # pytype: disable=module-attr
+if isatty(stdout) and pycompat.sysplatform != b'OpenVMS':
+    # The standard library doesn't offer line-buffered binary streams.
+    stdout = make_line_buffered(stdout)
 
 findexe = platform.findexe
 _gethgcmd = platform.gethgcmd
@@ -200,7 +208,7 @@ try:
 except AttributeError:
     pass
 
-closefds = pycompat.isposix
+closefds = pycompat.isposix and pycompat.sysplatform != b'OpenVMS'
 
 
 def explainexit(code):
@@ -211,7 +219,7 @@ def explainexit(code):
     return _(b"killed by signal %d") % -code
 
 
-class _pfile(object):
+class _pfile:
     """File-like wrapper for a stream opened by subprocess.Popen()"""
 
     def __init__(self, proc, fp):
@@ -330,8 +338,6 @@ def tempfilter(s, cmd):
         cmd = cmd.replace(b'INFILE', inname)
         cmd = cmd.replace(b'OUTFILE', outname)
         code = system(cmd)
-        if pycompat.sysplatform == b'OpenVMS' and code & 1:
-            code = 0
         if code:
             raise error.Abort(
                 _(b"command '%s' failed: %s") % (cmd, explainexit(code))
@@ -360,7 +366,7 @@ _filtertable = {
 def filter(s, cmd):
     """filter a string through a command that transforms its input to its
     output"""
-    for name, fn in pycompat.iteritems(_filtertable):
+    for name, fn in _filtertable.items():
         if cmd.startswith(name):
             return fn(s, cmd[len(name) :].lstrip())
     return pipefilter(s, cmd)
@@ -375,8 +381,10 @@ def hgexecutable():
     Defaults to $HG or 'hg' in the search path.
     """
     if _hgexecutable is None:
-        hg = encoding.environ.get(b'HG')
+        hg = encoding.environ.get(b'HG', '')
         mainmod = sys.modules['__main__']
+        if pycompat.sysplatform == b'OpenVMS' and hg[0:1] == '$':
+            hg = 'mcr ' + hg[1:]
         if hg:
             _sethgexecutable(hg)
         elif resourceutil.mainfrozen():
@@ -466,7 +474,7 @@ def shellenviron(environ=None):
 
     env = dict(encoding.environ)
     if environ:
-        env.update((k, py2shell(v)) for k, v in pycompat.iteritems(environ))
+        env.update((k, py2shell(v)) for k, v in environ.items())
     env[b'HG'] = hgexecutable()
     return env
 
@@ -525,8 +533,6 @@ def system(cmd, environ=None, cwd=None, out=None):
             out.write(line)
         proc.wait()
         rc = proc.returncode
-    if pycompat.sysplatform == b'OpenVMS' and rc & 1:
-        rc = 0
     return rc
 
 
@@ -576,7 +582,7 @@ def hgcmd():
     return _gethgcmd()
 
 
-def rundetached(args, condfn):
+def rundetached(args, condfn) -> int:
     """Execute the argument list in a detached process.
 
     condfn is a callable which is called repeatedly and should return
@@ -611,6 +617,12 @@ def rundetached(args, condfn):
     finally:
         if prevhandler is not None:
             signal.signal(signal.SIGCHLD, prevhandler)
+
+        # pytype seems to get confused by not having a return in the finally
+        # block, and thinks the return value should be Optional[int] here.  It
+        # appears to be https://github.com/google/pytype/issues/938, without
+        # the `with` clause.
+        pass  # pytype: disable=bad-return-type
 
 
 @contextlib.contextmanager
@@ -674,8 +686,9 @@ if pycompat.iswindows:
         # we can't use close_fds *and* redirect stdin. I'm not sure that we
         # need to because the detached process has no console connection.
 
+        stdin = None
+
         try:
-            stdin = None
             if stdin_bytes is not None:
                 stdin = pycompat.unnamedtempfile()
                 stdin.write(stdin_bytes)
@@ -701,7 +714,7 @@ if pycompat.iswindows:
 
 else:
 
-    def runbgcommandpy3(
+    def runbgcommand(
         cmd,
         env,
         shell=False,
@@ -738,6 +751,8 @@ else:
             start_new_session = False
             ensurestart = True
 
+        stdin = None
+
         try:
             if stdin_bytes is None:
                 stdin = subprocess.DEVNULL
@@ -766,7 +781,8 @@ else:
                 record_wait(255)
             raise
         finally:
-            if stdin_bytes is not None:
+            if stdin_bytes is not None and stdin is not None:
+                assert not isinstance(stdin, int)
                 stdin.close()
         if not ensurestart:
             # Even though we're not waiting on the child process,
@@ -781,125 +797,3 @@ else:
             returncode = p.wait
             if record_wait is not None:
                 record_wait(returncode)
-
-    def runbgcommandpy2(
-        cmd,
-        env,
-        shell=False,
-        stdout=None,
-        stderr=None,
-        ensurestart=True,
-        record_wait=None,
-        stdin_bytes=None,
-    ):
-        """Spawn a command without waiting for it to finish.
-
-
-        When `record_wait` is not None, the spawned process will not be fully
-        detached and the `record_wait` argument will be called with a the
-        `Subprocess.wait` function for the spawned process.  This is mostly
-        useful for developers that need to make sure the spawned process
-        finished before a certain point. (eg: writing test)"""
-        if pycompat.isdarwin:
-            # avoid crash in CoreFoundation in case another thread
-            # calls gui() while we're calling fork().
-            gui()
-
-        # double-fork to completely detach from the parent process
-        # based on http://code.activestate.com/recipes/278731
-        if record_wait is None:
-            pid = os.fork()
-            if pid:
-                if not ensurestart:
-                    # Even though we're not waiting on the child process,
-                    # we still must call waitpid() on it at some point so
-                    # it's not a zombie/defunct. This is especially relevant for
-                    # chg since the parent process won't die anytime soon.
-                    # We use a thread to make the overhead tiny.
-                    def _do_wait():
-                        os.waitpid(pid, 0)
-
-                    t = threading.Thread(target=_do_wait)
-                    t.daemon = True
-                    t.start()
-                    return
-                # Parent process
-                (_pid, status) = os.waitpid(pid, 0)
-                if os.WIFEXITED(status):
-                    returncode = os.WEXITSTATUS(status)
-                else:
-                    returncode = -(os.WTERMSIG(status))
-                if returncode != 0:
-                    # The child process's return code is 0 on success, an errno
-                    # value on failure, or 255 if we don't have a valid errno
-                    # value.
-                    #
-                    # (It would be slightly nicer to return the full exception info
-                    # over a pipe as the subprocess module does.  For now it
-                    # doesn't seem worth adding that complexity here, though.)
-                    if returncode == 255:
-                        returncode = errno.EINVAL
-                    raise OSError(
-                        returncode,
-                        b'error running %r: %s'
-                        % (cmd, os.strerror(returncode)),
-                    )
-                return
-
-        returncode = 255
-        try:
-            if record_wait is None:
-                # Start a new session
-                os.setsid()
-            # connect stdin to devnull to make sure the subprocess can't
-            # muck up that stream for mercurial.
-            if stdin_bytes is None:
-                stdin = open(os.devnull, b'r')
-            else:
-                stdin = pycompat.unnamedtempfile()
-                stdin.write(stdin_bytes)
-                stdin.flush()
-                stdin.seek(0)
-
-            if stdout is None:
-                stdout = open(os.devnull, b'w')
-            if stderr is None:
-                stderr = open(os.devnull, b'w')
-
-            p = subprocess.Popen(
-                cmd,
-                shell=shell,
-                env=env,
-                close_fds=True,
-                stdin=stdin,
-                stdout=stdout,
-                stderr=stderr,
-            )
-            if record_wait is not None:
-                record_wait(p.wait)
-            returncode = 0
-        except EnvironmentError as ex:
-            returncode = ex.errno & 0xFF
-            if returncode == 0:
-                # This shouldn't happen, but just in case make sure the
-                # return code is never 0 here.
-                returncode = 255
-        except Exception:
-            returncode = 255
-        finally:
-            # mission accomplished, this child needs to exit and not
-            # continue the hg process here.
-            stdin.close()
-            if record_wait is None:
-                os._exit(returncode)
-
-    if pycompat.ispy3:
-        # This branch is more robust, because it avoids running python
-        # code (hence gc finalizers, like sshpeer.__del__, which
-        # blocks).  But we can't easily do the equivalent in py2,
-        # because of the lack of start_new_session=True flag. Given
-        # that the py2 branch should die soon, the short-lived
-        # duplication seems acceptable.
-        runbgcommand = runbgcommandpy3
-    else:
-        runbgcommand = runbgcommandpy2

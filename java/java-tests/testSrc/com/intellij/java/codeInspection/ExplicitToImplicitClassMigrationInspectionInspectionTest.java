@@ -1,25 +1,67 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ExplicitToImplicitClassMigrationInspection;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.java.JavaBundle;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends LightQuickFixParameterizedTestCase {
+public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+
+  @NotNull
   @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new ExplicitToImplicitClassMigrationInspection()};
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_23;
   }
 
   @Override
-  protected String getBasePath() {
-    return "/inspection/explicitToImplicitClassMigration/";
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/explicitToImplicitClassMigration/";
   }
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_22_PREVIEW;
+  public void testAnotherFile() { doNotFind(); }
+  public void testCaretAtClass() { doTest(); }
+  public void testExtendsObject() { doTest(); }
+  public void testInterface() { doNotFind(); }
+  public void testSeveralSimple() { doNotFind(); }
+  public void testSimple() { doTest(); }
+  public void testSimpleWithComments() { doTest(); }
+  public void testTestClass() { doNotFind(); }
+  public void testWithAnnotation() { doNotFind(); }
+  public void testWithConstructor() { doNotFind(); }
+  public void testWithEnhancedMain() { doTest(); }
+  public void testWithEnhancedMain2() { doTest(); }
+  public void testWithExtendList() { doNotFind(); }
+  public void testWithGeneric() { doNotFind(); }
+  public void testWithPackage() { doNotFind(); }
+  public void testWithSyntaxError() { doNotFind(); }
+  public void testWithUsages() { doNotFind(); }
+  public void testWithImportConflict() {
+    myFixture.addClass(
+      """
+        package p;
+        public class List{}
+        """
+    );
+    doTest();
+  }
+
+  private void doNotFind() {
+    myFixture.enableInspections(new ExplicitToImplicitClassMigrationInspection());
+    myFixture.testHighlighting(true, false, true, "before" + getTestName(false) + ".java");
+    IntentionAction intention = myFixture.getAvailableIntention(
+      JavaBundle.message("inspection.explicit.to.implicit.class.migration.fix.name"));
+    assertNull(intention);
+  }
+
+  private void doTest() {
+    myFixture.enableInspections(new ExplicitToImplicitClassMigrationInspection());
+    myFixture.testHighlighting(true, false, true, "before" + getTestName(false) + ".java");
+    myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(
+      JavaBundle.message("inspection.explicit.to.implicit.class.migration.fix.name")));
+    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
   }
 }

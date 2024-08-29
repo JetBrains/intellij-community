@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
@@ -56,6 +56,7 @@ import static com.intellij.openapi.util.NlsContexts.ProgressText;
  * </li>
  * </ul>
  * </p>
+ * <hr>
  *
  * <p>An object accompanying a computation, usually in a background thread. It allows displaying process status to the user
  * ({@link #setText}, {@link #setText2}, {@link #setFraction}, {@link #setIndeterminate}) and

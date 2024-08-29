@@ -29,18 +29,20 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import kotlin.Triple;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
@@ -48,7 +50,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
-  private final Map<PyExpression, PyFunction> expressionToGuards = new HashMap<>();
 
   public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
     return myBuilder.build(this, owner);
@@ -62,26 +63,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   private void startConditionalNodeAndCheckGuards(@NotNull PsiElement element, @Nullable PyExpression condition, boolean result) {
     myBuilder.startConditionalNode(element, condition, result);
-    addTypeGuardAssertions(condition, result);
-  }
-
-  private void addTypeGuardAssertions(@Nullable PyExpression condition, boolean result) {
-    final PyExpression actualExpression;
-    final boolean negation;
-    if (condition instanceof PyPrefixExpression prefixExpression && prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
-      actualExpression = prefixExpression.getOperand();
-      negation = true;
-    }
-    else {
-      actualExpression = condition;
-      negation = false;
-    }
-    var function = expressionToGuards.get(actualExpression);
-    if ((negation && !result || !negation && result) && function != null && actualExpression instanceof PyCallExpression callExpression) {
-      final var evaluator = new PyTypeAssertionEvaluator();
-      evaluator.handleTypeGuardCall(callExpression, function);
-      InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
-    }
   }
 
   @Override
@@ -164,24 +145,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyCallExpression(final @NotNull PyCallExpression node) {
-    final PyExpression callee = node.getCallee();
-    final var callNodeType = getCalleeNodeType(callee);
+    super.visitPyCallExpression(node);
 
-    // Flow abrupted
-    if (callNodeType instanceof NoReturnCallKind) {
-      callee.accept(this);
-      for (PyExpression expression : node.getArguments()) {
-        expression.accept(this);
-      }
-      abruptFlow(node);
-    }
-    else if (callNodeType instanceof TypeGuardCallKind typeGuardCallKind && node.getArguments().length > 0) {
-      expressionToGuards.put(node, typeGuardCallKind.pyFunction);
-      super.visitPyCallExpression(node);
-    }
-    else {
-      super.visitPyCallExpression(node);
-    }
+    var callInstruction = new CallInstruction(myBuilder, node);
+    myBuilder.addNodeAndCheckPending(callInstruction);
 
     if (node.isCalleeText(PyNames.ASSERT_IS_INSTANCE)) {
       final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
@@ -585,12 +552,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     final var outside = new ConditionalInstructionImpl(myBuilder, null, subExpression, !conditionResultToContinue);
     myBuilder.addNode(outside);
-    addTypeGuardAssertions(subExpression, !conditionResultToContinue);
     myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
 
     myBuilder.prevInstruction = branchingPoint;
     final var toTheNext = new ConditionalInstructionImpl(myBuilder, null, subExpression, conditionResultToContinue);
-    addTypeGuardAssertions(subExpression, conditionResultToContinue);
     myBuilder.addNode(toTheNext);
   }
 
@@ -621,7 +586,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final var elsePartInstruction = new ConditionalInstructionImpl(myBuilder, elsePart, mainPartResults.getFirst(), false);
       myBuilder.prevInstruction = null;
       myBuilder.addNode(elsePartInstruction);
-      addTypeGuardAssertions(mainPartResults.getFirst(), false);
 
       if (!isStaticallyTrue) {
         for (Pair<PsiElement, Instruction> pair : branchingPoints) {
@@ -1053,40 +1017,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.checkPending(instruction);
   }
 
-  @Nullable
-  private static CallTypeKind getCalleeNodeType(@Nullable PyExpression callee) {
-    if (callee instanceof PyReferenceExpression expression) {
-      QualifiedName qName = expression.asQualifiedName();
-
-      if (qName == null) {
-        return null;
-      }
-
-      ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(expression);
-
-      // Flow-insensitive context is required to prevent recursive control flow access during the resolve process
-      TypeEvalContext context = TypeEvalContext.codeInsightFallback(callee.getProject());
-
-      while (scopeOwner != null) {
-        final var result = StreamEx
-          .of(PyResolveUtil.resolveQualifiedNameInScope(qName, scopeOwner, context))
-          .select(PyFunction.class)
-          .map(function -> {
-            if (PyTypingTypeProvider.isNoReturn(function, context)) {
-              return NoReturnCallKind.INSTANCE;
-            }
-            if (PyTypingTypeProvider.isTypeGuard(function, context)) {
-              return new TypeGuardCallKind(function);
-            }
-            return null;
-          }).findFirst( it -> it != null);
-        if (result.isPresent()) return result.get();
-        scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
-      }
-    }
-    return null;
-  }
-
   private void abruptFlow(final PsiElement node) {
     // Here we process pending instructions!!!
     myBuilder.processPending((pendingScope, instruction) -> {
@@ -1108,14 +1038,5 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     return !PsiTreeUtil.instanceOf(instruction.getElement(),
                                    PyStatementList.class);
   }
-
-  private interface CallTypeKind { }
-
-  private static class NoReturnCallKind implements CallTypeKind {
-    private NoReturnCallKind() {}
-    public static final NoReturnCallKind INSTANCE = new NoReturnCallKind();
-  }
-
-  private record TypeGuardCallKind(@NotNull PyFunction pyFunction) implements CallTypeKind {}
 }
 

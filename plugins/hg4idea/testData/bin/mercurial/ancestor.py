@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import heapq
 
@@ -13,7 +12,6 @@ from .node import nullrev
 from . import (
     dagop,
     policy,
-    pycompat,
 )
 
 parsers = policy.importmod('parsers')
@@ -147,7 +145,7 @@ def ancestors(pfunc, *orignodes):
     return deepest(gca)
 
 
-class incrementalmissingancestors(object):
+class incrementalmissingancestors:
     """persistent state used to calculate missing ancestors incrementally
 
     Although similar in spirit to lazyancestors below, this is a separate class
@@ -188,7 +186,7 @@ class incrementalmissingancestors(object):
             # no revs to consider
             return
 
-        for curr in pycompat.xrange(start, min(revs) - 1, -1):
+        for curr in range(start, min(revs) - 1, -1):
             if curr not in bases:
                 continue
             revs.discard(curr)
@@ -229,7 +227,7 @@ class incrementalmissingancestors(object):
         # exit.
 
         missing = []
-        for curr in pycompat.xrange(start, nullrev, -1):
+        for curr in range(start, nullrev, -1):
             if not revsvisit:
                 break
 
@@ -317,7 +315,7 @@ def _lazyancestorsiter(parentrevs, initrevs, stoprev, inclusive):
             see(p2)
 
 
-class lazyancestors(object):
+class lazyancestors:
     def __init__(self, pfunc, revs, stoprev=0, inclusive=False):
         """Create a new object generating ancestors for the given revs. Does
         not generate revs lower than stoprev.

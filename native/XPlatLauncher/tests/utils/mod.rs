@@ -133,14 +133,15 @@ impl<'a> Drop for TestEnvironment<'a> {
 }
 
 pub fn prepare_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
-    match prepare_test_env_impl(launcher_location, true) {
-        Ok(x) => x,
-        Err(e) => panic!("Failed to prepare test environment: {:?}", e),
-    }
+    prepare_custom_test_env(launcher_location, None, true)
 }
 
-pub fn prepare_no_jbr_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
-    match prepare_test_env_impl(launcher_location, false) {
+pub fn prepare_custom_test_env<'a>(
+    launcher_location: LauncherLocation,
+    dir_suffix: Option<&str>,
+    with_jbr: bool
+) -> TestEnvironment<'a> {
+    match prepare_test_env_impl(launcher_location, dir_suffix, with_jbr) {
         Ok(x) => x,
         Err(e) => panic!("Failed to prepare test environment: {:?}", e),
     }
@@ -156,7 +157,11 @@ struct TestEnvironmentShared {
     temp_dir: TempDir
 }
 
-fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
+fn prepare_test_env_impl<'a>(
+    launcher_location: LauncherLocation,
+    dir_suffix: Option<&str>,
+    with_jbr: bool
+) -> Result<TestEnvironment<'a>> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().context("Failed to init shared test environment").unwrap();
         unsafe {
@@ -166,7 +171,8 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
 
     let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
 
-    let temp_dir = Builder::new().prefix("xplat_launcher_test_").tempdir().context("Failed to create temp directory")?;
+    let prefix = if let Some(s) = dir_suffix { format!("launcher_test_{s}_") } else { "launcher_test_".to_string() };
+    let temp_dir = Builder::new().prefix(&prefix).tempdir().context("Failed to create temp directory")?;
     let temp_path = temp_dir.path().canonicalize()?.strip_ns_prefix()?;
 
     let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, &temp_path, shared_env)?;
@@ -586,13 +592,27 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
         if let Some(es) = launcher_process.try_wait()? {
             return Ok(LauncherRunResult {
                 exit_status: es,
-                stdout: fs::read_to_string(stdout_file_path).context("Cannot open stdout file")?,
-                stderr: fs::read_to_string(stderr_file_path).context("Cannot open stderr file")?,
+                stdout: read_output_file(stdout_file_path).context("Cannot read stdout file")?,
+                stderr: read_output_file(stderr_file_path).context("Cannot read stderr file")?,
                 dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
             });
         }
 
         thread::sleep(time::Duration::from_secs(1))
+    }
+}
+
+fn read_output_file(path: &Path) -> Result<String> {
+    let bytes = fs::read(path).with_context(|| format!("Cannot open {:?}", path))?;
+    if let Ok(string) = String::from_utf8(bytes.to_owned()) {
+        Ok(string)
+    } else {
+        for line in bytes.split(|b| *b == '\n' as u8) {
+            if let Err(e) = String::from_utf8(line.to_owned()) {
+                bail!("{}: {:?} {:?}", e, line, String::from_utf8_lossy(line))
+            }
+        }
+        panic!("Should not reach here");
     }
 }
 

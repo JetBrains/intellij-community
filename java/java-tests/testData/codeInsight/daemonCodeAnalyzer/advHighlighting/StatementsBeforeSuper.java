@@ -4,9 +4,9 @@ class A {
   int i;
 
   A() {
-    <error descr="Cannot reference 'this' before supertype constructor has been called">this</error>.i++;                   // Error
-    <error descr="Cannot reference 'this' before supertype constructor has been called">this</error>.hashCode();            // Error
-    System.out.print(<error descr="Cannot reference 'this' before supertype constructor has been called">this</error>);     // Error
+    <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.i++;                   // Error
+    <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.hashCode();            // Error
+    System.out.print(<error descr="Cannot reference 'this' before superclass constructor is called">this</error>);     // Error
     super();
   }
   A(int i) {}
@@ -58,7 +58,7 @@ class D {
 class E extends D {
 
   E() {
-    <error descr="Cannot reference 'D.i' before supertype constructor has been called">super.i</error>++;                  // Error
+    <error descr="Cannot reference 'D.i' before superclass constructor is called">super.i</error>++;                  // Error
     super();
   }
 
@@ -68,8 +68,8 @@ class F {
   int i;
 
   F() {
-    <error descr="Cannot reference 'F.i' before supertype constructor has been called">i</error>++;                        // Error
-    <error descr="Cannot reference 'Object.hashCode()' before supertype constructor has been called">hashCode</error>();                 // Error
+    <error descr="Cannot reference 'F.i' before superclass constructor is called">i</error>++;                        // Error
+    <error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>();                 // Error
     super();
   }
 
@@ -84,7 +84,7 @@ class G {
 
     C() {
       G.this.b++;             // Allowed - enclosing instance
-      <error descr="Cannot reference 'C.this' before supertype constructor has been called">C.this</error>.c++;             // Error - same instance
+      <error descr="Cannot reference 'C.this' before superclass constructor is called">C.this</error>.c++;             // Error - same instance
       super();
     }
 
@@ -113,7 +113,7 @@ class Outer2 {
   }
 
   Outer2() {
-    new <error descr="Cannot reference 'Inner' before supertype constructor has been called">Inner</error>();                // Error - 'this' is enclosing instance
+    new <error descr="Cannot reference 'Inner' before superclass constructor is called">Inner</error>();                // Error - 'this' is enclosing instance
     super();
   }
 
@@ -124,7 +124,7 @@ class X {
   }
 
   X() {
-    var tmp = new <error descr="Cannot reference 'S' before supertype constructor has been called">S</error>() { };      // Error
+    var tmp = new <error descr="Cannot reference 'S' before superclass constructor is called">S</error>() { };      // Error
     super();
   }
 
@@ -153,7 +153,7 @@ class Y {
 class Z<T> extends Y {
 
   Z() {
-    super(<error descr="Cannot reference 'this' before supertype constructor has been called">this</error>);                // Error - refers to 'this'
+    super(<error descr="Cannot reference 'this' before superclass constructor is called">this</error>);                // Error - refers to 'this'
   }
 
   Z(List<?> list) {

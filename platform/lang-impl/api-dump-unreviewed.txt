@@ -1874,7 +1874,6 @@ c:com.intellij.build.BuildView
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.execution.ui.ObservableConsoleView
 - com.intellij.ide.OccurenceNavigator
-- com.intellij.openapi.actionSystem.DataProvider
 - sf:CONSOLE_VIEW_NAME:java.lang.String
 - *sf:RESTART_ACTIONS:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,java.lang.String,com.intellij.build.ViewManager):V
@@ -1891,7 +1890,6 @@ c:com.intellij.build.BuildView
 - getActions():com.intellij.openapi.actionSystem.AnAction[]
 - getAdditionalActions():com.intellij.openapi.actionSystem.AnAction[]
 - getContentSize():I
-- getData(java.lang.String):java.lang.Object
 - getFilter():java.util.function.Predicate
 - getNextOccurenceActionName():java.lang.String
 - getPreviousOccurenceActionName():java.lang.String
@@ -1911,6 +1909,7 @@ c:com.intellij.build.BuildView
 - scrollTo(I):V
 - setHelpId(java.lang.String):V
 - setOutputPaused(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.build.BuildViewManager
 - com.intellij.build.AbstractViewManager
 - <init>(com.intellij.openapi.project.Project):V
@@ -1949,7 +1948,7 @@ f:com.intellij.build.BuildViewSettingsProviderAdapter
 - isExecutionViewHidden():Z
 *c:com.intellij.build.CompositeView
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.openapi.ui.ComponentContainer
 - <init>(java.lang.String):V
 - addView(com.intellij.openapi.ui.ComponentContainer,java.lang.String):V
@@ -1957,13 +1956,13 @@ f:com.intellij.build.BuildViewSettingsProviderAdapter
 - createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
 - dispose():V
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getPreferredFocusableComponent():javax.swing.JComponent
 - getSwitchActions():com.intellij.openapi.actionSystem.AnAction[]
 - getView(java.lang.String):com.intellij.openapi.ui.ComponentContainer
 - getView(java.lang.String,java.lang.Class):java.lang.Object
 - isViewVisible(java.lang.String):Z
 - showView(java.lang.String,Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.build.DefaultBuildDescriptor
 - com.intellij.build.BuildDescriptor
 - <init>(com.intellij.build.BuildDescriptor):V
@@ -6024,6 +6023,7 @@ f:com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil
 - sf:DEFAULT_PROGRESS_POPUP_DELAY_MS:I
 - <init>():V
 - s:runTask(com.intellij.openapi.project.Project,com.intellij.openapi.application.NonBlockingReadAction,java.util.function.Consumer,java.lang.String,com.intellij.openapi.editor.Editor):V
+- s:runTask(com.intellij.openapi.project.Project,com.intellij.openapi.application.NonBlockingReadAction,java.util.function.Consumer,java.lang.String,com.intellij.openapi.editor.Editor,Z):V
 f:com.intellij.codeInsight.hint.PrevNextParameterHandler
 - com.intellij.openapi.editor.actionSystem.EditorActionHandler
 - <init>(Z):V
@@ -11062,6 +11062,7 @@ c:com.intellij.execution.impl.ConsoleViewImpl
 - p:calcNextOccurrence(I):com.intellij.ide.OccurenceNavigator$OccurenceInfo
 - canPause():Z
 - clear():V
+- clearMessageFilters():V
 - p:createCenterComponent():javax.swing.JComponent
 - p:createCompositeFilter():com.intellij.execution.filters.CompositeFilter
 - createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
@@ -13878,6 +13879,7 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - p:myScopeDescriptor:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - p:<init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - psf:applyPatternFilter(java.lang.String,java.util.regex.Pattern):java.lang.String
+- sf:createContext(com.intellij.openapi.project.Project,com.intellij.psi.SmartPsiElementPointer):com.intellij.openapi.actionSystem.DataContext
 - pa:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - p:createScopes():java.util.List
 - pf:doGetActions(com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter,com.intellij.ide.util.ElementsChooser$StatisticsCollector,java.lang.Runnable):java.util.List
@@ -18770,10 +18772,6 @@ f:com.intellij.ide.util.projectWizard.ExistingModuleLoader
 - getModuleType():com.intellij.openapi.module.ModuleType
 - s:setUpLoader(java.lang.String):com.intellij.ide.util.projectWizard.ExistingModuleLoader
 - validate(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
-f:com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
-- sf:INSTANCE:com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logProjectGenerated(com.intellij.openapi.project.Project,java.lang.Class):V
 a:com.intellij.ide.util.projectWizard.MultiWebTemplateNewProjectWizard
 - com.intellij.ide.util.projectWizard.WebTemplateNewProjectWizardBase
 - <init>(java.util.List):V
@@ -20642,10 +20640,6 @@ c:com.intellij.openapi.fileTypes.impl.associate.macos.MacOSFileTypeAssociator
 - <init>():V
 - associateFileTypes(java.util.List):V
 - isOsRestartRequired():Z
-c:com.intellij.openapi.fileTypes.impl.associate.macos.PListBuddyWrapper
-- sf:PLIST_PATH:java.lang.String
-- sf:UTIL_PATH:java.lang.String
-- <init>():V
 f:com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
@@ -28187,7 +28181,7 @@ f:com.intellij.usageView.impl.UsageContextCallHierarchyPanel
 - com.intellij.usages.impl.UsageContextPanelBase
 - <init>(com.intellij.usages.UsageViewPresentation):V
 - dispose():V
-- updateLayoutLater(com.intellij.openapi.project.Project,java.util.List):V
+- updateLayoutLater(java.util.List):V
 f:com.intellij.usageView.impl.UsageContextCallHierarchyPanel$Provider
 - com.intellij.usages.UsageContextPanel$Provider
 - <init>():V

@@ -123,7 +123,7 @@ public class HelpTooltip {
   private @Nullable Supplier<@NotNull @TooltipTitle String> title;
   private @NlsSafe String shortcut;
   private @Tooltip String description;
-  private ActionLink link;
+  private @Nullable ActionLink link;
   private @Nullable JBFontScaler linkOriginalFontScaler;
   private boolean neverHide;
   private @NotNull Alignment alignment = Alignment.CURSOR;
@@ -289,14 +289,13 @@ public class HelpTooltip {
    * @param external whether the link is "external" or not
    * @return {@code this}
    */
-  public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction, boolean external) {
-    link = new ActionLink(linkText, e -> {
-      hidePopup(true);
-      linkAction.run();
-    });
-    if (external) {
-      link.setExternalLinkIcon();
-    }
+  public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, @NotNull Runnable linkAction, boolean external) {
+    link = new MyActionLink(linkText, linkAction, external) {
+      @Override
+      protected void hidePopup() {
+        HelpTooltip.this.hidePopup(true);
+      }
+    };
     linkOriginalFontScaler = new JBFontScaler(link.getFont());
     return this;
   }
@@ -309,7 +308,7 @@ public class HelpTooltip {
    * @param url URL to browse.
    * @return {@code this}
    */
-  public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
+  public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, @NotNull URL url) {
     link = new BrowserLink(linkLabel, url.toExternalForm());
     link.setHorizontalTextPosition(SwingConstants.LEFT);
     linkOriginalFontScaler = new JBFontScaler(link.getFont());
@@ -326,7 +325,7 @@ public class HelpTooltip {
                           : tooltip.title != null && Objects.equals(title.get(), tooltip.title.get())) &&
            Objects.equals(shortcut, tooltip.shortcut) &&
            Objects.equals(description, tooltip.description) &&
-           Objects.equals(link, tooltip.link) &&
+           linksEqual(link, tooltip.link) &&
            alignment == tooltip.alignment &&
            Objects.equals(masterPopupOpenCondition, tooltip.masterPopupOpenCondition);
   }
@@ -361,7 +360,9 @@ public class HelpTooltip {
   public void installOn(@NotNull JComponent component) {
     HelpTooltip installed = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
 
-    if (installed == null) installImpl(component);
+    if (installed == null) {
+      installImpl(component);
+    }
     else if (!equals(installed)) {
       installed.hideAndDispose(component);
       installImpl(component);
@@ -664,6 +665,22 @@ public class HelpTooltip {
                            shortcut);
   }
 
+  static boolean linksEqual(@Nullable ActionLink o1, @Nullable ActionLink o2) {
+    if (o1 == null || o2 == null) return o1 == o2;
+    if (o1.getClass() != o2.getClass()) return false;
+    if (!Objects.equals(o1.getText(), o2.getText())) return false;
+
+    if (o1 instanceof MyActionLink a1 && o2 instanceof MyActionLink a2) {
+      return a1.external == a2.external &&
+             // do not require equals/hashCode for Runnables
+             a1.linkAction.getClass() == a2.linkAction.getClass();
+    }
+    else if (o1 instanceof BrowserLink b1 && o2 instanceof BrowserLink b2) {
+      return b1.getUrl().equals(b2.getUrl());
+    }
+    return o1 == o2;
+  }
+
   private static class BoundWidthLabel extends JLabel {
     private static Collection<View> getRows(@NotNull View root) {
       Collection<View> rows = new ArrayList<>();
@@ -749,5 +766,26 @@ public class HelpTooltip {
 
       setSizeForWidth(width);
     }
+  }
+
+  private abstract static class MyActionLink extends ActionLink {
+    final Runnable linkAction;
+    final boolean external;
+
+    MyActionLink(@NlsContexts.LinkLabel @NotNull String text, @NotNull Runnable linkAction, boolean external) {
+      this.linkAction = linkAction;
+      this.external = external;
+      setText(text);
+      addActionListener(e -> {
+        hidePopup();
+        linkAction.run();
+      });
+      if (external) {
+        setExternalLinkIcon();
+      }
+    }
+
+    protected abstract void hidePopup();
+
   }
 }

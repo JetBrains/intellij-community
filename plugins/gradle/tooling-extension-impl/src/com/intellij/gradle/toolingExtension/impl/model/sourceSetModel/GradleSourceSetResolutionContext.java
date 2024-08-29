@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
-class GradleSourceSetResolutionContext {
+public class GradleSourceSetResolutionContext {
 
   public final @Nullable String projectSourceCompatibility;
   public final @Nullable String projectTargetCompatibility;
@@ -47,7 +47,7 @@ class GradleSourceSetResolutionContext {
   public final @NotNull List<DefaultExternalFilter> resourceFilters;
   public final @NotNull List<DefaultExternalFilter> testResourceFilters;
 
-  GradleSourceSetResolutionContext(
+  public GradleSourceSetResolutionContext(
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
@@ -88,5 +88,16 @@ class GradleSourceSetResolutionContext {
     testResourcesIncludes = GradleResourceFilterModelBuilder.getIncludes(project, "processTestResources");
     testResourcesExcludes = GradleResourceFilterModelBuilder.getExcludes(project, "processTestResources");
     testResourceFilters = GradleResourceFilterModelBuilder.getFilters(project, context, "processTestResources");
+  }
+
+  public boolean isJavaTestSourceSet(@NotNull SourceSet sourceSet) {
+    String sourceSetName = sourceSet.getName();
+    Set<File> sourceDirs = sourceSet.getAllJava().getSrcDirs();
+
+    boolean resolveSourceSetDependencies = Boolean.getBoolean("idea.resolveSourceSetDependencies");
+    boolean isIdeaTestSourceSet = ideaTestSourceDirs.containsAll(sourceDirs);
+    boolean isKnownTestSourceSet = testSourceSets.contains(sourceSet);
+    boolean isCustomTestSourceSet = (isIdeaTestSourceSet || isKnownTestSourceSet) && !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSetName);
+    return SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName()) || resolveSourceSetDependencies && isCustomTestSourceSet;
   }
 }

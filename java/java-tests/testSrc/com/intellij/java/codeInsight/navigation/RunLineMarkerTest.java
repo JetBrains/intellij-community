@@ -39,8 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static junit.framework.TestCase.assertSame;
-
 /**
  * @author Dmitry Avdeev
  */
@@ -291,5 +289,18 @@ public class RunLineMarkerTest extends LineMarkerTestCase {
 
     wrapper.actionPerformed(TestActionEvent.createTestEvent(dataContext));
     assertTrue(performed.get());
+  }
+
+  public void testNestedNonStaticClassMethod() {
+    myFixture.configureByText("A1.java", """
+      class A1 {
+          class A2{
+              public static void <caret>main(String[] args) {
+                  System.out.println("1");
+              }
+          }
+      }""");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(0, marks.size());
   }
 }

@@ -226,6 +226,7 @@ internal class GHPRTimelineViewModelImpl(
   override fun updateAll() {
     cs.launch {
       detailsData.signalDetailsNeedReload()
+      detailsData.signalMergeabilityNeedsReload()
       timelineLoader.loadMore(true)
       reviewData.signalThreadsNeedReload()
     }
