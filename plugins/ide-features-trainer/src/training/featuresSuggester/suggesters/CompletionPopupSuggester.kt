@@ -16,6 +16,8 @@ class CompletionPopupSuggester : AbstractFeatureSuggester() {
 
   override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
+  override val forceCheckForStatistics = true
+
   private object State {
     var dotOffset: Int = -1
       private set

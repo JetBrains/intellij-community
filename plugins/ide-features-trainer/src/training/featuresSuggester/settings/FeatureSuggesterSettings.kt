@@ -32,7 +32,10 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
   private var workingDays: MutableList<Long> = mutableListOf()
 
   val isAnySuggesterEnabled: Boolean
-    get() = suggesters.any { it.value }
+    get() = needSendStatisticsForSwitchedOffCheckers || suggesters.any { it.value }
+
+  val needSendStatisticsForSwitchedOffCheckers: Boolean
+    get() = Registry.`is`("feature.suggester.send.statistics", false)
 
   private val isSuggestersEnabledByDefault: Boolean
     get() = Registry.`is`("feature.suggester.enable.suggesters", false)

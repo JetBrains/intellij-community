@@ -22,9 +22,13 @@ interface FeatureSuggester {
 
   fun isSuggestionNeeded(): Boolean
 
+  fun logStatisticsThatSuggestionIsFound(suggestion: Suggestion)
+
   val id: String
 
   val suggestingActionDisplayName: String
 
   val minSuggestingIntervalDays: Int
+
+  val forceCheckForStatistics: Boolean get() = false
 }

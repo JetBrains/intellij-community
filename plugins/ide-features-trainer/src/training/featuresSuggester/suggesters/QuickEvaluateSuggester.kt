@@ -26,6 +26,8 @@ class QuickEvaluateSuggester : AbstractFeatureSuggester() {
 
   override val languages = listOf(Language.ANY.id)
 
+  override val forceCheckForStatistics = true
+
   private var lastCopyFromFile = WeakReference<VirtualFile>(null)
   private var lastCopiedText = ""
 
