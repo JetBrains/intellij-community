@@ -227,7 +227,7 @@ public interface ApplicationEx extends Application {
 
   /**
    * Runs specified action with disabled implicit read lock if this feature is enabled with system property.
-   * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
+   * @see com.intellij.platform.ide.bootstrap.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
    * @param runnable action to run with disabled implicit read lock.
    */
   @ApiStatus.Internal
@@ -237,7 +237,7 @@ public interface ApplicationEx extends Application {
 
   /**
    * Runs specified action with enabeld implicit read lock, if this feature is disabled with system property.
-   * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
+   * @see com.intellij.platform.ide.bootstrap.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
    * @param runnable action to run with enabled implicit read lock.
    */
   @ApiStatus.Internal
@@ -246,7 +246,7 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * @deprecated Use {@link IdeEventQueue#flushNativeEventQueue}
+   * @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()}
    */
   @ApiStatus.Internal
   @Deprecated
