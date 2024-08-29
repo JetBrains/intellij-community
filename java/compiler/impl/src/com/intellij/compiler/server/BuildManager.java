@@ -1411,7 +1411,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter("-Djava.awt.headless=true");
 
     String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
-    if (jnaBootLibraryPath != null) {
+    if (jnaBootLibraryPath != null && wslPath == null) {
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.boot.library.path=" + jnaBootLibraryPath);
       //noinspection SpellCheckingInspection
