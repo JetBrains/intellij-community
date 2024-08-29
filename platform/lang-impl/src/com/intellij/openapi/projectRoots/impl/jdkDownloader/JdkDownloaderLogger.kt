@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 internal object JdkDownloaderLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 4)
+  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 5)
 
   private val DOWNLOAD: EventId1<Boolean> = GROUP.registerEvent("download", EventFields.Boolean("success"))
 
