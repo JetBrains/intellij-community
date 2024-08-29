@@ -77,6 +77,6 @@ public class DebuggerThreadActionHandler extends DebuggerActionHandler {
         }
       }
     }
-    return false;
+    return true;
   }
 }
