@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
@@ -20,6 +21,7 @@ import java.nio.file.StandardOpenOption
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Throws
 import kotlin.time.Duration.Companion.seconds
 
 internal class IjentNioFileChannel private constructor(
@@ -49,6 +51,8 @@ internal class IjentNioFileChannel private constructor(
       return IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReadingAndWriting(options).getOrThrowFileSystemException())
     }
   }
+
+  override fun toString(): String = "IjentNioFileChannel($ijentOpenedFile)"
 
   override fun read(dst: ByteBuffer): Int {
     return readFromPosition(dst, null)
@@ -305,6 +309,12 @@ internal class IjentNioFileChannel private constructor(
     }
 
     check(ijentOpenedFile is IjentOpenedFile.Reader) { "The file must be opened for reading" }
+
+    if (ijentOpenedFile is IjentOpenedFile.Writer) {
+      thisLogger().error(
+        "The file ${this} is opened for writing, but an attempt to write anything to the file won't be reflected in the memory map"
+      )
+    }
 
     val mmapCopyRegistry = service<MmapCopyRegistry>()
     return fsBlocking {
