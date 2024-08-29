@@ -28,10 +28,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -515,7 +515,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     });
 
-    mergeSourceSetContentRoots(moduleMap, resolverContext);
+    mergeSourceSetContentRoots(resolverContext, moduleMap);
     if (resolverContext.isResolveModulePerSourceSet()) {
       mergeLibraryAndModuleDependencyData(resolverContext, projectDataNode, resolverContext.getGradleUserHome(), gradleHomeDir);
     }
@@ -793,22 +793,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static class Counter {
-    int count;
-
-    void increment() {
-      count++;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(count);
-    }
-  }
-
   private static void mergeSourceSetContentRoots(
-    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap,
-    @NotNull ProjectResolverContext resolverContext
+    @NotNull ProjectResolverContext resolverContext,
+    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
   ) {
     if (resolverContext.isResolveModulePerSourceSet()) {
       mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, moduleMap);
@@ -818,118 +805,60 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
+  /**
+   * Gradle source set haven't the content root term.
+   * Therefore, IDEA needs to deduct the best content roots for the specified source set directories.
+   * <p>
+   * For example, it creates content roots src/main for the source set directories src/main/java and src/main/resources.
+   * Same for src/test/java and src/test/resources, it creates src/test content root.
+   */
   private static void mergeSourceSetContentRootsInModulePerSourceSetMode(
     @NotNull ProjectResolverContext resolverContext,
     @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
   ) {
+    var contentRootIndex = new GradleContentRootIndex();
 
-    final Map<String, Counter> weightMap = new HashMap<>();
-    for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
-      final DataNode<ModuleData> moduleNode = pair.first;
-      for (DataNode<ContentRootData> contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
-        File file = new File(contentRootNode.getData().getRootPath());
-        while (file != null) {
-          weightMap.computeIfAbsent(file.getPath(), __ -> new Counter()).increment();
-          file = file.getParentFile();
-        }
-      }
+    for (var moduleEntry : moduleMap.values()) {
+      var moduleNode = moduleEntry.first;
 
-      for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
-        final Set<String> set = new HashSet<>();
-        for (DataNode<ContentRootData> contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
-          File file = new File(contentRootNode.getData().getRootPath());
-          while (file != null) {
-            set.add(file.getPath());
-            file = file.getParentFile();
-          }
-        }
-        for (String path : set) {
-          weightMap.computeIfAbsent(path, __ -> new Counter()).increment();
-        }
+      for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
+        contentRootIndex.addSourceRoots(sourceSetNode);
       }
     }
-    for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
-      final DataNode<ModuleData> moduleNode = pair.first;
-      final ExternalProject externalProject = resolverContext.getExtraProject(pair.second, ExternalProject.class);
+
+    for (var moduleEntry : moduleMap.values()) {
+      var moduleNode = moduleEntry.first;
+      var ideaModule = moduleEntry.second;
+
+      var externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
       if (externalProject == null) continue;
 
-      mergeModuleContentRoots(weightMap, externalProject, moduleNode);
-      for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
-        mergeModuleContentRoots(weightMap, externalProject, sourceSetNode);
-      }
-    }
-  }
+      for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
+        var contentRootPaths = contentRootIndex.resolveContentRoots(externalProject, sourceSetNode);
 
-  private static void mergeModuleContentRoots(@NotNull Map<String, Counter> weightMap,
-                                              @NotNull ExternalProject externalProject,
-                                              @NotNull DataNode<? extends ModuleData> moduleNode) {
-    final File buildDir = externalProject.getBuildDir();
-    final MultiMap<String, ContentRootData> sourceSetRoots = MultiMap.create();
-    Collection<DataNode<ContentRootData>> contentRootNodes = findAll(moduleNode, ProjectKeys.CONTENT_ROOT);
-    if (contentRootNodes.size() <= 1) return;
-
-    for (DataNode<ContentRootData> contentRootNode : contentRootNodes) {
-      File root = new File(contentRootNode.getData().getRootPath());
-      if (FileUtil.isAncestor(buildDir, root, true)) continue;
-
-      while (weightMap.containsKey(root.getParent()) && weightMap.get(root.getParent()).count <= 1) {
-        root = root.getParentFile();
-      }
-
-      ContentRootData mergedContentRoot = null;
-      String rootPath = toCanonicalPath(root.getPath());
-      Set<String> paths = new HashSet<>(sourceSetRoots.keySet());
-      for (String path : paths) {
-        if (FileUtil.isAncestor(rootPath, path, true)) {
-          Collection<ContentRootData> values = sourceSetRoots.remove(path);
-          if (values != null) {
-            sourceSetRoots.putValues(rootPath, values);
-          }
+        var contentRootNodes = CanonicalPathPrefixTreeFactory.INSTANCE.<ContentRootData>createMap();
+        for (var contentRootPath : contentRootPaths) {
+          var contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
+          contentRootNodes.set(contentRootPath, contentRootData);
         }
-        else if (FileUtil.isAncestor(path, rootPath, false)) {
-          Collection<ContentRootData> contentRoots = sourceSetRoots.get(path);
-          for (ContentRootData rootData : contentRoots) {
-            if (StringUtil.equals(rootData.getRootPath(), path)) {
-              mergedContentRoot = rootData;
-              break;
+
+        for (var contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
+          for (var source : contentRootNode.getData().getSourceRoots().entrySet()) {
+            var sourceRootType = source.getKey();
+            for (var sourceRoot : source.getValue()) {
+              var sourceRootPath = sourceRoot.getPath();
+              var packagePrefix = sourceRoot.getPackagePrefix();
+              var contentRootData = ContainerUtil.getLastItem(contentRootNodes.getAncestorValues(sourceRootPath));
+              contentRootData.storePath(sourceRootType, sourceRootPath, packagePrefix);
             }
           }
-          if (mergedContentRoot == null) {
-            mergedContentRoot = contentRoots.iterator().next();
-          }
-          break;
+          contentRootNode.clear(true);
         }
-        if (sourceSetRoots.size() == 1) break;
-      }
 
-      if (mergedContentRoot == null) {
-        mergedContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getPath());
-        sourceSetRoots.putValue(mergedContentRoot.getRootPath(), mergedContentRoot);
-      }
-
-      for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
-        for (ContentRootData.SourceRoot sourceRoot : contentRootNode.getData().getPaths(sourceType)) {
-          mergedContentRoot.storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
+        for (var contentRootData : contentRootNodes.values()) {
+          sourceSetNode.createChild(ProjectKeys.CONTENT_ROOT, contentRootData);
         }
       }
-
-      contentRootNode.clear(true);
-    }
-
-    for (Map.Entry<String, Collection<ContentRootData>> entry : sourceSetRoots.entrySet()) {
-      final String rootPath = entry.getKey();
-      final ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootPath);
-
-      for (ContentRootData rootData : entry.getValue()) {
-        for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
-          Collection<ContentRootData.SourceRoot> roots = rootData.getPaths(sourceType);
-          for (ContentRootData.SourceRoot sourceRoot : roots) {
-            ideContentRoot.storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
-          }
-        }
-      }
-
-      moduleNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
     }
   }
 
