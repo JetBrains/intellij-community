@@ -427,9 +427,6 @@ c:com.intellij.openapi.actionSystem.LangDataKeys
 - sf:TARGET_MODULE:com.intellij.openapi.actionSystem.DataKey
 - sf:TARGET_PSI_ELEMENT:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
-a:com.intellij.openapi.module.InternalModuleType
-- com.intellij.openapi.module.ModuleType
-- p:<init>(java.lang.String):V
 com.intellij.openapi.module.ModuleConfigurationEditor
 - com.intellij.openapi.options.Configurable
 - sf:EMPTY:com.intellij.openapi.module.ModuleConfigurationEditor[]
