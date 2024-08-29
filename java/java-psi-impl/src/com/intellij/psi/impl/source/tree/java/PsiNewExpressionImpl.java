@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance(PsiNewExpressionImpl.class);
@@ -44,7 +45,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   private @Nullable PsiType doGetType(@Nullable PsiAnnotation stopAt) {
     PsiType type = null;
-    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    List<PsiAnnotation> annotations = new SmartList<>();
     boolean stop = false;
 
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
