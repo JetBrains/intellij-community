@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 private val LOG = logger<SdkmanrcConfigurationProvider>()
 
@@ -36,11 +36,15 @@ data class SdkmanReleaseData(val target: String,
     val variant = when {
       vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
       vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
+      vendor == "albba" -> JdkVersionDetector.Variant.Dragonwell
       vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
+      vendor == "bsg" -> JdkVersionDetector.Variant.BiSheng
       vendor == "graal" -> JdkVersionDetector.Variant.GraalVM
       vendor == "graalce" -> JdkVersionDetector.Variant.GraalVMCE
       vendor == "jbr" -> JdkVersionDetector.Variant.JBR
+      vendor == "kona" -> JdkVersionDetector.Variant.Kona
       vendor == "librca" -> JdkVersionDetector.Variant.Liberica
+      vendor == "ms" -> JdkVersionDetector.Variant.Microsoft
       vendor == "oracle" -> JdkVersionDetector.Variant.Oracle
       vendor == "open" -> JdkVersionDetector.Variant.Oracle
       vendor == "sapmchn" -> JdkVersionDetector.Variant.SapMachine

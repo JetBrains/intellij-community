@@ -33,9 +33,12 @@ data class AsdfReleaseData(val name: String, val vendor: String, val version: St
       "adoptopenjdk-jre-openj9", "adoptopenjdk-jre-openj9-large_heap",
       "adoptopenjdk-openj9", "adoptopenjdk-openj9-large_heap" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
       "corretto" -> JdkVersionDetector.Variant.Corretto
+      "dragonwell" -> JdkVersionDetector.Variant.Dragonwell
       "graalvm-community" -> JdkVersionDetector.Variant.GraalVMCE
+      "kona" -> JdkVersionDetector.Variant.Kona
       "liberica", "liberica-javafx",
       "liberica-jre", "liberica-jre-javafx", "liberica-lite" -> JdkVersionDetector.Variant.Liberica
+      "microsoft" -> JdkVersionDetector.Variant.Microsoft
       "openjdk", "oracle" -> JdkVersionDetector.Variant.Oracle
       "oracle-graalvm" -> JdkVersionDetector.Variant.GraalVM
       "sapmachine", "sapmachine-jre" -> JdkVersionDetector.Variant.SapMachine
