@@ -36,7 +36,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final DebuggerActionHandler mySmartStepIntoHandler;
   private final XMarkObjectActionHandler myMarkObjectActionHandler;
   private final EditBreakpointActionHandler myEditBreakpointActionHandler;
-  private final DebuggerActionHandler myFreezeThreadHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -94,7 +93,6 @@ public class XDebuggerSupport extends DebuggerSupport {
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
     myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
-    myFreezeThreadHandler = new DebuggerThreadActionHandler(provider -> provider.getFreezeThreadHandler());
   }
 
   @Override
@@ -223,11 +221,5 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
     return myEditBreakpointActionHandler;
-  }
-
-  @NotNull
-  @Override
-  public DebuggerActionHandler getFreezeThreadHandler() {
-    return myFreezeThreadHandler;
   }
 }

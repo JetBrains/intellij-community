@@ -27,9 +27,14 @@ import java.util.function.Function;
 
 public class DebuggerThreadActionHandler extends DebuggerActionHandler {
 
+  public static final DebuggerThreadActionHandler FreezeThread = new DebuggerThreadActionHandler(provider -> provider.getFreezeThreadHandler());
+  public static final DebuggerThreadActionHandler ThawThread = new DebuggerThreadActionHandler(provider -> provider.getThawThreadHandler());
+  public static final DebuggerThreadActionHandler FreezeOtherThreads = new DebuggerThreadActionHandler(provider -> provider.getFreezeOtherThreadsHandler());
+  public static final DebuggerThreadActionHandler ThawAllThreads = new DebuggerThreadActionHandler(provider -> provider.getThawAllThreadsHandler());
+
   private final Function<ThreadsActionsProvider, DebuggerActionHandler> myGetHandler;
 
-  public DebuggerThreadActionHandler(Function<ThreadsActionsProvider, DebuggerActionHandler> getHandler) {
+  private DebuggerThreadActionHandler(Function<ThreadsActionsProvider, DebuggerActionHandler> getHandler) {
     myGetHandler = getHandler;
   }
 

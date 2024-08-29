@@ -22,6 +22,6 @@ public class FreezeThreadAction extends XDebuggerActionBase {
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getFreezeThreadHandler();
+    return DebuggerThreadActionHandler.FreezeThread;
   }
 }

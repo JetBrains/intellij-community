@@ -247,8 +247,6 @@ public abstract class DebuggerSupport {
     return DISABLED_EDIT;
   }
 
-  public @NotNull DebuggerActionHandler getFreezeThreadHandler() { return DisabledActionHandler.INSTANCE;  }
-
   public static @NotNull <T extends DebuggerSupport> DebuggerSupport getDebuggerSupport(Class<T> aClass) {
     for (DebuggerSupport support : getDebuggerSupports()) {
       if (support.getClass() == aClass) {
