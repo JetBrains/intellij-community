@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ContinuationHolder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeSkipCoroutineStackFrameProxy
-import java.lang.Integer.min
 
 class CoroutineFrameBuilder {
     companion object {
@@ -133,18 +132,9 @@ class CoroutineFrameBuilder {
             if (!mode.isCoroutineFound())
                 return null
 
-            val (theFollowingFrames, isFirstSuspendFrame) = theFollowingFrames(frame)
-            if (mode.isSuspendMethodParameter()) {
-                if (theFollowingFrames.isNotEmpty()) {
-                    // have to check next frame if that's invokeSuspend:-1 before proceed, otherwise skip
-                    // remove negative frames from the stacktrace
-                    lookForTheFollowingFrame(theFollowingFrames) ?: return null
-                } else
-                    return null
-            }
-
             val continuation = extractContinuation(frame, mode) ?: return null
             if (threadAndContextSupportsEvaluation(suspendContext, frame)) {
+                val (theFollowingFrames, isFirstSuspendFrame) = theFollowingFrames(frame)
                 val context = DefaultExecutionContext(suspendContext, frame)
                 val continuationHolder = ContinuationHolder.instance(context)
                 val coroutineInfo = continuationHolder.extractCoroutineInfoData(continuation) ?: return null
@@ -156,16 +146,6 @@ class CoroutineFrameBuilder {
                     isFirstSuspendFrame,
                     coroutineInfo.topFrameVariables
                 )
-            }
-            return null
-        }
-
-        private fun lookForTheFollowingFrame(theFollowingFrames: List<StackFrameProxyImpl>): StackFrameProxyImpl? {
-            for (i in 0 until min(PRE_FETCH_FRAME_COUNT, theFollowingFrames.size)) { // pre-scan PRE_FETCH_FRAME_COUNT frames
-                val nextFrame = theFollowingFrames[i]
-                if (nextFrame.getSuspendExitMode() != SuspendExitMode.NONE) {
-                    return nextFrame
-                }
             }
             return null
         }
@@ -183,7 +163,13 @@ class CoroutineFrameBuilder {
                 val indexOfGetCoroutineSuspended = hasGetCoroutineSuspended(frames)
                 // @TODO if found - skip this thread stack
                 if (indexOfGetCoroutineSuspended < 0 && frames.size > indexOfCurrentFrame + 1) {
-                    return Pair(frames.drop(indexOfCurrentFrame + 1), isFirstSuspendFrame(indexOfCurrentFrame, frames))
+                    return Pair(
+                        frames.asSequence()
+                            .drop(indexOfCurrentFrame + 1)
+                            .dropWhile { it.getSuspendExitMode() != SuspendExitMode.NONE }
+                            .toList(),
+                        isFirstSuspendFrame(indexOfCurrentFrame, frames)
+                    )
                 }
             } else {
                 log.error("Frame isn't found on the thread stack.")

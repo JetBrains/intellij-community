@@ -68,9 +68,6 @@ fun Location.isInvokeSuspend() =
 fun Location.isInvokeSuspendWithNegativeLineNumber() =
     isInvokeSuspend() && safeLineNumber() < 0
 
-fun Location.isFilteredInvokeSuspend() =
-    isInvokeSuspend() || isInvokeSuspendWithNegativeLineNumber()
-
 fun StackFrameProxyImpl.variableValue(variableName: String): ObjectReference? {
     val continuationVariable = safeVisibleVariableByName(variableName) ?: return null
     return getValue(continuationVariable) as? ObjectReference ?: return null
@@ -120,7 +117,7 @@ fun Location.sameLineAndMethod(location: Location?): Boolean =
     location != null && location.safeMethod() == safeMethod() && location.safeLineNumber() == safeLineNumber()
 
 fun Location.isFilterFromTop(location: Location?): Boolean =
-    isFilteredInvokeSuspend() || sameLineAndMethod(location) || location?.safeMethod() == safeMethod()
+    isInvokeSuspendWithNegativeLineNumber() || sameLineAndMethod(location) || location?.safeMethod() == safeMethod()
 
 fun Location.isFilterFromBottom(location: Location?): Boolean =
     sameLineAndMethod(location)
