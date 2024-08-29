@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Ref
@@ -9,10 +10,14 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService.Companion.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
+import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,6 +33,21 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
     override fun setUp() {
         super.setUp()
         vfsDisposable = KotlinTestUtils.allowRootAccess(this, projectRoot.path)
+        waitForKotlinSettingsConfiguration()
+    }
+
+    private fun waitForKotlinSettingsConfiguration() {
+        // Make sure that the Kotlin compiler settings are initialized
+        KotlinCommonCompilerArgumentsHolder.getInstance(project)
+        // Updating the settings is done in a coroutine that might take several EDT dispatches to work.
+        // We dispatch them up to 10 times here to ensure the settings are updated correctly.
+        val propertiesComponent = PropertiesComponent.getInstance(project)
+        for (i in 1..5) {
+            if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) break
+            UIUtil.dispatchAllInvocationEvents()
+            Thread.sleep(100)
+        }
+        Assert.assertTrue(propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME))
     }
 
     override fun tearDown(): Unit = runAll(
