@@ -35,7 +35,8 @@ class LogicalStructureViewService(
 }
 
 private class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>)
-  : StructureViewModelBase(psiFile, editor, createViewTreeElement(assembledModel)), StructureViewModel.ElementInfoProvider {
+  : StructureViewModelBase(psiFile, editor, createViewTreeElement(assembledModel)),
+    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
 
   override fun isAlwaysShowsPlus(element: StructureViewTreeElement?): Boolean {
     return false
@@ -47,5 +48,13 @@ private class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, assem
 
   override fun getGroupers(): Array<Grouper> {
     return arrayOf(LogicalGrouper())
+  }
+
+  override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
+    return false
+  }
+
+  override fun isSmartExpand(): Boolean {
+    return false
   }
 }
