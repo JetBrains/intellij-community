@@ -557,28 +557,42 @@ class GroovyBuildScriptManipulator(
         ) -> GrStatement,
         hasAndroidModule: Boolean
     ) {
-        var optionsBlock = if (hasAndroidModule || !projectSupportsCompilerOptions(gradleFile)) {
+        val kotlinOptionsBlock = if (hasAndroidModule || !projectSupportsCompilerOptions(gradleFile)) {
             // no `compilerOptions` for android
             outerDslBlock.getBlockOrCreate("kotlinOptions")
         } else {
             outerDslBlock.getBlockByName("kotlinOptions")
         }
-        if (optionsBlock != null) {
-            // We leave deprecated `kotlinOptions` untouched, it can be updated with `kotlinOptions` to `compilerOptions` inspection
-            optionsBlock.addParameterAssignment(parameterName, parameterValue, replaceIt)
-        } else { // Work with `compilerOptions` block
-            val compilerOption = getCompilerOption(parameterName, parameterValue)
-            var replaced = outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
-            if (replaced != true) {
-                optionsBlock = outerDslBlock.getBlockOrCreate("compilerOptions")
-                replaced = optionsBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
 
-                if (replaced != true) {
-                    val added = optionsBlock.addLastExpressionInBlockIfNeeded(compilerOption.expression)
-                    if (added == true) {
-                        compilerOption.classToImport?.let {
-                            addImportIfNeeded(it, gradleFile)
-                        }
+        if (kotlinOptionsBlock != null) {
+            // We leave deprecated `kotlinOptions` untouched, it can be updated with `kotlinOptions` to `compilerOptions` inspection
+            kotlinOptionsBlock.addParameterAssignment(parameterName, parameterValue, replaceIt)
+        } else { // Work with `compilerOptions` block
+            addCompilerOption(parameterName, parameterValue, outerDslBlock, gradleFile, replaceIt)
+        }
+    }
+
+    private fun addCompilerOption(
+        parameterName: String,
+        parameterValue: String,
+        outerDslBlock: GrClosableBlock,
+        gradleFile: GroovyFile,
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement
+    ) {
+        val compilerOption = getCompilerOption(parameterName, parameterValue)
+        var replaced = outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
+        if (replaced != true) {
+            val compilerOptionsBlock = outerDslBlock.getBlockOrCreate("compilerOptions")
+            replaced = compilerOptionsBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
+
+            if (replaced != true) {
+                val added = compilerOptionsBlock.addLastExpressionInBlockIfNeeded(compilerOption.expression)
+                if (added == true) {
+                    compilerOption.classToImport?.let {
+                        addImportIfNeeded(it, gradleFile)
                     }
                 }
             }

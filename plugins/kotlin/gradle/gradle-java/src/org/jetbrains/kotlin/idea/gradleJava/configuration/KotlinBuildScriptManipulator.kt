@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.CompilerOption
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getCompilerOption
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
 import org.jetbrains.kotlin.idea.gradleTooling.capitalize
@@ -737,21 +738,32 @@ class KotlinBuildScriptManipulator(
         compilerOption.classToImport?.let {
             addImportIfMissing(it.toString())
         }
-        var compilerOptionsBlock = findScriptInitializer("$taskName.compilerOptions")?.getBlock()
+        val compilerOptionsBlock = findScriptInitializer("$taskName.compilerOptions")?.getBlock()
         return if (compilerOptionsBlock == null) {
-            addImportIfMissing("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
-            script?.blockExpression?.addDeclarationIfMissing("val $taskName: KotlinCompile by tasks")
-            compilerOptionsBlock = addTopLevelBlock("$taskName.compilerOptions")
-            compilerOptionsBlock?.addExpressionIfMissing(compilerOption.expression)
+            addCompilerOptionsBlockAndOption(taskName, compilerOption)
         } else {
-            val assignment = compilerOptionsBlock.statements.find {
-                (it as? KtDotQualifiedExpression)?.receiverExpression?.text == parameterName
-            }
-            if (assignment != null) {
-                assignment.replaceIt(/* precompiledReplacement = */ compilerOption.expression, /* insideCompilerOptions = */ true)
-            } else {
-                compilerOptionsBlock.addExpressionIfMissing(compilerOption.expression)
-            }
+            return replaceOrAddCompilerOption(compilerOptionsBlock, parameterName, compilerOption, replaceIt)
+        }
+    }
+
+    private fun KtFile.addCompilerOptionsBlockAndOption(taskName: String, compilerOption: CompilerOption): KtExpression? {
+        addImportIfMissing("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+        script?.blockExpression?.addDeclarationIfMissing("val $taskName: KotlinCompile by tasks")
+        val compilerOptionsBlock = addTopLevelBlock("$taskName.compilerOptions")
+        return compilerOptionsBlock?.addExpressionIfMissing(compilerOption.expression)
+    }
+
+    private fun replaceOrAddCompilerOption(
+        compilerOptionsBlock: KtBlockExpression, parameterName: String, compilerOption: CompilerOption,
+        replaceIt: KtExpression.(/* precompiledReplacement */ String?, /* insideCompilerOptions = */ Boolean) -> PsiElement
+    ): PsiElement {
+        val assignment = compilerOptionsBlock.statements.find {
+            (it as? KtDotQualifiedExpression)?.receiverExpression?.text == parameterName
+        }
+        return if (assignment != null) {
+            assignment.replaceIt(/* precompiledReplacement = */ compilerOption.expression, /* insideCompilerOptions = */ true)
+        } else {
+            compilerOptionsBlock.addExpressionIfMissing(compilerOption.expression)
         }
     }
 

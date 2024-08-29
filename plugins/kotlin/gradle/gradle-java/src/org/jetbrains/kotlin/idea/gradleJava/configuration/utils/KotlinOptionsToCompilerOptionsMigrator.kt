@@ -18,11 +18,10 @@ data class Replacement(val expressionToReplace: KtExpression, val replacement: S
 
 fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpression): Replacement? {
 
-  val rightPartOfBinaryExpression = binaryExpression.right
-  val textOfRightPartOfBinaryExpression = rightPartOfBinaryExpression?.text ?: return null
+  val rightPartOfBinaryExpression = binaryExpression.right ?: return null
+  val textOfRightPartOfBinaryExpression = rightPartOfBinaryExpression.text
 
   val leftPartOfBinaryExpression = binaryExpression.left ?: return null
-
   val textOfLeftPartOfBinaryExpression = leftPartOfBinaryExpression.text
 
   // We don't touch strings like `freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"`
@@ -64,26 +63,13 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
 }
 
 fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFile): Boolean {
-    val jpsVersion = KotlinJpsPluginSettings.jpsVersion(file.project)
-    val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion ?: return false
-    return parsedKotlinVersion >= KotlinVersion(major, minor, patch)
+  val jpsVersion = KotlinJpsPluginSettings.jpsVersion(file.project)
+  val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion ?: return false
+  return parsedKotlinVersion >= KotlinVersion(major, minor, patch)
 }
 
-private fun getReplacementForOldKotlinOptionIfNeeded(
-    replacement: StringBuilder,
-    optionName: String,
-    optionValue: String,
-    operationReference: String,
-): CompilerOption? {
-
-  val processedOptionValue = if (optionName != "freeCompilerArgs") {
-    optionValue.removeSurrounding("\"", "\"")
-  }
-  else {
-    optionValue
-  }
-
-  val operationReplacer = when (operationReference) {
+private fun getOperationReplacer(operationReference: String, processedOptionValue: String): String? {
+  return when (operationReference) {
     "=" -> {
       "set"
     }
@@ -101,37 +87,76 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
       null
     }
   }
+}
+
+private fun getReplacementForOldKotlinOptionIfNeeded(
+  replacement: StringBuilder,
+  optionName: String,
+  optionValue: String,
+  operationReference: String,
+): CompilerOption? {
+
+  val processedOptionValue = if (optionName != "freeCompilerArgs") {
+    optionValue.removeSurrounding("\"", "\"")
+  }
+  else {
+    optionValue
+  }
+
+  val operationReplacer = getOperationReplacer(operationReference, processedOptionValue)
 
   if (operationReplacer != null) {
     // jvmTarget, apiVersion and languageVersion
     val versionOptionData = optionsWithValuesMigratedFromNumericStringsToEnums[optionName]
     if (versionOptionData != null) {
-      val convertedValue = versionOptionData.mappingRule.apply(processedOptionValue)
-      if (convertedValue != null) {
-        val compilerOptionValue = "${versionOptionData.newOptionType}${convertedValue}"
-        replacement.append(
-          "$optionName.$operationReplacer($compilerOptionValue)"
-        )
-        return CompilerOption(replacement.toString(), versionOptionData.fqClassName, compilerOptionValue)
-      }
+
+      return getCompilerOptionForVersionValue(versionOptionData, processedOptionValue, replacement, optionName, operationReplacer)
+
     }
-    // JS options
-    else if (jsOptions.contains(optionName)) {
+    else if (jsOptions.contains(optionName)) { // JS options
+
       val jsOptionsValuesStringToEnumCorrespondence = jsOptions[optionName] ?: return null
       val jsOptionValue = jsOptionsValuesStringToEnumCorrespondence[processedOptionValue]
       if (jsOptionValue != null) {
-        replacement.append(
-          "$optionName.$operationReplacer(${jsOptionValue.className}.${jsOptionValue.optionValue})"
-        )
-        return CompilerOption(replacement.toString(), jsOptionValue.fqClassName)
+        return getCompilerOptionForJsValue(jsOptionValue, replacement, optionName, operationReplacer)
       }
+
     }
     else if (optionName.contains("freeCompilerArgs")) {
+
       replacement.append("$optionName.$operationReplacer($processedOptionValue)")
       return CompilerOption(replacement.toString())
+
     }
   }
   return null
+}
+
+private fun getCompilerOptionForVersionValue(
+  versionOptionData: VersionOption, processedOptionValue: String, replacement: StringBuilder,
+  optionName: String, operationReplacer: String,
+): CompilerOption? {
+  val convertedValue = versionOptionData.mappingRule.apply(processedOptionValue)
+  if (convertedValue != null) {
+    val compilerOptionValue = "${versionOptionData.newOptionType}${convertedValue}"
+    replacement.append(
+      "$optionName.$operationReplacer($compilerOptionValue)"
+    )
+    return CompilerOption(replacement.toString(), versionOptionData.fqClassName, compilerOptionValue)
+  }
+  return null
+}
+
+private fun getCompilerOptionForJsValue(
+  jsOptionValue: JsOptionValue,
+  replacement: StringBuilder,
+  optionName: String,
+  operationReplacer: String,
+): CompilerOption {
+  replacement.append(
+    "$optionName.$operationReplacer(${jsOptionValue.className}.${jsOptionValue.optionValue})"
+  )
+  return CompilerOption(replacement.toString(), jsOptionValue.fqClassName)
 }
 
 fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
@@ -141,8 +166,8 @@ fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
 }
 
 private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
-    binaryExpression: KtBinaryExpression,
-    textOfLeftPartOfBinaryExpression: String,
+  binaryExpression: KtBinaryExpression,
+  textOfLeftPartOfBinaryExpression: String,
 ): Replacement? {
   if (textOfLeftPartOfBinaryExpression.startsWith("kotlinOptions.")) {
     val replacement = binaryExpression.text.replace("kotlinOptions.", "compilerOptions.")
