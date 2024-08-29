@@ -31,7 +31,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -419,20 +418,20 @@ data class ClientId(val value: String) {
     }
 
     @JvmStatic
-    private fun assertClientIdMismatch(assertInfo: Pair<ClientIdContextElement?, Throwable>) {
+    private fun assertClientIdMismatch(assertInfo: Pair<ClientIdContextElement?, Throwable?>) {
       val currentClientIdElement = currentThreadContext().clientIdContextElement
       if (assertInfo.first != currentClientIdElement) {
-        logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'", assertInfo.second.also { throwable ->
-          val currentThrowable = currentClientIdElement?.creationTrace
-          if (currentThrowable != null) throwable.initCause(currentThrowable)
-        }))
+        logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'").apply {
+          assertInfo.second?.let { addSuppressed(it) }
+          currentClientIdElement?.creationTrace?.let { addSuppressed(it) }
+        })
       }
     }
 
-    private fun captureInfoForAssertion(): Pair<ClientIdContextElement?, Throwable> {
-      // TODO: drop capturing of Throwable because of performance
+    private fun captureInfoForAssertion(): Pair<ClientIdContextElement?, Throwable?> {
       val clientIdContextElement = currentThreadContext().clientIdContextElement
-      return clientIdContextElement to Throwable("'$clientIdContextElement' captured at")
+      val throwable = if (isStacktraceLoggingEnabled()) Throwable("'$clientIdContextElement' captured at") else null
+      return clientIdContextElement to throwable
     }
 
     @JvmStatic
@@ -545,9 +544,8 @@ object ClientIdContextElementPrecursor : CopyableThreadContextElement<Unit>, Cor
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 @ApiStatus.Internal
 class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextElement<Unit>, IntelliJContextElement {
-  //private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
-  // TODO: temp enable in the branch
-  val creationTrace: Throwable? = Throwable("${formatClientId()} created at")
+  val creationTrace: Throwable? = if (isStacktraceLoggingEnabled()) Throwable("${formatClientId()} created at") else null
+
   companion object Key : CoroutineContext.Key<ClientIdContextElement>
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
@@ -606,3 +604,6 @@ val CoroutineContext.clientIdContextElement: ClientIdContextElement?
 val currentThreadClientId: ClientId?
   @ApiStatus.Internal
   get() = currentThreadContext().clientIdContextElement?.clientId
+
+
+private fun isStacktraceLoggingEnabled() = logger.isTraceEnabled
