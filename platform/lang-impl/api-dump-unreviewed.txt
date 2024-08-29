@@ -20444,6 +20444,7 @@ c:com.intellij.openapi.module.impl.ModuleImpl
 - com.intellij.openapi.module.Module
 - com.intellij.openapi.ui.Queryable
 - com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.util.messages.MessageBusOwner
 - canStoreSettings():Z
 - clearScopesCache():V
 - p:debugString(Z):java.lang.String
@@ -20471,7 +20472,6 @@ c:com.intellij.openapi.module.impl.ModuleImpl
 - pf:getStore():com.intellij.openapi.components.impl.stores.IComponentStore
 - getSupportedSignaturesOfLightServiceConstructors():java.util.List
 - init():V
-- p:isComponentSuitable(com.intellij.openapi.components.ComponentConfig):Z
 - isDisposed():Z
 - isLoaded():Z
 - markAsLoaded():V

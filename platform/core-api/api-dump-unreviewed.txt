@@ -206,15 +206,6 @@ f:com.intellij.core.CoreBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
-c:com.intellij.diagnostic.CompositeEventWatcher
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.diagnostic.EventWatcher[]):V
-- dispose():V
-- edtEventFinished(java.awt.AWTEvent,J):V
-- edtEventStarted(java.awt.AWTEvent,J):V
-- logTimeMillis(java.lang.String,J,java.lang.Class):V
-- reset():V
-- runnableTaskFinished(java.lang.Runnable,J,I,J,Z):V
 com.intellij.diagnostic.Dumpable
 - a:dumpState():java.lang.String
 f:com.intellij.diagnostic.ImplementationConflictException
@@ -1744,16 +1735,6 @@ com.intellij.openapi.components.ApplicationComponent
 c:com.intellij.openapi.components.ApplicationComponent$Adapter
 - com.intellij.openapi.components.ApplicationComponent
 - <init>():V
-f:com.intellij.openapi.components.ComponentConfig
-- sf:EMPTY_ARRAY:com.intellij.openapi.components.ComponentConfig[]
-- f:headlessImplementationClass:java.lang.String
-- f:implementationClass:java.lang.String
-- f:interfaceClass:java.lang.String
-- loadForDefaultProject:Z
-- f:options:java.util.Map
-- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
-- overrides:Z
-- <init>(java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.ExtensionDescriptor$Os,Z,java.util.Map):V
 com.intellij.openapi.components.ExportableApplicationComponent
 - com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.ExportableComponent
@@ -1796,16 +1777,6 @@ f:com.intellij.openapi.components.ServiceBean
 - getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - s:loadServicesFromBeans(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.util.List
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
-f:com.intellij.openapi.components.ServiceDescriptor
-- f:client:com.intellij.openapi.client.ClientKind
-- f:headlessImplementation:java.lang.String
-- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
-- f:overrides:Z
-- f:serviceImplementation:java.lang.String
-- f:serviceInterface:java.lang.String
-- f:testServiceImplementation:java.lang.String
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.lang.String,com.intellij.openapi.components.ServiceDescriptor$PreloadMode,com.intellij.openapi.client.ClientKind,com.intellij.openapi.extensions.ExtensionDescriptor$Os):V
-- getImplementation():java.lang.String
 f:com.intellij.openapi.components.ServiceManager
 - s:createLazyKey(java.lang.Class):com.intellij.openapi.util.NotNullLazyKey
 - s:getService(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object
@@ -3510,12 +3481,10 @@ f:com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 - isValid():Z
 f:com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 - com.intellij.openapi.vfs.newvfs.events.VFileEvent
-- <init>(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,com.intellij.openapi.util.io.FileAttributes,java.lang.String,Z,com.intellij.openapi.vfs.newvfs.events.ChildInfo[]):V
 - equals(java.lang.Object):Z
 - getAttributes():com.intellij.openapi.util.io.FileAttributes
 - getChildName():java.lang.String
 - getChildNameId():I
-- getChildren():com.intellij.openapi.vfs.newvfs.events.ChildInfo[]
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - getFileSystem():com.intellij.openapi.vfs.VirtualFileSystem
 - getParent():com.intellij.openapi.vfs.VirtualFile
@@ -6384,6 +6353,7 @@ a:com.intellij.util.messages.MessageBusFactory
 com.intellij.util.messages.MessageBusListener
 - a:getListener():java.lang.Object
 - a:getTopic():com.intellij.util.messages.Topic
+com.intellij.util.messages.MessageBusOwner
 f:com.intellij.util.messages.impl.MessageBusCoroutinesKt
 - sf:subscribeAsFlow(com.intellij.util.messages.MessageBus,com.intellij.util.messages.Topic,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 f:com.intellij.util.messages.impl.MessageListenerList
