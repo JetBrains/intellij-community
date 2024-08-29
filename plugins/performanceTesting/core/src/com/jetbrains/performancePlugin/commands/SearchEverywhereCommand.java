@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ConcurrencyUtil;
@@ -31,12 +32,14 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 /**
@@ -61,40 +64,29 @@ public class SearchEverywhereCommand extends AbstractCommand {
     return extractCommandArgument(CMD_PREFIX).contains("WARMUP");
   }
 
+  private Boolean isStartThoughAction() {
+    return extractCommandArgument(CMD_PREFIX).contains("START_THROUGH_ACTION");
+  }
+
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   @Override
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
-    final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
-    Project project = context.getProject();
-
     String[] args = getArgs();
     final String tab = myOptions.tab;
     final String insertText = args.length > 1 ? args[1] : "";
 
+    if (isStartThoughAction()) {
+      return executeStartingThroughAction(context, insertText);
+    }
+
+    final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
+    Project project = context.getProject();
+
     boolean warmup = isWarmupMode();
 
-    Ref<String> tabId = new Ref<>();
-    switch (tab) {
-      case "text" -> tabId.set(TextSearchContributor.class.getSimpleName());
-      case "file" -> tabId.set(FileSearchEverywhereContributor.class.getSimpleName());
-      case "class" -> tabId.set(ClassSearchEverywhereContributor.class.getSimpleName());
-      case "action" -> tabId.set(ActionSearchEverywhereContributor.class.getSimpleName());
-      case "symbol" -> tabId.set(SymbolSearchEverywhereContributor.class.getSimpleName());
-      case "all" -> tabId.set(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
-      default -> throw new RuntimeException("Tab is not set");
-    }
-    LOG.info(tabId.get());
+    Ref<String> tabId = computeTabId(tab);
 
-    int numberOfPermits;
-    if (insertText.isEmpty() && myOptions.typingText.isEmpty()) {
-      numberOfPermits = 1; //we don't wait for any text insertion
-    }
-    else if (!insertText.isEmpty() && !myOptions.typingText.isEmpty()) {
-      numberOfPermits = -1; //we wait till both operations are finished
-    }
-    else {
-      numberOfPermits = 0; //we wait till one operation is finished
-    }
+    int numberOfPermits = getNumberOfPermits(insertText);
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
     TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere"), globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
@@ -120,12 +112,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
             attachSearchListeners(manager.getCurrentlyShownUI());
             return null;
           });
-          if (!insertText.isEmpty()) {
-            insertText(context.getProject(), insertText, typingSemaphore, warmup);
-          }
-          if (!myOptions.typingText.isEmpty()) {
-            typeText(context.getProject(), myOptions.typingText, typingSemaphore, warmup);
-          }
+          typeOrInsertText(context, insertText, typingSemaphore, warmup);
         }
         catch (Exception e) {
           LOG.error(e);
@@ -156,12 +143,126 @@ public class SearchEverywhereCommand extends AbstractCommand {
   }
 
   @NotNull
-  protected String[] getArgs() {
+  private static Ref<String> computeTabId(String tab) {
+    Ref<String> tabId = new Ref<>();
+    switch (tab) {
+      case "text" -> tabId.set(TextSearchContributor.class.getSimpleName());
+      case "file" -> tabId.set(FileSearchEverywhereContributor.class.getSimpleName());
+      case "class" -> tabId.set(ClassSearchEverywhereContributor.class.getSimpleName());
+      case "action" -> tabId.set(ActionSearchEverywhereContributor.class.getSimpleName());
+      case "symbol" -> tabId.set(SymbolSearchEverywhereContributor.class.getSimpleName());
+      case "all" -> tabId.set(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
+      default -> throw new RuntimeException("Tab is not set");
+    }
+    LOG.info(tabId.get());
+    return tabId;
+  }
+
+  private @NotNull Promise<Object> executeStartingThroughAction(@NotNull PlaybackContext context, String insertText) {
+    final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
+    Project project = context.getProject();
+    boolean warmup = isWarmupMode();
+
+    String actionId = computeActionId();
+
+    final ActionManager am = ActionManager.getInstance();
+    final AnAction targetAction = am.getAction(actionId);
+    if (targetAction == null) {
+      throw new RuntimeException("Unknown action: " + actionId);
+    }
+    final InputEvent input = getInputEvent(actionId);
+
+    int numberOfPermits = getNumberOfPermits(insertText);
+    Semaphore typingSemaphore = new Semaphore(numberOfPermits);
+    TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhereFromAction"), globalSpan -> {
+      context.getRobot().delay(Registry.intValue("actionSystem.playback.delay"));
+      ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
+        try {
+          am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(() -> {//AWT
+            SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
+            attachSearchListeners(ui);
+
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+              typeOrInsertText(context, insertText, typingSemaphore, warmup);
+            });
+
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+              closePopupOrSelectFirst(typingSemaphore, ui, actionCallback);
+            });
+          });
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }));
+      return null;
+    });
+
+    return Promises.toPromise(actionCallback);
+  }
+
+  private void closePopupOrSelectFirst(Semaphore typingSemaphore, SearchEverywhereUI ui, ActionCallback actionCallback) {
+    try {
+      typingSemaphore.acquire();
+      if (myOptions.close) {
+        ApplicationManager.getApplication().invokeAndWait(() -> ui.closePopup());
+      }
+      if (myOptions.selectFirst) {
+        WriteAction.runAndWait(() -> {
+          ApplicationManager.getApplication().invokeAndWait(() -> ui.selectFirst());
+        });
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+    finally {
+      actionCallback.setDone();
+    }
+  }
+
+  private void typeOrInsertText(@NotNull PlaybackContext context, String insertText, Semaphore typingSemaphore, boolean warmup) {
+    if (!insertText.isEmpty()) {
+      insertText(context.getProject(), insertText, typingSemaphore, warmup);
+    }
+    if (!myOptions.typingText.isEmpty()) {
+      typeText(context.getProject(), myOptions.typingText, typingSemaphore, warmup);
+    }
+  }
+
+  private @NotNull String computeActionId() {
+    String actionId;
+    switch (myOptions.tab) {
+      case "text" -> actionId = "TextSearchAction";
+      case "file" -> actionId = "GotoFile";
+      case "class" -> actionId = "GotoClass";
+      case "action" -> actionId = "GotoAction";
+      case "symbol" -> actionId = "GotoSymbol";
+      case "all" -> actionId = "SearchEverywhere";
+      default -> throw new RuntimeException("Tab is not set, can't run the action");
+    }
+    return actionId;
+  }
+
+  private int getNumberOfPermits(String insertText) {
+    int numberOfPermits;
+    if (insertText.isEmpty() && myOptions.typingText.isEmpty()) {
+      numberOfPermits = 1; //we don't wait for any text insertion
+    }
+    else if (!insertText.isEmpty() && !myOptions.typingText.isEmpty()) {
+      numberOfPermits = -1; //we wait till both operations are finished
+    }
+    else {
+      numberOfPermits = 0; //we wait till one operation is finished
+    }
+    return numberOfPermits;
+  }
+
+  protected String @NotNull [] getArgs() {
     return getArgs(PREFIX);
   }
 
-  @NotNull
-  protected String[] getArgs(String prefix) {
+  protected String @NotNull [] getArgs(String prefix) {
     String input = extractCommandArgument(prefix);
     String[] args = input.split("\\|");
     Args.parse(myOptions, args[0].split(" "));
