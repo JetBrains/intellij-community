@@ -261,8 +261,13 @@ private fun TextFieldDecorationBox(
             incomingConstraints.offset(horizontal = -occupiedSpaceHorizontally).copy(minHeight = 0)
         val textFieldPlaceable = measurables.single { it.layoutId == TEXT_FIELD_ID }.measure(textFieldConstraints)
 
-        // measure placeholder
-        val placeholderConstraints = textFieldConstraints.copy(minWidth = 0)
+        // measure placeholder (can't be bigger than the text)
+        val placeholderConstraints =
+            textFieldConstraints.copy(
+                minWidth = 0,
+                maxWidth = textFieldPlaceable.width,
+                maxHeight = textFieldPlaceable.height,
+            )
         val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(leadingPlaceable, trailingPlaceable, textFieldPlaceable, incomingConstraints)
