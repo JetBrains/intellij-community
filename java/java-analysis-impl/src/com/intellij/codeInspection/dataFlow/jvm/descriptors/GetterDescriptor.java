@@ -29,6 +29,7 @@ import java.util.Objects;
 public final class GetterDescriptor extends PsiVarDescriptor {
   private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "trim", "stripLeading", "stripTrailing", "strip").parameterCount(0),
     CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
     CallMatcher.instanceCall("java.lang.reflect.Executable", "getParameterCount", "isVarArgs"),
     CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
