@@ -16,7 +16,7 @@ internal class TerminalStartupMoment {
   }
 }
 
-internal fun ShellStartupOptions.Builder.initStartupMomentIfNeeded(): ShellStartupOptions.Builder = also {
+internal fun ShellStartupOptions.Builder.initStartupMomentIfNeeded(): ShellStartupOptions.Builder = apply {
   startupMoment(this.startupMoment ?: TerminalStartupMoment())
 }
 
