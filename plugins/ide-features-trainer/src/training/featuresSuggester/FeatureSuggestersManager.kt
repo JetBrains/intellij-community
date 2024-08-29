@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFocusGainedAction
 import training.featuresSuggester.settings.FeatureSuggesterSettings
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics
 import training.featuresSuggester.suggesters.FeatureSuggester
 import training.featuresSuggester.ui.NotificationSuggestionPresenter
 import training.featuresSuggester.ui.SuggestionPresenter
@@ -32,6 +32,9 @@ internal class FeatureSuggestersManager(private val project: Project) : Disposab
     try {
       handleAction(action)
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (t: Throwable) {
       thisLogger().error("An error occurred during action processing: $action", t)
     }
@@ -39,19 +42,20 @@ internal class FeatureSuggestersManager(private val project: Project) : Disposab
 
   private fun handleAction(action: Action) {
     val language = action.language
-    val suggesters = FeatureSuggester.suggesters.filter { it.languages.find { id -> id == Language.ANY.id || id == language?.id } != null }
+    val needSendStatisticsForSwitchedOffCheckers = FeatureSuggesterSettings.instance().needSendStatisticsForSwitchedOffCheckers
+    val suggesters = FeatureSuggester.suggesters
+      .filter { (it.forceCheckForStatistics && needSendStatisticsForSwitchedOffCheckers) || it.isEnabled() }
+      .filter { it.languages.find { id -> id == Language.ANY.id || id == language?.id } != null }
     for (suggester in suggesters) {
-      if (suggester.isEnabled()) {
-        processSuggester(suggester, action)
-      }
+      processSuggester(suggester, action)
     }
   }
 
   private fun processSuggester(suggester: FeatureSuggester, action: Action) {
     val suggestion = suggester.getSuggestion(action)
     if (suggestion is PopupSuggestion) {
-      FeatureSuggesterStatistics.logSuggestionFound(suggester.id)
-      if (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded()) {
+      suggester.logStatisticsThatSuggestionIsFound(suggestion)
+      if (suggester.isEnabled() && (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded())) {
         suggestionPresenter.showSuggestion(project, suggestion, disposable = this)
         fireSuggestionFound(suggestion)
         FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
