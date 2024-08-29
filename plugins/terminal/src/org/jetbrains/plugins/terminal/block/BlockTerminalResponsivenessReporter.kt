@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.terminal.TerminalStartupMoment
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
-import org.jetbrains.plugins.terminal.fus.DurationType
+import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.time.Duration
@@ -25,17 +25,17 @@ internal class BlockTerminalResponsivenessReporter(
 
   override fun initialized() {
     val durationToReadyPrompt = startupMoment.elapsedNow()
-    val metrics = listOf(DurationType.FROM_STARTUP_TO_SHOWN_CURSOR to durationToCursorShownInInitializationBlock,
-                         DurationType.FROM_STARTUP_TO_READY_PROMPT to durationToReadyPrompt)
-    thisLogger().info("${shellType} new terminal started fully (" + metrics.joinToString { formatMessage(it.first, it.second) } + ")")
+    val metrics = listOf(TimeSpanType.FROM_STARTUP_TO_SHOWN_CURSOR to durationToCursorShownInInitializationBlock,
+                         TimeSpanType.FROM_STARTUP_TO_READY_PROMPT to durationToReadyPrompt)
+    thisLogger().info("${shellType} block terminal started fully (" + metrics.joinToString { formatMessage(it.first, it.second) } + ")")
     metrics.forEach {
-      TerminalUsageTriggerCollector.logBlockTerminalStepDuration(project, shellType, it.first, it.second.toKotlinDuration())
+      TerminalUsageTriggerCollector.logBlockTerminalTimeSpanFinished(project, shellType, it.first, it.second.toKotlinDuration())
     }
   }
 }
 
-private fun formatMessage(durationType: DurationType, duration: Duration): String {
-  return "${durationType.description}: ${duration.toMillis()} ms"
+private fun formatMessage(timeSpanType: TimeSpanType, duration: Duration): String {
+  return "${timeSpanType.description}: ${duration.toMillis()} ms"
 }
 
 internal fun installResponsivenessReporter(project: Project, startupMoment: TerminalStartupMoment, session: BlockTerminalSession) {
