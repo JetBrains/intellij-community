@@ -264,7 +264,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
 
-    SearchPerformanceTracker performanceTracker = new SearchPerformanceTracker(() -> myHeader.getSelectedTab().getID());
+    SearchPerformanceTracker performanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
     addSearchListener(performanceTracker);
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, performanceTracker, myMlService, myProject,
                                                                           startMoment));
