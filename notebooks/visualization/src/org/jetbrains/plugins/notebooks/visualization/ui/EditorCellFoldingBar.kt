@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeListener
@@ -35,7 +35,7 @@ class EditorCellFoldingBar(
     get() = panel?.isVisible == true
     set(value) {
       if (visible == value) return
-      if (editor.editorKind != EditorKind.MAIN_EDITOR) return
+      if (!editor.isOrdinaryNotebookEditor()) return
 
       if (value) {
         val panel = createFoldingBar()

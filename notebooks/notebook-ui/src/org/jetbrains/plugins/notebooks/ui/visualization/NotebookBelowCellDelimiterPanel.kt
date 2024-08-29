@@ -2,7 +2,6 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.IconLoader
@@ -10,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -39,9 +39,9 @@ class NotebookBelowCellDelimiterPanel(
   private val notebookAppearance = editor.notebookAppearance
   private val plusTagButtonSize = JBUI.scale(18)
   private val tagsSpacing = JBUI.scale(6)
-  private val delimiterHeight = when (editor.editorKind.isDiff()) {
-    true -> getJupyterCellSpacing(editor) / 2
-    false -> editor.notebookAppearance.cellBorderHeight / 4
+  private val delimiterHeight = when (editor.isOrdinaryNotebookEditor()) {
+    true -> editor.notebookAppearance.cellBorderHeight / 4
+    false -> NotebookEditorAppearanceUtils.getJupyterCellSpacing(editor) / 2
   }
   private var executionLabel: JLabel? = null
 
@@ -110,7 +110,7 @@ class NotebookBelowCellDelimiterPanel(
   }
 
   private fun getExecutionCountLabelText(executionCount: Int?) = when {
-      editor.editorKind != EditorKind.MAIN_EDITOR -> ""
+      !editor.isOrdinaryNotebookEditor() -> ""
       executionCount == null -> ""
       else -> "[$executionCount]"
     }

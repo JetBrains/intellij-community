@@ -95,7 +95,3 @@ fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
     }
   }
 }
-
-fun getJupyterCellSpacing(editor: Editor): Int = editor.getLineHeight()
-
-internal fun EditorKind.isDiff(): Boolean = this === EditorKind.DIFF

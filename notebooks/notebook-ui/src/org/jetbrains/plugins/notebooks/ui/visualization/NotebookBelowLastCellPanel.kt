@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterAddCellToolbarService
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterAddNewCellToolbar
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import java.awt.GridBagLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -16,7 +17,7 @@ class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(GridBagLayout(
   private val actionGroup = createActionGroup()
 
   init {
-    if (!editor.editorKind.isDiff()) {
+    if (editor.isOrdinaryNotebookEditor()) {
       isOpaque = false
       border = JBUI.Borders.empty(editor.notebookAppearance.cellBorderHeight)
       addComponentListeners()

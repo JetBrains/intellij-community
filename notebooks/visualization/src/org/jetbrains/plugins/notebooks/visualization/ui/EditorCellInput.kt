@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
@@ -19,7 +19,7 @@ class EditorCellInput(
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
   private val shouldShowRunButton =
-    editor.editorKind == EditorKind.MAIN_EDITOR &&
+    editor.isOrdinaryNotebookEditor() &&
     editor.notebookAppearance.shouldShowRunButtonInGutter() &&
     cell.type == NotebookCellLines.CellType.CODE
 
