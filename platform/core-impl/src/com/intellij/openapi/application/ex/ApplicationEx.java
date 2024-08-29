@@ -150,7 +150,7 @@ public interface ApplicationEx extends Application {
   /**
    * Tries to acquire the read lock and run the {@code action}.
    *
-   * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
+   * @return true if the action was run while holding the lock, false if was unable to get the lock and the action was not run
    */
   boolean tryRunReadAction(@NotNull Runnable action);
 
@@ -196,7 +196,7 @@ public interface ApplicationEx extends Application {
 
   /**
    * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
-   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
+   * if no write-intent action is currently running or blocked until the currently running write-intent action completes.
    * <p>
    * This method is used to implement higher-level API. Please do not use it directly.
    * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or
@@ -236,7 +236,7 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * Runs specified action with enabeld implicit read lock, if this feature is disabled with system property.
+   * Runs specified action with enabled implicit read lock if this feature is disabled with system property.
    * @see com.intellij.platform.ide.bootstrap.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
    * @param runnable action to run with enabled implicit read lock.
    */
