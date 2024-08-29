@@ -24,7 +24,8 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private val LOG: Logger = Logger.getInstance("#com.intellij.concurrency")
+private const val category = "#com.intellij.concurrency"
+private val LOG: Logger = Logger.getInstance(category)
 
 /**
  * This class contains an overriding coroutine context for [IntellijCoroutines.currentThreadCoroutineContext].
@@ -78,7 +79,9 @@ private data class InstalledThreadContext(
    * It can be explicitly reset, so `null` is a permitted value.
    */
   val context: CoroutineContext?
-)
+) {
+  val creationTrace: Throwable? = if (isStacktraceLoggingEnabled()) Throwable("$context created at") else null
+}
 
 private val INITIAL_THREAD_CONTEXT = InstalledThreadContext(null, null)
 
@@ -287,11 +290,13 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
-      LOG.error("Thread context was already set: $previousContext. \n " +
-                "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack." +
-                "Also, if you have any kind of manual event queue draining/pumping/flushing/etc " +
-                "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`." +
-                "See usages of resetThreadContext().")
+      LOG.error(Throwable("Thread context was already set: $previousContext. \n " +
+                "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +
+                "Also, if you have any kind of manual event queue draining/pumping/flushing/etc \n" +
+                "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`. \n" +
+                "See usages of resetThreadContext().").apply {
+        addSuppressed(previousContext.creationTrace ?: tracingHint())
+      })
     }
     InstalledThreadContext(currentSnapshot, coroutineContext)
   }
@@ -474,3 +479,6 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
   return captureCallableThreadContext(callable)
 }
+
+private fun isStacktraceLoggingEnabled() = LOG.isTraceEnabled
+private fun tracingHint() = Throwable("To enable stack trace recording set log category '$category' to 'trace'")

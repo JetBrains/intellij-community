@@ -424,6 +424,7 @@ data class ClientId(val value: String) {
         logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'").apply {
           assertInfo.second?.let { addSuppressed(it) }
           currentClientIdElement?.creationTrace?.let { addSuppressed(it) }
+          if (suppressed.isEmpty()) addSuppressed(tracingHint())
         })
       }
     }
@@ -556,6 +557,7 @@ class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextEle
       logger.error(Throwable("Thread context has $threadClientIdElement but coroutine context has $this").apply {
         creationTrace?.let { addSuppressed(it) }
         threadClientIdElement?.creationTrace?.let { addSuppressed(it) }
+        if (suppressed.isEmpty()) addSuppressed(tracingHint())
       })
     }
   }
@@ -607,3 +609,5 @@ val currentThreadClientId: ClientId?
 
 
 private fun isStacktraceLoggingEnabled() = logger.isTraceEnabled
+// better to unify with the similar in threadContext.kt later
+private fun tracingHint() = Throwable("To enable stack trace recording set log category '#com.intellij.codeWithMe' to 'trace'")
