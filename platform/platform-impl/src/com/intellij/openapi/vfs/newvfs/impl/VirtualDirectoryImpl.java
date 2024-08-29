@@ -348,7 +348,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         result[i] = child.getId();
       }
 
-      myData.setChildrenIds(result);
+      myData.childrenIds = result;
       assertConsistency(isCaseSensitive, children, "afterCaseSensitivityChanged", isCaseSensitive);
     }
   }
@@ -471,7 +471,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       myData.clearAdoptedNames();
-      myData.setChildrenIds(result);
+      myData.childrenIds = result;
       setAllChildrenLoaded();
       if (CHECK) {
         assertConsistency(isCaseSensitive, children);
@@ -543,8 +543,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int id) {
-    final int[] sortedChildrenIds = getOrComputeSortedChildrenIds();
-    int i = Arrays.binarySearch(sortedChildrenIds, id);
+    int i = ArrayUtil.indexOf(myData.childrenIds, id);
     if (i >= 0) {
       VirtualFileSystemEntry fileById = getVfsData().getFileById(id, this, true);
       if (fileById != null) {
@@ -594,19 +593,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
     return fileByName;
-  }
-
-  private int @NotNull [] getOrComputeSortedChildrenIds() {
-    int[] sortedChildrenIds = myData.sortedChildrenIds;
-    if (sortedChildrenIds != null) return sortedChildrenIds;
-    synchronized (myData) {
-      sortedChildrenIds = myData.sortedChildrenIds;
-      if (sortedChildrenIds != null) return sortedChildrenIds;
-      sortedChildrenIds = ArrayUtil.copyOf(myData.childrenIds);
-      Arrays.sort(sortedChildrenIds);
-      myData.sortedChildrenIds = sortedChildrenIds;
-    }
-    return sortedChildrenIds;
   }
 
   @Override
@@ -680,7 +666,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
         mergedIds.add(nextInfo.getId());
       });
-      myData.setChildrenIds(mergedIds.toIntArray());
+      myData.childrenIds = mergedIds.toIntArray();
 
       if (markAllChildrenLoaded) {
         setAllChildrenLoaded();
@@ -699,7 +685,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         int i = -indexInReal - 1;
         int id = child.getId();
         assert id > 0 : child + ": " + id;
-        myData.setChildrenIds(ArrayUtil.insert(myData.childrenIds, i, id));
+        myData.childrenIds = ArrayUtil.insert(myData.childrenIds, i, id);
       }
       // else already stored
       assertConsistency(isCaseSensitive, child, "indexInReal", indexInReal, isCaseSensitive);
@@ -714,7 +700,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (indexInReal >= 0) {
         // it can be that we ask to add a name to the adopted list whereas it is already contained in the real part -
         // in this case, we should remove it from the latter
-        myData.setChildrenIds(ArrayUtil.remove(myData.childrenIds, indexInReal));
+        myData.childrenIds = ArrayUtil.remove(myData.childrenIds, indexInReal);
       }
       if (!allChildrenLoaded()) {
         myData.addAdoptedName(name, isCaseSensitive);
@@ -741,7 +727,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (o != newIds.length) {
         newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
-      myData.setChildrenIds(newIds);
+      myData.childrenIds = newIds;
 
       if (!allChildrenLoaded()) {
         myData.addAdoptedNames(namesToRemove, isCaseSensitive);
