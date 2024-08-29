@@ -59,10 +59,10 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     subscribeToChanges()
   }
 
-  suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails {
+  suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails = withContext(Dispatchers.IO) {
     PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
     val spec = selectedPackage.repository.createPackageSpecification(selectedPackage.name)
-    return manager.repositoryManager.getPackageDetails(spec)
+    manager.repositoryManager.getPackageDetails(spec)
   }
 
 

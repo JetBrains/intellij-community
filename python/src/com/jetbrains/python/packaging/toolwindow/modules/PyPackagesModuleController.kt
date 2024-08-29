@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.modules
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -25,7 +26,7 @@ import java.awt.FlowLayout
 import javax.swing.*
 import javax.swing.event.ListSelectionListener
 
-class PyPackagesModuleController(val project: Project) {
+class PyPackagesModuleController(val project: Project) : Disposable {
   val packagingScope = PyPackageCoroutine.getIoScope(project)
   val service
     get() = project.service<PyPackagingToolWindowService>()
@@ -60,7 +61,7 @@ class PyPackagesModuleController(val project: Project) {
 
   val component = ScrollPaneFactory.createScrollPane(modulePanel, true)
 
-  val fileListener = object : FileEditorManagerListener {
+  private val fileListener = object : FileEditorManagerListener {
     override fun selectionChanged(event: FileEditorManagerEvent) {
       if (project.modules.size > 1) {
         val newFile = event.newFile ?: return
@@ -75,7 +76,9 @@ class PyPackagesModuleController(val project: Project) {
 
   init {
     project.messageBus
-      .connect(service)
+      .connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, fileListener)
   }
+
+  override fun dispose() {}
 }
