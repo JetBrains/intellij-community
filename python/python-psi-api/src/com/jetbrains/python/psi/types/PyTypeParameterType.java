@@ -79,4 +79,9 @@ public interface PyTypeParameterType extends PyType {
    * Results of {@code getScopeOwner()} and {@link #getName()} constitute unique "coordinates" of a given type parameter.
    */
   @Nullable PyQualifiedNameOwner getScopeOwner();
+
+  @Nullable
+  default PyType getDefaultType() {
+    return null;
+  }
 }
