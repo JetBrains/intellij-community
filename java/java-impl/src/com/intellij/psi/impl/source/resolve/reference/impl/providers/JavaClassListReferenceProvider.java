@@ -23,7 +23,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByString(String str, final @NotNull PsiElement position, int offsetInPosition){
+  public PsiReference @NotNull [] getReferencesByString(@NotNull String str, final @NotNull PsiElement position, int offsetInPosition){
     if (position instanceof XmlTag && ((XmlTag)position).getValue().getTextElements().length == 0) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -40,7 +40,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
     }
 
     NotNullLazyValue<Set<String>> topLevelPackages = NotNullLazyValue.createValue(() -> JavaClassReferenceProvider.getDefaultPackagesNames(position.getProject()));
-    final List<PsiReference> results = new ArrayList<>();
+    final List<JavaClassReference> results = new ArrayList<>();
 
     for(int dot = str.indexOf('.'); dot > 0; dot = str.indexOf('.', dot + 1)) {
       int start = dot;
@@ -59,7 +59,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
           }
         }
         String s = str.substring(start, end + 1);
-        ContainerUtil.addAll(results, new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this) {
+        JavaClassReference[] references = new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this) {
           @Override
           public boolean isSoft() {
             return true;
@@ -69,7 +69,13 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
           public boolean isAllowDollarInNames() {
             return true;
           }
-        }.getAllReferences());
+        }.getAllReferences();
+        for (JavaClassReference reference : references) {
+          // do not add duplicate references
+          if (!ContainerUtil.exists(results, storedRef->storedRef.getRangeInElement().equals(reference.getRangeInElement()))) {
+            results.add(reference);
+          }
+        }
         ProgressManager.checkCanceled();
       }
     }
@@ -77,7 +83,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
   }
 
   @Override
-  public GlobalSearchScope getScope(Project project) {
+  public GlobalSearchScope getScope(@NotNull Project project) {
     return GlobalSearchScope.allScope(project);
   }
 }
