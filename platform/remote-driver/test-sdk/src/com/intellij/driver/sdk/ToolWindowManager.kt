@@ -15,6 +15,7 @@ interface ToolWindowManager {
 interface ToolWindow {
   fun show()
   fun hide()
+  fun isVisible(): Boolean
 }
 
 fun Driver.getToolWindow(id: String): ToolWindow {
