@@ -29,7 +29,7 @@ internal class IjentNioFileChannel private constructor(
   private val ijentOpenedFile: IjentOpenedFile,
   // we keep stacktrace of the cause of closing for troubleshooting
   @Volatile
-  private var closeOrigin: Throwable? = null
+  private var closeOrigin: Throwable? = null,
 ) : FileChannel() {
   companion object {
     @JvmStatic
@@ -39,14 +39,14 @@ internal class IjentNioFileChannel private constructor(
     @JvmStatic
     internal suspend fun createWriting(
       nioFs: IjentNioFileSystem,
-      options: IjentFileSystemApi.WriteOptions
+      options: IjentFileSystemApi.WriteOptions,
     ): IjentNioFileChannel =
       IjentNioFileChannel(nioFs, nioFs.ijentFs.openForWriting(options).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createReadingWriting(
       nioFs: IjentNioFileSystem,
-      options: IjentFileSystemApi.WriteOptions
+      options: IjentFileSystemApi.WriteOptions,
     ): IjentNioFileChannel {
       return IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReadingAndWriting(options).getOrThrowFileSystemException())
     }
@@ -167,7 +167,8 @@ internal class IjentNioFileChannel private constructor(
       if (size < currentSize) {
         try {
           file.truncate(size)
-        } catch (e : IjentOpenedFile.Writer.TruncateException) {
+        }
+        catch (e: IjentOpenedFile.Writer.TruncateException) {
           e.throwFileSystemException()
         }
       }
@@ -204,7 +205,8 @@ internal class IjentNioFileChannel private constructor(
         break
       }
       totalBytesWritten += bytesWritten
-    } while (true)
+    }
+    while (true)
     return totalBytesWritten.toLong()
   }
 
@@ -228,7 +230,8 @@ internal class IjentNioFileChannel private constructor(
         break
       }
       currentPosition += bytesWritten
-    } while (true)
+    }
+    while (true)
     return totalBytesRead.toLong()
   }
 
@@ -236,7 +239,7 @@ internal class IjentNioFileChannel private constructor(
     return readFromPosition(dst, position)
   }
 
-  private fun readFromPosition(dst: ByteBuffer, position: Long?) : Int {
+  private fun readFromPosition(dst: ByteBuffer, position: Long?): Int {
     checkClosed()
     when (ijentOpenedFile) {
       is IjentOpenedFile.Reader -> Unit
@@ -245,7 +248,8 @@ internal class IjentNioFileChannel private constructor(
     val readResult = fsBlocking {
       if (position == null) {
         ijentOpenedFile.read(dst)
-      } else {
+      }
+      else {
         ijentOpenedFile.read(dst, position)
       }
     }.getOrThrowFileSystemException()
@@ -270,11 +274,12 @@ internal class IjentNioFileChannel private constructor(
       fsBlocking {
         if (position != null) {
           ijentOpenedFile.write(src, position)
-        } else {
+        }
+        else {
           ijentOpenedFile.write(src)
         }
       }
-      .getOrThrowFileSystemException()
+        .getOrThrowFileSystemException()
     return bytesWritten
   }
 
