@@ -274,6 +274,9 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       if (isNewUI() && e.area == EditorMouseEventArea.LINE_NUMBERS_AREA) {
         return getInstance().showBreakpointsOverLineNumbers
       }
+      if (isNewUI() && e.editor.settings.isLineNumbersAfterIcons && e.editor.settings.isLineNumbersShown) {
+        return false
+      }
       if (e.area != EditorMouseEventArea.LINE_MARKERS_AREA && e.area != EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         return false
       }
