@@ -88,11 +88,14 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final StringEventField LAST_TAB_ID = EventFields.String("lastTabId", ourTabs);
   public static final LongEventField DURATION_MS = EventFields.Long("durationMs");
   public static final LongEventField DURATION_FROM_ACTION_START_MS = EventFields.Long("durationFromActionStartMs");
+  public static final LongEventField DURATION_TO_FIRST_RESULT_FROM_ACTION_START_MS = EventFields.Long("durationToFirstResultFromActionStartMs");
+  public static final LongEventField DURATION_TO_FIRST_RESULT_LAST_QUERY_FROM_ACTION_START_MS = EventFields.Long("durationToFirstResultLastQueryFromActionStartMs");
   public static final IntEventField ML_EXPERIMENT_VERSION = EventFields.Int("mlExperimentVersion");
   public static final IntEventField ML_EXPERIMENT_GROUP = EventFields.Int("mlExperimentGroup");
   public static final VarargEventId SESSION_FINISHED = GROUP.registerVarargEvent(
     "sessionFinished", TYPED_NAVIGATION_KEYS, TYPED_SYMBOL_KEYS,
-    TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS, DURATION_FROM_ACTION_START_MS,
+    TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS,
+    DURATION_FROM_ACTION_START_MS, DURATION_TO_FIRST_RESULT_FROM_ACTION_START_MS, DURATION_TO_FIRST_RESULT_LAST_QUERY_FROM_ACTION_START_MS,
     ML_EXPERIMENT_GROUP, ML_EXPERIMENT_VERSION
   );
 

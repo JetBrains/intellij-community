@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.time.Duration;
 
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
 
@@ -53,12 +54,20 @@ public final class SearchFieldStatisticsCollector implements Disposable {
       if (firstSearch != null) {
         pairs.add(FIRST_TAB_ID.with(firstSearch.getTab()));
         pairs.add(TIME_TO_FIRST_RESULT.with(firstSearch.getTimeToFirstResult()));
+        Duration fromTheStartMoment = firstSearch.getDurationToFirstResultFromTheStartMoment();
+        if (fromTheStartMoment != null) {
+          pairs.add(DURATION_TO_FIRST_RESULT_FROM_ACTION_START_MS.with(fromTheStartMoment.toMillis()));
+        }
       }
 
       FinishedSearchPerformanceInfo lastSearch = info.getLastSearch();
       if (lastSearch != null) {
         pairs.add(LAST_TAB_ID.with(lastSearch.getTab()));
         pairs.add(TIME_TO_FIRST_RESULT_LAST_QUERY.with(lastSearch.getTimeToFirstResult()));
+        Duration fromTheStartMoment = lastSearch.getDurationToFirstResultFromTheStartMoment();
+        if (fromTheStartMoment != null) {
+          pairs.add(DURATION_TO_FIRST_RESULT_LAST_QUERY_FROM_ACTION_START_MS.with(fromTheStartMoment.toMillis()));
+        }
       }
 
       pairs.add(TYPED_NAVIGATION_KEYS.with(myNavKeysTyped));
