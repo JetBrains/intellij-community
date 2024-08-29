@@ -46,9 +46,9 @@ private class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, assem
     return false
   }
 
-  override fun getGroupers(): Array<Grouper> {
-    return arrayOf(LogicalGrouper())
-  }
+  //override fun getGroupers(): Array<Grouper> {
+  //  return arrayOf(LogicalGrouper())
+  //}
 
   override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
     return false

@@ -324,7 +324,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   protected @NotNull ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
-    result.add(new ShowLogicalStructureAction());
     List<AnAction> sorters = getSortActions();
     if (!sorters.isEmpty()) {
       result.addAll(sorters);
@@ -358,7 +357,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public final DefaultActionGroup getViewActions() {
     DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
     result.setPopup(true);
-    result.add(new ShowLogicalStructureAction());
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
