@@ -544,6 +544,7 @@ com.intellij.codeInsight.intention.CustomizableIntentionAction
 - hasSeparatorAbove():Z
 - isSelectable():Z
 - isShowIcon():Z
+- isShowLightBulb():Z
 - isShowSubmenu():Z
 f:com.intellij.codeInsight.intention.CustomizableIntentionAction$RangeToHighlight
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey):V
