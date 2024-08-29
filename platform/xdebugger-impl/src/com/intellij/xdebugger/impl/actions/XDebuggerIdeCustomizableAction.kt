@@ -1,20 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide
+package com.intellij.xdebugger.impl.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.ide.IdeCustomizableActionHelper
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
 
-@ApiStatus.Internal
-abstract class IdeDependentAction : DumbAwareAction() {
+abstract class XDebuggerIdeCustomizableAction : XDebuggerActionBase() {
   private val customizableActionHelper by lazy { IdeCustomizableActionHelper(this) }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
     customizableActionHelper.update(e)
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun isDumbAware(): Boolean = true
 }

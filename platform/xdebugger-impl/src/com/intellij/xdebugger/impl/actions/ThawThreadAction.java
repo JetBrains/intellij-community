@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-public class ThawThreadAction extends XDebuggerActionBase {
+public class ThawThreadAction extends XDebuggerIdeCustomizableAction {
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {

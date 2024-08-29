@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-public class FreezeThreadAction extends XDebuggerActionBase {
+public class FreezeThreadAction extends XDebuggerIdeCustomizableAction {
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
