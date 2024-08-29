@@ -78,7 +78,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     ProjectSpecificAction projectSpecificAction = myCustomization.createProjectSpecificAction(callback);
     addProjectSpecificAction(projectSpecificAction);
 
-    List<DirectoryProjectGenerator<?>> generators = myCustomization.getProjectGenerators();
+    List<DirectoryProjectGenerator<?>> generators = EP_NAME.getExtensionList();
     addAll(myCustomization.getActions(generators, callback));
     if (!myCustomization.showUserDefinedProjects()) {
       return;
@@ -121,10 +121,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     protected abstract @NotNull ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
                                                                                              @NotNull AbstractCallback<T> callback);
 
-    protected @NotNull List<DirectoryProjectGenerator<?>> getProjectGenerators() {
-      return EP_NAME.getExtensionList();
-    }
-
     public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
       List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<?> projectGenerator : generators) {
@@ -158,7 +154,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return projectSpecificAction.getChildren(ActionManager.getInstance());
     }
 
-    protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
+    protected static boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
       return generator instanceof HideableProjectGenerator && ((HideableProjectGenerator)generator).isHidden();
     }
 
@@ -166,7 +162,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return false;
     }
 
-    void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+    final void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
       myProjectStep = projectStep;
     }
   }

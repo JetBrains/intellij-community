@@ -18486,8 +18486,7 @@ pa:com.intellij.ide.util.projectWizard.AbstractNewProjectStep$Customization
 - pa:createProjectSpecificSettingsStep(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 - getActions(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):com.intellij.openapi.actionSystem.AnAction[]
 - getActions(java.util.List,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):com.intellij.openapi.actionSystem.AnAction[]
-- p:getProjectGenerators():java.util.List
-- p:shouldIgnore(com.intellij.platform.DirectoryProjectGenerator):Z
+- ps:shouldIgnore(com.intellij.platform.DirectoryProjectGenerator):Z
 - showUserDefinedProjects():Z
 com.intellij.ide.util.projectWizard.CustomStepProjectGenerator
 - a:createStep(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
