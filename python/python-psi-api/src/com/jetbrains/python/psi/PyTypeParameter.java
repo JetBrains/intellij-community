@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Type Parameter that can be a part of {@link PyTypeParameterList}<br>
  * For more information see <a href="https://peps.python.org/pep-0695/">PEP 695</a>
  */
-public interface PyTypeParameter extends PyAstTypeParameter, PyElement, PsiNameIdentifierOwner, PyTypedElement, StubBasedPsiElement<PyTypeParameterStub> {
+public interface PyTypeParameter extends PyAstTypeParameter, PyElement, PsiNameIdentifierOwner, PyTypedElement, PyQualifiedNameOwner, StubBasedPsiElement<PyTypeParameterStub> {
 
   @Override
   @Nullable
