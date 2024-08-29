@@ -71,6 +71,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final PyInspection myInspection;
   private volatile Boolean myIsEnabled = null;
   protected final Set<String> myUnresolvedNames = Collections.synchronizedSet(new HashSet<>());
+
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
                                           List<String> ignoredIdentifiers,
                                           @NotNull PyInspection inspection,
@@ -391,7 +392,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     if (Iterables.size(installPackageQuickFixes) > 0) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes);
       myUnresolvedNames.add(refName);
-      ContainerUtil.addAll(fixes, getInstallAllPackagesQuickFixes());
+      if (Iterables.size(installPackageQuickFixes) > 1) {
+        ContainerUtil.addAll(fixes, getInstallAllPackagesQuickFixes());
+      }
     }
 
     if (reference instanceof PySubstitutionChunkReference) {
