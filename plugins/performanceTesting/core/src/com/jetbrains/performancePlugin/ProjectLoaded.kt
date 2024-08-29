@@ -131,7 +131,9 @@ private fun runOnProjectInit(project: Project) {
   LOG.info("Start Execution")
   PerformanceTestSpan.startSpan()
 
-  subscribeToStopProfile()
+  ApplicationManager.getApplication().executeOnPooledThread {
+    subscribeToStopProfile()
+  }
 
   val profilerSettings = initializeProfilerSettingsForIndexing()
   if (profilerSettings != null) {
