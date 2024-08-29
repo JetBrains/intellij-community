@@ -106,6 +106,37 @@ fun <E : Entity, T : Any> entityOnNonUniqueAttribute(entityAttribute: EntityAttr
   entities(entityAttribute, value).singleOrNullOrThrow()
 
 /**
+ *  Problematic case that this method solves temporarily:
+ *  ```kotlin
+ *    interface A: Entity { var i: Boolean }
+ *    interface B: A
+ *    interface C: A
+ *
+ *    // ...
+ *    new(B) { i = true }
+ *    new(C) { i = true }
+ *    lookupOne(B::i, true) // worked, but entity(A.iAttr, true) as? B would fail (multiple result)
+ *  ```
+ *
+ *  Replace either with:
+ *  - if there's at most one on base class + attribute is Unique: `entity() as? YourTarget`
+ *  - otherwise: inline content `entities(...).filterIsInstance<YourTarget>().singleOrNullOrThrow()`
+ */
+@Deprecated(
+  "new API doesn't allow to call entity() on a attribute of a base class while expecting only a subtype to be returned",
+  ReplaceWith("entities(entityAttribute, value).filterIsInstance<C>().singleOrNullOrThrow()", "fleet.util.singleOrNullOrThrow")
+)
+inline fun <E : Entity, T : Any, reified C: E> entityCasted(entityAttribute: EntityAttribute<E, T>, value: T): C? =
+  entities(entityAttribute, value).filterIsInstance<C>().singleOrNullOrThrow()
+
+@Deprecated(
+  "new API doesn't allow to call entity() on a attribute of a base class while expecting only a subtype to be returned",
+  ReplaceWith("entities(entityAttribute, value).filterIsInstance<C>()")
+)
+inline fun <E : Entity, T : Any, reified C: E> entitiesCasted(entityAttribute: EntityAttribute<E, T>, value: T): Set<C> =
+  entities(entityAttribute, value).filterIsInstance<C>().toSet()
+
+/**
  * Returns an [Entity] which has the attribute's value set to (or containing) a given [value]
  * Works for [EntityAttribute]s with [Indexing.UNIQUE] or [RefFlags.UNIQUE]
  * */
