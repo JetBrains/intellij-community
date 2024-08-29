@@ -95,10 +95,7 @@ internal class WorkspaceBuilderChangeLog {
       else mapOf(newConnectionId to newParentId)
 
       val newRemovedParents = if (replaceEntity.references != null) {
-        if (replaceEntity.references.removedParents.contains(newConnectionId, newParentId)) {
-          replaceEntity.references.removedParents.toMutableMap().also { it.remove(newConnectionId) }
-        }
-        else replaceEntity.references.removedParents
+        replaceEntity.references.removedParents.toMutableMap().also { it.remove(newConnectionId, newParentId) }
       }
       else emptyMap()
 
@@ -159,12 +156,7 @@ internal class WorkspaceBuilderChangeLog {
       else mapOf(removedConnectionId to removedParentId)
 
       val newAddedParents: Map<ConnectionId, ParentEntityId> = if (replaceEntity.references != null) {
-        if (replaceEntity.references.newParents.contains(removedConnectionId, removedParentId)) {
-          replaceEntity.references.newParents.toMutableMap().also { it.remove(removedConnectionId) }
-        }
-        else {
-          replaceEntity.references.newParents
-        }
+        replaceEntity.references.newParents.toMutableMap().also { it.remove(removedConnectionId, removedParentId) }
       }
       else emptyMap()
 
@@ -228,12 +220,7 @@ internal class WorkspaceBuilderChangeLog {
         setOf(connectionToId)
       }
       val newRemovedChildren = if (replaceEntity.references != null) {
-        if (connectionToId in replaceEntity.references.removedChildren) {
-          replaceEntity.references.removedChildren - connectionToId
-        }
-        else {
-          replaceEntity.references.removedChildren
-        }
+        replaceEntity.references.removedChildren - connectionToId
       }
       else emptySet()
 
@@ -312,12 +299,7 @@ internal class WorkspaceBuilderChangeLog {
       else setOf(connectionToId)
 
       val newAddedChildren = if (replaceEntity.references != null) {
-        if (connectionToId in replaceEntity.references.newChildren) {
-          replaceEntity.references.newChildren - connectionToId
-        }
-        else {
-          replaceEntity.references.newChildren
-        }
+        replaceEntity.references.newChildren - connectionToId
       }
       else emptySet()
 
