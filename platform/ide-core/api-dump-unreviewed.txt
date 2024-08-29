@@ -125,12 +125,6 @@ e:com.intellij.execution.ui.SettingsEditorFragmentType
 - sf:TAG:com.intellij.execution.ui.SettingsEditorFragmentType
 - s:valueOf(java.lang.String):com.intellij.execution.ui.SettingsEditorFragmentType
 - s:values():com.intellij.execution.ui.SettingsEditorFragmentType[]
-f:com.intellij.facet.frameworks.LibrariesDownloadAssistant
-- s:findVersion(java.lang.String,java.net.URL[]):com.intellij.facet.frameworks.beans.Artifact
-- s:getLibraryInfos(com.intellij.facet.frameworks.beans.Artifact):com.intellij.facet.ui.libraries.LibraryInfo[]
-- s:getLibraryInfos(java.net.URL,java.lang.String):com.intellij.facet.ui.libraries.LibraryInfo[]
-- s:getVersions(java.lang.String,java.net.URL[]):com.intellij.facet.frameworks.beans.Artifact[]
-- s:getVersions(java.net.URL[]):com.intellij.facet.frameworks.beans.Artifact[]
 f:com.intellij.facet.frameworks.LibrariesDownloadConnectionService
 - com.intellij.facet.frameworks.SettingsConnectionService
 - s:getInstance():com.intellij.facet.frameworks.LibrariesDownloadConnectionService
