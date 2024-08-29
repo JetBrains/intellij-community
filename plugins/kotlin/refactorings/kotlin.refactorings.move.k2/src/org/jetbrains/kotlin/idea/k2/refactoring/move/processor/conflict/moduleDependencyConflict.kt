@@ -61,10 +61,11 @@ internal fun checkModuleDependencyConflictsForNonMovedUsages(
 }
 
 fun checkModuleDependencyConflictsForInternalUsages(
+    topLevelMovedDeclarations: Iterable<KtNamedDeclaration>,
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     target: PsiDirectory
 ): MultiMap<PsiElement, String> {
-    return allDeclarationsToMove.flatMap { containing ->
+    return topLevelMovedDeclarations.flatMap { containing ->
         containing.internalUsageElements()
             .mapNotNull { refExpr -> refExpr.internalUsageInfo ?: return@mapNotNull null }
             .filter { usageInfo -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) }

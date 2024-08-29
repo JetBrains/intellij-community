@@ -65,11 +65,11 @@ internal fun findAllMoveConflicts(
 
 /**
  * Find all conflicts when moving elements.
- * @param declarationsToCheck the set of declarations to move, they must all be moved from the same containing file.
+ * @param topLevelDeclarationsToMove the set of declarations to move, they must all be moved from the same containing file.
  * @param allDeclarationsToMove all declarations that will be moved.
  */
 internal fun findAllMoveConflicts(
-    declarationsToCheck: Iterable<KtNamedDeclaration>,
+    topLevelDeclarationsToMove: Iterable<KtNamedDeclaration>,
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
@@ -77,13 +77,13 @@ internal fun findAllMoveConflicts(
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
     val targetModule = targetDir.containingModule()?.productionOrTestSourceModuleInfo?.toKaModule() ?: return MultiMap.empty()
-    val (fakeTarget, oldToNewMap) = createCopyTarget(declarationsToCheck, targetDir, targetPkg, targetFileName)
+    val (fakeTarget, oldToNewMap) = createCopyTarget(topLevelDeclarationsToMove, targetDir, targetPkg, targetFileName)
     return MultiMap<PsiElement, String>().apply {
-        putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(declarationsToCheck, targetModule))
-        putAllValues(checkMoveActualDeclarationIntoCommonModule(declarationsToCheck, targetModule))
+        putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(topLevelDeclarationsToMove, targetModule))
+        putAllValues(checkMoveActualDeclarationIntoCommonModule(topLevelDeclarationsToMove, targetModule))
         putAllValues(checkVisibilityConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
         putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
-        putAllValues(checkModuleDependencyConflictsForInternalUsages(allDeclarationsToMove, targetDir))
+        putAllValues(checkModuleDependencyConflictsForInternalUsages(topLevelDeclarationsToMove, allDeclarationsToMove, targetDir))
         putAllValues(checkModuleDependencyConflictsForNonMovedUsages(allDeclarationsToMove, usages, targetDir))
     }
 }
