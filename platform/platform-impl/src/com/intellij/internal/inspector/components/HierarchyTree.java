@@ -8,6 +8,7 @@ import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.internal.inspector.accessibilityAudit.*;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -152,7 +153,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     private final Accessible myAccessible;
     private final String myName;
     private final boolean isAccessibleNode;
-    private String accessibilityTestResult;
+    private final AccessibilityAuditManager accessibilityAudit;
 
     String myText;
 
@@ -188,9 +189,11 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       return node;
     }
 
-    public void runAccessibilityTests() { this.accessibilityTestResult = "pass"; }
+    public void runAccessibilityTests(@NotNull AccessibleContext ac) { accessibilityAudit.runAccessibilityTests(ac); }
 
-    public void clearAccessibilityTestsResult() { this.accessibilityTestResult = null; }
+    public void clearAccessibilityTestsResult() { accessibilityAudit.clearAccessibilityTestsResult(); }
+
+    public AccessibilityTestResult getAccessibilityTestResult() { return accessibilityAudit.getAccessibilityTestResult(); }
 
     private ComponentNode(@Nullable Component component,
                           @Nullable Accessible accessible,
@@ -201,6 +204,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       myAccessible = accessible;
       myName = name;
       isAccessibleNode = isAccessibleComponent;
+      accessibilityAudit = new AccessibilityAuditManager();
     }
 
     private static List<TreeNode> prepareAccessibleChildren(@Nullable Accessible a) {
@@ -364,9 +368,19 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           append(componentNode.myName);
         }
 
-        if (componentNode.accessibilityTestResult != null) {
+        AccessibilityTestResult accessibilityResult = componentNode.getAccessibilityTestResult();
+
+        if (accessibilityResult != AccessibilityTestResult.NOT_RUNNING) {
+          SimpleTextAttributes attributes;
+
+          if (AccessibilityTestResult.FAIL.equals(accessibilityResult)) {
+            attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED);
+          } else {
+            attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GREEN);
+          }
+
           append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          append(componentNode.accessibilityTestResult, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(accessibilityResult.getResult(), attributes);
         }
       }
       if (isRenderer) {

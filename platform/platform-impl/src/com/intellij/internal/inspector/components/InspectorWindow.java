@@ -40,6 +40,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -461,8 +463,13 @@ public final class InspectorWindow extends JDialog implements Disposable {
       TreeUtil.visitVisibleRows(myHierarchyTree, path -> {
         Object node = path.getLastPathComponent();
         if (node instanceof HierarchyTree.ComponentNode componentNode) {
-          if (showAccessibilityIssues){
-            componentNode.runAccessibilityTests();
+          if (showAccessibilityIssues) {
+            Component c = componentNode.getComponent();
+
+            if (c instanceof Accessible a) {
+              AccessibleContext ac = a.getAccessibleContext();
+              componentNode.runAccessibilityTests(ac);
+            }
           } else {
             componentNode.clearAccessibilityTestsResult();
           }
