@@ -256,7 +256,7 @@ object K2CreatePropertyFromUsageBuilder {
     }
 
     private val fieldAnnotationTargetCallableId: CallableId =
-        CallableId(ClassId(StandardClassIds.BASE_ANNOTATION_PACKAGE, StandardClassIds.Annotation.shortClassName), Name.identifier(KotlinTarget.FIELD.name))
+        CallableId(StandardClassIds.AnnotationTarget, Name.identifier(KotlinTarget.FIELD.name))
 
     internal fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
         val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
