@@ -11,7 +11,6 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
@@ -24,7 +23,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CopyableThreadContextElement
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
@@ -56,18 +54,19 @@ data class ClientId(val value: String) {
   }
 
   companion object {
-    private val LOG = Logger.getInstance(ClientId::class.java)
-    fun getClientIdLogger(): Logger = LOG
 
     /**
      * Default client id for local application
      */
+    @Internal
     val defaultLocalId: ClientId = ClientId("Host")
 
     /**
      * Specifies behavior for [ClientId.current]
      */
-    val absenceBehaviorValue: AbsenceBehavior get() {
+    val absenceBehaviorValue: AbsenceBehavior
+      @Internal
+      get() {
       if (!LoadingState.COMPONENTS_LOADED.isOccurred)
         return AbsenceBehavior.RETURN_LOCAL
       if (!Registry.getInstance().isLoaded) {
@@ -86,12 +85,12 @@ data class ClientId(val value: String) {
     // we will be able to get rid of this hack and mark frontend sessions as local
     private val fakeLocalIds = ConcurrentHashMap<String, Unit>().keySet(Unit)
 
-    @ApiStatus.Internal
+    @Internal
     @Deprecated("This api will be removed")
     // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
     fun isFakeLocalId(clientId: ClientId) = fakeLocalIds.contains(clientId.value)
 
-    @ApiStatus.Internal
+    @Internal
     @Deprecated("This api will be removed")
     // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
     fun isFakeLocalId(clientId: String) = fakeLocalIds.contains(clientId)
@@ -155,7 +154,7 @@ data class ClientId(val value: String) {
       }
 
     @JvmStatic
-    @ApiStatus.Internal
+    @Internal
     // optimization method for avoiding allocating ClientId in the hot path
     fun getCurrentValue(): String {
       val service = getCachedService()
@@ -173,7 +172,7 @@ data class ClientId(val value: String) {
      * Overrides the ID of the owner of CWM/RD session.
      */
     @JvmStatic
-    @ApiStatus.Internal
+    @Internal
     fun overrideOwnerId(newId: ClientId, parentDisposable: Disposable) {
       require(ownerId == defaultLocalId)
       ownerId = newId
@@ -190,13 +189,14 @@ data class ClientId(val value: String) {
     /**
      * Overrides the ID that is considered to be local to this process. Can be only invoked once.
      */
+    @Internal
     @JvmStatic
     fun overrideLocalId(newId: ClientId) {
       require(localId == defaultLocalId)
       localId = newId
     }
 
-    @ApiStatus.Internal
+    @Internal
     @Deprecated("This api will be removed")
     // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
     fun addFakeLocalId(id: ClientId, parentDisposable: Disposable) {
@@ -232,6 +232,7 @@ data class ClientId(val value: String) {
      * Since the thread local wasn't reset (due to the fact that the [withClientId] call is not finished yet) some event can observe this hanging [clientId],
      * which in essence should not be set for this event.
      */
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
@@ -284,6 +285,7 @@ data class ClientId(val value: String) {
      * **Note:** This method should not be called within a suspend context.
      * It is recommended to use `withContext(clientId.asContextElement())` instead.
      */
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     fun withClientId(clientId: ClientId?): AccessToken {
@@ -305,6 +307,7 @@ data class ClientId(val value: String) {
       return withClientId(clientId, errorOnMismatch = false)
     }
 
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     private fun withClientId(clientId: ClientId?, errorOnMismatch: Boolean): AccessToken {
@@ -323,6 +326,7 @@ data class ClientId(val value: String) {
      * **Note:** This method should not be called within a suspend context.
      * It is recommended to use `withContext(clientId.asContextElement())` instead.
      */
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     fun withClientId(clientIdValue: String): AccessToken {
@@ -383,7 +387,7 @@ data class ClientId(val value: String) {
 
     private var service: Ref<ClientSessionsManager<*>?>? = null
 
-    @ApiStatus.Internal
+    @Internal
     fun getCachedService(): ClientSessionsManager<*>? {
       val cached = service
       if (cached != null) return cached.get()
@@ -404,7 +408,7 @@ data class ClientId(val value: String) {
     }
 
     @TestOnly
-    @ApiStatus.Internal
+    @Internal
     fun nullizeCachedServiceInTest(test: ThrowableRunnable<Throwable>) {
       service = Ref.create(null)
       try {
@@ -435,6 +439,7 @@ data class ClientId(val value: String) {
       return clientIdContextElement to throwable
     }
 
+    @Internal
     @JvmStatic
     fun <T> decorateFunction(action: () -> T): () -> T {
       val infoForAssertion = captureInfoForAssertion()
@@ -444,7 +449,7 @@ data class ClientId(val value: String) {
       }
     }
 
-
+    @Internal
     @JvmStatic
     fun decorateRunnable(runnable: Runnable): Runnable {
       val infoForAssertion = captureInfoForAssertion()
@@ -454,6 +459,7 @@ data class ClientId(val value: String) {
       }
     }
 
+    @Internal
     @JvmStatic
     fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
       val infoForAssertion = captureInfoForAssertion()
@@ -463,6 +469,7 @@ data class ClientId(val value: String) {
       }
     }
 
+    @Internal
     @JvmStatic
     fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
       val infoForAssertion = captureInfoForAssertion()
@@ -472,6 +479,7 @@ data class ClientId(val value: String) {
       }
     }
 
+    @Internal
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
       val infoForAssertion = captureInfoForAssertion()
@@ -481,6 +489,7 @@ data class ClientId(val value: String) {
       }
     }
 
+    @Internal
     @JvmStatic
     fun <T> decorateProcessor(processor: Processor<T>): Processor<T> {
       val infoForAssertion = captureInfoForAssertion()
@@ -490,6 +499,7 @@ data class ClientId(val value: String) {
       }
     }
 
+    @Internal
     fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext
   }
 }
@@ -509,12 +519,12 @@ fun ClientId.asContextElement(): CoroutineContext.Element {
   return ClientIdContextElement(this)
 }
 
-@ApiStatus.Internal
+@Internal
 fun CoroutineContext.clientId(): ClientId? = this[ClientIdContextElement.Key]?.clientId
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 @DelicateCoroutinesApi
-@ApiStatus.Internal
+@Internal
 object ClientIdContextElementPrecursor : CopyableThreadContextElement<Unit>, CoroutineContext.Key<ClientIdContextElementPrecursor>, IntelliJContextElement {
 
   override fun copyForChild(): CopyableThreadContextElement<Unit> {
@@ -543,7 +553,7 @@ object ClientIdContextElementPrecursor : CopyableThreadContextElement<Unit>, Cor
 }
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-@ApiStatus.Internal
+@Internal
 class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextElement<Unit>, IntelliJContextElement {
   val creationTrace: Throwable? = if (isStacktraceLoggingEnabled()) Throwable("${formatClientId()} created at") else null
 
@@ -600,11 +610,11 @@ class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextEle
 }
 
 val CoroutineContext.clientIdContextElement: ClientIdContextElement?
-  @ApiStatus.Internal
+  @Internal
   get() = this[ClientIdContextElement.Key]
 
 val currentThreadClientId: ClientId?
-  @ApiStatus.Internal
+  @Internal
   get() = currentThreadContext().clientIdContextElement?.clientId
 
 

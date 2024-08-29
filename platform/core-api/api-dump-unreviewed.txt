@@ -127,12 +127,6 @@ f:com.intellij.codeWithMe.ClientId
 - f:component1():java.lang.String
 - f:copy(java.lang.String):com.intellij.codeWithMe.ClientId
 - bs:copy$default(com.intellij.codeWithMe.ClientId,java.lang.String,I,java.lang.Object):com.intellij.codeWithMe.ClientId
-- sf:decorateBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
-- sf:decorateCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
-- sf:decorateFunction(java.util.function.Function):java.util.function.Function
-- sf:decorateFunction(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
-- sf:decorateProcessor(com.intellij.util.Processor):com.intellij.util.Processor
-- sf:decorateRunnable(java.lang.Runnable):java.lang.Runnable
 - equals(java.lang.Object):Z
 - sf:getCurrent():com.intellij.codeWithMe.ClientId
 - sf:getCurrentOrNull():com.intellij.codeWithMe.ClientId
@@ -142,11 +136,6 @@ f:com.intellij.codeWithMe.ClientId
 - hashCode():I
 - sf:isCurrentlyUnderLocalId():Z
 - sf:isLocal(com.intellij.codeWithMe.ClientId):Z
-- sf:overrideLocalId(com.intellij.codeWithMe.ClientId):V
-- sf:withClientId(com.intellij.codeWithMe.ClientId):com.intellij.openapi.application.AccessToken
-- sf:withClientId(com.intellij.codeWithMe.ClientId,kotlin.jvm.functions.Function0):java.lang.Object
-- sf:withClientId(com.intellij.codeWithMe.ClientId,Z):com.intellij.openapi.application.AccessToken
-- sf:withClientId(java.lang.String):com.intellij.openapi.application.AccessToken
 e:com.intellij.codeWithMe.ClientId$AbsenceBehavior
 - java.lang.Enum
 - sf:LOG_ERROR:com.intellij.codeWithMe.ClientId$AbsenceBehavior
@@ -155,15 +144,6 @@ e:com.intellij.codeWithMe.ClientId$AbsenceBehavior
 - s:valueOf(java.lang.String):com.intellij.codeWithMe.ClientId$AbsenceBehavior
 - s:values():com.intellij.codeWithMe.ClientId$AbsenceBehavior[]
 f:com.intellij.codeWithMe.ClientId$Companion
-- f:coroutineContext():kotlin.coroutines.CoroutineContext
-- f:decorateBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
-- f:decorateCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
-- f:decorateFunction(java.util.function.Function):java.util.function.Function
-- f:decorateFunction(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
-- f:decorateProcessor(com.intellij.util.Processor):com.intellij.util.Processor
-- f:decorateRunnable(java.lang.Runnable):java.lang.Runnable
-- f:getAbsenceBehaviorValue():com.intellij.codeWithMe.ClientId$AbsenceBehavior
-- f:getClientIdLogger():com.intellij.openapi.diagnostic.Logger
 - f:getCurrent():com.intellij.codeWithMe.ClientId
 - f:getCurrentOrNull():com.intellij.codeWithMe.ClientId
 - f:getDefaultLocalId():com.intellij.codeWithMe.ClientId
@@ -171,11 +151,6 @@ f:com.intellij.codeWithMe.ClientId$Companion
 - f:getOwnerId():com.intellij.codeWithMe.ClientId
 - f:isCurrentlyUnderLocalId():Z
 - f:isLocal(com.intellij.codeWithMe.ClientId):Z
-- f:overrideLocalId(com.intellij.codeWithMe.ClientId):V
-- f:withClientId(com.intellij.codeWithMe.ClientId):com.intellij.openapi.application.AccessToken
-- f:withClientId(com.intellij.codeWithMe.ClientId,kotlin.jvm.functions.Function0):java.lang.Object
-- f:withClientId(com.intellij.codeWithMe.ClientId,Z):com.intellij.openapi.application.AccessToken
-- f:withClientId(java.lang.String):com.intellij.openapi.application.AccessToken
 f:com.intellij.codeWithMe.ClientIdExKt
 - sf:assertClientIdConsistency(com.intellij.codeWithMe.ClientId,java.lang.String):V
 - sf:isCurrent(com.intellij.codeWithMe.ClientId):Z
