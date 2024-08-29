@@ -68,14 +68,14 @@ fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFi
   return parsedKotlinVersion >= KotlinVersion(major, minor, patch)
 }
 
-private fun getOperationReplacer(operationReference: String, processedOptionValue: String): String? {
+private fun getOperationReplacer(operationReference: String, optionValue: String): String? {
   return when (operationReference) {
     "=" -> {
       "set"
     }
 
     "+=" -> {
-      if (processedOptionValue.contains("listOf")) {
+      if (!collectionsNamesRegex.find(optionValue)?.value.isNullOrEmpty()) {
         "addAll"
       }
       else {
@@ -96,25 +96,18 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
   operationReference: String,
 ): CompilerOption? {
 
-  val processedOptionValue = if (optionName != "freeCompilerArgs") {
-    optionValue.removeSurrounding("\"", "\"")
-  }
-  else {
-    optionValue
-  }
-
-  val operationReplacer = getOperationReplacer(operationReference, processedOptionValue)
+  val operationReplacer = getOperationReplacer(operationReference, optionValue)
 
   if (operationReplacer != null) {
     // jvmTarget, apiVersion and languageVersion
     val versionOptionData = optionsWithValuesMigratedFromNumericStringsToEnums[optionName]
     if (versionOptionData != null) {
 
-      return getCompilerOptionForVersionValue(versionOptionData, processedOptionValue, replacement, optionName, operationReplacer)
+      return getCompilerOptionForVersionValue(versionOptionData, optionValue, replacement, optionName, operationReplacer)
 
     }
     else if (jsOptions.contains(optionName)) { // JS options
-
+      val processedOptionValue = optionValue.removeSurrounding("\"", "\"")
       val jsOptionsValuesStringToEnumCorrespondence = jsOptions[optionName] ?: return null
       val jsOptionValue = jsOptionsValuesStringToEnumCorrespondence[processedOptionValue]
       if (jsOptionValue != null) {
@@ -122,20 +115,19 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
       }
 
     }
-    else if (optionName.contains("freeCompilerArgs")) {
-
-      replacement.append("$optionName.$operationReplacer($processedOptionValue)")
+    else {
+      replacement.append("$optionName.$operationReplacer($optionValue)")
       return CompilerOption(replacement.toString())
-
     }
   }
   return null
 }
 
 private fun getCompilerOptionForVersionValue(
-  versionOptionData: VersionOption, processedOptionValue: String, replacement: StringBuilder,
+  versionOptionData: VersionOption, optionValue: String, replacement: StringBuilder,
   optionName: String, operationReplacer: String,
 ): CompilerOption? {
+  val processedOptionValue = optionValue.removeSurrounding("\"", "\"")
   val convertedValue = versionOptionData.mappingRule.apply(processedOptionValue)
   if (convertedValue != null) {
     val compilerOptionValue = "${versionOptionData.newOptionType}${convertedValue}"
@@ -164,6 +156,8 @@ fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
   val compilerOption = getReplacementForOldKotlinOptionIfNeeded(replacement, optionName, optionValue, operationReference = "=")
   return compilerOption ?: CompilerOption("$optionName = $optionValue")
 }
+
+private val collectionsNamesRegex = Regex("listOf|mutableListOf|setOf|mutableSetOf")
 
 private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
   binaryExpression: KtBinaryExpression,

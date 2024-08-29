@@ -1,4 +1,4 @@
-// PROBLEM: Deprecated 'kotlinOptions' DSL should be replaced with 'compilerOptions'
+// PROBLEM: Use of deprecated 'kotlinOptions' DSL
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
 plugins {
     kotlin("jvm") version "2.0.0"

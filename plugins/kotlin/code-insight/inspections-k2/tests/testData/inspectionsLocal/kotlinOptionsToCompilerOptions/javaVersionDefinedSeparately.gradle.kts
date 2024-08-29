@@ -24,7 +24,7 @@ val javaVersion = JavaVersion.VERSION_1_8
 tasks.withType(KotlinJvmCompile::class.java).configureEach {
     <caret>kotlinOptions {
         jvmTarget = javaVersion.toString()
-        freeCompilerArgs += listOf(
+        freeCompilerArgs += setOf(
             "-Xjvm-default=all",
         )
     }

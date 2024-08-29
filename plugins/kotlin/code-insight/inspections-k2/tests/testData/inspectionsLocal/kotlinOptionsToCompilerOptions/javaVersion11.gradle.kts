@@ -23,4 +23,6 @@ tasks.test {
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.<caret>kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
+    outputFile = "<buildDir>/js/packages/<project.name>/kotlin/<project.name>.js"
+    optIn = listOf("org.mylibrary.OptInAnnotation")
 }

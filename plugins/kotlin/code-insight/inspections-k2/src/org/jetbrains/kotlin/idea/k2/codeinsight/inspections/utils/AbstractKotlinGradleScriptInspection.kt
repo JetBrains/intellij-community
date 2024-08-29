@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 abstract class AbstractKotlinGradleScriptInspection : AbstractKotlinInspection() {
 
     override fun isAvailableForFile(file: PsiFile): Boolean {
-        if (super.isAvailableForFile(file)) {
-            return file.name.endsWith(".gradle.kts") == true
+        if (file.name.endsWith(".gradle.kts")) {
+            return super.isAvailableForFile(file)
         } else {
             return false
         }
