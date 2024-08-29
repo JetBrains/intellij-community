@@ -135,4 +135,9 @@ public final class JavaDocTokenTypes implements JavaDocCommentTokenTypes {
   public IElementType sharp() {
     return JavaDocTokenType.DOC_SHARP;
   }
+
+  @Override
+  public IElementType inlineCodeFence() {
+    return JavaDocTokenType.DOC_INLINE_CODE_FENCE;
+  }
 }

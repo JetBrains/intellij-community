@@ -203,6 +203,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testHtmlCodeInMarkdown() {
     doTestMethod();
   }
+  public void testMarkdownInlineCodeBlock() { doTestClass(); }
+
 
   public void testRepeatableAnnotations() {
     useJava8();
