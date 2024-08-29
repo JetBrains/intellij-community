@@ -7,6 +7,7 @@ package com.intellij.ui.icons
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.colorPatcherDigestShim
@@ -113,12 +114,15 @@ open class CachedImageIcon private constructor(
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
+
     if (scaleContext != null) {
-      resolveActualIcon(scaleContext).paintIcon(c, g, x, y)
+      // We must use the icon's object scale, but not its sys scale,
+      // as it might be different from the one of the provided component / graphics.
+      resolveActualIcon(scaleContext.copyWithScale(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(gc)))).paintIcon(c, g, x, y)
       return
     }
 
-    val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
     synchronized(iconCache) {
       checkPathTransform()
       iconCache.getCachedIcon(host = this, gc = gc, attributes = getEffectiveAttributes())
