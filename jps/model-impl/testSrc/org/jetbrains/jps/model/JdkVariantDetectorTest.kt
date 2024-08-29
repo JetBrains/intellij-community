@@ -321,6 +321,56 @@ class JdkVariantDetectorTest {
        |SOURCE=""
     """.trimMargin()
 
+  private val RELEASE_BISHENG_17_0_11 =
+    """|IMPLEMENTOR="BiSheng"
+       |IMPLEMENTOR_VERSION="BiSheng"
+       |JAVA_RUNTIME_VERSION="17.0.11+11"
+       |JAVA_VERSION="17.0.11"
+       |JAVA_VERSION_DATE="2024-04-16"
+       |LIBC="gnu"
+       |MODULES="java.base ..."
+       |OS_ARCH="aarch64"
+       |OS_NAME="Linux"
+    """.trimMargin()
+
+  private val RELEASE_KONA_17_0_12 =
+    """|IMPLEMENTOR="Tencent"
+       |IMPLEMENTOR_VERSION="TencentKonaJDK"
+       |JAVA_RUNTIME_VERSION="17.0.12+1-LTS"
+       |JAVA_VERSION="17.0.12"
+       |JAVA_VERSION_DATE="2024-07-23"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="aarch64"
+       |OS_NAME="Darwin"
+    """.trimMargin()
+
+  private val RELEASE_ALIBABA_1_8_0_412 =
+    """|JAVA_VERSION="1.8.0_412"
+       |OS_NAME="Linux"
+       |OS_VERSION="2.6"
+       |OS_ARCH="amd64"
+       |IMPLEMENTOR="Alibaba"
+       |FULL_VERSION="1.8.0_412-b01"
+       |SEMANTIC_VERSION="8.0.412+1"
+       |BUILD_INFO="OS: Linux Version: 4.15.0-187-generic"
+       |JVM_VARIANT="Dragonwell"
+       |JVM_VERSION="25.412-b01"
+       |IMAGE_TYPE="JDK"
+    """.trimMargin()
+
+  private val RELEASE_MICROSOFT_21_0_4 =
+    """|IMPLEMENTOR="Microsoft"
+       |IMPLEMENTOR_VERSION="Microsoft-9911842"
+       |JAVA_RUNTIME_VERSION="21.0.4+7-LTS"
+       |JAVA_VERSION="21.0.4"
+       |JAVA_VERSION_DATE="2024-07-16"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="aarch64"
+       |OS_NAME="Darwin"
+    """.trimMargin()
+
   @Rule @JvmField val tempDir = TempDirectory()
 
   @Test fun `Oracle OpenJDK 8`() = assertVariant(Unknown, RELEASE_ORACLE_OPEN_1_8_0_41, MANIFEST_ORACLE_OPEN_1_8_0_41)  // no vendor info
@@ -328,9 +378,14 @@ class JdkVariantDetectorTest {
   @Test fun `Oracle 16`() = assertVariant(Oracle, RELEASE_ORACLE_16_0_1)
   @Test fun `AdoptOpenJDK 8 (HotSpot)`() = assertVariant(AdoptOpenJdk_HS, RELEASE_ADOPT_HOTSPOT_1_8_0_282)
   @Test fun `AdoptOpenJDK 11 (OpenJ9)`() = assertVariant(AdoptOpenJdk_J9, RELEASE_ADOPT_J9_11_0_10)
+  @Test fun `BiSheng 17`() = assertVariant(BiSheng, RELEASE_BISHENG_17_0_11)
   @Test fun `Corretto 8`() = assertVariant(Corretto, RELEASE_CORRETTO_1_8_0_292, MANIFEST_CORRETTO_1_8_0_292)
   @Test fun `Corretto 11`() = assertVariant(Corretto, RELEASE_CORRETTO_11_0_8_10_1)
+  @Test fun `Dragonwell 8`() = assertVariant(Dragonwell, RELEASE_ALIBABA_1_8_0_412)
+  @Test fun `Homebrew 17`() = assertVariant(Homebrew, RELEASE_HOMEBREW_OPENJDK_17_0_11)
+  @Test fun `Kona 17`() = assertVariant(Kona, RELEASE_KONA_17_0_12)
   @Test fun `Liberica 11`() = assertVariant(Liberica, RELEASE_LIBERICA_11_0_8)
+  @Test fun `Microsoft 21`() = assertVariant(Microsoft, RELEASE_MICROSOFT_21_0_4)
   @Test fun `SapMachine 11`() = assertVariant(SapMachine, RELEASE_SAP_MACHINE_11_0_8)
   @Test fun `Zulu 8`() = assertVariant(Unknown, RELEASE_ZULU_1_8_0_292, MANIFEST_ZULU_1_8_0_292)  // no vendor info
   @Test fun `Zulu 11`() = assertVariant(Zulu, RELEASE_ZULU_11_0_8)
@@ -342,7 +397,6 @@ class JdkVariantDetectorTest {
   @Test fun `GraalVM CE 16`() = assertVariant(GraalVMCE, RELEASE_GRAALVM_CE_16_0_1)
   @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
   @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
-  @Test fun `Homebrew 17`() = assertVariant(Homebrew, RELEASE_HOMEBREW_OPENJDK_17_0_11)
 
   @Test fun `GraalVM 21 - version string`() = assertEquals(
     "GraalVM CE 17.0.7 - VM 23.0.0",
