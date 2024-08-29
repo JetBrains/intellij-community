@@ -1266,7 +1266,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
     private var lastTimePerformed = 0
-    private val clientId = ClientId.current
 
     init {
       val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
