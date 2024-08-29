@@ -47,6 +47,13 @@ public interface CustomizableIntentionAction extends IntentionAction {
   }
 
   /**
+   * @return true if light bulb must be shown when such action is available
+   */
+  default boolean isShowLightBulb() {
+    return true;
+  }
+
+  /**
    * Get text specifically for tooltip view
    */
   default @NlsContexts.Tooltip String getTooltipText() {

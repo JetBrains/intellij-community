@@ -3,7 +3,9 @@
 
 package com.intellij.codeInsight.intention.impl.config
 
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.components.*
@@ -27,9 +29,16 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
   }
 
   @Volatile
-  private var ignoredActions = emptySet<String>()
+  private var ignoredActions: Set<String> = emptySet<String>()
 
-  fun isShowLightBulb(action: IntentionAction): Boolean = !ignoredActions.contains(action.familyName)
+  fun isShowLightBulb(action: IntentionAction): Boolean {
+    val showLightBulb = (IntentionActionDelegate.unwrap(action) as? CustomizableIntentionAction)
+      ?.isShowLightBulb != false
+
+    if (!showLightBulb) return false
+
+    return !ignoredActions.contains(action.familyName)
+  }
 
   override fun loadState(element: Element) {
     val children = element.getChildren(IGNORE_ACTION_TAG)
