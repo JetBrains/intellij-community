@@ -33,7 +33,6 @@ fun getFunctionBodyTextFromTemplate(
 
     val properties = fileTemplateManager.defaultProperties
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType)
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType)
     if (classFqName != null) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, classFqName.asString())
         properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, classFqName.shortName().asString())
