@@ -2,13 +2,10 @@
 package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.ide.impl.isTrusted
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -54,13 +51,9 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentMap
-import kotlin.io.path.extension
-import kotlin.io.path.notExists
-import kotlin.io.path.readLines
 
 @OptIn(ExperimentalCompilerApi::class)
 internal class KtCompilerPluginsProviderIdeImpl(
@@ -261,49 +254,9 @@ internal class KtCompilerPluginsProviderIdeImpl(
         val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
         if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
 
-        // Android Studio (Change I84190a461): allow substitution of the Compose compiler plugin.
-        // This can be removed once the Compose compiler plugin is bundled with the Kotlin compiler itself.
-        if (isComposePlugin(userSuppliedPluginJar)) {
-            val bundledComposePlugin = findBundledComposePlugin()
-            if (bundledComposePlugin != null) return bundledComposePlugin
-        }
-
         return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }
     }
 
-    private val COMPOSE_PLUGIN_REGISTRAR = "androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar"
-
-    private fun isComposePlugin(userSuppliedPluginJar: Path): Boolean {
-        if (userSuppliedPluginJar.notExists() || userSuppliedPluginJar.extension != "jar") {
-            return false
-        }
-        FileSystems.newFileSystem(userSuppliedPluginJar).use { jarFs ->
-            // Note: KotlinK2BundledCompilerPlugins looks for a CompilerPluginRegistrar, but Compose
-            // uses the deprecated ComponentRegistrar interface instead due to KT-60952. So we check for both.
-            val newRegistrarFile = "META-INF/services/org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar"
-            val oldRegistrarFile = "META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar"
-            for (registrarFile in listOf(newRegistrarFile, oldRegistrarFile)) {
-                val path = jarFs.getPath(registrarFile)
-                if (path.notExists()) {
-                    continue
-                }
-                if (path.readLines().map(String::trim).contains(COMPOSE_PLUGIN_REGISTRAR)) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
-    private fun findBundledComposePlugin(): Path? {
-        val id = PluginId.getId("androidx.compose.plugins.idea")
-        val idePlugin = PluginManager.getInstance().findEnabledPlugin(id) ?: return null
-        if (!idePlugin.isBundled) {
-            return null // Only the bundled plugin has binary compatibility guarantees.
-        }
-        val registrarClass = Class.forName(COMPOSE_PLUGIN_REGISTRAR, false, idePlugin.classLoader)
-        return PathManager.getJarForClass(registrarClass)
-    }
 
     private fun Module.getCompilerArguments(): CommonCompilerArguments {
         return KotlinFacet.get(this)?.configuration?.settings?.mergedCompilerArguments
