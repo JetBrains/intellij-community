@@ -54,15 +54,13 @@ object KotlinPackageIndexUtils {
     fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
         val result = hashSetOf<FqName>()
 
-        FileBasedIndex.getInstance().processValues(
-            KotlinPartialPackageNamesIndex.NAME, fqName, null,
-            FileBasedIndex.ValueProcessor { _, subPackageName ->
-                if (subPackageName != null && nameFilter(subPackageName)) {
-                    result.add(fqName.child(subPackageName))
-                }
-                true
-            }, scope
-        )
+        // use getValues() instead of processValues() because the latter visits each file in the package and that could be slow if there are a lot of files
+        val values = FileBasedIndex.getInstance().getValues(KotlinPartialPackageNamesIndex.NAME, fqName, scope)
+        for (subPackageName in values) {
+            if (subPackageName != null && nameFilter(subPackageName)) {
+                result.add(fqName.child(subPackageName))
+            }
+        }
 
         return result
     }
