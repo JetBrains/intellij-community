@@ -27,7 +27,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
-  private val SHELL_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
+  private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
+  private val SHELL_TYPE_FIELD = EventFields.Enum<ShellType>("shell")
   private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
@@ -41,13 +42,13 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                RUN_ANYTHING_PROVIDER_FIELD)
   private val localExecEvent = GROUP.registerEvent("local.exec",
                                                    OS_VERSION_FIELD,
-                                                   SHELL_FIELD,
+                                                   SHELL_STR_FIELD,
                                                    BLOCK_TERMINAL_FIELD)
 
   /** New Terminal only event with additional information about shell version and plugins */
   private val shellStartedEvent = GROUP.registerVarargEvent("local.shell.started",
                                                             OS_VERSION_FIELD,
-                                                            SHELL_FIELD,
+                                                            SHELL_STR_FIELD,
                                                             TerminalShellInfoStatistics.shellVersionField,
                                                             TerminalShellInfoStatistics.promptThemeField,
                                                             TerminalShellInfoStatistics.isOhMyZshField,
@@ -68,7 +69,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
 
 
   private val stepDurationEvent = GROUP.registerEvent("terminal.step.duration",
-                                                      EventFields.Enum<ShellType>("shell"),
+                                                      SHELL_TYPE_FIELD,
                                                       EventFields.Enum<DurationType>("duration_type"),
                                                       EventFields.DurationMs,
                                                       "Logs performance/responsiveness metrics")
@@ -157,7 +158,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     val osVersion = Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown"
     shellStartedEvent.log(project,
                           OS_VERSION_FIELD with osVersion,
-                          SHELL_FIELD with shellName.lowercase(),
+                          SHELL_STR_FIELD with shellName.lowercase(),
                           TerminalShellInfoStatistics.shellVersionField with shellInfo.shellVersion,
                           TerminalShellInfoStatistics.promptThemeField with shellInfo.promptTheme,
                           TerminalShellInfoStatistics.isOhMyZshField with shellInfo.isOhMyZsh,
