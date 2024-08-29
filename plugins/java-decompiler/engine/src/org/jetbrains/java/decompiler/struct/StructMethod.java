@@ -2,12 +2,17 @@
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.Type;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -41,7 +46,15 @@ public class StructMethod extends StructMember {
       attributes.putAll(code.codeAttributes);
     }
 
-    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null, clQualifiedName);
+    GenericMethodDescriptor signature = null;
+    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute signatureAttr = (StructGenericSignatureAttribute)attributes.get(StructGeneralAttribute.ATTRIBUTE_SIGNATURE.name);
+      if (signatureAttr != null) {
+        signature = GenericMain.parseMethodSignature(signatureAttr.getSignature());
+      }
+    }
+
+    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null, clQualifiedName, signature);
   }
 
   private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
@@ -58,6 +71,7 @@ public class StructMethod extends StructMember {
   private InstructionSequence seq = null;
   private boolean expanded = false;
   private final String classQualifiedName;
+  private final GenericMethodDescriptor signature;
 
   private StructMethod(int accessFlags,
                        Map<String, StructGeneralAttribute> attributes,
@@ -65,7 +79,8 @@ public class StructMethod extends StructMember {
                        String descriptor,
                        int bytecodeVersion,
                        StructCodeAttribute code,
-                       String classQualifiedName) {
+                       String classQualifiedName,
+                       GenericMethodDescriptor signature) {
     super(accessFlags, attributes);
     this.name = name;
     this.descriptor = descriptor;
@@ -79,6 +94,7 @@ public class StructMethod extends StructMember {
       this.localVariables = this.codeLength = this.codeFullLength = -1;
     }
     this.classQualifiedName = classQualifiedName;
+    this.signature = signature;
   }
 
   public void expandData(StructClass classStruct) throws IOException {
@@ -337,5 +353,9 @@ public class StructMethod extends StructMember {
 
   public String getClassQualifiedName() {
     return classQualifiedName;
+  }
+
+  public GenericMethodDescriptor getSignature() {
+    return signature;
   }
 }

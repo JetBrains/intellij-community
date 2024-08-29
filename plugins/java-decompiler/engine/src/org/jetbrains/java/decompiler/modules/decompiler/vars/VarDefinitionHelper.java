@@ -14,7 +14,6 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 
 import java.util.*;
@@ -970,7 +969,7 @@ public class VarDefinitionHelper {
 
     private VarInfo(LocalVariable lvt, VarType type) {
       if (lvt != null && lvt.getSignature() != null)
-        this.cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()), Collections.emptyList());
+        this.cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), true, Collections.emptyList());
       else if (lvt != null)
         this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false, Collections.emptyList());
       else if (type != null)

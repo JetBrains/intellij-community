@@ -1,0 +1,218 @@
+package pkg;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class TestGenerics<A, B extends TestGenerics.Maps & List> {
+   static Map<String, Boolean> field = TestGenerics.Maps.<String, Boolean>newHashMap();
+   static List<List<String>> llstring = new ArrayList<List<String>>();
+   static List<Byte> bytes = new ArrayList<Byte>();
+   A[] aArray = (A[])(new Object[10]);
+
+   public void genericAllocation() {
+      this.aArray = (A[])(new Object[20]);// 30
+   }// 31
+
+   public static void genericInference() {
+      HashMap<String, Integer> test = TestGenerics.Maps.<String, Integer>newHashMap();// 34
+   }// 35
+
+   public void genericList() {
+      List<B> testList = new ArrayList<B>();// 38
+      B b = testList.get(0);// 39
+      System.out.println("B:" + b);// 40
+   }// 41
+
+   public void genericCast() {
+      HashMap<String, Boolean> upcast = (HashMap)field;// 44
+   }// 45
+
+   public void genericForEach() {
+      for(String s : field.keySet()) {// 48
+         System.out.println(s);// 49
+      }
+// 51
+   }
+
+   public void genericForEachWithCast() {// 54
+      for(String s : llstring.get(0)) {// 55
+         System.out.println(s);
+      }// 57
+
+   }
+// 60
+   public <T extends Number> void genericSuperUp() {
+      List<T> list = new ArrayList<T>();// 61
+// 62
+      for(Number number : bytes) {
+         list.add(number);// 64
+      }
+
+   }
+// 68
+   public static class Maps {
+      public static <K, V> HashMap<K, V> newHashMap() {
+         return new HashMap<K, V>();
+      }
+   }
+}
+
+class 'pkg/TestGenerics' {
+   method 'genericAllocation ()V' {
+      0      14
+      1      14
+      2      14
+      6      14
+      7      14
+      8      14
+      9      14
+      a      14
+      b      14
+      c      15
+   }
+
+   method 'genericInference ()V' {
+      0      18
+      1      18
+      2      18
+      3      18
+      4      19
+   }
+
+   method 'genericList ()V' {
+      7      22
+      8      23
+      9      23
+      a      23
+      b      23
+      c      23
+      d      23
+      e      23
+      f      23
+      10      23
+      11      23
+      12      23
+      13      24
+      14      24
+      15      24
+      1d      24
+      1e      24
+      22      24
+      26      24
+      27      24
+      28      24
+      29      24
+      2a      24
+      2b      24
+      2c      25
+   }
+
+   method 'genericCast ()V' {
+      0      28
+      1      28
+      2      28
+      3      28
+      4      28
+      5      28
+      6      28
+      7      29
+   }
+
+   method 'genericForEach ()V' {
+      0      32
+      1      32
+      2      32
+      3      32
+      4      32
+      5      32
+      6      32
+      7      32
+      d      32
+      20      32
+      21      33
+      22      33
+      23      33
+      24      33
+      25      33
+      26      33
+      27      33
+      2b      35
+   }
+
+   method 'genericForEachWithCast ()V' {
+      0      38
+      1      38
+      2      38
+      3      38
+      4      38
+      5      38
+      6      38
+      7      38
+      8      38
+      9      38
+      a      38
+      b      38
+      11      38
+      24      38
+      25      39
+      26      39
+      27      39
+      28      39
+      29      39
+      2a      39
+      2b      39
+      2f      41
+   }
+
+   method 'genericSuperUp ()V' {
+      7      44
+      8      46
+      9      46
+      a      46
+      10      46
+      23      46
+      24      47
+      25      47
+      26      47
+      27      47
+      28      47
+      29      47
+      2a      47
+      2f      49
+   }
+}
+
+class 'pkg/TestGenerics$Maps' {
+   method 'newHashMap ()Ljava/util/HashMap;' {
+      7      53
+   }
+}
+
+Lines mapping:
+30 <-> 15
+31 <-> 16
+34 <-> 19
+35 <-> 20
+38 <-> 23
+39 <-> 24
+40 <-> 25
+41 <-> 26
+44 <-> 29
+45 <-> 30
+48 <-> 33
+49 <-> 34
+51 <-> 36
+54 <-> 39
+55 <-> 40
+57 <-> 42
+60 <-> 45
+61 <-> 47
+62 <-> 48
+64 <-> 50
+68 <-> 54
+Not mapped:
+50
+56
+63

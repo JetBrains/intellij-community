@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.util.ClasspathScanner;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.io.File;
@@ -58,6 +59,15 @@ public class Fernflower implements IDecompiledData {
 
     DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor, cancellationManager);
     DecompilerContext.setCurrentContext(context);
+
+    String vendor = System.getProperty("java.vendor", "missing vendor");
+    String javaVersion = System.getProperty("java.version", "missing java version");
+    String jvmVersion = System.getProperty("java.vm.version", "missing jvm version");
+    logger.writeMessage(String.format("JVM info: %s - %s - %s", vendor, javaVersion, jvmVersion), IFernflowerLogger.Severity.INFO);
+
+    if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
+      ClasspathScanner.addAllClasspath(structContext);
+    }
   }
 
   public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {

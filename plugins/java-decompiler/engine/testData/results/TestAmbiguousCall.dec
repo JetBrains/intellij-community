@@ -13,7 +13,7 @@ class TestAmbiguousCall {
       this.m1(var1, "IAE");// 10
       IllegalArgumentException var2 = new IllegalArgumentException();// 12
       this.m1((RuntimeException)var2, "RE");// 13
-      this.m1((IllegalArgumentException)var2, "IAE");// 14
+      this.m1(var2, "IAE");// 14
    }// 15
 }
 

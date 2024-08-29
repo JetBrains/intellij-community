@@ -1,12 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
@@ -51,6 +58,11 @@ public abstract class Exprent implements IMatchable {
 
   public VarType getExprType() {
     return VarType.VARTYPE_VOID;
+  }
+
+  // TODO: This captures the state of upperBound, find a way to do it without modifying state?
+  public VarType getInferredExprType(VarType upperBound) {
+    return getExprType();
   }
 
   public int getExprentUse() {
@@ -170,6 +182,119 @@ public abstract class Exprent implements IMatchable {
       }
       return ret;
     }
+
+  protected VarType gatherGenerics(VarType upperBound, VarType ret, List<String> fparams, List<VarType> genericArgs) {
+    Map<VarType, VarType> map = new HashMap<>();
+
+    // List<T> -> List<String>
+    if (upperBound != null && upperBound.isGeneric() && ret.isGeneric()) {
+      List<VarType> leftArgs = ((GenericType)upperBound).getArguments();
+      List<VarType> rightArgs = ((GenericType)ret).getArguments();
+      if (leftArgs.size() == rightArgs.size() && rightArgs.size() == fparams.size()) {
+        for (int i = 0; i < leftArgs.size(); i++) {
+          VarType left = leftArgs.get(i);
+          VarType right = rightArgs.get(i);
+          if (left != null && right.getValue().equals(fparams.get(i))) {
+            genericArgs.add(left);
+            map.put(right, left);
+          } else {
+            genericArgs.clear();
+            map.clear();
+            break;
+          }
+        }
+      }
+    }
+
+    return map.isEmpty() ? ret : ret.remap(map);
+  }
+
+  protected void appendParameters(TextBuffer buf, List<VarType> genericArgs) {
+    if (genericArgs.isEmpty()) {
+      return;
+    }
+    buf.append("<");
+    //TODO: Check target output level and use <> operator?
+    for (int i = 0; i < genericArgs.size(); i++) {
+      buf.append(ExprProcessor.getCastTypeName(genericArgs.get(i), Collections.emptyList()));
+      if(i + 1 < genericArgs.size()) {
+        buf.append(", ");
+      }
+    }
+    buf.append(">");
+  }
+
+  protected Map<VarType, List<VarType>> getNamedGenerics() {
+    Map<VarType, List<VarType>> ret = new HashMap<>();
+    ClassNode class_ = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+    MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+
+    //TODO: Loop enclosing classes?
+    GenericClassDescriptor cls = class_ == null ? null : class_.classStruct.getSignature();
+    if (cls != null) {
+      for (int x = 0; x < cls.fparameters.size(); x++) {
+        ret.put(GenericType.parse("T" + cls.fparameters.get(x) + ";"), cls.fbounds.get(x));
+      }
+    }
+
+    //TODO: Loop enclosing method?
+    GenericMethodDescriptor mtd = method == null ? null : method.methodStruct.getSignature();
+    if (mtd != null) {
+      for (int x = 0; x < mtd.typeParameters.size(); x++) {
+        ret.put(GenericType.parse("T" + mtd.typeParameters.get(x) + ";"), mtd.typeParameterBounds.get(x));
+      }
+    }
+
+    return ret;
+  }
+
+  protected void wrapInCast(VarType left, VarType right, TextBuffer buf, int precedence) {
+    boolean needsCast = !left.isSuperset(right) && (right.equals(VarType.VARTYPE_OBJECT) || left.getType() != CodeConstants.TYPE_OBJECT);
+
+    if (left != null && left.isGeneric()) {
+      Map<VarType, List<VarType>> names = this.getNamedGenerics();
+      int arrayDim = 0;
+
+      if (left.getArrayDim() == right.getArrayDim()) {
+        arrayDim = left.getArrayDim();
+        left = left.resizeArrayDim(0);
+        right = right.resizeArrayDim(0);
+      }
+
+      List<? extends VarType> types = names.get(right);
+      if (types == null) {
+        types = names.get(left);
+      }
+
+      if (types != null) {
+        boolean anyMatch = false; //TODO: allMatch instead of anyMatch?
+        for (VarType type : types) {
+          if (type.equals(VarType.VARTYPE_OBJECT) && right.equals(VarType.VARTYPE_OBJECT)) {
+            continue;
+          }
+          anyMatch |= right.getValue() == null /*null const doesn't need cast*/ || DecompilerContext.getStructContext().instanceOf(right.getValue(), type.getValue());
+        }
+
+        if (anyMatch) {
+          needsCast = false;
+        }
+      }
+
+      if (arrayDim != 0) {
+        left = left.resizeArrayDim(arrayDim);
+      }
+    }
+
+    if (!needsCast) {
+      return;
+    }
+
+    if (precedence >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
+      buf.enclose("(", ")");
+    }
+
+    buf.prepend("(" + ExprProcessor.getCastTypeName(left, Collections.emptyList()) + ")");
+  }
 
   // *****************************************************************************
   // IMatchable implementation

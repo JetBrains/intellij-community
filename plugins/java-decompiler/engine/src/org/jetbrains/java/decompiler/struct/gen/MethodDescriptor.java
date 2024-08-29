@@ -2,14 +2,23 @@
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public final class MethodDescriptor {
   public final VarType[] params;
   public final VarType ret;
+  public GenericMethodDescriptor genericInfo;
 
   private MethodDescriptor(VarType[] params, VarType ret) {
     this.params = params;
@@ -62,6 +71,35 @@ public final class MethodDescriptor {
     VarType ret = new VarType(descriptor.substring(parenth + 1));
 
     return new MethodDescriptor(params, ret);
+  }
+
+  public static MethodDescriptor parseDescriptor(StructMethod struct, ClassNode node) {
+    MethodDescriptor md = MethodDescriptor.parseDescriptor(struct.getDescriptor());
+
+    GenericMethodDescriptor sig = struct.getSignature();
+    if (sig != null) {
+      if (node != null) {
+        MethodWrapper methodWrapper = node.getWrapper().getMethodWrapper(struct.getName(), struct.getDescriptor());
+        boolean init = CodeConstants.INIT_NAME.equals(struct.getName()) && node.type != ClassNode.CLASS_ANONYMOUS;
+        long actualParams = md.params.length;
+        List<VarVersionPair> sigFields = methodWrapper == null ? null : methodWrapper.synthParameters;
+        if (sigFields != null) {
+          actualParams = sigFields.stream().filter(Objects::isNull).count();
+        }
+        if (actualParams != sig.parameterTypes.size()) {
+          String message = "Inconsistent generic signature in method " + struct.getName() + " " + struct.getDescriptor() + " in " + struct.getClassQualifiedName();
+          DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+          sig = null;
+        }
+      }
+      md.addGenericDescriptor(sig);
+    }
+
+    return md;
+  }
+
+  public void addGenericDescriptor(GenericMethodDescriptor desc) {
+    this.genericInfo = desc;
   }
 
   public String buildNewDescriptor(NewClassNameBuilder builder) {

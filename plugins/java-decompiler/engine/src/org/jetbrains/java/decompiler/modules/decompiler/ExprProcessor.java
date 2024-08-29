@@ -30,6 +30,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
@@ -478,7 +479,7 @@ public class ExprProcessor {
           exprList.add(new ExitExprent(instr.opcode == CodeConstants.opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
                                        instr.opcode == CodeConstants.opc_return ? null : stack.pop(),
                                        instr.opcode == CodeConstants.opc_athrow ? null : methodDescriptor.ret,
-                                       offsets));
+                                       offsets, methodDescriptor));
           break;
         case CodeConstants.opc_monitorenter:
         case CodeConstants.opc_monitorexit:
@@ -690,7 +691,15 @@ public class ExprProcessor {
       sb.append("void");
       return sb.toString();
     }
+    else if (tp == CodeConstants.TYPE_GENVAR && type.isGeneric()) {
+      sb.append(type.getValue());
+      return sb.toString();
+    }
     else if (tp == CodeConstants.TYPE_OBJECT) {
+      if (type.isGeneric()) {
+        ((GenericType)type).appendCastName(sb, typeAnnWriteHelpers);
+        return sb.toString();
+      }
       String ret;
       if (getShort) {
         ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
@@ -741,7 +750,9 @@ public class ExprProcessor {
       boolean shouldWrite = true;
       if (!enclosingClasses.isEmpty() && i != nestedTypes.size() - 1) {
         String enclosingType = enclosingClasses.remove(0).simpleName;
-        shouldWrite = !nestedType.equals(enclosingType);
+        shouldWrite = !nestedType.equals(enclosingType)
+          // Also write out the enclosing class if we are the outermost, and we're in the type params
+          || enclosingClasses.isEmpty() && DecompilerContext.getOption(DecompilerContext.IN_CLASS_TYPE_PARAMS);
       }
       if (i == 0) { // the first annotation can be written already
         if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
@@ -957,6 +968,8 @@ public class ExprProcessor {
         tracer.incrementCurrentSourceLine();
       }
 
+      expr.getInferredExprType(null);
+
       TextBuffer content = expr.toJava(indent, tracer);
 
       if (content.length() > 0) {
@@ -1029,7 +1042,7 @@ public class ExprProcessor {
       }
     }
 
-    VarType rightType = exprent.getExprType();
+    VarType rightType = exprent.getInferredExprType(leftType);
 
     boolean cast =
       castAlways ||

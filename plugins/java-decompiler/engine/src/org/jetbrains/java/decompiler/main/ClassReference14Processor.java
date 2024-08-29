@@ -34,7 +34,7 @@ public final class ClassReference14Processor {
     invFor.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/String;)Ljava/lang/Class;"));
     invFor.setStatic(true);
     invFor.setParameters(Collections.singletonList(new VarExprent(0, VarType.VARTYPE_STRING, null)));
-    BODY_EXPR = new ExitExprent(ExitExprent.EXIT_RETURN, invFor, VarType.VARTYPE_CLASS, null);
+    BODY_EXPR = new ExitExprent(ExitExprent.EXIT_RETURN, invFor, VarType.VARTYPE_CLASS, null, null);
 
     InvocationExprent ctor = new InvocationExprent();
     ctor.setName(CodeConstants.INIT_NAME);
@@ -52,7 +52,7 @@ public final class ClassReference14Processor {
     invCause.setInstance(newExpr);
     invCause.setParameters(
       Collections.singletonList(new VarExprent(2, new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"), null)));
-    HANDLER_EXPR = new ExitExprent(ExitExprent.EXIT_THROW, invCause, null, null);
+    HANDLER_EXPR = new ExitExprent(ExitExprent.EXIT_THROW, invCause, null, null, null);
   }
 
   public static void processClassReferences(ClassNode node) {

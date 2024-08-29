@@ -161,6 +161,19 @@ public class StructContext {
     }
   }
 
+  public void addData(String path, String cls, byte[] data, boolean isOwn) throws IOException {
+        ContextUnit unit = units.get(path);
+        if (unit == null) {
+          unit = new ContextUnit(ContextUnit.TYPE_FOLDER, path, cls, isOwn, saver, decompiledData);
+          units.put(path, unit);
+        }
+
+        StructClass cl = StructClass.create(new DataInputFullStream(data), isOwn, loader);
+        classes.put(cl.qualifiedName, cl);
+        unit.addClass(cl, cls);
+        loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(path, cls, data));
+  }
+
   public Map<String, StructClass> getClasses() {
     return classes;
   }

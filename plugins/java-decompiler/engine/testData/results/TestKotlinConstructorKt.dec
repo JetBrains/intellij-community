@@ -14,8 +14,8 @@ import kotlin.collections.CollectionsKt;
 )
 public final class TestKotlinConstructorKt {
    private static final List<Mapping> foo(Collection<String> list) {
-      Iterable $receiver$iv = (Iterable)list;// 2
-      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));
+      Iterable $receiver$iv = list;// 2
+      Collection destination$iv$iv = new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10));
 
       for(Object item$iv$iv : $receiver$iv) {// 10 11
          String it = (String)item$iv$iv;
@@ -24,12 +24,12 @@ public final class TestKotlinConstructorKt {
             throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
          }
 
-         var10000.<init>((String)it);
+         var10000.<init>(it);
          Mapping var11 = var10000;
          destination$iv$iv.add(var11);// 12
       }
-
-      return CollectionsKt.toList((Iterable)((List)destination$iv$iv));// 4 13
+// 4 13
+      return CollectionsKt.toList((List)destination$iv$iv);
    }
 }
 

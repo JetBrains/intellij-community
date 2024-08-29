@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAtt
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -57,6 +58,22 @@ public class VarExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
+    return getVarType();
+  }
+
+  @Override
+  public VarType getInferredExprType(VarType upperBound) {
+    if (lvt != null && lvt.getSignature() != null) {
+      // TODO; figure out why it's crashing, ugly fix for now
+      try {
+        return GenericType.parse(lvt.getSignature());
+      } catch (StringIndexOutOfBoundsException ex) {
+        ex.printStackTrace();
+      }
+    }
+    else if (lvt != null) {
+      return lvt.getVarType();
+    }
     return getVarType();
   }
 
@@ -150,7 +167,7 @@ public class VarExprent extends Exprent {
           if (lvt.getSignature() != null) {
             GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
             if (descriptor != null) {
-              buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, Collections.emptyList()));
+              buffer.append(ExprProcessor.getCastTypeName(descriptor.type, Collections.emptyList()));
               return;
             }
           }
@@ -176,7 +193,7 @@ public class VarExprent extends Exprent {
               if (signature != null) {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
-                  buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, Collections.emptyList()));
+                  buffer.append(ExprProcessor.getCastTypeName(descriptor.type, Collections.emptyList()));
                   return;
                 }
               }

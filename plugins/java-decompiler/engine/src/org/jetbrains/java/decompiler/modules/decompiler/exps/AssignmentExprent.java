@@ -5,14 +5,16 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Objects;
 
 public class AssignmentExprent extends Exprent {
 
@@ -47,6 +49,11 @@ public class AssignmentExprent extends Exprent {
   @Override
   public VarType getExprType() {
     return left.getExprType();
+  }
+
+  @Override
+  public VarType getInferredExprType(VarType upperBounds) {
+    return left.getInferredExprType(upperBounds);
   }
 
   @Override
@@ -89,8 +96,8 @@ public class AssignmentExprent extends Exprent {
 
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-    VarType leftType = left.getExprType();
-    VarType rightType = right.getExprType();
+    VarType leftType = left.getInferredExprType(null);
+    VarType rightType = right.getInferredExprType(leftType);
 
     boolean fieldInClassInit = false, hiddenField = false;
     if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
@@ -128,14 +135,8 @@ public class AssignmentExprent extends Exprent {
 
     TextBuffer res = right.toJava(indent, tracer);
 
-    if (condType == CONDITION_NONE &&
-        !leftType.isSuperset(rightType) &&
-        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) {
-      if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res.enclose("(", ")");
-      }
-
-      res.prepend("(" + ExprProcessor.getCastTypeName(leftType, Collections.emptyList()) + ")");
+    if (condType == CONDITION_NONE) {
+      this.wrapInCast(leftType, rightType, res, right.getPrecedence());
     }
 
     buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);

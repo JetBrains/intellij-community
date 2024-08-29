@@ -722,7 +722,7 @@ public class SimplifyExprentsHelper {
                                                                                Arrays.asList(
                                                                                  statement.getHeadexprent().getCondition(),
                                                                                  ifExit.getValue(),
-                                                                                 elseExit.getValue()), ifHeadExprBytecode), ifExit.getRetType(), ifHeadExprBytecode));
+                                                                                 elseExit.getValue()), ifHeadExprBytecode), ifExit.getRetType(), ifHeadExprBytecode, ifExit.getMethodDescriptor()));
               statement.setExprents(data);
 
               StatEdge retEdge = ifStatement.getAllSuccessorEdges().get(0);

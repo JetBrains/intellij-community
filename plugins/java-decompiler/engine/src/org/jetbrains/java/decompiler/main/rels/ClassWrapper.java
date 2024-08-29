@@ -47,7 +47,7 @@ public class ClassWrapper {
     for (StructMethod mt : classStruct.getMethods()) {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
-      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, null);
       VarProcessor varProc = new VarProcessor(classStruct, mt, md);
       DecompilerContext.startMethod(varProc);
 
