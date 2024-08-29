@@ -1,16 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
-import kotlinx.coroutines.*
 import java.io.IOException
-import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.*
@@ -18,10 +13,7 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.Throws
-import kotlin.time.Duration.Companion.seconds
 
 internal class IjentNioFileChannel private constructor(
   private val nioFs: IjentNioFileSystem,
@@ -282,24 +274,6 @@ internal class IjentNioFileChannel private constructor(
     return bytesWritten
   }
 
-  private val memoryMapCopy: Path by lazy {
-    val memoryMapCopyPath = Files.createTempFile("ijent-memory-map-copy-", null)
-    try {
-      fsBlocking {
-        downloadWholeFile(memoryMapCopyPath)
-      }
-    }
-    catch (err: Throwable) {
-      MmapCopyRegistry.tryDelete(memoryMapCopyPath)
-      throw err
-    }
-
-    // While `this` exists, its weak reference is not empty, `MmapCopyRegistry` doesn't delete the already downloaded file,
-    // and there is no reason to check if the file was deleted.
-    service<MmapCopyRegistry>().holdMemoryMapReference(memoryMapCopy, WeakReference(this@IjentNioFileChannel))
-    memoryMapCopyPath
-  }
-
   /**
    * The current implementation is a huge compromise that tries to work but can never work reliably.
    *
@@ -330,17 +304,29 @@ internal class IjentNioFileChannel private constructor(
       )
     }
 
-    val fileCopyPath = memoryMapCopy
-    val map = fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
-      localCopy.map(mode, position, size)
+    val fileCopyPath = Files.createTempFile("ijent-memory-map-copy-", null)
+    return try {
+      fsBlocking {
+        downloadWholeFile(fileCopyPath)
+      }
+
+      fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
+        localCopy.map(mode, position, size)
+      }
     }
-
-    // The API user may close the file channel and drop the reference on it.
-    // `map` must keep working.
-    // The copied file will be deleted after all maps disappear.
-    service<MmapCopyRegistry>().holdMemoryMapReference(fileCopyPath, WeakReference(map))
-
-    return map
+    finally {
+      // It's safe to delete the file copy as soon as the memory map is created. Even on Windows.
+      // https://stackoverflow.com/questions/11099295/file-flag-delete-on-close-and-memory-mapped-files/11099431#11099431
+      try {
+        Files.delete(fileCopyPath)
+      }
+      catch (err: IOException) {
+        logger<IjentNioFileSystem>().info(
+          "Failed to delete a file copy created for mmap. It does not break the IDE but leaves garbage on the disk. Path: $fileCopyPath",
+          err,
+        )
+      }
+    }
   }
 
   private suspend fun downloadWholeFile(fileCopyPath: Path) {
@@ -360,72 +346,6 @@ internal class IjentNioFileChannel private constructor(
             buffer.clear()
           }
           is IjentOpenedFile.Reader.ReadResult.EOF -> break
-        }
-      }
-    }
-  }
-
-  /** A garbage collector for file copies. */
-  @Service
-  private class MmapCopyRegistry(coroutineScope: CoroutineScope) {
-    companion object {
-      fun tryDelete(path: Path) {
-        try {
-          Files.delete(path)
-        }
-        catch (err: IOException) {
-          logger<IjentNioFileSystem>().info(
-            "Failed to delete a file copy created for mmap. It does not break the IDE but leaves garbage on the disk. Path: $path",
-            err,
-          )
-        }
-      }
-    }
-
-    private val memoryMapReferences: Queue<Pair<Path, WeakReference<Any?>>> = ConcurrentLinkedQueue()
-
-    fun holdMemoryMapReference(localFileCopyPath: Path, holder: WeakReference<Any?>) {
-      assert(localFileCopyPath !is IjentNioPath)
-      memoryMapReferences.add(localFileCopyPath to holder)
-    }
-
-    init {
-      ShutDownTracker.getInstance().registerShutdownTask {
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(Dispatchers.IO) {
-          while (true) {
-            val (path, _) = memoryMapReferences.poll() ?: break
-            launch {
-              tryDelete(path)
-            }
-          }
-        }
-      }
-
-      coroutineScope.launch {
-        while (isActive) {
-          delay(2.seconds)  // The timeout was taken at random.
-
-          val requeue = mutableListOf<Pair<Path, WeakReference<Any?>>>()
-          val deleteList = hashSetOf<Path>()
-          while (true) {
-            val pair = memoryMapReferences.poll() ?: break
-            if (pair.second.get() == null) {
-              deleteList.add(pair.first)
-            }
-            else {
-              requeue.add(pair)
-              deleteList.remove(pair.first)
-            }
-          }
-
-          memoryMapReferences.addAll(requeue)
-
-          for (path in deleteList) {
-            launch(Dispatchers.IO) {
-              tryDelete(path)
-            }
-          }
         }
       }
     }
