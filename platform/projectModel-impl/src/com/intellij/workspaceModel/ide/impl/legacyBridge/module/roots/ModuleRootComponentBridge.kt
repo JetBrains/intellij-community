@@ -29,7 +29,8 @@ class ModuleRootComponentBridge(
   private val currentModule: Module
 ) : ModuleRootManagerEx(), Disposable, ModuleRootModelBridge {
 
-  override val moduleBridge = currentModule as ModuleBridge
+  override val moduleBridge: ModuleBridge
+    get() = currentModule as ModuleBridge
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
