@@ -162,6 +162,9 @@ public final class BasicJavaDocParser {
         parseSimpleTagValue(builder, javaDocElementTypeContainer);
       }
     }
+    else if (tokenType == JavaDocTokenType.DOC_INLINE_CODE_FENCE) {
+      parseInlineCodeBlock(builder, javaDocElementTypeContainer);
+    }
     else if (tokenType == JavaDocTokenType.DOC_CODE_FENCE) {
       parseCodeBlock(builder, javaDocElementTypeContainer);
     }
@@ -171,6 +174,33 @@ public final class BasicJavaDocParser {
     else {
       remapAndAdvance(builder);
     }
+  }
+
+  private static void parseInlineCodeBlock(PsiBuilder builder,
+                                           @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+    PsiBuilder.Marker tag = builder.mark();
+    IElementType stopElementType = findInlineToken(builder, JavaDocTokenType.DOC_INLINE_CODE_FENCE);
+    int endOffset = builder.getCurrentOffset();
+    tag.rollbackTo();
+
+
+    if (stopElementType != JavaDocTokenType.DOC_INLINE_CODE_FENCE) {
+      // Bail out, no end
+      builder.advanceLexer();
+      return;
+    }
+
+    tag = builder.mark();
+    builder.advanceLexer();
+    while (builder.getCurrentOffset() < endOffset && !builder.eof()) {
+      builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
+      builder.advanceLexer();
+    }
+    if(!builder.eof()) {
+      builder.advanceLexer();
+    }
+
+    tag.done(javaDocElementTypeContainer.DOC_MARKDOWN_CODE_BLOCK);
   }
 
   private static void parseCodeBlock(PsiBuilder builder,
@@ -201,7 +231,8 @@ public final class BasicJavaDocParser {
   }
 
   /** Ensure a reference link is good before parsing it */
-  private static void parseMarkdownReferenceChecked(PsiBuilder builder, @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+  private static void parseMarkdownReferenceChecked(PsiBuilder builder,
+                                                    @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
     boolean hasLabel = true;
     PsiBuilder.Marker tag = builder.mark();
 
@@ -328,9 +359,16 @@ public final class BasicJavaDocParser {
     refStart.drop();
   }
 
+
+  private static @Nullable IElementType findInlineToken(@NotNull PsiBuilder builder, IElementType needle) {
+    return findInlineToken(builder, needle, null, false);
+  }
+
   /**
    * Look for the token provided by `needle`, taking into account markdown line break rules
-   * @param travelToken The token that is either allowed or disallowed to encounter while looking for the `needle`
+   *
+   * @param travelToken             The token that is either allowed or disallowed to encounter while looking for the `needle`
+   *                                When `null`, no check is performed
    * @param isTravelTokenDisallowed When `true`, the `travelToken` will abort the search
    *                                When `false`, encountering something other than `travelToken` or `needle` will abort the search
    * @return The last token encountered during the search.
@@ -338,7 +376,7 @@ public final class BasicJavaDocParser {
   @Contract(mutates = "param1")
   private static @Nullable IElementType findInlineToken(@NotNull PsiBuilder builder,
                                                         IElementType needle,
-                                                        IElementType travelToken,
+                                                        @Nullable IElementType travelToken,
                                                         boolean isTravelTokenDisallowed) {
     IElementType token = null;
     IElementType previousToken;
@@ -350,7 +388,7 @@ public final class BasicJavaDocParser {
         return token;
       }
       boolean travelTokenFound = travelToken == token;
-      if ((isTravelTokenDisallowed && travelTokenFound) || (!isTravelTokenDisallowed && !travelTokenFound)) {
+      if ((travelToken != null) && ((isTravelTokenDisallowed && travelTokenFound) || (!isTravelTokenDisallowed && !travelTokenFound))) {
         break;
       }
 

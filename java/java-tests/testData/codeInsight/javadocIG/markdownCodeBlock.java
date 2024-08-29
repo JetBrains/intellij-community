@@ -10,4 +10,6 @@
 ///   <markdown />
 /// </hello>
 /// ```
+/// "Inline" java code block
+/// ```System.out.println("Hello Markdown");```
 class MarkdownCodeBlock {}

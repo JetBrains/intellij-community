@@ -1866,7 +1866,11 @@ public class JavaDocInfoGenerator {
         }
       }
       else if (element instanceof PsiMarkdownCodeBlock markdownCodeBlock) {
-        appendStyledCodeBlock(subBuffer, element.getProject(), markdownCodeBlock.getCodeLanguage(), markdownCodeBlock.getCodeText());
+        if (markdownCodeBlock.isInline()) {
+          appendWrappedWithInlineCodeTag(subBuffer, markdownCodeBlock.getCodeText());
+        } else {
+          appendStyledCodeBlock(subBuffer, element.getProject(), markdownCodeBlock.getCodeLanguage(), markdownCodeBlock.getCodeText());
+        }
       }
       else if (element instanceof PsiMarkdownReferenceLink) {
         generateMarkdownLinkValue((PsiMarkdownReferenceLink)element, subBuffer);
