@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.generation.surroundWith.*;
@@ -31,7 +31,7 @@ import java.util.List;
 public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   private enum SurroundType {
     IF(new JavaWithIfSurrounder()),
     IF_ELSE(new JavaWithIfElseSurrounder()),
@@ -83,6 +83,18 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
     for (SurroundType type : SurroundType.values()) {
       doTest(String.format(template, StringUtil.capitalize(type.toFileName())), type.getSurrounder());
     }
+  }
+  
+  public void testSurroundCompleteLineWithIf() {
+    doTest(new JavaWithIfSurrounder());
+  }
+
+  public void testSurroundCompleteLineWithIfElse() {
+    doTest(new JavaWithIfElseSurrounder());
+  }
+  
+  public void testSurroundCompleteLineWithTryFinally() {
+    doTest(new JavaWithTryFinallySurrounder());
   }
 
   public void testSurroundWithStatementWithoutSelection() {
@@ -158,7 +170,7 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSurroundExpressionWithElseIfElse() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    //TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithIfElseExpressionSurrounder());
   }
 
