@@ -6,8 +6,6 @@ package com.intellij.net.ssl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
-import com.intellij.openapi.ui.DialogWrapper.MAC_ACTION_ORDER
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
@@ -16,7 +14,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.CheckboxTree.CheckboxTreeCellRenderer
-import com.intellij.ui.CheckboxTreeBase.CheckPolicy
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
@@ -79,7 +76,6 @@ internal class CertificateWarningDialog(
 
   override fun createCenterPanel(): JComponent? {
     return panel {
-      val labelsGroup = "labels"
       row {
         var error: String? = null
         certificates.forEach {
@@ -101,8 +97,7 @@ internal class CertificateWarningDialog(
         text(HtmlChunk.text(errorText).bold().toString())
       }
       if (remoteHost != null) {
-        row {
-          label(IdeBundle.message("ssl.certificate.server.address")).widthGroup(labelsGroup)
+        row(IdeBundle.message("ssl.certificate.server.address")) {
           text(remoteHost).align(AlignX.LEFT)
         }
       }
@@ -239,48 +234,43 @@ internal class CertificateWarningDialog(
   private fun updateDetails() {
     val errors = certificateErrorsMap[currentCertificate.certificate] ?: emptyList()
     detailsPlaceholder.component = panel {
-      val collapsibleGroupLabels = "collapsibleGroupLabels"
       row {
-        label(IdeBundle.message("section.title.issued.to")).align(AlignX.FILL)
+        label(IdeBundle.message("section.title.issued.to"))
       }
       indent {
-        addPrincipalData(currentCertificate.subjectFields, collapsibleGroupLabels, true)
+        addPrincipalData(currentCertificate.subjectFields, true)
       }
 
       row {
-        label(IdeBundle.message("section.title.issued.by")).align(AlignX.FILL)
+        label(IdeBundle.message("section.title.issued.by"))
       }
       indent {
-        addPrincipalData(currentCertificate.issuerFields, collapsibleGroupLabels, false)
+        addPrincipalData(currentCertificate.issuerFields, false)
       }
 
       row {
-        label(IdeBundle.message("section.title.validity.period")).align(AlignX.FILL)
+        label(IdeBundle.message("section.title.validity.period"))
       }
       indent {
         val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
-        row {
+        row(IdeBundle.message("label.valid.from")) {
           val notBefore = dateFormat.format(currentCertificate.notBefore)
-          label(IdeBundle.message("label.valid.from")).widthGroup(collapsibleGroupLabels)
           cell(createColoredComponent(notBefore, IdeBundle.message("label.certificate.not.yet.valid"), errors.contains(CertificateError.NOT_YET_VALID)))
         }
-        row {
+        row(IdeBundle.message("label.valid.until")) {
           val notAfter = dateFormat.format(currentCertificate.notAfter)
-          label(IdeBundle.message("label.valid.until")).widthGroup(collapsibleGroupLabels)
           cell(createColoredComponent(notAfter, IdeBundle.message("label.certificate.expired"), errors.contains(CertificateError.EXPIRED)))
         }
       }
 
       row {
-        label(IdeBundle.message("section.title.fingerprints")).align(AlignX.FILL)
+        label(IdeBundle.message("section.title.fingerprints"))
       }
       indent {
-        row {
-          label("SHA-256:").widthGroup(collapsibleGroupLabels)
+        row("SHA-256:") {
           text(formatHex(currentCertificate.sha256Fingerprint, true))
         }
-        row {
-          label("SHA-1:").widthGroup(collapsibleGroupLabels)
+        row("SHA-1:") {
           text(formatHex(currentCertificate.sha1Fingerprint, true))
         }
       }
@@ -299,11 +289,12 @@ internal class CertificateWarningDialog(
             .show(RelativePoint.getSouthOf(contentPanel), Balloon.Position.below)
         }
         banner.preferredSize = Dimension(300, 90)
-        cell(banner).apply {
-          align(AlignX.FILL + AlignY.BOTTOM)
-          this.customize(UnscaledGaps(top = 20))
-        }
-      }
+        cell(banner)
+          .align(AlignX.FILL)
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+          }
+      }.topGap(TopGap.SMALL)
     }
   }
 
@@ -311,7 +302,7 @@ internal class CertificateWarningDialog(
     return CertificateWrapper(cert).subjectFields[CommonField.COMMON_NAME.shortName] ?: cert.subjectX500Principal.name
   }
 
-  private fun Panel.addPrincipalData(fields: Map<String, @NlsSafe String>, labelsGroup: String, isIssuedTo: Boolean) {
+  private fun Panel.addPrincipalData(fields: Map<String, @NlsSafe String>, isIssuedTo: Boolean) {
     val errors = certificateErrorsMap[currentCertificate.certificate] ?: emptyList()
     val errorText = when {
       isIssuedTo && errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("label.certificate.self.signed")
@@ -325,9 +316,8 @@ internal class CertificateWarningDialog(
       if (field == null) {
         return@forEach
       }
-      row {
+      row(commonField.longName + ":") {
         val errorFields = if (isIssuedTo) listOf(CommonField.ORGANIZATION_UNIT, CommonField.ORGANIZATION) else listOf(CommonField.COMMON_NAME)
-        label(commonField.longName + ":").widthGroup(labelsGroup)
         val errorCondition = errorText != null && !isErrorHighlighted && errorFields.contains(commonField)
         val text = if (errorCondition) field.value + " ($errorText)" else field.value
         text(text).apply {
