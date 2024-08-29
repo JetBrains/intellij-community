@@ -2,6 +2,15 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" filepath="$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" filepath="$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" filepath="$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" filepath="$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/rpc/fleet.rpc.iml" filepath="$PROJECT_DIR$/fleet/rpc/fleet.rpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/rpc.server/fleet.rpc.server.iml" filepath="$PROJECT_DIR$/fleet/rpc.server/fleet.rpc.server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/core/fleet.util.core.iml" filepath="$PROJECT_DIR$/fleet/util/core/fleet.util.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" filepath="$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/os/fleet.util.os.iml" filepath="$PROJECT_DIR$/fleet/util/os/fleet.util.os.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" />
