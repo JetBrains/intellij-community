@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -27,7 +27,7 @@ public class GenericType extends VarType implements Type {
   public GenericType(int type, int arrayDim, String value, VarType parent, List<VarType> arguments, int wildcard) {
     super(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
     this.parent = parent;
-    this.arguments = arguments == null ? Collections.<VarType>emptyList() : arguments;
+    this.arguments = arguments == null ? Collections.emptyList() : arguments;
     this.wildcard = wildcard;
   }
 
@@ -72,7 +72,7 @@ public class GenericType extends VarType implements Type {
           }
           else {
             StringBuilder name_buff = new StringBuilder();
-            while (signature.length() > 0) {
+            while (!signature.isEmpty()) {
               String name = cl;
               String args = null;
 
@@ -82,7 +82,7 @@ public class GenericType extends VarType implements Type {
                 args = cl.substring(argStart + 1, cl.length() - 1);
               }
 
-              if (name_buff.length() > 0) {
+              if (!name_buff.isEmpty()) {
                 name_buff.append('$');
               }
               name_buff.append(name);
@@ -161,7 +161,7 @@ public class GenericType extends VarType implements Type {
 
     List<VarType> args = new ArrayList<>();
 
-    while (value.length() > 0) {
+    while (!value.isEmpty()) {
       String typeStr = getNextType(value);
       int len = typeStr.length();
       int wildcard = switch (typeStr.charAt(0)) {
@@ -175,7 +175,7 @@ public class GenericType extends VarType implements Type {
         typeStr = typeStr.substring(1);
       }
 
-      args.add(typeStr.length() == 0 ? null : GenericType.parse(typeStr, wildcard));
+      args.add(typeStr.isEmpty() ? null : GenericType.parse(typeStr, wildcard));
 
       value = value.substring(len);
     }
@@ -261,16 +261,18 @@ public class GenericType extends VarType implements Type {
   public List<TypeAnnotationWriteHelper> appendCastName(final StringBuilder clsName, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
     if (parent != null && parent.isGeneric()) {
       typeAnnWriteHelpers = ((GenericType) parent).appendCastName(clsName, typeAnnWriteHelpers);
+      clsName.append(".");
       typeAnnWriteHelpers = ExprProcessor.writeNestedTypeAnnotations(clsName, typeAnnWriteHelpers);
-      clsName.append(".").append(getValue().substring(parent.getValue().length() + 1));
+      clsName.append(getValue().substring(parent.getValue().length() + 1));
+      return appendTypeArguments(clsName, typeAnnWriteHelpers);
     }
     else {
       List<String> nestedTypes = Arrays.asList(DOT_SPLIT.split(DecompilerContext.getImportCollector().getNestedName(getValue().replace('/', '.'))));
-      ExprProcessor.writeNestedClass(clsName, this, nestedTypes, typeAnnWriteHelpers);
+      typeAnnWriteHelpers = ExprProcessor.writeNestedClass(clsName, this, nestedTypes, typeAnnWriteHelpers);
+      appendTypeArguments(clsName, typeAnnWriteHelpers);
       ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
+      return typeAnnWriteHelpers;
     }
-    typeAnnWriteHelpers = appendTypeArguments(clsName, typeAnnWriteHelpers);
-    return typeAnnWriteHelpers;
   }
 
   private List<TypeAnnotationWriteHelper> appendTypeArguments(final StringBuilder buffer, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
@@ -286,7 +288,7 @@ public class GenericType extends VarType implements Type {
         // only take type paths that are in the generic
         List<TypeAnnotationWriteHelper> locTypeAnnWriteHelpers = GenericMain.getGenericTypeAnnotations(i, typeAnnWriteHelpers);
         typeAnnWriteHelpers.removeAll(locTypeAnnWriteHelpers);
-        locTypeAnnWriteHelpers = GenericMain.writeTypeAnnotationBeforeWildCard(buffer, par, wildcard, locTypeAnnWriteHelpers);
+        locTypeAnnWriteHelpers = GenericMain.writeTypeAnnotationBeforeWildCard(buffer, par, locTypeAnnWriteHelpers);
         if (par == null) { // Wildcard unbound
           buffer.append('?');
         }

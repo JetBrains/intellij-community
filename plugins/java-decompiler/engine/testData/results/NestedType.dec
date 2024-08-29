@@ -13,7 +13,7 @@ public class NestedType {
    static class Foo {
       public void doSomething() {
          Bar fooBar = new Bar();// 16
-         FooBar.Bar<String, String> fooBarBar = new FooBar.Bar();// 17
+         FooBar.Bar<String, String> fooBarBar = new FooBar.Bar<String, String>();// 17
          System.out.println(fooBar);// 18
          System.out.println(fooBarBar);// 19
       }// 20
@@ -25,7 +25,7 @@ public class NestedType {
    static class FooBar<T> {
       public void doSomething() {
          Foo.Bar fooBar = new Foo.Bar();// 27
-         Bar<String, String> fooBarBar = new Bar();// 28
+         Bar<String, String> fooBarBar = new Bar<String, String>();// 28
          System.out.println(fooBar);// 29
          System.out.println(fooBarBar);// 30
       }// 31

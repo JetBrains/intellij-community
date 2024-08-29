@@ -5,7 +5,6 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -77,10 +76,10 @@ public class an implements am {
    }
 
    public void a(k<ak> var1) {
-      var1.a((Object)this.g);
-      var1.a((Collection)this.a());
-      var1.a((Object)this.i);
-      var1.a((Object)this.j);
+      var1.a(this.g);
+      var1.a(this.a());
+      var1.a(this.i);
+      var1.a(this.j);
    }
 
    public List<ao> b() {

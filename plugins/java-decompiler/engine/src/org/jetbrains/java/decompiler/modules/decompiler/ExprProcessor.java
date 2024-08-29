@@ -23,6 +23,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -710,7 +711,7 @@ public class ExprProcessor {
         return UNDEFINED_TYPE_STRING; // FIXME: a warning should be logged
       }
       List<String> nestedTypes = Arrays.asList(ret.split("\\."));
-      writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
+      typeAnnWriteHelpers = writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
       popNestedTypeAnnotation(typeAnnWriteHelpers);
       return sb.toString();
     }
@@ -782,9 +783,16 @@ public class ExprProcessor {
   public static boolean canWriteNestedTypeAnnotation(String curPath, List<String> nestedTypes) {
     if (nestedTypes.isEmpty()) return true;
     String fullName = curPath + nestedTypes.get(0);
-    ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName);
-    if (classNode == null) return false;
-    return (classNode.access & CodeConstants.ACC_STATIC) == 0 && canWriteNestedTypeAnnotation(fullName + "$", nestedTypes.subList(1, nestedTypes.size()));
+    StructClass currentClass = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
+    StructInnerClassesAttribute attribute = currentClass.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
+    if (attribute == null) return false;
+    Optional<StructInnerClassesAttribute.Entry> first = attribute.getEntries().stream()
+      .filter(t -> t.innerName != null && t.innerName.equals(fullName))
+      .findFirst();
+    if (first.isEmpty()) return false;
+    StructInnerClassesAttribute.Entry entry = first.get();
+    return (entry.accessFlags & CodeConstants.ACC_STATIC) == 0 &&
+           canWriteNestedTypeAnnotation(fullName + "$", nestedTypes.subList(1, nestedTypes.size()));
   }
 
   public static List<ClassesProcessor.ClassNode> enclosingClassList() {

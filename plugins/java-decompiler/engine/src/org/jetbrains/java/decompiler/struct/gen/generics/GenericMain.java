@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -37,7 +37,7 @@ public final class GenericMain {
       descriptor.superclass = GenericType.parse(superCl);
 
       signature = signature.substring(superCl.length());
-      while (signature.length() > 0) {
+      while (!signature.isEmpty()) {
         String superIf = GenericType.getNextType(signature);
         descriptor.superinterfaces.add(GenericType.parse(superIf));
         signature = signature.substring(superIf.length());
@@ -81,7 +81,7 @@ public final class GenericMain {
       signature = signature.substring(to + 1);
 
       List<VarType> parameterTypes = new ArrayList<>();
-      while (parameters.length() > 0) {
+      while (!parameters.isEmpty()) {
         String par = GenericType.getNextType(parameters);
         parameterTypes.add(GenericType.parse(par));
         parameters = parameters.substring(par.length());
@@ -92,7 +92,7 @@ public final class GenericMain {
       signature = signature.substring(ret.length());
 
       List<VarType> exceptionTypes = new ArrayList<>();
-      if (signature.length() > 0) {
+      if (!signature.isEmpty()) {
         String[] exceptions = signature.split("\\^");
         for (int i = 1; i < exceptions.length; i++) {
           exceptionTypes.add(GenericType.parse(exceptions[i]));
@@ -133,7 +133,7 @@ public final class GenericMain {
     String value = signature.substring(1, index);
     signature = signature.substring(index + 1);
 
-    while (value.length() > 0) {
+    while (!value.isEmpty()) {
       int to = value.indexOf(":");
 
       String param = value.substring(0, to);
@@ -152,7 +152,7 @@ public final class GenericMain {
         value = value.substring(bound.length());
 
 
-        if (value.length() == 0 || value.charAt(0) != ':') {
+        if (value.isEmpty() || value.charAt(0) != ':') {
           break;
         }
         else {
@@ -214,12 +214,12 @@ public final class GenericMain {
   public static List<TypeAnnotationWriteHelper> writeTypeAnnotationBeforeWildCard(
     StringBuilder sb,
     VarType type,
-    int wildcard,
     List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
   ) {
     return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
       StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
-      if (wildcard != GenericType.WILDCARD_NO && path == null) {
+      if ((type instanceof GenericType genericType && genericType.getWildcard() != GenericType.WILDCARD_NO ||
+           type == null) && path == null) {
         typeAnnWriteHelper.writeTo(sb);
         return false;
       }

@@ -224,7 +224,7 @@ public class a5 {
                      if (var300 <= var1) {
                         var10000[4] = (new String(var97)).intern();
                         b = var10000;
-                        a = y.a(ai.class);
+                        a = y.<ai>a(ai.class);
                         return;
                      }
 
@@ -260,7 +260,7 @@ public class a5 {
                         if (var100 <= var1) {
                            var10000[4] = (new String(var105)).intern();
                            b = var10000;
-                           a = y.a(ai.class);
+                           a = y.<ai>a(ai.class);
                            return;
                         }
 
@@ -389,7 +389,7 @@ public class a5 {
                         if (var280 <= var1) {
                            var10000[4] = (new String(var83)).intern();
                            b = var10000;
-                           a = y.a(ai.class);
+                           a = y.<ai>a(ai.class);
                            return;
                         }
 
@@ -425,7 +425,7 @@ public class a5 {
                            if (var86 <= var1) {
                               var10000[4] = (new String(var105)).intern();
                               b = var10000;
-                              a = y.a(ai.class);
+                              a = y.<ai>a(ai.class);
                               return;
                            }
 
@@ -665,7 +665,7 @@ public class a5 {
                         if (var240 <= var1) {
                            var10000[4] = (new String(var55)).intern();
                            b = var10000;
-                           a = y.a(ai.class);
+                           a = y.<ai>a(ai.class);
                            return;
                         }
 
@@ -701,7 +701,7 @@ public class a5 {
                            if (var58 <= var1) {
                               var10000[4] = (new String(var105)).intern();
                               b = var10000;
-                              a = y.a(ai.class);
+                              a = y.<ai>a(ai.class);
                               return;
                            }
 
@@ -830,7 +830,7 @@ public class a5 {
                            if (var220 <= var1) {
                               var10000[4] = (new String(var41)).intern();
                               b = var10000;
-                              a = y.a(ai.class);
+                              a = y.<ai>a(ai.class);
                               return;
                            }
 
@@ -866,7 +866,7 @@ public class a5 {
                               if (var44 <= var1) {
                                  var10000[4] = (new String(var105)).intern();
                                  b = var10000;
-                                 a = y.a(ai.class);
+                                 a = y.<ai>a(ai.class);
                                  return;
                               }
 

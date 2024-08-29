@@ -89,7 +89,7 @@ public interface IFernflowerPreferences {
     defaults.put(CONVERT_RECORD_PATTERN, "0");
     defaults.put(CONVERT_PATTERN_SWITCH, "0");
 
-    defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
+    defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "0");
     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());

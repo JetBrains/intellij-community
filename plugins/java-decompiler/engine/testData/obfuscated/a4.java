@@ -112,7 +112,7 @@ public class a4 implements ac {
             var10000[1] = (new String(var9)).intern();
             c = var10000;
             a = false;
-            b = y.a(ad.class);
+            b = y.<ad>a(ad.class);
             return;
          }
 
@@ -150,7 +150,7 @@ public class a4 implements ac {
                var10000[1] = (new String(var17)).intern();
                c = var10000;
                a = false;
-               b = y.a(ad.class);
+               b = y.<ad>a(ad.class);
                return;
             }
 

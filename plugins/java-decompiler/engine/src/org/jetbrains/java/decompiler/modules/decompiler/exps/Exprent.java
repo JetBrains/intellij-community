@@ -249,7 +249,8 @@ public abstract class Exprent implements IMatchable {
   }
 
   protected void wrapInCast(VarType left, VarType right, TextBuffer buf, int precedence) {
-    boolean needsCast = !left.isSuperset(right) && (right.equals(VarType.VARTYPE_OBJECT) || left.getType() != CodeConstants.TYPE_OBJECT);
+    boolean needsCast =
+      (left != null && !left.isSuperset(right)) && (right.equals(VarType.VARTYPE_OBJECT) || left.getType() != CodeConstants.TYPE_OBJECT);
 
     if (left != null && left.isGeneric()) {
       Map<VarType, List<VarType>> names = this.getNamedGenerics();

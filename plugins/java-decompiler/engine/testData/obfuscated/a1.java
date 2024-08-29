@@ -86,6 +86,6 @@ public class a1 implements a0 {
    }
 
    public o e(String var1) throws XPathExpressionException {
-      return o.b((Object)this.d(var1));
+      return o.b(this.d(var1));
    }
 }

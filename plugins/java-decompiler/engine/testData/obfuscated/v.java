@@ -78,7 +78,7 @@ public class v {
 
    public <I> I a(Class<I> var1) {
       try {
-         return a(var1.newInstance());
+         return (I)a(var1.newInstance());
       } catch (Throwable var3) {
          throw new IllegalArgumentException(var3);
       }

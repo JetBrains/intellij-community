@@ -14,8 +14,8 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
-public class ClasspathScanner {
+//todo support path from idea?
+public final class ClasspathScanner {
 
     public static void addAllClasspath(StructContext ctx) {
       Set<String> found = new HashSet<>();
@@ -53,7 +53,7 @@ public class ClasspathScanner {
             DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
             try {
               Optional<ByteBuffer> bb = reader.read(cls);
-              if (!bb.isPresent()) {
+              if (bb.isEmpty()) {
                 DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
                 return;
               }

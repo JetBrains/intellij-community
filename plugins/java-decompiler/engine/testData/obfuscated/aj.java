@@ -101,7 +101,7 @@ public class aj implements am {
                Long var7 = (Long)this.b.get(var6.getKey());
                if (var7 != null) {
                   double var8 = (double)(((Long)var6.getValue() - var7) * 10L) / (double)var3;
-                  var1.a((Object)(new ar(h[1], (String)var6.getKey(), "%", var8 * 100.0)));
+                  var1.a(new ar(h[1], (String)var6.getKey(), "%", var8 * 100.0));
                }
             }
          }

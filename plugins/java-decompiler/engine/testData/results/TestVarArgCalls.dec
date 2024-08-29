@@ -17,11 +17,11 @@ public class TestVarArgCalls {
    }// 20
 
    public void printAll(String fmt, String... params) {
-      System.out.println(String.format(fmt, params));// 23
+      System.out.println(String.format(fmt, (Object[])params));// 23
    }// 24
 
    public void printComplex(String fmt, String[]... params) {
-      System.out.println(String.format(fmt, params));// 27
+      System.out.println(String.format(fmt, (Object[])params));// 27
    }// 28
 }
 

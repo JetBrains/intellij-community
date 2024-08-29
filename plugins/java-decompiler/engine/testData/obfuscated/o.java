@@ -199,7 +199,7 @@ public class o {
    public <E extends Enum<E>> E a(Class<E> var1) {
       try {
          if (this.a == null) {
-            return null;
+            return (E)null;
          }
       } catch (Exception var4) {
          throw var4;
@@ -207,16 +207,16 @@ public class o {
 
       try {
          if (var1.isAssignableFrom(this.a.getClass())) {
-            return (Enum)this.a;
+            return (E)(this.a);
          }
       } catch (Exception var5) {
          throw var5;
       }
 
       try {
-         return Enum.valueOf(var1, String.valueOf(this.a));
+         return (E)Enum.valueOf(var1, String.valueOf(this.a));
       } catch (Exception var3) {
-         return null;
+         return (E)null;
       }
    }
 

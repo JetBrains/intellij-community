@@ -154,6 +154,7 @@ public class InvocationExprent extends Exprent {
 
     addBytecodeOffsets(expr.bytecode);
     bootstrapArguments = expr.getBootstrapArguments();
+    genericArgs = expr.genericArgs;
   }
 
   @Override
@@ -385,28 +386,28 @@ public class InvocationExprent extends Exprent {
     }
     List<StructMethod> matches = getMatchedDescriptors();
     BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
-    StructMethod desc = null;
-    if(matches.size() == 1) {
-      desc = matches.get(0);
-    }
+    //StructMethod desc = null;
+    //if(matches.size() == 1) {
+    //  desc = matches.get(0);
+    //}
 
-    StructClass cl = DecompilerContext.getStructContext().getClass(className);
-    Map<VarType, VarType> genArgs = new HashMap<>();
+    //StructClass cl = DecompilerContext.getStructContext().getClass(className);
+    //Map<VarType, VarType> genArgs = new HashMap<>();
 
     // building generic info from the instance
-    VarType inferred = instance == null ? null : instance.getInferredExprType(null);
-    if (cl != null && cl.getSignature() != null && instance != null && inferred.isGeneric()) {
-      GenericType genType = (GenericType)inferred;
-      if (genType.getArguments().size() == cl.getSignature().fparameters.size()) {
-        for (int i = 0; i < cl.getSignature().fparameters.size(); i++) {
-          VarType from = GenericType.parse("T" + cl.getSignature().fparameters.get(i) + ";");
-          VarType to = genType.getArguments().get(i);
-          if (from != null && to != null) {
-            genArgs.put(from, to);
-          }
-        }
-      }
-    }
+    //VarType inferred = instance == null ? null : instance.getInferredExprType(null);
+    //if (cl != null && cl.getSignature() != null && instance != null && inferred.isGeneric()) {
+    //  GenericType genType = (GenericType)inferred;
+    //  if (genType.getArguments().size() == cl.getSignature().fparameters.size()) {
+    //    for (int i = 0; i < cl.getSignature().fparameters.size(); i++) {
+    //      VarType from = GenericType.parse("T" + cl.getSignature().fparameters.get(i) + ";");
+    //      VarType to = genType.getArguments().get(i);
+    //      if (from != null && to != null) {
+    //        genArgs.put(from, to);
+    //      }
+    //    }
+    //  }
+    //}
 
     // omit 'new Type[] {}' for the last parameter of a vararg method call
     if (parameters.size() == descriptor.params.length && isVarArgCall()) {
