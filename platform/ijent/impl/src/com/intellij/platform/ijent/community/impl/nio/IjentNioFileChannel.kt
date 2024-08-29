@@ -20,7 +20,6 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.Throws
 import kotlin.time.Duration.Companion.seconds
 
@@ -283,13 +282,23 @@ internal class IjentNioFileChannel private constructor(
     return bytesWritten
   }
 
-  /**
-   * Holds an already created file copy, suitable for opening more than one memory map for the same file.
-   *
-   * The first element of a pair is a path to a local copy of the remote file.
-   * The second element is a job that copies the file from the client to the server.
-   */
-  private var memoryMap: AtomicReference<Pair<Path, Job>?> = AtomicReference(null)
+  private val memoryMapCopy: Path by lazy {
+    val memoryMapCopyPath = Files.createTempFile("ijent-memory-map-copy-", null)
+    try {
+      fsBlocking {
+        downloadWholeFile(memoryMapCopyPath)
+      }
+    }
+    catch (err: Throwable) {
+      MmapCopyRegistry.tryDelete(memoryMapCopyPath)
+      throw err
+    }
+
+    // While `this` exists, its weak reference is not empty, `MmapCopyRegistry` doesn't delete the already downloaded file,
+    // and there is no reason to check if the file was deleted.
+    service<MmapCopyRegistry>().holdMemoryMapReference(memoryMapCopy, WeakReference(this@IjentNioFileChannel))
+    memoryMapCopyPath
+  }
 
   /**
    * The current implementation is a huge compromise that tries to work but can never work reliably.
@@ -321,39 +330,17 @@ internal class IjentNioFileChannel private constructor(
       )
     }
 
-    val mmapCopyRegistry = service<MmapCopyRegistry>()
-    return fsBlocking {
-      val pathCreatedHere = Files.createTempFile("ijent-memory-map-copy-", null)
-      var deletePathCreatedHere = true
-
-      try {
-        coroutineScope {
-          val fileCopyDeferredCreatedHere: Job = launch(start = CoroutineStart.LAZY) {
-            downloadWholeFile(pathCreatedHere)
-          }
-
-          val (fileCopyPath: Path, fileCopyDeferred: Job) = memoryMap.updateAndGet { actual ->
-            actual ?: (pathCreatedHere to fileCopyDeferredCreatedHere)
-          }!!
-
-          fileCopyDeferred.join()
-
-          val map = fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
-            localCopy.map(mode, position, size)
-          }
-          mmapCopyRegistry.holdMemoryMapReference(fileCopyPath, map)
-
-          deletePathCreatedHere = fileCopyDeferred != fileCopyDeferredCreatedHere
-
-          map
-        }
-      }
-      finally {
-        if (deletePathCreatedHere) {
-          MmapCopyRegistry.tryDelete(pathCreatedHere)
-        }
-      }
+    val fileCopyPath = memoryMapCopy
+    val map = fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
+      localCopy.map(mode, position, size)
     }
+
+    // The API user may close the file channel and drop the reference on it.
+    // `map` must keep working.
+    // The copied file will be deleted after all maps disappear.
+    service<MmapCopyRegistry>().holdMemoryMapReference(fileCopyPath, WeakReference(map))
+
+    return map
   }
 
   private suspend fun downloadWholeFile(fileCopyPath: Path) {
@@ -395,12 +382,11 @@ internal class IjentNioFileChannel private constructor(
       }
     }
 
-    private val memoryMapReferences: Queue<Pair<Path, WeakReference<MappedByteBuffer>>> =
-      ConcurrentLinkedQueue<Pair<Path, WeakReference<MappedByteBuffer>>>()
+    private val memoryMapReferences: Queue<Pair<Path, WeakReference<Any?>>> = ConcurrentLinkedQueue()
 
-    fun holdMemoryMapReference(localFileCopyPath: Path, buffer: MappedByteBuffer) {
+    fun holdMemoryMapReference(localFileCopyPath: Path, holder: WeakReference<Any?>) {
       assert(localFileCopyPath !is IjentNioPath)
-      memoryMapReferences.add(localFileCopyPath to WeakReference(buffer))
+      memoryMapReferences.add(localFileCopyPath to holder)
     }
 
     init {
@@ -420,8 +406,8 @@ internal class IjentNioFileChannel private constructor(
         while (isActive) {
           delay(2.seconds)  // The timeout was taken at random.
 
-          val requeue = mutableListOf<Pair<Path, WeakReference<MappedByteBuffer>>>()
-          val deleteList = mutableListOf<Path>()
+          val requeue = mutableListOf<Pair<Path, WeakReference<Any?>>>()
+          val deleteList = hashSetOf<Path>()
           while (true) {
             val pair = memoryMapReferences.poll() ?: break
             if (pair.second.get() == null) {
@@ -429,6 +415,7 @@ internal class IjentNioFileChannel private constructor(
             }
             else {
               requeue.add(pair)
+              deleteList.remove(pair.first)
             }
           }
 
