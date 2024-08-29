@@ -142,9 +142,9 @@ fun doPatchPluginXml(
     Span.current().addEvent("patch $pluginModuleName for WebStorm")
     val pluginName = rootElement.getChild("name")
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
-    pluginName.text = "Database Tools and SQL for WebStorm & RustRover"
+    pluginName.text = "Database Tools and SQL for WebStorm"
     val description = rootElement.getChild("description")
-    val replaced1 = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm and RustRover")
+    val replaced1 = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
     check(replaced1) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
 
     val oldText = "The plugin provides all the same features as <a href=\"https://www.jetbrains.com/datagrip/\">DataGrip</a>, the standalone JetBrains IDE for databases."
