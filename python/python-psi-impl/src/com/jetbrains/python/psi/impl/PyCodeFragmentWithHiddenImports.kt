@@ -1,54 +1,37 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.PsiScopeProcessor
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyImportStatementBase
+import org.jetbrains.annotations.ApiStatus
 
-class PyCodeFragmentWithHiddenImports @JvmOverloads constructor(
-  project: Project,
-  name: String,
-  text: CharSequence,
-  isPhysical: Boolean,
-  supportsHiddenImports: Boolean = false,
-) : PyExpressionCodeFragmentImpl(project, name, text, isPhysical) {
+@ApiStatus.Internal
+open class PyCodeFragmentWithHiddenImports(project: Project, name: String, text: CharSequence, isPhysical: Boolean)
+  : PyExpressionCodeFragmentImpl(project, name, text, isPhysical) {
 
-  private var myPseudoImportsFragment =
-    if (supportsHiddenImports)
-      PyCodeFragmentWithHiddenImports(project, "imports.py", "", isPhysical, supportsHiddenImports = false).also {
-        it.context = super.getContext()
-        super.setContext(it)
-      }
-    else null
+  private val _pseudoImports = mutableListOf<PyImportStatementBase>()
 
-  /**
-   * @return the file where imports should be placed. Either `this` or hidden file for imports
-   */
-  fun getImportContext(): PyCodeFragmentWithHiddenImports = myPseudoImportsFragment ?: this
-  override fun getRealContext(): PsiElement? = getImportContext().context
+  val pseudoImports get(): List<PyImportStatementBase> = _pseudoImports
 
-  override fun setContext(context: PsiElement?) {
-    if (myPseudoImportsFragment != null) {
-      myPseudoImportsFragment!!.context = context
-    } else {
-      super.setContext(context)
-    }
+  fun addImports(pseudoImports: Collection<PyImportStatementBase>) {
+    _pseudoImports.addAll(pseudoImports)
+    clearCaches()
+    myManager.beforeChange(false) // drops resolve caches
   }
 
-  override fun processDeclarations(
-    processor: PsiScopeProcessor,
-    state: ResolveState,
-    lastParent: PsiElement?,
-    place: PsiElement,
-  ): Boolean {
-    myPseudoImportsFragment?.processDeclarations(processor, state, lastParent, place)
-    return super.processDeclarations(processor, state, lastParent, place)
+  fun addImportsFromStrings(importStatements: Collection<String>) {
+    val generator = PyElementGenerator.getInstance(project)
+    val langLevel = LanguageLevel.forElement(this)
+    importStatements
+      .map { generator.createFromText(langLevel, PyImportStatementBase::class.java, it) }
+      .let { addImports(it) }
   }
 
   override fun clone(): PyCodeFragmentWithHiddenImports {
     val clone = super.clone() as PyCodeFragmentWithHiddenImports
-    clone.myPseudoImportsFragment = myPseudoImportsFragment?.clone()
-    clone.context = clone.myPseudoImportsFragment ?: clone.context
+    clone._pseudoImports.clear()
+    clone._pseudoImports.addAll(_pseudoImports)
     return clone
   }
 }

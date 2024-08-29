@@ -17,10 +17,11 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyVersionAwareElementVisitor;
-import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,6 +223,20 @@ public class ScopeImpl implements Scope {
     }
     else {
       languageLevel = null;
+    }
+    if (myFlowOwner instanceof PyCodeFragmentWithHiddenImports fragment) {
+      var pseudoImports = fragment.getPseudoImports();
+      for (PyImportStatementBase importStmt : pseudoImports) {
+        importStmt.accept(new PyVersionAwareElementVisitor(languageLevel) {
+          @Override
+          public void visitPyElement(@NotNull PyElement node) {
+           if (node instanceof PyImportedNameDefiner definer) {
+             importedNameDefiners.add(definer);
+           }
+           super.visitPyElement(node);
+          }
+        });
+      }
     }
     myFlowOwner.acceptChildren(new PyVersionAwareElementVisitor(languageLevel) {
       @Override
