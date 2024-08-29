@@ -1,6 +1,0 @@
-#include "resource.h"
-#define RT_MANIFEST 24
-
-IDI_WINLAUNCHER         ICON                    "WinLauncher.ico"
-
-1 RT_MANIFEST "WinLauncher.manifest"

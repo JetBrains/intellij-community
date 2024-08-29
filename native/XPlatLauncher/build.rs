@@ -13,6 +13,7 @@ use {
     std::io::Read,
     std::path::{Path, PathBuf},
     std::process::Command,
+    winresource::WindowsResource,
 };
 
 #[cfg(target_os = "windows")]
@@ -278,18 +279,18 @@ fn embed_metadata() -> Result<()> {
     let cargo_root_env_var = env::var("CARGO_MANIFEST_DIR")?;
     let cargo_root = PathBuf::from(cargo_root_env_var);
 
+    let mut res = WindowsResource::new();
+
     let manifest_relative_path = "resources/windows/WinLauncher.manifest";
     assert_exists_and_file(&cargo_root.join(manifest_relative_path))?;
     cargo!("rerun-if-changed={manifest_relative_path}");
+    res.set_manifest_file(manifest_relative_path);
 
     let icon_relative_path = "resources/windows/WinLauncher.ico";
     assert_exists_and_file(&cargo_root.join(icon_relative_path))?;
 
-    let rc_relative_path = "resources/windows/WinLauncher.rc";
-    assert_exists_and_file(&cargo_root.join(rc_relative_path))?;
-    embed_resource::compile(rc_relative_path, embed_resource::NONE);
-
-    Ok(())
+    res.set_icon_with_id(icon_relative_path, "2000");  // see `resources/windows/resource.h`
+    res.compile().context("Failed to embed resources")
 }
 
 #[cfg(target_os = "windows")]
