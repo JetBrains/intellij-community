@@ -1,4 +1,4 @@
-// ERROR: Function 'public' exposes its 'internal' parameter type 'Foo'.
+// ERROR: 'public' function exposes its 'internal' parameter type 'Foo'.
 internal interface Foo
 
 class Bar {

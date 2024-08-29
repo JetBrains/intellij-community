@@ -1,4 +1,4 @@
-// ERROR: Subclass 'public' exposes its 'internal' supertype 'Base'.
+// ERROR: 'public' subclass exposes its 'internal' supertype 'Base'.
 internal abstract class Base {
     abstract fun test()
 }
