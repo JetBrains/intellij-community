@@ -1491,7 +1491,18 @@ public final class SwitchPatternHelper {
           upperDoStatement.getParent().replaceStatement(upperDoStatement, statement);
         }
         else {
+          List<StatEdge> continueEdges = upperDoStatement.getPredecessorEdges(EdgeType.CONTINUE);
           upperDoStatement.getParent().replaceStatement(upperDoStatement, switchStatement);
+          for (StatEdge edge : switchStatement.getPredecessorEdges(EdgeType.CONTINUE)) {
+            Statement source = edge.getSource();
+            if (continueEdges.contains(edge) && upperDoStatement.containsStatement(source)) {
+              source.removeSuccessor(edge);
+              source.getParent().getStats().removeWithKey(source.id);
+              for (StatEdge predecessorEdge : source.getAllPredecessorEdges()) {
+                predecessorEdge.getSource().removeSuccessor(predecessorEdge);
+              }
+            }
+          }
         }
         normalizeCaseLabels(switchStatement, upperDoStatement);
       }

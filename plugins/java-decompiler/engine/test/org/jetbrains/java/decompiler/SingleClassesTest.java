@@ -147,9 +147,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testComplexInstanceOfRecordPatternJavac() { doTest("pkg/TestComplexInstanceOfRecordPatternJavac"); }
   @Test public void testSwitchWithDeconstructionsWithoutNestedJavac() { doTest("pkg/TestSwitchWithDeconstructionsWithoutNestedJavac"); }
 
-  //todo fix after merging
   //todo fix nested variables
-  //@Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
+  @Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
   @Test public void testSwitchWrapReturnJavac() { doTest("pkg/TestSwitchWrapReturnJavac"); }
 
   // TODO: fix all below
