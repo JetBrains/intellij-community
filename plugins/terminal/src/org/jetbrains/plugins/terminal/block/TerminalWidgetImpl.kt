@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -176,5 +174,3 @@ internal class TerminalWidgetImpl(
     }
   }
 }
-
-internal val LOG: Logger = logger<TerminalWidgetImpl>()

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.terminal.TerminalStartupMoment
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
@@ -26,7 +27,7 @@ internal class BlockTerminalResponsivenessReporter(
     val durationToReadyPrompt = startupMoment.elapsedNow()
     val metrics = listOf(DurationType.FROM_STARTUP_TO_SHOWN_CURSOR to durationToCursorShownInInitializationBlock,
                          DurationType.FROM_STARTUP_TO_READY_PROMPT to durationToReadyPrompt)
-    LOG.info("${shellType} new terminal started fully (" + metrics.joinToString { formatMessage(it.first, it.second) } + ")")
+    thisLogger().info("${shellType} new terminal started fully (" + metrics.joinToString { formatMessage(it.first, it.second) } + ")")
     metrics.forEach {
       TerminalUsageTriggerCollector.logBlockTerminalStepDuration(project, shellType, it.first, it.second.toKotlinDuration())
     }
