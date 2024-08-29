@@ -22,7 +22,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 23)
+  private val GROUP = EventLogGroup(GROUP_ID, 24)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -68,11 +68,11 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                         "Fired each time when command is started")
 
 
-  private val stepDurationEvent = GROUP.registerEvent("terminal.step.duration",
-                                                      SHELL_TYPE_FIELD,
-                                                      EventFields.Enum<DurationType>("duration_type"),
-                                                      EventFields.DurationMs,
-                                                      "Logs performance/responsiveness metrics")
+  private val timespanFinishedEvent = GROUP.registerEvent("terminal.timespan.finished",
+                                                          SHELL_TYPE_FIELD,
+                                                          EventFields.Enum<TimeSpanType>("time_span_type"),
+                                                          EventFields.DurationMs,
+                                                          "Logs performance/responsiveness metrics")
 
   private val commandFinishedEvent = GROUP.registerVarargEvent("terminal.command.finished",
                                                                "Fired each time when command is finished. New Terminal only.",
@@ -105,8 +105,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  internal fun logBlockTerminalStepDuration(project: Project, shellType: ShellType, durationType: DurationType, duration: Duration) {
-    stepDurationEvent.log(project, shellType, durationType, duration.inWholeMilliseconds)
+  internal fun logBlockTerminalTimeSpanFinished(project: Project, shellType: ShellType, timeSpanType: TimeSpanType, duration: Duration) {
+    timespanFinishedEvent.log(project, shellType, timeSpanType, duration.inWholeMilliseconds)
   }
 
   fun triggerCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
@@ -229,7 +229,7 @@ enum class TerminalCommandGenerationEvent {
   MODE_ENABLED, MODE_DISABLED, GENERATION_FINISHED, GENERATION_INTERRUPTED, GENERATION_FAILED
 }
 
-internal enum class DurationType(val description: String) {
+internal enum class TimeSpanType(val description: String) {
   FROM_STARTUP_TO_SHOWN_CURSOR("time from startup to terminal cursor shown in initialization block"),
   FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input")
 }
