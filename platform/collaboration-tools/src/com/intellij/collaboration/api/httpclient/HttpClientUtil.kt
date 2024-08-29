@@ -4,17 +4,18 @@ package com.intellij.collaboration.api.httpclient
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_GZIP
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
 import com.intellij.collaboration.api.logName
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import java.io.*
+import java.io.InputStream
+import java.io.Reader
+import java.io.StringReader
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.net.http.HttpResponse.BodyHandler
-import java.net.http.HttpResponse.ResponseInfo
+import java.net.http.HttpResponse.*
 import java.nio.ByteBuffer
 import java.util.concurrent.Flow
 import java.util.zip.GZIPInputStream
@@ -54,7 +55,7 @@ object HttpClientUtil {
    */
   private fun responseReaderWithLogging(logger: Logger, requestName: String, stream: InputStream): Reader {
     if (logger.isTraceEnabled) {
-      val body = stream.reader().readText()
+      val body = stream.reader().use { it.readText() }
       logger.trace("$requestName : Response body: $body")
       return StringReader(body)
     }
@@ -65,30 +66,15 @@ object HttpClientUtil {
    * Reads the request response if the request completed successfully, otherwise throws [HttpStatusErrorException]
    * Response status is always logged, response body is logged when tracing is enabled in logger
    */
-  fun <T> readSuccessResponseWithLogging(logger: Logger,
-                                         request: HttpRequest,
-                                         responseInfo: ResponseInfo,
-                                         bodyStream: InputStream,
-                                         reader: (Reader) -> T): T {
+  fun <T> readSuccessResponseWithLogging(
+    logger: Logger,
+    request: HttpRequest,
+    responseInfo: ResponseInfo,
+    bodyStream: InputStream,
+    reader: (Reader) -> T,
+  ): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
-    return responseReaderWithLogging(logger, request.logName(), bodyStream).use {
-      val result = reader(it)
-
-      // Ensure that the reader is finished reading.
-      // Otherwise, a subscription canceled exception will be thrown by Http1AsyncReceiver,
-      // cascading into 'chunked transfer encoding, state: READING_LENGTH'.
-      // See also: java.net.http.HttpResponse.BodySubscribers.ofInputStream
-      // and: jdk.internal.net.http.Http1AsyncReceiver.handlePendingDelegate
-      // and: https://youtrack.jetbrains.com/issue/IJPL-148688
-      try {
-        it.copyTo(Writer.nullWriter())
-      }
-      catch (ioe: IOException) {
-        // thrown if the stream was closed, so we don't need to do anything more
-      }
-
-      result
-    }
+    return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
   }
 
   /**
@@ -104,7 +90,7 @@ object HttpClientUtil {
   fun <T> inflateAndReadWithErrorHandlingAndLogging(
     logger: Logger,
     request: HttpRequest,
-    mapToResult: (Reader, ResponseInfo) -> T
+    mapToResult: (Reader, ResponseInfo) -> T,
   ): BodyHandler<T> = InflatedStreamReadingBodyHandler { responseInfo, bodyStream ->
     readSuccessResponseWithLogging(logger, request, responseInfo, bodyStream) { reader ->
       mapToResult(reader, responseInfo)
@@ -130,7 +116,7 @@ object HttpClientUtil {
 
 
 class ByteArrayProducingBodyPublisher(
-  private val producer: () -> ByteArray
+  private val producer: () -> ByteArray,
 ) : HttpRequest.BodyPublisher {
 
   override fun subscribe(subscriber: Flow.Subscriber<in ByteBuffer>) {
@@ -140,26 +126,35 @@ class ByteArrayProducingBodyPublisher(
   override fun contentLength(): Long = -1
 }
 
+@Deprecated("Should be replaced by a Ktor HTTP-client by 24.3")
+class LazyBodyHandler<T>(
+  private val delegate: BodyHandler<T>
+) : BodyHandler<() -> T> {
+  override fun apply(responseInfo: ResponseInfo?): BodySubscriber<(() -> T)?>? =
+    BodySubscribers.mapping(delegate.apply(responseInfo)) {
+      { it }
+    }
+}
 
 class InflatedStreamReadingBodyHandler<T>(
-  private val streamReader: (responseInfo: ResponseInfo, bodyStream: InputStream) -> T
-) : HttpResponse.BodyHandler<T> {
+  private val streamReader: (responseInfo: ResponseInfo, bodyStream: InputStream) -> T,
+) : BodyHandler<T> {
 
-  override fun apply(responseInfo: ResponseInfo): HttpResponse.BodySubscriber<T> {
-    val inputStreamSubscriber = HttpResponse.BodySubscribers.ofInputStream()
+  override fun apply(responseInfo: ResponseInfo): BodySubscriber<T> {
+    val inputStreamSubscriber = BodySubscribers.ofInputStream()
 
     val isGzipContent = responseInfo.headers()
       .allValues(CONTENT_ENCODING_HEADER)
       .contains(CONTENT_ENCODING_GZIP)
 
     val subscriber = if (isGzipContent) {
-      HttpResponse.BodySubscribers.mapping<InputStream?, InputStream?>(inputStreamSubscriber, ::GZIPInputStream)
+      BodySubscribers.mapping<InputStream?, InputStream?>(inputStreamSubscriber, ::GZIPInputStream)
     }
     else {
       inputStreamSubscriber
     }
 
-    return HttpResponse.BodySubscribers.mapping(subscriber) {
+    return BodySubscribers.mapping(subscriber) {
       streamReader(responseInfo, it)
     }
   }
