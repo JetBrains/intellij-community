@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.8.0'
 }
@@ -9,7 +11,7 @@ repositories {
     mavenCentral()
 }
 compileKotlin {
-    kotlinOptions {
-        languageVersion = "1.9"
+    compilerOptions {
+        languageVersion.set(KotlinVersion.KOTLIN_1_9)
     }
 }

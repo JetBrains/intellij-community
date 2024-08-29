@@ -16,11 +16,10 @@ import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.AbstractKotlinGradleScriptInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.Replacement
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getReplacementForOldKotlinOptionIfNeeded
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -41,9 +40,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 // Inspection tests don't treat tested build script files properly, and thus they ignore Kotlin versions used in scripts
                 return true
             } else {
-                val jpsVersion = KotlinJpsPluginSettings.jpsVersion(file.project)
-                val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion ?: return false
-                return parsedKotlinVersion >= KotlinVersion(2, 0, 0)
+                return kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file)
             }
         } else {
             return false
@@ -171,8 +168,9 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
             val newExpression = KtPsiFactory(project).createExpression(it.replacement)
             val replacedElement = it.expressionToReplace.replaced(newExpression)
 
-            if (it.classToImport != null) {
-                (replacedElement.containingFile as? KtFile)?.addImport(it.classToImport)
+            val classToImport = it.classToImport
+            if (classToImport != null) {
+                (replacedElement.containingFile as? KtFile)?.addImport(classToImport)
             }
         }
     }
