@@ -552,6 +552,16 @@ class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextEle
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
+  override fun beforeChildStarted(context: CoroutineContext) {
+    val threadClientIdElement = context.clientIdContextElement
+    if (threadClientIdElement != this) {
+      logger.error(Throwable("Thread context has $threadClientIdElement but coroutine context has $this").apply {
+        creationTrace?.let { addSuppressed(it) }
+        threadClientIdElement?.creationTrace?.let { addSuppressed(it) }
+      })
+    }
+  }
+
   override val key: CoroutineContext.Key<*>
     get() = Key
 

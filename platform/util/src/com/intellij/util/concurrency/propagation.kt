@@ -120,6 +120,9 @@ data class ChildContext internal constructor(
     else {
       AccessToken.EMPTY_ACCESS_TOKEN
     }
+    for (elem in ijElements) {
+      elem.beforeChildStarted(context)
+    }
     return object : AccessToken() {
       override fun finish() {
         installToken.finish()

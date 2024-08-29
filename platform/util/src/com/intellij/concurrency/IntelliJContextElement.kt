@@ -107,6 +107,13 @@ interface IntelliJContextElement : CoroutineContext.Element {
   }
 
   /**
+   * Called before the child computation is started
+   *
+   * @param context the context of the executing computation
+   */
+  fun beforeChildStarted(context: CoroutineContext) {}
+
+  /**
    * Called when the child computation ends its execution.
    *
    * @param context the context of the executing computation
