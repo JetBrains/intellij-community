@@ -85,7 +85,7 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiPolyadicExpression) return;
-        if (!ExpressionUtils.hasStringType(expression)) return;
+        if (!ExpressionUtils.hasStringType(expression) || expression.isTextBlock()) return;
         String text = expression.getText();
         int newLineIdx = getNewLineIndex(text, 0);
         if (mySuggestLiteralReplacement && newLineIdx != -1 && getNewLineIndex(text, newLineIdx + 1) != -1) {
