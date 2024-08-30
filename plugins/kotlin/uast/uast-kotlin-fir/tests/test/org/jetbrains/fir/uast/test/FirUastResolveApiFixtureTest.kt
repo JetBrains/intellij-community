@@ -325,4 +325,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testResolveJvmNameOnSetterFromLibrary() {
         checkResolveJvmNameOnSetterFromLibrary(myFixture)
     }
+
+    fun testResolveProtoDSL() {
+        checkResolveProtoDSL(myFixture, isK2 = true)
+    }
 }
