@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.ProjectType;
@@ -98,9 +99,11 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     for (Supplier<String> synonym : synonyms) {
       targetAction.addSynonym(synonym);
     }
-    if (targetAction instanceof ActionGroup) {
-      LOG.warn(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
-                             id, targetAction.getClass().getName()));
+    if (targetAction instanceof ActionGroup &&
+        !(targetAction instanceof CustomComponentAction) &&
+        !targetAction.getTemplatePresentation().isPerformGroup()) {
+      LOG.error(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
+                              id, targetAction.getClass().getName()));
     }
   }
 
