@@ -18,6 +18,8 @@ class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiPro
   FilterModel.MultipleFilterModel(listOf(VcsLogFilterCollection.STRUCTURE_FILTER, VcsLogFilterCollection.ROOT_FILTER),
                                   uiProperties, filters) {
 
+  private var loggedRootError: Boolean = false
+
   override fun getFilterValues(filter: VcsLogFilter): List<String>? {
     return when (filter) {
       is VcsLogStructureFilter -> getStructureFilterValues(filter)
@@ -38,11 +40,17 @@ class FileFilterModel(val roots: Set<VirtualFile>, uiProperties: MainVcsLogUiPro
               selectedRoots.add(root)
             }
             else {
-              LOG.warn("Can not find VCS root for filtering $root")
+              if (!loggedRootError) {
+                LOG.warn("Can not find VCS root for filtering $root")
+                loggedRootError = true
+              }
             }
           }
           else {
-            LOG.warn("Can not filter by root that does not exist $path")
+            if (!loggedRootError) {
+              LOG.warn("Can not filter by root that does not exist $path")
+              loggedRootError = true
+            }
           }
         }
         if (selectedRoots.isEmpty()) return null
