@@ -27,10 +27,6 @@ public final class Utils {
   private Utils() {
   }
 
-  /**
-   * @deprecated Please use {@link #showCompletionPopup(JComponent, List, String, JTextComponent, String, String)} instead.
-   */
-  @Deprecated
   public static void showCompletionPopup(JComponent toolbarComponent,
                                          JList<String> list,
                                          @NlsContexts.PopupTitle String title,
