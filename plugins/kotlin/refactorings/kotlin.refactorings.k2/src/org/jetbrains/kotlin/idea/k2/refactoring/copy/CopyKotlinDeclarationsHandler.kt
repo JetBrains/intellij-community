@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkAllUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createCopyTarget
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.copy.*
@@ -313,12 +312,8 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         if (elements.isEmpty()) return MultiMap.empty()
 
-        val (fakeTarget, _) = createCopyTarget(
-            elements, targetData.targetDirWrapper.baseDirectory, targetData.targetDirWrapper.pkgName, targetData.newName
-        )
-
         return MultiMap<PsiElement, String>().apply {
-            putAllValues(checkVisibilityConflictsForInternalUsages(elements, fakeTarget))
+            putAllValues(checkVisibilityConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.pkgName))
             putAllValues(checkModuleDependencyConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.baseDirectory)) // TODO pass old to new map
         }
     }

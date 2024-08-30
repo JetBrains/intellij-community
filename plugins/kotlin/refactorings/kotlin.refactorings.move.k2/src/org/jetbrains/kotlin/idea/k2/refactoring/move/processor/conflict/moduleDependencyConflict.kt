@@ -11,9 +11,12 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.*
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.isInternal
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.tryFindConflict
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willBeMoved
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.contains
@@ -32,12 +35,11 @@ private fun PsiElement.createAccessibilityConflictInternal(
 }
 
 private fun PsiElement.createAccessibilityConflictUnMoved(referencedDeclaration: PsiElement): Pair<PsiElement, String>? {
-    val module = containingModule() ?: return null
     return this to RefactoringBundle.message(
         "0.referenced.in.1.will.not.be.accessible.from.module.2",
         RefactoringUIUtil.getDescription(referencedDeclaration, true),
         RefactoringUIUtil.getDescription(getContainer(), true),
-        CommonRefactoringUtil.htmlEmphasize(module.name)
+        CommonRefactoringUtil.htmlEmphasize(module?.name ?: return null)
     ).capitalizeAsciiOnly()
 }
 

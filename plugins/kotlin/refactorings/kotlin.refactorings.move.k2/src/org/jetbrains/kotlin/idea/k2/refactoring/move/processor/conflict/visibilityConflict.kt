@@ -3,10 +3,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
@@ -14,25 +13,22 @@ import com.intellij.util.containers.toMultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.containingCopyDecl
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.tryFindConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willBeMoved
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 private fun PsiElement.createVisibilityConflict(referencedDeclaration: PsiElement): Pair<PsiElement, String> {
@@ -59,12 +55,11 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
 
 private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
     return if (usage is KtElement) {
-        kotlinIsVisibleTo(usage)
+        analyze(usage) { isVisibleTo(usage) }
     } else {
         lightIsVisibleTo(usage)
     }
 }
-
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
@@ -77,12 +72,6 @@ private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
         usage.mainReference?.resolveToSymbol() as? KaDeclarationSymbol ?: return false
     }
     return isVisible(symbol, file, position = usage)
-}
-
-private fun PsiNamedElement.kotlinIsVisibleTo(usage: KtElement) = when {
-    !isPhysical && this is KtNamedDeclaration -> analyzeCopy(this, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
-    !usage.isPhysical -> analyzeCopy(usage, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
-    else -> analyze(usage) { isVisibleTo(usage) }
 }
 
 private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
@@ -98,65 +87,64 @@ private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
  */
 internal fun checkVisibilityConflictForNonMovedUsages(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
-    oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
     return usages
-        .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) && usage.isVisibleBeforeMove() }
-        .mapNotNull { usage ->
+        .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
+        .mapNotNull { usageInfo ->
             tryFindConflict {
-                val usageElement = usage.element ?: return@tryFindConflict null
-                val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
-                if (referencedDeclaration.isMemberThatCanBeSkipped()) return@tryFindConflict null
-                val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@tryFindConflict null
-                val isVisible = declarationCopy.isVisibleTo(usageElement)
-                if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+                val usageElement = usageInfo.element ?: return@tryFindConflict null
+                val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
+                analyze(referencedDeclaration) {
+                    val isVisible = when (referencedDeclaration.symbol.visibility) {
+                        KaSymbolVisibility.PRIVATE -> false
+                        else -> true
+                    }
+                    if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+                }
             }
         }
         .toMultiMap()
 }
 
 /**
- * Checks whether checking visibility for a usage to [this] declaration can be skipped.
- * ```
- * open class Parent { fun bar() { } }
- *
- * class Child : Parent {
- *   fun foo() { bar() }
- * }
- * ```
- * In this example, checking whether `bar` is visible after moving `Parent` can only be done when updating the usage in the super type list
- * first.
- * Therefore, we try to skip visibility conflict checking for members
- */
-private fun KtNamedDeclaration.isMemberThatCanBeSkipped(): Boolean {
-    if (containingClass() == null) return false
-    analyze(this) {
-        val visibility = symbol.visibility
-        if (visibility == KaSymbolVisibility.PUBLIC || visibility == KaSymbolVisibility.PROTECTED) return true
-    }
-    return false
-}
-
-/**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
 fun checkVisibilityConflictsForInternalUsages(
-    allDeclarationsToMove: Iterable<KtNamedDeclaration>,
-    fakeTarget: KtFile
+    topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
+    allDeclarationsToMove: Collection<KtNamedDeclaration>,
+    targetPkg: FqName
 ): MultiMap<PsiElement, String> {
-    return fakeTarget
-        .collectDescendantsOfType<KtSimpleNameExpression>()
-        .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
-        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
-        .mapNotNull { (usageInfo, refExprCopy) ->
+    return topLevelDeclarationsToMove
+        .flatMap { it.internalUsageElements() }
+        .mapNotNull { refExpr -> (refExpr.internalUsageInfo ?: return@mapNotNull null) }
+        .filter { usageInfo -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
+        .mapNotNull { usageInfo ->
             tryFindConflict {
+                val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
-                val isVisible = referencedDeclaration.isVisibleTo(refExprCopy)
-                if (!isVisible) {
-                    val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
-                    usageElement.createVisibilityConflict(referencedDeclaration)
-                } else null
+                val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
+                    analyze(referencedDeclaration) {
+                        when (referencedDeclaration.symbol.visibility) {
+                            KaSymbolVisibility.PRIVATE -> false
+                            else -> true
+                        }
+                    }
+                } else if (referencedDeclaration is PsiModifierListOwner) {
+                    val modifierList = referencedDeclaration.modifierList ?: return@tryFindConflict null
+                    when (PsiUtil.getAccessLevel(modifierList)) {
+                        PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL -> {
+                            if (referencedDeclaration is PsiMethod && referencedDeclaration.isConstructor) {
+                                true // if a constructor is private, it's accessible outside the package
+                            } else {
+                                val declFqn = (referencedDeclaration as PsiModifierListOwner).containingFile.getFqNameByDirectory()
+                                declFqn == targetPkg
+                            }
+                        }
+                        else -> true
+                    }
+                } else true
+                if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
             }
         }.toMultiMap()
 }

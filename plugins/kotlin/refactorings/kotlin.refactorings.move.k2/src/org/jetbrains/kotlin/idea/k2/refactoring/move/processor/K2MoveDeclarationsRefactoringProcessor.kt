@@ -51,7 +51,6 @@ class K2MoveDeclarationsRefactoringProcessor(
                             allDeclarationsToMove = operationDescriptor.sourceElements,
                             targetDir = moveDescriptor.target.baseDirectory,
                             targetPkg = moveDescriptor.target.pkgName,
-                            targetFileName = moveDescriptor.target.fileName,
                             usages = usages
                                 .filterIsInstance<MoveRenameUsageInfo>()
                                 .filter { it.referencedElement in moveDescriptor.source.elements },
