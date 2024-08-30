@@ -22,11 +22,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -503,7 +499,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   internal suspend fun init(
     pane: ToolWindowPane,
     reopeningEditorJob: Job,
-    taskListDeferred: Deferred<List<RegisterToolWindowTask>>,
+    taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>,
   ) {
     doInit(pane = pane,
            connection = project.messageBus.connect(coroutineScope),
@@ -518,7 +514,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     pane: ToolWindowPane,
     connection: SimpleMessageBusConnection,
     reopeningEditorJob: Job,
-    taskListDeferred: Deferred<List<RegisterToolWindowTask>>?,
+    taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
   ) {
     withContext(ModalityState.any().asContextElement()) {
       launch(Dispatchers.EDT) {
@@ -573,7 +569,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     withContext(Dispatchers.EDT) {
       // always add to the default tool window pane
       @Suppress("DEPRECATION")
-      val task = RegisterToolWindowTask(
+      val task = RegisterToolWindowTaskData(
         id = bean.id,
         icon = findIconFromBean(bean, factory, plugin),
         anchor = getToolWindowAnchor(factory, bean),
@@ -581,10 +577,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         canCloseContent = bean.canCloseContents,
         shouldBeAvailable = factory.shouldBeAvailable(project),
         contentFactory = factory,
-        stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin)
-      ).apply {
-        pluginDescriptor = plugin
-      }
+        stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
+        pluginDescriptor = plugin,
+      )
 
       val toolWindowPane = getDefaultToolWindowPaneIfInitialized()
       registerToolWindow(task, toolWindowPane.buttonManager)
@@ -1073,7 +1068,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     // try to get a previously saved tool window pane, if possible
     val toolWindowPane = layoutState.getInfo(task.id)?.toolWindowPaneId?.let { getToolWindowPane(it) }
                          ?: getDefaultToolWindowPaneIfInitialized()
-    val entry = registerToolWindow(task, buttonManager = toolWindowPane.buttonManager)
+    val entry = registerToolWindow(task.data, buttonManager = toolWindowPane.buttonManager)
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
     toolWindowPane.buttonManager.getStripeFor(entry.toolWindow.anchor, entry.toolWindow.isSplitMode).revalidate()
@@ -1084,7 +1079,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return entry.toolWindow
   }
 
-  internal fun registerToolWindow(task: RegisterToolWindowTask, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
+  internal fun registerToolWindow(task: RegisterToolWindowTaskData, buttonManager: ToolWindowButtonManager): ToolWindowEntry {
     val layout = layoutState
     val existingInfo = layout.getInfo(task.id)
     val preparedTask = PreparedRegisterToolWindowTask(
@@ -1179,7 +1174,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     val stripeButton = if (preparedTask.isButtonNeeded) {
-      buttonManager.createStripeButton(toolWindow = toolWindow, info = infoSnapshot, task = task)
+      buttonManager.createStripeButton(toolWindow = toolWindow, info = infoSnapshot, task = RegisterToolWindowTask(task))
     }
     else {
       LOG.debug {
@@ -1218,7 +1213,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return RegisterToolWindowResult(entry = entry, postTask = null)
   }
 
-  internal fun isButtonNeeded(task: RegisterToolWindowTask, info: WindowInfoImpl?, stripeManager: ToolWindowStripeManager): Boolean {
+  internal fun isButtonNeeded(task: RegisterToolWindowTaskData, info: WindowInfoImpl?, stripeManager: ToolWindowStripeManager): Boolean {
     return (task.shouldBeAvailable
             && (info?.isShowStripeButton ?: !(isNewUi && isToolwindowOfBundledPlugin(task)))
             && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi))
@@ -2640,7 +2635,7 @@ private fun windowInfoChanges(oldInfo: WindowInfo, newInfo: WindowInfo): String 
   return sb.toString()
 }
 
-private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTask): Boolean {
+private fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTaskData): Boolean {
   // platform toolwindow but registered dynamically
   if (ToolWindowId.BUILD_DEPENDENCIES == task.id) {
     return true

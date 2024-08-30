@@ -5617,6 +5617,36 @@ com.intellij.openapi.wm.InteractiveCourseFactory
 f:com.intellij.openapi.wm.InteractiveCourseFactory$Companion
 - f:getINTERACTIVE_COURSE_FACTORY_EP():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.wm.LightEditFrame
+f:com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:Companion:com.intellij.openapi.wm.RegisterToolWindowTask$Companion
+- <init>(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,javax.swing.JComponent,Z,Z,Z,Z,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,java.util.function.Supplier):V
+- b:<init>(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,javax.swing.JComponent,Z,Z,Z,Z,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,java.util.function.Supplier,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:closable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:closable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+f:com.intellij.openapi.wm.RegisterToolWindowTask$Companion
+- f:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:closable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:closable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:closable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,java.util.function.Supplier,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:closable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:lazyAndClosable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:notClosable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:notClosable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
 f:com.intellij.openapi.wm.RegisterToolWindowTaskBuilder
 - anchor:com.intellij.openapi.wm.ToolWindowAnchor
 - canCloseContent:Z

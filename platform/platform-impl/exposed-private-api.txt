@@ -49,7 +49,6 @@ com/intellij/openapi/vfs/impl/http/HttpVirtualFileImpl
 com/intellij/openapi/vfs/newvfs/persistent/FSRecordsImpl
 com/intellij/openapi/vfs/newvfs/persistent/PersistentFSConnection
 com/intellij/openapi/vfs/newvfs/persistent/PersistentFSLoader
-com/intellij/openapi/wm/RegisterToolWindowTask
 com/intellij/openapi/wm/WelcomeScreenLeftPanel
 com/intellij/openapi/wm/ex/IdeFrameEx
 com/intellij/openapi/wm/impl/DesktopLayout
