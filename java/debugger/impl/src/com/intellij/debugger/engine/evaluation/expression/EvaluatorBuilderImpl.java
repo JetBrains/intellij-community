@@ -819,6 +819,16 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiElement element = resolveResult.getElement();
 
       if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        var computeSyntheticValue = element.getUserData(JavaEvaluationContextWrapper.SYNTHETIC_VARIABLE_VALUE_KEY);
+        if (computeSyntheticValue != null) {
+          myResult = new Evaluator() {
+            @Override
+            public Object evaluate(EvaluationContextImpl context) {
+              return computeSyntheticValue.invoke();
+            }
+          };
+          return;
+        }
         final Value labeledValue = element.getUserData(CodeFragmentFactoryContextWrapper.LABEL_VARIABLE_VALUE_KEY);
         if (labeledValue != null) {
           myResult = new IdentityEvaluator(labeledValue);

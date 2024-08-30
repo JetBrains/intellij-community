@@ -121,6 +121,11 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return EvaluatorBuilderImpl.getInstance();
   }
 
+  @Override
+  public EvaluationContextWrapper createEvaluationContextWrapper() {
+    return new JavaEvaluationContextWrapper();
+  }
+
   public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");
 
   public static boolean isDebuggerFile(PsiFile file) {

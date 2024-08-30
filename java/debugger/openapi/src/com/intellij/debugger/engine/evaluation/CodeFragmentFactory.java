@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,4 +33,9 @@ public abstract class CodeFragmentFactory {
    * @return builder, which can evaluate expression for your code fragment
    */
   public abstract EvaluatorBuilder getEvaluatorBuilder();
+
+  @ApiStatus.Internal
+  public EvaluationContextWrapper createEvaluationContextWrapper() {
+    return null;
+  }
 }

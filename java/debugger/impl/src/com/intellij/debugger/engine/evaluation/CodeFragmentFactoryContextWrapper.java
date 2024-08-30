@@ -2,31 +2,17 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -83,68 +69,8 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
 
   private PsiElement wrapContext(Project project, final PsiElement originalContext) {
     if (project.isDefault()) return originalContext;
-    //TODO [egor] : does not work for anything other than java anyway, see IDEA-132677
-    if (!(myDelegate instanceof DefaultCodeFragmentFactory)) {
-      return originalContext;
-    }
-    PsiElement context = originalContext;
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session != null) {
-      XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
-      Map<?, ValueMarkup> markupMap = markers != null ? markers.getAllMarkers() : null;
-      if (!ContainerUtil.isEmpty(markupMap)) {
-        Pair<String, Map<String, ObjectReference>> markupVariables = createMarkupVariablesText(markupMap);
-        String text = markupVariables.getFirst();
-        if (!StringUtil.isEmpty(text)) {
-          PsiCodeBlock codeFragment =
-            JavaPsiFacade.getElementFactory(project).createCodeBlockFromText("{" + text + "}", context);
-          codeFragment.accept(new JavaRecursiveElementVisitor() {
-            @Override
-            public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
-              final String name = variable.getName();
-              variable.putUserData(LABEL_VARIABLE_VALUE_KEY, markupVariables.getSecond().get(name));
-            }
-          });
-          context = codeFragment;
-        }
-      }
-    }
-    return context;
-  }
-
-  private static final Pattern ANONYMOUS_CLASS_NAME_PATTERN = Pattern.compile(".*\\$\\d.*");
-
-  private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
-    final Map<String, ObjectReference> reverseMap = new HashMap<>();
-    final StringBuilder buffer = new StringBuilder();
-    for (Map.Entry<?, ValueMarkup> entry : markupMap.entrySet()) {
-      ObjectReference objectRef = (ObjectReference)entry.getKey();
-      final ValueMarkup markup = entry.getValue();
-      String labelName = markup.getText();
-      if (!StringUtil.isJavaIdentifier(labelName)) {
-        continue;
-      }
-      try {
-        // TODO: we probably need something more complicated for type name generation, but not in EDT
-        String name = objectRef.type().name();
-        String typeName;
-        if (ANONYMOUS_CLASS_NAME_PATTERN.matcher(name).matches() || DebuggerUtilsEx.isLambdaClassName(name)) {
-          typeName = "Object";
-        }
-        else {
-          typeName = name.replace('$', '.');
-        }
-        labelName += DEBUG_LABEL_SUFFIX;
-        if (!buffer.isEmpty()) {
-          buffer.append("\n");
-        }
-        buffer.append(typeName).append(" ").append(labelName).append(";");
-        reverseMap.put(labelName, objectRef);
-      }
-      catch (ObjectCollectedException e) {
-        //it.remove();
-      }
-    }
-    return Pair.create(buffer.toString(), reverseMap);
+    EvaluationContextWrapper wrapper = myDelegate.createEvaluationContextWrapper();
+    if (wrapper == null) return originalContext;
+    return wrapper.wrapContext(project, originalContext, AdditionalContextProvider.getAllAdditionalContextElements(project, originalContext));
   }
 }

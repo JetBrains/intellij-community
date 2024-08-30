@@ -327,6 +327,8 @@
 
     <extensionPoint qualifiedName="com.intellij.debugger.nodeNameAdjuster"
                     interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.additionalContextProvider"
+                    interface="com.intellij.debugger.engine.evaluation.AdditionalContextProvider" dynamic="true"/>
 
 
     <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
@@ -568,6 +570,7 @@
     <projectService serviceInterface="com.intellij.debugger.ui.HotSwapUI" serviceImplementation="com.intellij.debugger.ui.HotSwapUIImpl"/>
     <projectService serviceInterface="com.intellij.debugger.DebuggerManager"
                     serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
+    <debugger.additionalContextProvider implementation="com.intellij.debugger.engine.evaluation.MarkedObjectAdditionalContextProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.JavaFindUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.JavaExtractMethodCollector"/>
