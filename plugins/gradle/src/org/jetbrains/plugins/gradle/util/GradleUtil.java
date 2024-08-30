@@ -113,6 +113,13 @@ public final class GradleUtil {
     return readWrapperConfiguration(wrapperPropertiesFile);
   }
 
+  public static @NotNull WrapperConfiguration generateGradleWrapperConfiguration(@NotNull GradleVersion gradleVersion) {
+    WrapperConfiguration configuration = new WrapperConfiguration();
+    URI distributionUri = getWrapperDistributionUri(gradleVersion);
+    configuration.setDistribution(distributionUri);
+    return configuration;
+  }
+
   public static boolean writeWrapperConfiguration(@NotNull Path targetPath, @NotNull WrapperConfiguration wrapperConfiguration) {
     Properties wrapperProperties = new Properties();
     setFromWrapperConfiguration(wrapperConfiguration, wrapperProperties);
