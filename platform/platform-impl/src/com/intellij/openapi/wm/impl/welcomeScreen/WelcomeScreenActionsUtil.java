@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Couple;
@@ -32,19 +33,6 @@ import java.util.function.Function;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
 public final class WelcomeScreenActionsUtil {
-
-  // TODO use UpdateSession to expand actionGroup
-  public static void collectAllActions(@NotNull DefaultActionGroup group, @NotNull ActionGroup actionGroup) {
-    for (AnAction action : actionGroup.getChildren(null)) {
-      if (action instanceof ActionGroup g && !g.isPopup()) {
-        collectAllActions(group, g);
-      }
-      else {
-        // add actions group popup as is
-        group.add(action);
-      }
-    }
-  }
 
   public static final class ToolbarTextButtonWrapper extends AnActionWrapper implements CustomComponentAction {
 
@@ -88,15 +76,10 @@ public final class WelcomeScreenActionsUtil {
     }
   }
 
-  static boolean isActionAvailable(@NotNull AnAction action) {
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT);
-    action.update(event);
-    return event.getPresentation().isVisible();
-  }
-
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
     DataContext context = ActionToolbar.getDataContextFor(component);
-    AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, context);
+    AnActionEvent actionEvent = AnActionEvent.createEvent(
+      action, context, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null);
     ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
   }
 
@@ -192,16 +175,15 @@ public final class WelcomeScreenActionsUtil {
   public static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
                                                                @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
                                                                int mainButtonsNum) {
-    ActionManager actionManager = ActionManager.getInstance();
-    DefaultActionGroup group = new DefaultActionGroup();
-    collectAllActions(group, actionGroup);
-    AnAction[] actions = group.getChildren(actionManager);
+    PresentationFactory presentationFactory = new PresentationFactory();
+    List<AnAction> visibleActions = Utils.expandActionGroup(
+      actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT,
+      ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE);
 
     DefaultActionGroup main = new DefaultActionGroup();
     DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true);
     more.getTemplatePresentation().setHideGroupIfEmpty(true);
-    for (AnAction child : actions) {
-      if (!isActionAvailable(child)) continue;
+    for (AnAction child : visibleActions) {
       if (main.getChildrenCount() < mainButtonsNum) {
         main.addAction(wrapper.apply(child));
       }
