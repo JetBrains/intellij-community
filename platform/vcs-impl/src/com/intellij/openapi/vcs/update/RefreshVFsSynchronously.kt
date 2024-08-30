@@ -24,6 +24,7 @@ interface FilePathChange {
 
 object RefreshVFsSynchronously {
   private val TRACE_LOG = Logger.getInstance("#trace.RefreshVFsSynchronously")
+  private val TIME_LOG = Logger.getInstance("#time.RefreshVFsSynchronously")
 
   @JvmStatic
   fun trace(message: @NonNls String) {
@@ -47,9 +48,7 @@ object RefreshVFsSynchronously {
       TRACE_LOG.debug("RefreshVFsSynchronously#refreshFiles: $files", Throwable())
     }
     val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it) }
-    runWithProgressText {
-      markDirtyAndRefresh(false, false, false, *toRefresh.toTypedArray())
-    }
+    markDirtyAndRefresh(isRecursive = false, toRefresh)
   }
 
   @JvmStatic
@@ -58,9 +57,7 @@ object RefreshVFsSynchronously {
     if (TRACE_LOG.isDebugEnabled) {
       TRACE_LOG.debug("RefreshVFsSynchronously#refreshVirtualFiles: $files", Throwable())
     }
-    runWithProgressText {
-      markDirtyAndRefresh(false, false, false, *files.toTypedArray())
-    }
+    markDirtyAndRefresh(isRecursive = false, files)
   }
 
   @JvmStatic
@@ -69,9 +66,7 @@ object RefreshVFsSynchronously {
     if (TRACE_LOG.isDebugEnabled) {
       TRACE_LOG.debug("RefreshVFsSynchronously#refreshVirtualFilesRecursive: $files", Throwable())
     }
-    runWithProgressText {
-      markDirtyAndRefresh(false, true, false, *files.toTypedArray())
-    }
+    markDirtyAndRefresh(isRecursive = true, files)
   }
 
   private fun refreshDeletedFiles(files: Collection<File>) {
@@ -80,8 +75,17 @@ object RefreshVFsSynchronously {
       TRACE_LOG.debug("RefreshVFsSynchronously#refreshDeletedFiles: $files", Throwable())
     }
     val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it.parentFile) }
+    markDirtyAndRefresh(isRecursive = true, toRefresh)
+  }
+
+  private fun markDirtyAndRefresh(isRecursive: Boolean, files: Collection<VirtualFile>) {
+    val start = System.currentTimeMillis()
     runWithProgressText {
-      markDirtyAndRefresh(false, true, false, *toRefresh.toTypedArray())
+      markDirtyAndRefresh(false, isRecursive, false, *files.toTypedArray())
+    }
+    val end = System.currentTimeMillis()
+    if (TIME_LOG.isDebugEnabled) {
+      TIME_LOG.debug("VFS refresh took ${end - start}ms, ${files.size} files, isRecursive=$isRecursive")
     }
   }
 
