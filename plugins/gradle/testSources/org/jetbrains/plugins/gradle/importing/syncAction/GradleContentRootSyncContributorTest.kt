@@ -422,4 +422,52 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       }
     }
   }
+
+  @Test
+  fun `test content root configuration with single source root`() {
+
+    val projectRoot = projectRoot.toNioPath()
+    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+
+    Disposer.newDisposable().use { disposable ->
+
+      val contentRootContributorAssertion = ListenerAssertion()
+
+      whenPhaseCompleted(disposable) { _, storage, phase ->
+        if (phase == GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE) {
+          contentRootContributorAssertion.trace {
+            assertModules(storage, "project", "project.main", "project.test")
+            assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
+            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src"))
+            assertContentRoots(virtualFileUrlManager, storage, "project.test")
+          }
+        }
+      }
+
+      createSettingsFile {
+        setProjectName("project")
+      }
+      createBuildFile {
+        withJavaPlugin()
+        addPostfix("""
+          |sourceSets.main.java.srcDirs = ["src"]
+          |sourceSets.main.resources.srcDirs = []
+          |sourceSets.test.java.srcDirs = []
+          |sourceSets.test.resources.srcDirs = []
+        """.trimMargin())
+      }
+
+      importProject()
+
+      assertModules(project, "project", "project.main", "project.test")
+      assertContentRoots(project, "project", projectRoot)
+      assertContentRoots(project, "project.main", projectRoot.resolve("src"))
+      assertContentRoots(project, "project.test")
+
+      contentRootContributorAssertion.assertListenerFailures()
+      contentRootContributorAssertion.assertListenerState(1) {
+        "The project loaded phase should be finished only once"
+      }
+    }
+  }
 }

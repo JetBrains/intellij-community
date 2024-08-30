@@ -74,6 +74,9 @@ class GradleContentRootIndex {
       return sourceRootPath
     }
     val contentRootPath = sourceRootPath.parent
+    if (contentRootPath == null || contentRootPath == projectRootPath) {
+      return sourceRootPath
+    }
     val contentRootWeight = contentRootWeightMap[contentRootPath]
     if (contentRootWeight == null || contentRootWeight > 1) {
       return sourceRootPath
