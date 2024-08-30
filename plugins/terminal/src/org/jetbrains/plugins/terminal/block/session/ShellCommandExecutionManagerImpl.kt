@@ -241,12 +241,12 @@ internal class ShellCommandExecutionManagerImpl(
       scheduledCommands.poll()?.let { command ->
         cancelGenerators(registrar, "user command is ready to execute")
         isCommandSent = true
-        doSendCommandToExecute(command, false)
+        doSendCommandToExecute(command, false, registrar)
         return@withLock // `commandFinished` event will resume queue processing
       }
       pollNextGeneratorToRun()?.let {
         runningGenerator = it
-        doSendCommandToExecute(it.shellCommand(), true)
+        doSendCommandToExecute(it.shellCommand(), true, registrar)
         // `generatorFinished` event will resume queue processing
       }
     }
@@ -270,14 +270,23 @@ internal class ShellCommandExecutionManagerImpl(
     }
   }
 
-  private fun doSendCommandToExecute(shellCommand: String, isGenerator: Boolean) {
+  private fun doSendCommandToExecute(shellCommand: String, isGenerator: Boolean, registrar: Lock.AfterLockActionRegistrar) {
     session.terminalStarterFuture.thenAccept { starter ->
       starter ?: return@thenAccept
-      doSendCommandToExecute(starter, shellCommand, isGenerator)
+      doSendCommandToExecute(starter, shellCommand)
+      registrar.afterLock {
+        if (isGenerator) {
+          fireGeneratorCommandSent(shellCommand)
+        }
+        else {
+          metricCommandSubmitToVisuallyStarted.finished(shellCommand)
+          fireUserCommandSent(shellCommand)
+        }
+      }
     }
   }
 
-  private fun doSendCommandToExecute(starter: TerminalStarter, shellCommand: String, isGenerator: Boolean) {
+  private fun doSendCommandToExecute(starter: TerminalStarter, shellCommand: String) {
     var adjustedCommand = shellCommand
     val enterCode = String(terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
     if (session.model.isBracketedPasteMode && (adjustedCommand.contains("\n") || adjustedCommand.contains(System.lineSeparator()))) {
@@ -289,14 +298,6 @@ internal class ShellCommandExecutionManagerImpl(
     }
     val clearPrompt = createClearPromptShortcut(terminal)
     TerminalUtil.sendCommandToExecute(clearPrompt + adjustedCommand, starter)
-
-    if (isGenerator) {
-      fireGeneratorCommandSent(shellCommand)
-    }
-    else {
-      metricCommandSubmitToVisuallyStarted.finished(shellCommand)
-      fireUserCommandSent(shellCommand)
-    }
   }
 
   override fun addListener(listener: ShellCommandSentListener) {
