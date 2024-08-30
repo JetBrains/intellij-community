@@ -2205,6 +2205,7 @@ f:com.intellij.collaboration.util.ResultUtil
 - f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.collaboration.util.SingleCoroutineLauncher
 - <init>(kotlinx.coroutines.CoroutineScope):V
+- f:cancel():V
 - f:getBusy():kotlinx.coroutines.flow.StateFlow
 - f:launch(kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2):V
 - bs:launch$default(com.intellij.collaboration.util.SingleCoroutineLauncher,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2,I,java.lang.Object):V
