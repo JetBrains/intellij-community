@@ -54,8 +54,7 @@ class DataContextDialog(
 
     val panel = panel {
       row {
-        @Suppress("DialogTitleCapitalization")
-        checkBox("Show GetDataRule") // NON-NLS
+        checkBox("Show BGT Data")
           .actionListener { event, component -> table.model = buildTreeModel(component.isSelected) }
       }
       row {
