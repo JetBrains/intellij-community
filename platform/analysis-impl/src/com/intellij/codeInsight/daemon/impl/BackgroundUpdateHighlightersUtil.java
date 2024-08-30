@@ -25,6 +25,8 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -192,13 +194,14 @@ public final class BackgroundUpdateHighlightersUtil {
     }
   }
 
-  static void setHighlightersInRange(@NotNull TextRange range,
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  public static void setHighlightersInRange(@NotNull TextRange range,
                                      @NotNull List<? extends HighlightInfo> infos,
                                      @NotNull MarkupModelEx markup,
                                      int group,
                                      @NotNull HighlightingSession session) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = session.getProject();
     List<HighlightInfo> toReuse = new ArrayList<>();
     Document document = session.getDocument();
