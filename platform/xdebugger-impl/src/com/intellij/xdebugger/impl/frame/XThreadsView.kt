@@ -11,12 +11,14 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
-internal class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() {
+@ApiStatus.Internal
+class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() {
   private val treePanel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, "", null)
 
-  private fun getTree() = treePanel.tree
+  fun getTree() = treePanel.tree
   fun getPanel(): JPanel = treePanel.mainPanel
 
   override fun getMainComponent() = getPanel()
