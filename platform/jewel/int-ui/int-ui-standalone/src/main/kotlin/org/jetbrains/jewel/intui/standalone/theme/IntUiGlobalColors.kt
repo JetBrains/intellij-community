@@ -39,14 +39,14 @@ public fun GlobalColors.Companion.dark(
 
 @Composable
 public fun BorderColors.Companion.light(
-    normal: Color = IntUiLightTheme.colors.gray(9),
+    normal: Color = IntUiLightTheme.colors.gray(12),
     focused: Color = IntUiLightTheme.colors.gray(14),
     disabled: Color = IntUiLightTheme.colors.gray(11),
 ): BorderColors = BorderColors(normal, focused, disabled)
 
 @Composable
 public fun BorderColors.Companion.dark(
-    normal: Color = IntUiDarkTheme.colors.gray(5),
+    normal: Color = IntUiDarkTheme.colors.gray(1),
     focused: Color = IntUiDarkTheme.colors.gray(2),
     disabled: Color = IntUiDarkTheme.colors.gray(4),
 ): BorderColors = BorderColors(normal, focused, disabled)
