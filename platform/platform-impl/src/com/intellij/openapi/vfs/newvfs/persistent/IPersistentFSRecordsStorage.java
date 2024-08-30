@@ -19,40 +19,40 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
   int recordsCount();
 
   /** Allows reader to read fields of the record[recordId], while holding appropriate locks */
-  <R> R readRecord(final int recordId,
-                   final @NotNull RecordReader<R> reader) throws IOException;
+  <R> R readRecord(int recordId,
+                   @NotNull RecordReader<R> reader) throws IOException;
 
   /**
    * Allows updater to read and update fields of the record[recordId], while holding appropriate locks
    *
    * @return if recordId == -1 -> creates new record, and return its id, otherwise returns recordId passed in
    */
-  int updateRecord(final int recordId,
-                   final @NotNull RecordUpdater updater) throws IOException;
+  int updateRecord(int recordId,
+                   @NotNull RecordUpdater updater) throws IOException;
 
-  <R> R readHeader(final @NotNull HeaderReader<R> reader) throws IOException;
+  <R> R readHeader(@NotNull HeaderReader<R> reader) throws IOException;
 
-  void updateHeader(final @NotNull HeaderUpdater updater) throws IOException;
+  void updateHeader(@NotNull HeaderUpdater updater) throws IOException;
 
   @FunctionalInterface
   interface RecordUpdater {
     /** @return true if actually modifies record (so it should be marked as modified), false otherwise */
-    boolean updateRecord(final @NotNull RecordForUpdate record) throws IOException;
+    boolean updateRecord(@NotNull RecordForUpdate record) throws IOException;
   }
 
   @FunctionalInterface
   interface RecordReader<R> {
-    R readRecord(final @NotNull RecordForRead record) throws IOException;
+    R readRecord(@NotNull RecordForRead record) throws IOException;
   }
 
   @FunctionalInterface
   interface HeaderReader<R> {
-    R readHeader(final @NotNull HeaderForRead header) throws IOException;
+    R readHeader(@NotNull HeaderForRead header) throws IOException;
   }
 
   @FunctionalInterface
   interface HeaderUpdater {
-    boolean updateHeader(final @NotNull HeaderForUpdate header) throws IOException;
+    boolean updateHeader(@NotNull HeaderForUpdate header) throws IOException;
   }
 
   interface RecordForRead {
@@ -78,11 +78,11 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
   }
 
   interface RecordForUpdate extends RecordForRead {
-    void setAttributeRecordId(final int recordId) throws IOException;
+    void setAttributeRecordId(int recordId) throws IOException;
 
-    void setParent(final int parentId) throws IOException;
+    void setParent(int parentId) throws IOException;
 
-    void setNameId(final int nameId) throws IOException;
+    void setNameId(int nameId) throws IOException;
 
     /** @return true if value is changed, false if not (i.e. new value is actually equal to the old one) */
     boolean setFlags(@PersistentFS.Attributes int flags) throws IOException;
@@ -106,13 +106,13 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
     }
 
     /** @return true if value is changed, false if not (i.e. new value is actually equal to the old one) */
-    boolean setLength(final long length) throws IOException;
+    boolean setLength(long length) throws IOException;
 
     /** @return true if value is changed, false if not (i.e. new value is actually equal to the old one) */
-    boolean setTimestamp(final long timestamp) throws IOException;
+    boolean setTimestamp(long timestamp) throws IOException;
 
     /** @return true if value is changed, false if not (i.e. new value is actually equal to the old one) */
-    boolean setContentRecordId(final int recordId) throws IOException;
+    boolean setContentRecordId(int recordId) throws IOException;
   }
 
   interface HeaderForRead {
@@ -128,8 +128,8 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
   }
 
   interface HeaderForUpdate extends HeaderForRead {
-    void setVersion(final int version) throws IOException;
+    void setVersion(int version) throws IOException;
 
-    //TODO void setErrorsAccumulated(final int errors) throws IOException;
+    //TODO void setErrorsAccumulated(int errors) throws IOException;
   }
 }
