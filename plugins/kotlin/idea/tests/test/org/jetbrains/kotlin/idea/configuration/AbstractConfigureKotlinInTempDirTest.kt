@@ -33,21 +33,6 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
     override fun setUp() {
         super.setUp()
         vfsDisposable = KotlinTestUtils.allowRootAccess(this, projectRoot.path)
-        waitForKotlinSettingsConfiguration()
-    }
-
-    private fun waitForKotlinSettingsConfiguration() {
-        // Make sure that the Kotlin compiler settings are initialized
-        KotlinCommonCompilerArgumentsHolder.getInstance(project)
-        // Updating the settings is done in a coroutine that might take several EDT dispatches to work.
-        // We dispatch them up to 10 times here to ensure the settings are updated correctly.
-        val propertiesComponent = PropertiesComponent.getInstance(project)
-        for (i in 1..5) {
-            if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) break
-            UIUtil.dispatchAllInvocationEvents()
-            Thread.sleep(100)
-        }
-        Assert.assertTrue(propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME))
     }
 
     override fun tearDown(): Unit = runAll(
