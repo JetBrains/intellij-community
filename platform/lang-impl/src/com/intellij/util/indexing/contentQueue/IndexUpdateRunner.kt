@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
 import com.intellij.platform.diagnostic.telemetry.IJTracer
@@ -273,9 +274,14 @@ class IndexUpdateRunner(
       contentLoader: CachedFileContentLoader,
       statistics: IndexingFileSetStatistics,
     ) {
-
-      // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       val file = fileIndexingRequest.file
+      if(!file.isValid){
+        //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
+        //  here with an invalid file, but in a (badly isolated) tests it could happen
+        LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
+        return
+      }
+      // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       val indexingStamp = indexingRequest.getFileIndexingStamp(file)
 
       val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
