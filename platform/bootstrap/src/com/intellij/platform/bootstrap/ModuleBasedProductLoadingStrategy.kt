@@ -258,6 +258,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pluginDir = pluginDir,
         context = context,
         isBundled = isBundled,
+        pool = zipFilePool,
         pathResolver = ModuleBasedPluginXmlPathResolver(
           includedModules = includedModules,
           pluginModuleGroup.optionalModuleIds,

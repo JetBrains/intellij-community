@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -570,6 +571,21 @@ class PluginDescriptorTest {
     val mainClassLoader = result.findEnabledPlugin(PluginId.getId("sample.plugin"))!!.pluginClassLoader
     assertThat((mainClassLoader as PluginClassLoader)._getParents()).contains(depPluginDescriptor)
   }
+  
+  @Test
+  fun `content module in separate JAR`() {
+    val pluginDir = pluginDirPath.resolve("sample-plugin")
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("dep", PluginBuilder(), separateJar = true)
+      .build(pluginDir)
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(1)
+    assertThat(result.getEnabledModules()).hasSize(2)
+    val depModuleDescriptor = result.findEnabledModule("dep")!!
+    assertThat(depModuleDescriptor.jarFiles).containsExactly(pluginDir.resolve("lib/modules/dep.jar"))
+  }
 
   @Test
   fun testExpiredPluginNotLoaded() {
@@ -642,6 +658,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     pathResolver = pathResolver,
     dataLoader = dataLoader,
     pluginDir = path,
+    pool = ZipFilePoolImpl(),
   )
   return result
 }
@@ -660,6 +677,6 @@ fun createFromDescriptor(path: Path,
                                  readInto = null,
                                  locationSource = path.toString())
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = null, moduleName = null)
-  initMainDescriptorByRaw(descriptor = result, raw = raw, pathResolver = pathResolver, context = context, pluginDir = path, dataLoader = dataLoader)
+  initMainDescriptorByRaw(descriptor = result, raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
   return result
 }

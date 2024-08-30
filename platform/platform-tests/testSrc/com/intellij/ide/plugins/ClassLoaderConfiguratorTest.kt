@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -188,7 +189,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    result.addAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context) },
+    result.addAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context, pool = ZipFilePoolImpl()) },
                   overrideUseIfCompatible = false,
                   productBuildNumber = buildNumber)
   }
