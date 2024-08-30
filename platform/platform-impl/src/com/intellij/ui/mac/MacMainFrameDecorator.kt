@@ -42,6 +42,10 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     private val LOG: Logger
       get() = logger<MacMainFrameDecorator>()
 
+    /**
+     * A client property on a root pane to describe the fullscreen state
+     * Should either be true or null
+     */
     const val FULL_SCREEN: String = "Idea.Is.In.FullScreen.Mode.Now"
 
     const val FULL_SCREEN_PROGRESS: String = "Idea.Is.In.FullScreen.Mode.Progress"
@@ -101,9 +105,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
 
       override fun windowEnteredFullScreen(event: FullScreenEvent) {
         frame.togglingFullScreenInProgress = false
-        // We can get the notification when the frame has been disposed
-        val rootPane = frame.rootPane
-        rootPane?.putClientProperty(FULL_SCREEN, true)
         enterFullScreen()
         frame.validate()
         notifyFrameComponents(true)
@@ -188,7 +189,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     isInFullScreen = state
     val rootPane = frame.rootPane
     if (rootPane != null) {
-      rootPane.putClientProperty(FULL_SCREEN, state)
+      rootPane.putClientProperty(FULL_SCREEN, if (state) true else null)
       if (rootPane.border != null) {
         rootPane.setBorder(null)
       }
