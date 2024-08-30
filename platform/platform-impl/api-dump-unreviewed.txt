@@ -686,8 +686,6 @@ f:com.intellij.application.options.schemes.SchemeNameGenerator
 - s:getUniqueName(java.lang.String,java.util.function.Predicate):java.lang.String
 a:com.intellij.application.options.schemes.SchemesCombo
 - com.intellij.openapi.ui.ComboBox
-- sf:IDE_LEVEL:java.util.function.Supplier
-- sf:PROJECT_LEVEL:java.util.function.Supplier
 - <init>():V
 - p:getIndent(com.intellij.openapi.options.Scheme):I
 - pa:getSchemeAttributes(com.intellij.openapi.options.Scheme):com.intellij.ui.SimpleTextAttributes

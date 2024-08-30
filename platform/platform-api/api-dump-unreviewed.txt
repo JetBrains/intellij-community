@@ -3684,7 +3684,6 @@ c:com.intellij.openapi.ui.ComboBoxWithWidePopup
 - setRenderer(javax.swing.ListCellRenderer):V
 c:com.intellij.openapi.ui.ComboBoxWithWidePopup$AdjustingListCellRenderer
 - javax.swing.ListCellRenderer
-- f:delegate:javax.swing.ListCellRenderer
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.openapi.ui.ComponentValidator
 - sf:CWBB_PROVIDER:java.util.function.Function
