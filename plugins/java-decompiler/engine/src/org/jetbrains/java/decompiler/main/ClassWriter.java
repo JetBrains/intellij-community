@@ -120,15 +120,20 @@ public class ClassWriter {
                 buffer.append(", ");
               }
 
+              List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
+              VarType type = md_content.params[i];
+              String typeName = ExprProcessor.getCastTypeName(type, explicitlyTyped, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
               if (explicitlyTyped) {
-                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
-                VarType type = md_content.params[i];
-                buffer.append(ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations)));
+                buffer.append(typeName);
                 buffer.append(' ');
               }
 
               String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
-              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
+              if (parameterName == null) {
+                parameterName = "param" + index; // null iff decompiled with errors
+              }
+              parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(mt.getAccessFlags(), typeName, parameterName, index);
+              buffer.append(parameterName);
 
               firstParameter = false;
             }
@@ -753,7 +758,11 @@ public class ClassWriter {
             buffer.append(' ');
 
             String parameterName = methodWrapper.varproc.getVarName(pair);
-            buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
+            if (parameterName == null) {
+              parameterName = "param" + index; // null iff decompiled with errors
+            }
+            parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(flags, typeName, parameterName, index);
+            buffer.append(parameterName);
 
             paramCount++;
           }
@@ -925,7 +934,11 @@ public class ClassWriter {
             buffer.append(" ");
 
             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
-            buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
+            if (parameterName == null) {
+              parameterName = "param" + index; // null iff decompiled with errors
+            }
+            parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(mt.getAccessFlags(), typeName, parameterName, index);
+            buffer.append(parameterName);
 
             firstParameter = false;
           }

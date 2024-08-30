@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.ClasspathScanner;
+import org.jetbrains.java.decompiler.util.JADNameProvider;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.io.File;
@@ -57,7 +58,26 @@ public class Fernflower implements IDecompiledData {
       converter = null;
     }
 
-    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor, cancellationManager);
+    IVariableNamingFactory renamerFactory = null;
+    String factoryClazz = (String) properties.get(DecompilerContext.RENAMER_FACTORY);
+    if (factoryClazz != null) {
+      try {
+        renamerFactory = Class.forName(factoryClazz).asSubclass(IVariableNamingFactory.class).getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        logger.writeMessage("Error loading renamer factory class: " + factoryClazz, e);
+      }
+    }
+    if (renamerFactory == null) {
+      if("1".equals(properties.get(IFernflowerPreferences.USE_JAD_VARNAMING))) {
+        boolean renameParams = "1".equals(properties.get(IFernflowerPreferences.USE_JAD_PARAMETER_RENAMING));
+        renamerFactory = new JADNameProvider.JADNameProviderFactory(renameParams);
+      } else {
+        renamerFactory = new IdentityRenamerFactory();
+      }
+    }
+
+    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor, cancellationManager, renamerFactory);
+
     DecompilerContext.setCurrentContext(context);
 
     String vendor = System.getProperty("java.vendor", "missing vendor");

@@ -1,0 +1,81 @@
+package pkg;
+
+public class TestJADNaming {
+   public void Func() {
+      short short1 = 1000;// 7
+      short short2 = 2000;
+      short short3 = 3000;
+      short short4 = 4000;
+      if (short1 != short2 && short3 == short4) {// 8
+         ;
+      }
+
+      boolean flag = true;// 9
+      boolean flag1 = false;
+      boolean flag2 = true;
+      boolean flag3 = false;
+      if (flag != flag1 && flag2 == flag3) {// 10
+         ;
+      }
+
+   }// 11
+}
+
+class 'pkg/TestJADNaming' {
+   method 'Func ()V' {
+      0      4
+      1      4
+      2      4
+      3      4
+      4      5
+      5      5
+      6      5
+      7      5
+      8      6
+      9      6
+      a      6
+      b      6
+      c      7
+      d      7
+      e      7
+      f      7
+      10      7
+      11      8
+      12      8
+      13      8
+      16      8
+      17      8
+      18      8
+      19      8
+      1c      12
+      1d      12
+      1e      12
+      1f      13
+      20      13
+      21      13
+      22      14
+      23      14
+      24      14
+      25      15
+      26      15
+      27      15
+      28      16
+      29      16
+      2a      16
+      2b      16
+      2c      16
+      2f      16
+      30      16
+      31      16
+      32      16
+      33      16
+      36      20
+   }
+}
+
+Lines mapping:
+7 <-> 5
+8 <-> 9
+9 <-> 13
+10 <-> 17
+11 <-> 21

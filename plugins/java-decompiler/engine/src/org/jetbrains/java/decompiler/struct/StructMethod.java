@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct;
 import org.jetbrains.java.decompiler.code.*;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
 import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.jetbrains.java.decompiler.code.CodeConstants.*;
 
@@ -72,6 +74,8 @@ public class StructMethod extends StructMember {
   private boolean expanded = false;
   private final String classQualifiedName;
   private final GenericMethodDescriptor signature;
+  private IVariableNameProvider renamer;
+  public Set<String> enclosedClasses; // Dirty hack, but the management of nested classes is trash.
 
   private StructMethod(int accessFlags,
                        Map<String, StructGeneralAttribute> attributes,
@@ -335,6 +339,17 @@ public class StructMethod extends StructMember {
 
   public InstructionSequence getInstructionSequence() {
     return seq;
+  }
+
+  public IVariableNameProvider getVariableNamer() {
+    if (renamer == null) {
+      this.renamer = DecompilerContext.getNamingFactory().createFactory(this);
+    }
+    return renamer;
+  }
+
+  public void clearVariableNamer() {
+    this.renamer = null;
   }
 
   public StructLocalVariableTableAttribute getLocalVariableAttr() {

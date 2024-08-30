@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -15,6 +16,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+import org.jetbrains.java.decompiler.util.StatementIterator;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -827,6 +829,51 @@ public class VarDefinitionHelper {
     }
 
 
+    Map<VarVersionPair, String> renames = this.mt.getVariableNamer().rename(typeNames);
+
+    // Stuff the parent context into enclosed child methods
+    StatementIterator.iterate(root, (exprent) -> {
+      List<StructMethod> methods = new ArrayList<>();
+      if (exprent.type == Exprent.EXPRENT_VAR) {
+        VarExprent var = (VarExprent)exprent;
+        if (var.isClassDef()) {
+          ClassesProcessor.ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(var.getVarType().getValue());
+          if (child != null)
+            methods.addAll(child.classStruct.getMethods());
+        }
+      }
+      else if (exprent.type == Exprent.EXPRENT_NEW) {
+        NewExprent _new = (NewExprent)exprent;
+        if (_new.isAnonymous()) { //TODO: Check for Lambda here?
+          ClassesProcessor.ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(_new.getNewType().getValue());
+          if (child != null) {
+            if (_new.isLambda()) {
+              if (child.lambdaInformation.is_method_reference) {
+                //methods.add(child.getWrapper().getClassStruct().getMethod(child.lambdaInformation.content_method_key));
+              } else {
+                methods.add(child.classStruct.getMethod(child.lambdaInformation.content_method_name, child.lambdaInformation.content_method_descriptor));
+              }
+            } else {
+              methods.addAll(child.classStruct.getMethods());
+            }
+          }
+        }
+      }
+
+      for (StructMethod meth : methods) {
+        meth.getVariableNamer().addParentContext(VarDefinitionHelper.this.mt.getVariableNamer());
+      }
+      return 0;
+    });
+
+    if (mt.enclosedClasses != null) {
+      for (String cls : mt.enclosedClasses) {
+        StructClass cl = DecompilerContext.getStructContext().getClass(cls);
+        for (StructMethod meth : cl.getMethods()) {
+          meth.getVariableNamer().addParentContext(this.mt.getVariableNamer());
+        }
+      }
+    }
 
     Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
 
@@ -837,7 +884,16 @@ public class VarDefinitionHelper {
         continue;
       }
       LocalVariable lvt = e.getValue().getLVT();
+      String rename = renames == null ? null : renames.get(idx);
+
+      if (rename != null) {
+        varproc.setVarName(idx, rename);
+      }
+
       if (lvt != null) {
+        if (rename != null) {
+          lvt = lvt.rename(rename);
+        }
         varproc.setVarLVT(idx, lvt);
         lvts.put(idx, lvt);
       }
@@ -969,7 +1025,7 @@ public class VarDefinitionHelper {
 
     private VarInfo(LocalVariable lvt, VarType type) {
       if (lvt != null && lvt.getSignature() != null)
-        this.cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), true, Collections.emptyList());
+        this.cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), false, Collections.emptyList());
       else if (lvt != null)
         this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false, Collections.emptyList());
       else if (type != null)

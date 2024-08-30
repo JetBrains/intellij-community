@@ -150,7 +150,8 @@ public class ClassWrapper {
   }
 
   private static void applyDebugInfo(StructMethod mt, VarProcessor varProc, MethodWrapper methodWrapper) {
-    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+    // Only rename parameters in the var processor if we aren't already renaming them with JAD naming
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && (!DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_VARNAMING) || !DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_PARAMETER_RENAMING))) {
       StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
       if (attr != null) {
         // only param names here

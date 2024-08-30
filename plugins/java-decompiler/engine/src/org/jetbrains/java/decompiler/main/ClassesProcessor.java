@@ -148,6 +148,7 @@ public class ClassesProcessor {
         node.access = cl.getAccessFlags();
         mapRootClasses.put(cl.qualifiedName, node);
       }
+      linkEnclosingMethods(cl);
     }
 
     // set non-sealed if class extends or implements a sealed class and is not final or sealed itself
@@ -256,6 +257,25 @@ public class ClassesProcessor {
         }
       }
     }
+  }
+
+  private void linkEnclosingMethods(StructClass cl) {
+      StructEnclosingMethodAttribute attr = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
+      if (attr == null || attr.getMethodName() == null) {
+        return;
+      }
+      StructClass parent = context.getClasses().get(attr.getClassName());
+      if (parent == null) {
+        return;
+      }
+      StructMethod method = parent.getMethod(attr.getMethodName(), attr.getMethodDescriptor());
+      if (method == null) {
+        return;
+      }
+      if (method.enclosedClasses == null) {
+        method.enclosedClasses = new HashSet<>();
+      }
+      method.enclosedClasses.add(cl.qualifiedName);
   }
 
   private static boolean isAnonymous(StructClass cl, StructClass enclosingCl) {
@@ -443,6 +463,7 @@ public class ClassesProcessor {
   private static void destroyWrappers(ClassNode node) {
     node.wrapper = null;
     node.classStruct.releaseResources();
+    node.classStruct.getMethods().forEach(m -> m.clearVariableNamer());
 
     for (ClassNode nd : node.nested) {
       destroyWrappers(nd);
