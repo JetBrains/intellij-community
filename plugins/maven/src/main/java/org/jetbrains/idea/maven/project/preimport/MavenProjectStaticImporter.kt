@@ -255,7 +255,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       Properties().apply {
         putAll(projectData.properties)
       },
-      projectData.plugins.values.toList(),
+      projectData.plugins.values.map { MavenPluginInfo(it, null) }.toList(),
     )
   }
 

@@ -7,6 +7,8 @@ import java.io.File
 import java.io.Serializable
 import java.util.*
 
+data class MavenPluginInfo(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
+
 internal data class MavenProjectState(
   val lastReadStamp: Long = 0,
   val mavenId: MavenId? = null,
@@ -36,9 +38,10 @@ internal data class MavenProjectState(
   val dependencyHash: String? = null,
   val unresolvedArtifactIds: Set<MavenId> = emptySet(),
   val localRepository: File? = null,
-  val plugins: List<MavenPlugin> = emptyList(),
-  val readingProblems: Collection<MavenProjectProblem> = emptySet()
+  val pluginInfos: List<MavenPluginInfo> = emptyList(),
+  val readingProblems: Collection<MavenProjectProblem> = emptySet(),
 ) : Serializable {
+  val plugins: List<MavenPlugin> get() = pluginInfos.map { it.plugin }
   val declaredPlugins: List<MavenPlugin> get() = plugins.filter { !it.isDefault }
 
   val isParentResolved: Boolean
@@ -64,7 +67,7 @@ internal data class MavenProjectState(
     val repositoryChanged = !Comparing.equal(localRepository, newState.localRepository)
 
     result.setHasDependencyChanges(repositoryChanged || !Comparing.equal(dependencies, newState.dependencies))
-    result.setHasPluginChanges(repositoryChanged || !Comparing.equal<List<MavenPlugin>>(plugins, newState.plugins))
+    result.setHasPluginChanges(repositoryChanged || !Comparing.equal(pluginInfos, newState.pluginInfos))
     result.setHasPropertyChanges(!Comparing.equal(properties, newState.properties))
     return result
   }

@@ -127,11 +127,11 @@ class MavenProject(val file: VirtualFile) {
   }
 
   @ApiStatus.Internal
-  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, plugins: List<MavenPlugin>): MavenProjectChanges {
+  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginInfo>): MavenProjectChanges {
     val newState = myState.copy(
       dependencies = dependencies,
       properties = properties,
-      plugins = plugins
+      pluginInfos = pluginInfos
     )
     return setState(newState)
   }
@@ -1070,7 +1070,7 @@ class MavenProject(val file: VirtualFile) {
       val newRepositories = LinkedHashSet<MavenRemoteRepository>()
       val newDependencies = LinkedHashSet<MavenArtifact>()
       val newDependencyTree = LinkedHashSet<MavenArtifactNode>()
-      val newPlugins = LinkedHashSet<MavenPlugin>()
+      val newPluginInfos = LinkedHashSet<MavenPluginInfo>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
 
@@ -1084,27 +1084,27 @@ class MavenProject(val file: VirtualFile) {
       }
 
       if (keepPreviousPlugins) {
-        newPlugins.addAll(state.plugins)
+        newPluginInfos.addAll(state.pluginInfos)
       }
 
       newUnresolvedArtifacts.addAll(unresolvedArtifactIds)
       newRepositories.addAll(model.remoteRepositories)
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
-      newPlugins.addAll(model.plugins)
+      newPluginInfos.addAll(model.plugins.map { MavenPluginInfo(it, null) })
       newExtensions.addAll(model.extensions)
 
       val remoteRepositories = ArrayList(newRepositories)
       val dependencies = ArrayList(newDependencies)
       val dependencyTree = ArrayList(newDependencyTree)
-      val plugins = ArrayList(newPlugins)
+      val pluginInfos = ArrayList(newPluginInfos)
       val extensions = ArrayList(newExtensions)
       val annotationProcessors = ArrayList(newAnnotationProcessors)
 
       val newDependencyHash = dependencyHash ?: state.dependencyHash
       val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0
 
-      MavenModelPropertiesPatcher.patch(model.properties, plugins)
+      MavenModelPropertiesPatcher.patch(model.properties, pluginInfos.map { it.plugin })
 
       return state.copy(
         lastReadStamp = lastReadStamp,
@@ -1133,7 +1133,7 @@ class MavenProject(val file: VirtualFile) {
         remoteRepositories = remoteRepositories,
         dependencies = dependencies,
         dependencyTree = dependencyTree,
-        plugins = plugins,
+        pluginInfos = pluginInfos,
         extensions = extensions,
         annotationProcessors = annotationProcessors,
         dependencyHash = newDependencyHash,
