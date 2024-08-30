@@ -191,10 +191,10 @@ internal class ShellCommandExecutionManagerImpl(
   }
 
   /**
-   * This is similar to sendCommandToExecute with the difference in termination signal.
-   * This sends "GENERATOR_FINISHED" instead of "Command finished" event.
+   * This is similar to [sendCommandToExecute] with the difference in finishing
+   * event (`generator_finished` instead of `command_finished`).
    *
-   * This does not execute command immediately, rather adds it to queue to be
+   * This does not execute the command immediately, rather adds it to the queue to be
    * executed when other commands\generators are finished and the shell is free.
    */
   override fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
@@ -444,4 +444,3 @@ internal class ShellCommandExecutionManagerImpl(
     )
   }
 }
-
