@@ -72,11 +72,13 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer, InternalDebugLoggingRequestor {
+  private static final ExecutorService RELOAD_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Breakpoint reload", 1);
   public static final Key<Breakpoint<?>> DATA_KEY = Key.create("JavaBreakpoint");
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
@@ -220,7 +222,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     ReadAction.nonBlocking(this::reload)
       .coalesceBy(myProject, this)
       .expireWith(myProject)
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(RELOAD_EXECUTOR);
   }
 
   /**
