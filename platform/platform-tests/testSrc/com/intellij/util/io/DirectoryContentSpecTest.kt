@@ -80,6 +80,27 @@ class DirectoryContentSpecTest {
       file("a.txt", "a")
     }, FileTextMatcher.ignoreBlankLines())
   }
+  
+  @Test
+  fun `file content different line separators`() {
+    val dir = directoryContent {
+      file("a.txt", "first\nsecond")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.txt", "first\r\nsecond")
+    }, FileTextMatcher.ignoreLineSeparators())
+
+    try {
+      dir.assertMatches(directoryContent {
+        file("a.txt", "first\r\nsecond")
+      })
+      fail("Must not match")
+    }
+    catch (e: AssertionError) {
+      assertThat(e.message).contains("Different line separators")
+    }
+  }
 
   @Test
   fun `file content with ignore empty lines option`() {
