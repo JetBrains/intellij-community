@@ -104,7 +104,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     DeadCodeHelper.removeGoTos(graph);
 
-    ExceptionDeobfuscator.duplicateMergedCatchBlocks(graph, cl);
+    ExceptionDeobfuscator.duplicateMergedMatchedExceptionCatchBlocks(graph, cl);
 
     ExceptionDeobfuscator.removeCircularRanges(graph);
 

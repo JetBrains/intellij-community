@@ -16,6 +16,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominat
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -394,7 +396,7 @@ public final class ExceptionDeobfuscator {
   }
 
   /**
-   * Duplicates merged catch blocks; it needs to process files with record pattern matching,
+   * Duplicates merged catch blocks with MatchException; it needs to process files with record pattern matching,
    * because the javac compiler collapses all catch blocks for same exception into one block.
    * It breaks logic to find a possible way. It must be called before other optimizations; otherwise
    * this decompiler will add a lot of empty blocks, which cannot be processed correctly.
@@ -402,7 +404,7 @@ public final class ExceptionDeobfuscator {
    * @param graph The control flow graph containing the merged catch blocks.
    * @param cl    The class containing the control flow graph.
    */
-  public static void duplicateMergedCatchBlocks(@NotNull ControlFlowGraph graph, @NotNull StructClass cl) {
+  public static void duplicateMergedMatchedExceptionCatchBlocks(@NotNull ControlFlowGraph graph, @NotNull StructClass cl) {
     if (!cl.hasRecordPatternSupport()) {
       return;
     }
@@ -419,6 +421,25 @@ public final class ExceptionDeobfuscator {
         continue;
       }
       if (handler.getLastInstruction().opcode != CodeConstants.opc_athrow) {
+        continue;
+      }
+      InstructionSequence seq = handler.getSeq();
+      boolean found = false;
+      for (int i = 0; i < seq.length(); i++) {
+        Instruction instr = seq.getInstr(i);
+        if (instr.opcode == CodeConstants.opc_new && instr.operandsCount() >= 1) {
+          if (found) {
+            found = false;
+            break;
+          }
+          PooledConstant constant = cl.getPool().getConstant(instr.operand(0));
+          if (constant instanceof PrimitiveConstant primitiveConstant &&
+              "java/lang/MatchException".equals(primitiveConstant.value)) {
+            found = true;
+          }
+        }
+      }
+      if (!found) {
         continue;
       }
       Set<String> exceptions = ranges.stream()
