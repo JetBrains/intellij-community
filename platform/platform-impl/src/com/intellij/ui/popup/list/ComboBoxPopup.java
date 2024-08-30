@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
+import com.intellij.ui.dsl.listCellRenderer.LcrRow;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -272,9 +273,16 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       if (cellRenderer instanceof GroupedComboBoxRenderer<? super T> renderer) {
         return renderer.separatorFor(value);
       }
-      if (cellRenderer instanceof ComboBoxWithWidePopup<? super T>.AdjustingListCellRenderer renderer
-          && renderer.delegate instanceof GroupedComboBoxRenderer<? super T> delegate) {
-        return delegate.separatorFor(value);
+      if (cellRenderer instanceof ComboBoxWithWidePopup<? super T>.AdjustingListCellRenderer renderer) {
+        ListCellRenderer<? super T> delegate = renderer.delegate;
+        if (delegate instanceof GroupedComboBoxRenderer<? super T> groupedComboBoxRenderer) {
+          return groupedComboBoxRenderer.separatorFor(value);
+        }
+        if (delegate instanceof LcrRow<?>) {
+          KotlinUIDslRendererComponent component =
+            (KotlinUIDslRendererComponent)delegate.getListCellRendererComponent(myProxyList, value, -1, false, false);
+          return component.getListSeparator();
+        }
       }
       return null;
     }

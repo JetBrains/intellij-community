@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer.impl
 
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleColoredComponent
@@ -13,6 +14,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.*
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -104,12 +106,12 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     gap = LcrRow.Gap.DEFAULT
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
 
+    val renderingType = getRenderingType(list, index)
     // The list is not focused when isSwingPopup = false
-    val isListFocused = isComboBoxPopup(list) || RenderingUtil.isFocused(list)
+    val isListFocused = renderingType.isComboBoxPopup() || RenderingUtil.isFocused(list)
     val selectionBg = if (isSelected) JBUI.CurrentTheme.List.Selection.background(isListFocused) else null
-    val collapsedComboBoxItem = index == -1
     val enabled: Boolean
-    if (collapsedComboBoxItem) {
+    if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
       background = null
       selectionColor = null
       enabled = getComboBox(list)?.isEnabled ?: true
@@ -127,8 +129,18 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     val cellsTypes = cells.map { it.type }
     val result = rendererCache.getRootPanel(cellsTypes)
 
-    applyRowStyle(result, collapsedComboBoxItem)
-    result.applySeparator(separator != null && !collapsedComboBoxItem, separator?.text, index == 0, list.background)
+    applyRowStyle(result, renderingType)
+
+    result.listSeparator = if (separator == null) null else ListSeparator(separator!!.text)
+
+    @Suppress("UNCHECKED_CAST")
+    val model = list.model as? ListPopupModel<T>
+    val listSeparator = when {
+      model == null -> if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM || separator == null) null
+      else ListSeparator(separator!!.text)
+      else -> if (model.isSeparatorAboveOf(value)) ListSeparator(model.getCaptionAboveOf(value)) else null
+    }
+    result.applySeparator(listSeparator, index == 0, list)
 
     for ((i, cell) in cells.withIndex()) {
       val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.gapBefore))
@@ -144,17 +156,22 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     return result
   }
 
-  private fun applyRowStyle(rendererPanel: RendererPanel, collapsedComboBoxItem: Boolean) {
+  private fun applyRowStyle(rendererPanel: RendererPanel, renderingType: RenderingType) {
     if (ExperimentalUI.isNewUI()) {
-      if (collapsedComboBoxItem) {
+      if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
         rendererPanel.initCollapsedComboBoxItem()
       }
       else {
-        rendererPanel.initItem(isComboBoxPopup(list), background, if (selected) selectionColor else null)
+        rendererPanel.initItem(renderingType, background, if (selected) selectionColor else null)
       }
     }
     else {
-      rendererPanel.initOldUIItem(if (selected) selectionColor else background)
+      if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
+        rendererPanel.initOldUICollapsedComboBoxItem()
+      }
+      else {
+        rendererPanel.initOldUIItem(if (selected) selectionColor else background)
+      }
     }
   }
 
@@ -170,9 +187,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     }
   }
 
-  private fun isComboBoxPopup(list: JList<*>): Boolean {
-    return (list.getClientProperty(JBPopup.KEY) is ComboBoxPopup<*>) // isSwingPopup = false
-           || UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null // isSwingPopup = true
+  private fun getRenderingType(list: JList<*>, index: Int): RenderingType {
+    return when {
+      index == -1 -> RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM
+      list.getClientProperty(JBPopup.KEY) is ComboBoxPopup<*> -> RenderingType.IJ_COMBO_BOX_POPUP
+      UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null -> RenderingType.SWING_COMBO_BOX_POPUP
+      else -> RenderingType.LIST
+    }
   }
 
   /**
@@ -225,7 +246,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
   private val cellsPanel = JPanel(cellsLayout)
 
   private val selectablePanel = SelectablePanel()
-  private val separator = GroupHeaderSeparator(JBUI.insets(2, 20))
+  private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.insets(2, 20)
+                                               else JBUI.insets(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()))
 
   init {
     add(separator, BorderLayout.NORTH)
@@ -241,6 +263,8 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
       builder.cell(type.createInstance())
     }
   }
+
+  override var listSeparator: ListSeparator? = null
 
   override fun getCopyText(): String? {
     // Find the first component with non-trivial text
@@ -298,13 +322,15 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     return accessibleContext
   }
 
-  fun applySeparator(hasSeparator: Boolean, text: @NlsContexts.Separator String?, isHideLine: Boolean, background: Color?) {
-    separator.isVisible = hasSeparator
-    separator.caption = text
-    separator.isHideLine = isHideLine
+  fun applySeparator(listSeparator: ListSeparator?, isHideLine: Boolean, list: JList<*>) {
+    separator.isVisible = listSeparator != null
+    if (listSeparator != null) {
+      separator.caption = listSeparator.text
+      separator.isHideLine = isHideLine
 
-    // Set background for separator
-    this.background = background
+      // Set background for separator
+      background = list.background
+    }
   }
 
   fun applyCellConstraints(i: Int, cell: LcrCellBaseImpl<*>, leftGap: Int): JComponent {
@@ -362,13 +388,13 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
   }
 
-  fun initItem(isComboBoxPopup: Boolean, background: Color?, selectionColor: Color?) {
+  fun initItem(renderingType: RenderingType, background: Color?, selectionColor: Color?) {
     with(selectablePanel) {
       // Update height/insets every time, so IDE scaling is applied
       isOpaque = true
       selectionArc = 8
       selectionInsets = JBInsets.create(0, 12)
-      if (isComboBoxPopup) {
+      if (renderingType.isComboBoxPopup()) {
         border = JBUI.Borders.empty(2, 20)
       }
       else {
@@ -380,11 +406,47 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
   }
 
+  fun initOldUICollapsedComboBoxItem() {
+    with(selectablePanel) {
+      border = null
+      background = null
+      selectionColor = null
+    }
+  }
+
   fun initOldUIItem(background: Color?) {
     with(selectablePanel) {
       border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
       this.background = background
       selectionColor = null
+    }
+  }
+}
+
+private enum class RenderingType {
+  LIST,
+
+  /**
+   * [ComboBox.isSwingPopup] = true
+   */
+  SWING_COMBO_BOX_POPUP,
+
+  /**
+   * [ComboBox.isSwingPopup] = false
+   */
+  IJ_COMBO_BOX_POPUP,
+
+  /**
+   * index == -1: ComboBox is rendering the selected item in the collapsed state or for some technical purposes
+   */
+  COLLAPSED_SELECTED_COMBO_BOX_ITEM;
+
+  fun isComboBoxPopup(): Boolean {
+    return when (this) {
+      SWING_COMBO_BOX_POPUP,
+      IJ_COMBO_BOX_POPUP,
+        -> true
+      else -> false
     }
   }
 }

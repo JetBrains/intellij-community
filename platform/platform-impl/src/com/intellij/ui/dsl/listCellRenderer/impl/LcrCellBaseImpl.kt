@@ -45,6 +45,7 @@ private class PatchedSimpleColoredComponent : SimpleColoredComponent() {
   init {
     @Suppress("UseDPIAwareInsets")
     ipad = Insets(ipad.top, 0, ipad.bottom, 0)
+    myBorder = null
     isOpaque = false
   }
 

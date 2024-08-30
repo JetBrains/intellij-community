@@ -12,10 +12,11 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
-import com.intellij.ui.dsl.builder.Placeholder
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.layout.selected
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -28,16 +29,23 @@ internal class LcrOthersPanel : UISandboxPanel {
       group("listCellRenderer") {
         row {
           lateinit var separator: JBCheckBox
+          lateinit var separatorText: JBTextField
           lateinit var icon: JBCheckBox
           lateinit var selected: JBCheckBox
           lateinit var placeholder: Placeholder
-          val onChanged = { _: JBCheckBox ->
-            createRenderer(placeholder, separator.isSelected, icon.isSelected, selected.isSelected)
+          val onChanged = { _: JComponent ->
+            createRenderer(placeholder, separator.isSelected, separatorText.text, icon.isSelected, selected.isSelected)
           }
 
           panel {
             row {
               separator = checkBox("Separator")
+                .gap(RightGap.SMALL)
+                .onChanged(onChanged)
+                .component
+              separatorText = textField()
+                .text("Group")
+                .enabledIf(separator.selected)
                 .onChanged(onChanged)
                 .component
             }
@@ -72,11 +80,13 @@ internal class LcrOthersPanel : UISandboxPanel {
     }
   }
 
-  private fun createRenderer(placeholder: Placeholder, separator: Boolean, icon: Boolean, selected: Boolean) {
-    val debugColor = JBColor(0x60BB60, 0x60BB60)
+  private fun createRenderer(placeholder: Placeholder, separator: Boolean, separatorText: String, icon: Boolean, selected: Boolean) {
+    val debugColor = JBColor(0x80DD80, 0x70AA70)
     val renderer = listCellRenderer {
       if (separator) {
-        separator { }
+        separator {
+          text = separatorText.nullize(true)
+        }
       }
 
       if (icon) {
