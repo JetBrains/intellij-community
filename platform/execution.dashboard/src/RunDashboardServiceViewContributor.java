@@ -26,7 +26,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,8 +58,6 @@ public final class RunDashboardServiceViewContributor
              RunDashboardGroupNode {
 
   @NonNls static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
-
-  private static final Key<ActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
 
   private static final DataProvider TREE_EXPANDER_HIDE_PROVIDER =
     id -> PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
@@ -187,7 +184,6 @@ public final class RunDashboardServiceViewContributor
       myNode = node;
     }
 
-    @Nullable
     @Override
     public String getId() {
       RunConfiguration configuration = myNode.getConfigurationSettings().getConfiguration();
@@ -249,7 +245,7 @@ public final class RunDashboardServiceViewContributor
     }
 
     @Override
-    public @Nullable DataProvider getDataProvider() {
+    public DataProvider getDataProvider() {
       Content content = myNode.getContent();
       if (content == null) return TREE_EXPANDER_HIDE_PROVIDER;
 
@@ -281,7 +277,6 @@ public final class RunDashboardServiceViewContributor
       ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).removeFromSelection(content);
     }
 
-    @Nullable
     @Override
     public Navigatable getNavigatable() {
       NullableLazyValue<PsiElement> value = NullableLazyValue.lazyNullable(() -> {
@@ -503,7 +498,6 @@ public final class RunDashboardServiceViewContributor
       super(node);
     }
 
-    @Nullable
     @Override
     public Runnable getRemover() {
       return () -> {
