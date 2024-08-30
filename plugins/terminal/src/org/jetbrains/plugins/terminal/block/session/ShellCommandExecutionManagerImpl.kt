@@ -389,7 +389,7 @@ internal class ShellCommandExecutionManagerImpl(
   }
 
   companion object {
-    internal val LOG = logger<ShellCommandExecutionManagerImpl>()
+    private val LOG = logger<ShellCommandExecutionManagerImpl>()
     private val NEXT_REQUEST_ID = AtomicInteger(0)
     private const val GENERATOR_COMMAND = "__jetbrains_intellij_run_generator"
     private const val SHORTCUT_CTRL_U = "\u0015"
