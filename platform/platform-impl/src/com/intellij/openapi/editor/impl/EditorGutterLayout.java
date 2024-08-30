@@ -131,7 +131,6 @@ public final class EditorGutterLayout {
 
     List<GutterArea> annotationAreas = List.of(
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize)
-        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0),
       areaGap()
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
@@ -188,13 +187,11 @@ public final class EditorGutterLayout {
   private List<GutterArea> createNewUILayout(boolean isDistractionFreeMode) {
     List<GutterArea> annotationAreas = List.of(
       area(ANNOTATIONS_AREA, EditorGutterComponentImpl.EMPTY_ANNOTATION_AREA_WIDTH::get)
-        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize == 0 && myEditorGutter.isLineMarkersShown()),
       areaGap()
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations() && myEditorGutter.isLineMarkersShown()),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize)
-        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0)
     );
 
