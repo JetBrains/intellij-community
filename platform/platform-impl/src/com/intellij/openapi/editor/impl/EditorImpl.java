@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
+import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -5454,7 +5455,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public boolean isInDistractionFreeMode() {
     return EditorUtil.isRealFileEditor(this)
-           && (Registry.is("editor.distraction.free.mode") || isInPresentationMode());
+           && (DistractionFreeModeController.isDistractionFreeModeEnabled() || isInPresentationMode());
   }
 
   boolean isInPresentationMode() {

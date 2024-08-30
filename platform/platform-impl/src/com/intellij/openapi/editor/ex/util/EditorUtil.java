@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.DistractionFreeModeController;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.injected.editor.EditorWindow;
@@ -1309,7 +1310,7 @@ public final class EditorUtil {
   public static boolean isBreakPointsOnLineNumbers() {
     return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
            && !UISettings.getInstance().getPresentationMode()
-           && !Registry.is("editor.distraction.free.mode");
+           && !DistractionFreeModeController.isDistractionFreeModeEnabled();
   }
 
   public static boolean isBlockLikeCaret(@NotNull final Caret caret) {
