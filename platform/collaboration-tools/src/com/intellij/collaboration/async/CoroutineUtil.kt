@@ -7,6 +7,9 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.HashingStrategy
@@ -544,3 +547,17 @@ suspend fun <T> Deferred<T>.awaitCancelling(): T {
     throw ce
   }
 }
+
+fun <T : Any> ExtensionPointName<T>.extensionListFlow(): Flow<List<T>> =
+  channelFlow<List<T>> {
+    addExtensionPointListener(this, object : ExtensionPointListener<T> {
+      override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
+        launch { send(extensionList) }
+      }
+
+      override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
+        launch { send(extensionList) }
+      }
+    })
+    send(extensionList)
+  }
