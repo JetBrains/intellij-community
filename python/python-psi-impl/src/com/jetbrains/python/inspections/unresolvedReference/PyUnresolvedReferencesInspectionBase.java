@@ -39,6 +39,7 @@ public abstract class PyUnresolvedReferencesInspectionBase extends PyInspection 
     assert visitor != null;
     ReadAction.run(
       () -> {
+        visitor.addInstallAllImports();
         if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
           visitor.highlightUnusedImports();
         }

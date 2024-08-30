@@ -69,7 +69,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)
 
-      installAllPackagesQuickFix.packageNames = myUnresolvedNames.toList()
+      installAllPackagesQuickFix.packageNames = myUnresolvedRefs.toList().map { it.refName }.distinct()
     }
 
     public override fun getInstallPackageQuickFixes(
