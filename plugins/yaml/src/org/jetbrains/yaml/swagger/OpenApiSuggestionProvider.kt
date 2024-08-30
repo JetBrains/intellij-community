@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import com.intellij.util.PlatformUtils
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLDocument
 import org.jetbrains.yaml.psi.YAMLFile
@@ -29,6 +30,10 @@ internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
     if (!FileTypeManager.getInstance().isFileOfType(file, YAMLFileType.YML)) return null
 
     if (isPluginSuggestionDismissed() || tryUltimateIsDisabled()) return null
+    if (PlatformUtils.isWriterside()) {
+      // WRS-2730 not compatible without `microservices`
+      return null
+    }
 
     val requiredPluginId = PluginId.getId(OPENAPI_PLUGIN_ID)
     if (PluginManager.isPluginInstalled(requiredPluginId)) return null
