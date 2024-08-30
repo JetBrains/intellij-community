@@ -11713,7 +11713,6 @@ f:com.intellij.find.editorHeaderActions.Utils
 - s:setSmallerFontForChildren(javax.swing.JComponent):V
 - s:shortcutSetOf(java.util.List):com.intellij.openapi.actionSystem.CustomShortcutSet
 - s:shortcutsOf(java.lang.String):java.util.List
-- s:showCompletionPopup(javax.swing.JComponent,java.util.List,java.lang.String,javax.swing.text.JTextComponent,java.lang.String,java.lang.String):V
 - s:showCompletionPopup(javax.swing.JComponent,javax.swing.JList,java.lang.String,javax.swing.text.JTextComponent,java.lang.String):V
 f:com.intellij.find.editorHeaderActions.VariantsCompletionAction
 - com.intellij.openapi.project.DumbAwareAction

@@ -5,16 +5,16 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.AlignedPopup;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -48,45 +48,11 @@ public final class Utils {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChosenCallback(callback)
-      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-        @Override
-        public @Nullable String getTextFor(@NlsContexts.ListItem String item) { return item; }
-      }))
       .createPopup();
 
     if (ad != null) {
       popup.setAdText(ad, SwingConstants.LEFT);
     }
-
-    JComponent parent = toolbarComponent != null ? toolbarComponent : textField;
-    AlignedPopup.showUnderneathWithoutAlignment(popup, parent);
-  }
-
-  public static void showCompletionPopup(JComponent toolbarComponent,
-                                         List<String> list,
-                                         @NlsContexts.PopupTitle String title,
-                                         JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad,
-                                         @Nls @Nullable String accessibleName) {
-
-    final IPopupChooserBuilder<String> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
-    if (title != null) builder.setTitle(title);
-    if (accessibleName != null) builder.setAccessibleName(accessibleName);
-    final JBPopup popup = builder
-      .setMovable(false)
-      .setResizable(false)
-      .setRequestFocus(true)
-      .setItemChosenCallback(s -> {
-        textField.setText(s);
-        IdeFocusManager.getGlobalInstance().requestFocus(textField, false);
-      })
-      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-        @Override
-        public @Nullable String getTextFor(@NlsContexts.ListItem String item) { return item; }
-      }))
-      .createPopup();
-
-    if (ad != null) popup.setAdText(ad, SwingConstants.LEFT);
 
     JComponent parent = toolbarComponent != null ? toolbarComponent : textField;
     AlignedPopup.showUnderneathWithoutAlignment(popup, parent);
