@@ -174,7 +174,7 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
             PsiTestUtil.addSourceRoot(newWorkspaceModule, commonModuleSrcDir)
             newWorkspaceModule.createMultiplatformFacetM3(
                 targetPlatform,
-                true,
+                false,
                 dependsOnModuleNames,
                 listOf(commonModuleSrcPath)
             )
@@ -192,7 +192,7 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
         context.workspaceModuleMap[module] = myModule
         val jvmSrcPath = listOf(testAppPath, ExecutionTestCase.SOURCES_DIRECTORY_NAME).joinToString(File.separator)
         doWriteAction {
-            myModule.createMultiplatformFacetM3(JvmPlatforms.jvm8, true, dependsOnModuleNames, listOf(jvmSrcPath))
+            myModule.createMultiplatformFacetM3(JvmPlatforms.jvm8, false, dependsOnModuleNames, listOf(jvmSrcPath))
         }
     }
 
