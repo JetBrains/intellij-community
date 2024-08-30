@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.*
+import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
@@ -156,21 +157,8 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   private fun isComboBoxPopup(list: JList<*>): Boolean {
-    return isComboBoxPopupClass(list.getClientProperty(JBPopup.KEY)?.javaClass) // isSwingPopup = false
+    return (list.getClientProperty(JBPopup.KEY) is ComboBoxPopup<*>) // isSwingPopup = false
            || UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null // isSwingPopup = true
-  }
-
-  // todo move the impl into intellij.platform.ide.impl module and use `is`
-  private fun isComboBoxPopupClass(clazz: Class<*>?): Boolean {
-    var c = clazz
-    while (c != null) {
-      if (c.name == "com.intellij.ui.popup.list.ComboBoxPopup") {
-        return true
-      }
-      c = c.superclass
-    }
-
-    return false
   }
 
   /**

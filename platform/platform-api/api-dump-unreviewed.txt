@@ -9514,14 +9514,6 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - f:setSpeedSearchHighlighting(Z):V
 f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
 - sf:stripHorizontalInsets(javax.swing.JComponent):V
-com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider
-- sf:Companion:com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider$Companion
-- s:getEP():com.intellij.openapi.extensions.ExtensionPointName
-- a:getRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
-- a:isApplicable():Z
-f:com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider$Companion
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
-- f:getRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 com.intellij.ui.dualView.CellWrapper
 - a:wrap(java.awt.Component,javax.swing.JTable,java.lang.Object,Z,Z,I,I,java.lang.Object):V
 com.intellij.ui.dualView.DualTreeElement
