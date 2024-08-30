@@ -1,25 +1,27 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.net.URL
+import java.nio.file.Path
+import kotlin.io.path.div
 
 plugins {
   id("com.jetbrains.python.envs") version "0.0.31"
 }
 
-val pythonsDirectory = layout.buildDirectory.file("pythons").get().asFile
+val pythonsDirectory: Path = layout.buildDirectory.file("pythons").get().asFile.toPath()
 val defaultArchiveWindows = "https://packages.jetbrains.team/files/p/py/python-archives-windows/"
 val isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
 val pythonExecutableName = if (isWindows) "python.exe" else "bin/python"
 val defaultPackages = listOf("teamcity-messages")
 
 envs {
-  bootstrapDirectory = pythonsDirectory
+  bootstrapDirectory = pythonsDirectory.toFile()
   zipRepository = URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", defaultArchiveWindows))
   shouldUseZipsFromRepository = isWindows
 
   fun testHelpers(pythonName: String, pythonVersion: String) {
     python(pythonName, pythonVersion, defaultPackages)
 
-    val pythonExecutable = pythonsDirectory.resolve(pythonName).resolve(pythonExecutableName).path
+    val pythonExecutable = pythonsDirectory / pythonName / pythonExecutableName
 
     tasks.register<Exec>("Tests for Python ${pythonVersion}") {
       mustRunAfter("build_envs")
