@@ -52,7 +52,7 @@ object FleetFromSourcesPaths {
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.noria.ui.test"])
   object Fonts {
     val jbMonoTTF: String by lazy {
-      fontsDirectory.resolve("jbMono/JetBrainsMono-Regular.ttf").pathString
+      fontsDirectory.resolve("JetBrainsMono/JetBrainsMono-Regular.ttf").pathString
     }
     val notoColorEmoji: String by lazy {
       fontsDirectory.resolve("NotoColorEmoji/NotoColorEmoji.ttf").pathString
