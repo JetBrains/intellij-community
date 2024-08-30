@@ -18896,7 +18896,6 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.OpenAlienProjectAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:projectOpened():V
-- scheduleUpdate(javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -19037,17 +19036,6 @@ a:com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction
 - pa:getTextForEmpty():java.lang.String
 - pa:isSilentlyChooseSingleOption():Z
 - p:showPopup(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.ui.popup.ListPopup,javax.swing.JComponent):V
-f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
-- <init>():V
-- s:collectAllActions(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.ActionGroup):V
-- s:splitAndWrapActions(com.intellij.openapi.actionSystem.ActionGroup,java.util.function.Function,I):com.intellij.openapi.util.Couple
-f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil$ToolbarTextButtonWrapper
-- com.intellij.openapi.actionSystem.AnActionWrapper
-- com.intellij.openapi.actionSystem.ex.CustomComponentAction
-- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
-- updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
-- s:wrapAsOptionButton(java.util.List):com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil$ToolbarTextButtonWrapper
-- s:wrapAsTextButton(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil$ToolbarTextButtonWrapper
 f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenColors
 f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory
 - <init>():V

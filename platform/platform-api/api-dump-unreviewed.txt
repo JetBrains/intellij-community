@@ -7939,6 +7939,7 @@ c:com.intellij.ui.components.DropDownLink
 - f:getSelectedItem():java.lang.Object
 - getSelectedObjects():java.lang.Object[]
 - p:itemToString(java.lang.Object):java.lang.String
+- p:performAction():V
 - p:popupPoint():java.awt.Point
 - f:setSelectedItem(java.lang.Object):V
 c:com.intellij.ui.components.FixedColumnsModel

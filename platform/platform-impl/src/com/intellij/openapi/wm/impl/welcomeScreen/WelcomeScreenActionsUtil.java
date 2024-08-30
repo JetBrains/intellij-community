@@ -1,21 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -26,55 +22,41 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
-public final class WelcomeScreenActionsUtil {
+final class WelcomeScreenActionsUtil {
 
-  public static final class ToolbarTextButtonWrapper extends AnActionWrapper implements CustomComponentAction {
-
-    private final List<AnAction> myActions;
-
-    ToolbarTextButtonWrapper(@NotNull List<AnAction> actions) {
-      super(actions.get(0));
-      myActions = actions;
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      JBOptionButton button = new JBOptionButton(null, null);
-      button.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          performAnActionForComponent(getDelegate(), button);
+  static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
+    return new CustomComponentAction() {
+      @Override
+      public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+        JBOptionButton button = new JBOptionButton(null, null);
+        button.setAction(new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            performAnActionForComponent(action, button);
+          }
+        });
+        List<AnAction> actions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
+        if (actions != null && actions.size() > 1) {
+          button.setOptions(actions);
         }
-      });
-      if (myActions.size() > 1) {
-        button.setOptions(ContainerUtil.subList(myActions, 1));
+        button.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
+        button.putClientProperty(JBOptionButton.PLACE, place);
+        return button;
       }
-      button.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
-      button.putClientProperty(JBOptionButton.PLACE, place);
-      return button;
-    }
 
-    @Override
-    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
-      if (!(component instanceof JBOptionButton button)) return;
-      button.getAction().putValue(Action.NAME, presentation.getText());
-      UIUtil.setEnabled(button, presentation.isEnabled(), true);
-    }
-
-    public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
-      return new ToolbarTextButtonWrapper(Collections.singletonList(action));
-    }
-
-    public static ToolbarTextButtonWrapper wrapAsOptionButton(@NotNull List<AnAction> actions) {
-      return new ToolbarTextButtonWrapper(actions);
-    }
+      @Override
+      public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+        if (!(component instanceof JBOptionButton button)) return;
+        button.getAction().putValue(Action.NAME, presentation.getText());
+        UIUtil.setEnabled(button, presentation.isEnabled(), true);
+      }
+    };
   }
+
 
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
     DataContext context = ActionToolbar.getDataContextFor(component);
@@ -138,59 +120,29 @@ public final class WelcomeScreenActionsUtil {
     }
   }
 
-  static final class LargeIconWithTextWrapper extends AnActionWrapper implements CustomComponentAction {
-
-    LargeIconWithTextWrapper(@NotNull AnAction action) {
-      super(action);
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      String text = presentation.getText();
-      if (StringUtil.isEmpty(text)) {
-        Utils.reportEmptyTextMenuItem(getDelegate(), place);
+  static @NotNull CustomComponentAction createBigIconWithTextAction(@NotNull AnAction action) {
+    return new CustomComponentAction() {
+      @Override
+      public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+        String text = presentation.getText();
+        if (StringUtil.isEmpty(text)) {
+          Utils.reportEmptyTextMenuItem(action, place);
+        }
+        LargeIconWithTextPanel panel = new LargeIconWithTextPanel();
+        panel.myIconButton.addActionListener(l -> performAnActionForComponent(action, panel.myIconButton));
+        return panel;
       }
-      LargeIconWithTextPanel panel = new LargeIconWithTextPanel();
-      panel.myIconButton.addActionListener(l -> performAnActionForComponent(
-        getDelegate(), panel.myIconButton));
-      return panel;
-    }
 
-    @Override
-    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
-      if (!(component instanceof LargeIconWithTextPanel panel)) return;
-      panel.myIconButton.setIcon(presentation.getIcon());
-      panel.myIconButton.setSelectedIcon(presentation.getSelectedIcon());
-      //noinspection DialogTitleCapitalization
-      panel.myLabel.setText(presentation.getText());
-      panel.myIconButton.getAccessibleContext().setAccessibleName(presentation.getText());
-      UIUtil.setEnabled(panel, presentation.isEnabled(), true);
-    }
-
-    static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
-      return new LargeIconWithTextWrapper(action);
-    }
-  }
-
-  public static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
-                                                               @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
-                                                               int mainButtonsNum) {
-    PresentationFactory presentationFactory = new PresentationFactory();
-    List<AnAction> visibleActions = Utils.expandActionGroup(
-      actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT,
-      ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE);
-
-    DefaultActionGroup main = new DefaultActionGroup();
-    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true);
-    more.getTemplatePresentation().setHideGroupIfEmpty(true);
-    for (AnAction child : visibleActions) {
-      if (main.getChildrenCount() < mainButtonsNum) {
-        main.addAction(wrapper.apply(child));
+      @Override
+      public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+        if (!(component instanceof LargeIconWithTextPanel panel)) return;
+        panel.myIconButton.setIcon(presentation.getIcon());
+        panel.myIconButton.setSelectedIcon(presentation.getSelectedIcon());
+        //noinspection DialogTitleCapitalization
+        panel.myLabel.setText(presentation.getText());
+        panel.myIconButton.getAccessibleContext().setAccessibleName(presentation.getText());
+        UIUtil.setEnabled(panel, presentation.isEnabled(), true);
       }
-      else {
-        more.addAction(wrapper.apply(child));
-      }
-    }
-    return Couple.of(main, more);
+    };
   }
 }
