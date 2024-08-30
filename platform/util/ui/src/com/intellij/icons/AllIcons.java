@@ -348,6 +348,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ForceStepInto = load("expui/run/forceStepInto.svg", "debugger/forceStepInto.svg", -897444087, 2);
     /** 16x16 */ public static final @NotNull Icon ForceStepOver = load("expui/run/forceStepOver.svg", "debugger/forceStepOver.svg", 1412423475, 2);
     /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", "debugger/frame.svg", -388104166, 2);
+    /** 16x16 */ public static final @NotNull Icon Freeze = load("expui/debugger/freeze.svg", "debugger/freeze.svg", 754396711, 2);
+    /** 16x16 */ public static final @NotNull Icon FreezeAll = load("expui/debugger/freezeAll.svg", "debugger/freezeAll.svg", 1588999303, 2);
     /** 16x16 */ public static final @NotNull Icon KillProcess = load("expui/run/killProcess.svg", "debugger/killProcess.svg", 1100470732, 2);
     /** 12x12 */ public static final @NotNull Icon LambdaBreakpoint = load("expui/breakpoints/breakpointLambda.svg", "debugger/LambdaBreakpoint.svg", -2130747183, 2);
     /** 12x12 */ public static final @NotNull Icon MultipleBreakpoints = load("expui/breakpoints/multipleBreakpoints.svg", "debugger/MultipleBreakpoints.svg", -1140485658, 2);
@@ -363,6 +365,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Selfreference = load("expui/debugger/selfReference.svg", "debugger/selfreference.svg", 1895404117, 2);
     /** 16x16 */ public static final @NotNull Icon ShowCurrentFrame = load("expui/run/showCurrentFrame.svg", "debugger/showCurrentFrame.svg", 1735060707, 2);
     /** 16x16 */ public static final @NotNull Icon SmartStepInto = load("expui/run/smartStepInto.svg", "debugger/smartStepInto.svg", 1962394045, 2);
+    /** 16x16 */ public static final @NotNull Icon Thaw = load("expui/debugger/thaw.svg", "debugger/thaw.svg", 858407095, 0);
+    /** 16x16 */ public static final @NotNull Icon ThawAll = load("expui/debugger/thawAll.svg", "debugger/thawAll.svg", -247611348, 0);
     /** 16x16 */ public static final @NotNull Icon ThreadAtBreakpoint = load("expui/debugger/threadAtBreakpoint.svg", "debugger/threadAtBreakpoint.svg", -2130465671, 0);
     /** 16x16 */ public static final @NotNull Icon ThreadCurrent = load("expui/debugger/threadCurrent.svg", "debugger/threadCurrent.svg", -580743407, 0);
     /** 16x16 */ public static final @NotNull Icon ThreadFrozen = load("expui/debugger/threadFrozen.svg", "debugger/threadFrozen.svg", 579300096, 0);
