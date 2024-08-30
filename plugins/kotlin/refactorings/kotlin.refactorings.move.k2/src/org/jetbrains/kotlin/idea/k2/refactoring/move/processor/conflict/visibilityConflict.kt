@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
@@ -87,7 +88,8 @@ private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
  */
 internal fun checkVisibilityConflictForNonMovedUsages(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
-    usages: List<MoveRenameUsageInfo>
+    usages: List<MoveRenameUsageInfo>,
+    targetDir: PsiDirectory
 ): MultiMap<PsiElement, String> {
     return usages
         .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
@@ -98,6 +100,7 @@ internal fun checkVisibilityConflictForNonMovedUsages(
                 analyze(referencedDeclaration) {
                     val isVisible = when (referencedDeclaration.symbol.visibility) {
                         KaSymbolVisibility.PRIVATE -> false
+                        KaSymbolVisibility.INTERNAL -> usageElement.module == targetDir.module
                         else -> true
                     }
                     if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
@@ -113,7 +116,8 @@ internal fun checkVisibilityConflictForNonMovedUsages(
 fun checkVisibilityConflictsForInternalUsages(
     topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
     allDeclarationsToMove: Collection<KtNamedDeclaration>,
-    targetPkg: FqName
+    targetPkg: FqName,
+    targetDir: PsiDirectory
 ): MultiMap<PsiElement, String> {
     return topLevelDeclarationsToMove
         .flatMap { it.internalUsageElements() }
@@ -127,6 +131,7 @@ fun checkVisibilityConflictsForInternalUsages(
                     analyze(referencedDeclaration) {
                         when (referencedDeclaration.symbol.visibility) {
                             KaSymbolVisibility.PRIVATE -> false
+                            KaSymbolVisibility.INTERNAL -> referencedDeclaration.module == targetDir.module
                             else -> true
                         }
                     }

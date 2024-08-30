@@ -313,8 +313,8 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         if (elements.isEmpty()) return MultiMap.empty()
 
         return MultiMap<PsiElement, String>().apply {
-            putAllValues(checkVisibilityConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.pkgName))
-            putAllValues(checkModuleDependencyConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.baseDirectory)) // TODO pass old to new map
+            putAllValues(checkVisibilityConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.pkgName, targetData.targetDirWrapper.baseDirectory))
+            putAllValues(checkModuleDependencyConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.baseDirectory))
         }
     }
 
