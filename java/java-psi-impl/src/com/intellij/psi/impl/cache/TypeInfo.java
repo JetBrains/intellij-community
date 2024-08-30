@@ -46,8 +46,7 @@ public /*sealed*/ abstract class TypeInfo {
     ourIndexFrequentType = new String[]{
       "",
       "boolean", "byte", "char", "double", "float", "int", "long", "null", "short", "void",
-      CommonClassNames.JAVA_LANG_OBJECT_SHORT, CommonClassNames.JAVA_LANG_OBJECT,
-      CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
+      CommonClassNames.JAVA_LANG_OBJECT, CommonClassNames.JAVA_LANG_STRING
     };
 
     ourFrequentTypeIndex = new Object2IntOpenHashMap<>();
@@ -124,8 +123,7 @@ public /*sealed*/ abstract class TypeInfo {
      */
     ELLIPSIS,
     BOOLEAN("boolean"), BYTE("byte"), CHAR("char"), DOUBLE("double"), FLOAT("float"), INT("int"), LONG("long"), SHORT("short"),
-    VOID("void"),
-    OBJECT("Object"), STRING("String"), WILDCARD("?");
+    VOID("void"), WILDCARD("?");
 
     private final @Nullable String text;
 
