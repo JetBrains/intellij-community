@@ -93,7 +93,7 @@ public final class FSRecords {
    * method(s) instead, because this method changes global state, hence could affect the tests following current.
    */
   public static synchronized FSRecordsImpl connect() throws UncheckedIOException {
-    return connect(FSRecordsImpl.getDefaultErrorHandler());
+    return connect(FSRecordsImpl.defaultErrorHandler());
   }
 
   /**

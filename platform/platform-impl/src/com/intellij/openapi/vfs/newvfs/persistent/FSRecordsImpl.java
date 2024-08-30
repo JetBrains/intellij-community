@@ -74,17 +74,26 @@ public final class FSRecordsImpl implements Closeable {
 
   //@formatter:off
 
+  //MAYBE RC: do we need a async VFS flush now, when all VFS storages are memory-mapped? It seems like the only case there
+  //          it could give us anything is an OS crash: if an OS crashes unexpectedly, async flush allows to save more of a VFS
+  //          data. But a) OS crashes are not very often events b) VFS flush still doesn't save the whole VFS content in case
+  //          of OS crash, and it is still quite a good chance either VFS or other IDE-critical on-disk structures get corrupted.
+  //          So, maybe drop background VFS flush entirely?
   private static final boolean BACKGROUND_VFS_FLUSH = getBooleanProperty("vfs.flushing.use-background-flush", true);
+  /** Not a lot of sense in gentle flusher for memory-mapped VFS storages */
   private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", false);
 
+  //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.attributes-storage.streamlined", true);
   /** Supported values: 'over-old-page-cache', 'over-lock-free-page-cache', 'over-mmapped-file'... */
   private static final String ATTRIBUTES_STORAGE_IMPL = System.getProperty("vfs.attributes-storage.impl", "over-mmapped-file");
   public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = "over-lock-free-page-cache".equals(ATTRIBUTES_STORAGE_IMPL);
   public static final boolean USE_ATTRIBUTES_OVER_MMAPPED_FILE = "over-mmapped-file".equals(ATTRIBUTES_STORAGE_IMPL);
-  
+
+  //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
 
+  //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", true);
 
   /** Supported values: 'none', 'slru', 'mru' */
@@ -126,6 +135,7 @@ public final class FSRecordsImpl implements Closeable {
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
 
+
   /**
    * Default VFS error handler: marks VFS as corrupted, schedules rebuild on next app startup, and rethrows
    * the error passed in
@@ -147,69 +157,20 @@ public final class FSRecordsImpl implements Closeable {
     ExceptionUtil.rethrow(error);
   };
 
-  public static ErrorHandler getDefaultErrorHandler() {
+  public static ErrorHandler defaultErrorHandler() {
     return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
   }
 
-  private final @NotNull PersistentFSConnection connection;
-  private final @NotNull PersistentFSContentAccessor contentAccessor;
-  private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
-  private final @NotNull PersistentFSTreeAccessor treeAccessor;
-  private final @NotNull PersistentFSRecordAccessor recordAccessor;
-
-  private final @NotNull ErrorHandler errorHandler;
-
-  /** Additional information about how VFS was initialized */
-  private final @NotNull VFSInitializationResult initializationResult;
-
-  /**
-   * Right now invertedNameIndex looks like a property of PersistentFSConnection -- but this is only because now it
-   * operates with fileId/nameId. Future index impls may work with name hashes instead of nameId -- say, because hash
-   * is a better way to identify strings if nameId is not unique. Such a version of index will require a name itself,
-   * as String, which is less available inside PersistentFSConnection.
-   */
-  private final @NotNull Supplier<InvertedNameIndex> invertedNameIndexLazy;
-  private final AtomicLong invertedNameIndexModCount = new AtomicLong();
-  /** Statistics: how many times {@link #processFilesWithNames(Set, IntPredicate)} was called */
-  private final AtomicLong invertedNameIndexRequestsServed = new AtomicLong();
-
-  private final @Nullable Closeable flushingTask;
-
-  /**
-   * Caching wrapper around {@link PersistentFSConnection#namesEnumerator}
-   * TODO RC: ideally this caching wrapper should be created inside connection, and connection.getNames()
-   *          should return already wrapped (caching) enumerator -- so it is an implementation detail
-   *          no one needs to know about
-   */
-  private final DataEnumeratorEx<String> fileNamesEnumerator;
 
 
-  /** VFS implementation version */
-  private final int currentVersion;
-
-
-  private final FileRecordLock updateLock = new FileRecordLock();
-
-  private volatile boolean closed = false;
-
-  /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
-  private volatile Exception closedStackTrace = null;
-
-  //@GuardedBy("this")
-  private final Set<AutoCloseable> closeables = new HashSet<>();
-  private final CopyOnWriteArraySet<FileIdIndexedStorage> fileIdIndexedStorages = new CopyOnWriteArraySet<>();
-
-  private static int nextMask(int value,
-                              int bits,
-                              int prevMask) {
+  private static int nextMask(int value, int bits, int prevMask) {
     assert value < (1 << bits) && value >= 0 : value;
     int mask = (prevMask << bits) | value;
     if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
 
-  private static int nextMask(boolean value,
-                              int prevMask) {
+  private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
 
@@ -219,13 +180,13 @@ public final class FSRecordsImpl implements Closeable {
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
            nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
-           nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+           nextMask(IOUtil.useNativeByteOrderForByteBuffers(), // TODO RC: memory-mapped storages ignore that property
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
            nextMask(true,  // former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
            nextMask(USE_ATTRIBUTES_OVER_MMAPPED_FILE, 
            nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
-           nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+           nextMask(true,  // former PersistentHashMapValueStorage.COMPRESSION_ENABLED, feel free to re-use
            nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
            nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
            nextMask(USE_FAST_NAMES_IMPLEMENTATION,
@@ -239,7 +200,7 @@ public final class FSRecordsImpl implements Closeable {
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
   public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath) throws UncheckedIOException {
-    return connect(storagesDirectoryPath, getDefaultErrorHandler());
+    return connect(storagesDirectoryPath, defaultErrorHandler());
   }
 
   public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
@@ -314,6 +275,55 @@ public final class FSRecordsImpl implements Closeable {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
     }
   }
+
+
+  private final @NotNull PersistentFSConnection connection;
+  private final @NotNull PersistentFSContentAccessor contentAccessor;
+  private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
+  private final @NotNull PersistentFSTreeAccessor treeAccessor;
+  private final @NotNull PersistentFSRecordAccessor recordAccessor;
+
+  private final @NotNull ErrorHandler errorHandler;
+
+  /** Additional information about how VFS was initialized */
+  private final @NotNull VFSInitializationResult initializationResult;
+
+  /**
+   * Right now invertedNameIndex looks like a property of PersistentFSConnection -- but this is only because now it
+   * operates with fileId/nameId. Future index impls may work with name hashes instead of nameId -- say, because hash
+   * is a better way to identify strings if nameId is not unique. Such a version of index will require a name itself,
+   * as String, which is less available inside PersistentFSConnection.
+   */
+  private final @NotNull Supplier<InvertedNameIndex> invertedNameIndexLazy;
+  private final AtomicLong invertedNameIndexModCount = new AtomicLong();
+  /** Statistics: how many times {@link #processFilesWithNames(Set, IntPredicate)} was called */
+  private final AtomicLong invertedNameIndexRequestsServed = new AtomicLong();
+
+  private final @Nullable Closeable flushingTask;
+
+  /**
+   * Caching wrapper around {@link PersistentFSConnection#namesEnumerator}
+   * TODO RC: ideally this caching wrapper should be created inside connection, and connection.getNames()
+   *          should return already wrapped (caching) enumerator -- so it is an implementation detail
+   *          no one needs to know about
+   */
+  private final DataEnumeratorEx<String> fileNamesEnumerator;
+
+
+  /** VFS implementation version */
+  private final int currentVersion;
+
+
+  private final FileRecordLock updateLock = new FileRecordLock();
+
+  private volatile boolean closed = false;
+
+  /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
+  private volatile Exception closedStackTrace = null;
+
+  //@GuardedBy("this")
+  private final Set<AutoCloseable> closeables = new HashSet<>();
+  private final CopyOnWriteArraySet<FileIdIndexedStorage> fileIdIndexedStorages = new CopyOnWriteArraySet<>();
 
   private FSRecordsImpl(@NotNull PersistentFSConnection connection,
                         @NotNull PersistentFSContentAccessor contentAccessor,
@@ -1418,13 +1428,13 @@ public final class FSRecordsImpl implements Closeable {
       InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
       // fill up nameId->fileId index:
       int maxAllocatedID = recordsStorage.maxAllocatedID();
-        for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-          int flags = recordsStorage.getFlags(fileId);
-          int nameId = recordsStorage.getNameId(fileId);
-          if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
-            invertedNameIndex.updateDataInner(fileId, nameId);
-          }
+      for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+        int flags = recordsStorage.getFlags(fileId);
+        int nameId = recordsStorage.getNameId(fileId);
+        if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
+          invertedNameIndex.updateDataInner(fileId, nameId);
         }
+      }
       LOG.info("VFS scanned: file-by-name index was populated");
       return invertedNameIndex;
     });
