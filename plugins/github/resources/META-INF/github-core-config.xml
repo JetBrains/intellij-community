@@ -6,6 +6,12 @@
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="intellij.vcs.github.titleAndDescriptionGenerator"
+                    interface="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
 
@@ -212,5 +218,7 @@
       </action>
       <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
+
+    <group id="GitHub.Pull.Request.Create.Title.Actions"/>
   </actions>
 </idea-plugin>

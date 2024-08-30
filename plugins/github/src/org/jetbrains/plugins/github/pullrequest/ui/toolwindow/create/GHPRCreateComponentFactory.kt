@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.awaitCancelling
 import com.intellij.collaboration.async.collectScoped
+import com.intellij.collaboration.async.extensionListFlow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
@@ -21,10 +22,7 @@ import com.intellij.collaboration.ui.util.*
 import com.intellij.collaboration.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -36,16 +34,14 @@ import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.*
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.showAbove
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -83,6 +79,7 @@ private const val TEXT_LINK_GAP = 8
 
 @OptIn(FlowPreview::class)
 internal object GHPRCreateComponentFactory {
+
   fun createIn(cs: CoroutineScope, vm: GHPRCreateViewModel): JComponent = cs.create(vm)
 
   private fun CoroutineScope.create(vm: GHPRCreateViewModel): JComponent {
@@ -151,7 +148,10 @@ internal object GHPRCreateComponentFactory {
       }
     }
 
-  private fun CoroutineScope.textPanel(vm: GHPRCreateViewModel): JPanel {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun CoroutineScope.textPanel(vm: GHPRCreateViewModel): JComponent {
+    val cs = this
+
     val titleField = CodeReviewCreateReviewUIUtil.createTitleEditor(vm.project, message("pull.request.create.title")).apply {
       margins = JBUI.insets(EDITOR_MARGINS, EDITOR_MARGINS, 0, EDITOR_MARGINS)
       launchNow {
@@ -215,7 +215,50 @@ internal object GHPRCreateComponentFactory {
         }
       }
     }
-    return textPanel
+
+    return Wrapper().apply {
+      bindContentIn(cs, GHPRTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()) { extensions ->
+        if (extensions.isEmpty()) {
+          return@bindContentIn textPanel
+        }
+
+        val extension = extensions.first()
+
+        val wrappedTextPanel = UiDataProvider.wrapComponent(textPanel) {
+          it[GHPRCreateTitleAndDescriptionGenerationViewModel.DATA_KEY] = vm.titleAndDescriptionGenerationVm.value
+        }
+
+        val actionManager = ActionManager.getInstance()
+        val actionGroup = actionManager.getAction("GitHub.Pull.Request.Create.Title.Actions") as ActionGroup
+        val toolbar = actionManager.createActionToolbar("GHCreationTitle", actionGroup, true).apply {
+          targetComponent = wrappedTextPanel
+        }
+
+        // Force an action's update with every new value for commits and template
+        cs.launchNow {
+          vm.titleAndDescriptionGenerationVm.collect {
+            if (it == null) {
+              toolbar.updateActionsAsync()
+              return@collect
+            }
+
+            it.isGenerating.collect {
+              toolbar.updateActionsAsync()
+            }
+          }
+        }
+
+        cs.launchNow {
+          vm.titleAndDescriptionGenerationVm.flatMapLatest { it?.generationFeedbackActivity ?: flowOf() }.collect {
+            extension.onGenerationDone(vm.project, descriptionField, it)
+          }
+        }
+
+        CodeReviewCreateReviewUIUtil.createGenerationToolbarOverlay(wrappedTextPanel, toolbar) {
+          (descriptionField as EditorEx).scrollPane.verticalScrollBar.preferredWidth
+        }
+      }
+    }
   }
 
   private fun CoroutineScope.directionSelector(vm: GHPRCreateViewModel): JComponent {

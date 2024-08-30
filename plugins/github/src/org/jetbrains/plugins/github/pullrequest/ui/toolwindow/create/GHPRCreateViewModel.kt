@@ -67,6 +67,8 @@ internal interface GHPRCreateViewModel {
   val descriptionText: StateFlow<String>
   val templateLoadingState: StateFlow<ComputedResult<String?>>
 
+  val titleAndDescriptionGenerationVm: StateFlow<GHPRCreateTitleAndDescriptionGenerationViewModel?>
+
   val assigneesVm: LabeledListPanelViewModel<GHUser>
   val reviewersVm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer>
   val labelsVm: LabeledListPanelViewModel<GHLabel>
@@ -88,7 +90,7 @@ internal interface GHPRCreateViewModel {
     val baseRepo: GHGitRepositoryMapping,
     val baseBranch: GitRemoteBranch?,
     val headRepo: GHGitRepositoryMapping?,
-    val headBranch: GitBranch?
+    val headBranch: GitBranch?,
   )
 
   sealed interface BranchesCheckResult {
@@ -108,13 +110,14 @@ internal interface GHPRCreateViewModel {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class GHPRCreateViewModelImpl(override val project: Project,
-                                       parentCs: CoroutineScope,
-                                       private val repositoryManager: GHHostedRepositoriesManager,
-                                       private val settings: GithubPullRequestsProjectUISettings,
-                                       private val dataContext: GHPRDataContext,
-                                       private val projectVm: GHPRToolWindowProjectViewModel)
-  : GHPRCreateViewModel, Disposable {
+internal class GHPRCreateViewModelImpl(
+  override val project: Project,
+  parentCs: CoroutineScope,
+  private val repositoryManager: GHHostedRepositoriesManager,
+  private val settings: GithubPullRequestsProjectUISettings,
+  private val dataContext: GHPRDataContext,
+  private val projectVm: GHPRToolWindowProjectViewModel,
+) : GHPRCreateViewModel, Disposable {
   private val cs = parentCs.childScope(classAsCoroutineName())
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
   private val repoData = dataContext.repositoryDataService
@@ -170,6 +173,24 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
   override val templateLoadingState: StateFlow<ComputedResult<String?>> = computationStateFlow(flowOf(Unit)) {
     dataContext.repositoryDataService.loadTemplate()
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+
+  override val titleAndDescriptionGenerationVm =
+    GHPRTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()
+      .mapNotNull { it.firstOrNull() }
+      .flatMapLatest { extension ->
+        changesVm.flatMapLatest { it?.getOrNull()?.reviewCommits ?: flowOf(null) }
+          .combine(templateLoadingState) { commits, templateResult ->
+            if (commits == null || templateResult.isInProgress) {
+              return@combine null
+            }
+
+            commits to templateResult.getOrNull()
+          }
+          .mapNullableScoped { (commits, templateResult) ->
+            GHPRCreateTitleAndDescriptionGenerationViewModelImpl(this, project, extension, commits, templateResult, ::setTitle, ::setDescription)
+          }
+      }
+      .stateIn(cs, SharingStarted.Eagerly, null)
 
   override val assigneesVm: LabeledListPanelViewModel<GHUser> = MetadataListViewModel(cs) {
     dataContext.repositoryDataService.loadIssuesAssignees()
