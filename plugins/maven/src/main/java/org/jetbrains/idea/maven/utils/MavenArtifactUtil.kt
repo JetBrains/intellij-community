@@ -51,7 +51,7 @@ object MavenArtifactUtil {
   @JvmStatic
   @JvmOverloads
   @Deprecated("this method does not support split repositories")
-  fun hasArtifactFile(localRepository: File, id: MavenId, type: String = "jar"): Boolean {
+  internal fun hasArtifactFile(localRepository: File, id: MavenId, type: String = "jar"): Boolean {
     return Files.exists(getArtifactFile(localRepository, id, type))
   }
 

@@ -39,7 +39,6 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
@@ -119,8 +118,8 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
       val hasUnresolvedPlugins = mavenProject.hasUnresolvedPlugins()
       if (hasUnresolvedPlugins) {
-        val unresolvedPlugins = mavenProject.declaredPlugins.filterNot { plugin ->
-          MavenArtifactUtil.hasArtifactFile(mavenProject.localRepository, plugin.mavenId)
+        val unresolvedPlugins = mavenProject.declaredPluginInfos.filterNot {
+          it.artifact?.isResolved == true
         }
         val errorMessage = "maven project: ${mavenProject} has unresolved plugins: $unresolvedPlugins"
         if (System.getProperty(MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS, "false").toBoolean()) {
