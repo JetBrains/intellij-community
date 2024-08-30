@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
@@ -66,7 +66,7 @@ class MavenProject(val file: VirtualFile) {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
     settings: MavenGeneralSettings,
@@ -94,7 +94,7 @@ class MavenProject(val file: VirtualFile) {
     return setState(newState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateState(
     model: MavenModel,
     dependencyHash: String?,
@@ -126,7 +126,7 @@ class MavenProject(val file: VirtualFile) {
     return setState(newState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginInfo>): MavenProjectChanges {
     val newState = myState.copy(
       dependencies = dependencies,
@@ -136,10 +136,17 @@ class MavenProject(val file: VirtualFile) {
     return setState(newState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateState(readingProblems: Collection<MavenProjectProblem>): MavenProjectChanges {
     val newState= myState.copy(readingProblems = readingProblems)
     return setState(newState)
+  }
+
+  @Internal
+  fun updatePluginArtifacts(pluginIdsToArtifacts: Map<MavenId, MavenArtifact?>) {
+    val newPluginInfos = myState.pluginInfos.map { MavenPluginInfo(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
+    val newState = myState.copy(pluginInfos = newPluginInfos)
+    setState(newState)
   }
 
   private fun setState(newState: MavenProjectState): MavenProjectChanges {
@@ -166,7 +173,7 @@ class MavenProject(val file: VirtualFile) {
     return snapshot.getChanges(myState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun setFolders(folders: MavenGoalExecutionResult.Folders): MavenProjectChanges {
     val newState = myState.copy(
       sources = folders.sources,
@@ -432,7 +439,7 @@ class MavenProject(val file: VirtualFile) {
       .map { it.description }
       .firstOrNull()
 
-  fun resetCache() {
+  private fun resetCache() {
     // todo a bit hacky
     cache.clear()
   }
@@ -522,7 +529,7 @@ class MavenProject(val file: VirtualFile) {
       return collectProblems(null)
     }
 
-  @ApiStatus.Internal
+  @Internal
   fun collectProblems(fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
     var problemsCache = getCachedValue(PROBLEMS_CACHE_KEY)
     if (problemsCache == null) {

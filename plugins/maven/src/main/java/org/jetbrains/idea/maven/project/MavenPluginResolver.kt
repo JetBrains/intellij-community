@@ -52,8 +52,9 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       }
       reportUnresolvedPlugins(unresolvedPluginIds)
       val updatedMavenProjects = mavenProjects.map { it.mavenProject }.toSet()
+      val pluginIdsToArtifacts = resolutionResults.associate { it.mavenPluginId to it.pluginArtifact }
       for (mavenProject in updatedMavenProjects) {
-        mavenProject.resetCache()
+        mavenProject.updatePluginArtifacts(pluginIdsToArtifacts)
         myTree.firePluginsResolved(mavenProject)
       }
     }
