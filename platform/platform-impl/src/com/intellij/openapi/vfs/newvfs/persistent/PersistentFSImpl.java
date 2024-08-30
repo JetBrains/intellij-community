@@ -45,7 +45,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ReplicatorInputStream;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
@@ -67,8 +66,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
@@ -110,8 +107,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private final VirtualDirectoryCache myIdToDirCache = new VirtualDirectoryCache();
 
-  private final ReadWriteLock[] contentLoadingSegmentedLock = new ReadWriteLock[16];
-
   private final AtomicBoolean myConnected = new AtomicBoolean(false);
   private volatile FSRecordsImpl vfsPeer = null;
 
@@ -129,10 +124,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
 
   public PersistentFSImpl(@NotNull Application app) {
-    for (int i = 0; i < contentLoadingSegmentedLock.length; i++) {
-      contentLoadingSegmentedLock[i] = new ReentrantReadWriteLock();
-    }
-
     this.app = app;
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
               ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
@@ -418,8 +409,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void setChildrenCached(int id) {
-    int flags = vfsPeer.getFlags(id);
-    vfsPeer.setFlags(id, flags | Flags.CHILDREN_CACHED);
+    vfsPeer.updateRecordFields(
+      id,
+      record -> record.addFlags(Flags.CHILDREN_CACHED)
+    );
   }
 
   @Override
@@ -443,10 +436,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
     return vfsPeer.writeAttribute(getFileId(file), att);
-  }
-
-  private @Nullable InputStream readContent(@NotNull VirtualFile file) {
-    return vfsPeer.readContent(getFileId(file));
   }
 
   private @NotNull InputStream readContentById(int contentId) {
@@ -670,8 +659,27 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public long getLength(@NotNull VirtualFile file) {
-    long length = getLengthIfUpToDate(file);
-    return length == -1 ? reloadLengthFromFS(file, getFileSystem(file)) : length;
+    int fileId = getFileId(file);
+    NewVirtualFileSystem fileSystem = getFileSystem(file);
+
+    long[] lengthRef = new long[1];
+    vfsPeer.updateRecordFields(fileId, record -> {
+      int flags = record.getFlags();
+      boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
+      long cachedLength = record.getLength();
+      if (!mustReloadLength && cachedLength >= 0) {
+        lengthRef[0] = cachedLength;
+        return false;
+      }
+
+      long actualLength = fileSystem.getLength(file);
+      record.setLength(actualLength);
+      record.removeFlags(Flags.MUST_RELOAD_LENGTH);
+
+      lengthRef[0] = actualLength;
+      return true;
+    });
+    return lengthRef[0];
   }
 
   @Override
@@ -775,30 +783,28 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int fileId = getFileId(file);
 
-    long length;
-    int contentRecordId;
-
-    //MAYBE RC: we could reduce contention on this lock by utilising FileIdLock inside the vfsPeer.
-    ReadWriteLock contentLoadingLock = contentLoadingSegmentedLock[fileId % contentLoadingSegmentedLock.length];
-    contentLoadingLock.readLock().lock();
-    try {
-      int flags = vfsPeer.getFlags(fileId);
+    //FIXME RC: very verbose return of Pair:
+    Pair<Long, Integer> pair = vfsPeer.readRecordFields(fileId, record -> {
+      int flags = record.getFlags();
       boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
       boolean mustReloadContent = BitUtil.isSet(flags, Flags.MUST_RELOAD_CONTENT);
-      length = mustReloadLength ? -1 : vfsPeer.getLength(fileId);
+      long length = mustReloadLength ? -1 : record.getLength();
       boolean contentOutdated = (length == -1) || mustReloadContent;
+      int contentRecordId;
       if (contentOutdated) {
         contentRecordId = -1;
       }
       else {
         // As soon as we got a contentId -- there is no need for locking anymore,
         // since VFSContentStorage is a thread-safe append-only storage
-        contentRecordId = vfsPeer.getContentRecordId(fileId);
+        contentRecordId = record.getContentRecordId();
       }
-    }
-    finally {
-      contentLoadingLock.readLock().unlock();
-    }
+      return new Pair<>(length, contentRecordId);
+    });
+
+    long length = pair.getFirst();
+    int contentRecordId = pair.getSecond();
+
 
     if (contentRecordId <= 0) {
       NewVirtualFileSystem fs = getFileSystem(file);
@@ -809,13 +815,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         updateContentForFile(fileId, new ByteArraySequence(content));
       }
       else {
-        contentLoadingLock.writeLock().lock();
-        try {
-          setLength(fileId, content.length);
-        }
-        finally {
-          contentLoadingLock.writeLock().unlock();
-        }
+        vfsPeer.updateRecordFields(fileId, record -> {
+          record.setLength(content.length);
+          int oldFlags = record.getFlags();
+          int flags = oldFlags & ~Flags.MUST_RELOAD_LENGTH;
+
+          if (oldFlags != flags) {
+            record.setFlags(flags);
+          }
+          return true;
+        });
       }
 
       return content;
@@ -835,21 +844,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void updateContentId(int fileId,
                                int newContentRecordId,
                                int newContentLength) throws IOException {
-    PersistentFSConnection connection = vfsPeer.connection();
-    PersistentFSRecordsStorage records = connection.getRecords();
-    //TODO RC: ideally, this method shouldn't be protected by external myInputLock, but .updateRecord() should
-    //         involve VFS internal locking to protect it from concurrent writes
-    records.updateRecord(fileId, record -> {
-      int flags = record.getFlags();
-      int newFlags = flags & ~(Flags.MUST_RELOAD_LENGTH | Flags.MUST_RELOAD_CONTENT);
-      if (newFlags != flags) {
-        record.setFlags(newFlags);
-      }
+    vfsPeer.updateRecordFields(fileId, record -> {
+      //MAYBE RC: should we keep MUST_RELOAD_CONTENT if newContentRecordId == 0?
+      record.removeFlags(Flags.MUST_RELOAD_LENGTH | Flags.MUST_RELOAD_CONTENT);
       record.setContentRecordId(newContentRecordId);
       record.setLength(newContentLength);
       return true;
     });
-    connection.markDirty();
+    vfsPeer.connection().markDirty();
   }
 
   @Override
@@ -860,37 +862,58 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    InputStream contentStream;
-    boolean useReplicator = false;
-    long len = 0L;
 
     int fileId = ((VirtualFileWithId)file).getId();
-    ReadWriteLock contentLoadingLock = contentLoadingSegmentedLock[fileId % contentLoadingSegmentedLock.length];
-    contentLoadingLock.readLock().lock();
-    try {
-      long storedLength = getLengthIfUpToDate(file);
-      boolean mustReloadLength = storedLength == -1;
+    NewVirtualFileSystem fs = getFileSystem(file);
 
-      if (mustReloadLength
-          || mustReloadContent(file)
-          || FileUtilRt.isTooLarge(file.getLength())
-          || (contentStream = readContent(file)) == null) {
-        NewVirtualFileSystem fs = getFileSystem(file);
-        len = mustReloadLength ? reloadLengthFromFS(file, fs) : storedLength;
-        contentStream = fs.getInputStream(file);
+    final class Result {
+      private long actualFileLength;
+      private boolean mustReloadContent;
+      private int contentRecordId;
+    }
 
-        if (shouldCache(len)) {
-          useReplicator = true;
-        }
+    Result result = new Result();
+
+    vfsPeer.updateRecordFields(fileId, record -> {
+      long vfsStoredLength = record.getLength();
+      int contentRecordId = record.getContentRecordId();
+      int flags = record.getFlags();
+      boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
+      boolean mustReloadContent = BitUtil.isSet(flags, Flags.MUST_RELOAD_CONTENT);
+      boolean lengthIsInvalid = mustReloadLength || (vfsStoredLength == -1);
+
+      result.mustReloadContent = mustReloadContent;
+      result.contentRecordId = contentRecordId;
+      result.actualFileLength = vfsStoredLength;
+
+      if (lengthIsInvalid) {
+        //TODO RC: this branch is the only reason for update() instead of read() -- maybe it is better to upgrade the lock
+        //         only when we fall here, instead of acquire write lock from the start? (StampedLock allows upgrades)
+        //TODO RC: it is not a good idea to request length from actual FS (IO) being under write lock -- but that else could
+        //         we do here? we need exclusive lock to prevent other threads from updating
+        result.actualFileLength = fs.getLength(file);
+        record.setLength(result.actualFileLength);
+        record.removeFlags(Flags.MUST_RELOAD_LENGTH);
+        return true;
+      }
+
+      return false;
+    });
+
+    InputStream contentStream;
+    if (result.contentRecordId <= 0 || result.mustReloadContent) {
+      InputStream fileStream = fs.getInputStream(file);
+      if (shouldCache(result.actualFileLength)) {
+        contentStream = createReplicatorAndStoreContent(file, fileStream, result.actualFileLength);
+      }
+      else {
+        contentStream = fileStream;
       }
     }
-    finally {
-      contentLoadingLock.readLock().unlock();
+    else {
+      contentStream = vfsPeer.readContentById(result.contentRecordId);
     }
 
-    if (useReplicator) {
-      contentStream = createReplicatorAndStoreContent(file, contentStream, len);
-    }
 
     return contentStream;
   }
@@ -900,22 +923,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return false;
     }
     return true;
-  }
-
-  private boolean mustReloadContent(@NotNull VirtualFile file) {
-    return BitUtil.isSet(vfsPeer.getFlags(getFileId(file)), Flags.MUST_RELOAD_CONTENT);
-  }
-
-  private long reloadLengthFromFS(@NotNull VirtualFile file, @NotNull FileSystemInterface fs) {
-    final long len = fs.getLength(file);
-    int fileId = getFileId(file);
-    setLength(fileId, len);
-    return len;
-  }
-
-  private void setLength(int fileId, long len) {
-    vfsPeer.setLength(fileId, len);
-    setFlag(fileId, Flags.MUST_RELOAD_LENGTH, false);
   }
 
   private @NotNull InputStream createReplicatorAndStoreContent(@NotNull VirtualFile file,
@@ -982,15 +989,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       newContentId = 0;
     }
 
-    ReadWriteLock contentLoadingLock = contentLoadingSegmentedLock[fileId % contentLoadingSegmentedLock.length];
-    contentLoadingLock.writeLock().lock();
-    try {
-      updateContentId(fileId, newContentId, newContent.length());
-    }
-    finally {
-      contentLoadingLock.writeLock().unlock();
-    }
-
+    updateContentId(fileId, newContentId, newContent.length());
   }
 
   /** Method is obsolete, migrate to {@link #contentHashIfStored(VirtualFile)} instance method */
@@ -1003,12 +1002,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @TestOnly
   public byte @Nullable [] contentHashIfStored(@NotNull VirtualFile file) {
     return FSRecords.getInstance().getContentHash(getFileId(file));
-  }
-
-  // returns last recorded length or -1 if it must reload from FS
-  private long getLengthIfUpToDate(@NotNull VirtualFile file) {
-    int fileId = getFileId(file);
-    return BitUtil.isSet(vfsPeer.getFlags(fileId), Flags.MUST_RELOAD_LENGTH) ? -1 : vfsPeer.getLength(fileId);
   }
 
   @Override
@@ -2132,8 +2125,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public void executeChangeCaseSensitivity(@NotNull VirtualFile file, @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
-    setFlag(directory, Flags.CHILDREN_CASE_SENSITIVE, newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
-    setFlag(directory, Flags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
+    int fileId = getFileId(file);
+    vfsPeer.updateRecordFields(fileId, record -> {
+      boolean sensitivityChanged = (newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)
+                                   ? record.addFlags(Flags.CHILDREN_CASE_SENSITIVE)
+                                   : record.removeFlags(Flags.CHILDREN_CASE_SENSITIVE);
+      return record.addFlags(Flags.CHILDREN_CASE_SENSITIVITY_CACHED)
+             || sensitivityChanged;
+    });
     directory.setCaseSensitivityFlag(newCaseSensitivity);
   }
 
@@ -2328,19 +2327,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void setFlag(@NotNull VirtualFile file, @Attributes int mask, boolean value) {
-    setFlag(getFileId(file), mask, value);
-  }
-
-  private void setFlag(int id, @Attributes int mask, boolean value) {
-    int oldFlags = vfsPeer.getFlags(id);
-    int flags = value ? oldFlags | mask
-                      : oldFlags & ~mask;
-
-    if (oldFlags != flags) {
-      //noinspection MagicConstant
-      vfsPeer.setFlags(id, flags);
-    }
+  private void setFlag(@NotNull VirtualFile file, @Attributes int flagsMask, boolean value) {
+    int fileId = getFileId(file);
+    vfsPeer.updateRecordFields(fileId, record -> {
+      if (value) {
+        return record.addFlags(flagsMask);
+      }
+      else {
+        return record.removeFlags(flagsMask);
+      }
+    });
   }
 
   private void executeTouch(@NotNull VirtualFile file,
@@ -2348,13 +2344,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                             long newModificationStamp,
                             long newLength,
                             long newTimestamp) {
-    if (reloadContentFromFS) {
-      setFlag(file, Flags.MUST_RELOAD_CONTENT, true);
-    }
-
     int fileId = getFileId(file);
-    setLength(fileId, newLength);
-    vfsPeer.setTimestamp(fileId, newTimestamp);
+    vfsPeer.updateRecordFields(fileId, record -> {
+      if (reloadContentFromFS) {
+        record.addFlags(Flags.MUST_RELOAD_CONTENT);
+      }
+
+      record.setLength(newLength);
+      record.removeFlags(Flags.MUST_RELOAD_LENGTH);
+
+      record.setTimestamp(newTimestamp);
+      return true;
+    });
 
     ((VirtualFileSystemEntry)file).setModificationStamp(newModificationStamp);
   }
@@ -2408,14 +2409,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void doCleanPersistedContent(int id) {
-    ReadWriteLock rwLock = contentLoadingSegmentedLock[id % contentLoadingSegmentedLock.length];
-    rwLock.writeLock().lock();
-    try {
-      setFlag(id, Flags.MUST_RELOAD_CONTENT | Flags.MUST_RELOAD_LENGTH, true);
-    }
-    finally {
-      rwLock.writeLock().unlock();
-    }
+    vfsPeer.updateRecordFields(id, record -> {
+      return record.addFlags(Flags.MUST_RELOAD_CONTENT | Flags.MUST_RELOAD_LENGTH);
+    });
   }
 
   @Override

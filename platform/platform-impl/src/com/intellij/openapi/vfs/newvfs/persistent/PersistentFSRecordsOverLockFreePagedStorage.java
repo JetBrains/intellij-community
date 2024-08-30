@@ -152,8 +152,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <R, E extends Throwable> R readRecord(final int recordId,
-                                               final @NotNull RecordReader<R, E> reader) throws E, IOException {
+  public <R> R readRecord(final int recordId,
+                          final @NotNull RecordReader<R> reader) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */false)) {
@@ -169,8 +169,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <E extends Throwable> int updateRecord(final int recordId,
-                                                final @NotNull RecordUpdater<E> updater) throws E, IOException {
+  public int updateRecord(final int recordId,
+                          final @NotNull RecordUpdater updater) throws IOException {
     final int trueRecordId = (recordId <= NULL_ID) ?
                              allocateRecord() :
                              recordId;
@@ -195,7 +195,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <R, E extends Throwable> R readHeader(final @NotNull HeaderReader<R, E> reader) throws E, IOException {
+  public <R> R readHeader(final @NotNull HeaderReader<R> reader) throws IOException {
     try (final Page page = storage.pageByOffset(0, /*forWrite: */false)) {
       page.lockPageForRead();
       try {
@@ -208,7 +208,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <E extends Throwable> void updateHeader(final @NotNull HeaderUpdater<E> updater) throws E, IOException {
+  public void updateHeader(final @NotNull HeaderUpdater updater) throws IOException {
     try (final Page page = storage.pageByOffset(0, /*forWrite: */true)) {
       page.lockPageForWrite();
       try {
@@ -727,7 +727,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   public void close() throws IOException {
     if (!storage.isClosed()) {
       setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_STAMP);
-      
+
       force();
       storage.close();
     }

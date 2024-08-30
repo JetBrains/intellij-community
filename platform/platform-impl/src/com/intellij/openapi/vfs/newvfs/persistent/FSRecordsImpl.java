@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
+import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
+import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordUpdater;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
@@ -135,7 +137,6 @@ public final class FSRecordsImpl implements Closeable {
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
 
-
   /**
    * Default VFS error handler: marks VFS as corrupted, schedules rebuild on next app startup, and rethrows
    * the error passed in
@@ -160,7 +161,6 @@ public final class FSRecordsImpl implements Closeable {
   public static ErrorHandler defaultErrorHandler() {
     return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
   }
-
 
 
   private static int nextMask(int value, int bits, int prevMask) {
@@ -313,6 +313,9 @@ public final class FSRecordsImpl implements Closeable {
   /** VFS implementation version */
   private final int currentVersion;
 
+
+  private final com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock fileRecordLock =
+    new com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock();
 
   private final FileRecordLock updateLock = new FileRecordLock();
 
@@ -1137,6 +1140,39 @@ public final class FSRecordsImpl implements Closeable {
     checkNotClosed();
     connection.getRecords().fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
     connection.markDirty();
+  }
+
+
+  // experimental API for fine-grained-locked file records access:
+
+  //TODO RC: specify exactly what can and can't be done in reader/writer lambdas
+
+  <R, E extends Throwable> R readRecordFields(int fileId, @NotNull RecordReader<R> reader) throws E {
+    PersistentFSRecordsStorage fileRecords = connection.getRecords();
+    long lockStamp = fileRecordLock.lockForRead(fileId);
+    try {
+      return fileRecords.readRecord(fileId, reader);
+    }
+    catch (IOException ex) {
+      throw handleError(ex);
+    }
+    finally {
+      fileRecordLock.unlockForRead(fileId, lockStamp);
+    }
+  }
+
+  <E extends IOException> void updateRecordFields(int fileId, @NotNull RecordUpdater updater) {
+    PersistentFSRecordsStorage fileRecords = connection.getRecords();
+    long lockStamp = fileRecordLock.lockForWrite(fileId);
+    try {
+      fileRecords.updateRecord(fileId, updater);
+    }
+    catch (IOException ex) {
+      throw handleError(ex);
+    }
+    finally {
+      fileRecordLock.unlockForWrite(fileId, lockStamp);
+    }
   }
 
 

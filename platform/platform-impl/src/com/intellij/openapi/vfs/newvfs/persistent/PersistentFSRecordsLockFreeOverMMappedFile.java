@@ -193,8 +193,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public <R, E extends Throwable> R readRecord(int recordId,
-                                               @NotNull RecordReader<R, E> reader) throws E, IOException {
+  public <R> R readRecord(int recordId,
+                          @NotNull RecordReader<R> reader) throws IOException {
     long recordOffsetInFile = recordOffsetInFile(recordId);
     int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     Page page = storage.pageByOffset(recordOffsetInFile);
@@ -203,8 +203,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public <E extends Throwable> int updateRecord(int recordId,
-                                                @NotNull RecordUpdater<E> updater) throws E, IOException {
+  public int updateRecord(int recordId,
+                          @NotNull RecordUpdater updater) throws IOException {
     int trueRecordId = (recordId <= NULL_ID) ?
                        allocateRecord() :
                        recordId;
@@ -221,12 +221,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public <R, E extends Throwable> R readHeader(@NotNull HeaderReader<R, E> reader) throws E, IOException {
+  public <R> R readHeader(@NotNull HeaderReader<R> reader) throws IOException {
     return reader.readHeader(headerAccessor);
   }
 
   @Override
-  public <E extends Throwable> void updateHeader(@NotNull HeaderUpdater<E> updater) throws E, IOException {
+  public void updateHeader(@NotNull HeaderUpdater updater) throws IOException {
     if (updater.updateHeader(headerAccessor)) {
       incrementGlobalModCount();
     }

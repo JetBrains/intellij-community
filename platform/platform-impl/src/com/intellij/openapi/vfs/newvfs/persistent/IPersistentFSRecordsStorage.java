@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -12,45 +13,46 @@ import java.io.IOException;
  * storage access. This interface allows implementation to decide how to protect specific record
  * access, without bothering clients with it.
  */
+@ApiStatus.Internal
 public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
 
   int recordsCount();
 
   /** Allows reader to read fields of the record[recordId], while holding appropriate locks */
-  <R, E extends Throwable> R readRecord(final int recordId,
-                                        final @NotNull RecordReader<R, E> reader) throws E, IOException;
+  <R> R readRecord(final int recordId,
+                   final @NotNull RecordReader<R> reader) throws IOException;
 
   /**
    * Allows updater to read and update fields of the record[recordId], while holding appropriate locks
    *
    * @return if recordId == -1 -> creates new record, and return its id, otherwise returns recordId passed in
    */
-  <E extends Throwable> int updateRecord(final int recordId,
-                                         final @NotNull RecordUpdater<E> updater) throws E, IOException;
+  int updateRecord(final int recordId,
+                   final @NotNull RecordUpdater updater) throws IOException;
 
-  <R, E extends Throwable> R readHeader(final @NotNull HeaderReader<R, E> reader) throws E, IOException;
+  <R> R readHeader(final @NotNull HeaderReader<R> reader) throws IOException;
 
-  <E extends Throwable> void updateHeader(final @NotNull HeaderUpdater<E> updater) throws E, IOException;
+  void updateHeader(final @NotNull HeaderUpdater updater) throws IOException;
 
   @FunctionalInterface
-  interface RecordUpdater<E extends Throwable> {
+  interface RecordUpdater {
     /** @return true if actually modifies record (so it should be marked as modified), false otherwise */
-    boolean updateRecord(final @NotNull RecordForUpdate record) throws E;
+    boolean updateRecord(final @NotNull RecordForUpdate record) throws IOException;
   }
 
   @FunctionalInterface
-  interface RecordReader<R, E extends Throwable> {
-    R readRecord(final @NotNull RecordForRead record) throws E;
+  interface RecordReader<R> {
+    R readRecord(final @NotNull RecordForRead record) throws IOException;
   }
 
   @FunctionalInterface
-  interface HeaderReader<R, E extends Throwable> {
-    R readHeader(final @NotNull HeaderForRead header) throws E;
+  interface HeaderReader<R> {
+    R readHeader(final @NotNull HeaderForRead header) throws IOException;
   }
 
   @FunctionalInterface
-  interface HeaderUpdater<E extends Throwable> {
-    boolean updateHeader(final @NotNull HeaderForUpdate header) throws E;
+  interface HeaderUpdater {
+    boolean updateHeader(final @NotNull HeaderForUpdate header) throws IOException;
   }
 
   interface RecordForRead {
@@ -71,7 +73,8 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
 
     int getContentRecordId() throws IOException;
 
-    @PersistentFS.Attributes int getFlags() throws IOException;
+    @PersistentFS.Attributes
+    int getFlags() throws IOException;
   }
 
   interface RecordForUpdate extends RecordForRead {
@@ -82,7 +85,25 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
     void setNameId(final int nameId) throws IOException;
 
     /** @return true if value is changed, false if not (i.e. new value is actually equal to the old one) */
-    boolean setFlags(final @PersistentFS.Attributes int flags) throws IOException;
+    boolean setFlags(@PersistentFS.Attributes int flags) throws IOException;
+
+    default boolean addFlags(@PersistentFS.Attributes int flagBits) throws IOException {
+      int oldFlags = getFlags();
+      int newFlags = oldFlags | flagBits;
+      if (newFlags != oldFlags) {
+        return setFlags(newFlags);
+      }
+      return false;
+    }
+
+    default boolean removeFlags(@PersistentFS.Attributes int flagBits) throws IOException {
+      int oldFlags = getFlags();
+      int newFlags = oldFlags & ~(flagBits);
+      if (newFlags != oldFlags) {
+        return setFlags(newFlags);
+      }
+      return false;
+    }
 
     /** @return true if value is changed, false if not (i.e. new value is actually equal to the old one) */
     boolean setLength(final long length) throws IOException;
