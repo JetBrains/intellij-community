@@ -2209,6 +2209,8 @@ e:com.intellij.execution.services.ServiceViewDnDDescriptor$Position
 - sf:INTO:com.intellij.execution.services.ServiceViewDnDDescriptor$Position
 - s:valueOf(java.lang.String):com.intellij.execution.services.ServiceViewDnDDescriptor$Position
 - s:values():com.intellij.execution.services.ServiceViewDnDDescriptor$Position[]
+com.intellij.execution.services.ServiceViewDragBeanBase
+- a:getSelectedItems():java.util.List
 com.intellij.execution.services.ServiceViewGroupingContributor
 - com.intellij.execution.services.ServiceViewContributor
 - a:getGroupDescriptor(java.lang.Object):com.intellij.execution.services.ServiceViewDescriptor

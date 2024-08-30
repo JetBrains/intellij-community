@@ -166,14 +166,13 @@ public final class RunDashboardServiceViewContributor
   @Nullable
   private static RunDashboardRunConfigurationNode getRunConfigurationNode(@NotNull DnDEvent event, @NotNull Project project) {
     Object object = event.getAttachedObject();
-    if (!(object instanceof DataProvider)) return null;
+    if (!(object instanceof ServiceViewDragBeanBase dragBean)) return null;
 
-    Object data = ((DataProvider)object).getData(PlatformCoreDataKeys.SELECTED_ITEMS.getName());
-    if (!(data instanceof Object[] items)) return null;
+    List<Object> items = dragBean.getSelectedItems();
+    Object item = ContainerUtil.getOnlyItem(items);
+    if (item == null) return null;
 
-    if (items.length != 1) return null;
-
-    RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(items[0], RunDashboardRunConfigurationNode.class);
+    RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(item, RunDashboardRunConfigurationNode.class);
     if (node != null && !node.getConfigurationSettings().getConfiguration().getProject().equals(project)) return null;
 
     return node;
