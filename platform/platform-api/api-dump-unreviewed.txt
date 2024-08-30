@@ -96,7 +96,6 @@ pc:com.intellij.execution.process.CapturingAnsiEscapesAwareProcessHandler$AnsiEs
 f:com.intellij.execution.process.ColoredOutputTypeRegistryImpl
 - <init>():V
 - s:getAnsiColorKey(I):com.intellij.openapi.editor.colors.TextAttributesKey
-- getOutputType(com.intellij.execution.process.AnsiTerminalEmulator,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 - getOutputType(java.lang.String,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 f:com.intellij.execution.process.ConsoleHighlighter
 - sf:BLACK:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -3813,7 +3812,6 @@ c:com.intellij.openapi.ui.DialogBuilder$CancelActionDescriptor
 - p:myText:java.lang.String
 - <init>():V
 - getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- p:getBuiltinAction(com.intellij.openapi.ui.DialogBuilder$MyDialogWrapper):javax.swing.Action
 - setText(java.lang.String):V
 c:com.intellij.openapi.ui.DialogBuilder$CloseDialogAction
 - com.intellij.openapi.ui.DialogBuilder$DialogActionDescriptor
@@ -3839,7 +3837,6 @@ c:com.intellij.openapi.ui.DialogBuilder$OkActionDescriptor
 - p:myText:java.lang.String
 - <init>():V
 - getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- p:getBuiltinAction(com.intellij.openapi.ui.DialogBuilder$MyDialogWrapper):javax.swing.Action
 - setText(java.lang.String):V
 f:com.intellij.openapi.ui.DialogEarthquakeShaker
 - s:shake(java.awt.Window):V
@@ -7325,7 +7322,6 @@ a:com.intellij.ui.ReorderableListController$CustomActionDescription
 - setShowText(Z):V
 pc:com.intellij.ui.ReorderableListController$CustomActionDescription$BaseAction
 - com.intellij.openapi.project.DumbAwareAction
-- <init>(com.intellij.ui.ReorderableListController$CustomActionDescription,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.ui.ReorderableListController$ActionBehaviour):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -8432,6 +8428,9 @@ c:com.intellij.ui.components.JBScrollPane$Layout
 - layoutContainer(java.awt.Container):V
 - preferredLayoutSize(java.awt.Container):java.awt.Dimension
 - syncWithScrollPane(javax.swing.JScrollPane):V
+c:com.intellij.ui.components.JBScrollPane$ViewportBorder
+- javax.swing.border.LineBorder
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 c:com.intellij.ui.components.JBSlider
 - javax.swing.JSlider
 - <init>():V
@@ -10023,7 +10022,6 @@ f:com.intellij.ui.messager.Callout
 - s:showText(javax.swing.JTree,javax.swing.tree.TreePath,I,java.lang.String):V
 - s:showTextBelow(javax.swing.JComponent,java.lang.String):V
 c:com.intellij.ui.messager.CalloutComponent
-- p:myPointerComponent:com.intellij.ui.messager.CalloutComponent$Pointer
 - p:myTargetComponent:javax.swing.JComponent
 - p:myTargetWindow:java.awt.Window
 - <init>(javax.swing.JComponent):V
@@ -11547,12 +11545,6 @@ c:com.intellij.ui.treeStructure.treetable.TreeTableTree
 - setTreeTableTreeBorder(javax.swing.border.Border):V
 - setVisibleRow(I):V
 - updateUI():V
-*:com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:FILE_VISIBLE_FOR_REMOTE_CLIENTS:com.intellij.openapi.util.Key
-- sf:SYNC_TAB_TO_REMOTE_CLIENTS:com.intellij.openapi.util.Key
-- a:isApplicable(com.intellij.ui.content.Content,com.intellij.openapi.client.ClientProjectSession):Z
-- a:syncContentToRemoteClient(com.intellij.ui.content.Content):Z
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String
@@ -11573,10 +11565,6 @@ c:com.intellij.ui.treeStructure.treetable.TreeTableTree
 - isUnsupported():Z
 - s:valueOf(java.lang.String):com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
 - s:values():com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode[]
-*:com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getMode():com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
-- a:isApplicable(java.lang.String,com.intellij.openapi.client.ClientProjectSession):Z
 com.intellij.ui.viewModel.extraction.ToolWindowViewModelListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:toolWindowChanged(java.lang.String):V
@@ -11752,7 +11740,6 @@ f:com.intellij.util.OpenSourceUtil
 - dispose():V
 - getName():java.lang.String
 - getPeriod():I
-- getStatistic():com.intellij.util.animation.JBAnimator$Statistic
 - getType():com.intellij.util.animation.JBAnimator$Type
 - ignorePowerSaveMode():com.intellij.util.animation.JBAnimator
 - isCyclic():Z

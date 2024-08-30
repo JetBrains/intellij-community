@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -323,19 +323,19 @@ public class DialogBuilder implements Disposable {
       return builtinAction;
     }
 
-    protected abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
+    abstract Action getBuiltinAction(MyDialogWrapper dialogWrapper);
   }
 
   public static class OkActionDescriptor extends BuiltinAction {
     @Override
-    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+    Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getOKAction();
     }
   }
 
   public static class CancelActionDescriptor extends BuiltinAction {
     @Override
-    protected Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
+    Action getBuiltinAction(MyDialogWrapper dialogWrapper) {
       return dialogWrapper.getCancelAction();
     }
   }

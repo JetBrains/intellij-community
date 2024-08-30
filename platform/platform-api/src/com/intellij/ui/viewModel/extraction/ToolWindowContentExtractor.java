@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.viewModel.extraction;
 
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
  /**
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * If your content contains virtual files that must be visible (i.e. in editors)
  * you should mark them with {@link #FILE_VISIBLE_FOR_REMOTE_CLIENTS}.
  */
-@ApiStatus.Experimental
+@Internal
 public interface ToolWindowContentExtractor {
   ExtensionPointName<ToolWindowContentExtractor> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowContentExtractor");
   Key<Boolean> SYNC_TAB_TO_REMOTE_CLIENTS = Key.create("ToolWindowContentExtractor.SyncTabToGuest");
