@@ -395,7 +395,7 @@ suspend fun withTransactor(
             }
             is TransactorEvent.TheEnd -> {
               currentCoroutineContext().ensureActive()
-              throw RuntimeException("Kernel is terminated", event.reason)
+              throw CancellationException("Transactor is terminated", event.reason)
             }
           }
         }
