@@ -55,7 +55,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.NewUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -3448,7 +3448,7 @@ public final class HighlightUtil {
       typeText = type.getCanonicalText();
     }
     Color color = matches
-                  ? ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()
+                  ? NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()
                   : NamedColorUtil.getErrorForeground();
     return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color)).addText(typeText);
   }

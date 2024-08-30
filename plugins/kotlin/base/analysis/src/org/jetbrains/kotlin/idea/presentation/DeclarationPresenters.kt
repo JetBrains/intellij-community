@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.NewUI
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -125,7 +125,7 @@ class KtFunctionPresenter : ItemPresentationProvider<KtFunction> {
 }
 
 internal fun getPresentationInContainer(param: Any): String {
-    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
+    if (NewUI.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.in.container.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.in.container.paren", param)
@@ -133,7 +133,7 @@ internal fun getPresentationInContainer(param: Any): String {
 }
 
 internal fun getPresentationText(param: Any): String {
-    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
+    if (NewUI.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.paren", param)
