@@ -55,6 +55,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -79,6 +80,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -122,7 +124,6 @@ import java.util.stream.Stream;
 import static com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi;
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
-import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 /**
  * @author Konstantin Bulenkov
@@ -640,7 +641,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
         mySearchField.setText(text);
         mySearchField.selectAll();
       })
-      .setRenderer(textListCellRenderer((@Nls var s) -> s))
+      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
+        @Override
+        public @Nullable String getTextFor(@NlsContexts.ListItem String value) {
+          return value;
+        }
+      }))
       .createPopup()
       .show(relativePoint);
   }

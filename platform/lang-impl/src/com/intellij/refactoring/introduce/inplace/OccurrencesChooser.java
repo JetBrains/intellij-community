@@ -11,18 +11,19 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
-
-import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 // Please do not make this class concrete<PsiElement>.
 // This prevents languages with polyadic expressions or sequences
@@ -112,7 +113,13 @@ public abstract class OccurrencesChooser<T> {
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
-      .setRenderer(textListCellRenderer(c -> c == null ? "" : c.formatDescription(occurrencesMap.get(c).size())))
+      .setRenderer(new GroupedItemsListRenderer<C>(new ListItemDescriptorAdapter<C>() {
+        @Override
+        public @Nullable String getTextFor(C value) {
+          if (value == null) return "";
+          return value.formatDescription(occurrencesMap.get(value).size());
+        }
+      }))
       .setItemSelectedCallback(value -> {
         if (value == null) return;
         dropHighlighters();

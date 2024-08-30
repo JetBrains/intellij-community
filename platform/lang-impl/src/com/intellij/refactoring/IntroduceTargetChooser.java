@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.IntroduceTarget;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -28,8 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-
-import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 public final class IntroduceTargetChooser {
   private IntroduceTargetChooser() {
@@ -124,12 +123,15 @@ public final class IntroduceTargetChooser {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .setRenderer(textListCellRenderer(t -> {
-        String text = t.render();
-        int firstNewLinePos = text.indexOf('\n');
-        String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
-        if (trimmedText.length() != text.length()) trimmedText += " ...";
-        return trimmedText;
+      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
+        @Override
+        public String getTextFor(T value) {
+          String text = value.render();
+          int firstNewLinePos = text.indexOf('\n');
+          String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+          if (trimmedText.length() != text.length()) trimmedText += " ...";
+          return trimmedText;
+        }
       }));
     if (southComponent != null && builder instanceof PopupChooserBuilder) {
       ((PopupChooserBuilder<T>)builder).setSouthComponent(southComponent);
