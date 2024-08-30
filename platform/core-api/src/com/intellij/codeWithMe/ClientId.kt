@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
-import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.installThreadContext
@@ -20,9 +19,6 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import kotlinx.coroutines.CopyableThreadContextElement
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
@@ -421,83 +417,35 @@ data class ClientId(val value: String) {
       }
     }
 
-    @JvmStatic
-    private fun assertClientIdMismatch(assertInfo: Pair<ClientIdContextElement?, Throwable?>) {
-      val currentClientIdElement = currentThreadContext().clientIdContextElement
-      if (assertInfo.first != currentClientIdElement) {
-        logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'").apply {
-          assertInfo.second?.let { addSuppressed(it) }
-          currentClientIdElement?.creationTrace?.let { addSuppressed(it) }
-          if (suppressed.isEmpty()) addSuppressed(tracingHint())
-        })
-      }
-    }
-
-    private fun captureInfoForAssertion(): Pair<ClientIdContextElement?, Throwable?> {
-      val clientIdContextElement = currentThreadContext().clientIdContextElement
-      val throwable = if (isStacktraceLoggingEnabled()) Throwable("'$clientIdContextElement' captured at") else null
-      return clientIdContextElement to throwable
-    }
-
+    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
-    fun <T> decorateFunction(action: () -> T): () -> T {
-      val infoForAssertion = captureInfoForAssertion()
-      return {
-        assertClientIdMismatch(infoForAssertion)
-        action()
-      }
-    }
+    fun <T> decorateFunction(action: () -> T): () -> T = action
 
+    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
-    fun decorateRunnable(runnable: Runnable): Runnable {
-      val infoForAssertion = captureInfoForAssertion()
-      return Runnable {
-        assertClientIdMismatch(infoForAssertion)
-        runnable.run()
-      }
-    }
+    fun decorateRunnable(runnable: Runnable): Runnable = runnable
 
+    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
-    fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
-      val infoForAssertion = captureInfoForAssertion()
-      return Callable {
-        assertClientIdMismatch(infoForAssertion)
-        callable.call()
-      }
-    }
+    fun <T> decorateCallable(callable: Callable<T>): Callable<T> = callable
 
+    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
-    fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
-      val infoForAssertion = captureInfoForAssertion()
-      return Function {
-        assertClientIdMismatch(infoForAssertion)
-        function.apply(it)
-      }
-    }
+    fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> = function
 
+    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
-    fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
-      val infoForAssertion = captureInfoForAssertion()
-      return BiConsumer { t, u ->
-        assertClientIdMismatch(infoForAssertion)
-        biConsumer.accept(t, u)
-      }
-    }
+    fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> = biConsumer
 
+    @Deprecated("ClientId propagation is handled by context propagation. You don't need to do it manually. The method will be removed soon.")
     @Internal
     @JvmStatic
-    fun <T> decorateProcessor(processor: Processor<T>): Processor<T> {
-      val infoForAssertion = captureInfoForAssertion()
-      return Processor {
-        assertClientIdMismatch(infoForAssertion)
-        processor.process(it)
-      }
-    }
+    fun <T> decorateProcessor(processor: Processor<T>): Processor<T> = processor
 
     @Internal
     fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext
@@ -522,93 +470,6 @@ fun ClientId.asContextElement(): CoroutineContext.Element {
 @Internal
 fun CoroutineContext.clientId(): ClientId? = this[ClientIdContextElement.Key]?.clientId
 
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-@DelicateCoroutinesApi
-@Internal
-object ClientIdContextElementPrecursor : CopyableThreadContextElement<Unit>, CoroutineContext.Key<ClientIdContextElementPrecursor>, IntelliJContextElement {
-
-  override fun copyForChild(): CopyableThreadContextElement<Unit> {
-    // there is only a precursor in the scope -> replace with a ClientId element from the thread local storage
-    val clientIdContextElement = currentThreadContext().clientIdContextElement
-    if (clientIdContextElement != null) return clientIdContextElement
-    return this
-  }
-
-  override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
-    val existingClientIdElement = overwritingElement[ClientIdContextElement.Key]
-    if (existingClientIdElement != null) return overwritingElement.minusKey(ClientIdContextElementPrecursor) // real client id is here - we remove precursor
-    val clientIdContextElement = currentThreadContext().clientIdContextElement
-    if (clientIdContextElement != null) return overwritingElement.minusKey(ClientIdContextElementPrecursor) + clientIdContextElement // remove precursor but add client id
-    return overwritingElement // keep as is if impossible to determine ClientId
-  }
-
-  override fun updateThreadContext(context: CoroutineContext) {
-  }
-
-  override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-  }
-
-  override val key: CoroutineContext.Key<*>
-    get() = this
-}
-
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-@Internal
-class ClientIdContextElement(val clientId: ClientId?) : CopyableThreadContextElement<Unit>, IntelliJContextElement {
-  val creationTrace: Throwable? = if (isStacktraceLoggingEnabled()) Throwable("${formatClientId()} created at") else null
-
-  companion object Key : CoroutineContext.Key<ClientIdContextElement>
-
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-
-  override fun beforeChildStarted(context: CoroutineContext) {
-    val threadClientIdElement = context.clientIdContextElement
-    if (threadClientIdElement != this) {
-      logger.error(Throwable("Thread context has $threadClientIdElement but coroutine context has $this").apply {
-        creationTrace?.let { addSuppressed(it) }
-        threadClientIdElement?.creationTrace?.let { addSuppressed(it) }
-        if (suppressed.isEmpty()) addSuppressed(tracingHint())
-      })
-    }
-  }
-
-  override val key: CoroutineContext.Key<*>
-    get() = Key
-
-  override fun toString(): String = formatClientId()
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as ClientIdContextElement
-
-    return clientId == other.clientId
-  }
-
-  override fun hashCode(): Int {
-    return clientId?.hashCode() ?: 0
-  }
-
-  override fun updateThreadContext(context: CoroutineContext) {
-  }
-
-  override fun copyForChild(): CopyableThreadContextElement<Unit> {
-    // if copyForChild is called on ClientIdContextElement (not on a precursor) it means that nothing should be done, a ClientId is here already
-    return this
-  }
-
-  override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext {
-    // the same for mergeForChild
-    return overwritingElement
-  }
-
-  override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-  }
-
-  private fun formatClientId(): String = "${clientId ?: "ClientId=<null>"}"
-}
-
 val CoroutineContext.clientIdContextElement: ClientIdContextElement?
   @Internal
   get() = this[ClientIdContextElement.Key]
@@ -616,8 +477,3 @@ val CoroutineContext.clientIdContextElement: ClientIdContextElement?
 val currentThreadClientId: ClientId?
   @Internal
   get() = currentThreadContext().clientIdContextElement?.clientId
-
-
-private fun isStacktraceLoggingEnabled() = logger.isTraceEnabled
-// better to unify with the similar in threadContext.kt later
-private fun tracingHint() = Throwable("To enable stack trace recording set log category '#com.intellij.codeWithMe' to 'trace'")
