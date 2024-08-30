@@ -26,6 +26,7 @@ object MavenArtifactUtil {
   private val ourPluginInfoCache: MutableMap<Path, MavenPluginInfo?> = Collections.synchronizedMap(HashMap())
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun readPluginInfo(localRepository: File, mavenId: MavenId): MavenPluginInfo? {
     val file = getArtifactNioPath(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar")
     return doReadPluginInfo(file)
@@ -48,16 +49,19 @@ object MavenArtifactUtil {
 
   @JvmStatic
   @JvmOverloads
+  @Deprecated("this method does not support split repositories")
   fun hasArtifactFile(localRepository: File, id: MavenId, type: String = "jar"): Boolean {
     return Files.exists(getArtifactFile(localRepository, id, type))
   }
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun getArtifactFile(localRepository: File, id: MavenId, type: String): Path {
     return getArtifactNioPath(localRepository, id.groupId, id.artifactId, id.version, type)
   }
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun getArtifactFile(localRepository: File, id: MavenId): Path {
     return getArtifactNioPath(localRepository, id.groupId, id.artifactId, id.version, "pom")
   }
@@ -92,6 +96,7 @@ object MavenArtifactUtil {
   }
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun getArtifactNioPath(localRepository: File, groupId: String?, artifactId: String?, version: String?, type: String): Path {
     var groupId = groupId
     var artifactId = artifactId
