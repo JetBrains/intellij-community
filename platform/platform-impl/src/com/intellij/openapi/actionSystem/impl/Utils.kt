@@ -863,7 +863,7 @@ object Utils {
       return
     }
 
-    UiNotifyConnector.doWhenFirstShown(component) {
+    UiNotifyConnector.doWhenFirstShown(component, isDeferred = false) {
       UIUtil.getWindow(component)?.addWindowListener(object : WindowAdapter() {
         override fun windowOpened(e: WindowEvent) {
           val time = TimeoutUtil.getDurationMillis(startNanos)
