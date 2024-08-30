@@ -2,7 +2,9 @@
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -37,6 +39,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
   private val rendererCache = RendererCache()
   private val cells = mutableListOf<LcrCellBaseImpl<*>>()
+  private var separator: LcrSeparatorImpl? = null
   private var gap = LcrRow.Gap.DEFAULT
 
   override val list: JList<out T>
@@ -79,6 +82,16 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
+  override fun separator(init: (LcrSeparator.() -> Unit)) {
+    if (separator != null) {
+      throw UiDslException("Separator is defined already")
+    }
+
+    val separator = LcrSeparatorImpl()
+    separator.init()
+    this.separator = separator
+  }
+
   override fun getListCellRendererComponent(
     list: JList<out T>,
     value: T,
@@ -87,15 +100,16 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     cellHasFocus: Boolean,
   ): Component {
     cells.clear()
+    separator = null
     gap = LcrRow.Gap.DEFAULT
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
 
     // The list is not focused when isSwingPopup = false
     val isListFocused = isComboBoxPopup(list) || RenderingUtil.isFocused(list)
     val selectionBg = if (isSelected) JBUI.CurrentTheme.List.Selection.background(isListFocused) else null
+    val collapsedComboBoxItem = index == -1
     val enabled: Boolean
-    if (index == -1) {
-      // Renderer for selected item in collapsed ComboBox component
+    if (collapsedComboBoxItem) {
       background = null
       selectionColor = null
       enabled = getComboBox(list)?.isEnabled ?: true
@@ -113,7 +127,8 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     val cellsTypes = cells.map { it.type }
     val result = rendererCache.getRootPanel(cellsTypes)
 
-    applyRowStyle(result)
+    applyRowStyle(result, collapsedComboBoxItem)
+    result.applySeparator(separator != null && !collapsedComboBoxItem, separator?.text, index == 0, list.background)
 
     for ((i, cell) in cells.withIndex()) {
       val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.gapBefore))
@@ -129,14 +144,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     return result
   }
 
-  private fun applyRowStyle(rendererPanel: RendererPanel) {
-    val isComboBoxPopup = isComboBoxPopup(list)
+  private fun applyRowStyle(rendererPanel: RendererPanel, collapsedComboBoxItem: Boolean) {
     if (ExperimentalUI.isNewUI()) {
-      if (index == -1) {
+      if (collapsedComboBoxItem) {
         rendererPanel.initCollapsedComboBoxItem()
       }
       else {
-        rendererPanel.initItem(isComboBoxPopup, background, if (selected) selectionColor else null)
+        rendererPanel.initItem(isComboBoxPopup(list), background, if (selected) selectionColor else null)
       }
     }
     else {
@@ -201,7 +215,7 @@ private class RendererCache {
   }
 }
 
-private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendererComponent {
+private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRendererComponent {
 
   private val cellsLayout = GridLayout()
 
@@ -210,10 +224,16 @@ private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendere
    */
   private val cellsPanel = JPanel(cellsLayout)
 
+  private val selectablePanel = SelectablePanel()
+  private val separator = GroupHeaderSeparator(JBUI.insets(2, 20))
+
   init {
+    add(separator, BorderLayout.NORTH)
+    add(selectablePanel, BorderLayout.CENTER)
+
     cellsPanel.isOpaque = false
-    layout = BorderLayout()
-    add(cellsPanel, BorderLayout.CENTER)
+    selectablePanel.layout = BorderLayout()
+    selectablePanel.add(cellsPanel, BorderLayout.CENTER)
 
     val builder = RowsGridBuilder(cellsPanel)
     builder.resizableRow()
@@ -251,8 +271,8 @@ private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendere
         component.text = " "
       }
     }
-    setSize(width, height)
-    doLayout()
+    selectablePanel.setSize(width, height)
+    selectablePanel.doLayout()
     cellsPanel.doLayout()
     var result = -1
     for (component in baselineComponents) {
@@ -276,6 +296,15 @@ private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendere
       }
     }
     return accessibleContext
+  }
+
+  fun applySeparator(hasSeparator: Boolean, text: @NlsContexts.Separator String?, isHideLine: Boolean, background: Color?) {
+    separator.isVisible = hasSeparator
+    separator.caption = text
+    separator.isHideLine = isHideLine
+
+    // Set background for separator
+    this.background = background
   }
 
   fun applyCellConstraints(i: Int, cell: LcrCellBaseImpl<*>, leftGap: Int): JComponent {
@@ -322,34 +351,40 @@ private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendere
    * Init renderer for selected item in collapsed ComboBox component
    */
   fun initCollapsedComboBoxItem() {
-    isOpaque = false
-    selectionArc = 0
-    selectionInsets = JBInsets.emptyInsets()
-    border = null
-    preferredHeight = null
-    background = null
-    selectionColor = null
+    with(selectablePanel) {
+      isOpaque = false
+      selectionArc = 0
+      selectionInsets = JBInsets.emptyInsets()
+      border = null
+      preferredHeight = null
+      background = null
+      selectionColor = null
+    }
   }
 
   fun initItem(isComboBoxPopup: Boolean, background: Color?, selectionColor: Color?) {
-    // Update height/insets every time, so IDE scaling is applied
-    isOpaque = true
-    selectionArc = 8
-    selectionInsets = JBInsets.create(0, 12)
-    if (isComboBoxPopup) {
-      border = JBUI.Borders.empty(2, 20)
+    with(selectablePanel) {
+      // Update height/insets every time, so IDE scaling is applied
+      isOpaque = true
+      selectionArc = 8
+      selectionInsets = JBInsets.create(0, 12)
+      if (isComboBoxPopup) {
+        border = JBUI.Borders.empty(2, 20)
+      }
+      else {
+        border = JBUI.Borders.empty(0, 20)
+      }
+      preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+      this.background = background
+      this.selectionColor = selectionColor
     }
-    else {
-      border = JBUI.Borders.empty(0, 20)
-    }
-    preferredHeight = JBUI.CurrentTheme.List.rowHeight()
-    this.background = background
-    this.selectionColor = selectionColor
   }
 
   fun initOldUIItem(background: Color?) {
-    border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
-    this.background = background
-    selectionColor = null
+    with(selectablePanel) {
+      border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
+      this.background = background
+      selectionColor = null
+    }
   }
 }

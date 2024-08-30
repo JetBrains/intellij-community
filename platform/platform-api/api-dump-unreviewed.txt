@@ -9500,6 +9500,9 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
 - s:values():com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap[]
+*:com.intellij.ui.dsl.listCellRenderer.LcrSeparator
+- a:getText():java.lang.String
+- a:setText(java.lang.String):V
 *f:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>(java.awt.Color):V

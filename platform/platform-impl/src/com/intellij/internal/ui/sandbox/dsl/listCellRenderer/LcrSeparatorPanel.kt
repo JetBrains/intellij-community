@@ -77,13 +77,11 @@ internal class LcrSeparatorPanel : UISandboxPanel {
 
   private fun newApiRenderer(): ListCellRenderer<String?> {
     return listCellRenderer {
-      /* todo uncomment after separator implementation
       separators[value]?.let {
         separator {
           text = it
         }
       }
-      */
       text(value ?: "")
     }
   }

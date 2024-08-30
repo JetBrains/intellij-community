@@ -73,4 +73,10 @@ interface LcrRow<T> {
    */
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
+  /**
+   * Filter in combobox with isSwingPopup = false separators are not supported yet
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  fun separator(init: (LcrSeparator.() -> Unit))
 }
