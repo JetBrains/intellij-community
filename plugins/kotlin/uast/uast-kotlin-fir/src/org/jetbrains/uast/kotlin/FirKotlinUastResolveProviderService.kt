@@ -246,6 +246,24 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             kaCallInfo.singleFunctionCallOrNull()
                 ?.symbol
                 ?.let { return toPsiMethod(it, ktElement, kaCallInfo) }
+            // Simple access: =
+            kaCallInfo.singleCallOrNull<KaSimpleVariableAccessCall>()?.let { variableAccessCall ->
+                (variableAccessCall.symbol as? KaPropertySymbol)?.let { propertySymbol ->
+                    when (variableAccessCall.simpleAccess) {
+                        is KaSimpleVariableAccess.Read -> {
+                            propertySymbol.getter?.let {
+                                return toPsiMethod(it, ktElement, kaCallInfo)
+                            }
+                        }
+                        is KaSimpleVariableAccess.Write -> {
+                            propertySymbol.setter?.let {
+                                return toPsiMethod(it, ktElement, kaCallInfo)
+                            }
+                        }
+                    }
+                }
+            }
+            // Compound access: +=, ++, etc.
             return when (ktElement) {
                 is KtBinaryExpression,
                 is KtPrefixExpression,
