@@ -509,7 +509,7 @@ class MavenProject(val file: VirtualFile) {
       var myUnresolvedPluginsCache = getCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY)
       if (myUnresolvedPluginsCache == null) {
         val result: MutableList<MavenPlugin> = ArrayList()
-        for (each in declaredPluginsInfos) {
+        for (each in declaredPluginInfos) {
           if (each.artifact?.isResolved != true) {
             result.add(each.plugin)
           }
@@ -729,13 +729,19 @@ class MavenProject(val file: VirtualFile) {
       return myState.plugins
     }
 
+  @get:ApiStatus.Experimental
+  val pluginInfos: List<MavenPluginInfo>
+    get() {
+      return myState.pluginInfos
+    }
+
   val declaredPlugins: List<MavenPlugin>
     get() {
       return myState.declaredPlugins
     }
 
   @get:ApiStatus.Experimental
-  val declaredPluginsInfos: List<MavenPluginInfo>
+  val declaredPluginInfos: List<MavenPluginInfo>
     get() {
       return myState.declaredPluginInfos
     }

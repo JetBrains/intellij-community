@@ -29,16 +29,17 @@ object MavenArtifactUtil {
   @Deprecated("this method does not support split repositories")
   fun readPluginInfo(localRepository: File, mavenId: MavenId): MavenPluginInfo? {
     val file = getArtifactNioPath(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar")
-    return doReadPluginInfo(file)
+    return readPluginInfo(file)
   }
 
   @JvmStatic
   fun readPluginInfo(mavenArtifact: MavenArtifact?): MavenPluginInfo? {
     val file = mavenArtifact?.file?.toPath() ?: return null
-    return doReadPluginInfo(file)
+    return readPluginInfo(file)
   }
 
-  private fun doReadPluginInfo(file: Path): MavenPluginInfo? {
+  @JvmStatic
+  fun readPluginInfo(file: Path): MavenPluginInfo? {
     var result = ourPluginInfoCache[file]
     if (result == null) {
       result = createPluginDocument(file)

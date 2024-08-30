@@ -28,7 +28,7 @@ class PluginsNode extends GroupNode {
   }
 
   public void updatePlugins(MavenProject mavenProject) {
-    var pluginsInfos = mavenProject.getDeclaredPluginsInfos();
+    var pluginsInfos = mavenProject.getDeclaredPluginInfos();
     myMavenProjectsStructure.updatePluginsTree(this, pluginsInfos);
   }
 

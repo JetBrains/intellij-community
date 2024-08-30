@@ -16,9 +16,9 @@
 package org.jetbrains.idea.maven
 
 import com.intellij.maven.testFramework.MavenTestCase
-import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenPluginInfo
+import java.nio.file.Path
 
 class MavenPluginInfoReaderTest : MavenTestCase() {
   override fun runInDispatchThread() = false
@@ -28,8 +28,7 @@ class MavenPluginInfoReaderTest : MavenTestCase() {
   override fun setUp() {
     super.setUp()
     repositoryPath = MavenCustomRepositoryHelper(dir, "plugins").getTestDataPath("plugins")
-    val id = MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2")
-    p = MavenArtifactUtil.readPluginInfo(repositoryFile, id)
+    p = MavenArtifactUtil.readPluginInfo(Path.of(repositoryFile.absolutePath, "org/apache/maven/plugins", "maven-compiler-plugin", "2.0.2", "maven-compiler-plugin-2.0.2.jar"))
   }
 
   fun testLoadingPluginInfo() {
