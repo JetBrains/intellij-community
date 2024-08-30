@@ -7,7 +7,6 @@ public class TestJADNaming {
       short short3 = 3000;
       short short4 = 4000;
       if (short1 != short2 && short3 == short4) {// 8
-         ;
       }
 
       boolean flag = true;// 9
@@ -15,7 +14,6 @@ public class TestJADNaming {
       boolean flag2 = true;
       boolean flag3 = false;
       if (flag != flag1 && flag2 == flag3) {// 10
-         ;
       }
 
    }// 11
@@ -47,35 +45,35 @@ class 'pkg/TestJADNaming' {
       17      8
       18      8
       19      8
-      1c      12
-      1d      12
-      1e      12
-      1f      13
-      20      13
-      21      13
-      22      14
-      23      14
-      24      14
-      25      15
-      26      15
-      27      15
-      28      16
-      29      16
-      2a      16
-      2b      16
-      2c      16
-      2f      16
-      30      16
-      31      16
-      32      16
-      33      16
-      36      20
+      1c      11
+      1d      11
+      1e      11
+      1f      12
+      20      12
+      21      12
+      22      13
+      23      13
+      24      13
+      25      14
+      26      14
+      27      14
+      28      15
+      29      15
+      2a      15
+      2b      15
+      2c      15
+      2f      15
+      30      15
+      31      15
+      32      15
+      33      15
+      36      18
    }
 }
 
 Lines mapping:
 7 <-> 5
 8 <-> 9
-9 <-> 13
-10 <-> 17
-11 <-> 21
+9 <-> 12
+10 <-> 16
+11 <-> 19

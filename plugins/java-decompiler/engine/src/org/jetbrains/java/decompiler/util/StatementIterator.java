@@ -7,7 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 import java.util.List;
 
-public class StatementIterator {
+public final class StatementIterator {
   public static void iterate(Statement stat, ExprentIterator itr) {
     if (stat == null) {
       return;

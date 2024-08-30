@@ -12,11 +12,10 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class JADNameProvider implements IVariableNameProvider {
-  private HashMap<String, Holder> last = null;
-  private HashMap<String, String> remap = null;
+  private HashMap<String, Holder> last;
+  private HashMap<String, String> remap;
   private final HashMap<Integer, String> parameters = new HashMap<>();
   private final StructMethod method;
   private final boolean renameParameters;
@@ -65,13 +64,13 @@ public class JADNameProvider implements IVariableNameProvider {
     public boolean skip_zero;
     public final List<String> names = new ArrayList<>();
 
-    public Holder(int t1, boolean skip_zero, String... names) {
+    private Holder(int t1, boolean skip_zero, String... names) {
       this.id = t1;
       this.skip_zero = skip_zero;
       Collections.addAll(this.names, names);
     }
 
-    public Holder(int t1, boolean skip_zero, List<String> names) {
+    private Holder(int t1, boolean skip_zero, List<String> names) {
       this.id = t1;
       this.skip_zero = skip_zero;
       this.names.addAll(names);
@@ -79,7 +78,7 @@ public class JADNameProvider implements IVariableNameProvider {
 
     @Override
     public String toString() {
-      return "Holder[" + id + ", " + skip_zero + ", " + names.stream().collect(Collectors.joining(", ")) + "]";
+      return "Holder[" + id + ", " + skip_zero + ", " + String.join(", ", names) + "]";
     }
 
     public Holder copy() {
@@ -117,7 +116,7 @@ public class JADNameProvider implements IVariableNameProvider {
     return result;
   }
 
-  private String cleanType(String type) {
+  private static String cleanType(String type) {
      if (type.indexOf('<') != -1) {
         type = type.substring(0, type.indexOf('<'));
      }
@@ -132,7 +131,7 @@ public class JADNameProvider implements IVariableNameProvider {
     String findtype = type;
 
     while (findtype.contains("[][]")) {
-      findtype = findtype.replaceAll("\\[\\]\\[\\]", "[]");
+      findtype = findtype.replaceAll("\\[]\\[]", "[]");
     }
     if (last.containsKey(findtype)) {
       index = findtype;
@@ -144,11 +143,11 @@ public class JADNameProvider implements IVariableNameProvider {
       index = remap.get(type);
     }
 
-    if ((index == null || index.length() == 0) && (CAPS_START.matcher(type).find() || ARRAY.matcher(type).find())) { // replace multi things with arrays.
+    if ((index == null || index.isEmpty()) && (CAPS_START.matcher(type).find() || ARRAY.matcher(type).find())) { // replace multi things with arrays.
       type = type.replace("...", "[]");
 
       while (type.contains("[][]")) {
-        type = type.replaceAll("\\[\\]\\[\\]", "[]");
+        type = type.replaceAll("\\[]\\[]", "[]");
       }
 
       String name = type.toLowerCase(Locale.ENGLISH);
@@ -165,7 +164,7 @@ public class JADNameProvider implements IVariableNameProvider {
       index = type.toLowerCase(Locale.ENGLISH);
     }
 
-    if (index == null || index.length() == 0) {
+    if (index == null || index.isEmpty()) {
       return type.toLowerCase(Locale.ENGLISH);
     }
 

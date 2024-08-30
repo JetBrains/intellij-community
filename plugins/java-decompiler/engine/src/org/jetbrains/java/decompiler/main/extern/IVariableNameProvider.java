@@ -7,7 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import java.util.Map;
 
 public interface IVariableNameProvider {
-  public Map<VarVersionPair,String> rename(Map<VarVersionPair,String> variables);
+  Map<VarVersionPair,String> rename(Map<VarVersionPair, String> variables);
 
   default String renameAbstractParameter(String name, int index) {
      return name;
@@ -19,5 +19,5 @@ public interface IVariableNameProvider {
      return name;
   }
 
-  public void addParentContext(IVariableNameProvider renamer);
+  void addParentContext(IVariableNameProvider renamer);
 }

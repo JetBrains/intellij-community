@@ -75,7 +75,7 @@ public class StructMethod extends StructMember {
   private final String classQualifiedName;
   private final GenericMethodDescriptor signature;
   private IVariableNameProvider renamer;
-  public Set<String> enclosedClasses; // Dirty hack, but the management of nested classes is trash.
+  public Set<String> enclosedClasses; // Dirty hack, not to manage nested classes.
 
   private StructMethod(int accessFlags,
                        Map<String, StructGeneralAttribute> attributes,
