@@ -13,52 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven
 
-import com.intellij.maven.testFramework.MavenTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import com.intellij.maven.testFramework.MavenTestCase
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil
+import org.jetbrains.idea.maven.utils.MavenPluginInfo
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+class MavenPluginInfoReaderTest : MavenTestCase() {
+  override fun runInDispatchThread() = false
 
-public class MavenPluginInfoReaderTest extends MavenTestCase {
-  private MavenPluginInfo p;
+  private var p: MavenPluginInfo? = null
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setRepositoryPath(new MavenCustomRepositoryHelper(getDir(), "plugins").getTestDataPath("plugins"));
-    MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
-    p = ApplicationManager.getApplication().executeOnPooledThread(() -> MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id))
-      .get(10, TimeUnit.SECONDS);
+  override fun setUp() {
+    super.setUp()
+    repositoryPath = MavenCustomRepositoryHelper(dir, "plugins").getTestDataPath("plugins")
+    val id = MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2")
+    p = MavenArtifactUtil.readPluginInfo(repositoryFile, id)
   }
 
-  public void testLoadingPluginInfo() {
-    assertEquals("org.apache.maven.plugins", p.getGroupId());
-    assertEquals("maven-compiler-plugin", p.getArtifactId());
-    assertEquals("2.0.2", p.getVersion());
+  fun testLoadingPluginInfo() {
+    assertEquals("org.apache.maven.plugins", p!!.groupId)
+    assertEquals("maven-compiler-plugin", p!!.artifactId)
+    assertEquals("2.0.2", p!!.version)
   }
 
-  public void testGoals() {
-    assertEquals("compiler", p.getGoalPrefix());
+  fun testGoals() {
+    assertEquals("compiler", p!!.goalPrefix)
 
-    List<String> qualifiedGoals = new ArrayList<>();
-    List<String> displayNames = new ArrayList<>();
-    List<String> goals = new ArrayList<>();
-    for (MavenPluginInfo.Mojo m : p.getMojos()) {
-      goals.add(m.getGoal());
-      qualifiedGoals.add(m.getQualifiedGoal());
-      displayNames.add(m.getDisplayName());
+    val qualifiedGoals: MutableList<String> = ArrayList()
+    val displayNames: MutableList<String> = ArrayList()
+    val goals: MutableList<String> = ArrayList()
+    for (m in p!!.mojos) {
+      goals.add(m.goal)
+      qualifiedGoals.add(m.qualifiedGoal)
+      displayNames.add(m.displayName)
     }
 
-    assertOrderedElementsAreEqual(goals, "compile", "testCompile");
+    assertOrderedElementsAreEqual(goals, "compile", "testCompile")
     assertOrderedElementsAreEqual(qualifiedGoals,
                                   "org.apache.maven.plugins:maven-compiler-plugin:2.0.2:compile",
-                                  "org.apache.maven.plugins:maven-compiler-plugin:2.0.2:testCompile");
-    assertOrderedElementsAreEqual(displayNames, "compiler:compile", "compiler:testCompile");
+                                  "org.apache.maven.plugins:maven-compiler-plugin:2.0.2:testCompile")
+    assertOrderedElementsAreEqual(displayNames, "compiler:compile", "compiler:testCompile")
   }
 }
