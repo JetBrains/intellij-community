@@ -26,16 +26,14 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
-import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.application
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.RestartDialog
@@ -43,6 +41,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
 import java.util.*
 import javax.swing.JComponent
+import javax.swing.ListCellRenderer
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 
@@ -63,7 +62,6 @@ class LanguageAndRegionUi {
         val localizationService = LocalizationStateService.getInstance()!!
         val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
-        languageBox.gap(RightGap.SMALL)
         comment(IdeBundle.message("ide.restart.required.comment"))
 
         if (propertyGraph != null && connection != null) {
@@ -95,7 +93,7 @@ class LanguageAndRegionUi {
 
         val languageComponent = languageBox.component
         languageComponent.isSwingPopup = false
-        languageComponent.renderer = LanguageComboBoxRenderer(locales)
+        languageComponent.renderer = createLanguageRenderer(locales)
 
         var lastSelectedItem = languageComponent.selectedItem as Locale
         languageComponent.whenItemSelectedFromUi {
@@ -130,7 +128,7 @@ class LanguageAndRegionUi {
             if (!newLocales.first.contains(selection)) {
               selection = newLocales.first.first()
             }
-            languageComponent.renderer = LanguageComboBoxRenderer(newLocales)
+            languageComponent.renderer = createLanguageRenderer(newLocales)
             languageComponent.model = CollectionComboBoxModel(newLocales.first, selection)
           }
         }, parentDisposable)
@@ -178,7 +176,12 @@ class LanguageAndRegionUi {
 
         val regionComponent = regionBox.component
         regionComponent.isSwingPopup = false
-        regionComponent.renderer = RegionComboBoxRenderer()
+        regionComponent.renderer = listCellRenderer {
+          if (value == Region.NOT_SET) {
+            separator {  }
+          }
+          text(value.displayName)
+        }
 
         var lastSelectedItem = regionComponent.selectedItem as Region
         regionComponent.whenItemSelectedFromUi {
@@ -254,33 +257,17 @@ internal class LanguageAndRegionConfigurable :
   }
 }
 
-private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collections.List<Locale>, Map<Locale, String>>) :
-  GroupedComboBoxRenderer<Locale>() {
-
-  override fun getText(item: Locale): @NlsSafe String {
-    if (item === LanguageAndRegionUi.ITEM_MORE_LANGUAGES) {
-      return IdeBundle.message("item.get.more.languages")
+private fun createLanguageRenderer(locales: Pair<List<Locale>, Map<Locale, String>>): ListCellRenderer<Locale> {
+  return listCellRenderer {
+    if (value === LanguageAndRegionUi.ITEM_MORE_LANGUAGES) {
+      separator { }
+      text(IdeBundle.message("item.get.more.languages"))
     }
-    return locales.second[item] ?: item.getDisplayLanguage(Locale.ENGLISH)
-  }
-
-  override fun separatorFor(value: Locale): ListSeparator? {
-    if (locales.first.indexOf(value) == 1 || value === LanguageAndRegionUi.ITEM_MORE_LANGUAGES) {
-      return ListSeparator()
+    else {
+      if (locales.first.indexOf(value) == 1) {
+        separator { }
+      }
+      text(locales.second[value] ?: value.getDisplayLanguage(Locale.ENGLISH))
     }
-    return null
-  }
-}
-
-private class RegionComboBoxRenderer : GroupedComboBoxRenderer<Region>() {
-  override fun getText(item: Region): String {
-    return item.displayName
-  }
-
-  override fun separatorFor(value: Region): ListSeparator? {
-    if (value == Region.NOT_SET) {
-      return ListSeparator()
-    }
-    return null
   }
 }
