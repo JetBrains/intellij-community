@@ -1252,6 +1252,7 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - f:isFromActionToolbar():Z
 - f:isFromContextMenu():Z
 - f:isFromMainMenu():Z
+- f:isFromSearchPopup():Z
 - f:isInInjectedContext():Z
 - f:setInjectedContext(Z):V
 - f:setUpdateSession(com.intellij.openapi.actionSystem.UpdateSession):V
