@@ -14,12 +14,15 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 public final class Utils {
   private Utils() {
@@ -48,6 +51,7 @@ public final class Utils {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChosenCallback(callback)
+      .setRenderer(textListCellRenderer((@Nls String s) -> s))
       .createPopup();
 
     if (ad != null) {
