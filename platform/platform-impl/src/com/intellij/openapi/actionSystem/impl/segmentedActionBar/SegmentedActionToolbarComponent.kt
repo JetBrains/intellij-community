@@ -106,20 +106,13 @@ open class SegmentedActionToolbarComponent(place: String,
         continue
       }
 
-      if (action is CustomComponentAction) {
-        val component = getCustomComponent(action)
-        addMetadata(component, i, actions.size)
-        add(CUSTOM_COMPONENT_CONSTRAINT, component)
-
-        component.putClientProperty(RUN_TOOLBAR_COMPONENT_ACTION, action)
-      }
-      else {
-        val component = createToolbarButton(action)
-        addMetadata(component, i, actions.size)
-        add(ACTION_BUTTON_CONSTRAINT, component)
-
-        component.putClientProperty(RUN_TOOLBAR_COMPONENT_ACTION, action)
-      }
+      val component = getOrCreateActionComponent(action)
+      val constraints =
+        if (component is ActionButton) ACTION_BUTTON_CONSTRAINT
+        else CUSTOM_COMPONENT_CONSTRAINT
+      addMetadata(component, i, actions.size)
+      add(constraints, component)
+      component.putClientProperty(RUN_TOOLBAR_COMPONENT_ACTION, action)
     }
   }
 

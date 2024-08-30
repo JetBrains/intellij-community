@@ -52,7 +52,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
-import javax.swing.JComponent
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -110,16 +109,15 @@ internal class ActionUpdater @JvmOverloads constructor(
   fun applyPresentationChanges() {
     for ((action, copy) in updatedPresentations) {
       val orig = presentationFactory.getPresentation(action)
-      var customComponent: JComponent? = null
-      if (action is CustomComponentAction) {
-        // 1. toolbar may have already created a custom component, do not erase it
-        // 2. presentation factory may be just reset, do not reuse component from a copy
-        customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY)
-      }
+      // 1. toolbar may have already created a custom component, do not erase it
+      // 2. presentation factory may be just reset, do not reuse component from a copy
+      var customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY)
       presentationFactory.postProcessPresentation(action, copy)
       orig.copyFrom(copy, customComponent, true)
       if (customComponent != null && orig.isVisible) {
-        (action as CustomComponentAction).updateCustomComponent(customComponent, orig)
+        val componentProvider = action as? CustomComponentAction
+                                ?: copy.getClientProperty(ActionUtil.COMPONENT_PROVIDER)
+        componentProvider?.updateCustomComponent(customComponent, orig)
       }
     }
   }

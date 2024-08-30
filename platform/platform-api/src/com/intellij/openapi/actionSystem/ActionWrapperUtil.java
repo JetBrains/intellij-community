@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,12 +16,15 @@ public final class ActionWrapperUtil {
                             @NotNull AnAction wrapper,
                             @NotNull AnAction delegate) {
     UpdateSession session = e.getUpdateSession();
-    JComponent customComponent =
-      session == UpdateSession.EMPTY || !(wrapper instanceof CustomComponentAction) ? null :
-      e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
+    JComponent customComponent = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
     AnActionEvent event = customizeEvent(e, wrapper);
     if (session == UpdateSession.EMPTY || e != event) delegate.update(event);
     else e.getPresentation().copyFrom(session.presentation(delegate), customComponent, true);
+
+    if (delegate instanceof CustomComponentAction o && !(wrapper instanceof CustomComponentAction) &&
+        e.getPresentation().getClientProperty(ActionUtil.COMPONENT_PROVIDER) == null) {
+      e.getPresentation().putClientProperty(ActionUtil.COMPONENT_PROVIDER, o);
+    }
   }
 
   public static AnAction @NotNull [] getChildren(@Nullable AnActionEvent e,

@@ -1904,6 +1904,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:ALLOW_PlAIN_LETTER_SHORTCUTS:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_GROUP:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_INLINE_ACTION:com.intellij.openapi.util.Key
+- sf:COMPONENT_PROVIDER:com.intellij.openapi.util.Key
 - sf:HIDE_DISABLED_CHILDREN:com.intellij.openapi.util.Key
 - sf:HIDE_DROPDOWN_ICON:com.intellij.openapi.util.Key
 - sf:INLINE_ACTIONS:com.intellij.openapi.util.Key

@@ -486,7 +486,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     for (AnAction action : rightAligned) {
-      JComponent button = action instanceof CustomComponentAction ? getCustomComponent(action) : createToolbarButton(action);
+      JComponent button = getOrCreateActionComponent(action);
       if (!isInsideNavBar()) {
         button.putClientProperty(ToolbarLayoutUtilKt.RIGHT_ALIGN_KEY, Boolean.TRUE);
       }
@@ -507,8 +507,20 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void addActionButtonImpl(@NotNull AnAction action, int index) {
-    if (action instanceof CustomComponentAction) {
-      add(getCustomComponent(action), CUSTOM_COMPONENT_CONSTRAINT, index);
+    JComponent component = getOrCreateActionComponent(action);
+    Object constraints =
+      component instanceof ActionButton ? ACTION_BUTTON_CONSTRAINT :
+      CUSTOM_COMPONENT_CONSTRAINT;
+    add(component, constraints, index);
+  }
+
+  protected final @NotNull JComponent getOrCreateActionComponent(@NotNull AnAction action) {
+    Presentation presentation = myPresentationFactory.getPresentation(action);
+    CustomComponentAction componentProvider =
+      action instanceof CustomComponentAction o ? o :
+      presentation.getClientProperty(ActionUtil.COMPONENT_PROVIDER);
+    if (componentProvider != null) {
+      return getCustomComponent(action, presentation, componentProvider);
     }
     else {
       if (action instanceof ActionWithDelegate<?> wrapper &&
@@ -516,30 +528,31 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         LOG.error("`CustomComponentAction` component is ignored due to wrapping: " +
                   Utils.operationName(action, null, myPlace));
       }
-      add(createToolbarButton(action), ACTION_BUTTON_CONSTRAINT, index);
+      return createToolbarButton(action, getActionButtonLook(), myPlace, presentation, myMinimumButtonSizeSupplier);
     }
   }
 
-  protected final @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
-    Presentation presentation = myPresentationFactory.getPresentation(action);
+  private @NotNull JComponent getCustomComponent(@NotNull AnAction anAction,
+                                                 @NotNull Presentation presentation,
+                                                 @NotNull CustomComponentAction action) {
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
-      customComponent = createCustomComponent((CustomComponentAction)action, presentation);
+      customComponent = createCustomComponent(action, presentation);
       if (customComponent.getParent() != null && customComponent.getClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING) == null) {
         customComponent.putClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING, true);
         LOG.warn(action.getClass().getSimpleName() + ".component.getParent() != null in '" + myPlace + "' toolbar. " +
                  "Custom components shall not be reused.");
       }
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
-      customComponent.putClientProperty(CustomComponentAction.ACTION_KEY, action);
-      ((CustomComponentAction)action).updateCustomComponent(customComponent, presentation);
+      ClientProperty.put(customComponent, CustomComponentAction.ACTION_KEY, anAction);
+      action.updateCustomComponent(customComponent, presentation);
     }
 
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
       final class ToolbarClicksCollectorListener extends MouseAdapter {
         @Override
-        public void mouseClicked(MouseEvent e) { ToolbarClicksCollector.record(action, myPlace, e, getDataContext()); }
+        public void mouseClicked(MouseEvent e) { ToolbarClicksCollector.record(anAction, myPlace, e, getDataContext()); }
       }
       if (!ContainerUtil.exists(clickable.getMouseListeners(), o -> o instanceof ToolbarClicksCollectorListener)) {
         clickable.addMouseListener(new ToolbarClicksCollectorListener());
@@ -619,14 +632,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     tweakActionComponentUI(component);
     ToolbarActionTracker.followToolbarComponent(presentation, component, getComponent());
-  }
-
-  protected final @NotNull ActionButton createToolbarButton(@NotNull AnAction action) {
-    return createToolbarButton(
-      action,
-      getActionButtonLook(),
-      myPlace, myPresentationFactory.getPresentation(action),
-      myMinimumButtonSizeSupplier);
   }
 
   protected @Nullable ActionButtonLook getActionButtonLook() {
