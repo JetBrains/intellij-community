@@ -19,6 +19,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
@@ -180,9 +181,11 @@ object ClasspathToVfsConverter {
 
         //we cannot use `refreshAndFindFileByPath` under read lock
         fun VirtualFileSystem.findLocalFileByPath(filePath: String): VirtualFile? {
-            var application = ApplicationManager.getApplication()
+            val application = ApplicationManager.getApplication()
 
-            return if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
+            return if (!application.isDispatchThread() && application.isReadAccessAllowed()
+                || isUnitTestMode()
+            ) {
                 findFileByPath(filePath)
             } else {
                 refreshAndFindFileByPath(filePath)
