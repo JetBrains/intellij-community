@@ -450,7 +450,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
 
       if (layoutSecondaries) {
-        if (!myActionGroup.isPrimary(action)) {
+        if (isSecondaryAction(action, i)) {
           mySecondaryActions.add(action);
           continue;
         }
@@ -492,6 +492,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
       add(button);
     }
+  }
+
+  protected boolean isSecondaryAction(@NotNull AnAction action, int actionIndex) {
+    return !myActionGroup.isPrimary(action);
   }
 
   protected boolean isAlignmentEnabled() {
@@ -575,7 +579,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                                       @Nullable ActionButtonLook look,
                                                       @NotNull String place,
                                                       @NotNull Presentation presentation,
-                                                      Supplier<? extends @NotNull Dimension> minimumSize) {
+                                                      @NotNull Supplier<? extends @NotNull Dimension> minimumSize) {
     ActionButton actionButton;
     if (Boolean.TRUE.equals(presentation.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR))) {
       actionButton = createTextButton(action, place, presentation, minimumSize);
