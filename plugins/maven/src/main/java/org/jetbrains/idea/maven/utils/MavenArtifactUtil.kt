@@ -28,7 +28,16 @@ object MavenArtifactUtil {
   @JvmStatic
   fun readPluginInfo(localRepository: File, mavenId: MavenId): MavenPluginInfo? {
     val file = getArtifactNioPath(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar")
+    return doReadPluginInfo(file)
+  }
 
+  @JvmStatic
+  fun readPluginInfo(mavenArtifact: MavenArtifact?): MavenPluginInfo? {
+    val file = mavenArtifact?.file?.toPath() ?: return null
+    return doReadPluginInfo(file)
+  }
+
+  private fun doReadPluginInfo(file: Path): MavenPluginInfo? {
     var result = ourPluginInfoCache[file]
     if (result == null) {
       result = createPluginDocument(file)

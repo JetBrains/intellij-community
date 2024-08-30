@@ -2,11 +2,13 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.Comparing
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.*
 import java.io.File
 import java.io.Serializable
 import java.util.*
 
+@ApiStatus.Experimental
 data class MavenPluginInfo(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
 
 internal data class MavenProjectState(
@@ -42,7 +44,8 @@ internal data class MavenProjectState(
   val readingProblems: Collection<MavenProjectProblem> = emptySet(),
 ) : Serializable {
   val plugins: List<MavenPlugin> get() = pluginInfos.map { it.plugin }
-  val declaredPlugins: List<MavenPlugin> get() = plugins.filter { !it.isDefault }
+  val declaredPluginInfos: List<MavenPluginInfo> get() = pluginInfos.filter { !it.plugin.isDefault }
+  val declaredPlugins: List<MavenPlugin> get() = declaredPluginInfos.map { it.plugin }
 
   val isParentResolved: Boolean
     get() = !unresolvedArtifactIds.contains(parentId)

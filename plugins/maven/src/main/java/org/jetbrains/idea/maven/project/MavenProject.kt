@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -728,6 +729,12 @@ class MavenProject(val file: VirtualFile) {
   val declaredPlugins: List<MavenPlugin>
     get() {
       return myState.declaredPlugins
+    }
+
+  @get:ApiStatus.Experimental
+  val declaredPluginsInfos: List<MavenPluginInfo>
+    get() {
+      return myState.declaredPluginInfos
     }
 
   fun getPluginConfiguration(groupId: String?, artifactId: String?): Element? {

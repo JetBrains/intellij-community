@@ -13,9 +13,9 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
+import org.jetbrains.idea.maven.project.MavenPluginInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
@@ -27,7 +27,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -305,30 +304,28 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     NONE, ERROR
   }
 
-  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPlugin> plugins) {
-    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, plugins));
+  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPluginInfo> pluginInfos) {
+    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, pluginInfos));
   }
 
   private class UpdatePluginsTreeTask implements Runnable {
     @NotNull private final PluginsNode myParentNode;
-    private final List<MavenPlugin> myPlugins;
+    private final List<MavenPluginInfo> myPluginInfos;
 
-    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPlugin> plugins) {
+    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPluginInfo> pluginInfos) {
       myParentNode = parentNode;
-      myPlugins = plugins;
+      myPluginInfos = pluginInfos;
     }
 
 
     @Override
     public void run() {
-      File localRepository = getProjectsManager().getLocalRepository();
-
       List<PluginNode> pluginInfos = new ArrayList<>();
-      Iterator<MavenPlugin> iterator = myPlugins.iterator();
+      var iterator = myPluginInfos.iterator();
       while (!isUnloading && iterator.hasNext()) {
-        MavenPlugin next = iterator.next();
-        var pluginInfo = MavenArtifactUtil.readPluginInfo(localRepository, next.getMavenId());
-        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next, pluginInfo);
+        var next = iterator.next();
+        var pluginInfo = MavenArtifactUtil.readPluginInfo(next.getArtifact());
+        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next.getPlugin(), pluginInfo);
         pluginInfos.add(pluginNode);
       }
       updateNodesInEDT(pluginInfos);
