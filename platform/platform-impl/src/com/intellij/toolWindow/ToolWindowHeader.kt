@@ -248,11 +248,13 @@ abstract class ToolWindowHeader internal constructor(
   private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (!init) { // remove to avoid extra events, toolbars update on addNotify!
       westPanel.remove(contentUi.tabComponent)
+      sideComponent?.let { westPanel.remove(it) }
       contentUi.disconnectTabToolbar()
       return
     }
     val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
     westPanel.add(contentUi.tabComponent, if (allowDnd) CC().grow() else CC().growY())
+    sideComponent?.let { westPanel.add(it) }
     contentUi.connectTabToolbar()
   }
 
