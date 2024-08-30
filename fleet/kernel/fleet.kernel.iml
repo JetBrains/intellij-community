@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="fleet.util.core" exported="" />
     <orderEntry type="module" module-name="fleet.rpc" exported="" />
     <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="fleet.preferences" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
   </component>
