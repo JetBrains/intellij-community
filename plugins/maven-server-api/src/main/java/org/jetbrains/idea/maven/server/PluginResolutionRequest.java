@@ -10,10 +10,12 @@ import java.util.Objects;
 public class PluginResolutionRequest implements Serializable {
   private final @NotNull MavenId myMavenPluginId;
   private final int nativeMavenProjectId;
+  private final boolean resolvePluginDependencies;
 
-  public PluginResolutionRequest(@NotNull MavenId mavenPluginId, int nativeMavenProjectId) {
+  public PluginResolutionRequest(@NotNull MavenId mavenPluginId, int nativeMavenProjectId, boolean resolvePluginDependencies) {
     myMavenPluginId = mavenPluginId;
     this.nativeMavenProjectId = nativeMavenProjectId;
+    this.resolvePluginDependencies = resolvePluginDependencies;
   }
 
   @NotNull
@@ -25,23 +27,30 @@ public class PluginResolutionRequest implements Serializable {
     return nativeMavenProjectId;
   }
 
+  public boolean resolvePluginDependencies() {
+    return resolvePluginDependencies;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PluginResolutionRequest request = (PluginResolutionRequest)o;
-    return nativeMavenProjectId == request.nativeMavenProjectId && myMavenPluginId.equals(request.myMavenPluginId);
+    return nativeMavenProjectId == request.nativeMavenProjectId
+           && resolvePluginDependencies == request.resolvePluginDependencies
+           && myMavenPluginId.equals(request.myMavenPluginId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMavenPluginId, nativeMavenProjectId);
+    return Objects.hash(myMavenPluginId, resolvePluginDependencies, nativeMavenProjectId);
   }
 
   @Override
   public String toString() {
     return "PluginResolutionRequest{" +
            "pluginId=" + myMavenPluginId +
+           ", resolveDependencies=" + resolvePluginDependencies +
            ", nativeMavenProjectId=" + nativeMavenProjectId +
            '}';
   }

@@ -141,13 +141,14 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
                              progressReporter: RawProgressReporter?,
                              eventHandler: MavenEventHandler,
+                             resolvePluginDependencies: Boolean,
                              forceUpdateSnapshots: Boolean): List<PluginResolutionResponse> {
     val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
     for (mavenPluginRequest in mavenPluginRequests) {
       val mavenPluginId = mavenPluginRequest.first
       try {
         val id = mavenPluginRequest.second.getId()
-        pluginResolutionRequests.add(PluginResolutionRequest(mavenPluginId, id))
+        pluginResolutionRequests.add(PluginResolutionRequest(mavenPluginId, id, resolvePluginDependencies))
       }
       catch (e: RemoteException) {
         // do not call handleRemoteError here since this error occurred because of previous remote error
@@ -166,8 +167,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
     return runBlockingMaybeCancellable {
-      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, MavenLogEventHandler, forceUpdateSnapshots)
-        .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
+      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, MavenLogEventHandler, true, forceUpdateSnapshots)
+        .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.pluginDependencyArtifacts }.toSet()
     }
   }
 

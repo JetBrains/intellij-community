@@ -24,7 +24,6 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
-import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.building.*;
@@ -56,6 +55,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.util.ExceptionUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.impl.RemoteRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -878,21 +878,18 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
         int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
 
-        String groupId = mavenPluginId.getGroupId();
-        String artifactId = mavenPluginId.getArtifactId();
-
         MavenProject project = RemoteNativeMaven3ProjectHolder.findProjectById(nativeMavenProjectId);
         List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
 
-        Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(groupId + ':' + artifactId);
-        List<Dependency> pluginDependencies =
-          null == pluginFromProject ? Collections.emptyList() : pluginFromProject.getDependencies();
-
-        PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
+        PluginResolutionData resolution =
+          new PluginResolutionData(
+            mavenPluginId,
+            pluginResolutionRequest.resolvePluginDependencies(),
+            remoteRepos);
         resolutions.add(resolution);
       }
       List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(runInParallel, resolutions, resolution ->
-        resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
+        resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.remoteRepos, session)
       );
       byte[] telemetryTrace = telemetry.shutdown();
       return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
@@ -901,14 +898,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private static class PluginResolutionData {
     MavenId mavenPluginId;
-    List<Dependency> pluginDependencies;
+    boolean resolveDependencies;
     List<RemoteRepository> remoteRepos;
 
     private PluginResolutionData(MavenId mavenPluginId,
-                                 List<Dependency> pluginDependencies,
+                                 boolean resolveDependencies,
                                  List<RemoteRepository> remoteRepos) {
       this.mavenPluginId = mavenPluginId;
-      this.pluginDependencies = pluginDependencies;
+      this.resolveDependencies = resolveDependencies;
       this.remoteRepos = remoteRepos;
     }
   }
@@ -916,45 +913,56 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull
   private PluginResolutionResponse resolvePlugin(LongRunningTask task,
                                                  MavenId mavenPluginId,
-                                                 List<Dependency> pluginDependencies,
+                                                 boolean resolveDependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
     MavenServerStatsCollector.pluginResolve(mavenPluginId.toString());
     long startTime = System.currentTimeMillis();
+    MavenArtifact mavenPluginArtifact = null;
     List<MavenArtifact> artifacts = new ArrayList<>();
-    if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, false, artifacts);
+    if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, mavenPluginArtifact, artifacts);
 
     try {
       Plugin plugin = new Plugin();
       plugin.setGroupId(mavenPluginId.getGroupId());
       plugin.setArtifactId(mavenPluginId.getArtifactId());
       plugin.setVersion(mavenPluginId.getVersion());
-      plugin.setDependencies(pluginDependencies);
 
       PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
       org.eclipse.aether.artifact.Artifact pluginArtifact =
         pluginDependenciesResolver.resolve(plugin, remoteRepos, session);
 
-      DependencyNode node = pluginDependenciesResolver.resolve(plugin, pluginArtifact, null, remoteRepos, session);
+      DependencyFilter dependencyFilter = resolveDependencies ? null : new DependencyFilter() {
+        @Override
+        public boolean accept(DependencyNode node, List<DependencyNode> parents) {
+          return false;
+        }
+      };
+
+      DependencyNode node = pluginDependenciesResolver.resolve(plugin, pluginArtifact, dependencyFilter, remoteRepos, session);
 
       PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
       node.accept(nlg);
 
 
       for (org.eclipse.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
+        MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile());
         if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
             !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
-          artifacts.add(Maven3ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
+          artifacts.add(mavenArtifact);
+        }
+        else {
+          mavenPluginArtifact = mavenArtifact;
         }
       }
 
       task.incrementFinishedRequests();
-      return new PluginResolutionResponse(mavenPluginId, true, artifacts);
+      return new PluginResolutionResponse(mavenPluginId, mavenPluginArtifact, artifacts);
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().warn(e);
-      return new PluginResolutionResponse(mavenPluginId, false, artifacts);
+      return new PluginResolutionResponse(mavenPluginId, mavenPluginArtifact, artifacts);
     }
     finally {
       long totalTime = System.currentTimeMillis() - startTime;
