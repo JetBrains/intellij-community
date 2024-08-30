@@ -198,7 +198,6 @@ sealed class K2MoveRenameUsageInfo(
                                 refElem.updatableUsageInfo = Source(refElem, mainReference, declPsi, true)
                             }
                         }
-
                     }
                 }
             }
@@ -314,35 +313,33 @@ sealed class K2MoveRenameUsageInfo(
                 }
                 usageInfo.refresh(c, referencedElement)
             }
-            val progress = ProgressManager.getInstance().progressIndicator
-            progress.pushState()
-            progress.isIndeterminate = false
-            progress.text = KotlinBundle.message("retargeting.internal.usages.progress")
-            val retargetedUsages = retargetMoveUsages(mapOf(fileCopy to internalUsages), emptyMap())
-            progress.text = KotlinBundle.message("shortening.internal.usages.progress")
-            shortenUsages(retargetedUsages)
-            progress.popState()
+            val progress = ProgressManager.getInstance().progressIndicator.apply {
+                pushState()
+                isIndeterminate = false
+            }
+            try {
+                progress.text = KotlinBundle.message("retargeting.usages.progress")
+                val retargetedUsages = retargetMoveUsages(mapOf(fileCopy to internalUsages), emptyMap(), totalFileCount = 1)
+                progress.text = KotlinBundle.message("shortening.usages.progress")
+                shortenUsages(retargetedUsages)
+            } finally {
+                progress.popState()
+            }
         }
 
-        fun retargetInternalUsages(oldToNewMap: Map<PsiElement, PsiElement>, fromCopy: Boolean = false) {
+        fun restoreInternalUsagesSorted(
+            oldToNewMap: Map<PsiElement, PsiElement>,
+            fromCopy: Boolean = false
+        ): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
             val newElements = oldToNewMap.values.toList()
             val topLevelElements = newElements
                 .filter { elem -> newElements.any { otherElem -> elem.isAncestor(otherElem) } }
                 .filterIsInstance<KtElement>()
-            val internalUsages = topLevelElements
+            return topLevelElements
                 .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap, fromCopy) }
                 .filterIsInstance<K2MoveRenameUsageInfo>()
                 .groupByFile()
                 .sortedByOffset()
-            val progress = ProgressManager.getInstance().progressIndicator
-            progress.pushState()
-            progress.isIndeterminate = false
-            progress.text = KotlinBundle.message("retargeting.internal.usages.progress")
-            val retargetedUsages = retargetMoveUsages(internalUsages, oldToNewMap)
-            progress.text = KotlinBundle.message("shortening.internal.usages.progress")
-            shortenUsages(retargetedUsages)
-            topLevelElements.forEach { decl -> unMarkAllUsages(decl) }
-            progress.popState()
         }
 
         /**
@@ -369,32 +366,44 @@ sealed class K2MoveRenameUsageInfo(
             return preProcessUsages(allUsages)
         }
 
-        internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
-            // Retarget external usages before internal usages to make sure imports in moved files are properly updated
-            retargetExternalUsages(usages, oldToNewMap)
-            retargetInternalUsages(oldToNewMap, false)
+        fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>, fromCopy: Boolean = false) {
+            val externalUsages = externalUsagesSorted(usages)
+            val internalUsages = restoreInternalUsagesSorted(oldToNewMap, fromCopy)
+            val progress = ProgressManager.getInstance().progressIndicator.apply {
+                pushState()
+                isIndeterminate = false
+            }
+            try {
+                progress.text = KotlinBundle.message("retargeting.usages.progress")
+                // Retarget external usages before internal usages to make sure imports in moved files are properly updated
+                val retargetedUsages = retargetMoveUsages(externalUsages, oldToNewMap, externalUsages.size + internalUsages.size) +
+                        retargetMoveUsages(internalUsages, oldToNewMap, externalUsages.size + internalUsages.size)
+                progress.text = KotlinBundle.message("shortening.usages.progress")
+                shortenUsages(retargetedUsages)
+            } finally {
+                internalUsages.forEach { (_, infos) ->
+                    infos.forEach { info ->
+                        val element = info.element as KtElement
+                        element.updatableUsageInfo = null
+                        element.nonUpdatableUsageInfo = null
+                    }
+                }
+                progress.popState()
+            }
         }
 
-        private fun retargetExternalUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
-            val externalUsages = usages
+        private fun externalUsagesSorted(usages: List<K2MoveRenameUsageInfo>): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
+            return usages
                 .filter { it.element != null } // if the element is null, it means that this external usage was moved
                 .groupByFile()
                 .sortedByOffset()
-            val progress = ProgressManager.getInstance().progressIndicator
-            progress.pushState()
-            progress.isIndeterminate = false
-            progress.text = KotlinBundle.message("retargeting.external.usages.progress")
-            val retargetedUsages = retargetMoveUsages(externalUsages, oldToNewMap)
-            progress.text = KotlinBundle.message("shortening.external.usages.progress")
-            shortenUsages(retargetedUsages)
-            progress.popState()
         }
 
         private fun retargetMoveUsages(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
-            oldToNewMap: Map<PsiElement, PsiElement>
+            oldToNewMap: Map<PsiElement, PsiElement>,
+            totalFileCount: Int
         ): Map<PsiFile, Map<PsiElement, PsiNamedElement>> {
-            val fileCount = usageInfosByFile.size
             val progress = ProgressManager.getInstance().progressIndicator
             return usageInfosByFile.map { (file, usageInfos) ->
                 progress.text2 = file.virtualFile.presentableUrl
@@ -412,7 +421,7 @@ sealed class K2MoveRenameUsageInfo(
                         qualifiedReference to newDeclaration
                     } else null
                 }.filter { it.first.isValid }.toMap()  // imports can become invalid because they are removed when binding element
-                progress.fraction += 1 / (fileCount * 2).toDouble()
+                progress.fraction += 1 / (totalFileCount * 2).toDouble()
                 usageMap
             }.toMap()
         }

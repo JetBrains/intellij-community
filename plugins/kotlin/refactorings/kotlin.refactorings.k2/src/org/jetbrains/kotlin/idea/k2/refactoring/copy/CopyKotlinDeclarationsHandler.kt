@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Directory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsagesForCopyFile
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkAllUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
@@ -289,7 +289,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             }
 
             @Suppress("UNCHECKED_CAST")
-            retargetInternalUsages(oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
+            retargetUsages(emptyList(), oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
 
             newElements.singleOrNull()
         }
