@@ -238,6 +238,8 @@ private fun RowScope.ColumnOne() {
 
 @Composable
 private fun IconsShowcase() {
+    val iconBackgroundColor = JewelTheme.colorPalette.blueOrNull(4) ?: JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor()
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -251,14 +253,14 @@ private fun IconsShowcase() {
         }
 
         Box(
-            Modifier.size(24.dp).background(JewelTheme.colorPalette.blue(4), shape = RoundedCornerShape(4.dp)),
+            Modifier.size(24.dp).background(iconBackgroundColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
             PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Stroke(Color.White))
         }
 
         Box(
-            Modifier.size(24.dp).background(JewelTheme.colorPalette.blue(4), shape = RoundedCornerShape(4.dp)),
+            Modifier.size(24.dp).background(iconBackgroundColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
             PlatformIcon(
