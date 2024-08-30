@@ -176,6 +176,20 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
       _branchState.value = BranchState(baseRepo, baseBranch, baseRepo, currentBranch)
     }
+
+    cs.launch {
+      combine(commits, branchState) { commitsResult, branchState ->
+        val commits = commitsResult?.getOrNull()
+        if (commits != null && commits.size == 1 && title.value.isEmpty()) {
+          updateTitle(commits.first().subject.lines().firstOrNull() ?: return@combine)
+        } else if (title.value.isEmpty()) {
+          updateTitle(when (val branch = branchState?.headBranch ?: return@combine) {
+            is GitRemoteBranch -> branch.nameForRemoteOperations
+            else -> branch.name
+          })
+        }
+      }
+    }
   }
 
   override fun updateTitle(text: String) {
