@@ -43,6 +43,12 @@
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="intellij.vcs.gitlab.titleGenerator"
+                    interface="org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
@@ -243,5 +249,7 @@
       </action>
       <add-to-group group-id="Git.Experimental.Branch.Popup.Actions"/>
     </group>
+
+    <group id="GitLab.Merge.Request.Create.Title.Actions"/>
   </actions>
 </idea-plugin>

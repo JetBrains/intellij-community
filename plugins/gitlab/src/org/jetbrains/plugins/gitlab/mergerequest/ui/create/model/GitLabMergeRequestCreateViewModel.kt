@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create.model
 
 import com.intellij.collaboration.api.HttpStatusErrorException
-import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
@@ -43,6 +41,9 @@ internal interface GitLabMergeRequestCreateViewModel {
   val projectData: GitLabProject
   val avatarIconProvider: IconsProvider<GitLabUserDTO>
 
+  val title: StateFlow<String>
+  val titleGenerationVm: StateFlow<GitLabMergeRequestCreateTitleGenerationViewModel?>
+
   val isBusy: Flow<Boolean>
 
   val allowsMultipleReviewers: Flow<Boolean>
@@ -50,7 +51,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val existingMergeRequest: Flow<String?>
   val creatingProgressText: Flow<String?>
-  val commits: SharedFlow<Result<List<VcsCommitMetadata>>?>
+  val commits: StateFlow<Result<List<VcsCommitMetadata>>?>
 
   val reviewRequirementsErrorState: Flow<MergeRequestRequirementsErrorType?>
   val reviewCreatingError: Flow<Throwable?>
@@ -76,7 +77,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   override val projectData: GitLabProject,
   override val avatarIconProvider: IconsProvider<GitLabUserDTO>,
   override val openReviewTabAction: suspend (mrIid: String) -> Unit,
-  private val onReviewCreated: () -> Unit
+  private val onReviewCreated: () -> Unit,
 ) : GitLabMergeRequestCreateViewModel {
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher = SingleCoroutineLauncher(cs)
@@ -128,8 +129,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
       }
       .distinctUntilChangedBy { it }
 
-  override val commits: SharedFlow<Result<List<VcsCommitMetadata>>?> = commitRevisionComparisonFlow.transformLatest { revisionComparison ->
-    if (revisionComparison == null || revisionComparison.baseRevision == null || revisionComparison.headRevision == null) {
+  override val commits: StateFlow<Result<List<VcsCommitMetadata>>?> = commitRevisionComparisonFlow.transformLatest { revisionComparison ->
+    if (revisionComparison?.baseRevision == null || revisionComparison.headRevision == null) {
       emit(Result.success(emptyList()))
       return@transformLatest
     }
@@ -144,6 +145,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     }
     emit(result)
   }.modelFlow(cs, thisLogger())
+    .stateInNow(cs, null)
 
   override val reviewRequirementsErrorState: Flow<MergeRequestRequirementsErrorType?> =
     combine(branchState, commits) { branchState, commits ->
@@ -164,7 +166,19 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   private val _adjustedReviewers: MutableStateFlow<List<GitLabUserDTO>> = MutableStateFlow(listOf())
   override val adjustedReviewers: StateFlow<List<GitLabUserDTO>> = _adjustedReviewers.asStateFlow()
 
-  private val title: MutableStateFlow<String> = MutableStateFlow("")
+  private val _title: MutableStateFlow<String> = MutableStateFlow("")
+  override val title: StateFlow<String> = _title.asStateFlow()
+  override val titleGenerationVm: StateFlow<GitLabMergeRequestCreateTitleGenerationViewModel?> =
+    commits.combine(GitLabTitleGeneratorExtension.EP_NAME.extensionListFlow()) { commits, extensions ->
+      val commits = commits?.getOrNull() ?: return@combine null
+      if (commits.isEmpty()) return@combine null
+
+      val extension = extensions.firstOrNull() ?: return@combine null
+
+      commits to extension
+    }.mapNullableScoped { (commits, extension) ->
+      GitLabMergeRequestCreateTitleGenerationViewModelImpl(this, project, extension, commits, ::updateTitle)
+    }.stateIn(cs, SharingStarted.Lazily, null)
 
   init {
     cs.launch {
@@ -182,18 +196,19 @@ internal class GitLabMergeRequestCreateViewModelImpl(
         val commits = commitsResult?.getOrNull()
         if (commits != null && commits.size == 1 && title.value.isEmpty()) {
           updateTitle(commits.first().subject.lines().firstOrNull() ?: return@combine)
-        } else if (title.value.isEmpty()) {
+        }
+        else if (title.value.isEmpty()) {
           updateTitle(when (val branch = branchState?.headBranch ?: return@combine) {
-            is GitRemoteBranch -> branch.nameForRemoteOperations
-            else -> branch.name
-          })
+                        is GitRemoteBranch -> branch.nameForRemoteOperations
+                        else -> branch.name
+                      })
         }
       }
     }
   }
 
   override fun updateTitle(text: String) {
-    title.value = text
+    _title.value = text
   }
 
   override fun updateBranchState(state: BranchState?) {
@@ -269,7 +284,7 @@ internal data class BranchState(
   val baseRepo: GitLabProjectMapping,
   val baseBranch: GitRemoteBranch,
   val headRepo: GitLabProjectMapping,
-  val headBranch: GitBranch
+  val headBranch: GitBranch,
 ) {
   companion object {
     internal fun fromDirectionModel(directionModel: GitLabMergeRequestCreateDirectionModel): BranchState? = with(directionModel) {
