@@ -79,7 +79,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
-    public boolean ARE_LINE_NUMBERS_AFTER_ICONS = false;
     public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
@@ -311,10 +310,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (old == val) return;
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
-  }
-
-  public boolean isLineNumbersAfterIcons() {
-    return myOptions.ARE_LINE_NUMBERS_AFTER_ICONS;
   }
 
   public EditorSettings.LineNumerationType getLineNumeration() {
