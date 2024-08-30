@@ -51,8 +51,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
       pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
                                     embeddersManager,
                                     progressReporter,
-                                    MavenLogEventHandler,
-                                    false)
+                                    MavenLogEventHandler)
     }
     finally {
       embeddersManager.releaseInTests()
