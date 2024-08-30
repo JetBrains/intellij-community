@@ -162,7 +162,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
         rendererPanel.initCollapsedComboBoxItem()
       }
       else {
-        rendererPanel.initItem(renderingType, background, if (selected) selectionColor else null)
+        rendererPanel.initItem(background, if (selected) selectionColor else null)
       }
     }
     else {
@@ -246,7 +246,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
   private val cellsPanel = JPanel(cellsLayout)
 
   private val selectablePanel = SelectablePanel()
-  private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.insets(2, 20)
+  private val separator = GroupHeaderSeparator(if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Popup.separatorLabelInsets()
                                                else JBUI.insets(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding()))
 
   init {
@@ -388,18 +388,16 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
   }
 
-  fun initItem(renderingType: RenderingType, background: Color?, selectionColor: Color?) {
+  fun initItem(background: Color?, selectionColor: Color?) {
+    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
+    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets()
+
     with(selectablePanel) {
       // Update height/insets every time, so IDE scaling is applied
       isOpaque = true
-      selectionArc = 8
-      selectionInsets = JBInsets.create(0, 12)
-      if (renderingType.isComboBoxPopup()) {
-        border = JBUI.Borders.empty(2, 20)
-      }
-      else {
-        border = JBUI.Borders.empty(0, 20)
-      }
+      selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
+      selectionInsets = JBInsets.create(0, leftRightInset)
+      border = JBUI.Borders.empty(0, innerInsets.left + leftRightInset, 0, innerInsets.right + leftRightInset)
       preferredHeight = JBUI.CurrentTheme.List.rowHeight()
       this.background = background
       this.selectionColor = selectionColor

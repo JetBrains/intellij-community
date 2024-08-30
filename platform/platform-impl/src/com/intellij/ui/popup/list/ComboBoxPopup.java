@@ -278,14 +278,28 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
         if (delegate instanceof GroupedComboBoxRenderer<? super T> groupedComboBoxRenderer) {
           return groupedComboBoxRenderer.separatorFor(value);
         }
-        if (delegate instanceof LcrRow<?>) {
-          KotlinUIDslRendererComponent component =
-            (KotlinUIDslRendererComponent)delegate.getListCellRendererComponent(myProxyList, value, -1, false, false);
-          return component.getListSeparator();
-        }
       }
+      ListCellRenderer unwrappedRenderer = unwrap(cellRenderer);
+      if (unwrappedRenderer instanceof LcrRow<?>) {
+        //noinspection unchecked
+        KotlinUIDslRendererComponent component =
+          (KotlinUIDslRendererComponent)unwrappedRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
+        return component.getListSeparator();
+      }
+
       return null;
     }
+  }
+
+  private static ListCellRenderer unwrap(ListCellRenderer renderer) {
+    while (renderer != null) {
+      if (renderer instanceof ComboBoxWithWidePopup.AdjustingListCellRenderer wrapper) {
+        renderer = wrapper.delegate;
+      } else {
+        return renderer;
+      }
+    }
+    return null;
   }
 
   private static @NotNull <T> List<T> copyItemsFromModel(@NotNull ListModel<T> model) {
