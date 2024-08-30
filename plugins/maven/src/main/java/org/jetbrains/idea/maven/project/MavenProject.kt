@@ -509,9 +509,9 @@ class MavenProject(val file: VirtualFile) {
       var myUnresolvedPluginsCache = getCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY)
       if (myUnresolvedPluginsCache == null) {
         val result: MutableList<MavenPlugin> = ArrayList()
-        for (each in declaredPlugins) {
-          if (!hasArtifactFile(localRepository, each.mavenId)) {
-            result.add(each)
+        for (each in declaredPluginsInfos) {
+          if (each.artifact?.isResolved != true) {
+            result.add(each.plugin)
           }
         }
         myUnresolvedPluginsCache = result
@@ -544,18 +544,21 @@ class MavenProject(val file: VirtualFile) {
     val result: MutableList<MavenProjectProblem> = ArrayList()
 
     validateParent(file, result)
-    result.addAll(myState.readingProblems)
+    val readingProblems = myState.readingProblems
+    result.addAll(readingProblems)
 
     for ((key, value) in modulesPathsAndNames) {
       if (LocalFileSystem.getInstance().findFileByPath(key) == null) {
-        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound",
-                                                                            value)))
+        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound", value)))
       }
     }
 
     validateDependencies(file, result, fileExistsPredicate)
     validateExtensions(file, result)
-    validatePlugins(file, result)
+
+    if (readingProblems.isEmpty()) {
+      validatePlugins(file, result)
+    }
 
     return result
   }
