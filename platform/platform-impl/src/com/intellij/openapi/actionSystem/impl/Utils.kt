@@ -38,8 +38,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.menu.FrameMenuUiKind
 import com.intellij.platform.ide.menu.IdeJMenuBar
-import com.intellij.platform.ide.menu.MacFrameMenu
 import com.intellij.platform.ide.menu.MacNativeActionMenuItem
 import com.intellij.platform.ide.menu.createMacNativeActionMenu
 import com.intellij.ui.AnimatedIcon
@@ -355,7 +355,7 @@ object Utils {
       while (TimeoutUtil.getDurationMillis(start) < fastTrackTime) {
         delay(1)
       }
-      val menuItem = (uiKind as? JComponent).takeIf { it is ActionUiKind.Popup }
+      val menuItem = (uiKind as? ActionUiKind.Popup as? ActualActionUiKind)?.component
       runEdtLoop(mainJob, expire, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(asyncDataContext), menuItem)
     }
     val progressJob = if (loadingIconPoint == null) null else launch {
@@ -456,7 +456,8 @@ object Utils {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw ProcessCanceledException()
     }
-    if (Thread.holdsLock((uiKind as? JComponent ?: JLabel()).treeLock)) {
+    val menuComponent = (uiKind as? ActualActionUiKind)?.component
+    if (Thread.holdsLock((menuComponent ?: JLabel()).treeLock)) {
       throw ProcessCanceledException()
     }
     val asyncDataContext = createAsyncDataContext(context)
@@ -470,8 +471,9 @@ object Utils {
         result = list
         if (expire?.invoke() == true) return@use
         val checked = group is CheckedActionGroup
-        if (uiKind !is MacFrameMenu) {
-          fillMenuInner(uiKind as JComponent, list, checked, enableMnemonics,
+        if (uiKind !is FrameMenuUiKind) {
+          menuComponent ?: throw AssertionError("${uiKind} is not `ActualActionUiKind`")
+          fillMenuInner(menuComponent, list, checked, enableMnemonics,
                         presentationFactory, asyncDataContext, place, uiKind)
         }
         else {
@@ -486,7 +488,7 @@ object Utils {
       if (elapsed > 1000) {
         LOG.warn("$elapsed ms to fillMenu@$place")
       }
-      val submenu = uiKind is ActionMenu && uiKind.getParent() != null
+      val submenu = menuComponent?.getParent() != null
       recordActionGroupExpanded(group, asyncDataContext, place, submenu, elapsed, result)
     }
   }
@@ -536,7 +538,7 @@ object Utils {
                             place: String,
                             uiKind: ActionUiKind.Popup) {
     val useDarkIcons = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
-    val isWindowMenu = uiKind is ActionMenu
+    val isWindowMenu = (uiKind as? ActualActionUiKind.Menu)?.menu is JMenu
     component.removeAll()
     val filtered = filterInvisible(list, presentationFactory, place)
     val children = ArrayList<Component>()

@@ -10724,7 +10724,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 - unregisterAction(java.lang.String):V
 f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - com.intellij.ui.components.JBMenu
-- com.intellij.openapi.actionSystem.ActionUiKind$Popup
 - sf:ALWAYS_VISIBLE:com.intellij.openapi.util.Key
 - sf:Companion:com.intellij.openapi.actionSystem.impl.ActionMenu$Companion
 - sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key
@@ -10739,7 +10738,6 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - sf:isAligned():Z
 - sf:isAlignedInGroup():Z
 - f:isHeaderMenuItem():Z
-- isMainMenu():Z
 - f:isMainMenuPlace():Z
 - sf:isShowNoIcons():Z
 - sf:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction):Z
@@ -13193,7 +13191,6 @@ c:com.intellij.openapi.editor.textarea.TextComponentEditorImpl
 Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.Disposable$Default
 - com.intellij.openapi.actionSystem.ActionToolbar
-- com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - com.intellij.ui.switcher.QuickActionProvider
 - javax.swing.JPanel

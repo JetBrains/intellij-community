@@ -2334,7 +2334,6 @@ com.intellij.execution.runToolbar.ExecutorRunToolbarAction
 - getRightSideType():com.intellij.execution.runToolbar.RTBarAction$Type
 c:com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent
 - com.intellij.openapi.actionSystem.ActionToolbar
-- com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
 - com.intellij.ui.switcher.QuickActionProvider
 - javax.swing.JPanel
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup):V
