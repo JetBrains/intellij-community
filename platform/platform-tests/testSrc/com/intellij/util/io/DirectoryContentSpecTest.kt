@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -208,7 +207,7 @@ class DirectoryContentSpecTest {
       file("a.txt", "a")
     }.generateInTempDir()
     assertTrue(zip.isRegularFile())
-    Assertions.assertThat(zip.fileName.toString()).endsWith(".zip")
+    assertThat(zip.fileName.toString()).endsWith(".zip")
     zip.assertMatches(zipFile {
       file("a.txt", "a")
     })
@@ -229,7 +228,7 @@ class DirectoryContentSpecTest {
       file("a.txt", "a")
     }.generateInTempDir()
     assertTrue(jar.isRegularFile())
-    Assertions.assertThat(jar.fileName.toString()).endsWith(".jar")
+    assertThat(jar.fileName.toString()).endsWith(".jar")
     jar.assertMatches(jarFile {
       file("a.txt", "a")
     })
