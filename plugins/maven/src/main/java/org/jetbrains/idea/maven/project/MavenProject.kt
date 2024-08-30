@@ -1100,15 +1100,21 @@ class MavenProject(val file: VirtualFile) {
         newAnnotationProcessors.addAll(state.annotationProcessors)
       }
 
+      // either keep all previous plugins or only those that are present in the new list
       if (keepPreviousPlugins) {
         newPluginInfos.addAll(state.pluginInfos)
+        newPluginInfos.addAll(model.plugins.map { MavenPluginInfo(it, null) })
+      }
+      else {
+        model.plugins.forEach { newPlugin ->
+          newPluginInfos.add(state.pluginInfos.firstOrNull { it.plugin == newPlugin } ?: MavenPluginInfo(newPlugin, null))
+        }
       }
 
       newUnresolvedArtifacts.addAll(unresolvedArtifactIds)
       newRepositories.addAll(model.remoteRepositories)
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
-      newPluginInfos.addAll(model.plugins.map { MavenPluginInfo(it, null) })
       newExtensions.addAll(model.extensions)
 
       val remoteRepositories = ArrayList(newRepositories)
