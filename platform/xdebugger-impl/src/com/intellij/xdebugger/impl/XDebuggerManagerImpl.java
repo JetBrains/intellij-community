@@ -75,12 +75,15 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState>, Disposable {
   public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
+  private static final ExecutorService EXECUTION_POINT_ICON_EXECUTOR =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("Execution point icon updater", 1);
 
   private final Project myProject;
   private final CoroutineScope myCoroutineScope;
@@ -141,7 +144,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
               session.updateExecutionPointGutterIconRenderer();
             }
           })
-          .submit(AppExecutorUtil.getAppExecutorService());
+          .submit(EXECUTION_POINT_ICON_EXECUTOR);
       }
     });
 
