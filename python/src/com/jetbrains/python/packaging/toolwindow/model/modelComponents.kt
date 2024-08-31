@@ -2,16 +2,31 @@
 package com.jetbrains.python.packaging.toolwindow.model
 
 import com.intellij.openapi.util.NlsSafe
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import javax.swing.Icon
 
 sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPackageRepository)
 
 class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.name, repository) {
   val currentVersion = PyPackageVersionNormalizer.normalize(instance.version)
+
+  val icon: Icon?
+    get() {
+      val condaPackage = instance as? CondaPackage ?: return null
+      return if (condaPackage.installedWithPip) {
+        PythonPsiApiIcons.Python
+      }
+      else {
+        PythonIcons.Python.Anaconda
+      }
+    }
 
   val canBeUpdated: Boolean
     get() {

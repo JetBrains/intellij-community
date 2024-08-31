@@ -88,6 +88,7 @@ internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
         versionLabel.text = version
         versionPanel.add(versionLabel)
       }
+      versionLabel.icon = (value as? InstalledPackage)?.icon
       return versionPanel
     }
 
