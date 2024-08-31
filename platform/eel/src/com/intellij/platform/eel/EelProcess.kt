@@ -1,18 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent
+package com.intellij.platform.eel
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 
 /**
- * Represents some process which was launched by IJent via [IjentApi.executeProcess].
+ * Represents some process which was launched via [EelExecApi.executeProcess].
  *
- * There are adapters for already written code: [com.intellij.execution.ijent.IjentChildProcessAdapter]
- * and [com.intellij.execution.ijent.IjentChildPtyProcessAdapter].
  */
-interface IjentChildProcess {
-  val pid: IjentApi.Pid
+interface EelProcess {
+  val pid: EelApi.Pid
 
   /**
    * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],
@@ -32,7 +30,7 @@ interface IjentChildProcess {
    *
    * Notice that every data chunk is flushed into the process separately. There's no buffering.
    */
-  @Throws(SendStdinError::class, IjentUnavailableException::class)
+  @Throws(SendStdinError::class)
   suspend fun sendStdinWithConfirmation(data: ByteArray)
 
   sealed class SendStdinError(msg: String) : Exception(msg) {
@@ -51,7 +49,6 @@ interface IjentChildProcess {
    *
    * Does nothing yet on Windows.
    */
-  @Throws(IjentUnavailableException::class)
   suspend fun interrupt()
 
   /**
@@ -59,7 +56,6 @@ interface IjentChildProcess {
    *
    * Calls [`ExitProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitprocess) on Windows.
    */
-  @Throws(IjentUnavailableException::class)
   suspend fun terminate()
 
   /**
@@ -68,10 +64,9 @@ interface IjentChildProcess {
    * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
    * on Windows.
    */
-  @Throws(IjentUnavailableException::class)
   suspend fun kill()
 
-  @Throws(ResizePtyError::class, IjentUnavailableException::class)  // Can't use @CheckReturnValue: KTIJ-7061
+  @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
   suspend fun resizePty(columns: Int, rows: Int)
 
   sealed class ResizePtyError(msg: String) : Exception(msg) {

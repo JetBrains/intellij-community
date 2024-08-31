@@ -4,7 +4,7 @@ package com.intellij.platform.ijent.spi
 import com.intellij.execution.CommandLineUtil.posixQuote
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.*
-import com.intellij.platform.ijent.IjentPlatform
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
@@ -48,7 +48,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     context
   }
 
-  final override suspend fun getTargetPlatform(): IjentPlatform.Posix {
+  final override suspend fun getTargetPlatform(): EelPlatform.Posix {
     return myContext.await().execCommand {
       getTargetPlatform()
     }
@@ -265,7 +265,7 @@ internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Coll
   )
 }
 
-private suspend fun DeployingContextAndShell.getTargetPlatform(): IjentPlatform.Posix = run {
+private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Posix = run {
   // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
   // verbose, and that information may be sufficient for choosing the right binary.
   // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
@@ -275,8 +275,8 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): IjentPlatform.
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> IjentPlatform.X8664Linux
-    "aarch64" in arch -> IjentPlatform.Aarch64Linux
+    "x86_64" in arch -> EelPlatform.X8664Linux
+    "aarch64" in arch -> EelPlatform.Aarch64Linux
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform

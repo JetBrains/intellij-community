@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent
+package com.intellij.platform.eel
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ijent.IjentNetworkResult.Ok
-import com.intellij.platform.ijent.IjentTunnelsApi.Connection
+import com.intellij.platform.eel.EelNetworkResult.Ok
+import com.intellij.platform.eel.EelTunnelsApi.Connection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -15,15 +15,15 @@ import kotlin.time.Duration
 /**
  * Methods for launching tunnels for TCP sockets, Unix sockets, etc.
  */
-sealed interface IjentTunnelsApi {
+interface EelTunnelsApi {
 
   /**
    * **This is a delicate API, for applied usages, please consider [withConnectionToRemotePort]**.
    *
    * Creates a connection to a TCP socket to a named host specified by [address].
    *
-   * If the result is [IjentNetworkResult.Error], then there was an error during establishment of the connection.
-   * Otherwise, the result is [IjentNetworkResult.Ok], which means that the connection is ready to use.
+   * If the result is [EelNetworkResult.Error], then there was an error during establishment of the connection.
+   * Otherwise, the result is [EelNetworkResult.Ok], which means that the connection is ready to use.
    *
    * The connection exists as a pair of channels [Connection.channelToServer] and [Connection.channelFromServer],
    * which allow communicating to a remote server from the IDE side.
@@ -40,8 +40,7 @@ sealed interface IjentTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
-  @Throws(IjentUnavailableException::class)
-  suspend fun getConnectionToRemotePort(address: HostAddress): IjentNetworkResult<Connection, IjentConnectionError>
+  suspend fun getConnectionToRemotePort(address: HostAddress): EelNetworkResult<Connection, EelConnectionError>
 
   /**
    * Creates a builder for address on the remote host.
@@ -87,8 +86,8 @@ sealed interface IjentTunnelsApi {
 
       /**
        * Sets timeout for connecting to remote host.
-       * If the connection could not be established before [timeout], then [IjentConnectionError.ConnectionTimeout] would be returned
-       * in [IjentTunnelsApi.getConnectionToRemotePort].
+       * If the connection could not be established before [timeout], then [EelConnectionError.ConnectionTimeout] would be returned
+       * in [EelTunnelsApi.getConnectionToRemotePort].
        *
        * Default value: 10 seconds.
        * The recognizable granularity is milliseconds.
@@ -121,48 +120,41 @@ sealed interface IjentTunnelsApi {
      * Sets the size of send buffer of the socket
      * @see java.net.SocketOptions.SO_SNDBUF
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun setSendBufferSize(size: UInt)
 
     /**
      * Sets the receive buffer size of the socket
      * @see java.net.SocketOptions.SO_RCVBUF
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun setReceiveBufferSize(size: UInt)
 
     /**
      * Sets the keep alive option for the socket
      * @see java.net.SocketOptions.SO_KEEPALIVE
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun setKeepAlive(keepAlive: Boolean)
 
     /**
      * Sets the possibility to reuse address of the socket
      * @see java.net.SocketOptions.SO_REUSEADDR
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun setReuseAddr(reuseAddr: Boolean)
 
     /**
      * Sets linger timeout for the socket
      * @see java.net.SocketOptions.SO_LINGER
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun setLinger(lingerInterval: Duration)
 
     /**
      * Disables pending data until acknowledgement
      * @see java.net.SocketOptions.TCP_NODELAY
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun setNoDelay(noDelay: Boolean)
 
     /**
      * Closes the connection to the socket.
      */
-    @Throws(IjentUnavailableException::class)
     suspend fun close()
   }
 
@@ -187,7 +179,7 @@ operator fun Connection.component1(): SendChannel<ByteBuffer> = channelToServer
  */
 operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = channelFromServer
 
-interface IjentTunnelsPosixApi : IjentTunnelsApi {
+interface EelTunnelsPosixApi : EelTunnelsApi {
   /**
    * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
@@ -212,7 +204,6 @@ interface IjentTunnelsPosixApi : IjentTunnelsApi {
    * }
    * ```
    */
-  @Throws(IjentUnavailableException::class)
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   data class ListenOnUnixSocketResult(
@@ -229,7 +220,7 @@ interface IjentTunnelsPosixApi : IjentTunnelsApi {
   }
 }
 
-interface IjentTunnelsWindowsApi : IjentTunnelsApi
+interface EelTunnelsWindowsApi : EelTunnelsApi
 
 /**
  * Convenience function for working with a connection to a remote server.
@@ -238,7 +229,7 @@ interface IjentTunnelsWindowsApi : IjentTunnelsApi
  * ```kotlin
  *
  * suspend fun foo() {
- *   ijentTunnelsApi.withConnectionToRemotePort("localhost", 8080, {
+ *   EelTunnelsApi.withConnectionToRemotePort("localhost", 8080, {
  *     myErrorReporter.report(it)
  *   }) { (channelTo, channelFrom) ->
  *     handleConnection(channelTo, channelFrom)
@@ -250,16 +241,15 @@ interface IjentTunnelsWindowsApi : IjentTunnelsApi
  * If the connection could not be established, then [errorHandler] is invoked.
  * Otherwise, [action] is invoked. The connection gets automatically closed when [action] finishes.
  *
- * @see com.intellij.platform.ijent.IjentTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
+ * @see EelTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
  */
-@Throws(IjentUnavailableException::class)
-suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
-  hostAddress: IjentTunnelsApi.HostAddress,
-  errorHandler: suspend (IjentConnectionError) -> T,
+suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
+  hostAddress: EelTunnelsApi.HostAddress,
+  errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T =
   when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
-    is IjentNetworkResult.Error -> errorHandler(connectionResult.error)
+    is EelNetworkResult.Error -> errorHandler(connectionResult.error)
     is Ok -> try {
       coroutineScope { action(connectionResult.value) }
     }
@@ -268,40 +258,38 @@ suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
     }
   }
 
-@Throws(IjentUnavailableException::class)
-suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
+suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
-  errorHandler: suspend (IjentConnectionError) -> T,
+  errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
 
-@Throws(IjentUnavailableException::class)
-suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
+suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
-  errorHandler: suspend (IjentConnectionError) -> T,
+  errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
 
 /**
- * Represents a common class for all network-related errors appearing during the interaction with IJent
+ * Represents a common class for all network-related errors appearing during the interaction with IJent or local process
  */
-sealed interface IjentNetworkError
+sealed interface EelNetworkError
 
 /**
  * Represents a result of a network operation
  */
-sealed interface IjentNetworkResult<out T, out E : IjentNetworkError> {
+sealed interface EelNetworkResult<out T, out E : EelNetworkError> {
   /**
    * Used when a network operation completed successfully
    */
-  interface Ok<out T> : IjentNetworkResult<T, Nothing> {
+  interface Ok<out T> : EelNetworkResult<T, Nothing> {
     val value: T
   }
 
   /**
    * Used when a network operation completed with an error
    */
-  interface Error<out E : IjentNetworkError> : IjentNetworkResult<Nothing, E> {
+  interface Error<out E : EelNetworkError> : EelNetworkResult<Nothing, E> {
     val error: E
   }
 }
@@ -309,17 +297,17 @@ sealed interface IjentNetworkResult<out T, out E : IjentNetworkError> {
 /**
  * An error that can happen during the creation of a connection to a remote server
  */
-interface IjentConnectionError : IjentNetworkError {
+interface EelConnectionError : EelNetworkError {
   val message: @NlsSafe String
 
-  data object ConnectionTimeout : IjentConnectionError {
+  data object ConnectionTimeout : EelConnectionError {
     override val message: @NlsSafe String = "Connection could not be established because of timeout"
   }
 
   /**
    * Returned when a hostname on the remote server was resolved to multiple different addresses.
    */
-  data object AmbiguousAddress : IjentConnectionError {
+  data object AmbiguousAddress : EelConnectionError {
     override val message: String = "Hostname could not be resolved uniquely"
   }
 
@@ -327,19 +315,19 @@ interface IjentConnectionError : IjentNetworkError {
    * Returned when a socket could not be created because of an OS error.
    */
   @JvmInline
-  value class SocketCreationFailure(override val message: @NlsSafe String) : IjentConnectionError
+  value class SocketCreationFailure(override val message: @NlsSafe String) : EelConnectionError
 
   /**
    * Returned when resolve of remote address failed during the creation of a socket.
    */
-  object HostUnreachable : IjentConnectionError {
+  object HostUnreachable : EelConnectionError {
     override val message: @NlsSafe String = "Remote host is unreachable"
   }
 
   /**
    * Returned when the remote server does not accept connections.
    */
-  object ConnectionRefused : IjentConnectionError {
+  object ConnectionRefused : EelConnectionError {
     override val message: @NlsSafe String = "Connection was refused by remote server"
   }
 
@@ -347,13 +335,13 @@ interface IjentConnectionError : IjentNetworkError {
    * Returned when hostname could not be resolved.
    */
   @JvmInline
-  value class ResolveFailure(override val message: @NlsSafe String) : IjentConnectionError
+  value class ResolveFailure(override val message: @NlsSafe String) : EelConnectionError
 
   /**
    * Unknown failure during a connection establishment
    */
   @JvmInline
-  value class UnknownFailure(override val message: @NlsSafe String) : IjentConnectionError
+  value class UnknownFailure(override val message: @NlsSafe String) : EelConnectionError
 }
 
 

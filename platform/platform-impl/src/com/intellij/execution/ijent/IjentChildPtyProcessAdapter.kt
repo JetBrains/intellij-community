@@ -2,6 +2,7 @@
 package com.intellij.execution.ijent
 
 import com.intellij.execution.process.SelfKiller
+import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.pty4j.PtyProcess
@@ -53,7 +54,7 @@ class IjentChildPtyProcessAdapter(
     try {
       delegate.ijentChildProcess.resizePty(columns = winSize.columns, rows = winSize.rows)
     }
-    catch (err: IjentChildProcess.ResizePtyError) {
+    catch (err: EelProcess.ResizePtyError) {
       // The other implementation throw IllegalStateException in such cases.
       throw IllegalStateException(err.message, err)
     }

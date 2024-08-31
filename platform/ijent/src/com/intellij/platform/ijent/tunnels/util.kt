@@ -4,13 +4,14 @@
 package com.intellij.platform.ijent.tunnels
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.withConnectionToRemotePort
 import com.intellij.platform.ijent.*
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import org.jetbrains.annotations.ApiStatus
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -20,9 +21,10 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
+import com.intellij.platform.eel.component1
+import com.intellij.platform.eel.component2
 
-
-private val LOG: Logger = Logger.getInstance(IjentTunnelsApi::class.java)
+private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
 
 /**
  * A tunnel to a remote server (a.k.a. local port forwarding).
@@ -36,7 +38,7 @@ private val LOG: Logger = Logger.getInstance(IjentTunnelsApi::class.java)
  *
  * This function returns when the server starts accepting connections.
  */
-fun CoroutineScope.forwardLocalPort(tunnels: IjentTunnelsApi, localPort: Int, address: IjentTunnelsApi.HostAddress) {
+fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress) {
   val serverSocket = ServerSocket()
   serverSocket.bind(InetSocketAddress("localhost", localPort))
   serverSocket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
@@ -120,7 +122,7 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
     }
     outputStream.flush()
   }
-  catch (e: IjentTunnelsApi.RemoteNetworkException) {
+  catch (e: EelTunnelsApi.RemoteNetworkException) {
     LOG.warn("Connection $connectionId closed", e)
   }
 }

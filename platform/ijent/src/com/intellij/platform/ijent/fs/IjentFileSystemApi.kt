@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 sealed interface IjentFileSystemApi {
 
   /**
-   * The same as the user from [com.intellij.platform.ijent.IjentApi.info].
+   * The same as the user from [com.intellij.platform.eel.IjentApi.info].
    *
    * There's a duplication of methods because [user] is required for checking file permissions correctly, but also it can be required
    * in other cases outside the filesystem.

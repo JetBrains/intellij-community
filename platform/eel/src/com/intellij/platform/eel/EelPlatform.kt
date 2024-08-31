@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent
+package com.intellij.platform.eel
 
-sealed interface IjentPlatform {
-  sealed interface Posix : IjentPlatform
+sealed interface EelPlatform {
+  sealed interface Posix : EelPlatform
   sealed interface Linux : Posix
   sealed interface Darwin : Posix
-  sealed interface Windows : IjentPlatform
+  sealed interface Windows : EelPlatform
 
   data object Arm64Darwin : Darwin
   data object Aarch64Linux : Linux
@@ -14,7 +14,7 @@ sealed interface IjentPlatform {
   data object X64Windows : Windows
 
   companion object {
-    fun getFor(os: String, arch: String): IjentPlatform? =
+    fun getFor(os: String, arch: String): EelPlatform? =
       when (os.lowercase()) {
         "darwin" -> when (arch.lowercase()) {
           "arm64", "aarch64" -> Arm64Darwin
@@ -34,12 +34,3 @@ sealed interface IjentPlatform {
       }
   }
 }
-
-val IjentPlatform.executableName: String
-  get() = when (this) {
-    IjentPlatform.Arm64Darwin -> "ijent-aarch64-apple-darwin-release"
-    IjentPlatform.X8664Darwin -> "ijent-x86_64-apple-darwin-release"
-    IjentPlatform.Aarch64Linux -> "ijent-aarch64-unknown-linux-musl-release"
-    IjentPlatform.X8664Linux -> "ijent-x86_64-unknown-linux-musl-release"
-    IjentPlatform.X64Windows -> "ijent-x86_64-pc-windows-gnu-release.exe"
-  }

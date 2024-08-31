@@ -14,7 +14,7 @@ import kotlinx.coroutines.job
  * [ijentName] is a label used for logging, debugging, thread names, etc.
  *
  * By default, the IJent executable exits when the IDE exits.
- * [IjentApi.close] and [com.intellij.platform.ijent.bindToScope] may be used to terminate IJent earlier.
+ * [com.intellij.platform.eel.IjentApi.close] and [com.intellij.platform.ijent.bindToScope] may be used to terminate IJent earlier.
  *
  * TODO Either define thrown exceptions or return something like Result.
  */
