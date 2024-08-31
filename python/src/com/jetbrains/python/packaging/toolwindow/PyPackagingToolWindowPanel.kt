@@ -28,7 +28,6 @@ import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.modules.PyPackagesModuleController
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackageSearchTextField
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackagesListController
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackageCustomInstallComponents
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -105,13 +104,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
       service.reloadPackages()
     })
-    actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.manage.repositories.action"), AllIcons.General.GearPlain) {
-      service.manageRepositories()
-    })
+
+    actionGroup.add(ActionManager.getInstance().getAction("PyPackageToolbarAdditional"))
     val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, actionGroup, true)
     actionToolbar.targetComponent = this
-
-
 
     mainPanel = PyPackagesUiComponents.borderPanel {
       val topToolbar = PyPackagesUiComponents.boxPanel {
@@ -122,7 +118,6 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
         add(searchTextField)
         actionToolbar.component.maximumSize = Dimension(70, actionToolbar.component.maximumSize.height)
         add(actionToolbar.component)
-        add(PyPackageCustomInstallComponents.createInstallFromLocationLink(project))
       }
       add(topToolbar, BorderLayout.NORTH)
       add(splitter!!, BorderLayout.CENTER)
