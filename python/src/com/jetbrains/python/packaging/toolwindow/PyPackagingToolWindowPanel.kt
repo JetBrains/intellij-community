@@ -132,7 +132,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       add(topToolbar, BorderLayout.NORTH)
       add(splitter!!, BorderLayout.CENTER)
     }
-    //setContent(mainPanel!!)
+    setContent(mainPanel!!)
   }
 
   private fun createLeftPanel(): JComponent {
@@ -143,8 +143,12 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       border = BorderFactory.createEmptyBorder()
     }
 
-    left.add(moduleController.component, BorderLayout.WEST)
-    left.add(packageListController.component, BorderLayout.CENTER)
+    val splitter = OnePixelSplitter(false).apply {
+      firstComponent = moduleController.component
+      secondComponent = packageListController.component
+    }
+    splitter.proportion = 0.2f
+    left.add(splitter, BorderLayout.CENTER)
 
     return left
   }
