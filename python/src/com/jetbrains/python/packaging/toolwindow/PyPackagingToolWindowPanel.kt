@@ -19,8 +19,10 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SideBorder
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
@@ -35,6 +37,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -76,6 +80,12 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     Disposer.register(service, this)
     withEmptyText(message("python.toolwindow.packages.no.interpreter.text"))
 
+    @Suppress("DialogTitleCapitalization")
+    emptyText.appendLine(message("python.sdk.popup.interpreter.settings"), SimpleTextAttributes.LINK_ATTRIBUTES, object : ActionListener {
+      override fun actionPerformed(e: ActionEvent?) {
+        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, null)
+      }
+    })
     leftPanel = createLeftPanel()
 
 
@@ -122,7 +132,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       add(topToolbar, BorderLayout.NORTH)
       add(splitter!!, BorderLayout.CENTER)
     }
-    setContent(mainPanel!!)
+    //setContent(mainPanel!!)
   }
 
   private fun createLeftPanel(): JComponent {
