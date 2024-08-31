@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.toolwindow.packages
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.SimpleToolWindowPanel.LEFT_ALIGNMENT
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.UIUtil
@@ -31,8 +32,8 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
     tablesView.showSearchResult(installed, repoData)
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>) {
-    tablesView.resetSearch(installed, repos)
+  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+    tablesView.resetSearch(installed, repos, currentSdk)
   }
 
   fun selectPackage(name: String) {

@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
@@ -170,8 +171,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.showSearchResult(installed, repoData)
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>) {
-    packageListController.resetSearch(installed, repos)
+  fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>, currentSdk: Sdk?) {
+    packageListController.resetSearch(installed, repos, currentSdk)
   }
 
 

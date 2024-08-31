@@ -98,7 +98,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
       }.toList()
 
-      toolWindowPanel?.resetSearch(installedPackages.values.toList(), packagesByRepository + invalidRepositories)
+      toolWindowPanel?.resetSearch(installedPackages.values.toList(), packagesByRepository + invalidRepositories, currentSdk)
       prevSelected?.name?.let { toolWindowPanel?.selectPackageName(it) }
     }
   }

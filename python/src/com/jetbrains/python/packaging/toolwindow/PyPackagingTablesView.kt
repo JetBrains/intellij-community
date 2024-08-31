@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.repository.InstalledPyPackagedRepository
@@ -16,9 +17,11 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 
-class PyPackagingTablesView(private val project: Project,
-                            private val container: JPanel,
-                            private val controller: PyPackagingToolWindowPanel) {
+class PyPackagingTablesView(
+  private val project: Project,
+  private val container: JPanel,
+  private val controller: PyPackagingToolWindowPanel,
+) {
   private val repositories: MutableList<PyPackagingTableGroup> = mutableListOf()
   private val installedPackages = PyPackagingTableGroup(
     InstalledPyPackagedRepository(),
@@ -48,11 +51,11 @@ class PyPackagingTablesView(private val project: Project,
       ?.let { selectPackage(it.second) }
   }
 
-  fun resetSearch(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
+  fun resetSearch(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>, currentSdk: Sdk?) {
     updatePackages(installed, repoData)
 
     installedPackages.expand()
-    installedPackages.updateHeaderText(null)
+    installedPackages.setSdkToHeader(currentSdk?.name)
 
     repositories.forEach {
       it.collapse()
@@ -150,7 +153,7 @@ class PyPackagingTablesView(private val project: Project,
       installedPackages.table -> repositories.firstOrNull()
       else -> {
         val currentIndex = repositories.indexOfFirst { it.table == currentTable }
-        if (currentIndex + 1 != repositories.size)  repositories[currentIndex + 1]
+        if (currentIndex + 1 != repositories.size) repositories[currentIndex + 1]
         else return
       }
     }
