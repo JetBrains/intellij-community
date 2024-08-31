@@ -822,8 +822,8 @@ public class AllIcons {
   }
 
   public static final class Json {
-    /** 16x16 */ public static final @NotNull Icon Array = load("json/array.svg", 1494844844, 2);
-    /** 16x16 */ public static final @NotNull Icon Object = load("json/object.svg", -1268113296, 2);
+    /** 16x16 */ public static final @NotNull Icon Array = load("json/array.svg", "expui/", 1494844844, 2);
+    /** 16x16 */ public static final @NotNull Icon Object = load("json/object.svg", "expui/", -1268113296, 2);
   }
 
   public static final class Language {
@@ -1038,7 +1038,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Public = load("nodes/public.svg", "expui/nodes/accessPublic.svg", 1720533817, 0);
     /** 16x16 */ public static final @NotNull Icon ReadAccess = load("nodes/read-access.svg", 1692583040, 0);
     /** 16x16 */ public static final @NotNull Icon Record = load("nodes/record.svg", "expui/", -1827827309, 0);
-    /** 16x16 */ public static final @NotNull Icon Related = load("nodes/related.svg", 1655583391, 0);
+    /** 16x16 */ public static final @NotNull Icon Related = load("nodes/related.svg", "expui/", 1655583391, 0);
     /** 16x16 */ public static final @NotNull Icon ResourceBundle = load("nodes/resourceBundle.svg", "expui/", -157836139, 0);
     /** 16x16 */ public static final @NotNull Icon RunnableMark = load("nodes/runnableMark.svg", "expui/", 8747712, 0);
     /** 16x16 */ public static final @NotNull Icon RwAccess = load("nodes/rw-access.svg", -2056540925, 0);
