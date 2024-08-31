@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
 import com.intellij.model.search.impl.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -22,6 +24,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -32,6 +35,12 @@ private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.se
 @Suppress("UNCHECKED_CAST")
 internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher<SearchParameters<R>, R>> {
   return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+}
+
+@TestOnly
+fun registerSearcherForTesting(key: Class<*>, searcher: Searcher<*, *>, parentDisposable: Disposable) {
+  if (!ApplicationManager.getApplication().isUnitTestMode) throw IllegalStateException()
+  searchersExtension.addExplicitExtension(key, searcher, parentDisposable)
 }
 
 internal val indicatorOrEmpty: ProgressIndicator
