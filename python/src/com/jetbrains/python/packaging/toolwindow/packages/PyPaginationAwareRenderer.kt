@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.packages
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -21,7 +23,7 @@ import javax.swing.JTable
 import javax.swing.table.DefaultTableCellRenderer
 
 internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
-  private val nameLabel = JLabel().apply { border = JBUI.Borders.empty(0, 12) }
+  private val nameLabel = JBLabel().apply { border = JBUI.Borders.empty(0, 12) }
 
   private val versionLabel = JLabel().apply { border = JBUI.Borders.emptyRight(12) }
 
@@ -88,7 +90,7 @@ internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
         versionLabel.text = version
         versionPanel.add(versionLabel)
       }
-      versionLabel.icon = (value as? InstalledPackage)?.icon
+      versionLabel.icon = (value as? InstalledPackage)?.sourceRepoIcon
       return versionPanel
     }
 
@@ -99,7 +101,10 @@ internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
     namePanel.foreground = JBUI.CurrentTheme.Table.foreground(rowSelected, tableFocused)
 
     nameLabel.text = currentPackage.name
+    val isEditMode = (currentPackage as? InstalledPackage)?.isEditMode == true
+    nameLabel.icon = if (isEditMode) AllIcons.Actions.Edit else null
     nameLabel.foreground = JBUI.CurrentTheme.Label.foreground()
+
     return namePanel
   }
 

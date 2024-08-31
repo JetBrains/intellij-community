@@ -17,7 +17,8 @@ sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPac
 class InstalledPackage(val instance: PythonPackage, repository: PyPackageRepository, val nextVersion: PyPackageVersion? = null) : DisplayablePackage(instance.name, repository) {
   val currentVersion = PyPackageVersionNormalizer.normalize(instance.version)
 
-  val icon: Icon?
+  val isEditMode = instance.isEditableMode
+  val sourceRepoIcon: Icon?
     get() {
       val condaPackage = instance as? CondaPackage ?: return null
       return if (condaPackage.installedWithPip) {
