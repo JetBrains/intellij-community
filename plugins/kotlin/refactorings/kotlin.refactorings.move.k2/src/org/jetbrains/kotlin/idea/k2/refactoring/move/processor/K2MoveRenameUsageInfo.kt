@@ -381,13 +381,7 @@ sealed class K2MoveRenameUsageInfo(
                 progress.text = KotlinBundle.message("shortening.usages.progress")
                 shortenUsages(retargetedUsages)
             } finally {
-                internalUsages.forEach { (_, infos) ->
-                    infos.forEach { info ->
-                        val element = info.element as KtElement
-                        element.updatableUsageInfo = null
-                        element.nonUpdatableUsageInfo = null
-                    }
-                }
+                oldToNewMap.values.forEach { decl -> if (decl is KtElement) unMarkAllUsages(decl) }
                 progress.popState()
             }
         }
