@@ -24,12 +24,12 @@ abstract class StatisticsRegionUrlMapperService {
     }
   }
 
-  abstract fun mapUrl(url: String?): String?
+  abstract fun getRegionUrl(): String?
 
   /**
   Fall back implementation in case there is a problem with required service implementation
    */
   private class StatisticsRegionUrlMapperServiceFallBack : StatisticsRegionUrlMapperService() {
-    override fun mapUrl(url: String?): String? = url
+    override fun getRegionUrl(): String = EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE
   }
 }

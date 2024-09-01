@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogConfigParserException;
@@ -26,21 +26,20 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class SettingsConnectionService {
-  @Nullable
-  private final String myConfigUrl;
-
   @NotNull
   private final EventLogApplicationInfo myApplicationInfo;
 
   @NotNull
   private final Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
 
-  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull String recorderId,
+  protected SettingsConnectionService(@NotNull Supplier<@Nullable String> settingsUrlSupplier, @NotNull String recorderId,
                                       @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
-    myConfigUrl = settingsUrl;
     myApplicationInfo = appInfo;
     myCachedExternalSettings = new StatisticsCachingSupplier<>(
-      () -> myConfigUrl != null ? loadSettings(recorderId, myConfigUrl, myApplicationInfo.getProductVersion()) : null,
+      () -> {
+        final String url = settingsUrlSupplier.get();
+        return url != null ? loadSettings(recorderId, url, myApplicationInfo.getProductVersion()) : null;
+      },
       settingsCacheTimeoutMs
     );
   }
