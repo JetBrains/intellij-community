@@ -19,6 +19,7 @@ import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.apache.xmlbeans.*;
 import org.apache.xmlbeans.impl.tool.CommandLine;
+import org.apache.xmlbeans.impl.xb.xsdschema.SchemaDocument;
 import org.apache.xmlbeans.impl.xsd2inst.SampleXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +69,7 @@ final class Xsd2InstanceUtils {
     var sdocs = new ArrayList<XmlObject>();
     for (File schemaFile : schemaFiles) {
       try {
-        sdocs.add(XmlObject.Factory.parse(schemaFile,
+        sdocs.add(SchemaDocument.Factory.parse(schemaFile,
                                           (new XmlOptions()).setLoadLineNumbers().setLoadMessageDigest()));
       }
       catch (Exception e) {
@@ -97,8 +98,13 @@ final class Xsd2InstanceUtils {
       catch (XmlException e) {
         StringBuilder out = new StringBuilder("Schema compilation errors: ");
         var errors = e.getErrors();
-        for (Object error : errors) {
-          out.append("\n").append(error);
+        if (errors != null) {
+          for (Object error : errors) {
+            out.append("\n").append(error);
+          }
+        }
+        else {
+          out.append(e.getMessage());
         }
         throw new IllegalArgumentException(out.toString());
       }
