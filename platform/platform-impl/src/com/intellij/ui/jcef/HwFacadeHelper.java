@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.jbr.JdkEx;
 import com.intellij.util.FieldAccessor;
 import org.cef.CefApp;
 import org.cef.CefClient;

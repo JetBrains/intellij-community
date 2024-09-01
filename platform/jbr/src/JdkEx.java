@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.jdkEx;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.jbr;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.MethodInvocator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ import java.awt.*;
  *
  * @author tav
  */
-@ApiStatus.Internal
 public final class JdkEx {
   private static final Logger LOG = Logger.getInstance(JdkEx.class);
 

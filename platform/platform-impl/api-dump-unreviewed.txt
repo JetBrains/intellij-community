@@ -10075,10 +10075,6 @@ f:com.intellij.internal.validation.ValidTest
 f:com.intellij.internal.validation.ValidationTest
 - com.intellij.openapi.ui.DialogWrapper
 - getPreferredFocusedComponent():javax.swing.JComponent
-com.intellij.jdkEx.DisplayModeEx
-- a:isDefault(java.awt.DisplayMode):Z
-com.intellij.jdkEx.InputEventEx
-- a:getWhenNano(java.awt.event.InputEvent):J
 f:com.intellij.jps.impl.JpsIdePluginManagerImpl
 - <init>():V
 - getModificationStamp():I

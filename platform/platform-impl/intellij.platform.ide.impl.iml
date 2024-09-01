@@ -143,5 +143,6 @@
     <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
     <orderEntry type="library" name="googlecode.plist.dd" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jbr" />
   </component>
 </module>

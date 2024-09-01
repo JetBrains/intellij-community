@@ -671,6 +671,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/inspect/intellij.platform.inspect.iml" filepath="$PROJECT_DIR$/platform/inspect/intellij.platform.inspect.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" filepath="$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" filepath="$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" filepath="$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" filepath="$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" />
