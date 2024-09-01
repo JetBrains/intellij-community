@@ -20,6 +20,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,6 +37,8 @@ public class LauncherGenerator {
   private ExeReader myReader;
   private VersionInfo myVersionInfo;
 
+  public static final String LAUNCHER_USE_SEEKABLE_STREAM_PROPERTY = "launcher.use.seekable.stream";
+
   public LauncherGenerator(Path template, Path exePath) {
     myTemplate = template;
     myExePath = exePath;
@@ -43,8 +46,14 @@ public class LauncherGenerator {
 
   public void load() throws IOException {
     myReader = new ExeReader(myTemplate.getFileName().toString());
-    try (var stream = new OffsetTrackingInputStream(new DataInputStream(Files.newInputStream(myTemplate)))) {
-      myReader.read(stream);
+    if (Boolean.getBoolean(LAUNCHER_USE_SEEKABLE_STREAM_PROPERTY)) {  // Android Studio: b/363795669
+      try (var stream = new RandomAccessFile(myTemplate.toFile(), "r")) {
+        myReader.read(stream);
+      }
+    } else {
+      try (var stream = new OffsetTrackingInputStream(new DataInputStream(Files.newInputStream(myTemplate)))) {
+        myReader.read(stream);
+      }
     }
 
     var resourceSection = (ResourceSectionReader)myReader.getSectionReader(Section.RESOURCES_SECTION_NAME);

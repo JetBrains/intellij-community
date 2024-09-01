@@ -371,7 +371,7 @@ private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, c
         icoFile.absolutePathString(),
         outputPath.absolutePathString(),
       ),
-      jvmArgs = listOf("-Djava.awt.headless=true"),
+      jvmArgs = listOf("-Djava.awt.headless=true", "-Dlauncher.use.seekable.stream=true"), // Android Studio: b/363795669
       classPath = context.getModuleRuntimeClasspath(module = generatorModule, forTests = false).map { it.toString() },
       javaExe = context.stableJavaExecutable,
     )
