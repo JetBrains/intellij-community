@@ -26,13 +26,13 @@ import java.util.List;
  */
 public final class IntentionFUSCollector extends CounterUsagesCollector {
   private static final ClassEventField ID_FIELD = EventFields.Class("id");
-  private static final BooleanEventField DUMB_MODE_FIELD = EventFields.Boolean("dumb_mode");
+  private static final BooleanEventField DUMB_FIELD = EventFields.Boolean("dumb");
   private static final IntEventField POSITION_FIELD = EventFields.Int("position");
   private static final IntEventField DISTANCE_FIELD = EventFields.Int("distance");
   private static final StringEventField INSPECTION_ID_FIELD =
     EventFields.StringValidatedByCustomRule("inspection_id", InspectionUsageFUSCollector.InspectionToolValidator.class);
 
-  private static final EventLogGroup GROUP = new EventLogGroup("intentions", 63);
+  private static final EventLogGroup GROUP = new EventLogGroup("intentions", 64);
 
   private static final VarargEventId CALLED =
     GROUP.registerVarargEvent("called",
@@ -40,7 +40,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
                               EventFields.PluginInfo,
                               EventFields.Language,
                               DISTANCE_FIELD,
-                              DUMB_MODE_FIELD);
+                              DUMB_FIELD);
 
   private static final VarargEventId SHOWN =
     GROUP.registerVarargEvent("shown",
@@ -50,13 +50,13 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
                               POSITION_FIELD,
                               INSPECTION_ID_FIELD,
                               DISTANCE_FIELD,
-                              DUMB_MODE_FIELD);
+                              DUMB_FIELD);
 
   private static final EventId3<Long, FileType, Boolean> POPUP_DELAY =
     GROUP.registerEvent("popup.delay",
                         EventFields.DurationMs,
                         EventFields.FileType,
-                        DUMB_MODE_FIELD);
+                        DUMB_FIELD);
 
   @Override
   public EventLogGroup getGroup() {
@@ -76,7 +76,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
                ID_FIELD.with(clazz),
                EventFields.Language.with(language),
                DISTANCE_FIELD.with(getDistance(hostEditor, fixOffset)),
-               DUMB_MODE_FIELD.with(dumb));
+               DUMB_FIELD.with(dumb));
     FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
   }
 
@@ -102,7 +102,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
         POSITION_FIELD.with(i),
         INSPECTION_ID_FIELD.with(intention.getToolId()),
         DISTANCE_FIELD.with(getDistance(editor, intention.getFixOffset())),
-        DUMB_MODE_FIELD.with(dumb)
+        DUMB_FIELD.with(dumb)
       );
     }
   }
