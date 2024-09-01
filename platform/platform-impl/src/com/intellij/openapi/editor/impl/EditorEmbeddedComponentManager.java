@@ -39,7 +39,9 @@ public final class EditorEmbeddedComponentManager {
     return ourInstance;
   }
 
-  public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
+  public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor,
+                                         @NotNull JComponent component,
+                                         @NotNull Properties properties) {
     ThreadingAssertions.assertEventDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
@@ -49,7 +51,9 @@ public final class EditorEmbeddedComponentManager {
   }
 
   private static @NotNull ComponentInlays getComponentInlaysFor(@NotNull EditorEx editor) {
-    if (!COMPONENT_INLAYS_KEY.isIn(editor)) COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
+    if (!COMPONENT_INLAYS_KEY.isIn(editor)) {
+      COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
+    }
     return COMPONENT_INLAYS_KEY.get(editor);
   }
 
@@ -97,18 +101,33 @@ public final class EditorEmbeddedComponentManager {
     final int priority;
     final int offset;
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      int priority,
+                      int offset) {
       this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
     }
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      boolean showWhenFolded,
+                      int priority,
+                      int offset) {
       this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
     }
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, boolean fullWidth, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      boolean showWhenFolded,
+                      boolean fullWidth,
+                      int priority,
+                      int offset) {
       this.resizePolicy = resizePolicy;
       this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
@@ -285,8 +304,15 @@ public final class EditorEmbeddedComponentManager {
 
 
     @Nullable
-    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
-                          boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, boolean fullWidth, int priority, int offset) {
+    Inlay<MyRenderer> add(@NotNull JComponent component,
+                          @NotNull ResizePolicy policy,
+                          @Nullable Properties.RendererFactory rendererFactory,
+                          boolean relatesToPrecedingText,
+                          boolean showAbove,
+                          boolean showWhenFolded,
+                          boolean fullWidth,
+                          int priority,
+                          int offset) {
       if (myEditor.isDisposed()) return null;
 
 
