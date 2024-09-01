@@ -31,7 +31,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     super(manager, name, type);
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
-    myModifierList = new LombokLightModifierList(manager);
+    myModifierList = new LombokLightModifierList(manager).withParent(this);
     setBaseIcon(LombokIcons.Nodes.LombokField);
   }
 
