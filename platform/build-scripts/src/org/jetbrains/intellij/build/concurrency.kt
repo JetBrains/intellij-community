@@ -5,11 +5,12 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import java.util.concurrent.CancellationException
 
-internal suspend fun <T> Collection<T>.forEachConcurrent(concurrency: Int = Runtime.getRuntime().availableProcessors(), action: suspend (T) -> Unit) {
+internal suspend fun <T> Collection<T>.forEachConcurrent(
+  concurrency: Int = Runtime.getRuntime().availableProcessors(),
+  action: suspend (T) -> Unit,
+) {
   coroutineScope {
     val itemChannel = produce {
       for (item in this@forEachConcurrent) {
@@ -28,22 +29,6 @@ internal suspend fun <T> Collection<T>.forEachConcurrent(concurrency: Int = Runt
               // well, we are not canceled, only child
               throw IllegalStateException("Unexpected cancellation - action is cancelled itself", e)
             }
-          }
-        }
-      }
-    }
-  }
-
-  val semaphore = Semaphore(concurrency)
-  coroutineScope {
-    for (item in this@forEachConcurrent) {
-      launch {
-        semaphore.withPermit {
-          try {
-            action(item)
-          }
-          catch (e: CancellationException) {
-            throw e
           }
         }
       }

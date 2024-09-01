@@ -28,8 +28,7 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 import kotlin.math.min
 
 internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
@@ -41,10 +40,11 @@ internal suspend fun uploadArchives(
   httpConnection: Http2ClientConnection,
   items: List<PackAndUploadItem>,
 ) {
-  val uploadedCount = AtomicInteger()
-  val uploadedBytes = AtomicLong()
-  val reusedCount = AtomicInteger()
-  val reusedBytes = AtomicLong()
+  val uploadedCount = LongAdder()
+  val uploadedBytes = LongAdder()
+  val uncompressedBytes = LongAdder()
+  val reusedCount = LongAdder()
+  val reusedBytes = LongAdder()
   val start = System.nanoTime()
 
   var fallbackToHeads = false
@@ -72,59 +72,76 @@ internal suspend fun uploadArchives(
   ZstdCompressContextPool().use { zstdCompressContextPool ->
     items.forEachConcurrent(uploadParallelism) { item ->
       if (alreadyUploaded.contains(item.name)) {
-        reusedCount.getAndIncrement()
-        reusedBytes.getAndAdd(Files.size(item.archive))
+        reusedCount.increment()
+        reusedBytes.add(Files.size(item.archive))
         return@forEachConcurrent
       }
 
       val urlPath = "$urlPathPrefix/${item.name}/${item.hash!!}.jar"
-      spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!).use {
-        val size = Files.size(item.archive)
-        val isUploaded = uploadFile(
+      spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!).use { span ->
+        if (fallbackToHeads) {
+          val status = httpConnection.head(urlPath)
+          if (status == HttpResponseStatus.OK) {
+            span.addEvent("already exist on server, nothing to upload", Attributes.of(AttributeKey.stringKey("urlPath"), urlPath))
+
+            reusedCount.increment()
+            val size = Files.size(item.archive)
+            reusedBytes.add(size)
+            uncompressedBytes.add(size)
+            return@use
+          }
+          else if (status != HttpResponseStatus.NOT_FOUND) {
+            span.addEvent(
+              "responded with unexpected",
+              Attributes.of(
+                AttributeKey.stringKey("status"), status.toString(),
+                AttributeKey.stringKey("urlPath"), urlPath,
+              ),
+            )
+          }
+        }
+
+        val uploadedSize = uploadFile(
           urlPath = urlPath,
           file = item.archive,
-          useHead = fallbackToHeads,
-          span = Span.current(),
-          httpSession = httpConnection,
-          fileSize = size,
+          httpConnection = httpConnection,
           sourceBlockSize = sourceBlockSize,
           zstdCompressContextPool = zstdCompressContextPool,
+          uncompressedBytes = uncompressedBytes,
         )
-        if (isUploaded) {
-          uploadedCount.getAndIncrement()
-          uploadedBytes.getAndAdd(size)
-        }
-        else {
-          reusedCount.getAndIncrement()
-          reusedBytes.getAndAdd(size)
-        }
+        uploadedCount.increment()
+        uploadedBytes.add(uploadedSize)
       }
     }
   }
 
+  val totalUploadedBytes = uploadedBytes.sum()
+  val totalUncompressedBytes = uncompressedBytes.sum()
+  val totalReusedBytes = reusedBytes.sum()
   Span.current().addEvent(
     "upload complete",
     Attributes.of(
-      AttributeKey.longKey("reusedParts"), reusedCount.get().toLong(),
-      AttributeKey.longKey("uploadedParts"), uploadedCount.get().toLong(),
+      AttributeKey.longKey("reusedParts"), reusedCount.sum(),
+      AttributeKey.longKey("uploadedParts"), uploadedCount.sum(),
 
-      AttributeKey.longKey("reusedBytes"), reusedBytes.get(),
-      AttributeKey.longKey("uploadedBytes"), uploadedBytes.get(),
+      AttributeKey.longKey("reusedBytes"), totalReusedBytes,
+      AttributeKey.longKey("uploadedBytes"), totalUploadedBytes,
 
-      AttributeKey.longKey("totalBytes"), reusedBytes.get() + uploadedBytes.get(),
-      AttributeKey.longKey("totalCount"), (reusedCount.get() + uploadedCount.get()).toLong(),
+      AttributeKey.longKey("totalBytes"), totalReusedBytes + totalUncompressedBytes,
+      AttributeKey.longKey("totalCount"), (reusedCount.sum() + uploadedCount.sum()),
     )
   )
 
-  reportStatisticValue("compile-parts:reused:bytes", reusedBytes.get().toString())
-  reportStatisticValue("compile-parts:reused:count", reusedCount.get().toString())
+  reportStatisticValue("compile-parts:uncompressedBytes:bytes", totalUncompressedBytes.toString())
+  reportStatisticValue("compile-parts:reused:bytes", totalReusedBytes.toString())
+  reportStatisticValue("compile-parts:reused:count", reusedCount.sum().toString())
 
-  reportStatisticValue("compile-parts:uploaded:bytes", uploadedBytes.get().toString())
-  reportStatisticValue("compile-parts:uploaded:count", uploadedCount.get().toString())
+  reportStatisticValue("compile-parts:uploaded:bytes", totalUploadedBytes.toString())
+  reportStatisticValue("compile-parts:uploaded:count", uploadedCount.sum().toString())
   reportStatisticValue("compile-parts:uploaded:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
-  reportStatisticValue("compile-parts:total:bytes", (reusedBytes.get() + uploadedBytes.get()).toString())
-  reportStatisticValue("compile-parts:total:count", (reusedCount.get() + uploadedCount.get()).toString())
+  reportStatisticValue("compile-parts:total:bytes", (totalReusedBytes + totalUncompressedBytes).toString())
+  reportStatisticValue("compile-parts:total:count", (reusedCount.sum() + uploadedCount.sum()).toString())
 }
 
 private suspend fun getFoundAndMissingFiles(metadataJson: String, urlPathPrefix: String, connection: Http2ClientConnection): CheckFilesResponse {
@@ -136,41 +153,22 @@ private suspend fun getFoundAndMissingFiles(metadataJson: String, urlPathPrefix:
 private suspend fun uploadFile(
   urlPath: String,
   file: Path,
-  useHead: Boolean,
-  span: Span,
-  httpSession: Http2ClientConnection,
-  fileSize: Long,
-  sourceBlockSize: Int,
+  httpConnection: Http2ClientConnection,
+  @Suppress("SameParameterValue") sourceBlockSize: Int,
   zstdCompressContextPool: ZstdCompressContextPool,
-): Boolean {
-  if (useHead) {
-    val status = httpSession.head(urlPath)
-    if (status == HttpResponseStatus.OK) {
-      span.addEvent("already exist on server, nothing to upload", Attributes.of(AttributeKey.stringKey("urlPath"), urlPath))
-      return false
-    }
-    else if (status != HttpResponseStatus.NOT_FOUND) {
-      span.addEvent(
-        "responded with unexpected",
-        Attributes.of(
-          AttributeKey.stringKey("status"), status.toString(),
-          AttributeKey.stringKey("urlPath"), urlPath
-        ),
-      )
-    }
-  }
-
-  require(fileSize > 0)
-
+  uncompressedBytes: LongAdder,
+): Long {
   val fileBuffer = FileChannel.open(file, READ_OPERATION).use { channel ->
-    channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize)
+    channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
   }
-
   try {
-    zstdCompressContextPool.withZstd { zstd ->
-      httpSession.put(AsciiString.of(urlPath)) { stream ->
+    val fileSize = fileBuffer.remaining()
+    require(fileSize > 0)
+    uncompressedBytes.add(fileSize.toLong())
+
+    return zstdCompressContextPool.withZstd { zstd ->
+      httpConnection.put(AsciiString.of(urlPath)) { stream ->
         compressAndUpload(
-          fileSize = fileSize,
           fileBuffer = fileBuffer,
           sourceBlockSize = sourceBlockSize,
           zstd = zstd,
@@ -182,19 +180,19 @@ private suspend fun uploadFile(
   finally {
     unmapBuffer(fileBuffer)
   }
-  return true
 }
 
 private suspend fun compressAndUpload(
-  fileSize: Long,
   fileBuffer: MappedByteBuffer,
   sourceBlockSize: Int,
   zstd: ZstdCompressCtx,
   stream: Http2StreamChannel,
-) {
+): Long {
   var position = 0
+  val fileSize = fileBuffer.remaining()
+  var uploadedSize = 0L
   while (true) {
-    val chunkSize = min(fileSize - position, sourceBlockSize.toLong()).toInt()
+    val chunkSize = min(fileSize - position, sourceBlockSize)
     val targetSize = Zstd.compressBound(chunkSize.toLong()).toInt()
     val targetNettyBuffer = stream.alloc().directBuffer(targetSize)
     val targetBuffer = targetNettyBuffer.nioBuffer(0, targetSize)
@@ -214,10 +212,14 @@ private suspend fun compressAndUpload(
 
     val endStream = position >= fileSize
     stream.writeData(targetNettyBuffer, endStream)
+
+    uploadedSize += compressedSize
     if (endStream) {
       break
     }
   }
+
+  return uploadedSize
 }
 
 @Serializable

@@ -101,12 +101,13 @@ internal class Http2ClientConnection internal constructor(
     }
   }
 
-  suspend fun put(path: AsciiString, writer: suspend (stream: Http2StreamChannel) -> Unit) {
-    connection.stream { stream, result ->
-      stream.pipeline().addLast(WebDavPutStatusChecker(result))
+  suspend fun put(path: AsciiString, writer: suspend (stream: Http2StreamChannel) -> Long): Long {
+    return connection.stream { stream, result ->
+      val handler = WebDavPutStatusChecker(result)
+      stream.pipeline().addLast(handler)
 
       stream.writeHeaders(createHeaders(HttpMethod.PUT, path), endStream = false)
-      writer(stream)
+      handler.uploadedSize = writer(stream)
 
       // 1. writer must send the last data frame with endStream=true
       // 2. stream now has the half-closed state - we listen for server header response with endStream
@@ -119,7 +120,9 @@ internal class Http2ClientConnection internal constructor(
   }
 }
 
-private class WebDavPutStatusChecker(private val result: CompletableDeferred<Unit>) : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
+private class WebDavPutStatusChecker(private val result: CompletableDeferred<Long>) : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
+  @JvmField var uploadedSize: Long = 0
+
   override fun channelRead0(context: ChannelHandlerContext, frame: Http2HeadersFrame) {
     if (!frame.isEndStream) {
       return
@@ -128,7 +131,7 @@ private class WebDavPutStatusChecker(private val result: CompletableDeferred<Uni
     val status = HttpResponseStatus.parseLine(frame.headers().status())
     // WebDAV server returns 204 for existing resources
     if (status == HttpResponseStatus.CREATED || status == HttpResponseStatus.NO_CONTENT || status == HttpResponseStatus.OK) {
-      result.complete(Unit)
+      result.complete(uploadedSize)
     }
     else {
       result.completeExceptionally(IllegalStateException("Unexpected response status: $status"))
