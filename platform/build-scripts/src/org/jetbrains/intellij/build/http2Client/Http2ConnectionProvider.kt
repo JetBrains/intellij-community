@@ -181,6 +181,11 @@ internal class Http2ConnectionProvider(
       // must be canceled when the parent context is canceled
       val result = CompletableDeferred<T>(parent = coroutineContext.job)
       block(streamChannel, result)
+      // Ensure the stream is closed before completing the operation.
+      // This prevents the risk of opening more streams than intended,
+      // especially when there is a limit on the number of parallel executed tasks.
+      // Also, avoid explicitly closing the stream in case of a successful operation.
+      streamChannel.closeFuture().joinCancellable(cancelFutureOnCancellation = false)
       return result.await()
     }
     finally {

@@ -3,11 +3,8 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.github.luben.zstd.Zstd
-import com.github.luben.zstd.ZstdCompressCtx
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http2.Http2StreamChannel
 import io.netty.util.AsciiString
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -16,22 +13,15 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.MAX_BUFFER_SIZE
-import org.jetbrains.intellij.build.http2Client.writeData
-import org.jetbrains.intellij.build.io.unmapBuffer
+import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
+import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
-import kotlin.math.min
-
-internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
 
 internal suspend fun uploadArchives(
   reportStatisticValue: (key: String, value: String) -> Unit,
@@ -158,68 +148,12 @@ private suspend fun uploadFile(
   zstdCompressContextPool: ZstdCompressContextPool,
   uncompressedBytes: LongAdder,
 ): Long {
-  val fileBuffer = FileChannel.open(file, READ_OPERATION).use { channel ->
-    channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
+  val result = zstdCompressContextPool.withZstd { zstd ->
+    httpConnection.upload(path = AsciiString.of(urlPath), file = file, sourceBlockSize = sourceBlockSize, zstd = zstd)
   }
-  try {
-    val fileSize = fileBuffer.remaining()
-    require(fileSize > 0)
-    uncompressedBytes.add(fileSize.toLong())
-
-    return zstdCompressContextPool.withZstd { zstd ->
-      httpConnection.put(AsciiString.of(urlPath)) { stream ->
-        compressAndUpload(
-          fileBuffer = fileBuffer,
-          sourceBlockSize = sourceBlockSize,
-          zstd = zstd,
-          stream = stream,
-        )
-      }
-    }
-  }
-  finally {
-    unmapBuffer(fileBuffer)
-  }
-}
-
-private suspend fun compressAndUpload(
-  fileBuffer: MappedByteBuffer,
-  sourceBlockSize: Int,
-  zstd: ZstdCompressCtx,
-  stream: Http2StreamChannel,
-): Long {
-  var position = 0
-  val fileSize = fileBuffer.remaining()
-  var uploadedSize = 0L
-  while (true) {
-    val chunkSize = min(fileSize - position, sourceBlockSize)
-    val targetSize = Zstd.compressBound(chunkSize.toLong()).toInt()
-    val targetNettyBuffer = stream.alloc().directBuffer(targetSize)
-    val targetBuffer = targetNettyBuffer.nioBuffer(0, targetSize)
-    val compressedSize = zstd.compressDirectByteBuffer(
-      targetBuffer, // compress into targetBuffer
-      targetBuffer.position(), // write compressed data starting at offset position()
-      targetSize, // write no more than target block size bytes
-      fileBuffer, // read data to compress from fileBuffer
-      position, // start reading at position()
-      chunkSize, // read chunk size bytes
-    )
-    assert(compressedSize > 0)
-    targetNettyBuffer.writerIndex(targetNettyBuffer.writerIndex() + compressedSize)
-    assert(targetNettyBuffer.readableBytes() == compressedSize)
-
-    position += chunkSize
-
-    val endStream = position >= fileSize
-    stream.writeData(targetNettyBuffer, endStream)
-
-    uploadedSize += compressedSize
-    if (endStream) {
-      break
-    }
-  }
-
-  return uploadedSize
+  require(result.fileSize > 0)
+  uncompressedBytes.add(result.fileSize)
+  return result.uploadedSize
 }
 
 @Serializable

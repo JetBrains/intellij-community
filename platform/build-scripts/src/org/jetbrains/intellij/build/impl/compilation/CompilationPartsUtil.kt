@@ -19,6 +19,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.http2Client.READ_OPERATION
 import org.jetbrains.intellij.build.http2Client.createHttp2ClientSessionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
@@ -43,8 +44,9 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.listDirectoryEntries
 
-internal val uploadParallelism = Runtime.getRuntime().availableProcessors().coerceIn(4, 32)
-internal val downloadParallelism = (Runtime.getRuntime().availableProcessors() * 2).coerceIn(8, 16)
+private val nettyMax = Runtime.getRuntime().availableProcessors() * 2
+internal val uploadParallelism = nettyMax.coerceIn(4, 32)
+internal val downloadParallelism = (nettyMax * 2).coerceIn(8, 16)
 
 private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 private const val SERVER_URL_PROPERTY = "intellij.build.compiled.classes.server.url"

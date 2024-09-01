@@ -8,11 +8,11 @@ import okio.IOException
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
+import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
 import org.jetbrains.intellij.build.http2Client.download
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.math.BigInteger
 import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -65,26 +65,29 @@ internal suspend fun downloadCompilationCache(
   }
   try {
     val errors = CopyOnWriteArrayList<Throwable>()
-    toDownload.forEachConcurrent(downloadParallelism) { item ->
-      val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
-      spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
-        try {
-          downloadedBytes.getAndAdd(
-            download(
-              item = item,
-              urlPath = urlPath,
-              skipUnpack = skipUnpack,
-              saveHash = saveHash,
-              connection = connection,
+    ZstdDecompressContextPool().use { zstdDecompressContextPool ->
+      toDownload.forEachConcurrent(downloadParallelism) { item ->
+        val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
+        spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
+          try {
+            downloadedBytes.getAndAdd(
+              download(
+                item = item,
+                urlPath = urlPath,
+                skipUnpack = skipUnpack,
+                saveHash = saveHash,
+                connection = connection,
+                zstdDecompressContextPool = zstdDecompressContextPool,
+              )
             )
-          )
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          span.recordException(e)
-          errors.add(CompilePartDownloadFailedError(item, e))
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            span.recordException(e)
+            errors.add(CompilePartDownloadFailedError(item, e))
+          }
         }
       }
     }
@@ -101,14 +104,14 @@ private suspend fun download(
   skipUnpack: Boolean,
   saveHash: Boolean,
   connection: Http2ClientConnection,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
 ): Long {
-  val (downloaded, digest) = connection.download(path = urlPath, file = item.file, digestFactory = { sha256() })
-  val digestBytes = digest.digest()
-  val computedHash = BigInteger(1, digestBytes).toString(36) + "-z"
+  val (downloaded, digest) = connection.download(path = urlPath, file = item.file, zstdDecompressContextPool = zstdDecompressContextPool, digestFactory = { sha256() })
+  val computedHash = digestToString(digest)
   if (computedHash != item.hash) {
-    println("actualHash  : ${computeHash(item.file)}")
-    println("expectedHash: ${item.hash}")
-    println("computedHash: $computedHash")
+    //println("actualHash  : ${computeHash(item.file)}")
+    //println("expectedHash: ${item.hash}")
+    //println("computedHash: $computedHash")
 
     val spanAttributes = Attributes.of(
       AttributeKey.stringKey("name"), item.file.name,

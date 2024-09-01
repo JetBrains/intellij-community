@@ -24,7 +24,12 @@ private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardO
 
 internal data class DownloadResult(@JvmField var size: Long, @JvmField val digest: MessageDigest)
 
-internal suspend fun Http2ClientConnection.download(path: String, file: Path, digestFactory: () -> MessageDigest): DownloadResult {
+internal suspend fun Http2ClientConnection.download(
+  path: String,
+  file: Path,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
+  digestFactory: () -> MessageDigest,
+): DownloadResult {
   Files.createDirectories(file.parent)
 
   return connection.stream { stream, result ->
@@ -33,6 +38,7 @@ internal suspend fun Http2ClientConnection.download(path: String, file: Path, di
         result = result,
         downloadResult = DownloadResult(size = 0, digest = digestFactory()),
         file = file,
+        zstdDecompressContextPool = zstdDecompressContextPool,
       ),
     )
 
@@ -46,6 +52,7 @@ private class DownloadHandler(
   private val result: CompletableDeferred<DownloadResult>,
   private val downloadResult: DownloadResult,
   private val file: Path,
+  private val zstdDecompressContextPool: ZstdDecompressContextPool,
 ) : InboundHandlerResultTracker<Http2StreamFrame>(result) {
   private var offset = 0L
   private var fileChannel: FileChannel? = null
@@ -55,7 +62,7 @@ private class DownloadHandler(
 
   override fun handlerAdded(ctx: ChannelHandlerContext?) {
     fileChannel = FileChannel.open(file, OVERWRITE_OPERATION)
-    zstdDecompressContext = ZstdDecompressCtx()
+    zstdDecompressContext = zstdDecompressContextPool.allocate()
   }
 
   override fun handlerRemoved(context: ChannelHandlerContext) {
@@ -64,8 +71,10 @@ private class DownloadHandler(
       fileChannel = null
     }
     finally {
-      zstdDecompressContext?.close()
-      zstdDecompressContext = null
+      zstdDecompressContext?.let {
+        zstdDecompressContext = null
+        zstdDecompressContextPool.release(it)
+      }
     }
   }
 

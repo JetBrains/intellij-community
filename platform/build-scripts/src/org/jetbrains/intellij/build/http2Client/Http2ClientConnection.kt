@@ -11,10 +11,8 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http2.Http2Headers
 import io.netty.handler.codec.http2.Http2HeadersFrame
-import io.netty.handler.codec.http2.Http2StreamChannel
 import io.netty.handler.codec.http2.ReadOnlyHttp2Headers
 import io.netty.util.AsciiString
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.DeserializationStrategy
@@ -101,40 +99,8 @@ internal class Http2ClientConnection internal constructor(
     }
   }
 
-  suspend fun put(path: AsciiString, writer: suspend (stream: Http2StreamChannel) -> Long): Long {
-    return connection.stream { stream, result ->
-      val handler = WebDavPutStatusChecker(result)
-      stream.pipeline().addLast(handler)
-
-      stream.writeHeaders(createHeaders(HttpMethod.PUT, path), endStream = false)
-      handler.uploadedSize = writer(stream)
-
-      // 1. writer must send the last data frame with endStream=true
-      // 2. stream now has the half-closed state - we listen for server header response with endStream
-      // 3. our ChannelInboundHandler above checks status and Netty closes the stream (as endStream was sent by both client and server)
-    }
-  }
 
   internal fun createHeaders(method: HttpMethod, path: AsciiString): Http2Headers {
     return ReadOnlyHttp2Headers.clientHeaders(true, method.asciiName(), path, scheme, authority, *commonHeaders)
-  }
-}
-
-private class WebDavPutStatusChecker(private val result: CompletableDeferred<Long>) : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
-  @JvmField var uploadedSize: Long = 0
-
-  override fun channelRead0(context: ChannelHandlerContext, frame: Http2HeadersFrame) {
-    if (!frame.isEndStream) {
-      return
-    }
-
-    val status = HttpResponseStatus.parseLine(frame.headers().status())
-    // WebDAV server returns 204 for existing resources
-    if (status == HttpResponseStatus.CREATED || status == HttpResponseStatus.NO_CONTENT || status == HttpResponseStatus.OK) {
-      result.complete(uploadedSize)
-    }
-    else {
-      result.completeExceptionally(IllegalStateException("Unexpected response status: $status"))
-    }
   }
 }

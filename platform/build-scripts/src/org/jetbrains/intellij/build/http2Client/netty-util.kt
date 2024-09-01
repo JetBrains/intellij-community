@@ -54,9 +54,7 @@ internal suspend fun <T : Any> Future<T>.cancellableAwait(): T {
       return getNow()
     }
     else {
-      cause()?.let {
-        throw it
-      }
+      throw cause()
     }
   }
 
@@ -83,6 +81,7 @@ internal suspend fun Future<*>.joinCancellable(cancelFutureOnCancellation: Boole
     cause()?.let {
       throw it
     }
+    return
   }
 
   suspendCancellableCoroutine { continuation ->
@@ -116,6 +115,7 @@ internal abstract class InboundHandlerResultTracker<T : Any>(
 ) : SimpleChannelInboundHandler<T>() {
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
+    context.close()
   }
 
   override fun channelInactive(context: ChannelHandlerContext) {
@@ -131,6 +131,7 @@ internal suspend fun Future<*>.joinNonCancellable() {
     cause()?.let {
       throw it
     }
+    return
   }
 
   // not suspendCancellableCoroutine - we must close the channel
