@@ -37,7 +37,7 @@ internal fun findAllMoveConflicts(
 }
 
 /**
- * Find all conflicts when moving elements for a multi file move.
+ * Find all conflicts when moving elements for a multi-file move.
  */
 internal fun findAllMoveConflicts(
     filesToMove: Iterable<KtFile>,

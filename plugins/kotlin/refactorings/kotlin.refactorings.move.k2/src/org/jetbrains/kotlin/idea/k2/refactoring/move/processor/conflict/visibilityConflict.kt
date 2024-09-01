@@ -140,7 +140,7 @@ fun checkVisibilityConflictsForInternalUsages(
                     when (PsiUtil.getAccessLevel(modifierList)) {
                         PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL -> {
                             if (referencedDeclaration is PsiMethod && referencedDeclaration.isConstructor) {
-                                true // if a constructor is private, it's accessible outside the package
+                                true // if a constructor is protected, it's accessible outside the package
                             } else {
                                 val declFqn = (referencedDeclaration as PsiModifierListOwner).containingFile.getFqNameByDirectory()
                                 declFqn == targetPkg
