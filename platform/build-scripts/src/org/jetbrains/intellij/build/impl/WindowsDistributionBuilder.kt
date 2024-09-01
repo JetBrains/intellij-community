@@ -333,7 +333,7 @@ internal class WindowsDistributionBuilder(
           icoFile.absolutePathString(),
           outputPath.absolutePathString(),
         ),
-        jvmArgs = listOf("-Djava.awt.headless=true"),
+        jvmArgs = listOf("-Djava.awt.headless=true", "-Dlauncher.use.seekable.stream=true"), // Android Studio: b/363795669
         context.getModuleRuntimeClasspath(generatorModule, forTests = false),
         context.stableJavaExecutable
       )
