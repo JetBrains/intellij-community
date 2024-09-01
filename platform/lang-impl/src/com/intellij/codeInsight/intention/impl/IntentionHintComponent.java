@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
@@ -253,7 +254,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
     if (mouseClick && myLightBulbPanel.isShowing()) {
-      showPopup(findPositionForBulbButton());
+      showPopup(findPositionForBulbButton(), IntentionSource.LIGHT_BULB);
       return;
     }
     CodeFloatingToolbar.temporarilyDisable(false);
@@ -262,7 +263,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       showPopupFromToolbar(toolbar);
       return;
     }
-    showPopup(null);
+    showPopup(null, IntentionSource.CONTEXT_ACTIONS);
   }
 
   private void showPopupFromToolbar(CodeFloatingToolbar toolbar) {
@@ -282,7 +283,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (intentionsButton == null) return;
     showPopup(defaultPosition, popup -> {
       toolbar.attachPopupToButton(intentionsButton, popup);
-    });
+    }, IntentionSource.FLOATING_TOOLBAR);
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
@@ -290,12 +291,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
-  private void showPopup(@Nullable RelativePoint positionHint) {
-    myPopup.show(this, positionHint, null);
+  private void showPopup(@Nullable RelativePoint positionHint, @NotNull IntentionSource source) {
+    myPopup.show(this, positionHint, null, source);
   }
 
-  private void showPopup(@Nullable RelativePoint positionHint, @Nullable Consumer<? super ListPopup> listPopupCustomization) {
-    myPopup.show(this, positionHint, listPopupCustomization);
+  private void showPopup(@Nullable RelativePoint positionHint,
+                         @Nullable Consumer<? super ListPopup> listPopupCustomization,
+                         @NotNull IntentionSource source) {
+    myPopup.show(this, positionHint, listPopupCustomization, source);
   }
 
   private @NotNull RelativePoint findPositionForBulbButton() {
@@ -617,14 +620,16 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @Override
-    public void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint,
-                     @Nullable Consumer<? super ListPopup> listPopupCustomization) {
+    public void show(@NotNull IntentionHintComponent component,
+                     @Nullable RelativePoint positionHint,
+                     @Nullable Consumer<? super ListPopup> listPopupCustomization,
+                     @NotNull IntentionSource source) {
       if (myDisposed || myEditor.isDisposed() || (myListPopup != null && myListPopup.isDisposed()) || myPopupShown) return;
 
       if (myListPopup == null) {
         assert myHint == null;
         myHint = component;
-        recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions));
+        recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions, source));
         if(listPopupCustomization != null) {
           listPopupCustomization.accept(myListPopup);
         }
@@ -642,7 +647,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       myPreviewHandler.showInitially();
 
-      IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage(), myEditor);
+      IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage(), myEditor, source);
       myPopupShown = true;
     }
 

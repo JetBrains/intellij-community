@@ -7253,6 +7253,16 @@ f:com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvid
 - createModels(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - getDependencies():java.util.Collection
 - getSupportedLanguages(com.intellij.openapi.project.Project):java.util.Collection
+*e:com.intellij.codeInsight.intention.IntentionSource
+- java.lang.Enum
+- sf:CONTEXT_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
+- sf:DAEMON_TOOLTIP:com.intellij.codeInsight.intention.IntentionSource
+- sf:FILE_LEVEL_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
+- sf:FLOATING_TOOLBAR:com.intellij.codeInsight.intention.IntentionSource
+- sf:LIGHT_BULB:com.intellij.codeInsight.intention.IntentionSource
+- sf:PROBLEMS_VIEW:com.intellij.codeInsight.intention.IntentionSource
+- s:valueOf(java.lang.String):com.intellij.codeInsight.intention.IntentionSource
+- s:values():com.intellij.codeInsight.intention.IntentionSource[]
 f:com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
@@ -7274,7 +7284,8 @@ com.intellij.codeInsight.intention.impl.AbstractIntentionPopup
 - com.intellij.openapi.Disposable
 - a:close():V
 - a:isVisible():Z
-- a:show(com.intellij.codeInsight.intention.impl.IntentionHintComponent,com.intellij.ui.awt.RelativePoint,java.util.function.Consumer):V
+- a:show(com.intellij.codeInsight.intention.impl.IntentionHintComponent,com.intellij.ui.awt.RelativePoint,java.util.function.Consumer,com.intellij.codeInsight.intention.IntentionSource):V
+- bs:show$default(com.intellij.codeInsight.intention.impl.AbstractIntentionPopup,com.intellij.codeInsight.intention.impl.IntentionHintComponent,com.intellij.ui.awt.RelativePoint,java.util.function.Consumer,com.intellij.codeInsight.intention.IntentionSource,I,java.lang.Object):V
 f:com.intellij.codeInsight.intention.impl.AssignShortcutToIntentionAction
 - com.intellij.codeInsight.intention.impl.AbstractEditIntentionShortcutAction
 - <init>(com.intellij.codeInsight.intention.IntentionAction):V
@@ -7422,6 +7433,7 @@ c:com.intellij.codeInsight.intention.impl.IntentionListStep
 - com.intellij.openapi.ui.popup.SpeedSearchFilter
 - <init>(com.intellij.codeInsight.intention.impl.IntentionHintComponent$IntentionPopup,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.impl.CachedIntentions):V
 - <init>(com.intellij.codeInsight.intention.impl.IntentionHintComponent$IntentionPopup,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.impl.IntentionContainer):V
+- p:<init>(com.intellij.codeInsight.intention.impl.IntentionHintComponent$IntentionPopup,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.impl.IntentionContainer,com.intellij.codeInsight.intention.IntentionSource):V
 - canceled():V
 - p:chooseActionAndInvoke(com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - getActionsWithSubActions():java.util.Map
@@ -7503,6 +7515,8 @@ c:com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 - s:availableFor(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction):Z
 - s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String):Z
 - s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,I):Z
+- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,I,com.intellij.codeInsight.intention.IntentionSource):Z
+- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,com.intellij.codeInsight.intention.IntentionSource):Z
 - s:chooseBetweenHostAndInjected(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.util.TripleFunction):com.intellij.openapi.util.Pair
 - s:chooseBetweenHostAndInjected(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.util.TripleFunction):com.intellij.openapi.util.Pair
 - s:chooseFileForAction(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction):com.intellij.openapi.util.Pair

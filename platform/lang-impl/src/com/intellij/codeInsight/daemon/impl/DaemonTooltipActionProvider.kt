@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
-import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
-import com.intellij.codeInsight.intention.CustomizableIntentionAction
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
@@ -54,7 +51,7 @@ private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: 
       if (action.text == myActionText) {
         //unfortunately it is very common case when quick fixes/refactorings use caret position
         editor.caretModel.moveToOffset(myActualOffset)
-        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myActionText)
+        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myActionText, IntentionSource.DAEMON_TOOLTIP)
         return
       }
     }
