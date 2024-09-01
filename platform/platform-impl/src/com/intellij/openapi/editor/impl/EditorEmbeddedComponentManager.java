@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -292,7 +291,6 @@ public final class EditorEmbeddedComponentManager {
   }
 
   private static final class ComponentInlays implements Disposable {
-    private static final Logger LOG = Logger.getInstance(ComponentInlays.class);
     private final EditorEx myEditor;
     private final ResizeListener myResizeListener;
 
@@ -573,7 +571,7 @@ public final class EditorEmbeddedComponentManager {
         }));
       }
 
-      private boolean isNearTo(int value, int coordinate) {
+      private static boolean isNearTo(int value, int coordinate) {
         return isInside(value, coordinate, coordinate);
       }
 
