@@ -12,14 +12,17 @@ interface LogicalStructureTreeElementProvider<T> {
     val EP_NAME = ExtensionPointName.create<LogicalStructureTreeElementProvider<*>>(EP_FQN)
 
     fun <T> getTreeElement(model: T): StructureViewTreeElement? {
-      val provider = EP_NAME.extensionList
-        .firstOrNull { it.getModelClass().isInstance(model) } as? LogicalStructureTreeElementProvider<T>
-      return provider?.getTreeElement(model)
+      for (provider in EP_NAME.extensionList) {
+        if (!provider.getModelClass().isInstance(model)) continue
+        val treeElement = (provider as? LogicalStructureTreeElementProvider<T>)?.getTreeElement(model)
+        if (treeElement != null) return treeElement
+      }
+      return null
     }
   }
 
   fun getModelClass(): Class<T>
 
-  fun getTreeElement(model: T): StructureViewTreeElement
+  fun getTreeElement(model: T): StructureViewTreeElement?
 
 }
