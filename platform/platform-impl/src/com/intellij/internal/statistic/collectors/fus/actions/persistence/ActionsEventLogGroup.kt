@@ -71,9 +71,6 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   val DUMB_START: BooleanEventField = EventFields.Boolean("dumb_start")
 
   @JvmField
-  val DUMB: BooleanEventField = EventFields.Boolean("dumb")
-
-  @JvmField
   val INCOMPLETE_DEPENDENCIES_MODE = EventFields.Enum("incomplete_dependencies_mode", DependenciesState::class.java,
                                                       "COMPLETE or INCOMPLETE (see IncompleteDependenciesService)")
 
@@ -116,7 +113,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
       EventFields.CurrentFile,
       TOGGLE_ACTION,
       CONTEXT_MENU,
-      DUMB,
+      EventFields.Dumb,
       INCOMPLETE_DEPENDENCIES_MODE,
       ACTION_ID,
       ACTION_CLASS,

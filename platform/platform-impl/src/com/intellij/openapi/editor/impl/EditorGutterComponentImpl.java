@@ -24,7 +24,6 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
@@ -2905,14 +2904,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private static final class GutterIconClickCollectors extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 5);
 
-    private static final BooleanEventField IS_DUMB_MODE = EventFields.Boolean("dumb");
     private static final StringEventField ICON = EventFields.StringValidatedByCustomRule("icon_id", PluginInfoValidationRule.class);
 
     private static final VarargEventId CLICKED = GROUP.registerVarargEvent(
       "clicked",
       EventFields.Language,
       ICON,
-      IS_DUMB_MODE,
+      EventFields.Dumb,
       EventFields.PluginInfo
     );
 
@@ -2930,7 +2928,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         project,
         EventFields.Language.with(language),
         ICON.with(icon),
-        IS_DUMB_MODE.with(isDumb),
+        EventFields.Dumb.with(isDumb),
         EventFields.PluginInfo.with(pluginInfo)
       );
     }

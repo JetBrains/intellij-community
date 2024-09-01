@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -67,7 +67,6 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
   private static final EventField<Boolean> IS_PREVIEW_TAB = EventFields.Boolean("is_preview_tab");
-  private static final EventField<Boolean> IS_DUMB = EventFields.Boolean("dumb");
   private static final EnumEventField<DependenciesState> INCOMPLETE_DEPENDENCIES_MODE =
     EventFields.Enum("incomplete_dependencies_mode", DependenciesState.class);
 
@@ -90,9 +89,9 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   private static final VarargEventId SELECT = registerFileTypeEvent("select");
-  private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_NAME_PATTERN_FIELD, IS_DUMB, INCOMPLETE_DEPENDENCIES_MODE);
+  private static final VarargEventId EDIT = registerFileTypeEvent("edit", FILE_NAME_PATTERN_FIELD, EventFields.Dumb, INCOMPLETE_DEPENDENCIES_MODE);
   private static final VarargEventId OPEN = registerFileTypeEvent(
-    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD, IS_DUMB,
+    "open", FILE_EDITOR, EventFields.TimeToShowMs, EventFields.DurationMs, IS_WRITABLE, IS_PREVIEW_TAB, FILE_NAME_PATTERN_FIELD, EventFields.Dumb,
     INCOMPLETE_DEPENDENCIES_MODE
   );
   private static final VarargEventId CLOSE = registerFileTypeEvent("close", IS_WRITABLE);
@@ -169,7 +168,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
         boolean isDumb = DumbService.isDumb(project);
         IncompleteDependenciesService service = project.getService(IncompleteDependenciesService.class);
         DependenciesState incompleteDependenciesMode = service.getState();
-        return Arrays.asList(IS_DUMB.with(isDumb), INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode));
+        return Arrays.asList(EventFields.Dumb.with(isDumb), INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode));
       }).expireWith(project)
       .executeSynchronously();
   }
