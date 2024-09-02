@@ -4,16 +4,12 @@ package com.jetbrains.python.packaging.toolwindow.details
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.observable.util.isNotNull
-import com.intellij.openapi.observable.util.isNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -22,6 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 class PyPackageInfoPanel(val project: Project) : Disposable {
   private val infoController = PyPackageDescriptionController(project).also {
@@ -29,7 +28,6 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
   }
 
   private val packageProperty = AtomicProperty<DisplayablePackage?>(null)
-  private val isLoading = AtomicBooleanProperty(false)
 
   private val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
   private val loadingPanel = JBPanelWithEmptyText().apply {
@@ -38,17 +36,8 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
 
   private var updateJob: Job? = null
 
-  val component = panel {
-    row {
-      cell(noPackagePanel)
-    }.resizableRow().visibleIf(packageProperty.isNull())
-    row {
-      cell(loadingPanel)
-    }.resizableRow().visibleIf(isLoading)
-
-    row {
-      cell(infoController.wrappedComponent)
-    }.resizableRow().visibleIf(packageProperty.isNotNull())
+  val component = JPanel().apply {
+    layout = BorderLayout()
   }
 
   override fun dispose() {}
@@ -56,6 +45,9 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
   fun getPackage() = packageProperty.get()
 
   fun setPackage(pyPackage: DisplayablePackage?) {
+    val newPanel = if (pyPackage == null) noPackagePanel else loadingPanel
+    setComponent(newPanel)
+
     packageProperty.set(pyPackage)
 
     if (pyPackage == null) {
@@ -63,7 +55,6 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
     }
 
     infoController.setPackage(pyPackage)
-    isLoading.set(true)
     updateJob?.cancel()
 
     val service = project.service<PyPackagingToolWindowService>()
@@ -76,8 +67,20 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
         }
       }
       finally {
-        isLoading.set(false)
+        withContext(Dispatchers.EDT) {
+          setComponent(infoController.wrappedComponent)
+        }
       }
+    }
+  }
+
+  private fun setComponent(newPanel: JComponent) {
+    val currentComponent = component.components.firstOrNull()
+    if (currentComponent != newPanel) {
+      component.removeAll()
+      component.add(newPanel)
+      component.revalidate()
+      component.repaint()
     }
   }
 }
