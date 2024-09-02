@@ -61,14 +61,14 @@ class CustomFoldingEditorCellViewComponent(
 
   private fun disposeFolding() = cell.manager.update { ctx ->
     if (!editor.isDisposed && foldingRegion?.isValid == true) {
-      editor.componentContainer.remove(mainComponent)
       foldingRegion?.let {
         ctx.addFoldingOperation {
           editor.foldingModel.removeFoldRegion(it)
         }
       }
-      foldingRegion = null
     }
+    editor.componentContainer.remove(mainComponent)
+    foldingRegion = null
   }
 
   override fun calculateBounds(): Rectangle {

@@ -17,7 +17,7 @@ import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
-private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, Any>>("CELL_EXTENSION_CONTAINER_KEY")
+private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellExtension>>("CELL_EXTENSION_CONTAINER_KEY")
 
 class EditorCell(
   private val editor: EditorEx,
@@ -41,7 +41,7 @@ class EditorCell(
     return document.getText(TextRange(startOffset, endOffset))
   }
 
-  val type: NotebookCellLines.CellType get() = interval.type
+  val type = interval.type
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
@@ -98,7 +98,7 @@ class EditorCell(
     }
 
   var gutterAction: AnAction? = null
-  private set
+    private set
 
   private var executionCount: Int? = null
 
@@ -111,8 +111,17 @@ class EditorCell(
   private var mode = NotebookEditorMode.COMMAND
 
   override fun dispose() {
-    coroutineScope.cancel()
+    cleanupExtensions()
     view?.let { disposeView(it) }
+    coroutineScope.cancel()
+  }
+
+  private fun cleanupExtensions() {
+    CELL_EXTENSION_CONTAINER_KEY.get(this)?.values?.forEach {
+      if (it is Disposable) {
+        Disposer.dispose(it)
+      }
+    }
   }
 
   fun update() {
@@ -206,25 +215,24 @@ class EditorCell(
     view?.requestCaret()
   }
 
-  inline fun <reified T: Any> getExtension(): T {
+  inline fun <reified T : EditorCellExtension> getExtension(): T {
     return getExtension(T::class)
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : Any> getExtension(cls: KClass<T>): T {
+  fun <T : EditorCellExtension> getExtension(cls: KClass<T>): T {
     return CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] as T
   }
 
-  fun <T: Any> addExtension(cls: KClass<T>, extension:T) {
+  fun <T : EditorCellExtension> addExtension(cls: KClass<T>, extension: T) {
     CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] = extension
   }
 
-  inline fun <reified T: Any> removeExtension(): T {
-    return removeExtension(T::class)
+  fun onBeforeRemove() {
+    forEachExtension { it.onBeforeRemove() }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun <T : Any> removeExtension(cls: KClass<T>): T {
-    return CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] as T
+  private fun forEachExtension(action: (EditorCellExtension) -> Unit) {
+    CELL_EXTENSION_CONTAINER_KEY.get(this)?.values?.forEach { action(it) }
   }
 }

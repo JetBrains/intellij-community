@@ -393,6 +393,8 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun removeCell(index: Int, events: MutableList<EditorCellEvent>) {
+    val cell = _cells[index]
+    cell.onBeforeRemove()
     val removed = _cells.removeAt(index)
     Disposer.dispose(removed)
     events.add(CellRemoved(removed))
