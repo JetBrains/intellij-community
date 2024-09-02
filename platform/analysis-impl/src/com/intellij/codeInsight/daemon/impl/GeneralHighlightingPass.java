@@ -41,6 +41,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -180,6 +181,11 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               myHighlightInfoUpdater.psiElementVisited(visitor.getClass(), element, List.of(), getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
             }
           }
+        }
+        if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+          List<? extends Class<? extends HighlightVisitor>> liveVisitorClasses = ContainerUtil.map(filteredVisitors, v -> v.getClass());
+          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || liveVisitorClasses.contains(toolId);
+          impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
         }
         boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
                                             forceHighlightParents, (toolId, psiElement, newInfos) -> {

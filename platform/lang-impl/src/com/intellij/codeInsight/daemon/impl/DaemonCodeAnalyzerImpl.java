@@ -719,9 +719,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public void settingsChanged() {
-    if (mySettings.isCodeHighlightingChanged(myLastSettings)) {
-      restart();
-    }
+    restart();
     myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)mySettings).clone();
   }
 
