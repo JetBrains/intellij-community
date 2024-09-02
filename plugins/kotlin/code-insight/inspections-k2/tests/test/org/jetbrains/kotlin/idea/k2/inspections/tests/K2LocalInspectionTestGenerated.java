@@ -7761,6 +7761,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/minusAssign.gradle.kts");
             }
 
+            @TestMetadata("optionsBeforeDotInBiggerDotQualifiedExpression.gradle.kts")
+            public void testOptionsBeforeDotInBiggerDotQualifiedExpression_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/optionsBeforeDotInBiggerDotQualifiedExpression.gradle.kts");
+            }
+
+            @TestMetadata("optionsBeforeDot.gradle.kts")
+            public void testOptionsBeforeDot_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/optionsBeforeDot.gradle.kts");
+            }
+
             @TestMetadata("subprojects.gradle.kts")
             public void testSubprojects_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/subprojects.gradle.kts");

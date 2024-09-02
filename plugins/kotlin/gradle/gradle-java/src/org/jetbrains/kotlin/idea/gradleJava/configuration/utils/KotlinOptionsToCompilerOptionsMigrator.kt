@@ -33,8 +33,11 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
   val optionName = when (leftPartOfBinaryExpression) {
     is KtDotQualifiedExpression -> {
       val partBeforeDot = leftPartOfBinaryExpression.receiverExpression.text
-      if (partBeforeDot != "kotlinOptions") {
-        return null
+
+      if (!partBeforeDot.contains("kotlinOptions")) {
+        if (partBeforeDot != "options") {
+          return null
+        }
       }
       else {
         replacement.append("compilerOptions.")

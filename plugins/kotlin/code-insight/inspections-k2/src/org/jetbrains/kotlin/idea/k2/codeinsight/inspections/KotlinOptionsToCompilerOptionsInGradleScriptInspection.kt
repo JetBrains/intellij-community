@@ -81,9 +81,15 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                     }
                 }
                 when (expressionParent) {
-                    is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources`
+                    is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources` OR kotlinOptions.options
                         val parentOfExpressionParent = expressionParent.parent
-                        if (parentOfExpressionParent !is KtBinaryExpression) return // like kotlinOptions.sourceMapEmbedSources = "inlining"
+
+                        if (parentOfExpressionParent !is KtBinaryExpression) { // like kotlinOptions.sourceMapEmbedSources = "inlining"
+                            // like kotlinOptions.options.jvmTarget = JvmTarget.JVM_11
+                            if (parentOfExpressionParent is KtDotQualifiedExpression &&
+                                parentOfExpressionParent.parent !is KtBinaryExpression)
+                                return
+                        }
                     }
 
                     is KtCallExpression -> {
@@ -146,10 +152,18 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
         val expressionsToFix = mutableListOf<Replacement>()
         val expressionParent = element.parent
         when (expressionParent) {
-            is KtDotQualifiedExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources`
+            is KtDotQualifiedExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources` || `kotlinOptions.options.jvmTarget`
                 val parentOfExpressionParent = expressionParent.parent
-                if (parentOfExpressionParent is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
-                    getReplacementForOldKotlinOptionIfNeeded(parentOfExpressionParent)?.let { expressionsToFix.add(it) }
+                when (parentOfExpressionParent) {
+                    is KtBinaryExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
+                        getReplacementForOldKotlinOptionIfNeeded(parentOfExpressionParent)?.let { expressionsToFix.add(it) }
+                    }
+                    is KtDotQualifiedExpression -> {
+                        val parent = parentOfExpressionParent.parent
+                        if (parent is KtBinaryExpression) { // like `kotlinOptions.options.jvmTarget = JvmTarget.JVM_11`
+                            getReplacementForOldKotlinOptionIfNeeded(parent)?.let { expressionsToFix.add(it) }
+                        }
+                    }
                 }
             }
 
