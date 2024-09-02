@@ -15,7 +15,10 @@ import fleet.kernel.rebase.*
 import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
 import fleet.rpc.core.Serialization
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
 import kotlin.coroutines.CoroutineContext
 
@@ -30,34 +33,27 @@ suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend Corou
   }
 }
 
-fun CoroutineScope.handleEntityTypes() {
-  launch {
-    change {
-      for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+fun handleEntityTypes(transactor: Transactor, coroutineScope: CoroutineScope) {
+  transactor.changeAsync {
+    for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+      for (entityType in extension.entityTypes()) {
+        register(entityType)
+      }
+    }
+  }
+  EntityTypeProvider.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<EntityTypeProvider> {
+    override fun extensionAdded(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
+      transactor.changeAsync {
         for (entityType in extension.entityTypes()) {
           register(entityType)
         }
       }
     }
-  }
-  EntityTypeProvider.EP_NAME.addExtensionPointListener(this, object : ExtensionPointListener<EntityTypeProvider> {
-
-    override fun extensionAdded(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
-      launch {
-        change {
-          for (entityType in extension.entityTypes()) {
-            register(entityType)
-          }
-        }
-      }
-    }
 
     override fun extensionRemoved(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
-      launch {
-        change {
-          for (entityType in extension.entityTypes()) {
-            entityType.delete()
-          }
+      transactor.changeAsync {
+        for (entityType in extension.entityTypes()) {
+          entityType.delete()
         }
       }
     }

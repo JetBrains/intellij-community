@@ -54,7 +54,7 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
         change {
           initWorkspaceClock()
         }
-        handleEntityTypes()
+        handleEntityTypes(transactor(), this)
         kernelCoroutineContext.complete(currentCoroutineContext().kernelCoroutineContext())
         updateDbInTheEventDispatchThread()
       }
