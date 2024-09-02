@@ -4,6 +4,7 @@ package com.intellij.ide.structureView.logical.impl
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.structureView.*
 import com.intellij.ide.util.treeView.smartTree.Grouper
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -19,6 +20,10 @@ class LogicalStructureViewService(
   }
 
   fun getLogicalStructureBuilder(psiFile: PsiFile): StructureViewBuilder? {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      // TODO StructureTW
+      return null
+    }
     val assembledModel = LogicalStructureAssembledModel(project, psiFile)
     if (assembledModel.getChildren().isEmpty()) return null
     return object: TreeBasedStructureViewBuilder() {

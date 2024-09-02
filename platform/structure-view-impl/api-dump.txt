@@ -86,11 +86,6 @@ f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - f:getChildrenGrouped():java.util.List
 - f:getModel():java.lang.Object
 - f:getProject():com.intellij.openapi.project.Project
-com.intellij.ide.structureView.logical.model.LogicalStructureModel
-- a:getName():java.lang.String
-com.intellij.ide.structureView.logical.model.PsiRepresentingLogicalStructureModel
-- com.intellij.ide.structureView.logical.model.LogicalStructureModel
-- a:getPsiElement():com.intellij.psi.PsiElement
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider

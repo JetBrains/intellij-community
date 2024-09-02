@@ -96,6 +96,10 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirStructureViewFactory"/>
 
+    <lang.logicalStructureTreeElementProvider
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.K2ClassLogicalStructureTreeElementProvider"
+            order="before javaPsiClassLogicalStructureTreeElementProvider"/>
+
     <codeInsight.gotoSuper
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
