@@ -36,7 +36,9 @@ public final class GetterDescriptor extends PsiVarDescriptor {
     CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
                              "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass",
-                             "getSimpleName", "getCanonicalName")
+                             "getSimpleName", "getCanonicalName"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getName", "getParent", "getPath", "getAbsolutePath", 
+                             "getParentFile", "getAbsoluteFile", "toPath")
   );
   private final @NotNull PsiMethod myGetter;
   private final boolean myStable;
