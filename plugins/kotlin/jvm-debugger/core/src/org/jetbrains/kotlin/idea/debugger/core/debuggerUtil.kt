@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
@@ -246,19 +247,16 @@ fun isOnSuspendReturnOrReenter(location: Location): Boolean {
 }
 
 private fun doesMethodHaveSwitcher(location: Location): Boolean {
-    if (DexDebugFacility.isDex(location.virtualMachine())) {
-        return false
+    val method = location.safeMethod() ?: return false
+    // State machine is always generated for suspend lambdas
+    if (isInvokeSuspendMethod(method)) {
+        return true
     }
 
-    var result = false
-    MethodBytecodeUtil.visit(location.method(), object : MethodVisitor(Opcodes.API_VERSION) {
-        override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
-            if (!result && checkContinuationLabelField(location, name, descriptor, owner)) {
-                result = true
-            }
-        }
-    }, false)
-    return result
+    // Otherwise, if state machine is generated, the $continuation
+    // variable will be present in LVT.
+    val variables = method.safeVariables() ?: return false
+    return variables.any { it.name() == CONTINUATION_VARIABLE_NAME   }
 }
 
 private fun checkContinuationLabelField(location: Location, name: String?, descriptor: String?, owner: String?): Boolean {
