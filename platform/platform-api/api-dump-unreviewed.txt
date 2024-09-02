@@ -8576,10 +8576,6 @@ c:com.intellij.ui.components.ProgressBarLoadingDecorator
 - startLoading():V
 - startLoading(Z):V
 - stopLoading():V
-c:com.intellij.ui.components.SelectionAwareListCellRenderer
-- javax.swing.ListCellRenderer
-- <init>(com.intellij.util.NotNullFunction):V
-- getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.ui.components.TextComponentEmptyText
 - com.intellij.util.ui.StatusText
 - sf:STATUS_VISIBLE_FUNCTION:java.lang.String
@@ -9935,10 +9931,6 @@ f:com.intellij.ui.layout.ComponentPredicateKt
 - sf:or(com.intellij.ui.layout.ComponentPredicate,com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueIs(javax.swing.JComboBox,java.lang.Object):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueMatches(javax.swing.JComboBox,kotlin.jvm.functions.Function1):com.intellij.ui.layout.ComponentPredicate
-f:com.intellij.ui.list.LeftRightRenderer
-- javax.swing.ListCellRenderer
-- <init>(javax.swing.ListCellRenderer,javax.swing.ListCellRenderer):V
-- getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.ui.mac.screenmenu.Menu
 - com.intellij.ui.mac.screenmenu.MenuItem
 - <init>(java.lang.String):V
