@@ -1836,6 +1836,8 @@
     <postStartupActivity implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentInProjectStarter"
                          os="windows"/>
     <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
+
+    <registryKey key="menu.drag.enabled" defaultValue="true" description="Allow activating menu items by dragging and releasing the mouse on macOS and Linux" />
   </extensions>
 
   <applicationListeners>
