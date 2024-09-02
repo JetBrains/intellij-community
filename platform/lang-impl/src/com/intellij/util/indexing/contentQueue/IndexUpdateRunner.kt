@@ -275,12 +275,13 @@ class IndexUpdateRunner(
       statistics: IndexingFileSetStatistics,
     ) {
       val file = fileIndexingRequest.file
-      if(!file.isValid){
+      if( !fileIndexingRequest.isDeleteRequest && !file.isValid ){
         //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
         return
       }
+
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       val indexingStamp = indexingRequest.getFileIndexingStamp(file)
 
