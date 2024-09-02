@@ -133,12 +133,12 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
     CharTable charTable = SharedImplUtil.findCharTableByTree(tag);
     if (JavaFileCodeStyleFacade.forContext(psiFile).isJavaDocLeadingAsterisksEnabled() || isMarkdownComment()) {
-      tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, manager));
+      tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, getNewLikeBuffer(), charTable, manager));
       tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, getLeadingToken(), charTable, manager));
       tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, manager));
     }
     else {
-      tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, manager));
+      tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, getNewLikeBuffer(), charTable, manager));
     }
   }
 
@@ -147,16 +147,20 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     boolean needToAddNewline = false;
     if (last.getElementType() == DOC_TAG && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
-        anchor = getLastChildNode(); // this is a '*/'
-        ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), TokenSet.WHITE_SPACE);
-        if (prevBeforeWS != null) {
-          anchor = prevBeforeWS;
+        if (isMarkdownComment()) {
+          anchor = getLastChildNode();
           before = Boolean.FALSE;
+        } else {
+          anchor = getLastChildNode(); // this is a '*/'
+          ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), TokenSet.WHITE_SPACE);
+          if (prevBeforeWS != null) {
+            anchor = prevBeforeWS;
+            before = Boolean.FALSE;
+          } else {
+            before = Boolean.TRUE;
+          }
+          needToAddNewline = true;
         }
-        else {
-          before = Boolean.TRUE;
-        }
-        needToAddNewline = true;
       }
 
       if (anchor.getElementType() != DOC_TAG) {
@@ -166,8 +170,8 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
           CharTable charTable = SharedImplUtil.findCharTableByTree(this);
           PsiManager psiManager = getManager();
 
-          if (JavaFileCodeStyleFacade.forContext(getContainingFile()).isJavaDocLeadingAsterisksEnabled() || isMarkdownComment()) {
-            TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, psiManager);
+          if (isMarkdownComment() || JavaFileCodeStyleFacade.forContext(getContainingFile()).isJavaDocLeadingAsterisksEnabled()) {
+            TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, getNewLikeBuffer(), charTable, psiManager);
             TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, getLeadingToken(), charTable, psiManager);
             TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, psiManager);
             newLine.getTreeParent().addChild(leadingAsterisk);
@@ -176,7 +180,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
             anchor = commentData;
           }
           else {
-            TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, psiManager);
+            TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, getNewLikeBuffer(), charTable, psiManager);
             anchor = super.addInternal(newLine, newLine, anchor, Boolean.FALSE);
           }
           before = Boolean.FALSE;
@@ -258,10 +262,11 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return true;
   }
 
-  private static boolean nodeOnSameLineWithCommentStartBlock(@NotNull ASTNode node) {
-    ASTNode current = TreeUtil.findSiblingBackward(node, DOC_COMMENT_START);
+  private boolean nodeOnSameLineWithCommentStartBlock(@NotNull ASTNode node) {
+    ASTNode current = TreeUtil.findSiblingBackward(node, isMarkdownComment() ? DOC_COMMENT_LEADING_ASTERISKS : DOC_COMMENT_START);
     if (current == null) return false;
     if (current == node) return true;
+    if (isMarkdownComment() && current != getFirstChild()) return false;
     while (current.getTreeNext() != node) {
       current = current.getTreeNext();
       if (current.textContains('\n')) return false;
@@ -269,8 +274,14 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return true;
   }
 
+  /** @return The leading token depending on comment type */
   private String getLeadingToken() {
     return isMarkdownComment() ? LEADING_TOKEN_MARKDOWN : LEADING_TOKEN;
+  }
+
+  /** @return Content to insert on a new line. Markdown comments handle spacing differently */
+  private String getNewLikeBuffer() {
+    return isMarkdownComment() ? "\n" : "\n ";
   }
 
   @Override
