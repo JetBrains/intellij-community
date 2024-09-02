@@ -14,7 +14,7 @@ import kotlin.time.Duration
 sealed interface EelTunnelsApi {
 
   /**
-   * **This is a delicate API, for applied usages, please consider [withConnectionToRemotePort]**.
+   * **For applied usages, consider using [withConnectionToRemotePort]**.
    *
    * Creates a connection to a TCP socket to a named host specified by [address].
    *
@@ -47,9 +47,7 @@ sealed interface EelTunnelsApi {
    * Represents an address to a remote host.
    */
   interface HostAddress {
-    /**
-     * A builder class for remote host address.
-     */
+
     interface Builder {
 
       /**
@@ -82,8 +80,8 @@ sealed interface EelTunnelsApi {
 
       /**
        * Sets timeout for connecting to remote host.
-       * If the connection could not be established before [timeout], then [IjentConnectionError.ConnectionTimeout] would be returned
-       * in [IjentTunnelsApi.getConnectionToRemotePort].
+       * If the connection could not be established before [timeout], then [EelConnectionError.ConnectionTimeout] would be returned
+       * in [EelTunnelsApi.getConnectionToRemotePort].
        *
        * Default value: 10 seconds.
        * The recognizable granularity is milliseconds.
@@ -249,11 +247,28 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
 ): T =
   when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
     is EelNetworkResult.Error -> errorHandler(connectionResult.error)
-    is EelNetworkResult.Ok -> try {
-      coroutineScope { action(connectionResult.value) }
-    }
-    finally {
-      connectionResult.value.close()
+    is EelNetworkResult.Ok -> {
+      var original: Throwable? = null
+      try {
+        coroutineScope { action(connectionResult.value) }
+      }
+      catch (e: Throwable) {
+        original = e
+        throw e
+      }
+      finally {
+        if (original == null) {
+          connectionResult.value.close()
+        }
+        else {
+          try {
+            connectionResult.value.close()
+          }
+          catch (e: Throwable) {
+            original.addSuppressed(e)
+          }
+        }
+      }
     }
   }
 
@@ -299,53 +314,23 @@ sealed interface EelNetworkResult<out T, out E : EelNetworkError> {
 interface EelConnectionError : EelNetworkError {
   val message: @NlsSafe String
 
-  data object PermissionDenied : EelConnectionError {
-    override val message: @NlsSafe String = "Permission denied"
-
-  }
-
-  data object ConnectionTimeout : EelConnectionError {
-    override val message: @NlsSafe String = "Connection could not be established because of timeout"
-  }
+  /**
+   * Returned when the remote host cannot create an object of a socket.
+   */
+  interface SocketAllocationError : EelConnectionError
 
   /**
-   * Returned when a hostname on the remote server was resolved to multiple different addresses.
+   * Returned when there is a problem with resolve of the hostname.
    */
-  data object AmbiguousAddress : EelConnectionError {
-    override val message: String = "Hostname could not be resolved uniquely"
-  }
+  interface ResolveFailure : EelConnectionError
 
   /**
-   * Returned when a socket could not be created because of an OS error.
+   * Returned when there was a problem with establishing a connection to a resolved server
    */
-  @JvmInline
-  value class SocketCreationFailure(override val message: @NlsSafe String) : EelConnectionError
-
-  /**
-   * Returned when resolve of remote address failed during the creation of a socket.
-   */
-  object HostUnreachable : EelConnectionError {
-    override val message: @NlsSafe String = "Remote host is unreachable"
-  }
-
-  /**
-   * Returned when the remote server does not accept connections.
-   */
-  object ConnectionRefused : EelConnectionError {
-    override val message: @NlsSafe String = "Connection was refused by remote server"
-  }
-
-  /**
-   * Returned when hostname could not be resolved.
-   */
-  @JvmInline
-  value class ResolveFailure(override val message: @NlsSafe String) : EelConnectionError
+  interface ConnectionProblem : EelConnectionError
 
   /**
    * Unknown failure during a connection establishment
    */
-  @JvmInline
-  value class UnknownFailure(override val message: @NlsSafe String) : EelConnectionError
+  interface UnknownFailure : EelConnectionError
 }
-
-
