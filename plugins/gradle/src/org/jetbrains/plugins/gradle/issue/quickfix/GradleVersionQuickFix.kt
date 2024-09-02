@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationSour
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -51,20 +52,7 @@ class GradleVersionQuickFix(private val projectPath: String,
   override val id: String = "fix_gradle_version_in_wrapper"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    return updateOrCreateWrapper()
-      .exceptionally {
-        LOG.warn(it)
-        val title = GradleBundle.message("gradle.version.quick.fix.error")
-        val message = GradleBundle.message("gradle.version.quick.fix.error.description", ShowLogAction.getActionName())
-        val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
-          .apply {
-            isBalloonNotification = true
-            balloonGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Wrapper Update")
-            setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
-          }
-        ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
-        throw it
-      }
+    return updateOrCreateWrapper(project)
       .thenApply {
         GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath)!!.distributionType = DistributionType.DEFAULT_WRAPPED
       }
@@ -81,12 +69,28 @@ class GradleVersionQuickFix(private val projectPath: String,
       }
   }
 
+  private fun updateOrCreateWrapper(project: Project): CompletableFuture<*> {
+    return tryUpdateOrCreateWrapper().exceptionally {
+      LOG.warn(it)
+      val title = GradleBundle.message("gradle.version.quick.fix.error")
+      val message = GradleBundle.message("gradle.version.quick.fix.error.description", ShowLogAction.getActionName())
+      val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
+        .apply {
+          isBalloonNotification = true
+          balloonGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Wrapper Update")
+          setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
+        }
+      ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
+      throw it
+    }
+  }
+
   /**
    * This is only a fallback, because immediately after updating `gradle-wrapper.properties` the `wrapper` task will be executed explicitly.
    * The fallback is necessary because if the `wrapper` task fails for some unknown reason, the next interaction with Gradle will download
    * the correct Gradle version.
    */
-  private fun updateOrCreateWrapper(): CompletableFuture<*> {
+  private fun tryUpdateOrCreateWrapper(): CompletableFuture<*> {
     return CompletableFuture.supplyAsync {
       var wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
       val wrapperConfiguration = getWrapperConfiguration(wrapperPropertiesPath, gradleVersion)
@@ -127,16 +131,21 @@ class GradleVersionQuickFix(private val projectPath: String,
     settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
 
     val future = CompletableFuture<Nothing>()
-    runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
-            object : TaskCallback {
-              override fun onSuccess() {
-                future.complete(null)
-              }
+    val task = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
+      .withActivateToolWindowBeforeRun(false)
+      .withProgressExecutionMode(NO_PROGRESS_ASYNC)
+      .withUserData(userData)
+      .withCallback(object : TaskCallback {
+        override fun onSuccess() {
+          future.complete(null)
+        }
 
-              override fun onFailure() {
-                future.completeExceptionally(RuntimeException("Wrapper task failed"))
-              }
-            }, NO_PROGRESS_ASYNC, false, userData)
+        override fun onFailure() {
+          future.completeExceptionally(RuntimeException("Wrapper task failed"))
+        }
+      })
+      .build()
+    runTask(task)
     return future
   }
 
