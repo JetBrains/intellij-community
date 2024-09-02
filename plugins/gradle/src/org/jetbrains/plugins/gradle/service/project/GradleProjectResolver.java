@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
@@ -809,6 +810,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap,
     @NotNull ProjectResolverContext resolverContext
   ) {
+    if (resolverContext.isResolveModulePerSourceSet()) {
+      mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, moduleMap);
+    }
+    else {
+      mergeSourceSetContentRootsInModulePerProjectMode(resolverContext, moduleMap);
+    }
+  }
+
+  private static void mergeSourceSetContentRootsInModulePerSourceSetMode(
+    @NotNull ProjectResolverContext resolverContext,
+    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
+  ) {
 
     final Map<String, Counter> weightMap = new HashMap<>();
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
@@ -917,6 +930,48 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
 
       moduleNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+    }
+  }
+
+  private static void mergeSourceSetContentRootsInModulePerProjectMode(
+    @NotNull ProjectResolverContext resolverContext,
+    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
+  ) {
+    for (var moduleEntry : moduleMap.values()) {
+      var moduleNode = moduleEntry.first;
+      var ideaModule = moduleEntry.second;
+
+      var externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
+      if (externalProject == null) continue;
+
+      var projectRootPath = NioPathUtil.toCanonicalPath(externalProject.getProjectDir().toPath());
+
+      var projectContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, projectRootPath);
+      var externalContentRootNodes = new ArrayList<ContentRootData>();
+
+      for (var contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
+        for (var source : contentRootNode.getData().getSourceRoots().entrySet()) {
+          var sourceRootType = source.getKey();
+          for (var sourceRoot : source.getValue()) {
+            var sourceRootPath = sourceRoot.getPath();
+            var packagePrefix = sourceRoot.getPackagePrefix();
+            if (FileUtil.isAncestor(projectRootPath, sourceRootPath, false)) {
+              projectContentRootData.storePath(sourceRootType, sourceRootPath, packagePrefix);
+            }
+            else {
+              var externalContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, sourceRootPath);
+              externalContentRootData.storePath(sourceRootType, sourceRootPath, packagePrefix);
+              externalContentRootNodes.add(externalContentRootData);
+            }
+          }
+        }
+        contentRootNode.clear(true);
+      }
+
+      moduleNode.createChild(ProjectKeys.CONTENT_ROOT, projectContentRootData);
+      for (var externalContentRootData : externalContentRootNodes) {
+        moduleNode.createChild(ProjectKeys.CONTENT_ROOT, externalContentRootData);
+      }
     }
   }
 
