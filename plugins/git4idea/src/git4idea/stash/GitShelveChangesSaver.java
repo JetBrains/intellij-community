@@ -28,7 +28,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public final class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
@@ -77,17 +80,12 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
   private void rollbackChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
                                @NotNull Collection<Change> shelvedChanges) {
     if (GitVersionSpecialty.RESTORE_SUPPORTED.existsIn(myProject)) {
-      Set<FilePath> filePaths = new HashSet<>();
-      for (Change change : shelvedChanges) {
-        ContainerUtil.addAllNotNull(filePaths, ChangesUtil.getBeforePath(change));
-        ContainerUtil.addAllNotNull(filePaths, ChangesUtil.getAfterPath(change));
-      }
+      List<FilePath> filePaths = ChangesUtil.getPaths(shelvedChanges);
+      Map<VirtualFile, List<FilePath>> filesByRoot = GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filePaths);
 
-      GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filePaths).forEach((root, paths) -> {
-        if (!rootsToSave.contains(root)) {
-          LOG.warn(String.format("Paths not under shelved root: root - %s, paths - %s, shelved roots - %s", root, paths, rootsToSave));
-          return;
-        }
+      for (VirtualFile root : rootsToSave) {
+        List<FilePath> rootPaths = ContainerUtil.notNullize(filesByRoot.get(root));
+        if (rootPaths.isEmpty()) continue;
 
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
         boolean isFreshRepository = repository != null && repository.getCurrentRevision() == null;
@@ -95,9 +93,9 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
           resetHardLocal(myProject, root);
         }
         else {
-          restoreStagedWorktree(myProject, root, paths);
+          restoreStagedWorktree(myProject, root, rootPaths);
         }
-      });
+      }
     }
     else {
       for (VirtualFile root : rootsToSave) {
