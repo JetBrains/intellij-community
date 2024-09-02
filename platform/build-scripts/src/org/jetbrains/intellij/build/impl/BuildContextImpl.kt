@@ -93,7 +93,7 @@ class BuildContextImpl internal constructor(
 
   private var builtinModulesData: BuiltinModulesFileData? = null
 
-  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
+  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this.compilationContext) }
 
   override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
 
@@ -156,7 +156,7 @@ class BuildContextImpl internal constructor(
         LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
       } ?: NonCachingJarCacheManager
       return BuildContextImpl(
-        compilationContext = compilationContext,
+        compilationContext = compilationContext.asArchivedIfNeeded,
         productProperties = productProperties,
         windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString),
         linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),

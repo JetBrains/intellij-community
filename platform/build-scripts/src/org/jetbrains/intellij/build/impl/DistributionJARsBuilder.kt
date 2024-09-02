@@ -36,6 +36,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -778,10 +779,11 @@ suspend fun layoutPlatformDistribution(
       }
       launch(CoroutineName("write patched app info")) {
         spanBuilder("write patched app info").use {
-          val module = context.findRequiredModule("intellij.platform.core")
+          val moduleName = "intellij.platform.core"
+          val module = context.findRequiredModule(moduleName)
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val result = injectAppInfo(inFileBytes = context.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found"), newFieldValue = context.appInfoXml)
-          moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
+          moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, result)
         }
       }
     }
@@ -809,12 +811,14 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
   }
 
   val moduleName = "intellij.platform.resources"
-  val sourceFile = context.getModuleOutputDir((context.findModule(moduleName))!!).resolve("keymaps/\$default.xml")
-  var text = Files.readString(sourceFile)
+  val relativePath = "keymaps/\$default.xml"
+  val sourceFileContent = context.getModuleOutputFileContent(context.findRequiredModule(moduleName), relativePath)
+                          ?: error("Not found '$relativePath' in module $moduleName output")
+  var text = String(sourceFileContent, StandardCharsets.UTF_8)
   text = text.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
   text = text.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>", "<mouse-shortcut keystroke=\"alt button1\"/>")
   text = text.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", "<mouse-shortcut keystroke=\"alt shift button1\"/>")
-  moduleOutputPatcher.patchModuleOutput(moduleName, "keymaps/\$default.xml", text)
+  moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, text)
 }
 
 fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
@@ -848,8 +852,8 @@ private suspend fun containsFileInOutput(
   excludes: Collection<String>,
   context: BuildContext,
 ): Boolean {
-  val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(moduleName))
-  if (Files.notExists(moduleOutput.resolve(filePath))) {
+  val exists = context.hasModuleOutputPath(context.findRequiredModule(moduleName), filePath)
+  if (!exists) {
     return false
   }
 

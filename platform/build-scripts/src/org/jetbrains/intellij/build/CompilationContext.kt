@@ -45,8 +45,14 @@ interface CompilationContext {
 
   fun findModule(name: String): JpsModule?
 
+  /**
+   * Could be directory or jar file
+   */
   suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
 
+  /**
+   * Could be directory or jar file
+   */
   suspend fun getModuleTestsOutputDir(module: JpsModule): Path
 
   suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>

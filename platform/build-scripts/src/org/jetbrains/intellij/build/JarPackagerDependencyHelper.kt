@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
-internal class JarPackagerDependencyHelper(private val context: BuildContext) {
+internal class JarPackagerDependencyHelper(private val context: CompilationContext) {
   private val javaExtensionService = JpsJavaExtensionService.getInstance()
 
   private val libraryCache = ConcurrentHashMap<JpsModule, List<JpsLibraryDependency>>()

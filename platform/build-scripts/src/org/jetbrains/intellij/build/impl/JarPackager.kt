@@ -36,7 +36,6 @@ import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.readLines
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
@@ -272,7 +271,7 @@ class JarPackager private constructor(
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     extraExcludes.isEmpty()
 
-    val nativeFiles = moduleOutDir.resolve("META-INF").resolve("native-files-list").takeIf { Files.isRegularFile(it) }?.readLines()
+    val nativeFiles = context.getModuleOutputFileContent(module = module, forTests = useTestModuleOutput, relativePath = "META-INF/native-files-list")?.let { String(it) }?.lines()
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
       assets.computeIfAbsent(moduleOutDir) { file ->
@@ -941,7 +940,9 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
   buildJar(
     targetFile = targetFile,
     sources = moduleNames.map { moduleName ->
-      DirSource(dir = context.getModuleOutputDir(context.findRequiredModule(moduleName)), excludes = commonModuleExcludes)
+      val output = context.getModuleOutputDir(context.findRequiredModule(moduleName))
+      if (Files.isDirectory(output) || !Files.exists(output)) DirSource(dir = output, excludes = commonModuleExcludes)
+      else ZipSource(file = output, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
     },
   )
 }

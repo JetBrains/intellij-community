@@ -29,8 +29,16 @@ class ArchivedCompilationOutputStorage(
     archiveIfAbsent = false
   }
 
+  internal fun loadMapping(mappingFile: Path) {
+    for (line in Files.readAllLines(mappingFile)) {
+      val eq = line.indexOf('=')
+      if (eq == -1) continue
+      unarchivedToArchivedMap[classesOutputDirectory.resolve(line.substring(0, eq))] = Path.of(line.substring(eq + 1))
+    }
+  }
+
   suspend fun getArchived(path: Path): Path {
-    if (Files.isRegularFile(path) || !path.startsWith(classesOutputDirectory)) {
+    if (Files.isRegularFile(path)) {
       return path
     }
 

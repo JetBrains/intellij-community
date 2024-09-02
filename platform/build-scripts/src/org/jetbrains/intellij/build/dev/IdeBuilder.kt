@@ -510,7 +510,7 @@ private suspend fun createBuildContext(
     }
 
     BuildContextImpl(
-      compilationContext = compilationContext,
+      compilationContext = compilationContext.asArchivedIfNeeded,
       productProperties = productProperties.await(),
       windowsDistributionCustomizer = WindowsDistributionCustomizer(),
       linuxDistributionCustomizer = LinuxDistributionCustomizer(),
