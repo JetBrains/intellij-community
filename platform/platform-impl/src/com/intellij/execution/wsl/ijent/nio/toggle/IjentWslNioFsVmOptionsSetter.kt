@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
@@ -120,7 +121,10 @@ object IjentWslNioFsVmOptionsSetter {
 
     // In Dev Server, it's possible to customize VM options only through the Run Configuration.
     // Invoking the action "Customize VM Options" won't have any effect because the Dev Server resets the file on restart.
-    val getEffectiveVmOptions = AppMode.isDevServer() || ApplicationManager.getApplication().isUnitTestMode
+    val getEffectiveVmOptions =
+      PluginManagerCore.isRunningFromSources() ||
+      AppMode.isDevServer() ||
+      ApplicationManager.getApplication().isUnitTestMode
 
     val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
       VMOptions.readOption(prefix, getEffectiveVmOptions)
@@ -132,7 +136,7 @@ object IjentWslNioFsVmOptionsSetter {
       }
       catch (err: IOException) {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-          throw err
+          thisLogger().error("Failed to set VM Option for IJent file system", err)
         }
       }
     }
