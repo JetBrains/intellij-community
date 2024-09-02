@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.project.ContentRootData
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.util.io.toCanonicalPath
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
@@ -59,14 +60,14 @@ class GradleContentRootIndex {
 
     val projectRootPath = externalProject.projectDir.toPath()
 
-    val contentRootPaths = HashSet<Path>()
+    val contentRootPaths = NioPathPrefixTreeFactory.createSet()
     for (sourceDirectorySet in sources.values) {
       for (sourceRootPath in sourceDirectorySet) {
         val contentRootPath = resolveContentRoot(projectRootPath, sourceRootPath)
         contentRootPaths.add(contentRootPath)
       }
     }
-    return contentRootPaths
+    return contentRootPaths.getRoots()
   }
 
   private fun resolveContentRoot(projectRootPath: Path, sourceRootPath: Path): Path {
