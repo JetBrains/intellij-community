@@ -358,6 +358,11 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testCompositeAssignmentCast() { doTest(); }
   
   public void testLambdaInitialization() { doTest(); }
+  
+  public void testSeparateInitialization() { doTest(); }
+  public void testSeparateInitialization2() { doTest(); }
+  public void testSeparateInitialization3() { doTest("Cannot perform refactoring.\nVariable aaa has no initializer"); }
+  public void testSeparateInitialization4() { doTest(); }
 
   private void doTest(String conflictMessage) {
     try {
