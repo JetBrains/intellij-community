@@ -33,7 +33,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.net.URI
+import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -89,9 +89,7 @@ class GradleVersionQuickFix(private val projectPath: String,
   private fun updateOrCreateWrapper(): CompletableFuture<*> {
     return CompletableFuture.supplyAsync {
       var wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
-      val wrapperConfiguration = getWrapperConfiguration(wrapperPropertiesPath)
-      val distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
-      wrapperConfiguration.distribution = URI(distributionUrl)
+      val wrapperConfiguration = getWrapperConfiguration(wrapperPropertiesPath, gradleVersion)
 
       if (wrapperPropertiesPath == null) {
         wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
@@ -142,13 +140,13 @@ class GradleVersionQuickFix(private val projectPath: String,
     return future
   }
 
-  private fun getWrapperConfiguration(wrapperPropertiesPath: Path?): WrapperConfiguration {
-    return if (wrapperPropertiesPath == null) {
-      WrapperConfiguration()
+  private fun getWrapperConfiguration(wrapperPropertiesPath: Path?, gradleVersion: GradleVersion): WrapperConfiguration {
+    val configuration = wrapperPropertiesPath?.let { GradleUtil.readWrapperConfiguration(it) }
+    if (configuration == null) {
+      return GradleUtil.generateGradleWrapperConfiguration(gradleVersion)
     }
-    else {
-      GradleUtil.readWrapperConfiguration(wrapperPropertiesPath) ?: WrapperConfiguration()
-    }
+    configuration.distribution = getWrapperDistributionUri(gradleVersion)
+    return configuration
   }
 
   companion object {
