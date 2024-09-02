@@ -68,7 +68,9 @@ class ApiIndex private constructor(
 
   internal fun discoverClass(signature: ClassBinarySignature): ApiIndex {
     val className = signature.name
-    check(classes[className] == null)
+    check(classes[className] == null) {
+      "Class already discovered $className"
+    }
     return ApiIndex(
       packages,
       classes = classes.put(className, signature),
