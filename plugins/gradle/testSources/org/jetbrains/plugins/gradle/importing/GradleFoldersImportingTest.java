@@ -886,7 +886,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testSourceFoldersOutOfContentRootWithModuleResolving() throws Exception {
+  public void testSourceFoldersOutOfContentRoot() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("../outer1/src/main/java/A.java", "class A {}");
     createProjectSubFile("../outer1/src/main/kotlin/A.kt", "class A {}");
@@ -899,8 +899,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .withIdeaPlugin()
       .addPrefix(
         """
-          apply plugin: 'java'
-          apply plugin: 'idea'
           sourceSets {
             generated.java.srcDirs += "${buildDir}/generated"
             generated.java.srcDirs += '../outer4/generated'
@@ -961,43 +959,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                    path("../outer4/generated")
       )
     );
-  }
-
-  @Test
-  public void testSourceFoldersOutOfContentRootWithoutModuleResolving() throws Exception {
-    createProjectSubFile("src/main/java/A.java", "class A {}");
-    createProjectSubFile("../outer1/src/main/java/A.java", "class A {}");
-    createProjectSubFile("../outer1/src/main/kotlin/A.kt", "class A {}");
-    createProjectSubFile("../outer2/src/main/java/A.java", "class A {}");
-    createProjectSubFile("../outer3/A.java", "class A {}");
-    createProjectSubFile("build/generated/A.java", "class A {}");
-    createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    createProjectSubFile("build.gradle", script(it -> it
-      .withJavaPlugin()
-      .withIdeaPlugin()
-      .addPrefix(
-        """
-          sourceSets {
-            generated.java.srcDirs += "${buildDir}/generated"
-            generated.java.srcDirs += '../outer4/generated'
-            main.java.srcDirs += '../outer1/src/main/java'
-            main.java.srcDirs += '../outer1/src/main/kotlin'
-            main.java.srcDirs += '../outer2/src/main/java'
-            main.java.srcDirs += '../outer3'
-          }
-          """
-      ).addPrefix(
-        """
-          idea {
-            module {
-              inheritOutputDirs = true
-              generatedSourceDirs += file("${buildDir}/generated")
-              generatedSourceDirs += file('../outer4/generated')
-            }
-          }
-          """
-      )
-    ));
 
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
     importProject();
