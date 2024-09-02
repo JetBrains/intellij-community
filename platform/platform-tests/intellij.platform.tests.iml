@@ -99,6 +99,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
   </component>
 </module>

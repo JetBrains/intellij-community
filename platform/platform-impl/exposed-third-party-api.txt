@@ -47,11 +47,6 @@ net/miginfocom/layout/BoundSize
 net/miginfocom/layout/LC
 org/apache/http/client/CredentialsProvider
 org/apache/http/client/config/RequestConfig$Builder
-org/cef/CefBrowserSettings
-org/cef/CefClient
-org/cef/browser/CefBrowser
-org/cef/browser/CefRequestContext
-org/cef/handler/CefRenderHandler
 sun/awt/FontConfiguration
 sun/awt/KeyboardFocusManagerPeerImpl
 sun/font/SunFontManager
