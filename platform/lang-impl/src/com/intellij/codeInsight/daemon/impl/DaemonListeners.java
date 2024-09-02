@@ -400,7 +400,11 @@ public final class DaemonListeners implements Disposable {
           }
         }
       }));
-    HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
+    HeavyProcessLatch.INSTANCE.addListener(this, op -> {
+      if (!HeavyProcessLatch.Type.Syncing.equals(op.getType())) {
+        stopDaemon(true, "re-scheduled to execute after heavy processing finished");
+      }
+    });
   }
 
   private static void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
