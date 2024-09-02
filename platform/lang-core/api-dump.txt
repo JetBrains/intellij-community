@@ -309,7 +309,6 @@ a:com.intellij.ide.util.projectWizard.ProjectBuilder
 - commit(com.intellij.openapi.project.Project):java.util.List
 - commit(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):java.util.List
 - a:commit(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel,com.intellij.openapi.roots.ui.configuration.ModulesProvider):java.util.List
-- createModuleConfigurator():java.util.function.Consumer
 - createProject(java.lang.String,java.lang.String):com.intellij.openapi.project.Project
 - isOpenProjectSettingsAfter():Z
 - isSuitableSdkType(com.intellij.openapi.projectRoots.SdkTypeId):Z

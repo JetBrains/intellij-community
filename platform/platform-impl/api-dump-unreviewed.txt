@@ -9635,7 +9635,6 @@ com.intellij.ide.wizard.NewProjectWizardStep
 - sf:GENERATE_ONBOARDING_TIPS_NAME:java.lang.String
 - sf:GIT_PROPERTY_NAME:java.lang.String
 - sf:GROUP_ID_PROPERTY_NAME:java.lang.String
-- createModuleConfigurator():java.util.function.Consumer
 - a:getContext():com.intellij.ide.util.projectWizard.WizardContext
 - a:getData():com.intellij.openapi.util.UserDataHolder
 - a:getKeywords():com.intellij.ide.wizard.NewProjectWizardStep$Keywords

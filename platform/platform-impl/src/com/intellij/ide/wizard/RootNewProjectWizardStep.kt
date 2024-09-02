@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 class RootNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep {
@@ -22,6 +23,7 @@ class RootNewProjectWizardStep(override val context: WizardContext) : NewProject
   }
 
   companion object {
+    @ApiStatus.Internal
     val PROJECT_BUILDER_KEY = Key.create<ProjectBuilder>(ProjectBuilder::class.java.name)
   }
 }
