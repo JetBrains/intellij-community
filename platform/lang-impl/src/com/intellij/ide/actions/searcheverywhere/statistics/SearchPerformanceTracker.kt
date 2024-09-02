@@ -16,6 +16,7 @@ internal class SearchPerformanceTracker(private val startMoment: StartMoment?, p
 
   private var firstSearch: FinishedSearchPerformanceInfo? = null
   private var lastSearch: FinishedSearchPerformanceInfo? = null
+  private var wasCancelled = true
 
   override fun searchStarted(pattern: String, contributors: MutableCollection<out SearchEverywhereContributor<*>>) {
     val tab = tabIdProvider.invoke()
@@ -53,6 +54,12 @@ internal class SearchPerformanceTracker(private val startMoment: StartMoment?, p
       return SearchSessionPerformanceInfo(firstSearch, lastSearch, totalDuration)
     }
   }
+
+  fun popupIsClosedDueToSelection() {
+    wasCancelled = false
+  }
+
+  fun isDialogCancelled() = wasCancelled
 }
 
 internal data class SearchPerformanceInfo(val tab: String) {
