@@ -263,7 +263,7 @@ final class DirectoryLock {
     catch (Exception e) {
       LOG.debug(e);
     }
-    return new CannotActivateException(BootstrapBundle.message("bootstrap.error.dead.end", address, remotePID, reason, myPortFile));
+    return new CannotActivateException(BootstrapBundle.message("bootstrap.error.dead.end", remotePID, address, reason, myPortFile));
   }
 
   private void allowActivation() {
