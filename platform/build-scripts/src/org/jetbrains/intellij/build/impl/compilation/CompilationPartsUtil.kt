@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import java.math.BigInteger
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
@@ -540,30 +541,7 @@ internal fun computeHash(file: Path): String {
   return digestToString(messageDigest)
 }
 
-internal fun digestToString(digest: MessageDigest): String = encodeToBase38(digest.digest())
-
-// Define the custom alphabet for encoding
-@Suppress("SpellCheckingInspection")
-private const val CUSTOM_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789_-"
-private const val BASE = CUSTOM_ALPHABET.length
-
-private fun encodeToBase38(bytes: ByteArray): String {
-  val result = StringBuilder(49)
-  var quotient = 0
-  for (currentByte in bytes) {
-    quotient = (quotient shl 8) or (currentByte.toInt() and 0xFF)
-    while (quotient >= BASE) {
-      result.append(CUSTOM_ALPHABET[quotient % BASE])
-      quotient /= BASE
-    }
-  }
-
-  if (quotient > 0) {
-    result.append(CUSTOM_ALPHABET[quotient])
-  }
-
-  return result.toString()
-}
+internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "z"
 
 internal data class PackAndUploadItem(
   @JvmField val output: Path,
