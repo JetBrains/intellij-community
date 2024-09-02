@@ -101,7 +101,7 @@ import java.util.stream.Collectors;
 /**
  * @author anna
  */
-public final class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnotationsManager implements Disposable {
+public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnotationsManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
   private static final NotificationGroup EXTERNAL_ANNOTATIONS_MESSAGES =
     NotificationGroupManager.getInstance().getNotificationGroup("External annotations");
