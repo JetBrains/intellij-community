@@ -58,6 +58,8 @@ public interface IFernflowerPreferences {
   String USE_JAD_VARNAMING = "jvn"; // Overwrites any Local Variable names with JAD style names
   String USE_JAD_PARAMETER_RENAMING = "jpr"; // Include parameter names in JAD naming
 
+  String SKIP_EXTRA_FILES = "sef";
+
   Map<String, Object> DEFAULTS = getDefaults();
 
   static Map<String, Object> getDefaults() {
@@ -105,6 +107,7 @@ public interface IFernflowerPreferences {
     defaults.put(DUMP_ORIGINAL_LINES, "0");
     defaults.put(USE_JAD_VARNAMING, "0");
     defaults.put(USE_JAD_PARAMETER_RENAMING, "0");
+    defaults.put(SKIP_EXTRA_FILES, "0");
 
     return Collections.unmodifiableMap(defaults);
   }
