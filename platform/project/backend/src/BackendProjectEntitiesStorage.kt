@@ -7,8 +7,8 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.project.asEntityOrNull
 import fleet.kernel.change
-import fleet.kernel.kernel
 import fleet.kernel.shared
+import fleet.kernel.transactor
 
 internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
   override suspend fun removeProjectEntity(project: Project): Unit = withKernel {
@@ -20,6 +20,6 @@ internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
 
     // Removing ProjectEntity and LocalProjectEntity is the last operation in most of the tests
     // Without calling "flushLatestChange" kernel keeps the project, which causes "testProjectLeak" failures
-    kernel().flushLatestChange()
+    transactor().flushLatestChange()
   }
 }

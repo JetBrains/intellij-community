@@ -76,7 +76,7 @@ fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
  * Don't use this method unless there are problems with objects stuck in [Novelty]
  */
 @ApiStatus.Internal
-suspend fun Kernel.flushLatestChange() {
+suspend fun Transactor.flushLatestChange() {
   this.changeSuspend {  }
 }
 
