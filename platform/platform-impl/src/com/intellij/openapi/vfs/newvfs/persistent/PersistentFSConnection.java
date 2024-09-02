@@ -175,7 +175,7 @@ public final class PersistentFSConnection {
     return records.getGlobalModCount();
   }
 
-  void markDirty() throws IOException {
+  void markDirty() {
     if (!dirty) {
       dirty = true;
     }

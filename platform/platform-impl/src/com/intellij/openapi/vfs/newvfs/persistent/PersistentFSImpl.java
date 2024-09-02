@@ -37,6 +37,8 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
+import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordForRead;
+import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -783,27 +785,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int fileId = getFileId(file);
 
-    //FIXME RC: very verbose return of Pair:
-    Pair<Long, Integer> pair = vfsPeer.readRecordFields(fileId, record -> {
-      int flags = record.getFlags();
-      boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
-      boolean mustReloadContent = BitUtil.isSet(flags, Flags.MUST_RELOAD_CONTENT);
-      long length = mustReloadLength ? -1 : record.getLength();
-      boolean contentOutdated = (length == -1) || mustReloadContent;
-      int contentRecordId;
-      if (contentOutdated) {
-        contentRecordId = -1;
-      }
-      else {
-        // As soon as we got a contentId -- there is no need for locking anymore,
-        // since VFSContentStorage is a thread-safe append-only storage
-        contentRecordId = record.getContentRecordId();
-      }
-      return new Pair<>(length, contentRecordId);
-    });
-
-    long length = pair.getFirst();
-    int contentRecordId = pair.getSecond();
+    LengthAndContentIdReader reader = vfsPeer.readRecordFields(fileId, new LengthAndContentIdReader());
+    long length = reader.length;
+    int contentRecordId = reader.contentRecordId;
 
 
     if (contentRecordId <= 0) {
@@ -815,6 +799,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         updateContentForFile(fileId, new ByteArraySequence(content));
       }
       else {
+        //just actualise the length:
         vfsPeer.updateRecordFields(fileId, record -> {
           record.setLength(content.length);
           int oldFlags = record.getFlags();
@@ -2497,4 +2482,27 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return o2 != null && o1.getChildName().equalsIgnoreCase(o2.getChildName());
     }
   };
+
+  private static class LengthAndContentIdReader implements RecordReader<LengthAndContentIdReader> {
+    private long length;
+    private int contentRecordId;
+
+    @Override
+    public LengthAndContentIdReader readRecord(@NotNull RecordForRead record) throws IOException {
+      int flags = record.getFlags();
+      boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
+      boolean mustReloadContent = BitUtil.isSet(flags, Flags.MUST_RELOAD_CONTENT);
+      length = mustReloadLength ? -1 : record.getLength();
+      boolean contentOutdated = (length == -1) || mustReloadContent;
+      if (contentOutdated) {
+        contentRecordId = -1;
+      }
+      else {
+        // As soon as we got a contentId -- there is no need for locking anymore,
+        // since VFSContentStorage is a thread-safe append-only storage
+        contentRecordId = record.getContentRecordId();
+      }
+      return this;
+    }
+  }
 }
