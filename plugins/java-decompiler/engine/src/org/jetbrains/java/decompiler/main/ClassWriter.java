@@ -830,7 +830,7 @@ public class ClassWriter {
             tracer.addTracer(codeTracer);
           }
           catch (Throwable t) {
-            String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.";
+            String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + node.classStruct.qualifiedName + " couldn't be written.";
             DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
             methodWrapper.decompiledWithErrors = true;
           }

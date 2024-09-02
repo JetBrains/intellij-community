@@ -102,7 +102,7 @@ public class ClassWrapper {
         throw e;
       }
       catch (Throwable t) {
-        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
+        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
