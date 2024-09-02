@@ -86,7 +86,7 @@ internal abstract class InlineCompletionSessionManager {
   private fun updateSession(
     session: InlineCompletionSession,
     suggestionUpdateManager: InlineCompletionSuggestionUpdateManager,
-    request: InlineCompletionRequest
+    request: InlineCompletionRequest,
   ): UpdateSessionResult {
     val event = request.event
 
@@ -97,7 +97,7 @@ internal abstract class InlineCompletionSessionManager {
       }
     }
 
-    val success = session.update { variant -> suggestionUpdateManager.update(event, variant) }
+    val success = session.update(event) { variant -> suggestionUpdateManager.update(event, variant) }
     if (!success) {
       return UpdateSessionResult.Invalidated
     }

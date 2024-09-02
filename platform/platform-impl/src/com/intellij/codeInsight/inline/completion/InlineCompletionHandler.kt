@@ -56,7 +56,7 @@ import kotlin.coroutines.resumeWithException
 class InlineCompletionHandler(
   scope: CoroutineScope,
   val editor: Editor,
-  private val parentDisposable: Disposable
+  private val parentDisposable: Disposable,
 ) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
@@ -238,7 +238,7 @@ class InlineCompletionHandler(
   private fun complete(
     isActive: Boolean,
     cause: Throwable?,
-    context: InlineCompletionContext
+    context: InlineCompletionContext,
   ) {
     if (cause != null && !context.isDisposed) {
       hide(context, FinishType.ERROR)
@@ -295,7 +295,8 @@ class InlineCompletionHandler(
     completionState.ignoreDocumentChanges = true
     return try {
       block()
-    } finally {
+    }
+    finally {
       check(completionState.ignoreDocumentChanges) {
         "The state of disabling document changes tracker is switched outside."
       }
@@ -329,7 +330,8 @@ class InlineCompletionHandler(
     completionState.ignoreCaretMovement = true
     return try {
       block()
-    } finally {
+    }
+    finally {
       check(completionState.ignoreCaretMovement) {
         "The state of disabling caret movement tracker is switched outside."
       }
@@ -339,7 +341,7 @@ class InlineCompletionHandler(
 
   private suspend fun request(
     provider: InlineCompletionProvider,
-    request: InlineCompletionRequest
+    request: InlineCompletionRequest,
   ): InlineCompletionSuggestion {
     withContext(Dispatchers.EDT) {
       trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
@@ -377,7 +379,8 @@ class InlineCompletionHandler(
       application.invokeLater {
         if (project.isDisposed) {
           continuation.resumeWithException(CancellationException())
-        } else {
+        }
+        else {
           documentManager.performWhenAllCommitted {
             continuation.resume(Unit)
           }
@@ -412,7 +415,7 @@ class InlineCompletionHandler(
   private fun getVariantsComputer(
     variants: List<InlineCompletionVariant>,
     context: InlineCompletionContext,
-    scope: CoroutineScope
+    scope: CoroutineScope,
   ): InlineCompletionVariantsComputer {
     return object : InlineCompletionVariantsComputer(variants) {
       private val job = scope.launch(Dispatchers.EDT) {
@@ -465,16 +468,16 @@ class InlineCompletionHandler(
         traceBlocking(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
       }
 
-      override fun variantChanged(variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>) {
+      override fun variantChanged(event: InlineCompletionEvent, variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>) {
         ThreadingAssertions.assertEventDispatchThread()
         val oldText = old.joinToString("") { it.text }
         val newText = new.joinToString("") { it.text }
-        traceBlocking(InlineCompletionEventType.Change(variantIndex, new, oldText.length - newText.length))
+        traceBlocking(InlineCompletionEventType.Change(event, variantIndex, new, oldText.length - newText.length))
       }
 
-      override fun variantInvalidated(variantIndex: Int) {
+      override fun variantInvalidated(event: InlineCompletionEvent, variantIndex: Int) {
         ThreadingAssertions.assertEventDispatchThread()
-        traceBlocking(InlineCompletionEventType.Invalidated(variantIndex))
+        traceBlocking(InlineCompletionEventType.Invalidated(event, variantIndex))
       }
 
       override fun dataChanged() {
@@ -528,7 +531,7 @@ class InlineCompletionHandler(
   private class InlineCompletionState(
     var ignoreDocumentChanges: Boolean = false,
     var ignoreCaretMovement: Boolean = false,
-    var isInvokingEvent: Boolean = false
+    var isInvokingEvent: Boolean = false,
   )
 
   companion object {

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
@@ -126,10 +127,11 @@ class InlineCompletionSession private constructor(
 
   @RequiresEdt
   internal fun update(
+    event: InlineCompletionEvent,
     updater: (InlineCompletionVariant.Snapshot) -> InlineCompletionSuggestionUpdateManager.UpdateResult
   ): Boolean {
     check(isActive())
-    return checkNotNull(variantsProvider).update(updater)
+    return checkNotNull(variantsProvider).update(event, updater)
   }
 
   /**
