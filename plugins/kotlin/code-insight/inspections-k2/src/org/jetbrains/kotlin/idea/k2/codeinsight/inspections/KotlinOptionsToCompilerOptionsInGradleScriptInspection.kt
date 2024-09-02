@@ -123,7 +123,6 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
         if (scriptText.contains("android")) {
             ktExpression.prevLeafs.forEach {
                 if ("android" == it.text) {
-                    println("android")
                     return true
                 }
             }
