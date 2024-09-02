@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
@@ -429,8 +429,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
       }
 
       final String text = host.getText();
-      boolean noIndent = host instanceof PsiFragment fragment && fragment.getTokenType() != JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN;
-      int startOffset = textRange.getStartOffset() + (noIndent ? 0 : indent);
+      var startOffset = computeInjectionStartOffset(host, textRange, indent, text);
       int endOffset = text.indexOf('\n', startOffset);
       final List<TextRange> result = new SmartList<>();
       while (endOffset > 0) {
@@ -470,6 +469,33 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
     public LanguageInjectionSupport getLanguageInjectionSupport() {
       return mySupport;
     }
+  }
+
+  /**
+   * Injection starts from:<ul>
+   * <li>First newline character</li>
+   * <li>First non-space character</li>
+   * <li>Any character after {@code indentSize} space characters</li>
+   * </ul>
+   */
+  private static int computeInjectionStartOffset(@NotNull PsiLanguageInjectionHost host,
+                                                 @NotNull TextRange textRange,
+                                                 int indentSize,
+                                                 @NotNull String hostText) {
+    int startOffset = textRange.getStartOffset();
+    boolean noIndent = host instanceof PsiFragment fragment && fragment.getTokenType() != JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN;
+    if (!noIndent) {
+      int firstLineIndent = 0;
+      while (startOffset < textRange.getEndOffset() && firstLineIndent < indentSize) {
+        char currentCharacter = hostText.charAt(startOffset);
+        if (currentCharacter == '\n' || !Character.isWhitespace(currentCharacter)) {
+          break;
+        }
+        startOffset++;
+        firstLineIndent++;
+      }
+    }
+    return startOffset;
   }
 
   private static boolean checkUnparsableReference(PsiExpression refExpression) {
