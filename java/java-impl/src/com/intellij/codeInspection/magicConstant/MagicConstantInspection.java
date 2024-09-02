@@ -507,6 +507,11 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       children = computable.compute();
     }
     else {
+      // If there is a global indicator (batch inspections are run under indicator),
+      // then `SliceNode#getChildren` collects children under that indicator.
+      // In turn, `SliceNode#doGetChildren` calls `ApplicationManagerEx.getApplicationEx().executeByImpatientReader`
+      // which javadoc says that it would throw PCE on each RA if there is pending WA.
+      // So without the progress, the whole batch run would be canceled by that PCE from slices.
       children = ProgressManager.getInstance().runProcess(
         computable, new ProgressIndicatorBase());
     }
