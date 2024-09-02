@@ -30,6 +30,7 @@ import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector
 import org.jetbrains.kotlin.idea.debugger.getContainingBlockOrMethod
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -137,8 +138,8 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(context: Sma
         return this
     }
     if (DexDebugFacility.isDex(debugProcess)) {
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
-        return this
+        return DexBytecodeInspector.EP.extensions.firstOrNull()?.filterAlreadyExecutedTargets(this, context)
+            ?: this
     }
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
     val location = frameProxy?.safeLocation() ?: run {
@@ -271,7 +272,7 @@ private fun filterSmartStepTargets(
 
 private fun Range<Int>.toClosedRange() = from..to
 
-private data class SmartStepIntoContext(
+data class SmartStepIntoContext(
     val expression: KtElement,
     val debugProcess: DebugProcessImpl,
     val position: SourcePosition,
