@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.idea.IJIgnore;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -24,7 +23,6 @@ public class MissingReturnTest extends LightGroovyTestCase {
 
   public void testMissingReturnTryCatch() { doTest(); }
 
-  @IJIgnore(issue = "IJPL-150165")
   public void testMissingReturnLastNull() { doTest(); }
 
   public void testMissingReturnImplicitReturns() { doTest(); }
