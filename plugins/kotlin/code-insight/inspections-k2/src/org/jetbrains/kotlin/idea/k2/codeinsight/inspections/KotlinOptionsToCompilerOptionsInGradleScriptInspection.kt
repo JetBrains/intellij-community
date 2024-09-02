@@ -111,12 +111,6 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                     KotlinBundle.message("inspection.kotlin.options.to.compiler.options.display.name")
                 )
                     .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-                    .range(
-                        TextRange(
-                            expression.startOffset,
-                            expression.endOffset
-                        ).shiftRight(-expression.startOffset)
-                    )
                     .fix(
                         ReplaceKotlinOptionsWithCompilerOptionsFix()
                     ).register()
