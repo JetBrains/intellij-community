@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.org.objectweb.asm.Opcodes
 import kotlin.jvm.internal.FunctionReference
 import kotlin.jvm.internal.PropertyReference
-import org.jetbrains.kotlin.idea.debugger.base.util.DexBytecodeInspector
+import org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector
 
 class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
     override fun isSynthetic(typeComponent: TypeComponent?): Boolean {
