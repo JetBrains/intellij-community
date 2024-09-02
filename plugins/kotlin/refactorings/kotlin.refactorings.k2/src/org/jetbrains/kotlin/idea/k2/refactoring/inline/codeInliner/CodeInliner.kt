@@ -140,7 +140,9 @@ class CodeInliner(
                         symbol is KaClassSymbol && symbol.classKind.isObject && symbol.name != null -> symbol.name!!.asString()
                         symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> "this@" + symbol.name!!.asString()
                         symbol is KaReceiverParameterSymbol -> {
-                            symbol.owningCallableSymbol.callableId?.callableName?.asString()?.let { "this@$it" } ?: "this"
+                            val name = (symbol.psi as? KtFunctionLiteral)?.findLabelAndCall()?.first
+                                ?: symbol.owningCallableSymbol.callableId?.callableName
+                            name?.asString()?.let { "this@$it" } ?: "this"
                         }
                         else -> "this"
                     }
