@@ -5,8 +5,6 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.apache.velocity.runtime.RuntimeConstants
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.KotlinLibraryCompatibilityParser
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.provideDefaultDataContext
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
 import org.jetbrains.plugins.gradle.jvmcompat.readAppVersion
@@ -47,12 +45,12 @@ class WizardDefaultDataGeneratorSettings<T : IdeVersionedDataState>(
                 contextProvider = KotlinWizardVersionState::provideDefaultDataContext
             ),
             WizardDefaultDataGeneratorSettings(
-                jsonPath = "/compatibility/libraries/coroutines.json",
-                ktFileName = "libraries/CoroutinesLibraryCompatibilityDefaultData.kt",
-                parser = KotlinLibraryCompatibilityParser,
-                templatePath = "compatibility/templates/KotlinLibraryDefaultData.kt.vm",
-                contextProvider = { provideDefaultDataContext("COROUTINES_LIBRARY_COMPATIBILITY_DEFAULT_DATA", it) }
-            )
+                jsonPath = "/compatibility/kotlin_libraries.json",
+                ktFileName = "KotlinLibrariesDefaultData.kt",
+                parser = KotlinLibrariesCompatibilityParser,
+                templatePath = "compatibility/templates/KotlinLibrariesDefaultData.kt.vm",
+                contextProvider = KotlinLibrariesCompatibilityState::provideDefaultDataContext
+            ),
         )
     }
 

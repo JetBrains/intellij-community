@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.tools.projectWizard.compatibility.library
+package org.jetbrains.kotlin.tools.projectWizard.compatibility
 
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.DefaultKotlinLibraryVersionProvider
 
 class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
     private lateinit var provider: DefaultKotlinLibraryVersionProvider
@@ -29,7 +28,7 @@ class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
     }
 
     fun testDefaultVersionProviderRegistered() {
-        assertTrue(KotlinLibraryVersionProvider.EP_NAME.extensionList.any { it is DefaultKotlinLibraryVersionProvider })
+        assertTrue(KotlinLibraryVersionProvider.Companion.EP_NAME.extensionList.any { it is DefaultKotlinLibraryVersionProvider })
     }
 
     fun testKnownVersion() {
