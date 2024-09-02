@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -10,6 +11,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
@@ -236,6 +238,43 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
   return withContext(Dispatchers.EDT) {
+    blockingContext {
+      ApplicationManager.getApplication().runWriteAction(Computable(action))
+    }
+  }
+}
+
+private object RunInBackgroundWriteActionMarker
+  : CoroutineContext.Element,
+    CoroutineContext.Key<RunInBackgroundWriteActionMarker> {
+  override val key: CoroutineContext.Key<*> get() = this
+}
+
+@Experimental
+@ApiStatus.Obsolete
+fun CoroutineContext.isBackgroundWriteAction(): Boolean =
+  currentThreadContext()[RunInBackgroundWriteActionMarker] != null
+
+/**
+ * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ *
+ * This function dispatches the [action] by [Dispatchers.Default] within the [context modality state][asContextElement].
+ * Acquiring the write-lock happens in blocking manner,
+ * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
+ * until all currently running read actions are finished.
+ *
+ * NB This function is an API stub.
+ * The implementation will change once running write actions would be allowed on other threads.
+ * This function exists to make it possible to use it in suspending contexts
+ * before the platform is ready to handle write actions differently.
+ *
+ * @see readAndWriteAction
+ * @see com.intellij.openapi.command.writeCommandAction
+ */
+@Experimental
+@ApiStatus.Obsolete
+suspend fun <T> backgroundWriteAction(action: () -> T): T {
+  return withContext(Dispatchers.Default + RunInBackgroundWriteActionMarker) {
     blockingContext {
       ApplicationManager.getApplication().runWriteAction(Computable(action))
     }

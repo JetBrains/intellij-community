@@ -19,6 +19,9 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.intellij.concurrency.ThreadContext.currentThreadContext;
+import static com.intellij.openapi.application.CoroutinesKt.isBackgroundWriteAction;
+
 public final class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance(TransactionGuardImpl.class);
 
@@ -130,7 +133,11 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   public void assertWriteActionAllowed() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    Application app = ApplicationManager.getApplication();
+    if (isBackgroundWriteAction(currentThreadContext()) && app.isWriteAccessAllowed()) {
+      return;
+    }
+    app.assertWriteIntentLockAcquired();
     if (!myWritingAllowed && areAssertionsEnabled() && !myErrorReported) {
       // please assign exceptions here to Peter
       LOG.error(reportWriteUnsafeContext(ModalityState.current()));
