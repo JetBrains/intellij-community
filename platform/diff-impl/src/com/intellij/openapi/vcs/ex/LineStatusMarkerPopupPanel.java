@@ -127,10 +127,18 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    int gap = JBUI.scale(10);
-    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
-    Rectangle maxSize = new Rectangle(screenRectangle.width - gap, screenRectangle.height - gap);
+    Window window = UIUtil.getWindow(myEditor.getComponent());
+    Dimension windowSize;
+    if (window != null) {
+      windowSize = window.getSize();
+    }
+    else {
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
+      windowSize = new Dimension(screenRectangle.width, screenRectangle.height);
+    }
 
+    int gap = JBUI.scale(10);
+    Rectangle maxSize = new Rectangle(windowSize.width - gap, windowSize.height - gap);
     Dimension size = super.getPreferredSize();
     if (size.width > maxSize.width) {
       size.width = maxSize.width;
