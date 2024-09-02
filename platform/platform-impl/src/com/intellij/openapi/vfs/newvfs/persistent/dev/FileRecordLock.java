@@ -12,35 +12,39 @@ public class FileRecordLock {
 
   private final StampedLock[] segmentedLock = new StampedLock[SEGMENTS_COUNT];
 
-  public FileRecordLock() {
+  {
     for (int i = 0; i < SEGMENTS_COUNT; i++) {
       segmentedLock[i] = new StampedLock();
     }
   }
 
   public long lockForWrite(int fileId) {
-    StampedLock lock = segmentedLock[fileId & SEGMENTS_MASK];
+    StampedLock lock = lockFor(fileId);
     return lock.writeLock();
   }
 
   public void unlockForWrite(int fileId, long stamp) {
-    StampedLock lock = segmentedLock[fileId & SEGMENTS_MASK];
+    StampedLock lock = lockFor(fileId);
     lock.unlockWrite(stamp);
   }
 
   public long lockForRead(int fileId) {
-    StampedLock lock = segmentedLock[fileId & SEGMENTS_MASK];
+    StampedLock lock = lockFor(fileId);
     return lock.readLock();
   }
 
   public long tryLockOptimisticForRead(int fileId) {
-    StampedLock lock = segmentedLock[fileId & SEGMENTS_MASK];
+    StampedLock lock = lockFor(fileId);
     return lock.tryOptimisticRead();
   }
 
   public void unlockForRead(int fileId, long stamp) {
-    StampedLock lock = segmentedLock[fileId & SEGMENTS_MASK];
+    StampedLock lock = lockFor(fileId);
     lock.unlockRead(stamp);
+  }
+
+  public StampedLock lockFor(int fileId){
+    return segmentedLock[fileId & SEGMENTS_MASK];
   }
 
 }

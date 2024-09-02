@@ -44,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.ObjIntConsumer;
@@ -53,6 +54,7 @@ import java.util.zip.ZipException;
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.io.DataEnumerator.NULL_ID;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -314,6 +316,8 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
+  //MAYBE RC: maybe move this to PersistentFSImpl -- i.e. leave FSRecordsImpl unsynchronized, and all synchronisation is
+  //          for PersistentFSImpl? The only cons is that FSRecords sometimes used directly
   private final com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock fileRecordLock =
     new com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock();
 
@@ -940,6 +944,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  @ApiStatus.Obsolete
   void setParent(int fileId,
                  int parentId) {
     if (fileId == parentId) {
@@ -1023,6 +1028,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  @ApiStatus.Obsolete
   void setFlags(int fileId,
                 @PersistentFS.Attributes int flags) {
     try {
@@ -1046,6 +1052,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  @ApiStatus.Obsolete
   void setLength(int fileId,
                  long len) {
     try {
@@ -1069,6 +1076,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  @ApiStatus.Obsolete
   void setTimestamp(int fileId,
                     long value) {
     try {
@@ -1091,10 +1099,6 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  SimpleStringPersistentEnumerator getEnumeratedAttributes() {
-    return connection.getEnumeratedAttributes();
-  }
-
   int getAttributeRecordId(int fileId) {
     try {
       return connection.getRecords().getAttributeRecordId(fileId);
@@ -1112,34 +1116,31 @@ public final class FSRecordsImpl implements Closeable {
                          @NotNull FileAttributes attributes,
                          @NotNull String name,
                          boolean cleanAttributeRef) {
+    checkNotClosed();
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
-    try {
-      fillRecord(fileId, timestamp, length, flags, nameId, parentId, cleanAttributeRef);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
+    updateRecordFields(fileId, record -> {
+      record.setParent(parentId);
+      record.setNameId(nameId);
+      record.setFlags(flags);
+      if (cleanAttributeRef) {
+        record.setAttributeRecordId(NULL_ID);
+      }
+      record.setTimestamp(timestamp);
+      record.setLength(length);
 
-    invertedNameIndexLazy.get().updateFileName(fileId, nameId, NULL_NAME_ID);
-    invertedNameIndexModCount.incrementAndGet();
+      invertedNameIndexLazy.get().updateFileName(fileId, nameId, NULL_NAME_ID);
+      invertedNameIndexModCount.incrementAndGet();
+
+      return true;
+    });
+    connection.markDirty();
+
 
     return nameId;
-  }
-
-  void fillRecord(int fileId,
-                  long timestamp,
-                  long length,
-                  int flags,
-                  int nameId,
-                  int parentId,
-                  boolean overwriteMissed) throws IOException {
-    checkNotClosed();
-    connection.getRecords().fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
-    connection.markDirty();
   }
 
 
@@ -1147,7 +1148,30 @@ public final class FSRecordsImpl implements Closeable {
 
   //TODO RC: specify exactly what can and can't be done in reader/writer lambdas
 
-  <R, E extends Throwable> R readRecordFields(int fileId, @NotNull RecordReader<R> reader) throws E {
+  int updateRecordFields(int fileId, @NotNull RecordUpdater updater) {
+    checkNotClosed();
+    PersistentFSRecordsStorage fileRecords = connection.getRecords();
+    long lockStamp = fileRecordLock.lockForWrite(fileId);
+    try {
+      return fileRecords.updateRecord(fileId, updater);
+      //TODO RC: it would be better to get 'modified' flag here, and call connection.markDirty() if modified=true. But updateRecords()
+      // doesn't provide the 'modified' property -- because it returns recordId instead.
+      // Now, the only reason for returning recordId is to cover the cases with new record inserted. But this is not so much needed:
+      // we could insert new record with .allocateRecords(), and then update its fields with .updateRecordFields() -- there is no
+      // concurrency issue with it, because newly allocated id is not yet published, so no one else could access it (except for iterating
+      // through VFS with for(fileId in 0..maxId) -- which is a very low-level access anyway). So, maybe change the fileRecords.updateRecord()
+      // semantics so that it returns 'modified' property instead of 
+    }
+    catch (IOException ex) {
+      throw handleError(ex);
+    }
+    finally {
+      fileRecordLock.unlockForWrite(fileId, lockStamp);
+    }
+  }
+
+  <R> R readRecordFields(int fileId, @NotNull RecordReader<R> reader) {
+    checkNotClosed();
     PersistentFSRecordsStorage fileRecords = connection.getRecords();
     long lockStamp = fileRecordLock.lockForRead(fileId);
     try {
@@ -1161,17 +1185,35 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  <E extends IOException> void updateRecordFields(int fileId, @NotNull RecordUpdater updater) {
+  <R> R readRecordFieldsOptimistic(int fileId, @NotNull RecordReader<R> reader) {
+    checkNotClosed();
+
     PersistentFSRecordsStorage fileRecords = connection.getRecords();
-    long lockStamp = fileRecordLock.lockForWrite(fileId);
+
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long lockStamp = lock.tryOptimisticRead();
     try {
-      fileRecords.updateRecord(fileId, updater);
+      for (; ; lockStamp = lock.readLock()) {
+        if (lockStamp == 0L) {
+          continue;
+        }
+
+        // possibly racy reads
+        R result = fileRecords.readRecord(fileId, reader);
+
+        if (!lock.validate(lockStamp)) {
+          continue;
+        }
+        return result;
+      }
     }
     catch (IOException ex) {
       throw handleError(ex);
     }
     finally {
-      fileRecordLock.unlockForWrite(fileId, lockStamp);
+      if (StampedLock.isReadLockStamp(lockStamp)) {
+        lock.unlockRead(lockStamp);
+      }
     }
   }
 

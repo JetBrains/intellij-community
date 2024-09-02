@@ -70,32 +70,6 @@ public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage,
   int getFlags(int fileId) throws IOException;
 
   /**
-   * Fills all record fields in one shot.
-   * Fields modifications are not atomic: method should be used in absence of concurrent modification, e.g.
-   * on startup, or for filling new, just allocated record, while fileId just allocated is not yet published
-   * for other threads to access.
-   */
-  default void fillRecord(int fileId,
-                          long timestamp,
-                          long length,
-                          int flags,
-                          int nameId,
-                          int parentId,
-                          boolean overwriteAttrRef) throws IOException {
-    updateRecord(fileId, record -> {
-      record.setParent(parentId);
-      record.setNameId(nameId);
-      record.setFlags(flags);
-      if (overwriteAttrRef) {
-        record.setAttributeRecordId(NULL_ID);
-      }
-      record.setTimestamp(timestamp);
-      record.setLength(length);
-      return true;
-    });
-  }
-
-  /**
    * @throws IndexOutOfBoundsException if fileId is outside of range (0..max] of the fileIds allocated so far
    */
   void cleanRecord(int fileId) throws IOException;
