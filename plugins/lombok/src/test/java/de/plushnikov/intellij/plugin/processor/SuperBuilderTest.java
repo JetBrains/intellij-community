@@ -39,6 +39,10 @@ public class SuperBuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testSuperbuilder$SuperBuilderToBuilderOverride() {
+    doTest(true);
+  }
+
   //TODO Implement AnnotatedTypes handling/delombok
 //  public void testSuperbuilder$SuperBuilderSingularAnnotatedTypes() {
 //    doTest(true);
