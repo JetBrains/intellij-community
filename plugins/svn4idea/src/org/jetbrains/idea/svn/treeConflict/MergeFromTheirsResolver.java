@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -190,7 +189,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
             List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
             new PatchApplier(Objects.requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
             myThereAreCreations =
-              patches.stream().anyMatch(patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
+              ContainerUtil.exists(patches, patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
           }
           catch (IOException e) {
             myException = new VcsException(e);
@@ -214,7 +213,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private void createPatches() throws VcsException {
     List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).toNioPath(), false);
-    myTextPatches = map(patches, TextFilePatch.class::cast);
+    myTextPatches = map(patches, patch -> patch);
   }
 
   @RequiresEdt
@@ -472,7 +471,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private static boolean containAdditions(@NotNull List<Change> changes) {
-    return changes.stream().anyMatch(change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
+    return ContainerUtil.exists(changes, change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
   }
 
   private static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {

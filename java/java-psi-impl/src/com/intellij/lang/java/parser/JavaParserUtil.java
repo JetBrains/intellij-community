@@ -94,7 +94,7 @@ public final class JavaParserUtil {
                                                 final LanguageLevel level) {
     return BasicJavaParserUtil.parseFragment(chameleon, wrapper, eatAll, level,
                                              (levelLanguage) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(levelLanguage),
-                                             (levelLanguage) -> (BasicJavaLexer)JavaParserDefinition.createLexer(levelLanguage)
+                                             (levelLanguage) -> JavaParserDefinition.createLexer(levelLanguage)
     );
   }
 
