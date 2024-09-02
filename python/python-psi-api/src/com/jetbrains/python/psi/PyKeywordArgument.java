@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.ast.PyAstKeywordArgument;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PyKeywordArgument extends PyAstKeywordArgument, PyExpression, PsiNamedElement {
+public interface PyKeywordArgument extends PyAstKeywordArgument, PyExpression, PsiNamedElement, PsiExternalReferenceHost {
   @Override
   @Nullable
   default PyExpression getValueExpression() {
