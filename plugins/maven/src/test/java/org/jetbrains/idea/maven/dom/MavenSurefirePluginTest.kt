@@ -12,6 +12,7 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletion() = runBlocking {
+    needFixForMaven4()
     configureProjectPom(
       """
           <groupId>simpleMaven</groupId>
