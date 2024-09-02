@@ -7,7 +7,8 @@ import com.jetbrains.rhizomedb.EntityType
 internal class ProjectEntitiesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
     return listOf(
-      ProjectEntity
+      ProjectEntity,
+      LocalProjectEntity
     )
   }
 }
