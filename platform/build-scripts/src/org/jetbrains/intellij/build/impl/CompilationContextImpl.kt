@@ -28,7 +28,10 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
-import org.jetbrains.intellij.build.impl.compilation.*
+import org.jetbrains.intellij.build.impl.compilation.checkCompilationOptions
+import org.jetbrains.intellij.build.impl.compilation.isCompilationRequired
+import org.jetbrains.intellij.build.impl.compilation.keepCompilationState
+import org.jetbrains.intellij.build.impl.compilation.reuseOrCompile
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
@@ -129,10 +132,6 @@ class CompilationContextImpl private constructor(
 
   override lateinit var compilationData: JpsCompilationData
 
-  override val portableCompilationCache: PortableCompilationCache by lazy {
-    PortableCompilationCache(this)
-  }
-
   @Volatile
   private var cachedJdkHome: Path? = null
 
@@ -220,6 +219,7 @@ class CompilationContextImpl private constructor(
           context.enableCoroutinesDump(it)
         }
       }
+
       spanBuilder("prepare for build").use {
         context.prepareForBuild()
       }
@@ -480,9 +480,9 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
     context.paths.jpsArtifacts,
   )
   val outputDirectoriesToKeep = buildSet {
-    this.add(context.paths.logDir)
+    add(context.paths.logDir)
     if (keepCompilationState) {
-      this.addAll(compilationState)
+      addAll(compilationState)
     }
   }
   spanBuilder("clean output").use { span ->

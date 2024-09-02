@@ -42,16 +42,12 @@ private val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
 internal class PortableCompilationCacheUploader(
   private val context: CompilationContext,
-  private val remoteCache: PortableCompilationCache.RemoteCache,
-  private val remoteGitUrl: String,
+  internal val remoteCache: PortableJpsCacheRemoteCacheConfig,
+  @JvmField val remoteGitUrl: String,
   private val commitHash: String,
   private val s3Folder: Path,
   private val forcedUpload: Boolean,
 ) {
-  private val uploader = Uploader(remoteCache.uploadUrl, remoteCache.authHeader)
-
-  private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
-
   init {
     s3Folder.deleteRecursively()
     Files.createDirectories(s3Folder)
@@ -75,11 +71,12 @@ internal class PortableCompilationCacheUploader(
     val start = System.nanoTime()
     val totalUploadedBytes = AtomicLong()
     val uploadedOutputCount = AtomicInteger()
+    val uploader = Uploader(remoteCache.uploadUrl, remoteCache.authHeader)
     withContext(Dispatchers.IO) {
       // Jps Caches upload is started first because of significant size
       launch {
         spanBuilder("upload jps cache").use {
-          uploadJpsCaches()
+          uploadJpsCaches(uploader)
         }
       }
 
@@ -100,7 +97,7 @@ internal class PortableCompilationCacheUploader(
 
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
 
-    uploadMetadata(sourceStateFile)
+    uploadMetadata(sourceStateFile = sourceStateFile, uploader = uploader)
     uploadToS3()
   }
 
@@ -110,7 +107,7 @@ internal class PortableCompilationCacheUploader(
     }
   }
 
-  private suspend fun uploadJpsCaches() {
+  private suspend fun uploadJpsCaches(uploader: Uploader) {
     val dataStorageRoot = context.compilationData.dataStorageRoot
     val zipFile = dataStorageRoot.parent.resolve(commitHash)
     Compressor.Zip(zipFile).use { zip ->
@@ -123,7 +120,7 @@ internal class PortableCompilationCacheUploader(
     moveFile(zipFile, s3Folder.resolve(cachePath))
   }
 
-  private suspend fun uploadMetadata(sourceStateFile: Path) {
+  private suspend fun uploadMetadata(sourceStateFile: Path, uploader: Uploader) {
     val metadataPath = "metadata/$commitHash"
     spanBuilder("upload metadata").setAttribute("path", metadataPath).use {
       uploader.upload(metadataPath, sourceStateFile)
@@ -162,7 +159,10 @@ internal class PortableCompilationCacheUploader(
   /**
    * Upload and publish a file with commits history
    */
-  suspend fun updateCommitHistory(commitHistory: CommitsHistory = this.commitHistory, overrideRemoteHistory: Boolean = false) {
+  internal suspend fun updateCommitHistory(overrideCommits: Set<String>? = null) {
+    val overrideRemoteHistory = overrideCommits != null
+    val commitHistory = CommitsHistory(mapOf(remoteGitUrl to (overrideCommits ?: setOf(commitHash))))
+    val uploader = Uploader(serverUrl = remoteCache.uploadUrl, authHeader = remoteCache.authHeader)
     for (commitHash in commitHistory.commitsForRemote(remoteGitUrl)) {
       val cacheUploaded = uploader.isExist("caches/$commitHash")
       val metadataUploaded = uploader.isExist("metadata/$commitHash")
@@ -176,10 +176,10 @@ internal class PortableCompilationCacheUploader(
         "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
       }
     }
-    val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory()
+    val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory(uploader)
     uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
     val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
-    val actual = remoteCommitHistory().commitsForRemote(remoteGitUrl).toSet()
+    val actual = remoteCommitHistory(uploader).commitsForRemote(remoteGitUrl).toSet()
     val missing = expected - actual
     val unexpected = actual - expected
     check(missing.none() && unexpected.none()) {
@@ -190,7 +190,7 @@ internal class PortableCompilationCacheUploader(
     }
   }
 
-  private suspend fun remoteCommitHistory(): CommitsHistory {
+  private suspend fun remoteCommitHistory(uploader: Uploader): CommitsHistory {
     return if (uploader.isExist(CommitsHistory.JSON_FILE)) {
       CommitsHistory(uploader.getAsString(CommitsHistory.JSON_FILE, remoteCache.authHeader))
     }
@@ -209,7 +209,7 @@ internal class PortableCompilationCacheUploader(
   }
 }
 
-private class Uploader(serverUrl: String, val authHeader: String) {
+private class Uploader(serverUrl: String, @JvmField val authHeader: String) {
   private val serverUrl = serverUrl.trimEnd('/')
 
   suspend fun upload(path: String, file: Path) {

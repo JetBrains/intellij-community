@@ -87,7 +87,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       finally {
         print(ServiceMessageTypes.BLOCK_CLOSED)
-        TraceManager.exportPendingSpans()
+        TraceManager.scheduleExportPendingSpans()
       }
     }
   }

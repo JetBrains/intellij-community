@@ -94,7 +94,7 @@ internal fun checkCompilationOptions(context: CompilationContext) {
   if (options.forceRebuild && pathToCompiledClassArchiveMetadata != null) {
     messages.error("Both '${BuildOptions.FORCE_REBUILD_PROPERTY}' and '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' options are specified")
   }
-  if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES) {
+  if (options.isInDevelopmentMode && ProjectStamps.PORTABLE_CACHES && !System.getProperty("jps.cache.test").toBoolean()) {
     messages.error("${ProjectStamps.PORTABLE_CACHES_PROPERTY} is not expected to be enabled in development mode due to performance penalty")
   }
   if (!options.useCompiledClassesFromProjectOutput) {
@@ -146,11 +146,18 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
     }
     IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
       span.addEvent("JPS remote cache will be used for compilation")
-      context.portableCompilationCache.downloadCacheAndCompileProject()
+      downloadJpsCacheAndCompileProject(context)
     }
     else -> {
       block("compile modules") {
-        doCompile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, availableCommitDepth = -1, context = context)
+        doCompile(
+          moduleNames = moduleNames,
+          includingTestsInModules = includingTestsInModules,
+          availableCommitDepth = -1,
+          context = context,
+          // null - we checked IS_PORTABLE_COMPILATION_CACHE_ENABLED above
+          handleCompilationFailureBeforeRetry = null,
+        )
       }
       return
     }
@@ -174,6 +181,7 @@ internal suspend fun doCompile(
   includingTestsInModules: List<String>? = null,
   availableCommitDepth: Int,
   context: CompilationContext,
+  handleCompilationFailureBeforeRetry: (suspend (successMessage: String) -> String)?,
 ) {
   check(JavaVersion.current().isAtLeast(17)) {
     "Build script must be executed under Java 17 to compile intellij project but it's executed under Java ${JavaVersion.current()}"
@@ -187,7 +195,7 @@ internal suspend fun doCompile(
   try {
     val (status, isIncrementalCompilation) = when {
       context.options.forceRebuild -> "forced rebuild" to false
-      availableCommitDepth >= 0 -> context.portableCompilationCache.usageStatus(availableCommitDepth) to true
+      availableCommitDepth >= 0 -> portableJpsCacheUsageStatus(availableCommitDepth) to true
       isIncrementalCompilationDataAvailable(context) -> "compiled using local cache" to true
       else -> "clean build" to false
     }
@@ -219,7 +227,14 @@ internal suspend fun doCompile(
     context.messages.buildStatus(status)
   }
   catch (e: Exception) {
-    retryCompilation(context = context, runner = runner, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, e = e)
+    retryCompilation(
+      context = context,
+      runner = runner,
+      moduleNames = moduleNames,
+      includingTestsInModules = includingTestsInModules,
+      e = e,
+      handleCompilationFailureBeforeRetry = handleCompilationFailureBeforeRetry,
+    )
   }
 }
 
@@ -256,7 +271,8 @@ private suspend fun retryCompilation(
   runner: JpsCompilationRunner,
   moduleNames: Collection<String>?,
   includingTestsInModules: List<String>?,
-  e: Exception
+  e: Exception,
+  handleCompilationFailureBeforeRetry: (suspend (successMessage: String) -> String)?,
 ) {
   if (!context.options.incrementalCompilation) {
     throw e
@@ -266,6 +282,7 @@ private suspend fun retryCompilation(
                              "'${BuildOptions.INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY}' is false.")
     throw e
   }
+
   var successMessage = "Clean build retry"
   when {
     e is TimeoutCancellationException -> {
@@ -274,8 +291,8 @@ private suspend fun retryCompilation(
       cleanOutput(context = context, keepCompilationState = false)
       context.options.incrementalCompilation = false
     }
-    IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
-      successMessage = context.portableCompilationCache.handleCompilationFailureBeforeRetry(successMessage)
+    handleCompilationFailureBeforeRetry != null -> {
+      successMessage = handleCompilationFailureBeforeRetry(successMessage)
     }
     else -> {
       Span.current().addEvent("Incremental compilation failed. Re-trying with clean build.")
