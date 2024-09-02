@@ -22,16 +22,14 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
@@ -85,15 +83,25 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
 
       for (VirtualFile root : rootsToSave) {
         List<FilePath> rootPaths = ContainerUtil.notNullize(filesByRoot.get(root));
-        if (rootPaths.isEmpty()) continue;
 
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-        boolean isFreshRepository = repository != null && repository.getCurrentRevision() == null;
-        if (isFreshRepository) {
+        if (repository == null || repository.getCurrentRevision() == null) {
           resetHardLocal(myProject, root);
         }
         else {
-          restoreStagedWorktree(myProject, root, rootPaths);
+          Set<FilePath> rootPathsSet = new HashSet<>(rootPaths);
+
+          // Workaround changes hidden by git4idea.status.GitChangesCollector.collectStagedUnstagedModifications,
+          // that will not be in 'shelvedChanges'
+          List<FilePath> pathsToUnstage = new ArrayList<>();
+          for (GitFileStatus record : repository.getStagingAreaHolder().getAllRecords()) {
+            if (record.isTracked() && record.getStagedStatus() != null && !rootPathsSet.contains(record.getPath())) {
+              pathsToUnstage.add(record.getPath());
+            }
+          }
+
+          restoreStagedAndWorktree(myProject, root, rootPaths);
+          restoreStaged(myProject, root, pathsToUnstage);
         }
       }
     }
@@ -118,10 +126,23 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     }
   }
 
-  private static void restoreStagedWorktree(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
+  private static void restoreStagedAndWorktree(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, filePaths)) {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESTORE);
       handler.addParameters("--staged", "--worktree", "--source=HEAD");
+      handler.endOptions();
+      handler.addParameters(paths);
+      GitCommandResult result = Git.getInstance().runCommand(handler);
+      if (!result.success()) {
+        LOG.warn("Can't restore changes:" + result.getErrorOutputAsJoinedString());
+      }
+    }
+  }
+
+  private static void restoreStaged(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, filePaths)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESTORE);
+      handler.addParameters("--staged", "--source=HEAD");
       handler.endOptions();
       handler.addParameters(paths);
       GitCommandResult result = Git.getInstance().runCommand(handler);
