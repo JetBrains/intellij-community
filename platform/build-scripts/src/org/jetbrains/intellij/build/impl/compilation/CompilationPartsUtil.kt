@@ -370,32 +370,22 @@ suspend fun fetchAndUnpackCompiledClasses(
     val start = System.nanoTime()
 
     val downloadedBytes = AtomicLong()
-    val failed: List<Throwable> = if (toDownload.isEmpty()) {
-      emptyList()
-    }
-    else {
-      createHttp2ClientSessionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")).use { client ->
-        downloadCompilationCache(
-          client = client,
-          serverUrl = metadata.serverUrl,
-          prefix = metadata.prefix,
-          toDownload = toDownload,
-          downloadedBytes = downloadedBytes,
-          skipUnpack = skipUnpack,
-          saveHash = saveHash,
-        )
-      }
+    createHttp2ClientSessionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")).use { client ->
+      downloadCompilationCache(
+        client = client,
+        serverUrl = metadata.serverUrl,
+        prefix = metadata.prefix,
+        toDownload = toDownload,
+        downloadedBytes = downloadedBytes,
+        skipUnpack = skipUnpack,
+        saveHash = saveHash,
+      )
     }
 
     reportStatisticValue("compile-parts:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
     reportStatisticValue("compile-parts:downloaded:bytes", downloadedBytes.get().toString())
-    reportStatisticValue("compile-parts:downloaded:count", (toDownload.size - failed.size).toString())
-    reportStatisticValue("compile-parts:failed:count", failed.size.toString())
-
-    if (!failed.isEmpty()) {
-      error("Failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
-    }
+    reportStatisticValue("compile-parts:downloaded:count", toDownload.size.toString())
   }
 
   val start = System.nanoTime()

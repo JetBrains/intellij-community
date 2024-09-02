@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import kotlinx.coroutines.isActive
 import okio.IOException
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
@@ -20,7 +21,6 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
 
@@ -34,7 +34,7 @@ internal suspend fun downloadCompilationCache(
   downloadedBytes: AtomicLong,
   skipUnpack: Boolean,
   saveHash: Boolean,
-): List<Throwable> {
+) {
   var urlPathWithPrefix = "/$prefix/"
   // first let's check for initial redirect (mirror selection)
   val initialServerUri = URI(serverUrl)
@@ -64,7 +64,6 @@ internal suspend fun downloadCompilationCache(
     connection = client.connect(effectiveServerUri.host, effectiveServerUri.port)
   }
   try {
-    val errors = CopyOnWriteArrayList<Throwable>()
     ZstdDecompressContextPool().use { zstdDecompressContextPool ->
       toDownload.forEachConcurrent(downloadParallelism) { item ->
         val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
@@ -82,16 +81,18 @@ internal suspend fun downloadCompilationCache(
             )
           }
           catch (e: CancellationException) {
-            throw e
+            if (coroutineContext.isActive) {
+              // well, we are not canceled, only child
+              throw IllegalStateException("Unexpected cancellation - action is cancelled itself", e)
+            }
           }
           catch (e: Throwable) {
             span.recordException(e)
-            errors.add(CompilePartDownloadFailedError(item, e))
+            throw CompilePartDownloadFailedError(item, e)
           }
         }
       }
     }
-    return errors
   }
   finally {
     connection.close()
@@ -129,7 +130,9 @@ private suspend fun download(
   return downloaded
 }
 
-internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause)
+internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause) {
+  override fun toString(): String = "item: $item, error: ${super.toString()}"
+}
 
 internal class HashMismatchException(message: String) : IOException(message)
 
