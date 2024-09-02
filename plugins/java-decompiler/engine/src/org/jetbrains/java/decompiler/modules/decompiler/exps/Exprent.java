@@ -252,11 +252,11 @@ public abstract class Exprent implements IMatchable {
     boolean needsCast =
       (left != null && !left.isSuperset(right)) && (right.equals(VarType.VARTYPE_OBJECT) || left.getType() != CodeConstants.TYPE_OBJECT);
 
-    if (left != null && left.isGeneric()) {
+    if (left.isGeneric() || right.isGeneric()) {
       Map<VarType, List<VarType>> names = this.getNamedGenerics();
       int arrayDim = 0;
 
-      if (left.getArrayDim() == right.getArrayDim()) {
+      if (left.getArrayDim() == right.getArrayDim() && left.getArrayDim() > 0) {
         arrayDim = left.getArrayDim();
         left = left.resizeArrayDim(0);
         right = right.resizeArrayDim(0);

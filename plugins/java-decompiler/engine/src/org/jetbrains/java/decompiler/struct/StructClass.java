@@ -154,6 +154,35 @@ public class StructClass extends StructMember {
     return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
   }
 
+  public StructMethod getMethodRecursive(String name, String descriptor) {
+    StructMethod ret = getMethod(name, descriptor);
+
+    if (ret != null) {
+      return ret;
+    }
+
+    if (superClass != null) {
+      StructClass cls = DecompilerContext.getStructContext().getClass((String)superClass.value);
+      if (cls != null) {
+        ret = cls.getMethodRecursive(name, descriptor);
+        if (ret != null) {
+          return ret;
+        }
+      }
+    }
+
+    for (String intf : getInterfaceNames()) {
+      StructClass cls = DecompilerContext.getStructContext().getClass(intf);
+      if (cls != null) {
+        ret = cls.getMethodRecursive(name, descriptor);
+        if (ret != null) {
+          return ret;
+        }
+      }
+    }
+    return null;
+  }
+
   public String getInterface(int i) {
     return interfaceNames[i];
   }

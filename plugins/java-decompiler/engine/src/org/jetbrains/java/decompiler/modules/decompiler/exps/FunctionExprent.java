@@ -279,11 +279,11 @@ public class FunctionExprent extends Exprent {
       VarType right = lstOperands.get(0).getInferredExprType(upperBound);
       VarType cast = lstOperands.get(1).getExprType();
 
-      if (upperBound != null && upperBound.isGeneric()) {
+      if (upperBound != null && (upperBound.isGeneric() || right.isGeneric())) {
         Map<VarType, List<VarType>> names = this.getNamedGenerics();
         int arrayDim = 0;
 
-        if (upperBound.getArrayDim() == right.getArrayDim()) {
+        if (upperBound.getArrayDim() == right.getArrayDim() && upperBound.getArrayDim() > 0) {
           arrayDim = upperBound.getArrayDim();
           upperBound = upperBound.resizeArrayDim(0);
           right = right.resizeArrayDim(0);
@@ -302,6 +302,15 @@ public class FunctionExprent extends Exprent {
           if (anyMatch) {
             this.needsCast = false;
           }
+        }
+        else {
+            this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), upperBound.getValue());
+        }
+        if (!this.needsCast) {
+          if (arrayDim > 0) {
+            right = right.resizeArrayDim(arrayDim);
+          }
+          return right;
         }
       }
       else { //TODO: Capture generics to make cast better?
