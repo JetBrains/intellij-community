@@ -11,7 +11,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal sealed class LcrCellBaseImpl<T: LcrInitParams>(val initParams: T, val baselineAlign: Boolean, val gapBefore: LcrRow.Gap) {
+internal sealed class LcrCellBaseImpl<T : LcrInitParams>(val initParams: T, val baselineAlign: Boolean, val beforeGap: LcrRow.Gap) {
 
   enum class Type(private val instanceFactory: () -> JComponent) {
     ICON(::JLabel),

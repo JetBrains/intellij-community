@@ -37,6 +37,10 @@ import kotlin.math.max
 @ApiStatus.Internal
 open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
+  companion object {
+    const val DEFAULT_GAP = 6
+  }
+
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
   private val rendererCache = RendererCache()
@@ -143,7 +147,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     result.applySeparator(listSeparator, index == 0, list)
 
     for ((i, cell) in cells.withIndex()) {
-      val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.gapBefore))
+      val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.beforeGap))
       cell.apply(component, enabled)
 
       if (cell is LcrSimpleColoredTextImpl && cell.initParams.speedSearchHighlighting) {
@@ -182,7 +186,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
   private fun getGapValue(gap: LcrRow.Gap): Int {
     return when (gap) {
-      LcrRow.Gap.DEFAULT -> 4
+      LcrRow.Gap.DEFAULT -> DEFAULT_GAP
       LcrRow.Gap.NONE -> 0
     }
   }
