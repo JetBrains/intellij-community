@@ -3651,6 +3651,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/functionalArgument.kt");
             }
 
+            @TestMetadata("functionalType.kt")
+            public void testFunctionalType() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/functionalType.kt");
+            }
+
             @TestMetadata("getWithSpread.kt")
             public void testGetWithSpread() throws Exception {
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/getWithSpread.kt");

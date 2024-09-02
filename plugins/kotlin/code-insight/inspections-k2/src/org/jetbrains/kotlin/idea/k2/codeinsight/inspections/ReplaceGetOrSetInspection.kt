@@ -73,6 +73,8 @@ internal class ReplaceGetOrSetInspection :
             return null
         }
 
+        if (functionSymbol.name != OperatorNameConventions.GET && functionSymbol.name != OperatorNameConventions.SET) return null
+
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.isUnitType != false) return null
 
