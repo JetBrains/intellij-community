@@ -1136,16 +1136,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
   }
 
-  @Override
-  public void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    getThreadingSupport().runWithoutImplicitRead(runnable);
-  }
-
-  @Override
-  public void runWithImplicitRead(@NotNull Runnable runnable) {
-    getThreadingSupport().runWithImplicitRead(runnable);
-  }
-
   @ApiStatus.Internal
   public static void postInit(@NotNull ApplicationImpl app) {
     AtomicBoolean reported = new AtomicBoolean();

@@ -584,9 +584,9 @@ class IdeEventQueue private constructor() : EventQueue() {
             (app.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.dispatchComponentEvent(e)
           }
         }
-        threadingSupport.runWithoutImplicitRead { defaultDispatchEvent(e) }
+        defaultDispatchEvent(e)
       }
-      else -> threadingSupport.runWithoutImplicitRead { defaultDispatchEvent(e) }
+      else -> defaultDispatchEvent(e)
     }
   }
 

@@ -5,8 +5,6 @@ import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -32,14 +30,13 @@ final class FlushQueue {
     synchronized (getQueueLock()) {
       FLUSHER_SCHEDULED = false;
     }
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     long startTime = System.currentTimeMillis();
     while (true) {
       RunnableInfo info = pollNextEvent();
       if (info == null) {
         break;
       }
-      runNextEvent(info, app);
+      runNextEvent(info);
       if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
         synchronized (getQueueLock()) {
           requestFlush();
@@ -72,11 +69,6 @@ final class FlushQueue {
       // to avoid walking over obsolete queue
       return myQueue;
     }
-  }
-
-  // Extracted to have a capture point
-  private static void doRun(@Async.Execute @NotNull RunnableInfo info, @NotNull ApplicationEx app) {
-    app.runWithImplicitRead(info.runnable);
   }
 
   @Override
@@ -113,11 +105,11 @@ final class FlushQueue {
     }
   }
 
-  private static void runNextEvent(@NotNull RunnableInfo info, @NotNull ApplicationEx app) {
+  private static void runNextEvent(@NotNull RunnableInfo info) {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
     final long waitingFinishedNs = System.nanoTime();
     try {
-      doRun(info, app);
+      info.runnable.run();
     }
     catch (ProcessCanceledException ignored) {
 

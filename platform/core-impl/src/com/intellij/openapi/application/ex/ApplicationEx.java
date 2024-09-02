@@ -226,26 +226,6 @@ public interface ApplicationEx extends Application {
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 
   /**
-   * Runs specified action with disabled implicit read lock if this feature is enabled with system property.
-   * @see com.intellij.platform.ide.bootstrap.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
-   * @param runnable action to run with disabled implicit read lock.
-   */
-  @ApiStatus.Internal
-  default void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
-  /**
-   * Runs specified action with enabled implicit read lock if this feature is disabled with system property.
-   * @see com.intellij.platform.ide.bootstrap.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
-   * @param runnable action to run with enabled implicit read lock.
-   */
-  @ApiStatus.Internal
-  default void runWithImplicitRead(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
-  /**
    * @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()}
    */
   @ApiStatus.Internal

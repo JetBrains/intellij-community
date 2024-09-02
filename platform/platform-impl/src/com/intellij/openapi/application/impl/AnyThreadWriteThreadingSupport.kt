@@ -116,16 +116,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return myState.get().hasPermit
   }
 
-  override fun runWithoutImplicitRead(runnable: Runnable) {
-    // There is no implicit read, as there is no write thread anymore
-    runnable.run()
-  }
-
-  override fun runWithImplicitRead(runnable: Runnable) {
-    // There is no implicit read, as there is no write thread anymore
-    runnable.run()
-  }
-
   override fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*> {
     val actionDecorated = decorateRunnable(action)
     return AppExecutorUtil.getAppExecutorService().submit(object : Runnable {
