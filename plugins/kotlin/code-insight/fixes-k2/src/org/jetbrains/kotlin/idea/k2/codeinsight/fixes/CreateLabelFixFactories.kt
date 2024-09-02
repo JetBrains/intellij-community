@@ -8,11 +8,23 @@ import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix.Companion.getContaining
 import org.jetbrains.kotlin.idea.quickfix.CreateLabelFix.Companion.getContainingLoops
 import org.jetbrains.kotlin.psi.*
 
-internal object CreateLabelFixFactory {
+internal object CreateLabelFixFactories {
 
-    val createLabelFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedLabel ->
-
+    val unresolvedLabelFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedLabel ->
         val labelReferenceExpression = diagnostic.psi as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
+        return@IntentionBased getFixes(labelReferenceExpression)
+    }
+
+    val notALoopLabelFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NotALoopLabel ->
+        val breakOrContinueExpression =
+            diagnostic.psi as? KtBreakExpression ?: diagnostic.psi as? KtContinueExpression ?: return@IntentionBased emptyList()
+
+        val labelReferenceExpression =
+            breakOrContinueExpression.getTargetLabel() as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
+        return@IntentionBased getFixes(labelReferenceExpression)
+    }
+
+    private fun getFixes(labelReferenceExpression: KtLabelReferenceExpression): List<CreateLabelFix> {
         val fixes = when ((labelReferenceExpression.parent as? KtContainerNode)?.parent) {
             is KtBreakExpression, is KtContinueExpression -> {
                 if (labelReferenceExpression.getContainingLoops().any()) {
@@ -32,7 +44,7 @@ internal object CreateLabelFixFactory {
 
             else -> emptyList()
         }
-        return@IntentionBased fixes
+        return fixes
     }
 }
 
