@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.siyeh.ig.bugs.message;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.siyeh.ig.format;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -13,7 +13,19 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.text.ChoiceFormat;
 import java.util.*;
 
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
+
+/**
+ * Utilities related to MessageFormat-like format string
+ */
 public final class MessageFormatUtil {
+  /**
+   * Matcher to match known JDK library methods that accept MessageFormat-like format string, along with an array/vararg of arguments
+   */
+  public static final CallMatcher PATTERN_METHODS = anyOf(
+    staticCall("java.text.MessageFormat", "format").parameterCount(2)
+  );
 
   private static final Map<String, List<String>> knownContractions = Map.ofEntries(
     Map.entry("aren", List.of("t")),
@@ -46,7 +58,10 @@ public final class MessageFormatUtil {
     Map.entry("you", List.of("d", "ll", "re", "ve"))
   );
 
-  @ApiStatus.Experimental
+  /**
+   * @param pattern MessageFormat-like formatting string
+   * @return MessageFormatResult object that contains information about placeholders and possible syntax errors inside the pattern
+   */
   @NotNull
   public static MessageFormatResult checkFormat(@NotNull String pattern) {
     if (pattern.isEmpty()) {
@@ -255,7 +270,7 @@ public final class MessageFormatUtil {
               MessageFormatPart part = holder.getLastPart();
               if (!(part.getMessageFormatElement() != null &&
                     part.getMessageFormatElement().currentPart == MessageFormatElementPart.FORMAT_TYPE &&
-                    part.getMessageFormatElement().formatTypeSegment.length() == 0)) {
+                    part.getMessageFormatElement().formatTypeSegment.isEmpty())) {
                 holder.addChar(ch);
               }
             }
@@ -323,7 +338,7 @@ public final class MessageFormatUtil {
       MessageHolder holder = parseMessageHolder(nextPattern);
       if (holder.errors.isEmpty()) {
         List<MessageFormatPart> notStrings =
-          ContainerUtil.filter(holder.parts, t -> !(t.getParsedType() == MessageFormatParsedType.STRING && t.getText().length() == 0));
+          ContainerUtil.filter(holder.parts, t -> !(t.getParsedType() == MessageFormatParsedType.STRING && t.getText().isEmpty()));
         if (notStrings.size() == 1 && notStrings.get(0).getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT) {
           return nextQuote + current;
         }
@@ -445,11 +460,18 @@ public final class MessageFormatUtil {
     RUNTIME_EXCEPTION, WARNING, WEAK_WARNING
   }
 
+  /**
+   * Information about MessageFormat-like format string
+   * 
+   * @param valid if true, then the format string is valid
+   * @param errors list of errors inside the format string
+   * @param placeholders list of placeholders inside the format string
+   */
   public record MessageFormatResult(boolean valid, @NotNull List<MessageFormatError> errors,
                                     @NotNull List<MessageFormatPlaceholder> placeholders) {
   }
 
-  public record MessageFormatPlaceholder(int index, @NotNull  TextRange range, boolean isString) {
+  public record MessageFormatPlaceholder(int index, @NotNull TextRange range, boolean isString) implements FormatPlaceholder {
   }
 
   static class MessageFormatPart {
