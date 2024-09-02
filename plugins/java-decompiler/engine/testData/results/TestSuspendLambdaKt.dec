@@ -81,7 +81,7 @@ public final class TestSuspendLambdaKt {
          }
       }
 
-      sl1 = (Function1)(new NamelessClass_1((Continuation)null));// 3
+      sl1 = new NamelessClass_1((Continuation)null);// 3
    }
 }
 

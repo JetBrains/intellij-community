@@ -158,8 +158,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
-  //todo check after all fixes
-  //@Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+  @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
   @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }

@@ -29,7 +29,6 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.*
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
@@ -69,8 +68,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      //todo open after private class is fixed
-      //VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"), visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
   }

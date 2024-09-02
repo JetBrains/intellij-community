@@ -232,7 +232,7 @@ public class FunctionExprent extends Exprent {
         case FUNCTION_SHL, FUNCTION_SHR, FUNCTION_USHR, FUNCTION_BIT_NOT, FUNCTION_NEG -> exprType = getMaxVarType(new VarType[]{type1});
         case FUNCTION_ADD, FUNCTION_SUB, FUNCTION_MUL, FUNCTION_DIV, FUNCTION_REM -> exprType = getMaxVarType(new VarType[]{type1, type2});
         case FUNCTION_AND, FUNCTION_OR, FUNCTION_XOR -> {
-          if (type1.getType() == CodeConstants.TYPE_BOOLEAN & type2.getType() == CodeConstants.TYPE_BOOLEAN) {
+          if (type1.getType() == CodeConstants.TYPE_BOOLEAN & type2 != null && type2.getType() == CodeConstants.TYPE_BOOLEAN) {
             exprType = VarType.VARTYPE_BOOLEAN;
           }
           else {
@@ -249,7 +249,7 @@ public class FunctionExprent extends Exprent {
       Exprent param2 = lstOperands.get(2);
       VarType supertype = VarType.getCommonSupertype(param1.getExprType(), param2.getExprType());
       if (param1.type == Exprent.EXPRENT_CONST && param2.type == Exprent.EXPRENT_CONST &&
-          supertype.getType() != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
+          supertype != null && supertype.getType() != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
         exprType = VarType.VARTYPE_INT;
       }
       else {
@@ -279,7 +279,7 @@ public class FunctionExprent extends Exprent {
       VarType right = lstOperands.get(0).getInferredExprType(upperBound);
       VarType cast = lstOperands.get(1).getExprType();
 
-      if (upperBound != null && (upperBound.isGeneric() || right.isGeneric())) {
+      if (upperBound != null && right != null && (upperBound.isGeneric() || right.isGeneric())) {
         Map<VarType, List<VarType>> names = this.getNamedGenerics();
         int arrayDim = 0;
 
@@ -314,7 +314,8 @@ public class FunctionExprent extends Exprent {
         }
       }
       else { //TODO: Capture generics to make cast better?
-        this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue());
+        this.needsCast = right != null && (right.getType() == CodeConstants.TYPE_NULL ||
+                         !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue()));
       }
     }
     return getExprType();
@@ -396,14 +397,15 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_EQ:
       case FUNCTION_NE: {
         if (type1.getType() == CodeConstants.TYPE_BOOLEAN) {
-          if (type2.isStrictSuperset(type1)) {
+          if (type2 != null && type2.isStrictSuperset(type1)) {
             result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
           }
           else { // both are booleans
             boolean param1_false_boolean =
               type1.isFalseBoolean() || (param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue());
             boolean param2_false_boolean =
-              type1.isFalseBoolean() || (param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue());
+              type1.isFalseBoolean() ||
+              (param2 != null && param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue());
 
             if (param1_false_boolean || param2_false_boolean) {
               result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
@@ -411,7 +413,7 @@ public class FunctionExprent extends Exprent {
             }
           }
         }
-        else if (type2.getType() == CodeConstants.TYPE_BOOLEAN) {
+        else if (type2 != null && type2.getType() == CodeConstants.TYPE_BOOLEAN) {
           if (type1.isStrictSuperset(type2)) {
             result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
           }

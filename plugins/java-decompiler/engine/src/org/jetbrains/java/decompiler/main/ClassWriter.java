@@ -722,7 +722,8 @@ public class ClassWriter {
         //if (init && !isEnum && ((node.access & CodeConstants.ACC_STATIC) == 0) && node.type == ClassNode.CLASS_MEMBER)
         //    index++;
         for (int i = methodWrapper.varproc.getFirstParameterPosition(); i < md.params.length; i++) {
-          VarType parameterType = hasDescriptor && !descriptor.parameterTypes.isEmpty() ? descriptor.parameterTypes.get(paramCount) : md.params[i];
+          VarType parameterType =
+            hasDescriptor && descriptor.parameterTypes.size() > paramCount ? descriptor.parameterTypes.get(paramCount) : md.params[i];
           if (mask == null || mask.get(i) == null) {
             if (paramCount > 0) {
               buffer.append(", ");

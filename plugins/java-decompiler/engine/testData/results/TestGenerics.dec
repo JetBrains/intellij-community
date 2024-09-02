@@ -21,7 +21,7 @@ public class TestGenerics<A, B extends TestGenerics.Maps & List> {
 
    public void genericList() {
       List<B> testList = new ArrayList();// 38
-      B b = testList.get(0);// 39
+      B b = (B)(testList.get(0));// 39
       System.out.println("B:" + b);// 40
    }// 41
 
