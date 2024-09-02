@@ -123,7 +123,7 @@ public class StructContext {
   }
 
   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
-    DecompilerContext.getLogger().writeMessage("Adding Archive: " + file.getAbsolutePath(), Severity.INFO);
+    DecompilerContext.getLogger().writeMessage("Adding Archive: " + file.getAbsolutePath(), Severity.TRACE);
     try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
       Enumeration<? extends ZipEntry> entries = archive.entries();
       while (entries.hasMoreElements()) {
@@ -147,7 +147,7 @@ public class StructContext {
         if (!entry.isDirectory()) {
           if (name.endsWith(".class")) {
             byte[] bytes = InterpreterUtil.getBytes(archive, entry);
-            DecompilerContext.getLogger().writeMessage("  Loading Class: " + name, Severity.INFO);
+            DecompilerContext.getLogger().writeMessage("  Loading Class: " + name, Severity.TRACE);
             StructClass cl = StructClass.create(new DataInputFullStream(bytes), isOwn, loader);
             classes.put(cl.qualifiedName, cl);
             unit.addClass(cl, name);

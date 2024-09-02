@@ -777,7 +777,7 @@ public class ClassWriter {
           throwsExceptions = true;
           buffer.append(" throws ");
 
-          boolean useDescriptor = hasDescriptor && !descriptor.exceptionTypes.isEmpty();
+          boolean useDescriptor = hasDescriptor && descriptor != null && !descriptor.exceptionTypes.isEmpty();
           for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
             if (i > 0) {
               buffer.append(", ");
