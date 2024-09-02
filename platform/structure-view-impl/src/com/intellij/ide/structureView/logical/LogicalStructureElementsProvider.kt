@@ -8,10 +8,6 @@ interface LogicalStructureElementsProvider<P, C> {
   fun getElements(parent: P): List<C>
 
   companion object {
-    private const val EP_FQN = "com.intellij.lang.logicalStructureElementsProvider"
-
-    val EP_NAME = ExtensionPointName.create<LogicalStructureElementsProvider<*, *>>(EP_FQN)
-
     fun <P> getProviders(p: P): Sequence<LogicalStructureElementsProvider<P, Any>> {
       return EP_NAME.extensionList.asSequence()
         .filter { it.forLogicalModelClass().isInstance(p) } as Sequence<LogicalStructureElementsProvider<P, Any>>
@@ -23,3 +19,7 @@ interface LogicalStructureElementsProvider<P, C> {
 interface ContainerElementsProvider<P, C> : LogicalStructureElementsProvider<P, C> {
   val containerName: String?
 }
+
+private const val EP_FQN = "com.intellij.lang.logicalStructureElementsProvider"
+
+private val EP_NAME = ExtensionPointName.create<LogicalStructureElementsProvider<*, *>>(EP_FQN)

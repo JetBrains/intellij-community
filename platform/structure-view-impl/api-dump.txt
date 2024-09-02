@@ -61,14 +61,12 @@ com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 - a:forLogicalModelClass():java.lang.Class
 - a:getElements(java.lang.Object):java.util.List
 f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getProviders(java.lang.Object):kotlin.sequences.Sequence
 com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 - sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
 - a:getModelClass():java.lang.Class
 - a:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 f:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
 - sf:Companion:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Companion

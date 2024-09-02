@@ -4,13 +4,14 @@ package com.intellij.ide.structureView.logical
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.openapi.extensions.ExtensionPointName
 
+/**
+ * Provides logical structure view for logical elements
+ * It is supposed to apply when we want to reuse existing tree for some logical elements branch
+ * By default it's better to provide [com.intellij.ide.presentation.PresentationProvider] for [T]
+ */
 interface LogicalStructureTreeElementProvider<T> {
 
   companion object {
-    private const val EP_FQN = "com.intellij.lang.logicalStructureTreeElementProvider"
-
-    val EP_NAME = ExtensionPointName.create<LogicalStructureTreeElementProvider<*>>(EP_FQN)
-
     fun <T> getTreeElement(model: T): StructureViewTreeElement? {
       for (provider in EP_NAME.extensionList) {
         if (!provider.getModelClass().isInstance(model)) continue
@@ -26,3 +27,7 @@ interface LogicalStructureTreeElementProvider<T> {
   fun getTreeElement(model: T): StructureViewTreeElement?
 
 }
+
+private const val EP_FQN = "com.intellij.lang.logicalStructureTreeElementProvider"
+
+private val EP_NAME = ExtensionPointName.create<LogicalStructureTreeElementProvider<*>>(EP_FQN)
