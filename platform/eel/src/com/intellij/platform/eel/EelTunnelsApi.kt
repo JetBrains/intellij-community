@@ -2,7 +2,6 @@
 package com.intellij.platform.eel
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.eel.EelNetworkResult.Ok
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -12,10 +11,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.time.Duration
 
-/**
- * Methods for launching tunnels for TCP sockets, Unix sockets, etc.
- */
-interface EelTunnelsApi {
+sealed interface EelTunnelsApi {
 
   /**
    * **This is a delicate API, for applied usages, please consider [withConnectionToRemotePort]**.
@@ -25,7 +21,7 @@ interface EelTunnelsApi {
    * If the result is [EelNetworkResult.Error], then there was an error during establishment of the connection.
    * Otherwise, the result is [EelNetworkResult.Ok], which means that the connection is ready to use.
    *
-   * The connection exists as a pair of channels [Connection.channelToServer] and [Connection.channelFromServer],
+   * The connection exists as a pair of channels [Connection.sendChannel] and [Connection.receiveChannel],
    * which allow communicating to a remote server from the IDE side.
    *
    * Packets sent to the channel and received from the channel may be split and/or concatenated.
@@ -33,10 +29,10 @@ interface EelTunnelsApi {
    *
    * If the connection gets closed from the server, then the channels also get closed in the sense of [SendChannel.close].
    *
-   * If an exception happens during sending, then [Connection.channelFromServer] gets closed exceptionally with [RemoteNetworkException].
+   * If an exception happens during sending, then [Connection.receiveChannel] gets closed exceptionally with [RemoteNetworkException].
    *
-   * [Connection.channelToServer] can be closed separately with [SendChannel.close]. In this case, the EOF is sent to the server.
-   * Note, that [Connection.channelFromServer] is __not__ closed in this case.
+   * [Connection.sendChannel] can be closed separately with [SendChannel.close]. In this case, the EOF is sent to the server.
+   * Note, that [Connection.receiveChannel] is __not__ closed in this case.
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
@@ -86,8 +82,8 @@ interface EelTunnelsApi {
 
       /**
        * Sets timeout for connecting to remote host.
-       * If the connection could not be established before [timeout], then [EelConnectionError.ConnectionTimeout] would be returned
-       * in [EelTunnelsApi.getConnectionToRemotePort].
+       * If the connection could not be established before [timeout], then [IjentConnectionError.ConnectionTimeout] would be returned
+       * in [IjentTunnelsApi.getConnectionToRemotePort].
        *
        * Default value: 10 seconds.
        * The recognizable granularity is milliseconds.
@@ -103,18 +99,22 @@ interface EelTunnelsApi {
 
 
   /**
-   * Represents a controller for a remote connection
+   * Represents a controller for a TCP connection
    */
   interface Connection {
-    /**
-     * A channel to the remote server
-     */
-    val channelToServer: SendChannel<ByteBuffer>
 
     /**
-     * A channel from the remote server
+     * A channel to the server
      */
-    val channelFromServer: ReceiveChannel<ByteBuffer>
+    // todo: Channel is a bad API here.
+    // The client that sends data to the server is also interested in the error that happens during the send.
+    // This can be fixed by having a suspend function instead of a channel
+    val sendChannel: SendChannel<ByteBuffer>
+
+    /**
+     * A channel from the server
+     */
+    val receiveChannel: ReceiveChannel<ByteBuffer>
 
     /**
      * Sets the size of send buffer of the socket
@@ -162,7 +162,6 @@ interface EelTunnelsApi {
     constructor() : this("")
 
     class ConnectionReset : RemoteNetworkException()
-    class ConnectionAborted : RemoteNetworkException()
     class UnknownFailure(error: String) : RemoteNetworkException(error)
   }
 }
@@ -171,13 +170,13 @@ interface EelTunnelsApi {
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel to server
  */
-operator fun Connection.component1(): SendChannel<ByteBuffer> = channelToServer
+operator fun Connection.component1(): SendChannel<ByteBuffer> = sendChannel
 
 /**
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel from server
  */
-operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = channelFromServer
+operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = receiveChannel
 
 interface EelTunnelsPosixApi : EelTunnelsApi {
   /**
@@ -250,7 +249,7 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
 ): T =
   when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
     is EelNetworkResult.Error -> errorHandler(connectionResult.error)
-    is Ok -> try {
+    is EelNetworkResult.Ok -> try {
       coroutineScope { action(connectionResult.value) }
     }
     finally {
@@ -299,6 +298,11 @@ sealed interface EelNetworkResult<out T, out E : EelNetworkError> {
  */
 interface EelConnectionError : EelNetworkError {
   val message: @NlsSafe String
+
+  data object PermissionDenied : EelConnectionError {
+    override val message: @NlsSafe String = "Permission denied"
+
+  }
 
   data object ConnectionTimeout : EelConnectionError {
     override val message: @NlsSafe String = "Connection could not be established because of timeout"
