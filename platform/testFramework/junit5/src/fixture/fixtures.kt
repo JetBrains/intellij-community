@@ -50,9 +50,13 @@ fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
 fun projectFixture(
   pathFixture: TestFixture<Path> = tempPathFixture(null),
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
+  openAfterCreation: Boolean = false,
 ): TestFixture<Project> = testFixture {
   val path = pathFixture.init()
   val project = ProjectManagerEx.getInstanceEx().newProjectAsync(path, openProjectTask)
+  if (openAfterCreation) {
+    ProjectManagerEx.getInstanceEx().openProject(path, openProjectTask.withProject(project))
+  }
   initialized(project) {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
   }
