@@ -339,7 +339,7 @@ public class MantisRepository extends BaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && StringUtil.isNotEmpty(myUsername) && StringUtil.isNotEmpty(myPassword);
+    return super.isConfigured() && StringUtil.isNotEmpty(getUsername()) && StringUtil.isNotEmpty(getPassword());
   }
 
   @Override
