@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.psi.*
 internal object CreateLabelFixFactories {
 
     val unresolvedLabelFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedLabel ->
-        val labelReferenceExpression = diagnostic.psi as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
+        val labelReferenceExpression = diagnostic.psi as? KtLabelReferenceExpression
+            ?: (diagnostic.psi as? KtReturnExpression)?.getTargetLabel() as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
         return@IntentionBased getFixes(labelReferenceExpression)
     }
 
