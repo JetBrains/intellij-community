@@ -2332,6 +2332,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("KTIJ-26747.kt")
+        public void testKTIJ_26747() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/KTIJ-26747.kt");
+        }
+
         @TestMetadata("parameterDefaultValue.kt")
         public void testParameterDefaultValue() throws Exception {
             runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
@@ -3561,6 +3566,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
         @TestMetadata("KTIJ20039.kt")
         public void testKTIJ20039() throws Exception {
             runTest("../../completion/testData/basic/common/KTIJ20039.kt");
+        }
+
+        @TestMetadata("KTIJ-26747.kt")
+        public void testKTIJ_26747() throws Exception {
+            runTest("../../completion/testData/basic/common/KTIJ-26747.kt");
         }
 
         @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
