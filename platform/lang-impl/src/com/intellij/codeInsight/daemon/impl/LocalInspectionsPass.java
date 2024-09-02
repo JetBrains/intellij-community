@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.*;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -95,6 +97,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       List<? extends InspectionRunner.InspectionContext> resultContexts = List.of();
       List<PsiFile> injectedFragments = List.of();
     };
+    DumbToolWrapperCondition dumbToolWrapperCondition = new DumbToolWrapperCondition(isDumbMode());
     if (!toolWrappers.isEmpty()) {
       Consumer<? super ManagedHighlighterRecycler> withRecycler = invalidPsiRecycler -> {
         InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
@@ -154,8 +157,24 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       }
     }
     if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-      Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(result.resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      impl.removeHighlightsForObsoleteTools(getFile(), getDocument(), result.injectedFragments, pairs, getHighlightingSession());
+      Set<Pair<Object, PsiFile>> actualToolsRun = ContainerUtil.map2Set(result.resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
+
+      Set<? extends String> inactiveSmartOnlyToolIds = dumbToolWrapperCondition.getInactiveToolWrapperIds();
+      BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, psiFile) -> {
+        if (!HighlightInfoUpdaterImpl.isInspectionToolId(toolId)) {
+          return true;
+        }
+
+        if (actualToolsRun.contains(Pair.create(toolId, psiFile))) {
+          return true;
+        }
+        if (inactiveSmartOnlyToolIds.contains(toolId)) {
+          // keep highlights from smart-only inspections in dumb mode
+          return true;
+        }
+        return false;
+      };
+      impl.removeHighlightsForObsoleteTools(getHighlightingSession(), result.injectedFragments, keepToolIdPredicate);
       impl.removeWarningsInsideErrors(result.injectedFragments, getDocument(), getHighlightingSession());  // must be the last
     }
   }
@@ -476,6 +495,33 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     @Override
     public boolean isInspectionHighlightInfoType() {
       return true;
+    }
+  }
+
+  private static class DumbToolWrapperCondition implements Condition<LocalInspectionToolWrapper> {
+    private final boolean myDumbMode;
+    private final Set<String> myInactiveIds = ConcurrentHashMap.newKeySet();
+
+    private DumbToolWrapperCondition(boolean isDumbMode) {
+      myDumbMode = isDumbMode;
+    }
+
+    @Override
+    public boolean value(LocalInspectionToolWrapper wrapper) {
+      if (!myDumbMode) return true;
+
+      LocalInspectionTool tool = wrapper.getTool();
+      if (DumbService.isDumbAware(tool)) {
+        return true;
+      }
+
+      myInactiveIds.add(tool.getShortName());
+      return false;
+    }
+
+    @NotNull
+    private Set<? extends String> getInactiveToolWrapperIds() {
+      return myInactiveIds;
     }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -579,5 +580,23 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       type("X");
       assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
     }
+  }
+
+  public void testHighlightingVisitorDisabledAtSomePointEgSemanticHighlightingBeingDisabledMustRemoveAllHighlightersOfOutdatedVisitors() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo(int wwwwwwwwwwwwwwwww) {
+        }
+      }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
+    assertEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+    CodeInsightTestFixtureImpl.runWithRainbowEnabled(true, () -> {
+      myDaemonCodeAnalyzer.restart();
+      assertNotEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
+    });
+    myDaemonCodeAnalyzer.restart();
+    assertEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
   }
 }
