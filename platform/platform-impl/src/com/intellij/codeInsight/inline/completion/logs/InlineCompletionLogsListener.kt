@@ -7,6 +7,9 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINISH_TYPE
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TIME_TO_START_SHOWING
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.WAS_SHOWN
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.FILE_LANGUAGE
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.INLINE_API_PROVIDER
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_EVENT
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.application.readAction
@@ -23,11 +26,11 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     wasShown.set(false)
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.add(REQUEST_ID with event.request.requestId)
+    container.add(REQUEST_EVENT with event.request.event.javaClass)
+    container.add(INLINE_API_PROVIDER with event.provider)
+    event.request.event.toRequest()?.file?.language?.let { container.add(FILE_LANGUAGE with it) }
     container.addAsync {
       readAction {
-        if (!event.request.file.isValid) {
-          return@readAction emptyList()
-        }
         InlineCompletionContextLogs.getFor(event.request)
       }
     }
@@ -49,6 +52,9 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val REQUEST_ID = register(EventFields.Long("request_id"))
+  val REQUEST_EVENT = register(EventFields.Class("request_event"))
+  val INLINE_API_PROVIDER = register(EventFields.Class("inline_api_provider"))
+  val FILE_LANGUAGE = register(EventFields.Language("file_language"))
 }
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
