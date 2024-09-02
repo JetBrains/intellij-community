@@ -592,6 +592,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         null
       }
     }?.let {
+      withContext(NonCancellable) {
+        cancelProjectOpening(options.project, it)
+      }
       throw it
     }
 
@@ -599,6 +602,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       !checkChildProcess(projectStoreBaseDir, options)
     }
     if (!continueOpen) {
+      withContext(NonCancellable) {
+        cancelProjectOpening(options.project)
+      }
       return null
     }
 
@@ -617,6 +623,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
         if (checkExistingProjectOnOpen(projectToClose, options, projectStoreBaseDir)) {
           LOG.info("Project check is not succeeded -> return null")
+          withContext(NonCancellable) {
+            cancelProjectOpening(options.project)
+          }
           return null
         }
       }
@@ -704,26 +713,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     catch (e: CancellationException) {
       withContext(NonCancellable) {
-        result?.let { project ->
-          try {
-            try {
-              // cancel async preloading of services as soon as possible
-              (project as ProjectImpl).getCoroutineScope().coroutineContext.job.cancelAndJoin()
-            }
-            catch (secondException: Throwable) {
-              e.addSuppressed(secondException)
-            }
-
-            withContext(Dispatchers.EDT) {
-              writeIntentReadAction {
-                closeProject(project, saveProject = false, checkCanClose = false)
-              }
-            }
-          }
-          catch (secondException: Throwable) {
-            e.addSuppressed(secondException)
-          }
-        }
+        cancelProjectOpening(result, e)
         failedToOpenProject(frameAllocator = frameAllocator, exception = null, options = options)
       }
 
@@ -780,6 +770,29 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     jpsMetrics.endSpan("project.opening")
     return project
+  }
+
+  private suspend fun cancelProjectOpening(project: Project?, e: CancellationException? = null) {
+    if (project == null) return
+
+    try {
+      try {
+        // cancel async preloading of services as soon as possible
+        (project as ProjectImpl).getCoroutineScope().coroutineContext.job.cancelAndJoin()
+      }
+      catch (secondException: Throwable) {
+        e?.addSuppressed(secondException)
+      }
+
+      withContext(Dispatchers.EDT) {
+        writeIntentReadAction {
+          closeProject(project, saveProject = false, checkCanClose = false)
+        }
+      }
+    }
+    catch (secondException: Throwable) {
+      e?.addSuppressed(secondException)
+    }
   }
 
   private suspend fun failedToOpenProject(frameAllocator: ProjectFrameAllocator, exception: Throwable?, options: OpenProjectTask) {
