@@ -132,7 +132,7 @@
 
     <registryKey key="kotlin.k2.kmp.wasm.enabled"
                  description="Enable KMP support in the K2 mode for WASM platform"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"/>
 
     <!-- inlay hints -->

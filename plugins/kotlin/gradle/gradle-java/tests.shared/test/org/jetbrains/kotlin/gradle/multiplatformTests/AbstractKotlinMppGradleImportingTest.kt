@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.enableKmpWasmSupport
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -206,7 +205,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // @Parametrized
             (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
             super.setUp()
-            enableKmpWasmSupport()
         }
 
         context.testProject = myProject
