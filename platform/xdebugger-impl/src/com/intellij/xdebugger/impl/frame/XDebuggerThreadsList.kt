@@ -30,6 +30,8 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>
 ) : JBList<StackInfo>(CollectionListModel()), UiDataProvider {
     private var mySelectedFrame: StackInfo? = null
 
+    //NOTE(Korovin): This field is here to allow actions to show a context menu without switching an active thread and still provide a
+    //context for actions which depend on a specific thread.
     var stackUnderMouse: StackInfo? = null
       private set
 
