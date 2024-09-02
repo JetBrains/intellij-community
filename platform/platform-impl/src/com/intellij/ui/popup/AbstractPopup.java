@@ -208,6 +208,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       };
     }
+
+    @Override
+    public void selectTextRange(int begin, int length) {
+      if (searchFieldShown || mySpeedSearchAlwaysShown) {
+        mySpeedSearchPatternField.getTextEditor().select(begin, begin + length);
+      }
+    }
   };
 
   protected void updateSpeedSearchColors(boolean error) {

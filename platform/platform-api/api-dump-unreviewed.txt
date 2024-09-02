@@ -10357,6 +10357,7 @@ a:com.intellij.ui.speedSearch.SpeedSearchSupply
 - a:matchingFragments(java.lang.String):java.lang.Iterable
 - a:refreshSelection():V
 - a:removeChangeListener(java.beans.PropertyChangeListener):V
+- selectTextRange(I,I):V
 - supportsNavigation():Z
 *:com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - a:getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle

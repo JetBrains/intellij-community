@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
@@ -48,6 +49,8 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
+import com.jetbrains.TextInput
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -155,6 +158,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
       postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
     }
+    addTextInputListener()
   }
 
   companion object {
@@ -918,6 +922,15 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   fun flushNativeEventQueue() {
     SunToolkit.flushPendingEvents()
+  }
+
+  private fun addTextInputListener() {
+    JBR.getTextInput()?.setGlobalEventListener(object : TextInput.EventListener {
+      override fun handleSelectTextRangeEvent(event: TextInput.SelectTextRangeEvent) {
+        val supply = SpeedSearchSupply.getSupply(event.source as JComponent, true)
+        supply?.selectTextRange(event.begin, event.length)
+      }
+    })
   }
 }
 

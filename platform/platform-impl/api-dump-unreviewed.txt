@@ -21992,6 +21992,7 @@ a:com.intellij.ui.SpeedSearchBase
 - refreshSelection():V
 - removeChangeListener(java.beans.PropertyChangeListener):V
 - pa:selectElement(java.lang.Object,java.lang.String):V
+- selectTextRange(I,I):V
 - setClearSearchOnNavigateNoMatch(Z):V
 - setComparator(com.intellij.ui.SpeedSearchComparator):V
 - setupListeners():V
