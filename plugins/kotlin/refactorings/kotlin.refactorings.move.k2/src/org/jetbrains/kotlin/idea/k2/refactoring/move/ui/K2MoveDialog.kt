@@ -46,6 +46,7 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
     }
 
     private fun saveSettings() {
+        mainPanel.apply()
         KotlinCommonRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages
     }
 
