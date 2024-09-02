@@ -105,13 +105,13 @@ final class PassExecutorService implements Disposable {
       // must not wait in EDT because waitFor() might inadvertently steal some work from FJP and try to run it and fail with "must not execute in EDT"
       ThreadingAssertions.assertBackgroundThread();
     }
-    for (Map.Entry<ScheduledPass, Job<Void>> entry : mySubmittedPasses.entrySet()) {
-      Job<Void> job = entry.getValue();
-      ScheduledPass pass = entry.getKey();
-      pass.myUpdateProgress.cancel(reason);
-      job.cancel();
-    }
     try {
+      for (Map.Entry<ScheduledPass, Job<Void>> entry : mySubmittedPasses.entrySet()) {
+        Job<Void> job = entry.getValue();
+        ScheduledPass pass = entry.getKey();
+        pass.myUpdateProgress.cancel(reason);
+        job.cancel();
+      }
       if (waitForTermination) {
         while (!waitFor(50)) {
           int i = 0;
