@@ -21,6 +21,7 @@ import java.net.InetSocketAddress
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.math.min
 import kotlin.random.Random
@@ -180,7 +181,18 @@ internal class Http2ConnectionProvider(
     try {
       // must be canceled when the parent context is canceled
       val result = CompletableDeferred<T>(parent = coroutineContext.job)
-      block(streamChannel, result)
+      val eventLoop = streamChannel.eventLoop()
+      // use a single-thread executor as Netty does for handlers for thread safety and fewer context switches
+      withContext(object : CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+          eventLoop.execute(block)
+        }
+
+        override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
+      }) {
+        block(streamChannel, result)
+      }
+
       // Ensure the stream is closed before completing the operation.
       // This prevents the risk of opening more streams than intended,
       // especially when there is a limit on the number of parallel executed tasks.

@@ -148,9 +148,7 @@ private suspend fun uploadFile(
   zstdCompressContextPool: ZstdCompressContextPool,
   uncompressedBytes: LongAdder,
 ): Long {
-  val result = zstdCompressContextPool.withZstd { zstd ->
-    httpConnection.upload(path = AsciiString.of(urlPath), file = file, sourceBlockSize = sourceBlockSize, zstd = zstd)
-  }
+  val result = httpConnection.upload(path = AsciiString.of(urlPath), file = file, sourceBlockSize = sourceBlockSize, zstdCompressContextPool = zstdCompressContextPool)
   require(result.fileSize > 0)
   uncompressedBytes.add(result.fileSize)
   return result.uploadedSize

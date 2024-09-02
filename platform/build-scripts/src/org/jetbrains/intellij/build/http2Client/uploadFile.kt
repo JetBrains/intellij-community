@@ -26,7 +26,7 @@ internal suspend fun Http2ClientConnection.upload(
   path: AsciiString,
   file: Path,
   sourceBlockSize: Int,
-  zstd: ZstdCompressCtx,
+  zstdCompressContextPool: ZstdCompressContextPool,
 ): UploadResult {
   return connection.stream { stream, result ->
     val handler = WebDavPutStatusChecker(result)
@@ -38,15 +38,17 @@ internal suspend fun Http2ClientConnection.upload(
       channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
     }
     try {
-      val fileSize = fileBuffer.remaining()
-      compressAndUpload(
-        fileBuffer = fileBuffer,
-        sourceBlockSize = sourceBlockSize,
-        zstd = zstd,
-        stream = stream,
-        fileSize = fileSize.toLong(),
-      ) {
-        handler.uploadedResult = it
+      val fileSize = fileBuffer.remaining().toLong()
+      zstdCompressContextPool.withZstd(fileSize) { zstd ->
+        compressAndUpload(
+          fileBuffer = fileBuffer,
+          sourceBlockSize = sourceBlockSize,
+          zstd = zstd,
+          stream = stream,
+          fileSize = fileSize,
+        ) {
+          handler.uploadedResult = it
+        }
       }
     }
     finally {

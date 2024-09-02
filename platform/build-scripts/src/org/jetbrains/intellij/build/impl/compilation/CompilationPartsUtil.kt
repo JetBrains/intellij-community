@@ -25,7 +25,6 @@ import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.math.BigInteger
 import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.ByteBuffer
@@ -46,7 +45,8 @@ import kotlin.io.path.listDirectoryEntries
 
 private val nettyMax = Runtime.getRuntime().availableProcessors() * 2
 internal val uploadParallelism = nettyMax.coerceIn(4, 32)
-internal val downloadParallelism = (nettyMax * 2).coerceIn(8, 16)
+// max 16 and not 32 as for upload because we write to disk (not read as upload)
+internal val downloadParallelism = nettyMax.coerceIn(4, 16)
 
 private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 private const val SERVER_URL_PROPERTY = "intellij.build.compiled.classes.server.url"
@@ -540,8 +540,30 @@ internal fun computeHash(file: Path): String {
   return digestToString(messageDigest)
 }
 
-// we cannot change file extension or prefix, so, add suffix
-internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "-z"
+internal fun digestToString(digest: MessageDigest): String = encodeToBase38(digest.digest())
+
+// Define the custom alphabet for encoding
+@Suppress("SpellCheckingInspection")
+private const val CUSTOM_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789_-"
+private const val BASE = CUSTOM_ALPHABET.length
+
+private fun encodeToBase38(bytes: ByteArray): String {
+  val result = StringBuilder(49)
+  var quotient = 0
+  for (currentByte in bytes) {
+    quotient = (quotient shl 8) or (currentByte.toInt() and 0xFF)
+    while (quotient >= BASE) {
+      result.append(CUSTOM_ALPHABET[quotient % BASE])
+      quotient /= BASE
+    }
+  }
+
+  if (quotient > 0) {
+    result.append(CUSTOM_ALPHABET[quotient])
+  }
+
+  return result.toString()
+}
 
 internal data class PackAndUploadItem(
   @JvmField val output: Path,
