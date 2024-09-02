@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Throws
 import kotlin.time.Duration.Companion.nanoseconds
 
 @ApiStatus.Internal
@@ -318,8 +319,6 @@ class IndexUpdateRunner(
       indexingStamp: FileIndexingStamp,
       file: VirtualFile,
     ): FileIndexingResult? {
-      //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
-      //         the lifecycle?
       val fileIndexingResult = readAction {
         fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
       }
@@ -345,8 +344,6 @@ class IndexUpdateRunner(
       try {
         val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
         val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
-        //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
-        //         the lifecycle?
         val fileIndexingResult = readAction {
           indexingAttemptCount.incrementAndGet()
           val fileType = if (fileTypeChangeChecker.get()) type else null
