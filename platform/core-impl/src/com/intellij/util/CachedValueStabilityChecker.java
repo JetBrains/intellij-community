@@ -171,7 +171,7 @@ final class CachedValueStabilityChecker {
     Class<?> superclass = clazz.getSuperclass();
     if (superclass == null) return false;
 
-    if ((o instanceof Supplier || o instanceof java.util.function.Function) &&
+    if ((o instanceof kotlin.Function || o instanceof Supplier || o instanceof java.util.function.Function) &&
         Object.class.equals(clazz.getSuperclass())) {
       return true;
     }
