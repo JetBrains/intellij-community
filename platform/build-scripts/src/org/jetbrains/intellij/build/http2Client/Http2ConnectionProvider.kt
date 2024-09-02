@@ -18,7 +18,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.net.InetSocketAddress
-import java.nio.channels.ClosedChannelException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
@@ -122,7 +121,7 @@ internal class Http2ConnectionProvider(
           continue
         }
       }
-      catch (e: ClosedChannelException) {
+      catch (e: Throwable) {
         if (attemptIndex >= MAX_ATTEMPTS) {
           if (suppressedExceptions != null) {
             for (suppressedException in suppressedExceptions) {
