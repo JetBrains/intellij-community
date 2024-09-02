@@ -59,19 +59,23 @@ class GradleContentRootIndex {
   ): Set<Path> {
 
     val projectRootPath = externalProject.projectDir.toPath()
+    val buildRootPath = externalProject.buildDir.toPath()
 
     val contentRootPaths = NioPathPrefixTreeFactory.createSet()
     for (sourceDirectorySet in sources.values) {
       for (sourceRootPath in sourceDirectorySet) {
-        val contentRootPath = resolveContentRoot(projectRootPath, sourceRootPath)
+        val contentRootPath = resolveContentRoot(projectRootPath, buildRootPath, sourceRootPath)
         contentRootPaths.add(contentRootPath)
       }
     }
     return contentRootPaths.getRoots()
   }
 
-  private fun resolveContentRoot(projectRootPath: Path, sourceRootPath: Path): Path {
+  private fun resolveContentRoot(projectRootPath: Path, buildRootPath: Path, sourceRootPath: Path): Path {
     if (!sourceRootPath.startsWith(projectRootPath)) {
+      return sourceRootPath
+    }
+    if (sourceRootPath.startsWith(buildRootPath)) {
       return sourceRootPath
     }
     val contentRootPath = sourceRootPath.parent
