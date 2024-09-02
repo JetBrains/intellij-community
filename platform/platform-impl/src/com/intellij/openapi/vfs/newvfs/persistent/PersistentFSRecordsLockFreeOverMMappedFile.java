@@ -529,34 +529,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     ByteBuffer pageBuffer = page.rawPageBuffer();
     return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, RecordLayout.CONTENT_REF_OFFSET, newContentRecordId);
   }
-
-  @Override
-  public void fillRecord(int recordId,
-                         long timestamp,
-                         long length,
-                         int flags,
-                         int nameId,
-                         int parentId,
-                         boolean cleanAttributeRef) throws IOException {
-    checkParentIdIsValid(parentId);
-
-    long recordOffsetInFile = recordOffsetInFile(recordId);
-    int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    Page page = storage.pageByOffset(recordOffsetInFile);
-    ByteBuffer pageBuffer = page.rawPageBuffer();
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.PARENT_REF_OFFSET, parentId);
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.NAME_REF_OFFSET, nameId);
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.FLAGS_OFFSET, flags);
-    if (cleanAttributeRef) {
-      setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.ATTR_REF_OFFSET, 0);
-    }
-    //TODO RC: why not set contentId?
-    setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.TIMESTAMP_OFFSET, timestamp);
-    setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.LENGTH_OFFSET, length);
-
-    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-  }
-
   @Override
   public void markRecordAsModified(int recordId) throws IOException {
     long recordOffsetInFile = recordOffsetInFile(recordId);

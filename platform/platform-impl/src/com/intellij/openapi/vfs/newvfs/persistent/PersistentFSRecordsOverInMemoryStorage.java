@@ -240,24 +240,6 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public void fillRecord(final int recordId,
-                         final long timestamp,
-                         final long length,
-                         final int flags,
-                         final int nameId,
-                         final int parentId,
-                         final boolean overwriteAttrRef) throws IOException {
-    setParent(recordId, parentId);
-    updateNameId(recordId, nameId);
-    setFlags(recordId, flags);
-    if (overwriteAttrRef) {
-      setAttributeRecordId(recordId, 0);
-    }
-    setTimestamp(recordId, timestamp);
-    setLength(recordId, length);
-  }
-
-  @Override
   public void cleanRecord(final int recordId) throws IOException {
     checkRecordId(recordId);
     //fill record with zeros, by 4 bytes at once:

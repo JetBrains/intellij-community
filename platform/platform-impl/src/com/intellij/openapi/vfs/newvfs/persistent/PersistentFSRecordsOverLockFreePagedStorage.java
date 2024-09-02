@@ -587,39 +587,6 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public void fillRecord(final int recordId,
-                         final long timestamp,
-                         final long length,
-                         final int flags,
-                         final int nameId,
-                         final int parentId,
-                         final boolean overwriteAttrRef) throws IOException {
-    final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-      page.lockPageForWrite();
-      try {
-        final ByteBuffer pageBuffer = page.rawPageBuffer();
-        pageBuffer.putInt(recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
-        pageBuffer.putInt(recordOffsetOnPage + NAME_REF_OFFSET, nameId);
-        pageBuffer.putInt(recordOffsetOnPage + FLAGS_OFFSET, flags);
-        if (overwriteAttrRef) {
-          pageBuffer.putInt(recordOffsetOnPage + ATTR_REF_OFFSET, 0);
-        }
-        pageBuffer.putLong(recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
-        pageBuffer.putLong(recordOffsetOnPage + LENGTH_OFFSET, length);
-
-        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-
-        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
-      }
-      finally {
-        page.unlockPageForWrite();
-      }
-    }
-  }
-
-  @Override
   public void cleanRecord(final int recordId) throws IOException {
     checkRecordIdIsValid(recordId);
 
