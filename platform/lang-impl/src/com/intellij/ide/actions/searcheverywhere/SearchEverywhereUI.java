@@ -152,6 +152,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SearchFieldTypingListener mySearchTypingListener;
   private final HintHelper myHintHelper;
   private final SearchEverywhereMlService myMlService;
+  private final SearchPerformanceTracker mySearchPerformanceTracker;
   private final @Nullable SearchEverywhereSpellingCorrector mySpellingCorrector;
   private JComponent myExtendedInfoPanel;
   @Nullable
@@ -262,9 +263,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
 
-    SearchPerformanceTracker performanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
-    addSearchListener(performanceTracker);
-    Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, performanceTracker, myMlService, myProject,
+    mySearchPerformanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
+    addSearchListener(mySearchPerformanceTracker);
+    Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, mySearchPerformanceTracker, myMlService, myProject,
                                                                           startMoment));
   }
 
@@ -1407,6 +1408,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     if (closePopup) {
+      mySearchPerformanceTracker.popupIsClosedDueToSelection();
       closePopup();
     }
     else {

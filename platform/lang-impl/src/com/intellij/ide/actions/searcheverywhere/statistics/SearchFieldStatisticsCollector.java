@@ -76,6 +76,7 @@ public final class SearchFieldStatisticsCollector implements Disposable {
       if (myStartMoment != null) {
         pairs.add(DURATION_FROM_ACTION_START_MS.with(myStartMoment.getCurrentDuration().toMillis()));
       }
+      pairs.add(DIALOG_WAS_CANCELLED.with(myPerformanceTracker.isDialogCancelled()));
 
       if (myMlService != null) {
         pairs.add(ML_EXPERIMENT_VERSION.with(myMlService.getExperimentVersion()));
