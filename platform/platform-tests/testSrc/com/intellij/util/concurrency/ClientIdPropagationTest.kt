@@ -2,8 +2,8 @@
 package com.intellij.util.concurrency
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.concurrency.client.ClientIdStringContextElement
-import com.intellij.concurrency.client.currentThreadClientIdString
+import com.intellij.codeWithMe.ClientIdStringContextElement
+import com.intellij.codeWithMe.currentThreadClientIdString
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -63,12 +63,9 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   private fun doTest(testRunnable: Runnable) {
     service<ClientSessionsManager<ClientAppSession>>().registerSession(testRootDisposable,
                                                                        TestClientAppSession(application as ApplicationImpl))
-    val oldPropagate = ClientId.propagateAcrossThreads
-    ClientId.propagateAcrossThreads = true
     installThreadContext(ClientIdStringContextElement(TEST_CLIENT_ID)).use {
       testRunnable.run()
     }
-    ClientId.propagateAcrossThreads = oldPropagate
 
     val clientId = resultClientId.get(10, TimeUnit.SECONDS)
     check(clientId == TEST_CLIENT_ID) { "Unexpected clientId value: $clientId" }

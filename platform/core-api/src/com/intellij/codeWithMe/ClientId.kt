@@ -29,6 +29,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Function
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -104,12 +105,6 @@ data class ClientId(val value: String) {
         AbsenceBehavior.RETURN_LOCAL
       }
     }
-
-    /**
-     * Controls propagation behavior. When false, decorateRunnable does nothing.
-     */
-    @JvmStatic
-    var propagateAcrossThreads: Boolean by ::propagateClientIdAcrossThreads
 
     /**
      * The ID considered local to this process. All other IDs (except for null) are considered remote
@@ -447,3 +442,27 @@ fun CoroutineContext.clientId(): ClientId? = this[ClientIdStringContextElement.K
 
 @ApiStatus.Internal
 fun currentThreadClientId(): ClientId? = currentThreadContext().clientId()
+
+@ApiStatus.Internal
+class ClientIdStringContextElement(val clientIdString: String?) : AbstractCoroutineContextElement(Key) {
+  private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
+  object Key : CoroutineContext.Key<ClientIdStringContextElement>
+
+  override fun toString(): String = if (creationTrace != null) "ClientId=$clientIdString. Created at:\r$creationTrace" else "ClientId=$clientIdString"
+}
+
+val CoroutineContext.clientIdStringContextElement: ClientIdStringContextElement?
+  get() = this[ClientIdStringContextElement.Key]
+
+val currentThreadClientIdString: String? get() = currentThreadContext().clientIdStringContextElement?.clientIdString
+
+
+inline fun <T> withClientId(clientId: String?, action: () -> T): T {
+  return withClientId(ClientIdStringContextElement(clientId), action)
+}
+
+inline fun <T> withClientId(idStringContextElement: ClientIdStringContextElement, action: () -> T): T {
+  installThreadContext(idStringContextElement, replace = true).use {
+    return action()
+  }
+}

@@ -4,7 +4,7 @@
 
 package com.intellij.util
 
-import com.intellij.concurrency.client.clientIdStringContextElement
+import com.intellij.codeWithMe.clientIdStringContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
