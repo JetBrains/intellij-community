@@ -45,15 +45,13 @@ internal class ShadowedCallablesFilter {
         typeArgumentsAreRequired: Boolean,
     ): FilterResult {
         // there is no need to create simplified signature if `KaCallableSignature<*>` is already processed
-        if (callable in processedSignatures) return FilterResult(excludeFromCompletion = true, options)
-        processedSignatures.add(callable)
-
-        val importingStrategy = options.importingStrategy
-        val updatedImportingStrategy = ImportStrategy.DoNothing
+        if (!processedSignatures.add(callable)) return FilterResult(excludeFromCompletion = true, options)
 
         // if callable is already imported, try updating importing strategy
-        if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope) && importingStrategy != updatedImportingStrategy) {
-            val updatedOptions = options.withImportingStrategy(updatedImportingStrategy)
+        if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope)
+            && options.importingStrategy != ImportStrategy.DoNothing
+        ) {
+            val updatedOptions = options.withImportingStrategy(ImportStrategy.DoNothing)
             val excludeFromCompletion = processSignatureConsideringOptions(callable, updatedOptions, symbolOrigin, typeArgumentsAreRequired)
             if (!excludeFromCompletion) {
                 return FilterResult(excludeFromCompletion, updatedOptions)

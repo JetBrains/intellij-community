@@ -145,7 +145,7 @@ internal open class FirCallableCompletionContributor(
         }
             .filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
             .filterOutShadowedCallables(weighingContext.expectedType)
-            .filterOutUninitializedCallables(positionContext.position)
+            .filterNot(isUninitializedCallable(positionContext.position))
 
         for (callableWithMetadata in callablesWithMetadata) {
             addCallableSymbolToCompletion(
@@ -520,42 +520,48 @@ internal open class FirCallableCompletionContributor(
         explicitReceiverTypeHint: KaType? = null,
     ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
 
-    context(KaSession)
-    private fun Sequence<CallableWithMetadataForCompletion>.filterOutUninitializedCallables(
-        position: PsiElement
-    ): Sequence<CallableWithMetadataForCompletion> {
-        val uninitializedCallablesForPosition = collectUninitializedCallablesForPosition(position)
-        return filterNot { it.signature.symbol.psi in uninitializedCallablesForPosition }
-    }
+    private fun isUninitializedCallable(
+        position: PsiElement,
+    ): (CallableWithMetadataForCompletion) -> Boolean {
+        val uninitializedCallablesForPosition = buildSet<KtCallableDeclaration> {
+            for (parent in position.parents(withSelf = false)) {
+                when (val grandParent = parent.parent) {
+                    is KtParameter -> {
+                        if (grandParent.defaultValue == parent) {
+                            // Filter out the current parameter and all parameters initialized after the current one.
+                            // In the following example:
+                            // ```
+                            // fun test(a, b: Int = <caret>, c: Int) {}
+                            // ```
+                            // `a` and `b` should not show up in completion.
+                            val originalOrSelf = getOriginalDeclarationOrSelf(
+                                declaration = grandParent,
+                                originalKtFile = basicContext.originalKtFile,
+                            )
+                            generateSequence(originalOrSelf) { it.nextSiblingOfSameType() }
+                                .forEach(::add)
+                        }
+                    }
 
-    context(KaSession)
-    private fun collectUninitializedCallablesForPosition(position: PsiElement): Set<KtCallableDeclaration> = buildSet {
-        for (parent in position.parents(withSelf = false)) {
-            when (val grandParent = parent.parent) {
-                is KtParameter -> {
-                    if (grandParent.defaultValue == parent) {
-                        // Filter out current parameter and all parameters initialized after current parameter. In the following example:
-                        // ```
-                        // fun test(a, b: Int = <caret>, c: Int) {}
-                        // ```
-                        // `a` and `b` should not show up in completion.
-                        val originalOrSelf = getOriginalDeclarationOrSelf(grandParent, basicContext.originalKtFile)
-                        originalOrSelf.getNextParametersWithSelf().forEach { add(it) }
+                    is KtProperty -> {
+                        if (grandParent.initializer == parent) {
+                            val declaration = getOriginalDeclarationOrSelf(
+                                declaration = grandParent,
+                                originalKtFile = basicContext.originalKtFile,
+                            )
+                            add(declaration)
+                        }
                     }
                 }
 
-                is KtProperty -> {
-                    if (grandParent.initializer == parent) {
-                        add(getOriginalDeclarationOrSelf(grandParent, basicContext.originalKtFile))
-                    }
-                }
+                if (parent is KtDeclaration) break // we can use variable inside lambda or anonymous object located in its initializer
             }
+        }
 
-            if (parent is KtDeclaration) break // we can use variable inside lambda or anonymous object located in its initializer
+        return { callable: CallableWithMetadataForCompletion ->
+            callable.signature.symbol.psi in uninitializedCallablesForPosition
         }
     }
-
-    private fun KtParameter.getNextParametersWithSelf(): Sequence<KtParameter> = generateSequence({ this }, { it.nextSiblingOfSameType() })
 
     context(KaSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterOutShadowedCallables(
