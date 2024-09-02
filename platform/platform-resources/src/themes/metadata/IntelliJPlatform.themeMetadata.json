@@ -2539,16 +2539,6 @@
     {
       "key": "LicenseDialog.LicenseServer.separatorColor",
       "since": "2024.2"
-    },
-    {
-      "key": "SslCertificate.popup.background",
-      "description": "Color which used for popup background in Certificate warning dialog",
-      "since": "2024.3"
-    },
-    {
-      "key": "SslCertificate.popup.foreground",
-      "description": "Color which used for popup foreground in Certificate warning dialog",
-      "since": "2024.3"
     }
   ]
 }
