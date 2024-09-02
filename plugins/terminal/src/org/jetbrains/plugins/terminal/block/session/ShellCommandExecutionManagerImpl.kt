@@ -76,6 +76,8 @@ internal class ShellCommandExecutionManagerImpl(
   private var isCommandSent: Boolean = false
 
   private val metricCommandSubmitToVisuallyStarted = createCommandMetric(session.shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED)
+  private val metricCommandSubmitToActuallyStarted = createCommandMetric(session.shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED)
+
   init {
     commandManager.addListener(object : ShellCommandListener {
       override fun initialized() {
@@ -86,6 +88,7 @@ internal class ShellCommandExecutionManagerImpl(
       }
 
       override fun commandStarted(command: String) {
+        metricCommandSubmitToActuallyStarted.finished(command)
         lock.withLock {
           if (isCommandRunning) {
             LOG.warn("Received command_started event, but previous command wasn't finished")
@@ -157,6 +160,7 @@ internal class ShellCommandExecutionManagerImpl(
    */
   override fun sendCommandToExecute(shellCommand: String) {
     metricCommandSubmitToVisuallyStarted.started(shellCommand, TimeSource.Monotonic.markNow())
+    metricCommandSubmitToActuallyStarted.started(shellCommand, TimeSource.Monotonic.markNow())
     lock.withLock {
       if (isCommandSent || isCommandRunning) {
         LOG.info("Command '$shellCommand' is postponed until currently running command is finished")

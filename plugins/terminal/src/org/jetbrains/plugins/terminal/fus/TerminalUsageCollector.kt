@@ -232,7 +232,8 @@ enum class TerminalCommandGenerationEvent {
 internal enum class TimeSpanType(val description: String) {
   FROM_STARTUP_TO_SHOWN_CURSOR("time from startup to terminal cursor shown in initialization block"),
   FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input"),
-  FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED("time from command submitted by user to command visually started")
+  FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED("time from command submitted by user to command visually started"),
+  FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED("time from command submitted by user to command actually started in shell"),
 }
 
 private const val GROUP_ID = "terminalShell"
