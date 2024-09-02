@@ -271,9 +271,9 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   public boolean isConfigured() {
     if (!super.isConfigured()) return false;
     if (isUseHttpAuthentication()) {
-      return StringUtil.isNotEmpty(myPassword) && StringUtil.isNotEmpty(myUsername);
+      return StringUtil.isNotEmpty(getPassword()) && StringUtil.isNotEmpty(getUsername());
     }
-    return StringUtil.isNotEmpty(myAPIKey);
+    return StringUtil.isNotEmpty(getAPIKey());
   }
 
   @Nullable
