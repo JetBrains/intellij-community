@@ -56,11 +56,11 @@ a:com.intellij.ide.structureView.logical.ConvertElementsProvider
 - getElements(java.lang.Object):java.util.List
 f:com.intellij.ide.structureView.logical.ConvertElementsProvider$Companion
 - f:convert(java.lang.Object):kotlin.sequences.Sequence
-com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
-- sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+*:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
 - a:forLogicalModelClass():java.lang.Class
 - a:getElements(java.lang.Object):java.util.List
-f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+*f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
 - f:getProviders(java.lang.Object):kotlin.sequences.Sequence
 com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 - sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
@@ -68,6 +68,9 @@ com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 - a:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 f:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
 - f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
+com.intellij.ide.structureView.logical.PropertyElementProvider
+- com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- a:getPropertyName():java.lang.String
 f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
 - sf:Companion:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Companion
 - <init>(com.intellij.openapi.project.Project):V

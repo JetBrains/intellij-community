@@ -4,6 +4,7 @@ package com.intellij.ide.structureView.logical.model
 import com.intellij.ide.structureView.logical.ContainerElementsProvider
 import com.intellij.ide.structureView.logical.ConvertElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.openapi.project.Project
 
 class LogicalStructureAssembledModel<T>(
@@ -25,7 +26,7 @@ class LogicalStructureAssembledModel<T>(
   fun getChildrenGrouped(): List<Pair<Any, List<LogicalStructureAssembledModel<*>>>> {
     return LogicalStructureElementsProvider.getProviders(model!!)
       .mapNotNull { provider ->
-        if (provider !is ContainerElementsProvider) return@mapNotNull null
+        if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) return@mapNotNull null
         val children = provider.getElements(model)
           .map { LogicalStructureAssembledModel(project, it) }
         Pair(provider, children)
