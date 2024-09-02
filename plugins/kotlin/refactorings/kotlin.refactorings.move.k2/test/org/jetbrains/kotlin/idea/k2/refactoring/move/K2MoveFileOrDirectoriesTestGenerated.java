@@ -75,6 +75,11 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/keepImportAliasRefs/keepImportAliasRefs.test");
     }
 
+    @TestMetadata("kotlin/langInjection/langInjection.test")
+    public void testKotlin_langInjection_LangInjection() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/langInjection/langInjection.test");
+    }
+
     @TestMetadata("kotlin/longName/longName.test")
     public void testKotlin_longName_LongName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/longName/longName.test");
