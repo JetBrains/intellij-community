@@ -208,6 +208,7 @@ sealed class K2MoveRenameUsageInfo(
             val mainReference = expr.mainReference
             if (expr is KtCallExpression && mainReference !is KtInvokeFunctionReference) return // to avoid duplication when handling name
             if (expr is KtEnumEntrySuperclassReferenceExpression) return
+            if (expr is KtCollectionLiteralExpression) return
             val parent = expr.parent
             if (parent is KtSuperExpression || parent is KtThisExpression) return
             if (expr.parentOfType<KtPackageDirective>() != null) return
