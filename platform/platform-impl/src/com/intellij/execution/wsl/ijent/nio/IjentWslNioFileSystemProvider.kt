@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
@@ -9,6 +10,7 @@ import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
@@ -18,12 +20,16 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
+import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
+import kotlin.io.path.readAttributes
+import kotlin.io.path.relativeTo
 
 /**
  * A special wrapper for [com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider]
@@ -174,7 +180,7 @@ class IjentWslNioFileSystemProvider(
         }
 
       override fun close() {
-        delegate.close();
+        delegate.close()
       }
     }
 
@@ -186,12 +192,43 @@ class IjentWslNioFileSystemProvider(
     ijentFsProvider.delete(path.toIjentPath())
   }
 
+  @OptIn(ExperimentalPathApi::class)
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-    ijentFsProvider.copy(source.toIjentPath(), target.toIjentPath(), *options)
+    val sourceIsIjent = source.toOriginalPath() !== source
+    val targetIsIjent = target.toOriginalPath() !== target
+    when {
+      sourceIsIjent && targetIsIjent -> {
+        ijentFsProvider.copy(source.toIjentPath(), target.toIjentPath(), *options)
+      }
+
+      !sourceIsIjent && !targetIsIjent -> {
+        LOG.warn("This branch is not supposed to execute. Copying ${source} => ${target} through inappropriate FileSystemProvider")
+        originalFsProvider.copy(source.toOriginalPath(), target.toOriginalPath(), *options)
+      }
+
+      else -> {
+        walkingTransfer(source, target, removeSource = false)
+      }
+    }
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    ijentFsProvider.move(source.toIjentPath(), target.toIjentPath(), *options)
+    val sourceIsIjent = source.toOriginalPath() !== source
+    val targetIsIjent = target.toOriginalPath() !== target
+    when {
+      sourceIsIjent && targetIsIjent -> {
+        ijentFsProvider.move(source.toIjentPath(), target.toIjentPath(), *options)
+      }
+
+      !sourceIsIjent && !targetIsIjent -> {
+        LOG.warn("This branch is not supposed to execute. Moving ${source} => ${target} through inappropriate FileSystemProvider")
+        originalFsProvider.move(source.toOriginalPath(), target.toOriginalPath(), *options)
+      }
+
+      else -> {
+        walkingTransfer(source, target, removeSource = true)
+      }
+    }
   }
 
   override fun isSameFile(path: Path, path2: Path): Boolean =
@@ -236,6 +273,81 @@ class IjentWslNioFileSystemProvider(
 
   override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
     originalFsProvider.setAttribute(path.toOriginalPath(), attribute, value, *options)
+  }
+
+  companion object {
+    private val LOG = logger<IjentWslNioFileSystemProvider>()
+
+    @VisibleForTesting
+    fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean) {
+      val sourceStack = ArrayDeque<Path>()
+      sourceStack.add(sourceRoot)
+
+      var lastDirectory: Path? = null
+
+      while (true) {
+        val source =
+          try {
+            sourceStack.removeLast()
+          }
+          catch (_: NoSuchElementException) {
+            break
+          }
+
+        while (removeSource && lastDirectory != null && lastDirectory != sourceRoot && source.parent != lastDirectory) {
+          Files.delete(lastDirectory)
+          lastDirectory = lastDirectory.parent
+        }
+
+        // TODO Add BasicFileAttributesHolder, it gives a huge speed up.
+        //val stat =
+        //  source.asSafely<BasicFileAttributesHolder>()?.get()
+        //  ?: source.readAttributes(LinkOption.NOFOLLOW_LINKS)
+        val stat = source.readAttributes<BasicFileAttributes>(LinkOption.NOFOLLOW_LINKS)
+
+        // WindowsPath doesn't support resolve() from paths of different class.
+        val target = source.relativeTo(sourceRoot).fold(targetRoot) { parent, file ->
+          parent.resolve(file.toString())
+        }
+
+        when {
+          stat.isDirectory -> {
+            lastDirectory = source
+            try {
+              target.createDirectories()
+            }
+            catch (err: FileAlreadyExistsException) {
+              if (!Files.isDirectory(target)) {
+                throw err
+              }
+            }
+            Files.newDirectoryStream(source).use { children ->
+              sourceStack.addAll(children.toList().asReversed())
+            }
+          }
+
+          stat.isRegularFile -> {
+            Files.newInputStream(source, READ).use { reader ->
+              Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
+                reader.copyTo(writer)
+              }
+            }
+            if (removeSource) {
+              Files.delete(source)
+            }
+          }
+
+          else -> {
+            LOG.info("Not copying $source to $target because the source file is neither a regular file nor a directory")
+          }
+        }
+      }
+
+      while (removeSource && lastDirectory != null && lastDirectory != sourceRoot) {
+        Files.delete(lastDirectory)
+        lastDirectory = lastDirectory.parent
+      }
+    }
   }
 }
 
