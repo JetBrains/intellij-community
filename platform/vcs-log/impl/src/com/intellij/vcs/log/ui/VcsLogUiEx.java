@@ -3,9 +3,11 @@ package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogCommitList;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -43,6 +45,11 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @NotNull
   VcsLogData getLogData();
 
+  /**
+   * @param commitId Prefer using {@link Hash} or {@link com.intellij.vcs.log.CommitId} when jumping to a specific commit.
+   *                 This value may be displayed to the user.
+   * @see VcsLogNavigationUtil for public usages
+   */
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,

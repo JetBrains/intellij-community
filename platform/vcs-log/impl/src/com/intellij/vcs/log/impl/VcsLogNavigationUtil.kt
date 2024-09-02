@@ -306,6 +306,7 @@ object VcsLogNavigationUtil {
   }
 
   @JvmStatic
+  @Deprecated("Reports cryptic message if 'silently == false'. Prefer using jumpToCommit(Hash, VirtualFile, ...)")
   fun VcsLogUiEx.jumpToCommit(commitIndex: Int, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
     val future = SettableFuture.create<JumpResult>()
     jumpTo(commitIndex, { visiblePack, id ->

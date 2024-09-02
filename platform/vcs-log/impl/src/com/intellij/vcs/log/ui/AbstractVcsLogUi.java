@@ -10,10 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -23,6 +25,7 @@ import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -112,6 +115,9 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
     tryJumpTo(commitId, rowGetter, future, focus);
   }
 
+  /**
+   * @see VcsLogNavigationUtil for public usages
+   */
   public <T> void tryJumpTo(@NotNull T commitId,
                             @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
                             @NotNull SettableFuture<JumpResult> future,
@@ -156,8 +162,9 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
   }
 
   protected static @NotNull <T> String getCommitPresentation(@NotNull T commitId) {
-    if (commitId instanceof Hash) {
-      return VcsLogBundle.message("vcs.log.commit.prefix", ((Hash)commitId).toShortString());
+    Hash hash = getCommitHash(commitId);
+    if (hash != null) {
+      return VcsLogBundle.message("vcs.log.commit.prefix", hash.toShortString());
     }
     if (commitId instanceof String commitString) {
       if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(commitString).matches()) {
@@ -165,6 +172,16 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
       }
     }
     return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", commitId.toString());
+  }
+
+  protected static <T> @Nullable Hash getCommitHash(@NotNull T commitId) {
+    if (commitId instanceof Hash hash) {
+      return hash;
+    }
+    if (commitId instanceof CommitId id) {
+      return id.getHash();
+    }
+    return null;
   }
 
   @Override
