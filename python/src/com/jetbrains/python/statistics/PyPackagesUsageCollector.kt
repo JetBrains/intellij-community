@@ -12,6 +12,8 @@ class PyPackagesUsageCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("py.packages.features", 2)
 
     val installAllEvent = GROUP.registerEvent("install.all.missed.quickfix", EventFields.Count)
+
+    @JvmField
     val installAllCanceledEvent = GROUP.registerEvent("install.all.missed.quickfix.canceled")
 
     @JvmField

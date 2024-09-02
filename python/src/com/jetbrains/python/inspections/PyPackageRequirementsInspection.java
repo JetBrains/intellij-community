@@ -422,6 +422,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
           chosen = dialog.getMarkedElements();
         }
         else {
+          PyPackagesUsageCollector.installAllCanceledEvent.log();
           chosen = Collections.emptyList();
         }
       }

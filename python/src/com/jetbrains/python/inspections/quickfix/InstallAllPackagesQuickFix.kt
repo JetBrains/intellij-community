@@ -24,7 +24,6 @@ class InstallAllPackagesQuickFix : LocalQuickFix {
 
     val confirmedPackages = getConfirmedPackages(packageNames)
     if (confirmedPackages.isEmpty()) {
-      PyPackagesUsageCollector.installAllCanceledEvent.log()
       return
     }
 
