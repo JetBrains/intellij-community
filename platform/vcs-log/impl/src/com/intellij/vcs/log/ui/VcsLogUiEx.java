@@ -57,6 +57,12 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
                   boolean silently,
                   boolean focus);
 
+  @ApiStatus.Internal
+  <T> JumpResult jumpToSync(@NotNull T commitId,
+                            @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                            boolean silently,
+                            boolean focus);
+
   @ApiStatus.Internal int COMMIT_NOT_FOUND = -1;
   @ApiStatus.Internal int COMMIT_DOES_NOT_MATCH = -2;
 

@@ -714,6 +714,7 @@ a:com.intellij.vcs.log.ui.AbstractVcsLogUi
 - <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.VcsLogColorManager,com.intellij.vcs.log.visible.VisiblePackRefresher):V
 - dispose():V
 - getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
+- ps:getCommitHash(java.lang.Object):com.intellij.vcs.log.Hash
 - ps:getCommitNotFoundMessage(java.lang.Object,Z):java.lang.String
 - ps:getCommitPresentation(java.lang.Object):java.lang.String
 - getDataPack():com.intellij.vcs.log.visible.VisiblePack

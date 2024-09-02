@@ -96,6 +96,10 @@ object VcsLogNavigationUtil {
       if (!manager.containsCommit(hash, root)) return null
     }
 
+    // At this point we know that commit exists in permanent graph.
+    // Try finding it in the opened tabs or open a new tab if none has a matching filter.
+    // We will skip tabs that are not refreshed yet, as it may be slow.
+
     val window = VcsLogContentUtil.getToolWindow(project) ?: return null
     if (!window.isVisible) {
       suspendCancellableCoroutine { continuation ->
@@ -104,7 +108,7 @@ object VcsLogNavigationUtil {
     }
 
     val selectedUis = manager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
-    selectedUis.find { ui -> predicate(ui) && ui.showCommit(hash, root, requestFocus) }?.let { return it }
+    selectedUis.find { ui -> predicate(ui) && ui.showCommitSync(hash, root, requestFocus) }?.let { return it }
 
     val mainLogContent = VcsLogContentUtil.findMainLog(window.contentManager)
     if (mainLogContent != null) {
@@ -115,7 +119,7 @@ object VcsLogNavigationUtil {
         val mainLogUi = mainLogContentProvider.waitMainUiCreation().await()
         if (!selectedUis.contains(mainLogUi)) {
           mainLogUi.refresher.setValid(true, false) // since main ui is not visible, it needs to be validated to find the commit
-          if (predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) {
+          if (predicate(mainLogUi) && mainLogUi.showCommitSync(hash, root, requestFocus)) {
             window.contentManager.setSelectedContent(mainLogContent)
             return mainLogUi
           }
@@ -126,7 +130,7 @@ object VcsLogNavigationUtil {
     val otherUis = manager.getLogUis(VcsLogTabLocation.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>() - selectedUis.toSet()
     otherUis.find { ui ->
       ui.refresher.setValid(true, false)
-      predicate(ui) && ui.showCommit(hash, root, requestFocus)
+      predicate(ui) && ui.showCommitSync(hash, root, requestFocus)
     }?.let { ui ->
       VcsLogContentUtil.selectLogUi(project, ui, requestFocus)
       return ui
@@ -136,6 +140,17 @@ object VcsLogNavigationUtil {
                                                               VcsLogTabLocation.TOOL_WINDOW) ?: return null
     if (newUi.showCommit(hash, root, requestFocus)) return newUi
     return null
+  }
+
+  private fun MainVcsLogUi.showCommitSync(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
+    return when (jumpToCommitSyncInternal(hash, root, true, requestFocus)) {
+      JumpResult.SUCCESS -> true
+      JumpResult.COMMIT_NOT_FOUND -> {
+        LOG.warn("Commit $hash for $root not found in $this")
+        false
+      }
+      JumpResult.COMMIT_DOES_NOT_MATCH -> false
+    }
   }
 
   private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile, requestFocus: Boolean): Boolean {
@@ -293,6 +308,16 @@ object VcsLogNavigationUtil {
   }
 
   @JvmStatic
+  private fun VcsLogUiEx.jumpToCommitSyncInternal(commitHash: Hash,
+                                                  root: VirtualFile,
+                                                  silently: Boolean,
+                                                  focus: Boolean): JumpResult {
+    return jumpToSync(commitHash, { visiblePack, hash ->
+      if (!logData.storage.containsCommit(CommitId(hash, root))) return@jumpToSync VcsLogUiEx.COMMIT_NOT_FOUND
+      getCommitRow(logData.storage, visiblePack, hash, root)
+    }, silently, focus)
+  }
+
   private fun VcsLogUiEx.jumpToCommitInternal(commitHash: Hash,
                                               root: VirtualFile,
                                               silently: Boolean,

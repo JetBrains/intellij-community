@@ -23,6 +23,7 @@ import com.intellij.vcs.log.visible.CompoundVisibleGraph;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +92,24 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
   @Override
   public @NotNull VisiblePack getDataPack() {
     return myVisiblePack;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public <T> JumpResult jumpToSync(@NotNull T commitId,
+                                   @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                                   boolean silently,
+                                   boolean focus) {
+    int result = rowGetter.apply(myVisiblePack, commitId);
+    if (result >= 0) {
+      getTable().jumpToRow(result, focus);
+    }
+
+    JumpResult jumpResult = JumpResult.fromInt(result);
+    if (!silently && jumpResult != JumpResult.SUCCESS) {
+      handleCommitNotFound(commitId, jumpResult == JumpResult.COMMIT_DOES_NOT_MATCH, rowGetter);
+    }
+    return jumpResult;
   }
 
   @Override
