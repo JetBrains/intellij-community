@@ -2052,13 +2052,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     testFoldingRegions(verificationFileName, null, false);
   }
 
-  @Override
-  public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
-    String RB_PREFIF = "TEMP::RAINBOW_TEMP_";
+  public static void runWithRainbowEnabled(boolean isRainbowOn, @NotNull Runnable runnable) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     boolean isRainbowOnInScheme = RainbowHighlighter.isRainbowEnabled(globalScheme, null);
     try {
       RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOn);
+      runnable.run();
+    }
+    finally {
+      RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
+    }
+  }
+  @Override
+  public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
+    runWithRainbowEnabled(isRainbowOn, () -> {
+      String RB_PREFIF = "TEMP::RAINBOW_TEMP_";
       configureByText(fileName, text.replaceAll("<" + RAINBOW + "(\\scolor='[^']*')?>", "").replace("</" + RAINBOW + ">", ""));
 
       List<HighlightInfo> highlighting = ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT);
@@ -2085,10 +2093,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                             : Integer.toHexString(attributes.getForegroundColor().getRGB());
         return "color='" + color + "'";
       }));
-    }
-    finally {
-      RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
-    }
+    });
   }
 
   @Override
