@@ -12,9 +12,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -34,10 +34,12 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-private val kotlinCompileTasksNames = setOf("org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile",
-                                            "org.jetbrains.kotlin.gradle.tasks.KotlinCompile",
-                                            "org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile",
-                                            "org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile")
+private val kotlinCompileTasksNames = setOf(
+    "org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile",
+    "org.jetbrains.kotlin.gradle.tasks.KotlinCompile",
+    "org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile",
+    "org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile"
+)
 
 internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : AbstractKotlinGradleScriptInspection() {
 
@@ -54,7 +56,6 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
@@ -69,8 +70,10 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
                 if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests on Gradle build scripts
                     analyze(expression) {
-                        val jvmClassForKotlinCompileTask = expression.resolveToCall()
-                            ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol?.containingJvmClassName
+                        val jvmClassForKotlinCompileTask = (expression.resolveToCall()
+                            ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
+                            ?.containingDeclaration as? KaClassLikeSymbol)?.importableFqName?.toString()
+
                             ?: expression.resolveExpression()?.containingSymbol?.importableFqName?.toString() ?: return
                         if (!kotlinCompileTasksNames.contains(jvmClassForKotlinCompileTask)) {
                             return
@@ -117,14 +120,14 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
     private fun isDescendantOfDslInWhichReplacementIsNotNeeded(ktExpression: KtExpression): Boolean {
         val scriptText = ktExpression.containingFile.text
-            if (scriptText.contains("android")) {
-                ktExpression.prevLeafs.forEach {
-                    if ("android" == it.text) {
-                        println("android")
-                        return true
-                    }
+        if (scriptText.contains("android")) {
+            ktExpression.prevLeafs.forEach {
+                if ("android" == it.text) {
+                    println("android")
+                    return true
                 }
             }
+        }
         return false
     }
 }
