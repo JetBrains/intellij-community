@@ -99,8 +99,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
-    <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
-              topic="com.intellij.platform.ModuleAttachListener"/>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"

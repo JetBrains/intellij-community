@@ -8,12 +8,14 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
+import com.intellij.util.Function
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.icons.PythonIcons
@@ -43,9 +45,22 @@ class PyPackagesModuleController(val project: Project) : Disposable {
     addListSelectionListener(ListSelectionListener { e ->
       if (e.valueIsAdjusting) return@ListSelectionListener
       val selectedModule = this@apply.selectedValue
-      val sdk = selectedModule.pythonSdk ?: return@ListSelectionListener
+      val sdk = selectedModule?.pythonSdk ?: return@ListSelectionListener
       packagingScope.launch {
         service.initForSdk(sdk)
+      }
+    })
+
+    project.messageBus.connect(this@PyPackagesModuleController).subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun modulesAdded(project: Project, modules: MutableList<out Module>) = rebuildList()
+
+      override fun moduleRemoved(project: Project, module: Module) = rebuildList()
+
+      override fun modulesRenamed(
+        project: Project, modules: MutableList<out Module>,
+        oldNameProvider: Function<in Module, String>,
+      ) {
+        rebuildList()
       }
     })
   }
@@ -81,4 +96,13 @@ class PyPackagesModuleController(val project: Project) : Disposable {
   }
 
   override fun dispose() {}
+
+  fun rebuildList() {
+    val selected = moduleList.selectedValue?.name
+    val modules: List<Module> = ModuleManager.getInstance(project).modules.toList().sortedBy { it.name }
+    val model = moduleList.model as? DefaultListModel
+    model?.removeAllElements()
+    model?.addAll(modules)
+    moduleList.selectedIndex = modules.indexOfFirst { it.name == selected }
+  }
 }

@@ -112,6 +112,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
     val actionGroup = DefaultActionGroup()
     actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
+      moduleController.rebuildList()
       service.reloadPackages()
     })
 
