@@ -826,7 +826,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
           @Override
           public void visitElement(@NotNull PsiElement element) {
             //System.out.println("fast visit "+element + Thread.currentThread());
-            super.visitElement(element);
           }
         };
       }
@@ -968,7 +967,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
               }
               fieldIdentifierVisited.set(true);
             }
-            super.visitIdentifier(identifier);
           }
 
           @Override
@@ -1071,7 +1069,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
               holder.registerProblem(identifier, "XXX", ProblemHighlightType.WARNING);
             }
-            super.visitIdentifier(identifier);
           }
         };
       }
