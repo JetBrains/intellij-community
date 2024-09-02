@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +40,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +53,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -135,7 +134,7 @@ final class PassExecutorService implements Disposable {
                     HighlightingPass @NotNull [] passes,
                     @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(updateProgress, true, "PES is disposed");
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(updateProgress, true, null,"PES is disposed");
       return;
     }
     ApplicationManager.getApplication().assertIsNonDispatchThread();
@@ -387,10 +386,10 @@ final class PassExecutorService implements Disposable {
           ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
         }
         catch (ApplicationUtil.CannotRunReadActionException e) {
-          myUpdateProgress.cancel();
+          myUpdateProgress.cancel(e, "CannotRunReadActionException");
         }
         catch (RuntimeException | Error e) {
-          saveException(e, myUpdateProgress);
+          myUpdateProgress.cancel(e, "exception thrown");
           throw e;
         }
       });
@@ -443,7 +442,8 @@ final class PassExecutorService implements Disposable {
             log(myUpdateProgress, myPass, "Canceled ");
             if (!myUpdateProgress.isCanceled()) {
               //in case some smart asses throw PCE just for fun
-              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(myUpdateProgress, true, "PCE was thrown by pass");
+              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(myUpdateProgress, true,
+                                                                                                ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
                 LOG.debug("PCE was thrown by " + myPass.getClass(), e);
               }
@@ -589,15 +589,6 @@ final class PassExecutorService implements Disposable {
         LOG.debug(message);
       }
     }
-  }
-
-  private static final Key<Throwable> THROWABLE_KEY = Key.create("THROWABLE_KEY");
-  static void saveException(@NotNull Throwable e, @NotNull DaemonProgressIndicator indicator) {
-    indicator.putUserDataIfAbsent(THROWABLE_KEY, e);
-  }
-  @TestOnly
-  static Throwable getSavedException(@NotNull DaemonProgressIndicator indicator) {
-    return indicator.getUserData(THROWABLE_KEY);
   }
 
   // return true if terminated

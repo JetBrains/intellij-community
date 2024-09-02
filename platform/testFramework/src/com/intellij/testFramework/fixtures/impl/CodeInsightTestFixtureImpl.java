@@ -283,7 +283,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     ProjectInspectionProfileManager.getInstance(project); // avoid "severities changed, restart" event
 
-    Exception exception = null;
+    Throwable exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
       int oldDelay = settings.getAutoReparseDelay();
@@ -313,16 +313,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
       catch (ProcessCanceledException e) {
         Throwable cause = e.getCause();
-        if (cause != null && cause.getClass() != Throwable.class) {
+        if (cause != null && cause != e && cause.getClass() != Throwable.class) {
           // canceled because of an exception, no need to repeat the same
-          throw e;
+          exception = cause;
+          break;
         }
-
+        exception = e;
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           UIUtil.dispatchAllInvocationEvents();
         });
-        exception = e;
       }
       catch (Exception e) {
         exception = e;
@@ -331,6 +331,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         settings.setAutoReparseDelay(oldDelay);
       }
     }
+    ExceptionUtil.rethrow(exception);
     throw new AssertionError("Unable to highlight after " + retries + " retries", exception);
   }
 

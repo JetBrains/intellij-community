@@ -18,6 +18,7 @@ import org.jetbrains.annotations.TestOnly;
 
 public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private static final Logger LOG = Logger.getInstance(DaemonProgressIndicator.class);
+  static final String CANCEL_WAS_CALLED_REASON = "cancel() was called";
   private static boolean debug;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug);
   private volatile Throwable myCancellationCause;
@@ -29,7 +30,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     boolean cancelled = false;
     synchronized (getLock()) {
       super.stop();
-      if (tryCancel()) {
+      if (tryCancel(null)) {
         cancelled = true;
       }
     }
@@ -52,13 +53,19 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     }
   }
 
-  private boolean tryCancel() {
-    synchronized (getLock()) {
-      if (!isCanceled()) {
+  private boolean tryCancel(@Nullable Throwable cause) {
+    if (!isCanceled()) {
+      // save before cancel to avoid data race with "checkCanceled(); catch(PCE) { check saved Exception }" elsewhere
+      if (cause == null) {
         myTraceableDisposable.kill("Daemon Progress Canceled");
-        super.cancel();
-        return true;
       }
+      else {
+        myTraceableDisposable.killExceptionally(cause);
+      }
+      myCancellationCause = cause;
+
+      super.cancel();
+      return true;
     }
     return false;
   }
@@ -69,8 +76,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void cancel() {
-    Throwable cause = LOG.isDebugEnabled() ? new Throwable() : null;
-    doCancel(cause, "cancel() was called");
+    Throwable cause = LOG.isDebugEnabled() ? new Throwable(CANCEL_WAS_CALLED_REASON) : null;
+    doCancel(cause, CANCEL_WAS_CALLED_REASON);
   }
 
   public final void cancel(@NotNull String reason) {
@@ -82,17 +89,15 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
-    if (tryCancel()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("doCancel(" + this +
-                  (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
-                  (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
+    synchronized (getLock()) {
+      if (tryCancel(cause)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("doCancel(" + this +
+                    (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
+                    (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
+        }
+        ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
       }
-      myCancellationCause = cause;
-      if (cause != null) {
-        myTraceableDisposable.killExceptionally(cause);
-      }
-      ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
     }
   }
 

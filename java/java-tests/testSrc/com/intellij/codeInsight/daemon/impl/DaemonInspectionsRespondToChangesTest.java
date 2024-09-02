@@ -934,7 +934,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       """;
     configureByText(JavaFileType.INSTANCE, text);
 
-    assertThrows(Exception.class, new MyException().getMessage(), () -> highlightErrors());
+    assertThrows(Throwable.class, new MyException().getMessage(), () -> highlightErrors());
   }
 
   public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterVisitingPSIElementTheSecondTimeAndFailingToGenerateTheSameWarningAgain() {
