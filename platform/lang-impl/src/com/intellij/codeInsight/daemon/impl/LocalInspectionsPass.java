@@ -50,6 +50,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -165,8 +166,24 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     }
 
     if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-      Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(result.resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      impl.removeHighlightsForObsoleteTools(getFile(), getDocument(), result.injectedFragments, pairs, getHighlightingSession(), dumbToolWrapperCondition.getInactiveToolWrapperIds());
+      Set<Pair<Object, PsiFile>> actualToolsRun = ContainerUtil.map2Set(result.resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
+
+      Set<String> inactiveSmartOnlyToolIds = dumbToolWrapperCondition.getInactiveToolWrapperIds();
+      BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, psiFile) -> {
+        if (!HighlightInfoUpdaterImpl.isInspectionToolId(toolId)) {
+          return true;
+        }
+
+        if (actualToolsRun.contains(Pair.create(toolId, psiFile))) {
+          return true;
+        }
+        if (inactiveSmartOnlyToolIds.contains(toolId)) {
+          // keep highlights from smart-only inspections in dumb mode
+          return true;
+        }
+        return false;
+      };
+      impl.removeHighlightsForObsoleteTools(getHighlightingSession(), result.injectedFragments, keepToolIdPredicate);
       impl.removeWarningsInsideErrors(result.injectedFragments, getDocument(), getHighlightingSession());  // must be the last
     }
   }
