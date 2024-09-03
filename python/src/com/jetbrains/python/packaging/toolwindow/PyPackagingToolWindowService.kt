@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -121,12 +122,24 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   internal suspend fun initForSdk(sdk: Sdk?) {
+    if (sdk == currentSdk)
+      return
+
+    withContext(Dispatchers.EDT) {
+      toolWindowPanel?.startLoadingSdk()
+    }
     val previousSdk = currentSdk
     currentSdk = sdk
+    if (sdk == null) {
+      return
+    }
+    manager = PythonPackageManager.forSdk(project, currentSdk!!)
+    manager.repositoryManager.initCaches()
+    manager.reloadPackages()
+
     if (currentSdk != null && currentSdk != previousSdk) {
-      manager = PythonPackageManager.forSdk(project, currentSdk!!)
-      manager.repositoryManager.initCaches()
-      manager.reloadPackages()
+
+
     }
     withContext(Dispatchers.Main) {
       toolWindowPanel?.contentVisible = currentSdk != null

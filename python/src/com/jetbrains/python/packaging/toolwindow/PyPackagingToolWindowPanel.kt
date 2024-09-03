@@ -112,6 +112,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
     val actionGroup = DefaultActionGroup()
     actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
+      startLoadingSdk()
       moduleController.rebuildList()
       service.reloadPackages()
     })
@@ -205,6 +206,11 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   fun selectPackageName(name: String) {
     this.packageListController.selectPackage(name)
+  }
+
+  fun startLoadingSdk() {
+    this.descriptionController.setPackage(null)
+    packageListController.startSdkInit()
   }
 
   companion object {
