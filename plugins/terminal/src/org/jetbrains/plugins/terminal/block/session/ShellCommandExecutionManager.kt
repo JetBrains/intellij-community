@@ -436,7 +436,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
         )
       },
       onActionUnknown = { command ->
-        thisLogger().error("Mismatched command $command")
+        thisLogger().warn("Mismatched command $command")
       }
     )
   }
