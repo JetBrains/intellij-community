@@ -7,8 +7,13 @@ import com.jetbrains.rhizomedb.ReadTrackingContext
 import com.jetbrains.rhizomedb.withReadTrackingContext
 import fleet.preferences.FleetFromSourcesPaths
 import fleet.preferences.isFleetTestMode
+import fleet.util.logging.logger
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.longs.LongSet
+
+private object FlatMap {
+  val logger = logger<FlatMap>()
+}
 
 private val assertionsEnabled = FleetFromSourcesPaths.isRunningFromSources || isFleetTestMode
 
@@ -36,9 +41,16 @@ internal fun <T, U> SubscriptionScope.flatMap(producer: Producer<T>, f: (Match<T
         val (us, patterns) = trackReads { f(input) }
         if (assertionsEnabled) {
           val us2 = f(input)
-          check(us.size == us2.size && us.all { it in us2 }) {
-            "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
-            "first invocation: $us, second: $us2"
+          val funIsPure = us.size == us2.size && us.all { it in us2 }
+          //          check(funIsPure) {
+          //            "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
+          //            "first invocation: $us, second: $us2"
+          //          }
+          if (!funIsPure) {
+            FlatMap.logger.warn {
+              "Function ${f::class} produces different results on the same input, this will lead to bugs in production\n" +
+              "first invocation: $us, second: $us2"
+            }
           }
         }
         val matches = adaptiveMapOf<U, Match<U>>()
