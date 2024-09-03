@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit3Framework
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.Language
 import com.intellij.openapi.util.NlsSafe
@@ -226,6 +227,17 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
+    }
+
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
+    }
+
+    override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
+    }
 }
 
 private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)

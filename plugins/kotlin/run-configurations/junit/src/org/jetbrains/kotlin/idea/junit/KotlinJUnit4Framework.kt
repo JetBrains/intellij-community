@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit4Framework
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
@@ -46,7 +47,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
 
             return CachedValuesManager.getCachedValue(ktClassOrObject) {
                 CachedValueProvider.Result.create(
-                    checkJUnit4PotentialTestClass(ktClassOrObject) == YES,
+                    checkJUnit4PotentialTestClass(ktClassOrObject) != NO,
                     OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
                 )
             }
@@ -75,18 +76,20 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             if (!isFrameworkAvailable(declaration)) {
                 NO
             } else {
-                checkIsJUnit4LikeTestClass(declaration)
+                checkIsJUnit4LikeTestClass(declaration, false)
             }
 
         private fun checkJUnit4PotentialTestClass(declaration: KtClassOrObject): ThreeState =
             if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
                 NO
             } else {
-                checkIsJUnit4LikeTestClass(declaration)
+                checkIsJUnit4LikeTestClass(declaration, true)
             }
 
-        private fun checkIsJUnit4LikeTestClass(declaration: KtClassOrObject): ThreeState {
-            return if (declaration.isPrivate()) {
+        private fun checkIsJUnit4LikeTestClass(declaration: KtClassOrObject, isPotential: Boolean): ThreeState {
+            return if (isPotential && isUnderTestSources(declaration)) {
+                UNSURE
+            } else if (declaration.isPrivate()) {
                 NO
             } else if (declaration.safeAs<KtClass>()?.isInner() == true) {
                 NO
@@ -162,6 +165,22 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
+
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit4 SetUp Function.kt")
+    }
+
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit4 TearDown Function.kt")
+    }
+
+    override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin JUnit4 Test Function.kt")
+    }
+
+    override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit4 Parameters Function.kt")
+    }
 }
 
 private val testMethodAnnotations = setOf(JUnitCommonClassNames.ORG_JUNIT_TEST, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST)

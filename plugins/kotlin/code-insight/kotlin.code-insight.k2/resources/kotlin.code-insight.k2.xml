@@ -248,6 +248,15 @@
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">
+      <action id="KotlinGenerateTestMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$Test"/>
+      <action id="KotlinGenerateSetUpMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$SetUp"/>
+      <action id="KotlinGenerateTearDownMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$TearDown"/>
+      <action id="KotlinGenerateDataMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$Data"/>
+      <separator />
       <action id="KotlinGenerateSecondaryConstructor"
               class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateSecondaryConstructorAction"/>
       <action id="KotlinGenerateEqualsAndHashCode"

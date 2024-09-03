@@ -157,13 +157,7 @@ abstract class KotlinGenerateTestSupportActionBase(
             project.executeWriteCommand(commandName) {
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-                val factory = PsiElementFactory.getInstance(project)
-                val psiMethod = factory.createMethodFromText(templateText, null)
-                psiMethod.throwsList.referenceElements.forEach { it.delete() }
-                var function = psiMethod.j2k(settings = publicByDefault) as? KtNamedFunction ?: run {
-                    errorHint = KotlinBundle.message("action.generate.test.support.error.cant.convert.java.template")
-                    return@executeWriteCommand
-                }
+                var function = KtPsiFactory(project).createFunction(templateText)
                 name?.let {
                     function = substituteNewName(function, it)
                 }

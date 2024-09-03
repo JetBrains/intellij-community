@@ -66,5 +66,7 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
   </component>
 </module>

@@ -105,9 +105,13 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     }
 
     protected fun isAnnotated(element: KtAnnotated, fqNames: Set<String>): Boolean {
+        return findAnnotation(element, fqNames) != null
+    }
+
+    protected fun findAnnotation(element: KtAnnotated, fqNames: Set<String>): KtAnnotationEntry? {
         val annotationEntries = element.annotationEntries
         if (annotationEntries.isEmpty()) {
-            return false
+            return null
         }
 
         val file = element.containingKtFile
@@ -116,11 +120,11 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             val shortName = annotationEntry.shortName ?: continue
             val fqName = annotationEntry.typeReference?.text
             if (fqName in fqNames || checkNameMatch(file, fqNames, shortName.asString())) {
-                return true
+                return annotationEntry
             }
         }
 
-        return false
+        return null
     }
 
     protected fun findAnnotatedFunction(classOrObject: KtClassOrObject?, fqNames: Set<String>): KtNamedFunction? {
