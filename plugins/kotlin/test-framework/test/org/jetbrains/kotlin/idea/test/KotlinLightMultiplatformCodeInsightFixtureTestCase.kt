@@ -22,11 +22,6 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
         File(TestMetadataUtil.getTestDataPath(javaClass))
     }
 
-    data class TestProjectFiles(
-        val allFiles: List<VirtualFile>,
-        val mainFile: VirtualFile?,
-    )
-
 
     override fun setUp() {
         super.setUp()
