@@ -37,7 +37,10 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -2017,7 +2020,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     Boolean result = ourTokenStickingMatrix.get(key);
 
     if (result == null) {
-      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+      Lexer lexer = JavaParserDefinition.createLexerWithMarkdownEscape(LanguageLevel.HIGHEST);
       String text1 = unescapeTokenText(token1, type1), text2 = unescapeTokenText(token2, type2);
       lexer.start(text1 + text2);
       IElementType reparsedType1 = lexer.getTokenType();

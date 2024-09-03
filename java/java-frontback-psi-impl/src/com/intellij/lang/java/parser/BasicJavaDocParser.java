@@ -333,14 +333,19 @@ public final class BasicJavaDocParser {
       builder.advanceLexer();
       builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
 
-      // A method only has parenthesis and a single comment data token
+      // A method only has parenthesis and a few comment data, separated by commas
       builder.advanceLexer();
       if (builder.getTokenType() == JavaDocTokenType.DOC_LPAREN) {
         builder.advanceLexer();
         PsiBuilder.Marker subValue = builder.mark();
 
-        if (getTokenType(builder) == JavaDocTokenType.DOC_COMMENT_DATA) {
-          builder.remapCurrentToken(javaDocElementTypeContainer.DOC_TYPE_HOLDER);
+        while(!builder.eof()) {
+          IElementType type = getTokenType(builder);
+          if (type == JavaDocTokenType.DOC_COMMENT_DATA) {
+            builder.remapCurrentToken(javaDocElementTypeContainer.DOC_TYPE_HOLDER);
+          } else if (type != JavaDocTokenType.DOC_COMMA) {
+            break;
+          }
           builder.advanceLexer();
         }
 

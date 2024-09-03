@@ -33,6 +33,16 @@ java.FILE
                   CHAR_KEYWORD
                 LBRACKET
                 RBRACKET
+            DOC_COMMA
+            DOC_TYPE_HOLDER
+              WHITE_SPACE
+              TYPE
+                INT_KEYWORD
+            DOC_COMMA
+            DOC_TYPE_HOLDER
+              WHITE_SPACE
+              TYPE
+                INT_KEYWORD
           DOC_RPAREN
         DOC_RBRACKET
     WHITE_SPACE
