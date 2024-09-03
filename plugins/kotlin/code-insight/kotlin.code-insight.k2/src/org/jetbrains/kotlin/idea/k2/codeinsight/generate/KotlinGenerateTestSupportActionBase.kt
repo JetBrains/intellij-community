@@ -137,7 +137,7 @@ abstract class KotlinGenerateTestSupportActionBase(
 
         val fileTemplateDescriptor = methodKind.getFileTemplateDescriptor(framework)
         val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(fileTemplateDescriptor.fileName)
-        var templateText = fileTemplate.text.replace(BODY_VAR, "TODO(\"Not yet implemented\")")
+        var templateText = fileTemplate.text.replace(BODY_VAR, "")
         var name: String? = null
         if (templateText.contains(NAME_VAR)) {
             name = if (templateText.contains("test$NAME_VAR")) "Name" else "name"
@@ -160,16 +160,22 @@ abstract class KotlinGenerateTestSupportActionBase(
             val (bodyText, needToOverride) = analyzeInModalWindow(functionInPlace, commandName) {
                 val functionSymbol = functionInPlace.symbol as KaNamedFunctionSymbol
                 val overriddenSymbols = functionSymbol.directlyOverriddenSymbols.filterIsInstance<KaNamedFunctionSymbol>().toList()
-                 when (overriddenSymbols.size) {
-                    0 -> generateUnsupportedOrSuperCall(project, functionSymbol, BodyType.FromTemplate)
+
+                fun isDefaultTemplate(): Boolean =
+                    (functionInPlace.bodyBlockExpression?.text?.trimStart('{')?.trimEnd('}') ?: functionInPlace.bodyExpression?.text).isNullOrBlank()
+
+                when (overriddenSymbols.size) {
+                    0 -> if (isDefaultTemplate()) generateUnsupportedOrSuperCall(project, functionSymbol, BodyType.FromTemplate) else null
                     1 -> generateUnsupportedOrSuperCall(project, overriddenSymbols.single(), BodyType.Super)
                     else -> generateUnsupportedOrSuperCall(project, overriddenSymbols.first(), BodyType.QualifiedSuper)
                 } to overriddenSymbols.isNotEmpty()
             }
 
             runWriteAction {
-                functionInPlace.bodyExpression?.delete()
-                functionInPlace.add(KtPsiFactory(project).createBlock(bodyText))
+                if (bodyText != null) {
+                    functionInPlace.bodyExpression?.delete()
+                    functionInPlace.add(KtPsiFactory(project).createBlock(bodyText))
+                }
 
                 if (needToOverride) {
                     functionInPlace.addModifier(KtTokens.OVERRIDE_KEYWORD)
