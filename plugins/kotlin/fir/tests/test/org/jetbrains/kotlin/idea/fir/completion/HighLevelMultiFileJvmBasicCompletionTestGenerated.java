@@ -195,6 +195,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/InImportCompanionObjectMembers/");
     }
 
+    @TestMetadata("InImportEscaped")
+    public void testInImportEscaped() throws Exception {
+        runTest("../../completion/testData/basic/multifile/InImportEscaped/");
+    }
+
     @TestMetadata("InImportExtension")
     public void testInImportExtension() throws Exception {
         runTest("../../completion/testData/basic/multifile/InImportExtension/");

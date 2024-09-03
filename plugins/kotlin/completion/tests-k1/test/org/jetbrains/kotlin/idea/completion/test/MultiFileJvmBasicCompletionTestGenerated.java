@@ -195,6 +195,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/InImportCompanionObjectMembers/");
     }
 
+    @TestMetadata("InImportEscaped")
+    public void testInImportEscaped() throws Exception {
+        runTest("../testData/basic/multifile/InImportEscaped/");
+    }
+
     @TestMetadata("InImportExtension")
     public void testInImportExtension() throws Exception {
         runTest("../testData/basic/multifile/InImportExtension/");

@@ -91,7 +91,7 @@ internal object TailTextProvider {
     }
 
     private fun FqName.asStringForTailText(): String =
-        if (isRoot) "<root>" else asString()
+        if (isRoot) "<root>" else render()
 
     context(KaSession)
     fun insertLambdaBraces(symbol: KaFunctionType): Boolean {
