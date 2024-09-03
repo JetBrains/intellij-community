@@ -17,7 +17,9 @@ import java.io.IOException;
 
 /**
  * Adapter for different attributes storage implementations: adapts them to the same interface
- * used by {@link PersistentFSAttributeAccessor}
+ * used by {@link PersistentFSAttributeAccessor}.
+ *
+ * Threading: implementations are not obliged to be thread-safe -- calling code must ensure thread-safety, if needed
  */
 @ApiStatus.Internal
 public interface VFSAttributesStorage extends Forceable, Closeable {
@@ -27,8 +29,7 @@ public interface VFSAttributesStorage extends Forceable, Closeable {
    * I set a restrictive limit here because VFS file attributes are designed to be a small chunk of data attached to
    * a file, not blobs of 100s Kb -- such blobs could compromise the performance of VFS for nothing.
    * Implementations could have larger restrictions ({@linkplain AttributesStorageOverBlobStorage}: ~1Mb),
-   * or not have any restrictions ({@link AttributesStorageOld}) -- but limit is stricter, to have
-   * some margins
+   * or even not have any restrictions at all -- but limit is stricter, to have some margins
    */
   int MAX_ATTRIBUTE_VALUE_SIZE = SystemProperties.getIntProperty("vfs.file-attribute-size-max", 800 * IOUtil.KiB);
 

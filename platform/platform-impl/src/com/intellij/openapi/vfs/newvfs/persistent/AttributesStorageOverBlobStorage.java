@@ -2,11 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
-import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
@@ -112,10 +110,10 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     }
   }
 
-  public <R> R readAttributeRaw(PersistentFSConnection connection,
+  public <R> R readAttributeRaw(@NotNull PersistentFSConnection connection,
                                 int fileId,
                                 @NotNull FileAttribute attribute,
-                                ByteBufferReader<R> reader) throws IOException {
+                                @NotNull ByteBufferReader<R> reader) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.readLock().lock();
     try {
@@ -164,8 +162,8 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
   public @NotNull AttributeOutputStream writeAttribute(@NotNull PersistentFSConnection connection,
                                                        int fileId,
                                                        @NotNull FileAttribute attribute) {
-    return new AttributeOutputStreamBase(
-      new AttributeOutputStreamImpl(connection, fileId, attribute),
+    return new AttributeOutputStreamImpl(
+      new WritesAccumulatingOutputStream(connection, fileId, attribute),
       connection.getEnumeratedAttributes()
     );
   }
@@ -754,15 +752,15 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     }
   }
 
-  private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
+  /** Accumulates writes in a byte[]-buffer, flushes the buffer into an attribute storage on {@link #close()} */
+  private final class WritesAccumulatingOutputStream extends UnsyncByteArrayOutputStream {
     private final @NotNull PersistentFSConnection connection;
     private final @NotNull FileAttribute attribute;
     private final int fileId;
 
-    private AttributeOutputStreamImpl(@NotNull PersistentFSConnection connection,
-                                      int fileId,
-                                      @NotNull FileAttribute attribute) {
-      super(new BufferExposingByteArrayOutputStream());
+    private WritesAccumulatingOutputStream(@NotNull PersistentFSConnection connection,
+                                           int fileId,
+                                           @NotNull FileAttribute attribute) {
       this.connection = connection;
       this.fileId = fileId;
       this.attribute = attribute;
@@ -772,8 +770,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     public void close() throws IOException {
       super.close();
 
-      BufferExposingByteArrayOutputStream attributeValueHolder = (BufferExposingByteArrayOutputStream)out;
-      int attributeValueSize = attributeValueHolder.size();
+      int attributeValueSize = size();
       checkAttributeValueSize(attribute, attributeValueSize);
 
       PersistentFSRecordsStorage records = connection.getRecords();
@@ -785,7 +782,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
         int updatedAttributesRecordId = updateAttribute(
           attributesRecordId,
           fileId, encodedAttributeId,
-          attributeValueHolder.getInternalBuffer(), attributeValueSize
+          myBuffer, attributeValueSize
         );
 
         //skip (updatedAttributesRecordId != attributesRecordId) check since we want to _always_ update file.modCount
@@ -801,11 +798,6 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
       finally {
         lock.writeLock().unlock();
       }
-    }
-
-    @Override
-    public @NotNull ByteArraySequence asByteArraySequence() {
-      return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
 

@@ -3417,10 +3417,10 @@ a:com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 *a:com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 - com.intellij.util.io.DataOutputStream
 - com.intellij.util.io.RepresentableAsByteArraySequence
-- <init>(com.intellij.util.io.DataOutputStream):V
+- <init>(java.io.OutputStream):V
 - asByteArraySequence():com.intellij.openapi.util.io.ByteArraySequence
 - a:writeEnumeratedString(java.lang.String):V
-*f:com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase
+*f:com.intellij.openapi.vfs.newvfs.AttributeOutputStreamImpl
 - com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 - writeEnumeratedString(java.lang.String):V
 c:com.intellij.openapi.vfs.newvfs.FileAttribute
