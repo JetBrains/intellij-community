@@ -168,11 +168,11 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
                                         HighlightSeverity.ERROR);
     long elapsed = System.currentTimeMillis() - start;
 
-    assertEquals(0, errors.size());
+    assertSize(0, errors);
     if (!run.get()) {
       fail(ThreadDumper.dumpThreadsToString());
     }
-    assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
+    assertTrue("Elapsed: " + elapsed, elapsed >= SLEEP);
   }
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {

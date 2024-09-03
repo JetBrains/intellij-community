@@ -157,7 +157,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   public void testWholeFileInspection() throws Exception {
     configureByFile(DaemonRespondToChangesTest.BASE_PATH + "FieldCanBeLocal.java");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-    assertEquals(1, infos.size());
+    assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
     ctrlW();
@@ -172,7 +172,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     type("0");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
-    assertEquals(1, infos.size());
+    assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
