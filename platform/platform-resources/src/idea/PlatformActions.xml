@@ -1071,6 +1071,7 @@
     <group id="WelcomeScreen.Options">
       <reference ref="About"/>
       <separator/>
+      <reference ref="WelcomeScreen.Settings"/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
       <reference ref="CreateDesktopEntry"/>
