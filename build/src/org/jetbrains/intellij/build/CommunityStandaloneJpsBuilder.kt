@@ -102,7 +102,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "netty-buffer",
     "aalto-xml",
     "caffeine",
-    "jetbrains.kotlinx.metadata.jvm"
+    "jetbrains.kotlinx.metadata.jvm",
+    "hash4j"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
