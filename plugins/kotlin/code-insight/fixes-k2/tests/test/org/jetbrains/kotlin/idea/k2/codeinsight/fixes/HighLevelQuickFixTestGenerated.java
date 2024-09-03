@@ -9807,7 +9807,48 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/properties")
+    public abstract static class Properties extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/properties/extensionPropertyInitializerToGetter")
+        public static class ExtensionPropertyInitializerToGetter extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("baseCase.kt")
+            public void testBaseCase() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/properties/extensionPropertyInitializerToGetter/baseCase.kt");
+            }
+
+            @TestMetadata("baseCaseVar.kt")
+            public void testBaseCaseVar() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/properties/extensionPropertyInitializerToGetter/baseCaseVar.kt");
+            }
+
+            @TestMetadata("baseCaseWithoutTypeAnnotation.kt")
+            public void testBaseCaseWithoutTypeAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/properties/extensionPropertyInitializerToGetter/baseCaseWithoutTypeAnnotation.kt");
+            }
+
+            @TestMetadata("dontShowQuickfixOnExistingAccessors.kt")
+            public void testDontShowQuickfixOnExistingAccessors() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/properties/extensionPropertyInitializerToGetter/dontShowQuickfixOnExistingAccessors.kt");
+            }
+
+            @TestMetadata("insertGetterBeforeExistingSetter.kt")
+            public void testInsertGetterBeforeExistingSetter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/properties/extensionPropertyInitializerToGetter/insertGetterBeforeExistingSetter.kt");
+            }
+        }
+    }
 
 
 

@@ -142,6 +142,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(SenselessNullInWhenFixFactory.removeCondition)
         registerFactory(SubclassCantCallCompanionProtectedNonStaticFixFactory.addJvmStaticAnnotation)
         registerFactory(AnonymousFunctionWithNameFixFactories.removeNameFromFunctionExpressionFixFactory)
+        registerFactory(ExtensionPropertyWithBackingFieldFixFactories.convertToGetterFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
