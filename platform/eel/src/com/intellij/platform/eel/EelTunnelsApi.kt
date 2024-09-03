@@ -44,6 +44,25 @@ sealed interface EelTunnelsApi {
   fun hostAddressBuilder(port: UShort): HostAddress.Builder
 
   /**
+   * Creates a builder for address `localhost:0`.
+   * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
+   */
+  fun hostAddressBuilder(): HostAddress.Builder
+
+  sealed interface ResolvedSocketAddress {
+    val port: UShort
+
+    interface V4 : ResolvedSocketAddress {
+      val bits: UInt
+    }
+
+    interface V6 : ResolvedSocketAddress {
+      val higherBits: ULong
+      val lowerBits: ULong
+    }
+  }
+
+  /**
    * Represents an address to a remote host.
    */
   interface HostAddress {
@@ -162,6 +181,52 @@ sealed interface EelTunnelsApi {
     class ConnectionReset : RemoteNetworkException()
     class UnknownFailure(error: String) : RemoteNetworkException(error)
   }
+
+  /**
+   * **For applied usages, please consider [withConnectionToRemotePort]**.
+   *
+   * Accepts remote connections to a named host specified by [address].
+   *
+   * If the result is [EelNetworkResult.Error], then there was an error during creation of the server.
+   * Otherwise, the result is [EelNetworkResult.Ok], which means that the server was created successfully.
+   *
+   * Locally, the server exists as a channel of [Connection]s, which allows imitating a server on the IDE side.
+   *
+   * Packets sent to the channels and received from the channel may be split and/or concatenated.
+   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   *
+   * If the connections get closed, then the channels also get closed in the sense of [SendChannel.close].
+   *
+   * If an exception happens during sending, then [Connection.sendChannel] gets closed exceptionally with [RemoteNetworkException].
+   *
+   * [Connection.sendChannel] can be closed separately with [SendChannel.close]. In this case, the EOF is sent to the server.
+   * Note, that [Connection.receiveChannel] is __not__ closed in this case.
+   *
+   * One should not forget to invoke [Connection.close] when the connection is not needed.
+   */
+  suspend fun getConnectionToLocalPort(address: HostAddress): EelNetworkResult<ConnectionAcceptor, EelConnectionError>
+
+  /**
+   * This is a representation of a remote server bound to [boundAddress].
+   */
+  interface ConnectionAcceptor {
+    /**
+     * A channel of incoming connections to the remote server.
+     * @see Connection
+     */
+    val incomingConnections: ReceiveChannel<Connection>
+
+    /**
+     * A bound local address where the server accepts connections.
+     * This address can be useful when the client wants to get a dynamically allocated port.
+     */
+    val boundAddress: ResolvedSocketAddress
+
+    /**
+     * Stops the server from accepting connections.
+     */
+    suspend fun close()
+  }
 }
 
 /**
@@ -247,30 +312,34 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
 ): T =
   when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
     is EelNetworkResult.Error -> errorHandler(connectionResult.error)
-    is EelNetworkResult.Ok -> {
-      var original: Throwable? = null
+    is EelNetworkResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
+  }
+
+private suspend fun <T> closeWithExceptionHandling(action: suspend CoroutineScope.() -> T, close: suspend () -> Unit): T {
+  var original: Throwable? = null
+  try {
+    return coroutineScope {
+      action()
+    }
+  }
+  catch (e: Throwable) {
+    original = e
+    throw e
+  }
+  finally {
+    if (original == null) {
+      close()
+    }
+    else {
       try {
-        coroutineScope { action(connectionResult.value) }
+        close()
       }
       catch (e: Throwable) {
-        original = e
-        throw e
-      }
-      finally {
-        if (original == null) {
-          connectionResult.value.close()
-        }
-        else {
-          try {
-            connectionResult.value.close()
-          }
-          catch (e: Throwable) {
-            original.addSuppressed(e)
-          }
-        }
+        original.addSuppressed(e)
       }
     }
   }
+}
 
 suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
@@ -283,6 +352,17 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
+
+
+suspend fun <T> EelTunnelsApi.withConnectionToLocalPort(
+  hostAddress: EelTunnelsApi.HostAddress,
+  errorHandler: suspend (EelConnectionError) -> T,
+  action: suspend CoroutineScope.(EelTunnelsApi.ConnectionAcceptor) -> T,
+): T =
+  when (val connectionResult = getConnectionToLocalPort(hostAddress)) {
+    is EelNetworkResult.Error -> errorHandler(connectionResult.error)
+    is EelNetworkResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
+  }
 
 /**
  * Represents a common class for all network-related errors appearing during the interaction with IJent or local process

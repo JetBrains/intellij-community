@@ -5,6 +5,8 @@ package com.intellij.platform.ijent.tunnels
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.component1
+import com.intellij.platform.eel.component2
 import com.intellij.platform.eel.withConnectionToRemotePort
 import com.intellij.platform.ijent.*
 import com.intellij.util.io.toByteArray
@@ -12,6 +14,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -21,8 +24,6 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
-import com.intellij.platform.eel.component1
-import com.intellij.platform.eel.component2
 
 private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
 
@@ -125,4 +126,12 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
   catch (e: EelTunnelsApi.RemoteNetworkException) {
     LOG.warn("Connection $connectionId closed", e)
   }
+}
+
+fun EelTunnelsApi.ResolvedSocketAddress.asInetAddress(): InetSocketAddress {
+  val inetAddress = when (this) {
+    is EelTunnelsApi.ResolvedSocketAddress.V4 -> InetAddress.getByAddress(ByteBuffer.allocate(4).putInt(bits.toInt()).toByteArray())
+    is EelTunnelsApi.ResolvedSocketAddress.V6 -> InetAddress.getByAddress(ByteBuffer.allocate(16).putLong(higherBits.toLong()).putLong(8, lowerBits.toLong()).array())
+  }
+  return InetSocketAddress(inetAddress, port.toInt())
 }
