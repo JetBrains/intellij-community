@@ -441,7 +441,7 @@ internal class ShellCommandExecutionManagerImpl(
         )
       },
       onActionUnknown = { command ->
-        thisLogger().error("Mismatched command $command")
+        thisLogger().warn("Mismatched command $command")
       }
     )
   }
