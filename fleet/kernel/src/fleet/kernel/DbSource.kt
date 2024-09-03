@@ -27,11 +27,17 @@ interface DbSource {
     override fun updateThreadContext(context: CoroutineContext): DbContext<*>? {
       // resuming
       val oldState = if (DbContext.isBound()) DbContext.threadBound else null
-      val ctx = DbContext<DB>(dbSource.latest, dbSource)
-      DbContext.threadLocal.set(ctx)
-      context[ContextMatches]?.matches?.firstOrNull { m -> !m.job.isActive }?.let { cancelledMatch ->
-        ctx.setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
-      }
+      runCatching { dbSource.latest }
+        .onSuccess { latest ->
+          val ctx = DbContext<DB>(latest, dbSource)
+          DbContext.threadLocal.set(ctx)
+          context[ContextMatches]?.matches?.firstOrNull { m -> !m.job.isActive }?.let { cancelledMatch ->
+            ctx.setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
+          }
+        }.onFailure { ex ->
+          val ctx = DbContext<DB>(RuntimeException("Failed to obtain latest db snapshot", ex), dbSource)
+          DbContext.threadLocal.set(ctx)
+        }
       return oldState
     }
 
@@ -57,7 +63,9 @@ interface DbSource {
       */
       oldState?.let {
         (oldState.dbSource as DbSource?)?.let { dbSource ->
-          oldState.set(dbSource.latest)
+          runCatching { dbSource.latest }
+            .onSuccess { latest -> oldState.set(latest) }
+            .onFailure { ex -> oldState.setPoison(RuntimeException("Failed to obtain latest db snapshot", ex)) }
         }
       }
       DbContext.threadLocal.set(oldState)
