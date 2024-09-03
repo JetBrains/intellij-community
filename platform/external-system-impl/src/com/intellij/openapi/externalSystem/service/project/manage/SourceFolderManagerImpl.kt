@@ -15,7 +15,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -43,11 +42,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
-import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -215,37 +211,11 @@ class SourceFolderManagerImpl(
     for ((eventFile, sourceFolders) in p) {
       val (_, url, type, packagePrefix, generated) = sourceFolders
       val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile) ?: model.addContentEntry(url, true)
-      val sourceFolder = addSourceFolder(type, contentEntry, url, generated, packagePrefix)
+      val sourceFolder = contentEntry.addSourceFolder(url, type, true)
       if (!packagePrefix.isNullOrEmpty()) {
         sourceFolder.packagePrefix = packagePrefix
       }
       setForGeneratedSources(sourceFolder, generated)
-    }
-  }
-
-  private fun <P: JpsElement> addSourceFolder(
-    type: JpsModuleSourceRootType<P>,
-    contentEntry: ContentEntry,
-    url: String,
-    generated: Boolean,
-    packagePrefix: String?,
-  ): SourceFolder {
-    val properties = type.createDefaultProperties()
-    updateProperties(properties, generated, packagePrefix)
-    return contentEntry.addSourceFolder(url, type, properties, true)
-  }
-
-  private fun updateProperties(properties: JpsElement, generated: Boolean, packagePrefix: String?) {
-    when (properties) {
-      is JavaSourceRootProperties -> {
-        properties.isForGeneratedSources = generated
-        if (!packagePrefix.isNullOrEmpty()) {
-          properties.packagePrefix = packagePrefix
-        }
-      }
-      is JavaResourceRootProperties ->
-        properties.isForGeneratedSources = generated
-      else -> { }
     }
   }
 
