@@ -465,7 +465,7 @@ private class BlockHrSupportExtension : Extension {
     if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
         attrs.getAttribute(StyleConstants.NameAttribute) === HTML.Tag.HR) {
       if (element.attributes.getAttribute(HTML.Tag.HR) == null) {
-        element.document.tryRunUnderWriteLock {
+        (element.document as JBHtmlEditorKit.JBHtmlDocument).tryRunUnderWriteLock {
           (element as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
         }
       }

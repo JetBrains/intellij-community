@@ -108,7 +108,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     StyleSheet ss = new StyleSheetCompressionThreshold();
     ss.addStyleSheet(styles);
 
-    HTMLDocument doc = new OurDocument(ss);
+    HTMLDocument doc = new JBHtmlDocument(ss);
     doc.setParser(getParser());
     doc.setAsynchronousLoadPriority(4);
     doc.setTokenThreshold(100);
@@ -209,8 +209,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private final class OurDocument extends HTMLDocument {
-    private OurDocument(StyleSheet styles) {
+  @ApiStatus.Internal
+  public final class JBHtmlDocument extends HTMLDocument {
+    private JBHtmlDocument(StyleSheet styles) {
       super(styles);
       UIUtil.disableTextLayoutIfNeeded(this);
     }
@@ -231,6 +232,24 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
       ParserCallback reader = super.getReader(pos, popDepth, pushDepth, insertTag);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
+    }
+
+    public void tryRunUnderWriteLock(Runnable runnable) {
+      if (getCurrentWriter() == Thread.currentThread()) {
+        runnable.run();
+      } else {
+        try {
+          writeLock();
+        } catch (IllegalStateException e) {
+          // ignore, wrong thread
+          return;
+        }
+        try {
+          runnable.run();
+        } finally {
+          writeUnlock();
+        }
+      }
     }
 
     private static final class CallbackWrapper extends ParserCallback {
