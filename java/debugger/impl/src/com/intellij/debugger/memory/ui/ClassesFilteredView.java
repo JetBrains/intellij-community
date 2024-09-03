@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.memory.ui;
 
@@ -117,30 +117,26 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void processAttached(@NotNull DebugProcess process) {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
         debugProcess.removeDebugProcessListener(this);
-        debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
-          @Override
-          protected void action() {
-            final boolean activated = myIsTrackersActivated.get();
-            final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
-            if (!proxy.canBeModified()) {
-              return;
+        boolean activated = myIsTrackersActivated.get();
+        VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+        if (!proxy.canBeModified()) {
+          return;
+        }
+        tracker.getTrackedClasses().forEach((className, type) -> {
+          List<ReferenceType> classes = proxy.classesByName(className);
+          if (classes.isEmpty()) {
+            trackWhenPrepared(className, debugSession, debugProcess, type);
+          }
+          else {
+            for (ReferenceType ref : classes) {
+              trackClass(debugSession, debugProcess, ref, type, activated);
             }
-            tracker.getTrackedClasses().forEach((className, type) -> {
-              List<ReferenceType> classes = proxy.classesByName(className);
-              if (classes.isEmpty()) {
-                trackWhenPrepared(className, debugSession, debugProcess, type);
-              }
-              else {
-                for (ReferenceType ref : classes) {
-                  trackClass(debugSession, debugProcess, ref, type, activated);
-                }
-              }
-            });
-
-            tracker.addTrackerListener(instancesTrackerListener);
           }
         });
+
+        tracker.addTrackerListener(instancesTrackerListener);
       }
 
       private void trackWhenPrepared(@NotNull String className,
