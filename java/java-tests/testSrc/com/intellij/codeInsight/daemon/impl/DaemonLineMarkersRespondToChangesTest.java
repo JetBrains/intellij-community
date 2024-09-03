@@ -124,13 +124,13 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
 
     Document document = getEditor().getDocument();
     List<LineMarkerInfo<?>> markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
+    assertSize(3, markers);
 
     type("//xxxx");
 
     assertEmpty(highlightErrors());
     markers = DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject());
-    assertEquals(3, markers.size());
+    assertSize(3, markers);
   }
 
 
@@ -192,12 +192,13 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    List<HighlightInfo> infosAfter = CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{/*Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS*/}, false);
+    List<HighlightInfo> infosAfter =
+      CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{/*Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS*/}, false);
     assertNotEmpty(filter(infosAfter, HighlightSeverity.ERROR));
     UIUtil.dispatchAllInvocationEvents();
     assertEmpty(changed);
     List<LineMarkerInfo<?>> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertEquals(lineMarkersAfter.size(), lineMarkers.size());
+    assertSize(lineMarkersAfter.size(), lineMarkers);
   }
 
   public void testLineMarkersDoNotBlinkOnBackSpaceRightBeforeMethodIdentifier() {
