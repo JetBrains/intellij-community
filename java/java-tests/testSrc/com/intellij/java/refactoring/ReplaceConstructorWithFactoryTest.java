@@ -69,6 +69,8 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
   
   public void testAnonymousInheritor() { runTest("AnonymousInheritor", "Inner"); }
+  
+  public void testAnonymousInheritor2() { runTest("AnonymousInheritor2", null); }
 
   public void testSubclassVisibility() { runTest("05", null); }
 

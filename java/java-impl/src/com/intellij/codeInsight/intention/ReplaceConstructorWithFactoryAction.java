@@ -78,7 +78,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
   private static String getMinimalAccessLevel(@NotNull PsiMember member,
                                               @NotNull List<@NotNull PsiElement> places) {
     String[] levels = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED};
-    PsiClass containingClass = member.getContainingClass();
+    PsiClass containingClass = member instanceof PsiClass cls ? cls : member.getContainingClass();
     for (String level : levels) {
       LightModifierList list = new LightModifierList(member.getManager(), JavaLanguage.INSTANCE, level);
       if (ContainerUtil.all(places, place -> JavaResolveUtil.isAccessible(member, containingClass, list, place, null, null))) {
@@ -214,7 +214,8 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       else if (element.getParent() instanceof PsiAnonymousClass || 
                "super".equals(element.getText()) || "this".equals(element.getText()) ||
                element instanceof PsiMethod method && method.isConstructor() ||
-               element instanceof PsiClass) {
+               element instanceof PsiClass ||
+               element.getParent() instanceof PsiReferenceList) {
         otherUsages.add(element);
       }
     }
