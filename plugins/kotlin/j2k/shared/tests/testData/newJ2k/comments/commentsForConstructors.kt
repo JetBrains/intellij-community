@@ -21,7 +21,7 @@ internal class B // this constructor will disappear
      */
 // single line magic comments
 internal class CtorComment {
-    var myA: String = "a"
+    var myA: String? = "a"
 }
 
 internal class CtorComment2  /*
