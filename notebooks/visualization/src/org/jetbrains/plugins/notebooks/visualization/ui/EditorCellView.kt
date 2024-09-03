@@ -79,6 +79,13 @@ class EditorCellView(
   // We are storing last offsets for highlighters to prevent highlighters unnecessary recreation on same values.
   private var lastHighLightersOffsets: IntRange? = null
 
+  var disableActions: Boolean = false
+    set(value) {
+      if (field == value) return
+      field = value
+      updateRunButtonVisibility()
+    }
+
   init {
     recreateControllers()
     updateSelection(false)
@@ -334,7 +341,7 @@ class EditorCellView(
   }
 
   private fun updateRunButtonVisibility() {
-    input.runCellButton?.visible = mouseOver || selected
+    input.runCellButton?.visible = !disableActions && (mouseOver || selected)
   }
 
 
