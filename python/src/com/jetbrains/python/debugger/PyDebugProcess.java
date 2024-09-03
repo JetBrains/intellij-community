@@ -331,6 +331,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void sessionInitialized() {
+    if (Registry.is("python.debug.use.single.port")) {
+      // In the case of a single port, the debugger is already connected at this point.
+      // An additional connection attempt will result in an error.
+      return;
+    }
     waitForConnection(getConnectionMessage(), getConnectionTitle());
   }
 
