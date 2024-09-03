@@ -1,44 +1,44 @@
-<idea-plugin package="org.jetbrains.plugins.notebooks.visualization">
+<idea-plugin package="com.intellij.notebooks.visualization">
   <dependencies>
     <module name="intellij.notebooks.ui"/>
   </dependencies>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearanceProvider"
+                    interface="com.intellij.notebooks.visualization.NotebookEditorAppearanceProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookCellLinesProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelectionModelProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.visualization.NotebookCellSelectionModelProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookCellSelectionModelProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookIntervalPointerFactoryProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointerFactoryProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookIntervalPointerFactoryProvider"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
-                    interface="org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController$Factory"
+                    interface="com.intellij.notebooks.visualization.NotebookCellInlayController$Factory"
                     dynamic="true"/>
   </extensionPoints>
 
   <actions resource-bundle="messages.VisualizationBundle">
     <group id="NotebookOutputCollapseActions" popup="true">
       <action id="NotebookOutputCollapseSingleInCellAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
       <action id="NotebookOutputCollapseAllInCellAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
       <action id="NotebookOutputCollapseAllInSelectedCellsAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInSelectedCellsAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInSelectedCellsAction"/>
       <action id="NotebookOutputCollapseAllAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllAction"/>
     </group>
 
     <action id="NotebookOutputSelectAllAction"
-            class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
+            class="com.intellij.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
             use-shortcut-of="$SelectAll"/>
   </actions>
 
@@ -47,9 +47,9 @@
 
     <getDataRule
       key="NOTEBOOK_CELL_LINES_INTERVAL"
-      implementationClass="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesIntervalDataRule"/>
-    <uiDataRule implementation="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"/>
-    <editorFactoryDocumentListener implementation="org.jetbrains.plugins.notebooks.visualization.UndoableActionListener"
+      implementationClass="com.intellij.notebooks.visualization.NotebookCellLinesIntervalDataRule"/>
+    <uiDataRule implementation="com.intellij.notebooks.visualization.EditorsWithOffsetsDataRule"/>
+    <editorFactoryDocumentListener implementation="com.intellij.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
   </extensions>
 
@@ -57,15 +57,15 @@
   <extensionPoints>
     <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentFactory"
-      interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory"
       dynamic="true"/>
     <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputDataKeyExtractor"
-      interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor"
       dynamic="true"/>
     <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentWrapper"
-      interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
