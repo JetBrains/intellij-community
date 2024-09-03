@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter;
@@ -495,42 +494,25 @@ public final class PersistentFSLoader {
 
 
   public @NotNull VFSAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
-    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
-      SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
-        /*min: */64, /*default: */ 128,
-        /*max: */StreamlinedBlobStorageHelper.MAX_CAPACITY,
-        /*percentOnTop: */30
-      );
+    //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
+    SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
+      /*min: */64, /*default: */ 128,
+      /*max: */StreamlinedBlobStorageHelper.MAX_CAPACITY,
+      /*percentOnTop: */30
+    );
 
-      LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
-      int pageSize = 1 << 24;//16Mb
-      StreamlinedBlobStorage blobStorage = MMappedFileStorageFactory.withDefaults()
-        .pageSize(pageSize)
-        //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
-        // data from non-mmapped -- the only 'migration' needed is to page-align the file:
-        .ifFileIsNotPageAligned(EXPAND_FILE)
-        .wrapStorageSafely(
-          attributesFile,
-          storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
-        );
-      return new AttributesStorageOverBlobStorage(blobStorage);
-    }
-    else {
-      LOG.info("VFS uses regular attributes storage");
-      boolean bulkAttrReadSupport = false;
-      boolean inlineAttributes = true;
-      return new AttributesStorageOld(
-        bulkAttrReadSupport,
-        inlineAttributes,
-        new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
-          @Override
-          protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
-                                                            @NotNull Path recordsFile) throws IOException {
-            return new CompactRecordsTable(recordsFile, context, false);
-          }
-        });
-    }
+    LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
+    int pageSize = 1 << 24;//16Mb
+    StreamlinedBlobStorage blobStorage = MMappedFileStorageFactory.withDefaults()
+      .pageSize(pageSize)
+      //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
+      // data from non-mmapped -- the only 'migration' needed is to page-align the file:
+      .ifFileIsNotPageAligned(EXPAND_FILE)
+      .wrapStorageSafely(
+        attributesFile,
+        storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
+      );
+    return new AttributesStorageOverBlobStorage(blobStorage);
   }
 
   private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {

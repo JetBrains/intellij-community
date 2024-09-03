@@ -88,9 +88,6 @@ public final class FSRecordsImpl implements Closeable {
   private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", false);
 
   //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.attributes-storage.streamlined", true);
-
-  //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
 
 
@@ -186,7 +183,7 @@ public final class FSRecordsImpl implements Closeable {
            nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
            nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
            nextMask(true,  // former USE_FAST_NAMES_IMPLEMENTATION, free to reuse
-           nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0)))))))))))));
+           nextMask(true   /* former USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, free to reuse */, 0)))))))))))));
     //@formatter:on
   }
 
