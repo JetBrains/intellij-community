@@ -87,9 +87,6 @@ public final class FSRecordsImpl implements Closeable {
   /** Not a lot of sense in gentle flusher for memory-mapped VFS storages */
   private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", false);
 
-  //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
-  public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
-
 
   /** Supported values: 'none', 'slru', 'mru' */
   private static final String NAME_CACHE_IMPL = System.getProperty("vfs.name-cache.impl", "mru");
@@ -220,7 +217,7 @@ public final class FSRecordsImpl implements Closeable {
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
       PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
-      PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?
+      PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() ?
                                               new PersistentFSTreeRawAccessor(attributeAccessor, recordAccessor, connection) :
                                               new PersistentFSTreeAccessor(attributeAccessor, recordAccessor, connection);
 
