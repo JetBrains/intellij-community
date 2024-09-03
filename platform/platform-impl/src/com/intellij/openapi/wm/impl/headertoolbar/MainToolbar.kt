@@ -10,6 +10,7 @@ import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -159,6 +160,18 @@ class MainToolbar(
     }
 
     migratePreviousCustomizations(schema)
+    migrateVcsActions(schema)
+  }
+
+  private fun migrateVcsActions(schema: CustomActionsSchema) {
+    if (AppMode.isRemoteDevHost()) return
+    val allActions = schema.getActions().toMutableList()
+    val actionsToRemove = setOf("Vcs.Push", "Vcs.UpdateProject")
+    val wereRemoved = allActions.removeIf { it.groupPath.contains("Main Toolbar") && it.component in actionsToRemove }
+    if (wereRemoved) {
+      schema.setActions(allActions)
+      schemaChanged()
+    }
   }
 
   /*
@@ -385,7 +398,7 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
   }
 
   override fun getSeparatorColor(): Color {
-    return JBColor.namedColor("MainToolbar.separatorColor", super.getSeparatorColor())
+    return JBColor.namedColor("MainToolbar.separatorColor", super.separatorColor)
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {
