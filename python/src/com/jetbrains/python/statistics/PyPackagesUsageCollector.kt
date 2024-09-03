@@ -9,7 +9,7 @@ class PyPackagesUsageCollector : CounterUsagesCollector() {
 
   @Suppress("CompanionObjectInExtension")
   companion object {
-    private val GROUP = EventLogGroup("py.packages.features", 2)
+    private val GROUP = EventLogGroup("py.packages.features", 3)
 
     val installAllEvent = GROUP.registerEvent("install.all.missed.quickfix", EventFields.Count)
 
@@ -18,5 +18,8 @@ class PyPackagesUsageCollector : CounterUsagesCollector() {
 
     @JvmField
     val installSingleEvent = GROUP.registerEvent("install.single.quickfix")
+
+
+    val failInstallSingleEvent = GROUP.registerEvent("fail.install.package")
   }
 }
