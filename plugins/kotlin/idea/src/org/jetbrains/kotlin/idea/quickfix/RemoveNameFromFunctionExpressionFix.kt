@@ -2,48 +2,28 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.util.createIntentionForFirstParentOfType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 
-class RemoveNameFromFunctionExpressionFix(element: KtNamedFunction) : KotlinQuickFixAction<KtNamedFunction>(element), CleanupFix {
-    override fun getText(): String = KotlinBundle.message("remove.identifier.from.anonymous.function")
-    override fun getFamilyName(): String = text
+internal object RemoveNameFromFunctionExpressionFixFactory : KotlinSingleIntentionActionFactory() {
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        removeNameFromFunction(element ?: return)
-    }
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val element = diagnostic.psiElement.getNonStrictParentOfType<KtNamedFunction>() ?: return null
 
-    companion object : KotlinSingleIntentionActionFactory() {
+        var wereAutoLabelUsages = false
+        val name = element.nameAsName ?: return null
 
-        override fun createAction(diagnostic: Diagnostic) =
-            diagnostic.createIntentionForFirstParentOfType(::RemoveNameFromFunctionExpressionFix)
-
-        private fun removeNameFromFunction(function: KtNamedFunction) {
-            var wereAutoLabelUsages = false
-            val name = function.nameAsName ?: return
-
-            function.forEachDescendantOfType<KtReturnExpression> {
-                if (!wereAutoLabelUsages && it.getLabelNameAsName() == name) {
-                    wereAutoLabelUsages = it.analyze().get(BindingContext.LABEL_TARGET, it.getTargetLabel()) == function
-                }
-            }
-
-            function.nameIdentifier?.delete()
-
-            if (wereAutoLabelUsages) {
-                val psiFactory = KtPsiFactory(function.project)
-                val newFunction = psiFactory.createExpressionByPattern("$0@ $1", name, function)
-                function.replace(newFunction)
+        element.forEachDescendantOfType<KtReturnExpression> {
+            if (!wereAutoLabelUsages && it.getLabelNameAsName() == name) {
+                wereAutoLabelUsages = it.analyze().get(BindingContext.LABEL_TARGET, it.getTargetLabel()) == element
             }
         }
+
+        return RemoveNameFromFunctionExpressionFix(element, wereAutoLabelUsages).asIntention()
     }
 }
