@@ -923,12 +923,17 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun addTextInputListener() {
-    JBR.getTextInput()?.setGlobalEventListener(object : TextInput.EventListener {
-      override fun handleSelectTextRangeEvent(event: TextInput.SelectTextRangeEvent) {
-        val supply = SpeedSearchSupply.getSupply(event.source as JComponent, true)
-        supply?.selectTextRange(event.begin, event.length)
-      }
-    })
+    if (SystemInfoRt.isMac && !GraphicsEnvironment.isHeadless()) {
+      JBR.getTextInput()?.setGlobalEventListener(object : TextInput.EventListener {
+        override fun handleSelectTextRangeEvent(event: TextInput.SelectTextRangeEvent) {
+          val source = event.source
+          if (source is JComponent) {
+            val supply = SpeedSearchSupply.getSupply(source, true)
+            supply?.selectTextRange(event.begin, event.length)
+          }
+        }
+      })
+    }
   }
 }
 
