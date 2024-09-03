@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.PopupBridge
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -111,7 +112,13 @@ private class DocumentationTargetHoverInfo(
         resizePopup(popup, it)
         bridge.updateLocation()
       }
-      DocumentationUsageCollector.QUICK_DOC_SHOWN.log()
+      val fileType = editor.virtualFile?.fileType
+      DocumentationUsageCollector.QUICK_DOC_SHOWN.log(fileType)
+      val startTime = System.currentTimeMillis()
+      Disposer.register(popup) {
+        DocumentationUsageCollector.QUICK_DOC_CLOSED.log(fileType, jointPopup, System.currentTimeMillis() - startTime)
+      }
+
     }
     EditorUtil.disposeWithEditor(editor, popupUI)
     return popupUI.component

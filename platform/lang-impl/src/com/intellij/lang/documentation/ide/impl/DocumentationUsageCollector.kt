@@ -6,19 +6,23 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.documentation.DocumentationTarget
 
-object DocumentationUsageCollector: CounterUsagesCollector() {
+object DocumentationUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("documentation", 4)
+  private val GROUP = EventLogGroup("documentation", 5)
 
   private val DOWNLOAD_FINISHED_EVENT = GROUP.registerEvent("quick.doc.download.finished",
                                                             EventFields.Class("handler"),
                                                             EventFields.Boolean("success")
   )
 
-  val QUICK_DOC_SHOWN = GROUP.registerEvent("quick.doc.shown")
+  val QUICK_DOC_SHOWN = GROUP.registerEvent("quick.doc.shown", EventFields.FileType)
+  val QUICK_DOC_CLOSED = GROUP.registerEvent("quick.doc.closed", EventFields.FileType, EventFields.Boolean("joint"), EventFields.DurationMs)
+  val DOC_COMPUTED = GROUP.registerEvent("computed", EventFields.Class("refClass"), EventFields.RoundedInt("size"))
 
   val EXPANDABLE_DEFINITION_SHOWN = GROUP.registerEvent("expandable.definition.shown")
   val EXPANDABLE_DEFINITION_EXPANDED = GROUP.registerEvent("expandable.definition.expanded", EventFields.Boolean("expand"))
@@ -32,6 +36,14 @@ object DocumentationUsageCollector: CounterUsagesCollector() {
   fun logDownloadFinished(project: Project, handlerClass: Class<out DocumentationDownloader>, success: Boolean) {
     DOWNLOAD_FINISHED_EVENT.log(project, handlerClass, success)
   }
+}
+
+internal fun getClassRefForStatistics(dereference: DocumentationTarget?): Class<out Any>? {
+  @Suppress("TestOnlyProblems")
+  return if (dereference is PsiElementDocumentationTarget)
+    dereference.targetElement.javaClass
+  else
+    dereference?.javaClass
 }
 
 enum class DocumentationLinkProtocol {
