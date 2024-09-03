@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
+import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
@@ -114,7 +116,12 @@ fun checkCallableShadowing(
             //offsets are required because context is ignored in KtPsiFactory and codeFragment is always created with eventsEnabled on,
             //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
             val copyCallExpression =
-                PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
+                CodeInsightUtilCore.findElementInRange(codeFragment.containingFile,
+                                                       offsetInCopy.startOffset,
+                                                       offsetInCopy.endOffset + newName.length - declaration.nameAsSafeName.asString().length,
+                                                       callExpression.javaClass,
+                                                       KotlinLanguage.INSTANCE)
+
             val resolveCall = copyCallExpression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
             val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
             if (resolvedSymbol is KaSyntheticJavaPropertySymbol) {

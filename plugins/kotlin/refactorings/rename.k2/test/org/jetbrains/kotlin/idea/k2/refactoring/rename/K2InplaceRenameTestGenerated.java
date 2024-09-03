@@ -185,6 +185,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EraseCompanionName.kt");
     }
 
+    @TestMetadata("expressionsInRange.kt")
+    public void testExpressionsInRange() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/expressionsInRange.kt");
+    }
+
     @TestMetadata("ExtensionAndNoReceiver.kt")
     public void testExtensionAndNoReceiver() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/ExtensionAndNoReceiver.kt");
