@@ -3,10 +3,7 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.ide.IdeBundle
 import com.intellij.l10n.LocalizationStateService
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -111,7 +108,16 @@ internal sealed class WhatsNewContent {
         if (request.isNotEmpty()) {
           service<ActionManager>().getAction(request)?.let {
             withContext(Dispatchers.EDT) {
-              it.actionPerformed(AnActionEvent.createFromAnAction(it, null, WhatsNewAction.PLACE, dataContext))
+              it.actionPerformed(
+                AnActionEvent.createEvent(
+                  it,
+                  dataContext,
+                  /*presentation =*/ null,
+                  WhatsNewAction.PLACE,
+                  ActionUiKind.NONE,
+                  /*event =*/ null
+                )
+              )
               logger.trace { "EapWhatsNew action $request performed" }
               WhatsNewCounterUsageCollector.actionPerformed(dataContext.project, request)
             }
