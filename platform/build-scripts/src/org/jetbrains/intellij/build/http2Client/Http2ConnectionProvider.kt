@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.http2Client
 
+import com.intellij.platform.util.coroutines.childScope
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
@@ -43,6 +44,7 @@ internal class Http2ConnectionProvider(
   private val bootstrapTemplate: Bootstrap,
   private val ioDispatcher: CoroutineDispatcher,
   sslContext: SslContext?,
+  private val coroutineScope: CoroutineScope,
 ) {
   private val mutex = Mutex()
   private val channelInitializer = Http2ClientFrameInitializer(sslContext, server)
@@ -72,7 +74,7 @@ internal class Http2ConnectionProvider(
     val connection = ConnectionState(
       bootstrap = Http2StreamChannelBootstrap(channel),
       channel = channel,
-      coroutineScope = CoroutineScope(SupervisorJob() + ioDispatcher),
+      coroutineScope = coroutineScope.childScope("TCP connection (server=${server.hostString}:${server.port})"),
     )
     (channel.pipeline().get("Http2FrameCodec") as Http2FrameCodec).connection().addListener(object : Http2ConnectionAdapter() {
       override fun onGoAwayReceived(lastStreamId: Int, errorCode: Long, debugData: ByteBuf?) {
@@ -87,13 +89,34 @@ internal class Http2ConnectionProvider(
     return connection
   }
 
+  suspend fun <T> use(block: suspend () -> T): T {
+    try {
+      return block()
+    }
+    finally {
+      val connection = connectionRef.get()
+      if (connection != null) {
+        try {
+          connection.coroutineScope.coroutineContext.job.cancelAndJoin()
+        }
+        finally {
+          withContext(NonCancellable) {
+            connection.channel.close().joinNonCancellable()
+          }
+        }
+      }
+    }
+  }
+
   suspend fun close() {
     val connection = connectionRef.get() ?: return
     try {
       connection.coroutineScope.coroutineContext.job.cancelAndJoin()
     }
     finally {
-      connection.channel.close().joinNonCancellable()
+      withContext(NonCancellable) {
+        connection.channel.close().joinNonCancellable()
+      }
     }
   }
 
@@ -108,7 +131,15 @@ internal class Http2ConnectionProvider(
       var currentConnection: ConnectionState? = null
       try {
         currentConnection = getConnection()
-        return withContext(currentConnection.coroutineScope.coroutineContext) {
+        // use a single-thread executor as Netty does for handlers for thread safety and fewer context switches
+        val eventLoop = bootstrapTemplate.config().group().next()
+        return withContext(currentConnection.coroutineScope.coroutineContext + object : CoroutineDispatcher() {
+          override fun dispatch(context: CoroutineContext, block: Runnable) {
+            eventLoop.execute(block)
+          }
+
+          override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
+        }) {
           openStreamAndConsume(connectionState = currentConnection, block = block)
         }
       }
@@ -180,18 +211,7 @@ internal class Http2ConnectionProvider(
     try {
       // must be canceled when the parent context is canceled
       val result = CompletableDeferred<T>(parent = coroutineContext.job)
-      val eventLoop = streamChannel.eventLoop()
-      // use a single-thread executor as Netty does for handlers for thread safety and fewer context switches
-      withContext(object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-          eventLoop.execute(block)
-        }
-
-        override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
-      }) {
-        block(streamChannel, result)
-      }
-
+      block(streamChannel, result)
       // Ensure the stream is closed before completing the operation.
       // This prevents the risk of opening more streams than intended,
       // especially when there is a limit on the number of parallel executed tasks.

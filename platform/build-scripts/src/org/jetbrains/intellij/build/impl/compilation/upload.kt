@@ -12,7 +12,6 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
-import org.jetbrains.intellij.build.http2Client.MAX_BUFFER_SIZE
 import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
 import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -57,51 +56,48 @@ internal suspend fun uploadArchives(
     emptySet()
   }
 
-  val sourceBlockSize = MAX_BUFFER_SIZE
   val urlPathPrefix = "${config.serverUrlPathPrefix}/${config.uploadUrlPathPrefix}"
-  ZstdCompressContextPool().use { zstdCompressContextPool ->
-    items.forEachConcurrent(uploadParallelism) { item ->
-      if (alreadyUploaded.contains(item.name)) {
-        reusedCount.increment()
-        reusedBytes.add(Files.size(item.archive))
-        return@forEachConcurrent
-      }
+  val zstdCompressContextPool = ZstdCompressContextPool()
+  items.forEachConcurrent(uploadParallelism) { item ->
+    if (alreadyUploaded.contains(item.name)) {
+      reusedCount.increment()
+      reusedBytes.add(Files.size(item.archive))
+      return@forEachConcurrent
+    }
 
-      val urlPath = "$urlPathPrefix/${item.name}/${item.hash!!}.jar"
-      spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!).use { span ->
-        if (fallbackToHeads) {
-          val status = httpConnection.head(urlPath)
-          if (status == HttpResponseStatus.OK) {
-            span.addEvent("already exist on server, nothing to upload", Attributes.of(AttributeKey.stringKey("urlPath"), urlPath))
+    val urlPath = "$urlPathPrefix/${item.name}/${item.hash!!}.jar"
+    spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!).use { span ->
+      if (fallbackToHeads) {
+        val status = httpConnection.head(urlPath)
+        if (status == HttpResponseStatus.OK) {
+          span.addEvent("already exist on server, nothing to upload", Attributes.of(AttributeKey.stringKey("urlPath"), urlPath))
 
-            reusedCount.increment()
-            val size = Files.size(item.archive)
-            reusedBytes.add(size)
-            uncompressedBytes.add(size)
-            return@use
-          }
-          else if (status != HttpResponseStatus.NOT_FOUND) {
-            span.addEvent(
-              "responded with unexpected",
-              Attributes.of(
-                AttributeKey.stringKey("status"), status.toString(),
-                AttributeKey.stringKey("urlPath"), urlPath,
-              ),
-            )
-          }
+          reusedCount.increment()
+          val size = Files.size(item.archive)
+          reusedBytes.add(size)
+          uncompressedBytes.add(size)
+          return@use
         }
-
-        val uploadedSize = uploadFile(
-          urlPath = urlPath,
-          file = item.archive,
-          httpConnection = httpConnection,
-          sourceBlockSize = sourceBlockSize,
-          zstdCompressContextPool = zstdCompressContextPool,
-          uncompressedBytes = uncompressedBytes,
-        )
-        uploadedCount.increment()
-        uploadedBytes.add(uploadedSize)
+        else if (status != HttpResponseStatus.NOT_FOUND) {
+          span.addEvent(
+            "responded with unexpected",
+            Attributes.of(
+              AttributeKey.stringKey("status"), status.toString(),
+              AttributeKey.stringKey("urlPath"), urlPath,
+            ),
+          )
+        }
       }
+
+      val uploadedSize = uploadFile(
+        urlPath = urlPath,
+        file = item.archive,
+        httpConnection = httpConnection,
+        zstdCompressContextPool = zstdCompressContextPool,
+        uncompressedBytes = uncompressedBytes,
+      )
+      uploadedCount.increment()
+      uploadedBytes.add(uploadedSize)
     }
   }
 
@@ -144,11 +140,15 @@ private suspend fun uploadFile(
   urlPath: String,
   file: Path,
   httpConnection: Http2ClientConnection,
-  @Suppress("SameParameterValue") sourceBlockSize: Int,
   zstdCompressContextPool: ZstdCompressContextPool,
   uncompressedBytes: LongAdder,
 ): Long {
-  val result = httpConnection.upload(path = AsciiString.of(urlPath), file = file, sourceBlockSize = sourceBlockSize, zstdCompressContextPool = zstdCompressContextPool)
+  val result = httpConnection.upload(
+    path = AsciiString.of(urlPath),
+    file = file,
+    sourceBlockSize = 4 * 1014 * 1024,
+    zstdCompressContextPool = zstdCompressContextPool,
+  )
   require(result.fileSize > 0)
   uncompressedBytes.add(result.fileSize)
   return result.uploadedSize

@@ -20,7 +20,7 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.READ_OPERATION
-import org.jetbrains.intellij.build.http2Client.createHttp2ClientSessionFactory
+import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -244,7 +244,7 @@ private suspend fun upload(
   }
 
   val serverAddress = config.serverAddress
-  createHttp2ClientSessionFactory(trustAll = serverAddress.hostString == "127.0.0.1").use { client ->
+  withHttp2ClientConnectionFactory(trustAll = serverAddress.hostString == "127.0.0.1") { client ->
     client.connect(serverAddress).use { connection ->
       spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).use {
         uploadArchives(
@@ -370,7 +370,7 @@ suspend fun fetchAndUnpackCompiledClasses(
     val start = System.nanoTime()
 
     val downloadedBytes = AtomicLong()
-    createHttp2ClientSessionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")).use { client ->
+    withHttp2ClientConnectionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")) { client ->
       downloadCompilationCache(
         client = client,
         serverUrl = metadata.serverUrl,

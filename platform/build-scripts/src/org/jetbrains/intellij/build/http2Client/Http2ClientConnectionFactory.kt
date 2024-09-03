@@ -20,9 +20,9 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.supervisorScope
 import java.net.InetSocketAddress
 import kotlin.coroutines.CoroutineContext
 
@@ -32,25 +32,21 @@ internal class Http2ClientConnectionFactory(
   private val bootstrapTemplate: Bootstrap,
   private val sslContext: SslContext?,
   private val ioDispatcher: CoroutineDispatcher,
+  private val coroutineScope: CoroutineScope,
 ) {
-  suspend inline fun <T> use(block: (Http2ClientConnectionFactory) -> T): T {
-    try {
-      return block(this)
-    }
-    finally {
-      withContext(NonCancellable) {
-        close()
-      }
-    }
-  }
-
   fun connect(host: String, port: Int = 443): Http2ClientConnection {
     return connect(InetSocketAddress.createUnresolved(host, port.let { if (it == -1) 443 else it }))
   }
 
   fun connect(server: InetSocketAddress): Http2ClientConnection {
     return Http2ClientConnection(
-      connection = Http2ConnectionProvider(server = server, bootstrapTemplate = bootstrapTemplate, sslContext = sslContext, ioDispatcher = ioDispatcher),
+      connection = Http2ConnectionProvider(
+        server = server,
+        bootstrapTemplate = bootstrapTemplate,
+        sslContext = sslContext,
+        ioDispatcher = ioDispatcher,
+        coroutineScope = coroutineScope,
+      ),
       scheme = AsciiString.of(if (sslContext == null) "http" else "https"),
       authority = AsciiString.of(server.hostString + ":" + server.port),
       commonHeaders = arrayOf(HttpHeaderNames.USER_AGENT, AsciiString.of("IJ Builder")),
@@ -62,7 +58,29 @@ internal class Http2ClientConnectionFactory(
   }
 }
 
-internal fun createHttp2ClientSessionFactory(useSsl: Boolean = true, trustAll: Boolean = false): Http2ClientConnectionFactory {
+internal suspend fun <T> withHttp2ClientConnectionFactory(
+  useSsl: Boolean = true,
+  trustAll: Boolean = false,
+  block: suspend (Http2ClientConnectionFactory) -> T,
+) {
+  var connection: Http2ClientConnectionFactory? = null
+  try {
+    return supervisorScope {
+      block(createHttp2ClientSessionFactory(useSsl = useSsl, trustAll = trustAll, coroutineScope = this).also {
+        connection = it
+      })
+    }
+  }
+  finally {
+    connection?.close()
+  }
+}
+
+private fun createHttp2ClientSessionFactory(
+  useSsl: Boolean = true,
+  trustAll: Boolean = false,
+  coroutineScope: CoroutineScope,
+): Http2ClientConnectionFactory {
   val useNativeTransport = true
   val (ioFactory, socketChannel) = try {
     when {
@@ -122,5 +140,6 @@ internal fun createHttp2ClientSessionFactory(useSsl: Boolean = true, trustAll: B
     bootstrapTemplate = bootstrapTemplate,
     sslContext = sslContext,
     ioDispatcher = dispatcher,
+    coroutineScope = coroutineScope,
   )
 }

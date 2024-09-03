@@ -13,8 +13,6 @@ import io.netty.handler.codec.http2.Http2Headers
 import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.handler.codec.http2.ReadOnlyHttp2Headers
 import io.netty.util.AsciiString
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.serializer
 
@@ -25,14 +23,9 @@ internal class Http2ClientConnection internal constructor(
   private val commonHeaders: Array<AsciiString>,
   @JvmField internal val connection: Http2ConnectionProvider,
 ) {
-  suspend inline fun <T> use(block: (Http2ClientConnection) -> T): T {
-    try {
-      return block(this)
-    }
-    finally {
-      withContext(NonCancellable) {
-        close()
-      }
+  suspend fun <T> use(block: suspend (Http2ClientConnection) -> T): T {
+    return connection.use {
+      block(this)
     }
   }
 

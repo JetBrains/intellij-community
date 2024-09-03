@@ -64,32 +64,31 @@ internal suspend fun downloadCompilationCache(
     connection = client.connect(effectiveServerUri.host, effectiveServerUri.port)
   }
   try {
-    ZstdDecompressContextPool().use { zstdDecompressContextPool ->
-      toDownload.forEachConcurrent(downloadParallelism) { item ->
-        val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
-        spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
-          try {
-            downloadedBytes.getAndAdd(
-              download(
-                item = item,
-                urlPath = urlPath,
-                skipUnpack = skipUnpack,
-                saveHash = saveHash,
-                connection = connection,
-                zstdDecompressContextPool = zstdDecompressContextPool,
-              )
+    val zstdDecompressContextPool = ZstdDecompressContextPool()
+    toDownload.forEachConcurrent(downloadParallelism) { item ->
+      val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
+      spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
+        try {
+          downloadedBytes.getAndAdd(
+            download(
+              item = item,
+              urlPath = urlPath,
+              skipUnpack = skipUnpack,
+              saveHash = saveHash,
+              connection = connection,
+              zstdDecompressContextPool = zstdDecompressContextPool,
             )
+          )
+        }
+        catch (e: CancellationException) {
+          if (coroutineContext.isActive) {
+            // well, we are not canceled, only child
+            throw IllegalStateException("Unexpected cancellation - action is cancelled itself", e)
           }
-          catch (e: CancellationException) {
-            if (coroutineContext.isActive) {
-              // well, we are not canceled, only child
-              throw IllegalStateException("Unexpected cancellation - action is cancelled itself", e)
-            }
-          }
-          catch (e: Throwable) {
-            span.recordException(e)
-            throw CompilePartDownloadFailedError(item, e)
-          }
+        }
+        catch (e: Throwable) {
+          span.recordException(e)
+          throw CompilePartDownloadFailedError(item, e)
         }
       }
     }
