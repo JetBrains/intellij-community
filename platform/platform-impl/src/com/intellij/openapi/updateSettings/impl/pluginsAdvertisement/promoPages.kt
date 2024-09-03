@@ -115,20 +115,6 @@ object PromoPages {
     return panel
   }
 
-  fun build(page: PromoFeaturePage): DialogPanel {
-    return build(page, FUSEventSource.SETTINGS)
-  }
-
-  fun build(page: PromoFeaturePage, source: FUSEventSource): DialogPanel {
-    return build(page = page,
-                 openLearnMore = {
-                   source.learnMoreAndLog(null, it, page.pluginId?.let(PluginId::getId))
-                 },
-                 openDownloadLink = {
-                   source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
-                 })
-  }
-
   fun buildWithTryUltimate(
     page: PromoFeaturePage,
     openLearnMore: ((url: String) -> Unit)? = null,

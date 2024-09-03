@@ -19,7 +19,7 @@ internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
   private const val FUS_GROUP_ID = "plugins.advertiser"
 
-  private val GROUP = EventLogGroup(FUS_GROUP_ID, 12)
+  private val GROUP = EventLogGroup(FUS_GROUP_ID, 13)
 
   val SOURCE_FIELD = EventFields.Enum(
     "source",
@@ -66,6 +66,7 @@ internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
   val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
     "open.download.page",
     SOURCE_FIELD,
+    PRODUCT_CODE_FIELD,
     PLUGIN_FIELD
   )
 
@@ -136,9 +137,14 @@ enum class FUSEventSource {
   ): Unit = PluginAdvertiserUsageCollector.INSTALL_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
-  fun openDownloadPageAndLog(project: Project? = null, url: String, pluginId: PluginId? = null) {
+  fun openDownloadPageAndLog(
+    project: Project? = null,
+    url: String,
+    suggestedIde: SuggestedIde? = null,
+    pluginId: PluginId? = null,
+  ) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
-    PluginAdvertiserUsageCollector.OPEN_DOWNLOAD_PAGE_EVENT.log(project, this, pluginId?.idString)
+    PluginAdvertiserUsageCollector.OPEN_DOWNLOAD_PAGE_EVENT.log(project, this, suggestedIde?.productCode, pluginId?.idString)
   }
 
   @JvmOverloads
