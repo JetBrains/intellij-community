@@ -7327,7 +7327,99 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter")
+    public static class ConvertPropertyInitializerToGetter extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/const.kt");
+        }
+
+        @TestMetadata("errorType.kt")
+        public void testErrorType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/errorType.kt");
+        }
+
+        @TestMetadata("hasReferenceToPrimaryCtorParameter.kt")
+        public void testHasReferenceToPrimaryCtorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/hasReferenceToPrimaryCtorParameter.kt");
+        }
+
+        @TestMetadata("hasReferenceToPrimaryCtorProperty.kt")
+        public void testHasReferenceToPrimaryCtorProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/hasReferenceToPrimaryCtorProperty.kt");
+        }
+
+        @TestMetadata("inapplicableIfExtensionProperty.kt")
+        public void testInapplicableIfExtensionProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/inapplicableIfExtensionProperty.kt");
+        }
+
+        @TestMetadata("inapplicableIfLocalVariableInFun.kt")
+        public void testInapplicableIfLocalVariableInFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/inapplicableIfLocalVariableInFun.kt");
+        }
+
+        @TestMetadata("inapplicableIfLocalVariableInInitBlock.kt")
+        public void testInapplicableIfLocalVariableInInitBlock() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/inapplicableIfLocalVariableInInitBlock.kt");
+        }
+
+        @TestMetadata("inapplicableIfNoInitializer.kt")
+        public void testInapplicableIfNoInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/inapplicableIfNoInitializer.kt");
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/jvmField.kt");
+        }
+
+        @TestMetadata("notInLambda.kt")
+        public void testNotInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/notInLambda.kt");
+        }
+
+        @TestMetadata("onPropertyName.kt")
+        public void testOnPropertyName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/onPropertyName.kt");
+        }
+
+        @TestMetadata("otherPackageType.kt")
+        public void testOtherPackageType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/otherPackageType.kt");
+        }
+
+        @TestMetadata("propertyWithInitializerWithSetter.kt")
+        public void testPropertyWithInitializerWithSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/propertyWithInitializerWithSetter.kt");
+        }
+
+        @TestMetadata("propertyWithInitializerWithoutAccessors.kt")
+        public void testPropertyWithInitializerWithoutAccessors() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/propertyWithInitializerWithoutAccessors.kt");
+        }
+
+        @TestMetadata("semicolon.kt")
+        public void testSemicolon() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/semicolon.kt");
+        }
+
+        @TestMetadata("topLevelDeclaration.kt")
+        public void testTopLevelDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyInitializerToGetter/topLevelDeclaration.kt");
+        }
+    }
 
 
 
