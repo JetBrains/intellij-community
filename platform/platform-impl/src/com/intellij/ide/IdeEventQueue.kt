@@ -44,6 +44,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.unwrapContextRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
@@ -341,7 +342,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       val oldEvent = trueCurrentEvent
       trueCurrentEvent = event
       val finalEvent = event
-      val runnable = InvocationUtil.extractRunnable(event)
+      val runnable = InvocationUtil.extractRunnable(event)?.unwrapContextRunnable()
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
         withAttachedClientId(finalEvent).use {

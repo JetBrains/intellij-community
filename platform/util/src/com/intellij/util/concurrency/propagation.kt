@@ -439,3 +439,7 @@ internal fun capturePropagationContext(
 fun contextAwareCallable(r: Runnable): Callable<*> = ContextAwareCallable {
   r.run()
 }
+
+fun Runnable.unwrapContextRunnable(): Runnable {
+  return if (this is ContextRunnable) this.delegate.unwrapContextRunnable() else this
+}
