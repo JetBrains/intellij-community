@@ -47,7 +47,6 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
     }
 
     @TestMetadata("compose.kt")
-    @IJIgnore(issue = "IJPL-150165")
     public void testCompose() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/compose.kt");
     }
