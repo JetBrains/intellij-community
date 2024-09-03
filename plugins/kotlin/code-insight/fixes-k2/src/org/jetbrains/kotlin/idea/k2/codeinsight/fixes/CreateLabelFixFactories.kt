@@ -11,9 +11,16 @@ import org.jetbrains.kotlin.psi.*
 internal object CreateLabelFixFactories {
 
     val unresolvedLabelFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedLabel ->
-        val labelReferenceExpression = diagnostic.psi as? KtLabelReferenceExpression
-            ?: (diagnostic.psi as? KtReturnExpression)?.getTargetLabel() as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
-        return@IntentionBased getFixes(labelReferenceExpression)
+        val returnExpression = diagnostic.psi as? KtReturnExpression ?: return@IntentionBased emptyList()
+        val labelReferenceExpression = returnExpression.getTargetLabel() as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
+
+        val fixes = if (labelReferenceExpression.getContainingLambdas().any()) {
+            listOf(CreateLabelFix.ForLambda(labelReferenceExpression))
+        } else {
+            emptyList()
+        }
+
+        return@IntentionBased fixes
     }
 
     val notALoopLabelFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NotALoopLabel ->
@@ -22,30 +29,14 @@ internal object CreateLabelFixFactories {
 
         val labelReferenceExpression =
             breakOrContinueExpression.getTargetLabel() as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
-        return@IntentionBased getFixes(labelReferenceExpression)
-    }
 
-    private fun getFixes(labelReferenceExpression: KtLabelReferenceExpression): List<CreateLabelFix> {
-        val fixes = when ((labelReferenceExpression.parent as? KtContainerNode)?.parent) {
-            is KtBreakExpression, is KtContinueExpression -> {
-                if (labelReferenceExpression.getContainingLoops().any()) {
-                    listOf(CreateLabelFix.ForLoop(labelReferenceExpression))
-                } else {
-                    emptyList()
-                }
-            }
-
-            is KtReturnExpression -> {
-                if (labelReferenceExpression.getContainingLambdas().any()) {
-                    listOf(CreateLabelFix.ForLambda(labelReferenceExpression))
-                } else {
-                    emptyList()
-                }
-            }
-
-            else -> emptyList()
+        val fixes = if (labelReferenceExpression.getContainingLoops().any()) {
+            listOf(CreateLabelFix.ForLoop(labelReferenceExpression))
+        } else {
+            emptyList()
         }
-        return fixes
+
+        return@IntentionBased fixes
     }
 }
 
