@@ -24,7 +24,7 @@ class LogicalStructureViewService(
       // TODO StructureTW
       return null
     }
-    val assembledModel = LogicalStructureAssembledModel(project, psiFile)
+    val assembledModel = LogicalStructureAssembledModel.getInstance(project, psiFile)
     if (assembledModel.getChildren().isEmpty()) return null
     return object: TreeBasedStructureViewBuilder() {
       override fun createStructureViewModel(editor: Editor?): StructureViewModel {

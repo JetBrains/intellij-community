@@ -18,9 +18,11 @@ import com.intellij.psi.PsiTarget
 import java.awt.Font
 import javax.swing.Icon
 
-/*
-  parentKey is needed to distinguish similar nodes in different branches.
-  Because the logical model may be recursive or the same element can be present a few times (e.g: two controllers depend on the same service)
+/**
+ * @param parentKey is needed to distinguish similar nodes in different branches.
+ *  Because the logical model may be recursive or the same element can be present a few times (e.g: two controllers depend on the same service)
+*  @return structure tree element basing on logical model
+ *  The model's children will be transformed into child tree elements
  */
 fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledModel<T>, parentKey: String = "root"): StructureViewTreeElement {
   val model = assembledModel.model

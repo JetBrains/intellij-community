@@ -84,11 +84,13 @@ f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElementsKt
 - sf:createViewTreeElement(com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel,java.lang.String):com.intellij.ide.structureView.StructureViewTreeElement
 - bs:createViewTreeElement$default(com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel,java.lang.String,I,java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
-- <init>(com.intellij.openapi.project.Project,java.lang.Object):V
+- sf:Companion:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
 - f:getChildren():java.util.List
 - f:getChildrenGrouped():java.util.List
 - f:getModel():java.lang.Object
 - f:getProject():com.intellij.openapi.project.Project
+f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
+- f:getInstance(com.intellij.openapi.project.Project,java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider
