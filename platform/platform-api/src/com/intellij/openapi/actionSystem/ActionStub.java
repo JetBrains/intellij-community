@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -102,8 +103,9 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     if (targetAction instanceof ActionGroup &&
         !(targetAction instanceof CustomComponentAction) &&
         !targetAction.getTemplatePresentation().isPerformGroup()) {
-      LOG.error(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
-                              id, targetAction.getClass().getName()));
+      LOG.error(new PluginException(String.format(
+        "ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
+        id, targetAction.getClass().getName()), plugin.getPluginId()));
     }
   }
 
