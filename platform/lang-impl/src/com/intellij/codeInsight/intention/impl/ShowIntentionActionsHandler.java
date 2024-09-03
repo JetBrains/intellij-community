@@ -285,6 +285,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
@@ -292,6 +295,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, IntentionSource.CONTEXT_ACTIONS);
   }
 
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
@@ -301,9 +307,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   /**
-   * @deprecated Use overload with {@link IntentionSource}
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
    */
-  @Deprecated
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
@@ -312,6 +317,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, fixOffset, IntentionSource.CONTEXT_ACTIONS);
   }
 
+  /**
+   * Chooses a file and editor between host and injected files for the given intention action and invokes the action within a command.
+   */
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
