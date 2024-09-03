@@ -162,7 +162,14 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
 
         DocumentationManagerUtil.createHyperlink(link, it, highlighted, false)
         HtmlChunk.fragment(
-            HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.ClassKotlin"),
+            HtmlChunk.tag("icon").attr(
+                "src",
+                if (ktDeclaration.isTopLevelKtOrJavaMember()) {
+                    "AllIcons.Nodes.Package"
+                } else {
+                    "KotlinBaseResourcesIcons.ClassKotlin"
+                }
+            ),
             HtmlChunk.nbsp(),
             HtmlChunk.raw(link.toString()),
             HtmlChunk.br()

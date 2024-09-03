@@ -558,7 +558,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         }
 
         private fun getContainerInfo(element: PsiElement?): HtmlChunk? {
-            if (element !is KtExpression) return null
+            val ktExpression = element as? KtExpression ?: return null
 
             val resolutionFacade = element.getResolutionFacade()
             val context = element.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
@@ -577,7 +577,14 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                         DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false)
                     }
                     HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.ClassKotlin"),
+                        HtmlChunk.tag("icon").attr(
+                            "src",
+                            if (ktExpression.isTopLevelKtOrJavaMember()) {
+                                "AllIcons.Nodes.Package"
+                            } else {
+                                "KotlinBaseResourcesIcons.ClassKotlin"
+                            }
+                        ),
                         HtmlChunk.nbsp(),
                         HtmlChunk.raw(link.toString()),
                         HtmlChunk.br()
