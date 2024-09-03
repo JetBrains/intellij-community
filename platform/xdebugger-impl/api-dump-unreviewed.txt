@@ -39,12 +39,26 @@ com.intellij.xdebugger.attach.XAttachDebuggerProvider
 - a:isAttachHostApplicable(com.intellij.xdebugger.attach.XAttachHost):Z
 com.intellij.xdebugger.attach.XAttachHost
 - a:getProcessList():java.util.List
+- getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
+- bs:getProcessListAsync$suspendImpl(com.intellij.xdebugger.attach.XAttachHost,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.xdebugger.attach.XAttachHost$Async
+- com.intellij.xdebugger.attach.XAttachHost
+- getProcessList():java.util.List
+- a:getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.xdebugger.attach.XAttachHostPresentationGroup
 - com.intellij.xdebugger.attach.XAttachPresentationGroup
 com.intellij.xdebugger.attach.XAttachHostProvider
+- sf:Companion:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - a:getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
+- getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- bs:getAvailableHostsAsync$suspendImpl(com.intellij.xdebugger.attach.XAttachHostProvider,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - a:getPresentationGroup():com.intellij.xdebugger.attach.XAttachPresentationGroup
+com.intellij.xdebugger.attach.XAttachHostProvider$Async
+- com.intellij.xdebugger.attach.XAttachHostProvider
+- getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
+- a:getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
 com.intellij.xdebugger.attach.XAttachPresentationGroup
 - java.util.Comparator
 - a:getGroupName():java.lang.String

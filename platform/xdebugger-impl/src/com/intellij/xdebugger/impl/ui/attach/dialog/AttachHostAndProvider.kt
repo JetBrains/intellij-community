@@ -23,7 +23,7 @@ data class AttachHostAndProvider(
 
   @Nls
   override fun getPresentation(): String {
-    val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
+    val presentationGroup = provider.getPresentationGroup() as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemDisplayText(project, host, dataHolder)
   }
 
@@ -33,7 +33,7 @@ data class AttachHostAndProvider(
   }
 
   override fun getIcon(): Icon {
-    val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
+    val presentationGroup = provider.getPresentationGroup() as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemIcon(project, host, dataHolder)
   }
 
