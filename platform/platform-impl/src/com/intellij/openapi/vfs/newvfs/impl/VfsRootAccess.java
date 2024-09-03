@@ -197,8 +197,9 @@ public final class VfsRootAccess {
           return null; // all is allowed
         }
         ReadAction.run(() -> {
-          for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
-            allowed.add(VfsUtilCore.urlToPath(url));
+          for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+            allowed.add(root.getPath());
+            allowed.add(root.getCanonicalPath());
           }
           for (Module module : ModuleManager.getInstance(project).getModules()) {
             Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
