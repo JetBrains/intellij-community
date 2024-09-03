@@ -2,29 +2,43 @@
 package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
+import com.intellij.ide.structureView.StructureViewModel
+import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.util.treeView.smartTree.TreeElement
-import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.editor.HighlighterColors
-import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
-import java.awt.Font
 import javax.swing.Icon
 
-/**
- * @param parentKey is needed to distinguish similar nodes in different branches.
- *  Because the logical model may be recursive or the same element can be present a few times (e.g: two controllers depend on the same service)
-*  @return structure tree element basing on logical model
- *  The model's children will be transformed into child tree elements
- */
-fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledModel<T>, parentKey: String = "root"): StructureViewTreeElement {
+internal class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>)
+  : StructureViewModelBase(psiFile, editor, createViewTreeElement(assembledModel, "root")),
+    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
+
+  override fun isAlwaysShowsPlus(element: StructureViewTreeElement?): Boolean {
+    return element is LogicalGroupStructureElement
+  }
+
+  override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
+    return element is PropertyPsiElementStructureElement<*> || element is PropertyStructureElement
+  }
+
+  override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
+    return false //(element as? LogicalStructureViewTreeElement<*>)?.getLogicalAssembledModel()?.model !is BackReferenceLogicalModel
+  }
+
+  override fun isSmartExpand(): Boolean {
+    return false
+  }
+}
+
+private fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledModel<T>, parentKey: String): StructureViewTreeElement {
   val model = assembledModel.model
   val explicitElement = LogicalStructureTreeElementProvider.getTreeElement(model)
   if (explicitElement != null) return explicitElement
@@ -73,7 +87,7 @@ private fun getPsiElement(model: Any?): PsiElement? {
   }
 }
 
-interface LogicalStructureViewTreeElement<T>: StructureViewTreeElement {
+private interface LogicalStructureViewTreeElement<T>: StructureViewTreeElement {
 
   fun getLogicalAssembledModel(): LogicalStructureAssembledModel<T>
 

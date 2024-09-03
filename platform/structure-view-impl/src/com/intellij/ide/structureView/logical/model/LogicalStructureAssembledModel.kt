@@ -23,8 +23,9 @@ class LogicalStructureAssembledModel<T> private constructor(
 
   fun getChildren(): List<LogicalStructureAssembledModel<*>> {
     return LogicalStructureElementsProvider.getProviders(model!!)
+      .filter { it !is ConvertElementsProvider }
       .flatMap { it.getElements(model) }
-      .flatMap { ConvertElementsProvider.convert(it) }
+      //.flatMap { ConvertElementsProvider.convert(it) }
       .map { LogicalStructureAssembledModel(project, it) }
       .toList()
   }

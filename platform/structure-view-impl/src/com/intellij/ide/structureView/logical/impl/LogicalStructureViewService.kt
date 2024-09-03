@@ -3,7 +3,6 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.structureView.*
-import com.intellij.ide.util.treeView.smartTree.Grouper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
@@ -37,29 +36,4 @@ class LogicalStructureViewService(
     }
   }
 
-}
-
-private class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>)
-  : StructureViewModelBase(psiFile, editor, createViewTreeElement(assembledModel)),
-    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
-
-  override fun isAlwaysShowsPlus(element: StructureViewTreeElement?): Boolean {
-    return false
-  }
-
-  override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
-    return false
-  }
-
-  //override fun getGroupers(): Array<Grouper> {
-  //  return arrayOf(LogicalGrouper())
-  //}
-
-  override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
-    return false
-  }
-
-  override fun isSmartExpand(): Boolean {
-    return false
-  }
 }

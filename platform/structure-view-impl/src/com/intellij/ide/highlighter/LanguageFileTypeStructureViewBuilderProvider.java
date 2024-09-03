@@ -19,10 +19,14 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
+import com.intellij.ide.structureView.impl.StructureViewComposite;
+import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -44,6 +48,19 @@ public class LanguageFileTypeStructureViewBuilderProvider implements StructureVi
     if (psiFile == null) return null;
 
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
-    return factory == null ?  null : factory.getStructureViewBuilder(psiFile);
+    if (factory == null) return null;
+    StructureViewBuilder physicalBuilder = factory.getStructureViewBuilder(psiFile);
+    if (physicalBuilder == null) return null;
+    StructureViewBuilder logicalBuilder = LogicalStructureViewService.Companion.getInstance(project).getLogicalStructureBuilder(psiFile);
+    if (logicalBuilder == null) return physicalBuilder;
+    return new StructureViewBuilder() {
+      @Override
+      public @NotNull StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project) {
+        return new StructureViewComposite(
+          new StructureViewComposite.StructureViewDescriptor("Logical", logicalBuilder.createStructureView(fileEditor, project), null),
+          new StructureViewComposite.StructureViewDescriptor("Physical", physicalBuilder.createStructureView(fileEditor, project), null)
+        );
+      }
+    };
   }
 }
