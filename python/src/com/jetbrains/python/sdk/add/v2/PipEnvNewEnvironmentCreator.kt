@@ -68,7 +68,7 @@ class PipEnvNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
 
     val newSdk = setupPipEnvSdkUnderProgress(null, null,
                                              model.baseSdks,
-                                             model.projectPath.get(),
+                                             model.projectPath.value,
                                              homePath, false)!!
     SdkConfigurationUtil.addSdk(newSdk)
     return newSdk

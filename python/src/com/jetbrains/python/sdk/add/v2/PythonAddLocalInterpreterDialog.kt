@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.awt.Dimension
 import javax.swing.BoxLayout
@@ -43,7 +44,7 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
       override fun ancestorAdded(event: AncestorEvent?) {
         val basePath = dialogPresenter.pathForVEnv.toString()
         model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-                                               Dispatchers.EDT + ModalityState.current().asContextElement(), AtomicProperty(basePath)))
+                                               Dispatchers.EDT + ModalityState.current().asContextElement(), MutableStateFlow(basePath)))
         model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
         mainPanel = PythonAddCustomInterpreter(model)
 

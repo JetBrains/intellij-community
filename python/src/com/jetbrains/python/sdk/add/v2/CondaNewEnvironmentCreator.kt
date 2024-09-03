@@ -48,7 +48,7 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) 
   }
 
   override fun onShown() {
-    model.state.newCondaEnvName.set(model.projectPath.get().substringAfterLast(File.separator))
+    model.state.newCondaEnvName.set(model.projectPath.value.substringAfterLast(File.separator))
   }
 
   override fun getOrCreateSdk(): Sdk {

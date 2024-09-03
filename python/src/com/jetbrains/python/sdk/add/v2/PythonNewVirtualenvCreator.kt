@@ -17,6 +17,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector
@@ -124,14 +125,14 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
       }
     }
 
-
-    model.projectPath.afterChange {
-      if (!locationModified) {
-        val suggestedVirtualEnvPath = model.suggestVenvPath()!! // todo nullability issue
-        model.state.venvPath.set(suggestedVirtualEnvPath)
+    versionComboBox.showingScope("...") {
+      model.projectPath.collect {
+        if (!locationModified) {
+          val suggestedVirtualEnvPath = model.suggestVenvPath()!! // todo nullability issue
+          model.state.venvPath.set(suggestedVirtualEnvPath)
+        }
       }
     }
-
     // todo venv path suggestion from controller
     //model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
     //  presenter.projectWithContextFlow.collectLatest { (projectPath, projectLocationContext) ->
@@ -185,8 +186,8 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
 
   override fun getOrCreateSdk(): Sdk {
     // todo remove project path, or move to controller
-    val projectPath = model.projectPath.get()
-    assert(projectPath.isNotBlank()) {"Project path can't be blank"}
+    val projectPath = model.projectPath.value
+    assert(projectPath.isNotBlank()) { "Project path can't be blank" }
     return model.setupVirtualenv((Path.of(model.state.venvPath.get())), Path.of(projectPath), model.state.baseInterpreter.get()!!).getOrThrow()
   }
 
@@ -237,7 +238,7 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
                                      model.state.inheritSitePackages.get(),
                                      model.state.makeAvailable.get(),
                                      false,
-                                     //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                      false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }
