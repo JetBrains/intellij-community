@@ -222,8 +222,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     // if still not consumed, handle the event by the default JTextComponent logic.
     //    super.processInputMethodEvent(e);
 
-    // Viewer editors can handle input method events themselves by using `InputMethodListener`.
-    if (!e.isConsumed() && !editor.isViewer()) {
+    if (!e.isConsumed() && editor.isDefaultInputMethodHandler()) {
       switch (e.getID()) {
         case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
           editor.replaceInputMethodText(e);

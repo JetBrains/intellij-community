@@ -2251,6 +2251,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return handler != null && handler.isComposedTextShown();
   }
 
+  /**
+   * Returns true if the default logic ({@link MyInputMethodHandler}) should handle input method events.
+   * Customize it with: (a) `{@link #setInputMethodRequests(InputMethodRequests)}` and
+   * (b) `editor.contentComponent.addInputMethodListener(inputMethodListener)`.
+   */
+  boolean isDefaultInputMethodHandler() {
+    InputMethodRequestsHolder holder = myInputMethodRequestsHolder;
+    return holder == null || holder.asMyHandler() != null;
+  }
+
   private @Nullable MyInputMethodHandler getMyInputMethodHandler() {
     InputMethodRequestsHolder holder = myInputMethodRequestsHolder;
     return holder != null ? holder.asMyHandler() : null;
