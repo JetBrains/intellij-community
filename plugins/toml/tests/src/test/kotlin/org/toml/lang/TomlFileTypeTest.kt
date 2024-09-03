@@ -18,6 +18,7 @@ class TomlFileTypeTest : TomlTestBase() {
     fun `test Gopkg lock`() = doTest("Gopkg.lock")
     fun `test Pipfile`() = doTest("Pipfile")
     fun `test Poetry lock file`() = doTest("poetry.lock")
+    fun `test uv lock file`() = doTest("uv.lock")
     fun `test Cargo config`() = doTest(".cargo/config")
 
     private fun doTest(path: String) {
