@@ -60,8 +60,6 @@ import sun.awt.AppContext
 import sun.awt.PeerEvent
 import sun.awt.SunToolkit
 import java.awt.*
-import java.awt.EventQueue.invokeLater
-import java.awt.EventQueue.isDispatchThread
 import java.awt.event.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -346,7 +344,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnable = InvocationUtil.extractRunnable(event)
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
-        withAttachedClientId(event).use {
+        withAttachedClientId(finalEvent).use {
           val progressManager = ProgressManager.getInstanceOrNull()
           try {
             runCustomProcessors(finalEvent, preProcessors)
