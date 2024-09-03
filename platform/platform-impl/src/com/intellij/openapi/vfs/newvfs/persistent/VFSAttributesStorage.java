@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -41,8 +41,7 @@ public interface VFSAttributesStorage extends Forceable, Closeable {
    * <p>
    * Current limit value is a bit arbitrary: the actual implementations limits' are wider (i.e. the
    * {@link AttributesStorageOverBlobStorage} binary format allows for 16k attributeId, see
-   * {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID}, while {@link AttributesStorageOld}
-   * has MAX_INT as a limit) -- but stricter limit allows to have a reserve capacity.
+   * {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID}) -- but stricter limit allows to have a reserve capacity.
    */
   int MAX_ATTRIBUTE_ID = SystemProperties.getIntProperty("vfs.file-attribute-max-id", 8 * 1024);
 
