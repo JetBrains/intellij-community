@@ -60,10 +60,9 @@ public fun <T> LazyTree(
         val resolvedContentColor =
             style.colors
                 .contentFor(TreeElementState.of(focused = isActive, selected = isSelected, expanded = false))
-                .value.takeOrElse { LocalContentColor.current }
+                .value
+                .takeOrElse { LocalContentColor.current }
 
-        CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
-            nodeContent(it)
-        }
+        CompositionLocalProvider(LocalContentColor provides resolvedContentColor) { nodeContent(it) }
     }
 }

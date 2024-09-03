@@ -35,10 +35,7 @@ fun TextAreas() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        TextArea(
-            state = rememberTextFieldState(LOREM_IPSUM),
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-        )
+        TextArea(state = rememberTextFieldState(LOREM_IPSUM), modifier = Modifier.weight(1f).fillMaxHeight())
 
         TextArea(
             state = rememberTextFieldState(LOREM_IPSUM),

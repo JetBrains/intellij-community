@@ -44,7 +44,7 @@ public class LazyTreeColors(
                 state.isFocused -> contentFocused
                 state.isSelected -> contentSelected
                 else -> content
-            },
+            }
         )
 
     public companion object
@@ -72,10 +72,7 @@ public class LazyTreeIcons(
     public val chevronSelectedExpanded: IconKey,
 ) {
     @Composable
-    public fun chevron(
-        isExpanded: Boolean,
-        isSelected: Boolean,
-    ): IconKey =
+    public fun chevron(isExpanded: Boolean, isSelected: Boolean): IconKey =
         when {
             isSelected && isExpanded -> chevronSelectedExpanded
             isSelected && !isExpanded -> chevronSelectedCollapsed
@@ -86,7 +83,6 @@ public class LazyTreeIcons(
     public companion object
 }
 
-public val LocalLazyTreeStyle: ProvidableCompositionLocal<LazyTreeStyle> =
-    staticCompositionLocalOf {
-        error("No LazyTreeStyle provided. Have you forgotten the theme?")
-    }
+public val LocalLazyTreeStyle: ProvidableCompositionLocal<LazyTreeStyle> = staticCompositionLocalOf {
+    error("No LazyTreeStyle provided. Have you forgotten the theme?")
+}

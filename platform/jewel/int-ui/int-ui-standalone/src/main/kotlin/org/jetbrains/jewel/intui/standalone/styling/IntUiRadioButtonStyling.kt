@@ -83,16 +83,10 @@ public fun RadioButtonMetrics.Companion.defaults(
 
 public fun RadioButtonIcons.Companion.light(
     radioButton: IconKey =
-        PathIconKey(
-            path = "com/intellij/ide/ui/laf/icons/intellij/radio.svg",
-            iconClass = RadioButtonIcons::class.java,
-        ),
+        PathIconKey(path = "com/intellij/ide/ui/laf/icons/intellij/radio.svg", iconClass = RadioButtonIcons::class.java)
 ): RadioButtonIcons = RadioButtonIcons(radioButton)
 
 public fun RadioButtonIcons.Companion.dark(
     radioButton: IconKey =
-        PathIconKey(
-            path = "com/intellij/ide/ui/laf/icons/darcula/radio.svg",
-            iconClass = RadioButtonIcons::class.java,
-        ),
+        PathIconKey(path = "com/intellij/ide/ui/laf/icons/darcula/radio.svg", iconClass = RadioButtonIcons::class.java)
 ): RadioButtonIcons = RadioButtonIcons(radioButton)

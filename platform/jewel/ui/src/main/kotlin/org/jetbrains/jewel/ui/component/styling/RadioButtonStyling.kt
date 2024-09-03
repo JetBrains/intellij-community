@@ -43,7 +43,7 @@ public class RadioButtonColors(
                 state.isSelected -> contentSelected
                 state.isHovered -> contentHovered
                 else -> content
-            },
+            }
         )
 
     public companion object
@@ -67,7 +67,7 @@ public class RadioButtonMetrics(
                 !state.isFocused && state.isSelected -> outlineSelectedSize
                 state.isFocused && !state.isSelected -> outlineFocusedSize
                 else -> outlineSize
-            },
+            }
         )
 
     public companion object
@@ -79,7 +79,6 @@ public class RadioButtonIcons(public val radioButton: IconKey) {
     public companion object
 }
 
-public val LocalRadioButtonStyle: ProvidableCompositionLocal<RadioButtonStyle> =
-    staticCompositionLocalOf {
-        error("No RadioButtonStyle provided. Have you forgotten the theme?")
-    }
+public val LocalRadioButtonStyle: ProvidableCompositionLocal<RadioButtonStyle> = staticCompositionLocalOf {
+    error("No RadioButtonStyle provided. Have you forgotten the theme?")
+}

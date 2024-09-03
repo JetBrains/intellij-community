@@ -11,7 +11,7 @@
       <option name="taskNames">
         <list>
           <option value="apiDump" />
-          <option value="formatKotlin" />
+          <option value="ktfmtFormat" />
         </list>
       </option>
       <option name="vmOptions" />

@@ -9,10 +9,7 @@ public interface IconKey {
 }
 
 @GenerateDataFunctions
-public class PathIconKey(
-    private val path: String,
-    override val iconClass: Class<*>,
-) : IconKey {
+public class PathIconKey(private val path: String, override val iconClass: Class<*>) : IconKey {
     override fun path(isNewUi: Boolean): String = path
 }
 

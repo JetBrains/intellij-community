@@ -4,8 +4,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.Nls
 
 sealed class ContentItem {
-    @get:Nls
-    abstract val displayText: String
+    @get:Nls abstract val displayText: String
     abstract val imagePath: String?
     abstract val versionName: String
     abstract val releaseDate: LocalDate?

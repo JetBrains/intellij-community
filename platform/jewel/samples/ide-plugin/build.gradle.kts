@@ -12,9 +12,7 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     mavenCentral()
 
-    intellijPlatform {
-        defaultRepositories()
-    }
+    intellijPlatform { defaultRepositories() }
 }
 
 dependencies {
@@ -23,13 +21,9 @@ dependencies {
         instrumentationTools()
     }
 
-    implementation(projects.ideLafBridge) {
-        exclude(group = "org.jetbrains.kotlinx")
-    }
+    implementation(projects.ideLafBridge) { exclude(group = "org.jetbrains.kotlinx") }
 
-    implementation(projects.markdown.ideLafBridgeStyling) {
-        exclude(group = "org.jetbrains.kotlinx")
-    }
+    implementation(projects.markdown.ideLafBridgeStyling) { exclude(group = "org.jetbrains.kotlinx") }
 
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
@@ -43,8 +37,4 @@ intellijPlatform {
     autoReload = false
 }
 
-tasks {
-    runIde {
-        jvmArgs = listOf("-Xmx3g")
-    }
-}
+tasks { runIde { jvmArgs = listOf("-Xmx3g") } }

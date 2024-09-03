@@ -18,27 +18,19 @@ import org.jetbrains.jewel.ui.painter.badge.BadgeShape
 /**
  * Paints a badge over the [source].
  *
- * An area corresponding to the result of [BadgeShape.createHoleOutline]
- * is cleared out first, to allow for visual separation with the badge,and
- * then the [BadgeShape.createOutline] is filled with the [color].
+ * An area corresponding to the result of [BadgeShape.createHoleOutline] is cleared out first, to allow for visual
+ * separation with the badge,and then the [BadgeShape.createOutline] is filled with the [color].
  */
-public class BadgePainter(
-    private val source: Painter,
-    private val color: Color,
-    private val shape: BadgeShape,
-) : DelegatePainter(source) {
+public class BadgePainter(private val source: Painter, private val color: Color, private val shape: BadgeShape) :
+    DelegatePainter(source) {
     /**
-     * Optional [Paint] used to draw contents into an offscreen layer to
-     * apply alpha or [ColorFilter] parameters accordingly. If no alpha or
-     * [ColorFilter] is provided or the [Painter] implementation implements
-     * [applyAlpha] and [applyColorFilter] then this paint is not used.
+     * Optional [Paint] used to draw contents into an offscreen layer to apply alpha or [ColorFilter] parameters
+     * accordingly. If no alpha or [ColorFilter] is provided or the [Painter] implementation implements [applyAlpha] and
+     * [applyColorFilter] then this paint is not used.
      */
     private var layerPaint: Paint? = null
 
-    /**
-     * Lazily create a [Paint] object or return the existing instance if it is
-     * already allocated.
-     */
+    /** Lazily create a [Paint] object or return the existing instance if it is already allocated. */
     private fun obtainPaint(): Paint {
         var target = layerPaint
         if (target == null) {

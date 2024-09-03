@@ -77,12 +77,7 @@ public fun IconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(
-        tooltip,
-        style = tooltipStyle,
-        modifier = tooltipModifier,
-        tooltipPlacement = tooltipPlacement,
-    ) {
+    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
         CoreIconActionButton(
             key = key,
             modifier = modifier,
@@ -163,12 +158,7 @@ public fun SelectableIconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(
-        tooltip,
-        style = tooltipStyle,
-        modifier = tooltipModifier,
-        tooltipPlacement = tooltipPlacement,
-    ) {
+    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
         CoreSelectableIconActionButton(
             key = key,
             modifier = modifier,
@@ -252,12 +242,7 @@ public fun ToggleableIconActionButton(
     iconClass: Class<*> = key::class.java,
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(
-        tooltip,
-        style = tooltipStyle,
-        modifier = tooltipModifier,
-        tooltipPlacement = tooltipPlacement,
-    ) {
+    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
         CoreToggleableIconActionButton(
             key = key,
             modifier = modifier,
@@ -305,16 +290,7 @@ public fun IconActionButton(
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    CoreIconActionButton(
-        painter,
-        contentDescription,
-        enabled,
-        focusable,
-        style,
-        interactionSource,
-        modifier,
-        onClick,
-    )
+    CoreIconActionButton(painter, contentDescription, enabled, focusable, style, interactionSource, modifier, onClick)
 }
 
 @Composable
@@ -332,12 +308,7 @@ public fun IconActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     tooltip: @Composable () -> Unit,
 ) {
-    Tooltip(
-        tooltip,
-        style = tooltipStyle,
-        modifier = tooltipModifier,
-        tooltipPlacement = tooltipPlacement,
-    ) {
+    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
         CoreIconActionButton(
             painter = painter,
             modifier = modifier,
@@ -362,7 +333,5 @@ private fun CoreIconActionButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
-        Icon(painter, contentDescription)
-    }
+    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) { Icon(painter, contentDescription) }
 }

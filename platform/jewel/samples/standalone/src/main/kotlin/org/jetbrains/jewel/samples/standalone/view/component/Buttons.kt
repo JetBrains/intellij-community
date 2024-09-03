@@ -32,9 +32,7 @@ import org.jetbrains.jewel.ui.painter.hints.Stroke
 
 @Composable
 fun Buttons() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         NormalButtons()
 
         var selectedIndex by remember { mutableIntStateOf(0) }
@@ -52,29 +50,18 @@ private fun NormalButtons() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedButton(onClick = { }) {
-            Text("Outlined")
-        }
+        OutlinedButton(onClick = {}) { Text("Outlined") }
 
-        OutlinedButton(onClick = {}, enabled = false) {
-            Text("Outlined Disabled")
-        }
+        OutlinedButton(onClick = {}, enabled = false) { Text("Outlined Disabled") }
 
-        DefaultButton(onClick = {}) {
-            Text("Default")
-        }
+        DefaultButton(onClick = {}) { Text("Default") }
 
-        DefaultButton(onClick = {}, enabled = false) {
-            Text("Default disabled")
-        }
+        DefaultButton(onClick = {}, enabled = false) { Text("Default disabled") }
     }
 }
 
 @Composable
-private fun IconButtons(
-    selected: Boolean,
-    onSelectableClick: () -> Unit,
-) {
+private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -84,9 +71,7 @@ private fun IconButtons(
 
         Text("Focusable:")
 
-        IconButton(onClick = {}) {
-            PlatformIcon(AllIconsKeys.Actions.Close, contentDescription = "IconButton")
-        }
+        IconButton(onClick = {}) { PlatformIcon(AllIconsKeys.Actions.Close, contentDescription = "IconButton") }
 
         Text("Not focusable:")
 
@@ -120,10 +105,7 @@ private fun IconButtons(
 }
 
 @Composable
-private fun IconActionButtons(
-    selected: Boolean,
-    onSelectableClick: () -> Unit,
-) {
+private fun IconActionButtons(selected: Boolean, onSelectableClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -169,14 +151,10 @@ private fun ActionButtons() {
 
         Text("With tooltip:")
 
-        ActionButton(onClick = {}, tooltip = { Text("I am a tooltip") }) {
-            Text("Hover me!")
-        }
+        ActionButton(onClick = {}, tooltip = { Text("I am a tooltip") }) { Text("Hover me!") }
 
         Text("Without tooltip:")
 
-        ActionButton(onClick = {}) {
-            Text("Do something")
-        }
+        ActionButton(onClick = {}) { Text("Do something") }
     }
 }

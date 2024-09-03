@@ -16,15 +16,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GitHubAlertBlockExtensionTest {
-    private val parser =
-        Parser.builder()
-            .extensions(listOf(GitHubAlertProcessorExtension.parserExtension))
-            .build()
+    private val parser = Parser.builder().extensions(listOf(GitHubAlertProcessorExtension.parserExtension)).build()
 
     private val renderer =
-        TextContentRenderer.builder()
-            .extensions(listOf(GitHubAlertProcessorExtension.textRendererExtension))
-            .build()
+        TextContentRenderer.builder().extensions(listOf(GitHubAlertProcessorExtension.textRendererExtension)).build()
 
     @Test
     fun `should parse note alert`() {
@@ -42,10 +37,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Note node, but was ${firstChild.javaClass.name}",
-            firstChild is Note,
-        )
+        assertTrue("Parsed node should be a Note node, but was ${firstChild.javaClass.name}", firstChild is Note)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -71,7 +63,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!TIP]  
             |> Optional information to help a user be more successful.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -80,10 +72,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Tip node, but was ${firstChild.javaClass.name}",
-            firstChild is Tip,
-        )
+        assertTrue("Parsed node should be a Tip node, but was ${firstChild.javaClass.name}", firstChild is Tip)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -108,7 +97,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!IMPORTANT]  
             |> Crucial information necessary for users to succeed.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -145,7 +134,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!WARNING]  
             |> Critical content demanding immediate user attention due to potential risks.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -154,10 +143,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Warning node, but was ${firstChild.javaClass.name}",
-            firstChild is Warning,
-        )
+        assertTrue("Parsed node should be a Warning node, but was ${firstChild.javaClass.name}", firstChild is Warning)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -182,7 +168,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!CAUTION]  
             |> Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -191,10 +177,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Caution node, but was ${firstChild.javaClass.name}",
-            firstChild is Caution,
-        )
+        assertTrue("Parsed node should be a Caution node, but was ${firstChild.javaClass.name}", firstChild is Caution)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -219,7 +202,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!note]  
             |> Highlights information that users should take into account, even when skimming.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -228,10 +211,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Note node, but was ${firstChild.javaClass.name}",
-            firstChild is Note,
-        )
+        assertTrue("Parsed node should be a Note node, but was ${firstChild.javaClass.name}", firstChild is Note)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -256,7 +236,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!tip]  
             |> Optional information to help a user be more successful.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -265,10 +245,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Tip node, but was ${firstChild.javaClass.name}",
-            firstChild is Tip,
-        )
+        assertTrue("Parsed node should be a Tip node, but was ${firstChild.javaClass.name}", firstChild is Tip)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -293,7 +270,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!important]  
             |> Crucial information necessary for users to succeed.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -330,7 +307,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!warning]  
             |> Critical content demanding immediate user attention due to potential risks.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -339,10 +316,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Warning node, but was ${firstChild.javaClass.name}",
-            firstChild is Warning,
-        )
+        assertTrue("Parsed node should be a Warning node, but was ${firstChild.javaClass.name}", firstChild is Warning)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -367,7 +341,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!caution]  
             |> Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -376,10 +350,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Caution node, but was ${firstChild.javaClass.name}",
-            firstChild is Caution,
-        )
+        assertTrue("Parsed node should be a Caution node, but was ${firstChild.javaClass.name}", firstChild is Caution)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -406,7 +377,7 @@ class GitHubAlertBlockExtensionTest {
             |> Negative potential consequences of an action.
             |>
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -415,10 +386,7 @@ class GitHubAlertBlockExtensionTest {
         assertEquals("Parsed document should only have one direct child", 1, children.size)
 
         val firstChild = children.first()
-        assertTrue(
-            "Parsed node should be a Caution node, but was ${firstChild.javaClass.name}",
-            firstChild is Caution,
-        )
+        assertTrue("Parsed node should be a Caution node, but was ${firstChild.javaClass.name}", firstChild is Caution)
 
         val contents = firstChild.children
         assertEquals("Parsed node should only have one direct child", 1, contents.size)
@@ -443,7 +411,7 @@ class GitHubAlertBlockExtensionTest {
             |> [! CAUTION]  
             |> Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -467,7 +435,7 @@ class GitHubAlertBlockExtensionTest {
             |> [! CAUTION]  
             |> Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -490,7 +458,7 @@ class GitHubAlertBlockExtensionTest {
             |> [ !CAUTION]  
             |> Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -513,7 +481,7 @@ class GitHubAlertBlockExtensionTest {
             |> [!CAUTION ]  
             |> Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -535,7 +503,7 @@ class GitHubAlertBlockExtensionTest {
                 """
             |> [!CAUTION] Negative potential consequences of an action.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         assertTrue("Parse result is not a document", parsed is Document)
@@ -552,11 +520,10 @@ class GitHubAlertBlockExtensionTest {
 }
 
 private val Node.children: List<Node>
-    get() =
-        buildList {
-            var nextChild = firstChild
-            while (nextChild != null) {
-                add(nextChild)
-                nextChild = nextChild.next
-            }
+    get() = buildList {
+        var nextChild = firstChild
+        while (nextChild != null) {
+            add(nextChild)
+            nextChild = nextChild.next
         }
+    }

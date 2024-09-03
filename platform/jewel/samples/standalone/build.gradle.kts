@@ -15,13 +15,12 @@ dependencies {
     implementation(projects.markdown.intUiStandaloneStyling)
     implementation(projects.markdown.extension.gfmAlerts)
     implementation(projects.markdown.extension.autolink)
-    implementation(compose.desktop.currentOs) {
-        exclude(group = "org.jetbrains.compose.material")
-    }
+    implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
     implementation(libs.intellijPlatform.icons)
 }
 
 val jdkLevel = project.property("jdk.level") as String
+
 kotlin {
     jvmToolchain {
         languageVersion = JavaLanguageVersion.of(jdkLevel)
@@ -55,10 +54,7 @@ tasks {
         // afterEvaluate is needed because the Compose Gradle Plugin
         // register the task in the afterEvaluate block
         afterEvaluate {
-            javaLauncher =
-                project.javaToolchains.launcherFor {
-                    languageVersion = JavaLanguageVersion.of(jdkLevel)
-                }
+            javaLauncher = project.javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(jdkLevel) }
             setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
         }
     }

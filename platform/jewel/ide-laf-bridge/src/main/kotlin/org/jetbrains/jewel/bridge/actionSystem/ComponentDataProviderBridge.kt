@@ -16,9 +16,7 @@ internal fun ComponentDataProviderBridge(
 ) {
     val rootDataProviderModifier = remember { RootDataProviderModifier() }
 
-    Box(modifier = Modifier.then(rootDataProviderModifier).then(modifier)) {
-        content()
-    }
+    Box(modifier = Modifier.then(rootDataProviderModifier).then(modifier)) { content() }
 
     DisposableEffect(component) {
         component.targetProvider = rootDataProviderModifier

@@ -41,10 +41,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyAc
 import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 
-/**
- * A composable that displays a scrollable and selectable list of items in
- * a column arrangement.
- */
+/** A composable that displays a scrollable and selectable list of items in a column arrangement. */
 @Composable
 public fun SelectableLazyColumn(
     modifier: Modifier = Modifier,
@@ -69,10 +66,11 @@ public fun SelectableLazyColumn(
 
     val latestOnSelectedIndexesChanged = rememberUpdatedState(onSelectedIndexesChanged)
     LaunchedEffect(state, container) {
-        snapshotFlow { state.selectedKeys }.collect { selectedKeys ->
-            val indices = selectedKeys.mapNotNull { key -> container.getKeyIndex(key) }
-            latestOnSelectedIndexesChanged.value.invoke(indices)
-        }
+        snapshotFlow { state.selectedKeys }
+            .collect { selectedKeys ->
+                val indices = selectedKeys.mapNotNull { key -> container.getKeyIndex(key) }
+                latestOnSelectedIndexesChanged.value.invoke(indices)
+            }
     }
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -97,9 +95,7 @@ public fun SelectableLazyColumn(
                         return@onPreviewKeyEvent true
                     }
                     if (state.lastActiveItemIndex != null) {
-                        val actionHandled =
-                            keyActions.handleOnKeyEvent(event, keys, state, selectionMode)
-                                .invoke(event)
+                        val actionHandled = keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
                         if (actionHandled) {
                             scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
                         }
@@ -144,10 +140,7 @@ private fun LazyListScope.appendEntry(
         is Entry.Item ->
             item(entry.key, entry.contentType) {
                 val itemScope =
-                    SelectableLazyItemScope(
-                        isSelected = entry.key in state.selectedKeys,
-                        isActive = isFocused,
-                    )
+                    SelectableLazyItemScope(isSelected = entry.key in state.selectedKeys, isActive = isFocused)
                 if (isKeySelectable(entry.key)) {
                     Box(
                         modifier =
@@ -159,7 +152,7 @@ private fun LazyListScope.appendEntry(
                                 selectableState = state,
                                 allKeys = keys,
                                 itemKey = entry.key,
-                            ),
+                            )
                     ) {
                         entry.content.invoke(itemScope)
                     }
@@ -169,11 +162,7 @@ private fun LazyListScope.appendEntry(
             }
 
         is Entry.Items ->
-            items(
-                count = entry.count,
-                key = { entry.key(it) },
-                contentType = { entry.contentType(it) },
-            ) { index ->
+            items(count = entry.count, key = { entry.key(it) }, contentType = { entry.contentType(it) }) { index ->
                 val key = remember(entry, index) { entry.key(index) }
                 val itemScope = SelectableLazyItemScope(key in state.selectedKeys, isFocused)
                 if (isKeySelectable(key)) {
@@ -187,7 +176,7 @@ private fun LazyListScope.appendEntry(
                                 selectableState = state,
                                 allKeys = keys,
                                 itemKey = entry.key(index),
-                            ),
+                            )
                     ) {
                         entry.itemContent.invoke(itemScope, index)
                     }
@@ -210,13 +199,14 @@ private fun LazyListScope.appendEntry(
                                 selectableState = state,
                                 allKeys = keys,
                                 itemKey = entry.key,
-                            ),
+                            )
                     ) {
                         entry.content.invoke(itemScope)
                     }
                 } else {
-                    SelectableLazyItemScope(entry.key in state.selectedKeys, isFocused)
-                        .apply { entry.content.invoke(itemScope) }
+                    SelectableLazyItemScope(entry.key in state.selectedKeys, isFocused).apply {
+                        entry.content.invoke(itemScope)
+                    }
                 }
             }
     }
@@ -230,23 +220,24 @@ private fun Modifier.selectable(
     selectableState: SelectableLazyListState,
     allKeys: List<SelectableLazyListKey>,
     itemKey: Any,
-) = pointerInput(allKeys, itemKey) {
-    awaitPointerEventScope {
-        while (true) {
-            val event = awaitPointerEvent()
-            when (event.type) {
-                PointerEventType.Press -> {
-                    requester?.requestFocus()
-                    actionHandler.handlePointerEventPress(
-                        pointerEvent = event,
-                        keybindings = keybindings,
-                        selectableLazyListState = selectableState,
-                        selectionMode = selectionMode,
-                        allKeys = allKeys,
-                        key = itemKey,
-                    )
+) =
+    pointerInput(allKeys, itemKey) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent()
+                when (event.type) {
+                    PointerEventType.Press -> {
+                        requester?.requestFocus()
+                        actionHandler.handlePointerEventPress(
+                            pointerEvent = event,
+                            keybindings = keybindings,
+                            selectableLazyListState = selectableState,
+                            selectionMode = selectionMode,
+                            allKeys = allKeys,
+                            key = itemKey,
+                        )
+                    }
                 }
             }
         }
     }
-}

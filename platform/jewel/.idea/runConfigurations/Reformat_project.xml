@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="formatKotlin" />
+          <option value="ktfmtFormat" />
         </list>
       </option>
       <option name="vmOptions" />

@@ -17,9 +17,7 @@ internal object JnaLoader {
                 val time = measureTimeMillis { Native.POINTER_SIZE }
                 logger.info("JNA library (${Native.POINTER_SIZE shl 3}-bit) loaded in $time ms")
                 loaded = true
-            } catch (
-                @Suppress("TooGenericExceptionCaught") t: Throwable,
-            ) {
+            } catch (@Suppress("TooGenericExceptionCaught") t: Throwable) {
                 logger.log(
                     Level.WARNING,
                     "Unable to load JNA library(os=${

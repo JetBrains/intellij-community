@@ -10,26 +10,19 @@ plugins {
 
 apiValidation {
     /**
-     * Set of annotations that exclude API from being public. Typically, it is
-     * all kinds of `@InternalApi` annotations that mark effectively private
-     * API that cannot be actually private for technical reasons.
+     * Set of annotations that exclude API from being public. Typically, it is all kinds of `@InternalApi` annotations
+     * that mark effectively private API that cannot be actually private for technical reasons.
      */
     nonPublicMarkers.add("org.jetbrains.jewel.InternalJewelApi")
 }
 
-poko {
-    pokoAnnotation = "org.jetbrains.jewel.foundation.GenerateDataFunctions"
-}
+poko { pokoAnnotation = "org.jetbrains.jewel.foundation.GenerateDataFunctions" }
 
-kotlin {
-    explicitApi()
-}
+kotlin { explicitApi() }
 
 val extension = project.extensions.create("publicApiValidation", ApiValidationExtension::class.java)
 
-with(extension) {
-    excludedClassRegexes.convention(emptySet())
-}
+with(extension) { excludedClassRegexes.convention(emptySet()) }
 
 tasks {
     val validatePublicApi =

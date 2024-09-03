@@ -268,13 +268,9 @@ private fun CheckboxImpl(
     verticalAlignment: Alignment.Vertical,
     content: (@Composable RowScope.() -> Unit)?,
 ) {
-    var checkboxState by remember {
-        mutableStateOf(CheckboxState.of(toggleableState = state, enabled = enabled))
-    }
+    var checkboxState by remember { mutableStateOf(CheckboxState.of(toggleableState = state, enabled = enabled)) }
 
-    remember(state, enabled) {
-        checkboxState = checkboxState.copy(toggleableState = state, enabled = enabled)
-    }
+    remember(state, enabled) { checkboxState = checkboxState.copy(toggleableState = state, enabled = enabled) }
 
     val swingCompatMode = JewelTheme.isSwingCompatMode
     LaunchedEffect(interactionSource, swingCompatMode) {
@@ -282,8 +278,7 @@ private fun CheckboxImpl(
             when (interaction) {
                 is PressInteraction.Press -> checkboxState = checkboxState.copy(pressed = !swingCompatMode)
                 is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> checkboxState = checkboxState.copy(pressed = false)
+                is PressInteraction.Release -> checkboxState = checkboxState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> checkboxState = checkboxState.copy(hovered = !swingCompatMode)
                 is HoverInteraction.Exit -> checkboxState = checkboxState.copy(hovered = false)
@@ -313,15 +308,16 @@ private fun CheckboxImpl(
             )
 
     val painterProvider = rememberResourcePainterProvider(icons.checkbox)
-    val checkboxPainter by painterProvider.getPainter(
-        if (checkboxState.toggleableState == ToggleableState.Indeterminate) {
-            CheckBoxIndeterminate
-        } else {
-            PainterHint.None
-        },
-        Selected(checkboxState.toggleableState == ToggleableState.On),
-        Stateful(checkboxState),
-    )
+    val checkboxPainter by
+        painterProvider.getPainter(
+            if (checkboxState.toggleableState == ToggleableState.Indeterminate) {
+                CheckBoxIndeterminate
+            } else {
+                PainterHint.None
+            },
+            Selected(checkboxState.toggleableState == ToggleableState.On),
+            Stateful(checkboxState),
+        )
 
     val checkboxBoxModifier = Modifier.size(metrics.checkboxSize)
 
@@ -346,9 +342,7 @@ private fun CheckboxImpl(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
                 LocalContentColor provides contentColor.takeOrElse { LocalContentColor.current },
             ) {
-                Row(contentModifier) {
-                    content()
-                }
+                Row(contentModifier) { content() }
             }
         }
     }
@@ -359,10 +353,7 @@ private object CheckBoxIndeterminate : PainterSuffixHint() {
 }
 
 @Composable
-private fun CheckBoxImage(
-    checkboxPainter: Painter,
-    modifier: Modifier = Modifier,
-) {
+private fun CheckBoxImage(checkboxPainter: Painter, modifier: Modifier = Modifier) {
     Box(modifier.paint(checkboxPainter, alignment = Alignment.TopStart))
 }
 
@@ -424,7 +415,7 @@ public value class CheckboxState(private val state: ULong) : ToggleableComponent
                     (if (pressed) Pressed else 0UL) or
                     (if (toggleableState != ToggleableState.Off) Selected else 0UL) or
                     (if (toggleableState == ToggleableState.Indeterminate) Indeterminate else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }

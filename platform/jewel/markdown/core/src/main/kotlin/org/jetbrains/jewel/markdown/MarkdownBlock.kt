@@ -11,28 +11,21 @@ public sealed interface MarkdownBlock {
     public sealed interface CodeBlock : MarkdownBlock {
         public val content: String
 
-        @GenerateDataFunctions
-        public class IndentedCodeBlock(override val content: String) : CodeBlock
+        @GenerateDataFunctions public class IndentedCodeBlock(override val content: String) : CodeBlock
 
         @GenerateDataFunctions
-        public class FencedCodeBlock(
-            override val content: String,
-            public val mimeType: MimeType?,
-        ) : CodeBlock
+        public class FencedCodeBlock(override val content: String, public val mimeType: MimeType?) : CodeBlock
     }
 
     public interface CustomBlock : MarkdownBlock
 
     @GenerateDataFunctions
-    public class Heading(
-        override val inlineContent: List<InlineMarkdown>,
-        public val level: Int,
-    ) : MarkdownBlock, WithInlineMarkdown {
+    public class Heading(override val inlineContent: List<InlineMarkdown>, public val level: Int) :
+        MarkdownBlock, WithInlineMarkdown {
         public constructor(level: Int, vararg inlineContent: InlineMarkdown) : this(inlineContent.toList(), level)
     }
 
-    @GenerateDataFunctions
-    public class HtmlBlock(public val content: String) : MarkdownBlock
+    @GenerateDataFunctions public class HtmlBlock(public val content: String) : MarkdownBlock
 
     public sealed interface ListBlock : MarkdownBlock {
         public val children: List<ListItem>
@@ -75,9 +68,7 @@ public sealed interface MarkdownBlock {
     public data object ThematicBreak : MarkdownBlock
 
     @GenerateDataFunctions
-    public class Paragraph(
-        override val inlineContent: List<InlineMarkdown>,
-    ) : MarkdownBlock, WithInlineMarkdown {
+    public class Paragraph(override val inlineContent: List<InlineMarkdown>) : MarkdownBlock, WithInlineMarkdown {
         public constructor(vararg inlineContent: InlineMarkdown) : this(inlineContent.toList())
     }
 }

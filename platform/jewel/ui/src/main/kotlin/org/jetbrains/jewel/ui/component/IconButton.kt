@@ -53,9 +53,7 @@ public fun IconButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable (BoxScope.(IconButtonState) -> Unit),
 ) {
-    var buttonState by remember(interactionSource) {
-        mutableStateOf(IconButtonState.of(enabled = enabled))
-    }
+    var buttonState by remember(interactionSource) { mutableStateOf(IconButtonState.of(enabled = enabled)) }
 
     remember(enabled) { buttonState = buttonState.copy(enabled = enabled) }
 
@@ -64,8 +62,7 @@ public fun IconButton(
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(pressed = true)
                 is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> buttonState = buttonState.copy(pressed = false)
+                is PressInteraction.Release -> buttonState = buttonState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> buttonState = buttonState.copy(hovered = true)
                 is HoverInteraction.Exit -> buttonState = buttonState.copy(hovered = false)
@@ -81,20 +78,19 @@ public fun IconButton(
 
     Box(
         modifier =
-        Modifier
-            .thenIf(!focusable) { focusProperties { canFocus = false } }
-            .then(modifier)
-            .clickable(
-                onClick = onClick,
-                enabled = enabled,
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null,
-            )
-            .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
-            .padding(style.metrics.padding)
-            .background(background, shape)
-            .border(style.metrics.borderWidth, border, shape),
+            Modifier.thenIf(!focusable) { focusProperties { canFocus = false } }
+                .then(modifier)
+                .clickable(
+                    onClick = onClick,
+                    enabled = enabled,
+                    role = Role.Button,
+                    interactionSource = interactionSource,
+                    indication = null,
+                )
+                .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
+                .padding(style.metrics.padding)
+                .background(background, shape)
+                .border(style.metrics.borderWidth, border, shape),
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )
@@ -111,21 +107,16 @@ public fun SelectableIconButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable (BoxScope.(SelectableIconButtonState) -> Unit),
 ) {
-    var buttonState by remember(interactionSource) {
-        mutableStateOf(SelectableIconButtonState.of(enabled = enabled))
-    }
+    var buttonState by remember(interactionSource) { mutableStateOf(SelectableIconButtonState.of(enabled = enabled)) }
 
-    remember(enabled, selected) {
-        buttonState = buttonState.copy(enabled = enabled, selected = selected)
-    }
+    remember(enabled, selected) { buttonState = buttonState.copy(enabled = enabled, selected = selected) }
 
     LaunchedEffect(key1 = interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(pressed = true)
                 is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> buttonState = buttonState.copy(pressed = false)
+                is PressInteraction.Release -> buttonState = buttonState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> buttonState = buttonState.copy(hovered = true)
                 is HoverInteraction.Exit -> buttonState = buttonState.copy(hovered = false)
@@ -141,24 +132,21 @@ public fun SelectableIconButton(
 
     Box(
         modifier =
-        Modifier
-            .thenIf(!focusable) { focusProperties { canFocus = false } }
-            .then(modifier)
-            .selectable(
-                onClick = onClick,
-                enabled = enabled,
-                role = Role.RadioButton,
-                interactionSource = interactionSource,
-                indication = null,
-                selected = selected,
-            )
-            .onActivated(enabled = enabled) {
-                buttonState = buttonState.copy(active = it)
-            }
-            .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
-            .padding(style.metrics.padding)
-            .background(background, shape)
-            .border(style.metrics.borderWidth, border, shape),
+            Modifier.thenIf(!focusable) { focusProperties { canFocus = false } }
+                .then(modifier)
+                .selectable(
+                    onClick = onClick,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    selected = selected,
+                )
+                .onActivated(enabled = enabled) { buttonState = buttonState.copy(active = it) }
+                .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
+                .padding(style.metrics.padding)
+                .background(background, shape)
+                .border(style.metrics.borderWidth, border, shape),
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )
@@ -175,9 +163,7 @@ public fun ToggleableIconButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable (BoxScope.(ToggleableIconButtonState) -> Unit),
 ) {
-    var buttonState by remember(interactionSource) {
-        mutableStateOf(ToggleableIconButtonState.of(enabled = enabled))
-    }
+    var buttonState by remember(interactionSource) { mutableStateOf(ToggleableIconButtonState.of(enabled = enabled)) }
 
     remember(enabled, value) {
         buttonState = buttonState.copy(enabled = enabled, toggleableState = ToggleableState(value))
@@ -188,8 +174,7 @@ public fun ToggleableIconButton(
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(pressed = true)
                 is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> buttonState = buttonState.copy(pressed = false)
+                is PressInteraction.Release -> buttonState = buttonState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> buttonState = buttonState.copy(hovered = true)
                 is HoverInteraction.Exit -> buttonState = buttonState.copy(hovered = false)
@@ -205,24 +190,21 @@ public fun ToggleableIconButton(
 
     Box(
         modifier =
-        Modifier
-            .thenIf(!focusable) { focusProperties { canFocus = false } }
-            .then(modifier)
-            .toggleable(
-                onValueChange = onValueChange,
-                enabled = enabled,
-                role = Role.Checkbox,
-                interactionSource = interactionSource,
-                indication = null,
-                value = buttonState.toggleableState == ToggleableState.On,
-            )
-            .onActivated(enabled = enabled) {
-                buttonState = buttonState.copy(active = it)
-            }
-            .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
-            .padding(style.metrics.padding)
-            .background(background, shape)
-            .border(style.metrics.borderWidth, border, shape),
+            Modifier.thenIf(!focusable) { focusProperties { canFocus = false } }
+                .then(modifier)
+                .toggleable(
+                    onValueChange = onValueChange,
+                    enabled = enabled,
+                    role = Role.Checkbox,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    value = buttonState.toggleableState == ToggleableState.On,
+                )
+                .onActivated(enabled = enabled) { buttonState = buttonState.copy(active = it) }
+                .defaultMinSize(style.metrics.minSize.width, style.metrics.minSize.height)
+                .padding(style.metrics.padding)
+                .background(background, shape)
+                .border(style.metrics.borderWidth, border, shape),
         contentAlignment = Alignment.Center,
         content = { content(buttonState) },
     )
@@ -252,14 +234,7 @@ public value class IconButtonState(public val state: ULong) : FocusableComponent
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ): IconButtonState =
-        of(
-            enabled = enabled,
-            focused = focused,
-            pressed = pressed,
-            hovered = hovered,
-            active = active,
-        )
+    ): IconButtonState = of(enabled = enabled, focused = focused, pressed = pressed, hovered = hovered, active = active)
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
@@ -278,14 +253,15 @@ public value class IconButtonState(public val state: ULong) : FocusableComponent
                     (if (focused) Focused else 0UL) or
                     (if (hovered) Hovered else 0UL) or
                     (if (pressed) Pressed else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }
 
 @Immutable
 @JvmInline
-public value class ToggleableIconButtonState(public val state: ULong) : FocusableComponentState, ToggleableComponentState {
+public value class ToggleableIconButtonState(public val state: ULong) :
+    FocusableComponentState, ToggleableComponentState {
     override val toggleableState: ToggleableState
         get() = state.readToggleableState()
 
@@ -341,14 +317,15 @@ public value class ToggleableIconButtonState(public val state: ULong) : Focusabl
                     (if (pressed) Pressed else 0UL) or
                     (if (active) Active else 0UL) or
                     (if (toggleableState != ToggleableState.Off) Selected else 0UL) or
-                    (if (toggleableState == ToggleableState.Indeterminate) Indeterminate else 0UL),
+                    (if (toggleableState == ToggleableState.Indeterminate) Indeterminate else 0UL)
             )
     }
 }
 
 @Immutable
 @JvmInline
-public value class SelectableIconButtonState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
+public value class SelectableIconButtonState(public val state: ULong) :
+    FocusableComponentState, SelectableComponentState {
     override val isSelected: Boolean
         get() = state and Selected != 0UL
 
@@ -404,7 +381,7 @@ public value class SelectableIconButtonState(public val state: ULong) : Focusabl
                     (if (focused) Focused else 0UL) or
                     (if (hovered) Hovered else 0UL) or
                     (if (pressed) Pressed else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }

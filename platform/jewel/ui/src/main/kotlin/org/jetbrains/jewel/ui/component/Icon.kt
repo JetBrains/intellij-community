@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import java.io.InputStream
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.newUiChecker
@@ -38,7 +39,6 @@ import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.util.thenIf
 import org.xml.sax.InputSource
-import java.io.InputStream
 
 @Deprecated(
     "Use the IconKey-based API instead",
@@ -60,12 +60,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(resource, iconClass)
     val painter by painterProvider.getPainter(*hints)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        colorFilter = colorFilter,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
 }
 
 @Deprecated(
@@ -88,12 +83,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(resource, iconClass)
     val painter by painterProvider.getPainter(hint)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        colorFilter = colorFilter,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
 }
 
 @Deprecated(
@@ -116,12 +106,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(resource, iconClass)
     val painter by painterProvider.getPainter(*hints)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        tint = tint,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
 @Deprecated(
@@ -144,12 +129,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(resource, iconClass)
     val painter by painterProvider.getPainter(hint)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        tint = tint,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
 @Composable
@@ -166,12 +146,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(path, iconClass)
     val painter by painterProvider.getPainter(*hints)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        tint = tint,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
 @Composable
@@ -189,12 +164,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(path, iconClass)
     val painter by painterProvider.getPainter(hint)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        tint = tint,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
 @Composable
@@ -211,12 +181,7 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(path, iconClass)
     val painter by painterProvider.getPainter(hint)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        colorFilter = colorFilter,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
 }
 
 @Composable
@@ -233,26 +198,18 @@ public fun Icon(
     val painterProvider = rememberResourcePainterProvider(path, iconClass)
     val painter by painterProvider.getPainter(*hints)
 
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        colorFilter = colorFilter,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
 }
 
 /**
- * Icon component that draws [imageVector] using [tint], defaulting to
- * [Color.Unspecified].
+ * Icon component that draws [imageVector] using [tint], defaulting to [Color.Unspecified].
  *
  * @param imageVector [ImageVector] to draw inside this Icon
- * @param contentDescription text used by accessibility services to
- *    describe what this icon represents. This should always be provided
- *    unless this icon is used for decorative purposes, and does not
- *    represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
  * @param modifier optional [Modifier] for this Icon
- * @param tint tint to be applied to [imageVector]. If [Color.Unspecified]
- *    is provided, then no tint is applied
+ * @param tint tint to be applied to [imageVector]. If [Color.Unspecified] is provided, then no tint is applied
  */
 @Composable
 public fun Icon(
@@ -270,17 +227,14 @@ public fun Icon(
 }
 
 /**
- * Icon component that draws [bitmap] using [tint], defaulting to
- * [Color.Unspecified].
+ * Icon component that draws [bitmap] using [tint], defaulting to [Color.Unspecified].
  *
  * @param bitmap [ImageBitmap] to draw inside this Icon
- * @param contentDescription text used by accessibility services to
- *    describe what this icon represents. This should always be provided
- *    unless this icon is used for decorative purposes, and does not
- *    represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
  * @param modifier optional [Modifier] for this Icon
- * @param tint tint to be applied to [bitmap]. If [Color.Unspecified] is
- *    provided, then no tint is applied
+ * @param tint tint to be applied to [bitmap]. If [Color.Unspecified] is provided, then no tint is applied
  */
 @Composable
 public fun Icon(
@@ -290,26 +244,18 @@ public fun Icon(
     tint: Color = Color.Unspecified,
 ) {
     val painter = remember(bitmap) { BitmapPainter(bitmap) }
-    Icon(
-        painter = painter,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        tint = tint,
-    )
+    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
 }
 
 /**
- * Icon component that draws a [painter] using [tint], defaulting to
- * [Color.Unspecified]
+ * Icon component that draws a [painter] using [tint], defaulting to [Color.Unspecified]
  *
  * @param painter [Painter] to draw inside this Icon
- * @param contentDescription text used by accessibility services to
- *    describe what this icon represents. This should always be provided
- *    unless this icon is used for decorative purposes, and does not
- *    represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
  * @param modifier optional [Modifier] for this Icon
- * @param tint tint to be applied to [painter]. If [Color.Unspecified] is
- *    provided, then no tint is applied
+ * @param tint tint to be applied to [painter]. If [Color.Unspecified] is provided, then no tint is applied
  */
 @Composable
 public fun Icon(
@@ -326,10 +272,9 @@ public fun Icon(
  * Icon component that draws a [painter] using a [colorFilter]
  *
  * @param painter [Painter] to draw inside this Icon
- * @param contentDescription text used by accessibility services to
- *    describe what this icon represents. This should always be provided
- *    unless this icon is used for decorative purposes, and does not
- *    represent a meaningful action that a user can take.
+ * @param contentDescription text used by accessibility services to describe what this icon represents. This should
+ *   always be provided unless this icon is used for decorative purposes, and does not represent a meaningful action
+ *   that a user can take.
  * @param colorFilter color filter to be applied to [painter]
  * @param modifier optional [Modifier] for this Icon
  */
@@ -354,19 +299,13 @@ public fun Icon(
         modifier
             .toolingGraphicsLayer()
             .defaultSizeFor(painter)
-            .paint(
-                painter,
-                colorFilter = colorFilter,
-                contentScale = ContentScale.Fit,
-            ).then(semantics),
+            .paint(painter, colorFilter = colorFilter, contentScale = ContentScale.Fit)
+            .then(semantics)
     )
 }
 
 @Composable
-public fun painterResource(
-    resourcePath: String,
-    loader: ResourceLoader,
-): Painter =
+public fun painterResource(resourcePath: String, loader: ResourceLoader): Painter =
     when (resourcePath.substringAfterLast(".").lowercase()) {
         "svg" -> rememberSvgResource(resourcePath, loader)
         "xml" -> rememberVectorXmlResource(resourcePath, loader)
@@ -374,21 +313,13 @@ public fun painterResource(
     }
 
 @Composable
-private fun rememberSvgResource(
-    resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default,
-): Painter {
+private fun rememberSvgResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter {
     val density = LocalDensity.current
-    return remember(resourcePath, density, loader) {
-        useResource(resourcePath, loader) { loadSvgPainter(it, density) }
-    }
+    return remember(resourcePath, density, loader) { useResource(resourcePath, loader) { loadSvgPainter(it, density) } }
 }
 
 @Composable
-private fun rememberVectorXmlResource(
-    resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default,
-): Painter {
+private fun rememberVectorXmlResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter {
     val density = LocalDensity.current
     val image =
         remember(resourcePath, density, loader) {
@@ -398,24 +329,16 @@ private fun rememberVectorXmlResource(
 }
 
 @Composable
-private fun rememberBitmapResource(
-    resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default,
-): Painter {
+private fun rememberBitmapResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter {
     val image = remember(resourcePath) { useResource(resourcePath, loader, ::loadImageBitmap) }
     return BitmapPainter(image)
 }
 
-private inline fun <T> useResource(
-    resourcePath: String,
-    loader: ResourceLoader,
-    block: (InputStream) -> T,
-): T = loader.load(resourcePath).use(block)
+private inline fun <T> useResource(resourcePath: String, loader: ResourceLoader, block: (InputStream) -> T): T =
+    loader.load(resourcePath).use(block)
 
 private fun Modifier.defaultSizeFor(painter: Painter) =
-    thenIf(painter.intrinsicSize == Size.Unspecified || painter.intrinsicSize.isInfinite()) {
-        DefaultIconSizeModifier
-    }
+    thenIf(painter.intrinsicSize == Size.Unspecified || painter.intrinsicSize.isInfinite()) { DefaultIconSizeModifier }
 
 private fun Size.isInfinite() = width.isInfinite() && height.isInfinite()
 

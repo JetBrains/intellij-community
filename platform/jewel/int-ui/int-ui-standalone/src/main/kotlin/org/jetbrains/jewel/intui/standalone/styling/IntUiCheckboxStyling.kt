@@ -71,17 +71,11 @@ public fun CheckboxMetrics.Companion.defaults(
 @Composable
 public fun CheckboxIcons.Companion.light(
     checkbox: IconKey =
-        PathIconKey(
-            path = "com/intellij/ide/ui/laf/icons/intellij/checkBox.svg",
-            iconClass = CheckboxIcons::class.java,
-        ),
+        PathIconKey(path = "com/intellij/ide/ui/laf/icons/intellij/checkBox.svg", iconClass = CheckboxIcons::class.java)
 ): CheckboxIcons = CheckboxIcons(checkbox)
 
 @Composable
 public fun CheckboxIcons.Companion.dark(
     checkbox: IconKey =
-        PathIconKey(
-            path = "com/intellij/ide/ui/laf/icons/darcula/checkBox.svg",
-            iconClass = CheckboxIcons::class.java,
-        ),
+        PathIconKey(path = "com/intellij/ide/ui/laf/icons/darcula/checkBox.svg", iconClass = CheckboxIcons::class.java)
 ): CheckboxIcons = CheckboxIcons(checkbox)

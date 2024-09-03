@@ -5,13 +5,13 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.skiko.hostOs
-import kotlin.time.Duration.Companion.milliseconds
 
 public fun ScrollbarStyle.Companion.tabStripLight(): ScrollbarStyle =
     if (hostOs.isMacOS) {

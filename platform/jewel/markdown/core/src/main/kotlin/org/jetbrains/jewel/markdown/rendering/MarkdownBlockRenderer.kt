@@ -25,12 +25,7 @@ public interface MarkdownBlockRenderer {
     )
 
     @Composable
-    public fun render(
-        block: MarkdownBlock,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-    )
+    public fun render(block: MarkdownBlock, enabled: Boolean, onUrlClick: (String) -> Unit, onTextClick: () -> Unit)
 
     @Composable
     public fun render(
@@ -96,39 +91,17 @@ public interface MarkdownBlockRenderer {
     )
 
     @Composable
-    public fun render(
-        block: ListItem,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-    )
+    public fun render(block: ListItem, enabled: Boolean, onUrlClick: (String) -> Unit, onTextClick: () -> Unit)
 
-    @Composable
-    public fun render(
-        block: CodeBlock,
-        styling: MarkdownStyling.Code,
-    )
+    @Composable public fun render(block: CodeBlock, styling: MarkdownStyling.Code)
 
-    @Composable
-    public fun render(
-        block: IndentedCodeBlock,
-        styling: MarkdownStyling.Code.Indented,
-    )
+    @Composable public fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented)
 
-    @Composable
-    public fun render(
-        block: FencedCodeBlock,
-        styling: MarkdownStyling.Code.Fenced,
-    )
+    @Composable public fun render(block: FencedCodeBlock, styling: MarkdownStyling.Code.Fenced)
 
-    @Composable
-    public fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak)
+    @Composable public fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak)
 
-    @Composable
-    public fun render(
-        block: HtmlBlock,
-        styling: MarkdownStyling.HtmlBlock,
-    )
+    @Composable public fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock)
 
     public companion object
 }

@@ -39,13 +39,10 @@ public fun Tooltip(
 ) {
     TooltipArea(
         tooltip = {
-            CompositionLocalProvider(
-                LocalContentColor provides style.colors.content,
-            ) {
+            CompositionLocalProvider(LocalContentColor provides style.colors.content) {
                 Box(
                     modifier =
-                        Modifier
-                            .shadow(
+                        Modifier.shadow(
                                 elevation = style.metrics.shadowSize,
                                 shape = RoundedCornerShape(style.metrics.cornerSize),
                                 ambientColor = style.colors.shadow,
@@ -60,11 +57,9 @@ public fun Tooltip(
                                 color = style.colors.border,
                                 shape = RoundedCornerShape(style.metrics.cornerSize),
                             )
-                            .padding(style.metrics.contentPadding),
+                            .padding(style.metrics.contentPadding)
                 ) {
-                    OverrideDarkMode(style.colors.background.isDark()) {
-                        tooltip()
-                    }
+                    OverrideDarkMode(style.colors.background.isDark()) { tooltip() }
                 }
             }
         },
@@ -76,9 +71,8 @@ public fun Tooltip(
 }
 
 /**
- * [TooltipPlacement] implementation for providing a [PopupPositionProvider] that calculates
- * the position of the popup relative to the current mouse cursor position, but never changes
- * it after showing the popup.
+ * [TooltipPlacement] implementation for providing a [PopupPositionProvider] that calculates the position of the popup
+ * relative to the current mouse cursor position, but never changes it after showing the popup.
  *
  * @param offset [DpOffset] to be added to the position of the popup.
  * @param alignment The alignment of the popup relative to the current cursor position.
@@ -101,8 +95,8 @@ public class FixedCursorPoint(
 }
 
 /**
- * A [PopupPositionProvider] that positions the popup at the given position relative to the anchor,
- * but never updates it after showing the popup.
+ * A [PopupPositionProvider] that positions the popup at the given position relative to the anchor, but never updates it
+ * after showing the popup.
  *
  * @param positionPx the offset, in pixels, relative to the anchor, to position the popup at.
  * @param offset [DpOffset] to be added to the position of the popup.

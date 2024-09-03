@@ -6,10 +6,7 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 
 @ExperimentalJewelApi
 public interface InlineMarkdownRenderer {
-    /**
-     * Render the [inlineMarkdown] as an [AnnotatedString], using the [styling]
-     * provided.
-     */
+    /** Render the [inlineMarkdown] as an [AnnotatedString], using the [styling] provided. */
     public fun renderAsAnnotatedString(
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,

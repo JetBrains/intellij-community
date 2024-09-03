@@ -96,11 +96,10 @@ public fun JewelTheme.Companion.darkThemeDefinition(
     )
 
 @Composable
-public fun ComponentStyling.default(): ComponentStyling =
-    with {
-        val isDark = JewelTheme.isDark
-        if (isDark) dark() else light()
-    }
+public fun ComponentStyling.default(): ComponentStyling = with {
+    val isDark = JewelTheme.isDark
+    if (isDark) dark() else light()
+}
 
 @Composable
 public fun ComponentStyling.dark(
@@ -155,7 +154,7 @@ public fun ComponentStyling.dark(
             textFieldStyle = textFieldStyle,
             tooltipStyle = tooltipStyle,
             undecoratedDropdownStyle = undecoratedDropdownStyle,
-        ),
+        )
     )
 
 @Composable
@@ -211,17 +210,12 @@ public fun ComponentStyling.light(
             textFieldStyle = textFieldStyle,
             tooltipStyle = tooltipStyle,
             undecoratedDropdownStyle = undecoratedDropdownStyle,
-        ),
+        )
     )
 
 @Composable
-public fun IntUiTheme(
-    isDark: Boolean = false,
-    swingCompatMode: Boolean = false,
-    content: @Composable () -> Unit,
-) {
-    val themeDefinition =
-        if (isDark) JewelTheme.darkThemeDefinition() else JewelTheme.lightThemeDefinition()
+public fun IntUiTheme(isDark: Boolean = false, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
+    val themeDefinition = if (isDark) JewelTheme.darkThemeDefinition() else JewelTheme.lightThemeDefinition()
 
     IntUiTheme(
         theme = themeDefinition,
@@ -238,11 +232,7 @@ public fun IntUiTheme(
     swingCompatMode: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    BaseJewelTheme(
-        theme,
-        ComponentStyling.default().with(styling),
-        swingCompatMode,
-    ) {
+    BaseJewelTheme(theme, ComponentStyling.default().with(styling), swingCompatMode) {
         CompositionLocalProvider(
             LocalPainterHintsProvider provides StandalonePainterHintsProvider(theme),
             LocalNewUiChecker provides StandaloneNewUiChecker,

@@ -14,9 +14,8 @@ import org.jetbrains.jewel.ui.painter.hints.KeyBasedPaletteReplacement
 import org.jetbrains.jewel.ui.painter.hints.PathOverride
 
 /** Provides the default [PainterHint]s to use to load images. */
-public class StandalonePainterHintsProvider(
-    theme: ThemeDefinition,
-) : PalettePainterHintsProvider(
+public class StandalonePainterHintsProvider(theme: ThemeDefinition) :
+    PalettePainterHintsProvider(
         theme.isDark,
         intellijColorPalette,
         theme.iconData.colorPalette,
@@ -31,9 +30,7 @@ public class StandalonePainterHintsProvider(
 
     private val overrideHint: PainterHint =
         PathOverride(
-            theme.iconData.iconOverrides.entries.associate { (k, v) ->
-                k.removePrefix("/") to v.removePrefix("/")
-            },
+            theme.iconData.iconOverrides.entries.associate { (k, v) -> k.removePrefix("/") to v.removePrefix("/") }
         )
 
     init {
@@ -63,11 +60,7 @@ public class StandalonePainterHintsProvider(
         uiPaletteHint = ColorBasedPaletteReplacement(ui)
     }
 
-    private fun registerColorBasedReplacement(
-        map: MutableMap<Color, Color>,
-        key: String,
-        value: String,
-    ) {
+    private fun registerColorBasedReplacement(map: MutableMap<Color, Color>, key: String, value: String) {
         // If either the key or the resolved value aren't valid colors, ignore the entry
         val keyAsColor = resolveKeyColor(key, intellijIconPalette, isDark) ?: return
         val resolvedColor = resolveColor(value) ?: return
@@ -76,11 +69,7 @@ public class StandalonePainterHintsProvider(
         map[keyAsColor] = resolvedColor
     }
 
-    private fun registerIdBasedReplacement(
-        map: MutableMap<String, Color>,
-        key: String,
-        value: String,
-    ) {
+    private fun registerIdBasedReplacement(map: MutableMap<String, Color>, key: String, value: String) {
         val adjustedKey = if (isDark) key.removeSuffix(".Dark") else key
 
         if (adjustedKey !in supportedCheckboxKeys) {
@@ -89,7 +78,9 @@ public class StandalonePainterHintsProvider(
         }
 
         if (adjustedKey != key) {
-            logger.warn("${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead")
+            logger.warn(
+                "${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead"
+            )
         }
 
         val parsedValue = resolveColor(value)
@@ -102,13 +93,12 @@ public class StandalonePainterHintsProvider(
     }
 
     @Composable
-    override fun hints(path: String): List<PainterHint> =
-        buildList {
-            add(overrideHint)
-            add(getPaletteHint(path, isNewUi = true))
-            add(HiDpi())
-            add(Dark(JewelTheme.isDark))
-        }
+    override fun hints(path: String): List<PainterHint> = buildList {
+        add(overrideHint)
+        add(getPaletteHint(path, isNewUi = true))
+        add(HiDpi())
+        add(Dark(JewelTheme.isDark))
+    }
 
     public companion object {
         // Extracted from com.intellij.ide.ui.UITheme#colorPalette

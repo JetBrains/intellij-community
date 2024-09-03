@@ -4,9 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class ApiAndroidStudioReleases(
-    @SerialName("content") val content: Content = Content(),
-) {
+internal data class ApiAndroidStudioReleases(@SerialName("content") val content: Content = Content()) {
 
     @Serializable
     internal data class Content(

@@ -94,9 +94,7 @@ private fun ButtonImpl(
     textStyle: TextStyle,
     content: @Composable (RowScope.() -> Unit),
 ) {
-    var buttonState by remember(interactionSource) {
-        mutableStateOf(ButtonState.of(enabled = enabled))
-    }
+    var buttonState by remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled)) }
 
     remember(enabled) { buttonState = buttonState.copy(enabled = enabled) }
 
@@ -104,8 +102,8 @@ private fun ButtonImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> buttonState = buttonState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release ->
-                    buttonState = buttonState.copy(pressed = false)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> buttonState = buttonState.copy(pressed = false)
 
                 is HoverInteraction.Enter -> buttonState = buttonState.copy(hovered = true)
                 is HoverInteraction.Exit -> buttonState = buttonState.copy(hovered = false)
@@ -180,14 +178,7 @@ public value class ButtonState(public val state: ULong) : FocusableComponentStat
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ): ButtonState =
-        of(
-            enabled = enabled,
-            focused = focused,
-            pressed = pressed,
-            hovered = hovered,
-            active = active,
-        )
+    ): ButtonState = of(enabled = enabled, focused = focused, pressed = pressed, hovered = hovered, active = active)
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
@@ -206,7 +197,7 @@ public value class ButtonState(public val state: ULong) : FocusableComponentStat
                     (if (focused) Focused else 0UL) or
                     (if (hovered) Hovered else 0UL) or
                     (if (pressed) Pressed else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }

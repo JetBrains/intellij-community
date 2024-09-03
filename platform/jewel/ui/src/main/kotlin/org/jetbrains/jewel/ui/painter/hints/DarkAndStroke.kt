@@ -75,23 +75,19 @@ private class StrokeImpl(private val color: Color) : PainterSuffixHint(), Painte
     override fun hashCode(): Int = color.hashCode()
 }
 
-/**
- * Transforms an SVG image to only draw its borders in the provided
- * [color]. All fills are removed.
- */
+/** Transforms an SVG image to only draw its borders in the provided [color]. All fills are removed. */
 @Suppress("FunctionName")
 public fun Stroke(color: Color): PainterHint = if (color.isSpecified) StrokeImpl(color) else PainterHint.None
 
 /**
- * Switches between the light and dark variants of an image based on
- * [isDark]. If no dark image exists, the light image will be used.
+ * Switches between the light and dark variants of an image based on [isDark]. If no dark image exists, the light image
+ * will be used.
  *
  * All images that aren't dark images are base, or light, images.
  *
- * Dark images must be named in exactly the same way as the corresponding
- * light image, but add a `_dark` suffix right before the extension. Dark
- * images must be placed in the same directory and have the same extension
- * as their light counterparts.
+ * Dark images must be named in exactly the same way as the corresponding light image, but add a `_dark` suffix right
+ * before the extension. Dark images must be placed in the same directory and have the same extension as their light
+ * counterparts.
  *
  * Examples:
  *

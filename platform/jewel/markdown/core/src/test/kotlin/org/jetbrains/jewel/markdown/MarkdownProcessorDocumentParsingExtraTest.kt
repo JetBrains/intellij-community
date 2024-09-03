@@ -30,18 +30,7 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em></em></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Emphasis(
-                        "_",
-                        Text("foo "),
-                        Emphasis("*", Text("bar")),
-                    ),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Emphasis("_", Text("foo "), Emphasis("*", Text("bar"))))))
     }
 
     @Test
@@ -52,15 +41,7 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    Emphasis("*", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo "), Emphasis("*", Text("bar")))))
     }
 
     @Test
@@ -72,17 +53,7 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * <p><em><em>foo <em>bar</em> a</em></em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Emphasis(
-                        "_",
-                        Text("foo "),
-                        Emphasis("*", Text("bar")),
-                        Text(" a"),
-                    ),
-                ),
-            ),
+            Paragraph(Emphasis("*", Emphasis("_", Text("foo "), Emphasis("*", Text("bar")), Text(" a"))))
         )
     }
 
@@ -94,16 +65,7 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> a</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    Emphasis("*", Text("bar")),
-                    Text(" a"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo "), Emphasis("*", Text("bar")), Text(" a"))))
     }
 
     @Test
@@ -115,20 +77,7 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * <p><em><em><em>foo <em>bar</em> a</em></em></em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Emphasis(
-                        "_",
-                        Emphasis(
-                            "*",
-                            Text("foo "),
-                            Emphasis("*", Text("bar")),
-                            Text(" a"),
-                        ),
-                    ),
-                ),
-            ),
+            Paragraph(Emphasis("*", Emphasis("_", Emphasis("*", Text("foo "), Emphasis("*", Text("bar")), Text(" a")))))
         )
     }
 }

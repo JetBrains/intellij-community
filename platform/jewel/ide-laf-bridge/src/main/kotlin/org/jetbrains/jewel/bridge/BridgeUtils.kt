@@ -43,17 +43,10 @@ public fun java.awt.Color.toComposeColor(): Color = Color(red = red, green = gre
 
 public fun java.awt.Color?.toComposeColorOrUnspecified(): Color = this?.toComposeColor() ?: Color.Unspecified
 
-public fun retrieveColor(
-    key: String,
-    default: Color,
-): Color = retrieveColorOrNull(key) ?: default
+public fun retrieveColor(key: String, default: Color): Color = retrieveColorOrNull(key) ?: default
 
-public fun retrieveColor(
-    key: String,
-    isDark: Boolean,
-    default: Color,
-    defaultDark: Color,
-): Color = retrieveColorOrNull(key) ?: if (isDark) defaultDark else default
+public fun retrieveColor(key: String, isDark: Boolean, default: Color, defaultDark: Color): Color =
+    retrieveColorOrNull(key) ?: if (isDark) defaultDark else default
 
 public fun retrieveColorOrNull(key: String): Color? = JBColor.namedColorOrNull(key)?.toComposeColor()
 
@@ -81,10 +74,7 @@ public fun List<Color>.createVerticalBrush(
     return Brush.verticalGradient(this, startY, endY, tileMode)
 }
 
-public fun retrieveIntAsDp(
-    key: String,
-    default: Dp? = null,
-): Dp {
+public fun retrieveIntAsDp(key: String, default: Dp? = null): Dp {
     val rawValue = UIManager.get(key)
     if (rawValue is Int) return rawValue.dp
     if (default != null) return default
@@ -99,10 +89,8 @@ public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
         Dp.Unspecified
     }
 
-public fun retrieveInsetsAsPaddingValues(
-    key: String,
-    default: PaddingValues? = null,
-): PaddingValues = UIManager.getInsets(key)?.toPaddingValues() ?: default ?: keyNotFound(key, "Insets")
+public fun retrieveInsetsAsPaddingValues(key: String, default: PaddingValues? = null): PaddingValues =
+    UIManager.getInsets(key)?.toPaddingValues() ?: default ?: keyNotFound(key, "Insets")
 
 /**
  * Converts a [Insets] to [PaddingValues]. If the receiver is a [JBInsets] instance, this function delegates to the
@@ -140,10 +128,7 @@ public fun JBDimension.toDpSize(): DpSize {
 
 public fun retrieveArcAsCornerSize(key: String): CornerSize = CornerSize(retrieveIntAsDp(key) / 2)
 
-public fun retrieveArcAsCornerSizeOrDefault(
-    key: String,
-    default: CornerSize,
-): CornerSize {
+public fun retrieveArcAsCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
     val intValue = retrieveIntAsDpOrUnspecified(key)
     if (intValue.isUnspecified) return default
     return CornerSize(intValue / 2)
@@ -163,10 +148,7 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
     keysNotFound(keys.toList(), "Int")
 }
 
-public fun retrieveTextStyle(
-    fontKey: String,
-    colorKey: String? = null,
-): TextStyle {
+public fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     return retrieveTextStyle(fontKey, color = baseColor)
 }

@@ -78,8 +78,7 @@ internal fun ComponentShowcaseTab() {
     VerticallyScrollableContainer {
         Row(
             modifier =
-                Modifier
-                    .trackComponentActivation(LocalComponent.current)
+                Modifier.trackComponentActivation(LocalComponent.current)
                     .fillMaxSize()
                     .background(bgColor)
                     .padding(16.dp),
@@ -93,69 +92,45 @@ internal fun ComponentShowcaseTab() {
 
 @Composable
 private fun RowScope.ColumnOne() {
-    Column(
-        Modifier.trackActivation().weight(1f),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         var activated by remember { mutableStateOf(false) }
         Text(
             "Here is a selection of our finest components(activated: $activated):",
-            Modifier.onActivated {
-                activated = it
-            },
+            Modifier.onActivated { activated = it },
             style = Typography.h3TextStyle(),
         )
 
         var selectedItem by remember { mutableIntStateOf(-1) }
         Dropdown(
             menuContent = {
-                selectableItem(selectedItem == 0, onClick = { selectedItem = 0 }) {
-                    Text("Hello")
-                }
+                selectableItem(selectedItem == 0, onClick = { selectedItem = 0 }) { Text("Hello") }
 
                 separator()
 
-                selectableItem(selectedItem == 1, onClick = { selectedItem = 1 }) {
-                    Text("World")
-                }
-            },
+                selectableItem(selectedItem == 1, onClick = { selectedItem = 1 }) { Text("World") }
+            }
         ) {
             Text("Selected item $selectedItem")
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             var clicks1 by remember { mutableIntStateOf(0) }
-            OutlinedButton({ clicks1++ }) {
-                Text("Outlined: $clicks1")
-            }
-            OutlinedButton({ }, enabled = false) {
-                Text("Outlined")
-            }
+            OutlinedButton({ clicks1++ }) { Text("Outlined: $clicks1") }
+            OutlinedButton({}, enabled = false) { Text("Outlined") }
 
             var clicks2 by remember { mutableIntStateOf(0) }
-            DefaultButton({ clicks2++ }) {
-                Text("Default: $clicks2")
-            }
-            DefaultButton({ }, enabled = false) {
-                Text("Default")
-            }
+            DefaultButton({ clicks2++ }) { Text("Default: $clicks2") }
+            DefaultButton({}, enabled = false) { Text("Default") }
         }
 
         val state = rememberTextFieldState("")
         TextField(
             state = state,
             modifier =
-                Modifier
-                    .width(200.dp)
-                    .provideData {
-                        set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")
-                        lazy(ActionSystemTestAction.COMPONENT_DATA_KEY.name) {
-                            Math.random().toString()
-                        }
-                    },
+                Modifier.width(200.dp).provideData {
+                    set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")
+                    lazy(ActionSystemTestAction.COMPONENT_DATA_KEY.name) { Math.random().toString() }
+                },
             placeholder = { Text("Write something...") },
         )
 
@@ -168,62 +143,43 @@ private fun RowScope.ColumnOne() {
                 checked = checked,
                 onCheckedChange = { checked = it },
                 outline = outline,
-                modifier =
-                    Modifier.provideData {
-                        set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "Checkbox")
-                    },
+                modifier = Modifier.provideData { set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "Checkbox") },
             ) {
                 Text("Hello, I am a themed checkbox")
             }
 
-            CheckboxRow(checked = validated, onCheckedChange = { validated = it }) {
-                Text("Show validation")
-            }
+            CheckboxRow(checked = validated, onCheckedChange = { validated = it }) { Text("Show validation") }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             var index by remember { mutableIntStateOf(0) }
-            RadioButtonRow(
-                selected = index == 0,
-                onClick = { index = 0 },
-                outline = outline,
-            ) {
+            RadioButtonRow(selected = index == 0, onClick = { index = 0 }, outline = outline) {
                 Text("I am number one")
             }
-            RadioButtonRow(
-                selected = index == 1,
-                onClick = { index = 1 },
-                outline = outline,
-            ) {
-                Text("Sad second")
-            }
+            RadioButtonRow(selected = index == 1, onClick = { index = 1 }, outline = outline) { Text("Sad second") }
         }
 
         IconsShowcase()
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Circular progress small:")
             CircularProgressIndicator()
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Circular progress big:")
             CircularProgressIndicatorBig()
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Tooltip(tooltip = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(AllIconsKeys.General.ShowInfos, contentDescription = null)
-                    Text("This is a tooltip")
+            Tooltip(
+                tooltip = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(AllIconsKeys.General.ShowInfos, contentDescription = null)
+                        Text("This is a tooltip")
+                    }
                 }
-            }) {
+            ) {
                 Text(
                     modifier = Modifier.border(1.dp, JewelTheme.globalColors.borders.normal).padding(12.dp, 8.dp),
                     text = "Hover Me!",
@@ -238,7 +194,8 @@ private fun RowScope.ColumnOne() {
 
 @Composable
 private fun IconsShowcase() {
-    val iconBackgroundColor = JewelTheme.colorPalette.blueOrNull(4) ?: JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor()
+    val iconBackgroundColor =
+        JewelTheme.colorPalette.blueOrNull(4) ?: JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor()
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -296,14 +253,12 @@ private fun IconsShowcase() {
             )
         }
 
-        IconButton(onClick = { }, Modifier.size(24.dp)) {
-            PlatformIcon(AllIconsKeys.Actions.Close, "Close")
-        }
+        IconButton(onClick = {}, Modifier.size(24.dp)) { PlatformIcon(AllIconsKeys.Actions.Close, "Close") }
 
         IconActionButton(
             AllIconsKeys.Actions.AddList,
             "Close",
-            onClick = { },
+            onClick = {},
             modifier = Modifier.size(24.dp),
             hints = arrayOf(Size(24)),
             tooltip = { Text("Hello there") },
@@ -313,51 +268,40 @@ private fun IconsShowcase() {
 
 @Composable
 private fun RowScope.ColumnTwo() {
-    Column(
-        Modifier.trackActivation().weight(1f),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         MarkdownExample()
 
         Divider(Orientation.Horizontal)
 
         var activated by remember { mutableStateOf(false) }
-        Text(
-            "activated: $activated",
-            Modifier.onActivated {
-                activated = it
-            },
-        )
+        Text("activated: $activated", Modifier.onActivated { activated = it })
 
-        val tree =
-            remember {
-                buildTree {
-                    addNode("root 1") {
-                        addLeaf("leaf 1")
-                        addLeaf("leaf 2")
-                    }
-                    addNode("root 2") {
-                        addLeaf("leaf 1")
-                        addNode("node 1") {
-                            addLeaf("leaf 1")
-                            addLeaf("leaf 2")
-                        }
-                    }
-                    addNode("root 3") {
+        val tree = remember {
+            buildTree {
+                addNode("root 1") {
+                    addLeaf("leaf 1")
+                    addLeaf("leaf 2")
+                }
+                addNode("root 2") {
+                    addLeaf("leaf 1")
+                    addNode("node 1") {
                         addLeaf("leaf 1")
                         addLeaf("leaf 2")
                     }
                 }
+                addNode("root 3") {
+                    addLeaf("leaf 1")
+                    addLeaf("leaf 2")
+                }
             }
+        }
         LazyTree(
             tree = tree,
             modifier = Modifier.height(200.dp).fillMaxWidth(),
             onElementClick = {},
             onElementDoubleClick = {},
         ) { element ->
-            Box(Modifier.fillMaxWidth()) {
-                Text(element.data, Modifier.padding(2.dp))
-            }
+            Box(Modifier.fillMaxWidth()) { Text(element.data, Modifier.padding(2.dp)) }
         }
     }
 }
@@ -383,19 +327,12 @@ private fun MarkdownExample() {
                 |```kotlin
                 |fun hello() = "World"
                 |```
-                """.trimMargin(),
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        JBUI.CurrentTheme.Banner.INFO_BACKGROUND
-                            .toComposeColor(),
-                        RoundedCornerShape(8.dp),
-                    ).border(
-                        1.dp,
-                        JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR
-                            .toComposeColor(),
-                        RoundedCornerShape(8.dp),
-                    ).padding(8.dp),
+                """
+                    .trimMargin(),
+                Modifier.fillMaxWidth()
+                    .background(JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(), RoundedCornerShape(8.dp))
+                    .border(1.dp, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(), RoundedCornerShape(8.dp))
+                    .padding(8.dp),
                 enabled = enabled,
                 onUrlClick = { url -> BrowserUtil.open(url) },
             )

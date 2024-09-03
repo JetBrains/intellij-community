@@ -23,7 +23,8 @@ internal interface ScrollbarHelper {
 
     companion object {
         @JvmStatic
-        fun getInstance(): ScrollbarHelper = if (hostOs == OS.MacOS) service<MacScrollbarHelperImpl>() else DummyScrollbarHelper
+        fun getInstance(): ScrollbarHelper =
+            if (hostOs == OS.MacOS) service<MacScrollbarHelperImpl>() else DummyScrollbarHelper
     }
 }
 
@@ -87,11 +88,7 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
     }
 
     @Suppress("unused", "UNUSED_PARAMETER")
-    fun callback(
-        self: ID?,
-        selector: Pointer?,
-        event: ID?,
-    ) {
+    fun callback(self: ID?, selector: Pointer?, event: ID?) {
         readTrackClickBehavior()
         readScrollbarVisibility()
     }
@@ -103,13 +100,13 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
             Foundation.invoke(userDefaults, "synchronize")
             val isJumpToPage =
                 Foundation.invoke(
-                    // id =
-                    userDefaults,
-                    // selector =
-                    "boolForKey:",
-                    // ...args =
-                    Foundation.nsString("AppleScrollerPagingBehavior"),
-                )
+                        // id =
+                        userDefaults,
+                        // selector =
+                        "boolForKey:",
+                        // ...args =
+                        Foundation.nsString("AppleScrollerPagingBehavior"),
+                    )
                     .booleanValue()
 
             val behavior =
@@ -129,11 +126,11 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
             // Inspired from MacScrollBarUI
             val isOverlayStyle =
                 Foundation.invoke(
-                    // id=
-                    Foundation.getObjcClass("NSScroller"),
-                    // selector=
-                    "preferredScrollerStyle",
-                )
+                        // id=
+                        Foundation.getObjcClass("NSScroller"),
+                        // selector=
+                        "preferredScrollerStyle",
+                    )
                     .booleanValue()
 
             val visibility =
@@ -167,11 +164,7 @@ private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
     }
 
     // Copied from MacScrollBarUI
-    private fun createDelegate(
-        name: String,
-        pointer: Pointer,
-        callback: Callback,
-    ): ID {
+    private fun createDelegate(name: String, pointer: Pointer, callback: Callback): ID {
         val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), name)
         if (ID.NIL != delegateClass) {
             if (!Foundation.addMethod(delegateClass, pointer, callback, "v@")) {

@@ -15,14 +15,12 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Test
 
 /**
- * This class tests that all the snippets in the CommonMark 0.31.2 specs
- * are rendered correctly into MarkdownBlocks, matching what the CommonMark
- * 0.20 HTML renderer tests also validate. Test cases are extracted from
- * [here]( https://spec.commonmark.org/0.31.2/spec.json).
+ * This class tests that all the snippets in the CommonMark 0.31.2 specs are rendered correctly into MarkdownBlocks,
+ * matching what the CommonMark 0.20 HTML renderer tests also validate. Test cases are extracted from [here](
+ * https://spec.commonmark.org/0.31.2/spec.json).
  *
- * Note that the reference HTML output is only there as information; our
- * parsing logic performs various transformations that CommonMark wouldn't.
- * For more info, refer to [MarkdownProcessor.processMarkdownDocument].
+ * Note that the reference HTML output is only there as information; our parsing logic performs various transformations
+ * that CommonMark wouldn't. For more info, refer to [MarkdownProcessor.processMarkdownDocument].
  */
 @Suppress(
     "HtmlDeprecatedAttribute",
@@ -89,15 +87,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(
-                    paragraph("foo"),
-                    paragraph("bar"),
-                ),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
     }
 
     @Test
@@ -114,15 +104,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(
-                    paragraph("foo"),
-                    indentedCodeBlock("  bar"),
-                ),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), indentedCodeBlock("  bar")), isTight = false))
     }
 
     @Test
@@ -190,14 +172,9 @@ class MarkdownProcessorDocumentParsingTest {
             unorderedList(
                 listItem(
                     paragraph("foo"),
-                    unorderedList(
-                        listItem(
-                            paragraph("bar"),
-                            unorderedList(listItem(paragraph("baz"))),
-                        ),
-                    ),
-                ),
-            ),
+                    unorderedList(listItem(paragraph("bar"), unorderedList(listItem(paragraph("baz"))))),
+                )
+            )
         )
     }
 
@@ -227,7 +204,7 @@ class MarkdownProcessorDocumentParsingTest {
     fun `should parse spec sample 12 correctly {Backslash escapes}`() {
         val parsed =
             processor.processMarkdownDocument(
-                "\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\`\\{\\|\\}\\~\n",
+                "\\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+\\,\\-\\.\\/\\:\\;\\<\\=\\>\\?\\@\\[\\\\\\]\\^\\_\\`\\{\\|\\}\\~\n"
             )
 
         /*
@@ -263,7 +240,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |\[foo]: /url "not a reference"
                 |\&ouml; not a character entity
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -297,7 +274,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text("[foo]: /url \"not a reference\""),
                 SoftLineBreak,
                 Text("&ouml; not a character entity"),
-            ),
+            )
         )
     }
 
@@ -320,7 +297,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo\
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -363,7 +340,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |\[\]
                 |~~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -383,13 +360,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="https://example.com?find=%5C*">https://example.com?find=\*</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    "https://example.com?find=\\*",
-                    title = null,
-                    Text("https://example.com?find=\\*"),
-                ),
-            ),
+            Paragraph(Link("https://example.com?find=\\*", title = null, Text("https://example.com?find=\\*")))
         )
     }
 
@@ -424,7 +395,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /bar\* "ti\*tle"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -443,7 +414,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -464,7 +435,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |&frac34; &HilbertSpace; &DifferentialD;
                 |&ClockwiseContourIntegral; &ngE;
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -473,15 +444,7 @@ class MarkdownProcessorDocumentParsingTest {
          * ¾ ℋ ⅆ
          * ∲ ≧̸</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("  & © Æ Ď"),
-                SoftLineBreak,
-                Text("¾ ℋ ⅆ"),
-                SoftLineBreak,
-                Text("∲ ≧̸"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("  & © Æ Ď"), SoftLineBreak, Text("¾ ℋ ⅆ"), SoftLineBreak, Text("∲ ≧̸")))
     }
 
     @Test
@@ -517,7 +480,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |&#abcdef0;
                 |&ThisIsNotDefined; &hi?;
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -536,7 +499,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text("&#abcdef0;"),
                 SoftLineBreak,
                 Text("&ThisIsNotDefined; &hi?;"),
-            ),
+            )
         )
     }
 
@@ -594,7 +557,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /f&ouml;&ouml; "f&ouml;&ouml;"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -614,7 +577,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -657,13 +620,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>*foo*
          * <em>foo</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*foo*"),
-                SoftLineBreak,
-                Emphasis("*", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*foo*"), SoftLineBreak, Emphasis("*", Text("foo"))))
     }
 
     @Test
@@ -675,7 +632,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |* foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -685,10 +642,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>foo</li>
          * </ul>
          */
-        parsed.assertEquals(
-            paragraph("* foo"),
-            unorderedList(listItem(paragraph("foo")), marker = "*"),
-        )
+        parsed.assertEquals(paragraph("* foo"), unorderedList(listItem(paragraph("foo")), marker = "*"))
     }
 
     @Test
@@ -734,7 +688,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- `one
                 |- two`
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -744,12 +698,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>two`</li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("`one")),
-                listItem(paragraph("two`")),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("`one")), listItem(paragraph("two`"))))
     }
 
     @Test
@@ -761,7 +710,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |---
                 |___
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -770,11 +719,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          * <hr />
          */
-        parsed.assertEquals(
-            thematicBreak(),
-            thematicBreak(),
-            thematicBreak(),
-        )
+        parsed.assertEquals(thematicBreak(), thematicBreak(), thematicBreak())
     }
 
     @Test
@@ -808,7 +753,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |**
                 |__
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -817,15 +762,7 @@ class MarkdownProcessorDocumentParsingTest {
          * **
          * __</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("--"),
-                SoftLineBreak,
-                Text("**"),
-                SoftLineBreak,
-                Text("__"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("--"), SoftLineBreak, Text("**"), SoftLineBreak, Text("__")))
     }
 
     @Test
@@ -837,7 +774,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  ***
                 |   ***
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -846,11 +783,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          * <hr />
          */
-        parsed.assertEquals(
-            thematicBreak(),
-            thematicBreak(),
-            thematicBreak(),
-        )
+        parsed.assertEquals(thematicBreak(), thematicBreak(), thematicBreak())
     }
 
     @Test
@@ -873,7 +806,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo
                 |    ***
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -950,7 +883,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |---a---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -959,11 +892,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>a------</p>
          * <p>---a---</p>
          */
-        parsed.assertEquals(
-            paragraph("_ _ _ _ a"),
-            paragraph("a------"),
-            paragraph("---a---"),
-        )
+        parsed.assertEquals(paragraph("_ _ _ _ a"), paragraph("a------"), paragraph("---a---"))
     }
 
     @Test
@@ -986,7 +915,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |***
                 |- bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1015,7 +944,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |***
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1024,11 +953,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          * <p>bar</p>
          */
-        parsed.assertEquals(
-            paragraph("Foo"),
-            thematicBreak(),
-            paragraph("bar"),
-        )
+        parsed.assertEquals(paragraph("Foo"), thematicBreak(), paragraph("bar"))
     }
 
     @Test
@@ -1040,7 +965,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |---
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1048,10 +973,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h2>Foo</h2>
          * <p>bar</p>
          */
-        parsed.assertEquals(
-            heading(2, Text("Foo")),
-            paragraph("bar"),
-        )
+        parsed.assertEquals(heading(2, Text("Foo")), paragraph("bar"))
     }
 
     @Test
@@ -1063,7 +985,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |* * *
                 |* Bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1091,7 +1013,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- Foo
                 |- * * *
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1103,12 +1025,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("Foo")),
-                listItem(thematicBreak()),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("Foo")), listItem(thematicBreak())))
     }
 
     @Test
@@ -1123,7 +1040,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |##### foo
                 |###### foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1165,7 +1082,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |#hashtag
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1173,10 +1090,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>#5 bolt</p>
          * <p>#hashtag</p>
          */
-        parsed.assertEquals(
-            paragraph("#5 bolt"),
-            paragraph("#hashtag"),
-        )
+        parsed.assertEquals(paragraph("#5 bolt"), paragraph("#hashtag"))
     }
 
     @Test
@@ -1198,14 +1112,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h1>foo <em>bar</em> *baz*</h1>
          */
-        parsed.assertEquals(
-            heading(
-                level = 1,
-                Text("foo "),
-                Emphasis("*", Text("bar")),
-                Text(" *baz*"),
-            ),
-        )
+        parsed.assertEquals(heading(level = 1, Text("foo "), Emphasis("*", Text("bar")), Text(" *baz*")))
     }
 
     @Test
@@ -1228,7 +1135,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  ## foo
                 |   # foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1264,7 +1171,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |    # bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1283,7 +1190,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |## foo ##
                 |  ###   bar    ###
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1291,10 +1198,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h2>foo</h2>
          * <h3>bar</h3>
          */
-        parsed.assertEquals(
-            heading(level = 2, Text("foo")),
-            heading(level = 3, Text("bar")),
-        )
+        parsed.assertEquals(heading(level = 2, Text("foo")), heading(level = 3, Text("bar")))
     }
 
     @Test
@@ -1305,7 +1209,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |# foo ##################################
                 |##### foo ##
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1313,10 +1217,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>foo</h1>
          * <h5>foo</h5>
          */
-        parsed.assertEquals(
-            heading(level = 1, Text("foo")),
-            heading(level = 5, Text("foo")),
-        )
+        parsed.assertEquals(heading(level = 1, Text("foo")), heading(level = 5, Text("foo")))
     }
 
     @Test
@@ -1361,7 +1262,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |## foo #\##
                 |# foo \#
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1386,7 +1287,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |## foo
                 |****
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1395,11 +1296,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h2>foo</h2>
          * <hr />
          */
-        parsed.assertEquals(
-            thematicBreak(),
-            heading(level = 2, Text("foo")),
-            thematicBreak(),
-        )
+        parsed.assertEquals(thematicBreak(), heading(level = 2, Text("foo")), thematicBreak())
     }
 
     @Test
@@ -1411,7 +1308,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |# baz
                 |Bar foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1420,11 +1317,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>baz</h1>
          * <p>Bar foo</p>
          */
-        parsed.assertEquals(
-            paragraph("Foo bar"),
-            heading(level = 1, Text("baz")),
-            paragraph("Bar foo"),
-        )
+        parsed.assertEquals(paragraph("Foo bar"), heading(level = 1, Text("baz")), paragraph("Bar foo"))
     }
 
     @Test
@@ -1436,7 +1329,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |#
                 |### ###
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1463,7 +1356,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo *bar*
                 |---------
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1487,7 +1380,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |baz*
                 |====
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1495,13 +1388,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>Foo <em>bar
          * baz</em></h1>
          */
-        parsed.assertEquals(
-            heading(
-                level = 1,
-                Text("Foo "),
-                Emphasis("*", Text("bar"), SoftLineBreak, Text("baz")),
-            ),
-        )
+        parsed.assertEquals(heading(level = 1, Text("Foo "), Emphasis("*", Text("bar"), SoftLineBreak, Text("baz"))))
     }
 
     @Test
@@ -1514,12 +1401,7 @@ class MarkdownProcessorDocumentParsingTest {
          * baz</em></h1>
          */
         parsed.assertEquals(
-            heading(
-                level = 1,
-                Text("Foo "),
-                Emphasis("*", Text("bar"), SoftLineBreak, Text("baz")),
-                Text(""),
-            ),
+            heading(level = 1, Text("Foo "), Emphasis("*", Text("bar"), SoftLineBreak, Text("baz")), Text(""))
         )
     }
 
@@ -1534,7 +1416,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo
                 |=
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1542,10 +1424,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h2>Foo</h2>
          * <h1>Foo</h1>
          */
-        parsed.assertEquals(
-            heading(level = 2, Text("Foo")),
-            heading(level = 1, Text("Foo")),
-        )
+        parsed.assertEquals(heading(level = 2, Text("Foo")), heading(level = 1, Text("Foo")))
     }
 
     @Test
@@ -1562,7 +1441,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  Foo
                 |  ===
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1589,7 +1468,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    Foo
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1601,10 +1480,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <hr />
          */
-        parsed.assertEquals(
-            indentedCodeBlock("Foo\n---\n\nFoo"),
-            thematicBreak(),
-        )
+        parsed.assertEquals(indentedCodeBlock("Foo\n---\n\nFoo"), thematicBreak())
     }
 
     @Test
@@ -1615,7 +1491,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo
                 |   ----      
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1633,7 +1509,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo
                 |    ---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1655,7 +1531,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo
                 |--- -
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1665,11 +1541,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>Foo</p>
          * <hr />
          */
-        parsed.assertEquals(
-            Paragraph(Text("Foo"), SoftLineBreak, Text("= =")),
-            paragraph("Foo"),
-            thematicBreak(),
-        )
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("= =")), paragraph("Foo"), thematicBreak())
     }
 
     @Test
@@ -1680,7 +1552,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo  
                 |-----
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1698,7 +1570,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo\
                 |----
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1721,7 +1593,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |---
                 |of dashes"/>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1747,7 +1619,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> Foo
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1757,10 +1629,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <hr />
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("Foo")),
-            thematicBreak(),
-        )
+        parsed.assertEquals(blockQuote(paragraph("Foo")), thematicBreak())
     }
 
     @Test
@@ -1772,7 +1641,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |bar
                 |===
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1783,17 +1652,7 @@ class MarkdownProcessorDocumentParsingTest {
          * ===</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(
-                Paragraph(
-                    Text("foo"),
-                    SoftLineBreak,
-                    Text("bar"),
-                    SoftLineBreak,
-                    Text("==="),
-                ),
-            ),
-        )
+        parsed.assertEquals(blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("bar"), SoftLineBreak, Text("==="))))
     }
 
     @Test
@@ -1804,7 +1663,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- Foo
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1814,10 +1673,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <hr />
          */
-        parsed.assertEquals(
-            unorderedList(listItem(paragraph("Foo"))),
-            thematicBreak(),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("Foo"))), thematicBreak())
     }
 
     @Test
@@ -1829,7 +1685,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Bar
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1852,7 +1708,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |---
                 |Baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1878,7 +1734,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |====
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1896,7 +1752,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |---
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1904,10 +1760,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          * <hr />
          */
-        parsed.assertEquals(
-            thematicBreak(),
-            thematicBreak(),
-        )
+        parsed.assertEquals(thematicBreak(), thematicBreak())
     }
 
     @Test
@@ -1918,7 +1771,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- foo
                 |-----
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1928,10 +1781,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <hr />
          */
-        parsed.assertEquals(
-            unorderedList(listItem(paragraph("foo"))),
-            thematicBreak(),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"))), thematicBreak())
     }
 
     @Test
@@ -1942,7 +1792,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    foo
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1951,10 +1801,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <hr />
          */
-        parsed.assertEquals(
-            indentedCodeBlock("foo"),
-            thematicBreak(),
-        )
+        parsed.assertEquals(indentedCodeBlock("foo"), thematicBreak())
     }
 
     @Test
@@ -1965,7 +1812,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> foo
                 |-----
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -1975,10 +1822,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <hr />
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("foo")),
-            thematicBreak(),
-        )
+        parsed.assertEquals(blockQuote(paragraph("foo")), thematicBreak())
     }
 
     @Test
@@ -1989,7 +1833,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |\> foo
                 |------
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2010,7 +1854,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |---
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2019,11 +1863,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h2>bar</h2>
          * <p>baz</p>
          */
-        parsed.assertEquals(
-            paragraph("Foo"),
-            heading(level = 2, Text("bar")),
-            paragraph("baz"),
-        )
+        parsed.assertEquals(paragraph("Foo"), heading(level = 2, Text("bar")), paragraph("baz"))
     }
 
     @Test
@@ -2038,7 +1878,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2048,11 +1888,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          * <p>baz</p>
          */
-        parsed.assertEquals(
-            Paragraph(Text("Foo"), SoftLineBreak, Text("bar")),
-            thematicBreak(),
-            paragraph("baz"),
-        )
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("bar")), thematicBreak(), paragraph("baz"))
     }
 
     @Test
@@ -2065,7 +1901,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |* * *
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2075,11 +1911,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          * <p>baz</p>
          */
-        parsed.assertEquals(
-            Paragraph(Text("Foo"), SoftLineBreak, Text("bar")),
-            thematicBreak(),
-            paragraph("baz"),
-        )
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("bar")), thematicBreak(), paragraph("baz"))
     }
 
     @Test
@@ -2092,7 +1924,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |\---
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2103,15 +1935,7 @@ class MarkdownProcessorDocumentParsingTest {
          * baz</p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Text("Foo"),
-                SoftLineBreak,
-                Text("bar"),
-                SoftLineBreak,
-                Text("---"),
-                SoftLineBreak,
-                Text("baz"),
-            ),
+            Paragraph(Text("Foo"), SoftLineBreak, Text("bar"), SoftLineBreak, Text("---"), SoftLineBreak, Text("baz"))
         )
     }
 
@@ -2123,7 +1947,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    a simple
                 |      indented code block
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2144,7 +1968,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2156,12 +1980,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo"), paragraph("bar")),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
     }
 
     @Test
@@ -2173,7 +1992,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    - bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2188,13 +2007,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(
-                    paragraph("foo"),
-                    unorderedList(listItem(paragraph("bar"))),
-                ),
-                isTight = false,
-            ),
+            orderedList(listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar")))), isTight = false)
         )
     }
 
@@ -2208,7 +2021,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    - one
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2235,7 +2048,7 @@ class MarkdownProcessorDocumentParsingTest {
                 | 
                 |    chunk3
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2274,7 +2087,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |Foo
                 |    bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2293,7 +2106,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    foo
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2302,10 +2115,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <p>bar</p>
          */
-        parsed.assertEquals(
-            indentedCodeBlock("foo"),
-            paragraph("bar"),
-        )
+        parsed.assertEquals(indentedCodeBlock("foo"), paragraph("bar"))
     }
 
     @Test
@@ -2320,7 +2130,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    foo
                 |----
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2350,7 +2160,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |        foo
                 |    bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2372,7 +2182,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    foo
                 |    
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2405,7 +2215,7 @@ class MarkdownProcessorDocumentParsingTest {
                 | >
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2427,7 +2237,7 @@ class MarkdownProcessorDocumentParsingTest {
                 | >
                 |~~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2448,7 +2258,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |``
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2468,7 +2278,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |~~~
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2490,7 +2300,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |```
                 |~~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2512,7 +2322,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |```
                 |``````
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2534,7 +2344,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |~~~
                 |~~~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2567,7 +2377,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |```
                 |aaa
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2590,7 +2400,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2601,10 +2411,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <p>bbb</p>
          */
-        parsed.assertEquals(
-            blockQuote(fencedCodeBlock("aaa")),
-            paragraph("bbb"),
-        )
+        parsed.assertEquals(blockQuote(fencedCodeBlock("aaa")), paragraph("bbb"))
     }
 
     @Test
@@ -2617,7 +2424,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2637,7 +2444,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |```
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2657,7 +2464,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2680,7 +2487,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa
                 |  ```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2704,7 +2511,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  aaa
                 |   ```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2726,7 +2533,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    aaa
                 |    ```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2748,7 +2555,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa
                 |  ```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2768,7 +2575,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa
                 |  ```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2788,7 +2595,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa
                 |    ```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2808,7 +2615,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |``` ```
                 |aaa
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2828,7 +2635,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa
                 |~~~ ~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2851,7 +2658,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |```
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2861,11 +2668,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <p>baz</p>
          */
-        parsed.assertEquals(
-            paragraph("foo"),
-            fencedCodeBlock("bar"),
-            paragraph("baz"),
-        )
+        parsed.assertEquals(paragraph("foo"), fencedCodeBlock("bar"), paragraph("baz"))
     }
 
     @Test
@@ -2880,7 +2683,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |~~~
                 |# baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2890,11 +2693,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <h1>baz</h1>
          */
-        parsed.assertEquals(
-            heading(level = 2, Text("foo")),
-            fencedCodeBlock("bar"),
-            heading(level = 1, Text("baz")),
-        )
+        parsed.assertEquals(heading(level = 2, Text("foo")), fencedCodeBlock("bar"), heading(level = 1, Text("baz")))
     }
 
     @Test
@@ -2908,7 +2707,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |end
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2919,10 +2718,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          */
         parsed.assertEquals(
-            fencedCodeBlock(
-                "def foo(x)\n  return 3\nend",
-                mimeType = MimeType.Known.fromMarkdownLanguageName("ruby"),
-            ),
+            fencedCodeBlock("def foo(x)\n  return 3\nend", mimeType = MimeType.Known.fromMarkdownLanguageName("ruby"))
         )
     }
 
@@ -2937,7 +2733,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |end
                 |~~~~~~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -2948,10 +2744,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          */
         parsed.assertEquals(
-            fencedCodeBlock(
-                "def foo(x)\n  return 3\nend",
-                mimeType = MimeType.Known.fromMarkdownLanguageName("ruby"),
-            ),
+            fencedCodeBlock("def foo(x)\n  return 3\nend", mimeType = MimeType.Known.fromMarkdownLanguageName("ruby"))
         )
     }
 
@@ -2963,19 +2756,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |````;
                 |````
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <pre><code class="language-;"></code></pre>
          */
-        parsed.assertEquals(
-            fencedCodeBlock(
-                "",
-                mimeType = MimeType.Known.fromMarkdownLanguageName(";"),
-            ),
-        )
+        parsed.assertEquals(fencedCodeBlock("", mimeType = MimeType.Known.fromMarkdownLanguageName(";")))
     }
 
     @Test
@@ -2986,7 +2774,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |``` aa ```
                 |foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3006,7 +2794,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |~~~
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3014,12 +2802,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <pre><code class="language-aa">foo
          * </code></pre>
          */
-        parsed.assertEquals(
-            fencedCodeBlock(
-                "foo",
-                mimeType = MimeType.Known.fromMarkdownLanguageName("aa"),
-            ),
-        )
+        parsed.assertEquals(fencedCodeBlock("foo", mimeType = MimeType.Known.fromMarkdownLanguageName("aa")))
     }
 
     @Test
@@ -3031,7 +2814,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |``` aaa
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3055,7 +2838,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</pre>
                 |</td></tr></table>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3069,12 +2852,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<table><tr><td>\n<pre>\n**Hello**,"),
-            Paragraph(
-                Emphasis("_", Text("world")),
-                Text("."),
-                SoftLineBreak,
-                HtmlInline("</pre>"),
-            ),
+            Paragraph(Emphasis("_", Text("world")), Text("."), SoftLineBreak, HtmlInline("</pre>")),
             htmlBlock("</td></tr></table>"),
         )
     }
@@ -3094,7 +2872,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |okay.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3119,7 +2897,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  </tr>
                 |</table>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay."),
         )
@@ -3134,7 +2912,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  *hello*
                 |         <foo><a>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3154,7 +2932,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</div>
                 |*foo*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3176,7 +2954,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</DIV>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3201,7 +2979,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  class="bar">
                 |</div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3217,8 +2995,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |  class="bar">
                 |</div>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3231,7 +3009,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  baz">
                 |</div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3247,8 +3025,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |  baz">
                 |</div>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3262,7 +3040,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |*bar*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3271,10 +3049,7 @@ class MarkdownProcessorDocumentParsingTest {
          * *foo*
          * <p><em>bar</em></p>
          */
-        parsed.assertEquals(
-            htmlBlock("<div>\n*foo*"),
-            Paragraph(Emphasis("*", Text("bar"))),
-        )
+        parsed.assertEquals(htmlBlock("<div>\n*foo*"), Paragraph(Emphasis("*", Text("bar"))))
     }
 
     @Test
@@ -3285,7 +3060,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<div id="foo"
                 |*hi*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3304,7 +3079,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<div class
                 |foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3323,7 +3098,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<div *???-&&&-<---
                 |*foo*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3354,7 +3129,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |</td></tr></table>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3370,8 +3145,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |</td></tr></table>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3385,7 +3160,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |int x = 33;
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3403,8 +3178,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |int x = 33;
                 |```
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3417,7 +3192,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*bar*
                 |</a>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3433,8 +3208,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |*bar*
                 |</a>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3447,7 +3222,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*bar*
                 |</Warning>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3463,8 +3238,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |*bar*
                 |</Warning>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3477,7 +3252,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*bar*
                 |</i>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3493,8 +3268,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |*bar*
                 |</i>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3506,7 +3281,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</ins>
                 |*bar*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3520,8 +3295,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |</ins>
                 |*bar*
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3534,7 +3309,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*foo*
                 |</del>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3550,8 +3325,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |*foo*
                 |</del>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3566,7 +3341,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</del>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3575,11 +3350,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo</em></p>
          * </del>
          */
-        parsed.assertEquals(
-            htmlBlock("<del>"),
-            Paragraph(Emphasis("*", Text("foo"))),
-            htmlBlock("</del>"),
-        )
+        parsed.assertEquals(htmlBlock("<del>"), Paragraph(Emphasis("*", Text("foo"))), htmlBlock("</del>"))
     }
 
     @Test
@@ -3590,13 +3361,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><del><em>foo</em></del></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                HtmlInline("<del>"),
-                Emphasis("*", Text("foo")),
-                HtmlInline("</del>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(HtmlInline("<del>"), Emphasis("*", Text("foo")), HtmlInline("</del>")))
     }
 
     @Test
@@ -3612,7 +3377,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</code></pre>
                 |okay
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3635,7 +3400,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |main = print $ parseTags tags
                 |</code></pre>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay"),
         )
@@ -3653,7 +3418,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</script>
                 |okay
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3674,7 +3439,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |document.getElementById("demo").innerHTML = "Hello JavaScript!";
                 |</script>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay"),
         )
@@ -3693,7 +3458,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</textarea>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3717,8 +3482,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</textarea>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3735,7 +3500,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</style>
                 |okay
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3758,7 +3523,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |p {color:blue;}
                 |</style>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay"),
         )
@@ -3774,7 +3539,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3792,8 +3557,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |foo
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3807,7 +3572,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3818,10 +3583,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <p>bar</p>
          */
-        parsed.assertEquals(
-            blockQuote(htmlBlock("<div>\nfoo")),
-            paragraph("bar"),
-        )
+        parsed.assertEquals(blockQuote(htmlBlock("<div>\nfoo")), paragraph("bar"))
     }
 
     @Test
@@ -3832,7 +3594,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- <div>
                 |- foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3844,12 +3606,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>foo</li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(htmlBlock("<div>")),
-                listItem(paragraph("foo")),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(htmlBlock("<div>")), listItem(paragraph("foo"))))
     }
 
     @Test
@@ -3860,7 +3617,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<style>p{color:red;}</style>
                 |*foo*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3868,10 +3625,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <style>p{color:red;}</style>
          * <p><em>foo</em></p>
          */
-        parsed.assertEquals(
-            htmlBlock("<style>p{color:red;}</style>"),
-            Paragraph(Emphasis("*", Text("foo"))),
-        )
+        parsed.assertEquals(htmlBlock("<style>p{color:red;}</style>"), Paragraph(Emphasis("*", Text("foo"))))
     }
 
     @Test
@@ -3882,7 +3636,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<!-- foo -->*bar*
                 |*baz*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3890,10 +3644,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <!-- foo -->*bar*
          * <p><em>baz</em></p>
          */
-        parsed.assertEquals(
-            htmlBlock("<!-- foo -->*bar*"),
-            Paragraph(Emphasis("*", Text("baz"))),
-        )
+        parsed.assertEquals(htmlBlock("<!-- foo -->*bar*"), Paragraph(Emphasis("*", Text("baz"))))
     }
 
     @Test
@@ -3905,7 +3656,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |</script>1. *bar*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3921,8 +3672,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |</script>1. *bar*
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -3937,7 +3688,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |   baz -->
                 |okay
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3956,7 +3707,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |bar
                 |   baz -->
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay"),
         )
@@ -3974,7 +3725,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |?>
                 |okay
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -3995,7 +3746,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |?>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay"),
         )
@@ -4031,7 +3782,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |]]>
                 |okay
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4066,7 +3817,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |}
                 |]]>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
             paragraph("okay"),
         )
@@ -4081,7 +3832,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    <!-- foo -->
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4090,10 +3841,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <pre><code>&lt;!-- foo --&gt;
          * </code></pre>
          */
-        parsed.assertEquals(
-            htmlBlock("  <!-- foo -->"),
-            indentedCodeBlock("<!-- foo -->"),
-        )
+        parsed.assertEquals(htmlBlock("  <!-- foo -->"), indentedCodeBlock("<!-- foo -->"))
     }
 
     @Test
@@ -4105,7 +3853,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    <div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4114,10 +3862,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <pre><code>&lt;div&gt;
          * </code></pre>
          */
-        parsed.assertEquals(
-            htmlBlock("  <div>"),
-            indentedCodeBlock("<div>"),
-        )
+        parsed.assertEquals(htmlBlock("  <div>"), indentedCodeBlock("<div>"))
     }
 
     @Test
@@ -4130,7 +3875,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |bar
                 |</div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4148,7 +3893,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |bar
                 |</div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             ),
         )
     }
@@ -4163,7 +3908,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |</div>
                 |*foo*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4181,8 +3926,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |</div>
                 |*foo*
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -4195,7 +3940,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<a href="bar">
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4205,13 +3950,7 @@ class MarkdownProcessorDocumentParsingTest {
          * baz</p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Text("Foo"),
-                SoftLineBreak,
-                HtmlInline("<a href=\"bar\">"),
-                SoftLineBreak,
-                Text("baz"),
-            ),
+            Paragraph(Text("Foo"), SoftLineBreak, HtmlInline("<a href=\"bar\">"), SoftLineBreak, Text("baz"))
         )
     }
 
@@ -4226,7 +3965,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4251,7 +3990,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*Emphasized* text.
                 |</div>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4267,8 +4006,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |*Emphasized* text.
                 |</div>
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -4289,7 +4028,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</table>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4328,7 +4067,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |</table>
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4360,7 +4099,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4381,7 +4120,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4400,16 +4139,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[Foo*bar\]]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p><a href="my_(url)" title="title (with parens)">Foo*bar]</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(Link(destination = "my_(url)", title = "title (with parens)", Text("Foo*bar]"))),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "my_(url)", title = "title (with parens)", Text("Foo*bar]"))))
     }
 
     @Test
@@ -4423,7 +4160,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[Foo bar]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4446,7 +4183,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4471,7 +4208,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4480,11 +4217,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>with blank line'</p>
          * <p>[foo]</p>
          */
-        parsed.assertEquals(
-            paragraph("[foo]: /url 'title"),
-            paragraph("with blank line'"),
-            paragraph("[foo]"),
-        )
+        parsed.assertEquals(paragraph("[foo]: /url 'title"), paragraph("with blank line'"), paragraph("[foo]"))
     }
 
     @Test
@@ -4497,7 +4230,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4516,7 +4249,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4524,10 +4257,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo]:</p>
          * <p>[foo]</p>
          */
-        parsed.assertEquals(
-            paragraph("[foo]:"),
-            paragraph("[foo]"),
-        )
+        parsed.assertEquals(paragraph("[foo]:"), paragraph("[foo]"))
     }
 
     @Test
@@ -4539,7 +4269,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4558,7 +4288,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4566,10 +4296,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo]: <bar>(baz)</p>
          * <p>[foo]</p>
          */
-        parsed.assertEquals(
-            Paragraph(Text("[foo]: "), HtmlInline("<bar>"), Text("(baz)")),
-            paragraph("[foo]"),
-        )
+        parsed.assertEquals(Paragraph(Text("[foo]: "), HtmlInline("<bar>"), Text("(baz)")), paragraph("[foo]"))
     }
 
     @Test
@@ -4581,7 +4308,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4600,7 +4327,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4620,7 +4347,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[foo]: first
                 |[foo]: second
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4639,7 +4366,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[Foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4658,7 +4385,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[αγω]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4689,7 +4416,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |]: /url
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4718,7 +4445,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[foo]: /url
                 |"title" ok
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4737,7 +4464,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4746,10 +4473,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <p>[foo]</p>
          */
-        parsed.assertEquals(
-            indentedCodeBlock("[foo]: /url \"title\""),
-            paragraph("[foo]"),
-        )
+        parsed.assertEquals(indentedCodeBlock("[foo]: /url \"title\""), paragraph("[foo]"))
     }
 
     @Test
@@ -4763,7 +4487,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4772,10 +4496,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <p>[foo]</p>
          */
-        parsed.assertEquals(
-            fencedCodeBlock("[foo]: /url"),
-            paragraph("[foo]"),
-        )
+        parsed.assertEquals(fencedCodeBlock("[foo]: /url"), paragraph("[foo]"))
     }
 
     @Test
@@ -4788,7 +4509,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4797,14 +4518,7 @@ class MarkdownProcessorDocumentParsingTest {
          * [bar]: /baz</p>
          * <p>[bar]</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("Foo"),
-                SoftLineBreak,
-                Text("[bar]: /baz"),
-            ),
-            paragraph("[bar]"),
-        )
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("[bar]: /baz")), paragraph("[bar]"))
     }
 
     @Test
@@ -4816,7 +4530,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[foo]: /url
                 |> bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4842,7 +4556,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |===
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4865,7 +4579,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |===
                 |[foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4874,11 +4588,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <a href="/url">foo</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Text("==="),
-                SoftLineBreak,
-                Link(destination = "/url", title = null, Text("foo")),
-            ),
+            Paragraph(Text("==="), SoftLineBreak, Link(destination = "/url", title = null, Text("foo")))
         )
     }
 
@@ -4896,7 +4606,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[bar],
                 |[baz]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4914,7 +4624,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text(","),
                 SoftLineBreak,
                 Link(destination = "/baz-url", title = null, Text("baz")),
-            ),
+            )
         )
     }
 
@@ -4927,7 +4637,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |> [foo]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4936,10 +4646,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <blockquote>
          * </blockquote>
          */
-        parsed.assertEquals(
-            Paragraph(Link(destination = "/url", title = null, Text("foo"))),
-            blockQuote(),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = null, Text("foo"))), blockQuote())
     }
 
     @Test
@@ -4951,7 +4658,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -4959,10 +4666,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>aaa</p>
          * <p>bbb</p>
          */
-        parsed.assertEquals(
-            paragraph("aaa"),
-            paragraph("bbb"),
-        )
+        parsed.assertEquals(paragraph("aaa"), paragraph("bbb"))
     }
 
     @Test
@@ -4976,7 +4680,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |ccc
                 |ddd
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5002,7 +4706,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5010,10 +4714,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>aaa</p>
          * <p>bbb</p>
          */
-        parsed.assertEquals(
-            paragraph("aaa"),
-            paragraph("bbb"),
-        )
+        parsed.assertEquals(paragraph("aaa"), paragraph("bbb"))
     }
 
     @Test
@@ -5024,7 +4725,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  aaa
                 | bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5044,7 +4745,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |             bbb
                 |                                       ccc
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5053,15 +4754,7 @@ class MarkdownProcessorDocumentParsingTest {
          * bbb
          * ccc</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("aaa"),
-                SoftLineBreak,
-                Text("bbb"),
-                SoftLineBreak,
-                Text("ccc"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("aaa"), SoftLineBreak, Text("bbb"), SoftLineBreak, Text("ccc")))
     }
 
     @Test
@@ -5072,7 +4765,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |   aaa
                 |bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5091,7 +4784,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    aaa
                 |bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5100,10 +4793,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          * <p>bbb</p>
          */
-        parsed.assertEquals(
-            indentedCodeBlock("aaa"),
-            paragraph("bbb"),
-        )
+        parsed.assertEquals(indentedCodeBlock("aaa"), paragraph("bbb"))
     }
 
     @Test
@@ -5114,7 +4804,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |aaa     
                 |bbb     
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5139,7 +4829,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |  
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5147,10 +4837,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>aaa</p>
          * <h1>aaa</h1>
          */
-        parsed.assertEquals(
-            paragraph("aaa"),
-            heading(level = 1, Text("aaa")),
-        )
+        parsed.assertEquals(paragraph("aaa"), heading(level = 1, Text("aaa")))
     }
 
     @Test
@@ -5162,7 +4849,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> bar
                 |> baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5174,10 +4861,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            blockQuote(
-                heading(level = 1, Text("Foo")),
-                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
-            ),
+            blockQuote(heading(level = 1, Text("Foo")), Paragraph(Text("bar"), SoftLineBreak, Text("baz")))
         )
     }
 
@@ -5190,7 +4874,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>bar
                 |> baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5202,10 +4886,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            blockQuote(
-                heading(level = 1, Text("Foo")),
-                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
-            ),
+            blockQuote(heading(level = 1, Text("Foo")), Paragraph(Text("bar"), SoftLineBreak, Text("baz")))
         )
     }
 
@@ -5218,7 +4899,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |   > bar
                 | > baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5230,10 +4911,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            blockQuote(
-                heading(level = 1, Text("Foo")),
-                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
-            ),
+            blockQuote(heading(level = 1, Text("Foo")), Paragraph(Text("bar"), SoftLineBreak, Text("baz")))
         )
     }
 
@@ -5246,7 +4924,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    > bar
                 |    > baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5268,7 +4946,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> bar
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5280,10 +4958,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            blockQuote(
-                heading(level = 1, Text("Foo")),
-                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
-            ),
+            blockQuote(heading(level = 1, Text("Foo")), Paragraph(Text("bar"), SoftLineBreak, Text("baz")))
         )
     }
 
@@ -5296,7 +4971,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |baz
                 |> foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5307,17 +4982,7 @@ class MarkdownProcessorDocumentParsingTest {
          * foo</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(
-                Paragraph(
-                    Text("bar"),
-                    SoftLineBreak,
-                    Text("baz"),
-                    SoftLineBreak,
-                    Text("foo"),
-                ),
-            ),
-        )
+        parsed.assertEquals(blockQuote(Paragraph(Text("bar"), SoftLineBreak, Text("baz"), SoftLineBreak, Text("foo"))))
     }
 
     @Test
@@ -5328,7 +4993,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> foo
                 |---
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5338,10 +5003,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <hr />
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("foo")),
-            thematicBreak(),
-        )
+        parsed.assertEquals(blockQuote(paragraph("foo")), thematicBreak())
     }
 
     @Test
@@ -5352,7 +5014,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> - foo
                 |- bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5380,7 +5042,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>     foo
                 |    bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5392,10 +5054,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <pre><code>bar
          * </code></pre>
          */
-        parsed.assertEquals(
-            blockQuote(indentedCodeBlock("foo")),
-            indentedCodeBlock("bar"),
-        )
+        parsed.assertEquals(blockQuote(indentedCodeBlock("foo")), indentedCodeBlock("bar"))
     }
 
     @Test
@@ -5407,7 +5066,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |```
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5418,11 +5077,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo</p>
          * <pre><code></code></pre>
          */
-        parsed.assertEquals(
-            blockQuote(fencedCodeBlock("")),
-            paragraph("foo"),
-            fencedCodeBlock(""),
-        )
+        parsed.assertEquals(blockQuote(fencedCodeBlock("")), paragraph("foo"), fencedCodeBlock(""))
     }
 
     @Test
@@ -5433,7 +5088,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> foo
                 |    - bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5467,7 +5122,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>  
                 |> 
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5487,7 +5142,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> foo
                 |>  
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5508,7 +5163,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |> bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5520,10 +5175,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>bar</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("foo")),
-            blockQuote(paragraph("bar")),
-        )
+        parsed.assertEquals(blockQuote(paragraph("foo")), blockQuote(paragraph("bar")))
     }
 
     @Test
@@ -5534,7 +5186,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> foo
                 |> bar
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5556,7 +5208,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>
                 |> bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5566,12 +5218,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>bar</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(
-                paragraph("foo"),
-                paragraph("bar"),
-            ),
-        )
+        parsed.assertEquals(blockQuote(paragraph("foo"), paragraph("bar")))
     }
 
     @Test
@@ -5582,7 +5229,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |> bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5592,10 +5239,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>bar</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            paragraph("foo"),
-            blockQuote(paragraph("bar")),
-        )
+        parsed.assertEquals(paragraph("foo"), blockQuote(paragraph("bar")))
     }
 
     @Test
@@ -5607,7 +5251,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |***
                 |> bbb
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5620,11 +5264,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>bbb</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("aaa")),
-            thematicBreak(),
-            blockQuote(paragraph("bbb")),
-        )
+        parsed.assertEquals(blockQuote(paragraph("aaa")), thematicBreak(), blockQuote(paragraph("bbb")))
     }
 
     @Test
@@ -5635,7 +5275,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> bar
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5657,7 +5297,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5667,10 +5307,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <p>baz</p>
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("bar")),
-            paragraph("baz"),
-        )
+        parsed.assertEquals(blockQuote(paragraph("bar")), paragraph("baz"))
     }
 
     @Test
@@ -5682,7 +5319,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5692,10 +5329,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * <p>baz</p>
          */
-        parsed.assertEquals(
-            blockQuote(paragraph("bar")),
-            paragraph("baz"),
-        )
+        parsed.assertEquals(blockQuote(paragraph("bar")), paragraph("baz"))
     }
 
     @Test
@@ -5706,7 +5340,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> > > foo
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5720,13 +5354,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(
-                blockQuote(
-                    blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("bar"))),
-                ),
-            ),
-        )
+        parsed.assertEquals(blockQuote(blockQuote(blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("bar"))))))
     }
 
     @Test
@@ -5738,7 +5366,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> bar
                 |>>baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5755,18 +5383,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                blockQuote(
-                    blockQuote(
-                        Paragraph(
-                            Text("foo"),
-                            SoftLineBreak,
-                            Text("bar"),
-                            SoftLineBreak,
-                            Text("baz"),
-                        ),
-                    ),
-                ),
-            ),
+                blockQuote(blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("bar"), SoftLineBreak, Text("baz"))))
+            )
         )
     }
 
@@ -5779,7 +5397,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |>    not code
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5792,10 +5410,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>not code</p>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(indentedCodeBlock("code")),
-            blockQuote(paragraph("not code")),
-        )
+        parsed.assertEquals(blockQuote(indentedCodeBlock("code")), blockQuote(paragraph("not code")))
     }
 
     @Test
@@ -5810,7 +5425,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |> A block quote.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5842,7 +5457,7 @@ class MarkdownProcessorDocumentParsingTest {
             |
             |    > A block quote.
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5867,7 +5482,7 @@ class MarkdownProcessorDocumentParsingTest {
                     blockQuote(paragraph("A block quote.")),
                 ),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -5880,7 +5495,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 | two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5890,10 +5505,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <p>two</p>
          */
-        parsed.assertEquals(
-            unorderedList(listItem(paragraph("one"))),
-            paragraph("two"),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"))), paragraph("two"))
     }
 
     @Test
@@ -5905,7 +5517,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |  two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5917,12 +5529,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("one"), paragraph("two")),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"), paragraph("two")), isTight = false))
     }
 
     @Test
@@ -5934,7 +5541,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |     two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5945,10 +5552,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <pre><code> two
          * </code></pre>
          */
-        parsed.assertEquals(
-            unorderedList(listItem(paragraph("one"))),
-            indentedCodeBlock(" two"),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"))), indentedCodeBlock(" two"))
     }
 
     @Test
@@ -5960,7 +5564,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |      two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -5972,12 +5576,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("one"), paragraph("two")),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"), paragraph("two")), isTight = false))
     }
 
     @Test
@@ -5989,7 +5588,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>>
                 |>>     two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6006,14 +5605,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            blockQuote(
-                blockQuote(
-                    orderedList(
-                        listItem(paragraph("one"), paragraph("two")),
-                        isTight = false,
-                    ),
-                ),
-            ),
+            blockQuote(blockQuote(orderedList(listItem(paragraph("one"), paragraph("two")), isTight = false)))
         )
     }
 
@@ -6026,7 +5618,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |>>
                 |  >  > two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6040,14 +5632,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * </blockquote>
          */
-        parsed.assertEquals(
-            blockQuote(
-                blockQuote(
-                    unorderedList(listItem(paragraph("one"))),
-                    paragraph("two"),
-                ),
-            ),
-        )
+        parsed.assertEquals(blockQuote(blockQuote(unorderedList(listItem(paragraph("one"))), paragraph("two"))))
     }
 
     @Test
@@ -6059,7 +5644,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |2.two
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6067,10 +5652,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>-one</p>
          * <p>2.two</p>
          */
-        parsed.assertEquals(
-            paragraph("-one"),
-            paragraph("2.two"),
-        )
+        parsed.assertEquals(paragraph("-one"), paragraph("2.two"))
     }
 
     @Test
@@ -6083,7 +5665,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |  bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6095,15 +5677,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(
-                    paragraph("foo"),
-                    paragraph("bar"),
-                ),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
     }
 
     @Test
@@ -6121,7 +5695,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    > bam
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6140,14 +5714,9 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(
-                    paragraph("foo"),
-                    fencedCodeBlock("bar"),
-                    paragraph("baz"),
-                    blockQuote(paragraph("bam")),
-                ),
+                listItem(paragraph("foo"), fencedCodeBlock("bar"), paragraph("baz"), blockQuote(paragraph("bam"))),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6163,7 +5732,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |      baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6180,10 +5749,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("Foo"), indentedCodeBlock("bar\n\n\nbaz")),
-                isTight = false,
-            ),
+            unorderedList(listItem(paragraph("Foo"), indentedCodeBlock("bar\n\n\nbaz")), isTight = false)
         )
     }
 
@@ -6257,7 +5823,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |      bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6270,12 +5836,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo"), indentedCodeBlock("bar")),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), indentedCodeBlock("bar")), isTight = false))
     }
 
     @Test
@@ -6287,7 +5848,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |           bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6301,11 +5862,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(paragraph("foo"), indentedCodeBlock("bar")),
-                startFrom = 10,
-                isTight = false,
-            ),
+            orderedList(listItem(paragraph("foo"), indentedCodeBlock("bar")), startFrom = 10, isTight = false)
         )
     }
 
@@ -6320,7 +5877,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    more code
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6331,11 +5888,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <pre><code>more code
          * </code></pre>
          */
-        parsed.assertEquals(
-            indentedCodeBlock("indented code"),
-            paragraph("paragraph"),
-            indentedCodeBlock("more code"),
-        )
+        parsed.assertEquals(indentedCodeBlock("indented code"), paragraph("paragraph"), indentedCodeBlock("more code"))
     }
 
     @Test
@@ -6349,7 +5902,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |       more code
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6366,13 +5919,9 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(
-                    indentedCodeBlock("indented code"),
-                    paragraph("paragraph"),
-                    indentedCodeBlock("more code"),
-                ),
+                listItem(indentedCodeBlock("indented code"), paragraph("paragraph"), indentedCodeBlock("more code")),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6387,7 +5936,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |       more code
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6404,13 +5953,9 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(
-                    indentedCodeBlock(" indented code"),
-                    paragraph("paragraph"),
-                    indentedCodeBlock("more code"),
-                ),
+                listItem(indentedCodeBlock(" indented code"), paragraph("paragraph"), indentedCodeBlock("more code")),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6423,7 +5968,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6431,10 +5976,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo</p>
          * <p>bar</p>
          */
-        parsed.assertEquals(
-            paragraph("foo"),
-            paragraph("bar"),
-        )
+        parsed.assertEquals(paragraph("foo"), paragraph("bar"))
     }
 
     @Test
@@ -6446,7 +5988,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |  bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6456,10 +5998,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <p>bar</p>
          */
-        parsed.assertEquals(
-            unorderedList(listItem(paragraph("foo"))),
-            paragraph("bar"),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"))), paragraph("bar"))
     }
 
     @Test
@@ -6471,7 +6010,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |   bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6483,12 +6022,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo"), paragraph("bar")),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
     }
 
     @Test
@@ -6505,7 +6039,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |-
                 |      baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6527,7 +6061,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("foo")),
                 listItem(fencedCodeBlock("bar")),
                 listItem(indentedCodeBlock("baz")),
-            ),
+            )
         )
     }
 
@@ -6539,7 +6073,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |-   
                 |  foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6560,7 +6094,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |  foo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6570,10 +6104,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <p>foo</p>
          */
-        parsed.assertEquals(
-            unorderedList(listItem()),
-            paragraph("foo"),
-        )
+        parsed.assertEquals(unorderedList(listItem()), paragraph("foo"))
     }
 
     @Test
@@ -6585,7 +6116,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |-
                 |- bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6596,13 +6127,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>bar</li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo")),
-                listItem(),
-                listItem(paragraph("bar")),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo")), listItem(), listItem(paragraph("bar"))))
     }
 
     @Test
@@ -6614,7 +6139,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |-   
                 |- bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6625,13 +6150,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>bar</li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo")),
-                listItem(),
-                listItem(paragraph("bar")),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo")), listItem(), listItem(paragraph("bar"))))
     }
 
     @Test
@@ -6643,7 +6162,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |2.
                 |3. bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6654,13 +6173,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>bar</li>
          * </ol>
          */
-        parsed.assertEquals(
-            orderedList(
-                listItem(paragraph("foo")),
-                listItem(),
-                listItem(paragraph("bar")),
-            ),
-        )
+        parsed.assertEquals(orderedList(listItem(paragraph("foo")), listItem(), listItem(paragraph("bar"))))
     }
 
     @Test
@@ -6687,7 +6200,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |1.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6715,7 +6228,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |     > A block quote.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6740,7 +6253,7 @@ class MarkdownProcessorDocumentParsingTest {
                     blockQuote(paragraph("A block quote.")),
                 ),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6756,7 +6269,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |      > A block quote.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6781,7 +6294,7 @@ class MarkdownProcessorDocumentParsingTest {
                     blockQuote(paragraph("A block quote.")),
                 ),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6797,7 +6310,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |       > A block quote.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6822,7 +6335,7 @@ class MarkdownProcessorDocumentParsingTest {
                     blockQuote(paragraph("A block quote.")),
                 ),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6838,7 +6351,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |        > A block quote.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6861,8 +6374,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    > A block quote.
                 """
-                    .trimMargin(),
-            ),
+                    .trimMargin()
+            )
         )
     }
 
@@ -6878,7 +6391,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |      > A block quote.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6903,7 +6416,7 @@ class MarkdownProcessorDocumentParsingTest {
                     blockQuote(paragraph("A block quote.")),
                 ),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -6915,7 +6428,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  1.  A paragraph
                 |    with two lines.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6926,9 +6439,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines."))),
-            ),
+            orderedList(listItem(Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines."))))
         )
     }
 
@@ -6940,7 +6451,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> 1. > Blockquote
                 |continued here.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6958,12 +6469,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                orderedList(
-                    listItem(
-                        blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here."))),
-                    ),
-                ),
-            ),
+                orderedList(listItem(blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here.")))))
+            )
         )
     }
 
@@ -6975,7 +6482,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |> 1. > Blockquote
                 |> continued here.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -6993,12 +6500,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                orderedList(
-                    listItem(
-                        blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here."))),
-                    ),
-                ),
-            ),
+                orderedList(listItem(blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here.")))))
+            )
         )
     }
 
@@ -7012,7 +6515,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    - baz
                 |      - boo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7040,16 +6543,11 @@ class MarkdownProcessorDocumentParsingTest {
                     unorderedList(
                         listItem(
                             paragraph("bar"),
-                            unorderedList(
-                                listItem(
-                                    paragraph("baz"),
-                                    unorderedList(listItem(paragraph("boo"))),
-                                ),
-                            ),
-                        ),
+                            unorderedList(listItem(paragraph("baz"), unorderedList(listItem(paragraph("boo"))))),
+                        )
                     ),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -7063,7 +6561,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  - baz
                 |   - boo
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7081,7 +6579,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("bar")),
                 listItem(paragraph("baz")),
                 listItem(paragraph("boo")),
-            ),
+            )
         )
     }
 
@@ -7093,7 +6591,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |10) foo
                 |    - bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7108,13 +6606,10 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(
-                    paragraph("foo"),
-                    unorderedList(listItem(paragraph("bar"))),
-                ),
+                listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar")))),
                 startFrom = 10,
                 delimiter = ")",
-            ),
+            )
         )
     }
 
@@ -7126,7 +6621,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |10) foo
                 |   - bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7139,11 +6634,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(paragraph("foo")),
-                startFrom = 10,
-                delimiter = ")",
-            ),
+            orderedList(listItem(paragraph("foo")), startFrom = 10, delimiter = ")"),
             unorderedList(listItem(paragraph("bar"))),
         )
     }
@@ -7162,13 +6653,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(
-                    unorderedList(listItem(paragraph("foo"))),
-                ),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(unorderedList(listItem(paragraph("foo"))))))
     }
 
     @Test
@@ -7190,18 +6675,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(
-                    unorderedList(
-                        listItem(
-                            orderedList(
-                                listItem(paragraph("foo")),
-                                startFrom = 2,
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+            orderedList(listItem(unorderedList(listItem(orderedList(listItem(paragraph("foo")), startFrom = 2)))))
         )
     }
 
@@ -7215,7 +6689,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  ---
                 |  baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7233,7 +6707,7 @@ class MarkdownProcessorDocumentParsingTest {
             unorderedList(
                 listItem(heading(level = 1, Text("Foo"))),
                 listItem(heading(level = 2, Text("Bar")), paragraph("baz")),
-            ),
+            )
         )
     }
 
@@ -7246,7 +6720,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- bar
                 |+ baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7260,14 +6734,8 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo")),
-                listItem(paragraph("bar")),
-            ),
-            unorderedList(
-                listItem(paragraph("baz")),
-                marker = "+",
-            ),
+            unorderedList(listItem(paragraph("foo")), listItem(paragraph("bar"))),
+            unorderedList(listItem(paragraph("baz")), marker = "+"),
         )
     }
 
@@ -7280,7 +6748,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |2. bar
                 |3) baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7294,15 +6762,8 @@ class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(paragraph("foo")),
-                listItem(paragraph("bar")),
-            ),
-            orderedList(
-                listItem(paragraph("baz")),
-                startFrom = 3,
-                delimiter = ")",
-            ),
+            orderedList(listItem(paragraph("foo")), listItem(paragraph("bar"))),
+            orderedList(listItem(paragraph("baz")), startFrom = 3, delimiter = ")"),
         )
     }
 
@@ -7315,7 +6776,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- bar
                 |- baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7326,13 +6787,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <li>baz</li>
          * </ul>
          */
-        parsed.assertEquals(
-            paragraph("Foo"),
-            unorderedList(
-                listItem(paragraph("bar")),
-                listItem(paragraph("baz")),
-            ),
-        )
+        parsed.assertEquals(paragraph("Foo"), unorderedList(listItem(paragraph("bar")), listItem(paragraph("baz"))))
     }
 
     @Test
@@ -7343,7 +6798,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |The number of windows in my house is
                 |14.  The number of doors is 6.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7356,7 +6811,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text("The number of windows in my house is"),
                 SoftLineBreak,
                 Text("14.  The number of doors is 6."),
-            ),
+            )
         )
     }
 
@@ -7368,7 +6823,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |The number of windows in my house is
                 |1.  The number of doors is 6.
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7396,7 +6851,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |- baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7419,7 +6874,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("bar")),
                 listItem(paragraph("baz")),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -7435,7 +6890,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |      bim
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7462,17 +6917,11 @@ class MarkdownProcessorDocumentParsingTest {
                     unorderedList(
                         listItem(
                             paragraph("bar"),
-                            unorderedList(
-                                listItem(
-                                    paragraph("baz"),
-                                    paragraph("bim"),
-                                ),
-                                isTight = false,
-                            ),
-                        ),
+                            unorderedList(listItem(paragraph("baz"), paragraph("bim")), isTight = false),
+                        )
                     ),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -7489,7 +6938,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- baz
                 |- bim
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7505,15 +6954,9 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("foo")),
-                listItem(paragraph("bar")),
-            ),
+            unorderedList(listItem(paragraph("foo")), listItem(paragraph("bar"))),
             htmlBlock("<!-- -->"),
-            unorderedList(
-                listItem(paragraph("baz")),
-                listItem(paragraph("bim")),
-            ),
+            unorderedList(listItem(paragraph("baz")), listItem(paragraph("bim"))),
         )
     }
 
@@ -7532,7 +6975,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    code
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7574,7 +7017,7 @@ class MarkdownProcessorDocumentParsingTest {
                 | - f
                 |- g
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7598,7 +7041,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("e")),
                 listItem(paragraph("f")),
                 listItem(paragraph("g")),
-            ),
+            )
         )
     }
 
@@ -7613,7 +7056,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |   3. c
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7631,12 +7074,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b")),
-                listItem(paragraph("c")),
-                isTight = false,
-            ),
+            orderedList(listItem(paragraph("a")), listItem(paragraph("b")), listItem(paragraph("c")), isTight = false)
         )
     }
 
@@ -7651,7 +7089,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |   - d
                 |    - e
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7670,7 +7108,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("b")),
                 listItem(paragraph("c")),
                 listItem(Paragraph(Text("d"), SoftLineBreak, Text("- e"))),
-            ),
+            )
         )
     }
 
@@ -7685,7 +7123,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |    3. c
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7702,11 +7140,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          */
         parsed.assertEquals(
-            orderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b")),
-                isTight = false,
-            ),
+            orderedList(listItem(paragraph("a")), listItem(paragraph("b")), isTight = false),
             indentedCodeBlock("3. c"),
         )
     }
@@ -7721,7 +7155,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |- c
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7739,12 +7173,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b")),
-                listItem(paragraph("c")),
-                isTight = false,
-            ),
+            unorderedList(listItem(paragraph("a")), listItem(paragraph("b")), listItem(paragraph("c")), isTight = false)
         )
     }
 
@@ -7758,7 +7187,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |* c
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7774,13 +7203,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("a")),
-                listItem(),
-                listItem(paragraph("c")),
-                isTight = false,
-                marker = "*",
-            ),
+            unorderedList(listItem(paragraph("a")), listItem(), listItem(paragraph("c")), isTight = false, marker = "*")
         )
     }
 
@@ -7795,7 +7218,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  c
                 |- d
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7819,7 +7242,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("b"), paragraph("c")),
                 listItem(paragraph("d")),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -7834,7 +7257,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  [ref]: /url
                 |- d
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7852,12 +7275,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b")),
-                listItem(paragraph("d")),
-                isTight = false,
-            ),
+            unorderedList(listItem(paragraph("a")), listItem(paragraph("b")), listItem(paragraph("d")), isTight = false)
         )
     }
 
@@ -7874,7 +7292,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  ```
                 |- c
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7891,11 +7309,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("a")),
-                listItem(fencedCodeBlock("b")),
-                listItem(paragraph("c")),
-            ),
+            unorderedList(listItem(paragraph("a")), listItem(fencedCodeBlock("b")), listItem(paragraph("c")))
         )
     }
 
@@ -7910,7 +7324,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |    c
                 |- d
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7929,18 +7343,9 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(
-                    paragraph("a"),
-                    unorderedList(
-                        listItem(
-                            paragraph("b"),
-                            paragraph("c"),
-                        ),
-                        isTight = false,
-                    ),
-                ),
+                listItem(paragraph("a"), unorderedList(listItem(paragraph("b"), paragraph("c")), isTight = false)),
                 listItem(paragraph("d")),
-            ),
+            )
         )
     }
 
@@ -7954,7 +7359,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  >
                 |* c
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -7969,11 +7374,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(
-                listItem(paragraph("a"), blockQuote(paragraph("b"))),
-                listItem(paragraph("c")),
-                marker = "*",
-            ),
+            unorderedList(listItem(paragraph("a"), blockQuote(paragraph("b"))), listItem(paragraph("c")), marker = "*")
         )
     }
 
@@ -7989,7 +7390,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  ```
                 |- d
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8007,13 +7408,9 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(
-                    paragraph("a"),
-                    blockQuote(paragraph("b")),
-                    fencedCodeBlock("c"),
-                ),
+                listItem(paragraph("a"), blockQuote(paragraph("b")), fencedCodeBlock("c")),
                 listItem(paragraph("d")),
-            ),
+            )
         )
     }
 
@@ -8038,7 +7435,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |- a
                 |  - b
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8051,14 +7448,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(
-            unorderedList(
-                listItem(
-                    paragraph("a"),
-                    unorderedList(listItem(paragraph("b"))),
-                ),
-            ),
-        )
+        parsed.assertEquals(unorderedList(listItem(paragraph("a"), unorderedList(listItem(paragraph("b"))))))
     }
 
     @Test
@@ -8072,7 +7462,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |   bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8085,15 +7475,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ol>
          */
-        parsed.assertEquals(
-            orderedList(
-                listItem(
-                    fencedCodeBlock("foo"),
-                    paragraph("bar"),
-                ),
-                isTight = false,
-            ),
-        )
+        parsed.assertEquals(orderedList(listItem(fencedCodeBlock("foo"), paragraph("bar")), isTight = false))
     }
 
     @Test
@@ -8106,7 +7488,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |  baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8123,17 +7505,10 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(
-                    paragraph("foo"),
-                    unorderedList(
-                        listItem(paragraph("bar")),
-                        marker = "*",
-                    ),
-                    paragraph("baz"),
-                ),
+                listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar")), marker = "*"), paragraph("baz")),
                 marker = "*",
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -8150,7 +7525,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |  - e
                 |  - f
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8174,22 +7549,10 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(
-                    paragraph("a"),
-                    unorderedList(
-                        listItem(paragraph("b")),
-                        listItem(paragraph("c")),
-                    ),
-                ),
-                listItem(
-                    paragraph("d"),
-                    unorderedList(
-                        listItem(paragraph("e")),
-                        listItem(paragraph("f")),
-                    ),
-                ),
+                listItem(paragraph("a"), unorderedList(listItem(paragraph("b")), listItem(paragraph("c")))),
+                listItem(paragraph("d"), unorderedList(listItem(paragraph("e")), listItem(paragraph("f")))),
                 isTight = false,
-            ),
+            )
         )
     }
 
@@ -8278,7 +7641,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |` `
                 |`  `
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8300,7 +7663,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |baz
                 |``
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8319,7 +7682,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo 
                 |``
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8337,7 +7700,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |`foo   bar 
                 |baz`
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8444,10 +7807,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="https://foo.bar.%60baz">https://foo.bar.`baz</a>`</p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(destination = "https://foo.bar.`baz", title = null, Text("https://foo.bar.`baz")),
-                Text("`"),
-            ),
+            Paragraph(Link(destination = "https://foo.bar.`baz", title = null, Text("https://foo.bar.`baz")), Text("`"))
         )
     }
 
@@ -8538,7 +7898,8 @@ class MarkdownProcessorDocumentParsingTest {
                 |*£*bravo.
                 |
                 |*€*charlie.
-                """.trimMargin(),
+                """
+                    .trimMargin()
             )
 
         /*
@@ -8547,11 +7908,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>*£*bravo.</p>
          * <p>*€*charlie.</p>
          */
-        parsed.assertEquals(
-            paragraph("*$*alpha."),
-            paragraph("*£*bravo."),
-            paragraph("*€*charlie."),
-        )
+        parsed.assertEquals(paragraph("*$*alpha."), paragraph("*£*bravo."), paragraph("*€*charlie."))
     }
 
     @Test
@@ -8573,13 +7930,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>5<em>6</em>78</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("5"),
-                Emphasis("*", Text("6")),
-                Text("78"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("5"), Emphasis("*", Text("6")), Text("78")))
     }
 
     @Test
@@ -8700,7 +8051,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*foo bar
                 |*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8730,16 +8081,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<em>foo</em>)</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("("),
-                    Emphasis("*", Text("foo")),
-                    Text(")"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("("), Emphasis("*", Text("foo")), Text(")"))))
     }
 
     @Test
@@ -8783,16 +8125,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<em>foo</em>)</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Text("("),
-                    Emphasis("_", Text("foo")),
-                    Text(")"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("("), Emphasis("_", Text("foo")), Text(")"))))
     }
 
     @Test
@@ -8836,12 +8169,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(bar)</em>.</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis("_", Text("(bar)")),
-                Text("."),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("(bar)")), Text(".")))
     }
 
     @Test
@@ -8885,12 +8213,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo<strong>bar</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo"),
-                StrongEmphasis("**", Text("bar")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo"), StrongEmphasis("**", Text("bar"))))
     }
 
     @Test
@@ -8923,7 +8246,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |__
                 |foo bar__
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -8987,14 +8310,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><strong>foo, <strong>bar</strong>, baz</strong></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    Text("foo, "),
-                    StrongEmphasis("__", Text("bar")),
-                    Text(", baz"),
-                ),
-            ),
+            Paragraph(StrongEmphasis("__", Text("foo, "), StrongEmphasis("__", Text("bar")), Text(", baz")))
         )
     }
 
@@ -9006,12 +8322,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo-<strong>(bar)</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo-"),
-                StrongEmphasis("__", Text("(bar)")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo-"), StrongEmphasis("__", Text("(bar)"))))
     }
 
     @Test
@@ -9044,16 +8355,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<strong>foo</strong>)</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("("),
-                    StrongEmphasis("**", Text("foo")),
-                    Text(")"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("("), StrongEmphasis("**", Text("foo")), Text(")"))))
     }
 
     @Test
@@ -9064,7 +8366,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |**Gomphocarpus (*Gomphocarpus physocarpus*, syn.
                 |*Asclepias physocarpa*)**
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -9082,8 +8384,8 @@ class MarkdownProcessorDocumentParsingTest {
                     SoftLineBreak,
                     Emphasis("*", Text("Asclepias physocarpa")),
                     Text(")"),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -9095,16 +8397,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo \""),
-                    Emphasis("*", Text("bar")),
-                    Text("\" foo"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo \""), Emphasis("*", Text("bar")), Text("\" foo"))))
     }
 
     @Test
@@ -9115,12 +8408,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong>bar</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis("**", Text("foo")),
-                Text("bar"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo")), Text("bar")))
     }
 
     @Test
@@ -9153,16 +8441,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<strong>foo</strong>)</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Text("("),
-                    StrongEmphasis("__", Text("foo")),
-                    Text(")"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("("), StrongEmphasis("__", Text("foo")), Text(")"))))
     }
 
     @Test
@@ -9206,12 +8485,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>(bar)</strong>.</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis("__", Text("(bar)")),
-                Text("."),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("(bar)")), Text(".")))
     }
 
     @Test
@@ -9223,13 +8497,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo <a href="/url">bar</a></em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo "),
-                    Link(destination = "/url", title = null, Text("bar")),
-                ),
-            ),
+            Paragraph(Emphasis("*", Text("foo "), Link(destination = "/url", title = null, Text("bar"))))
         )
     }
 
@@ -9241,7 +8509,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*foo
                 |bar*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -9249,16 +8517,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo
          * bar</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo"),
-                    SoftLineBreak,
-                    Text("bar"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"), SoftLineBreak, Text("bar"))))
     }
 
     @Test
@@ -9269,16 +8528,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar</strong> baz</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Text("foo "),
-                    StrongEmphasis("__", Text("bar")),
-                    Text(" baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("foo "), StrongEmphasis("__", Text("bar")), Text(" baz"))))
     }
 
     @Test
@@ -9289,16 +8539,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <em>bar</em> baz</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Text("foo "),
-                    Emphasis("_", Text("bar")),
-                    Text(" baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("foo "), Emphasis("_", Text("bar")), Text(" baz"))))
     }
 
     @Test
@@ -9309,15 +8550,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo</em> bar</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Emphasis("_", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Emphasis("_", Text("foo")), Text(" bar"))))
     }
 
     @Test
@@ -9328,15 +8561,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <em>bar</em></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo "),
-                    Emphasis("*", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo "), Emphasis("*", Text("bar")))))
     }
 
     @Test
@@ -9347,16 +8572,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar</strong> baz</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo "),
-                    StrongEmphasis("**", Text("bar")),
-                    Text(" baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo "), StrongEmphasis("**", Text("bar")), Text(" baz"))))
     }
 
     @Test
@@ -9367,16 +8583,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo<strong>bar</strong>baz</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo"),
-                    StrongEmphasis("**", Text("bar")),
-                    Text("baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"), StrongEmphasis("**", Text("bar")), Text("baz"))))
     }
 
     @Test
@@ -9398,15 +8605,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><strong>foo</strong> bar</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    StrongEmphasis("**", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", StrongEmphasis("**", Text("foo")), Text(" bar"))))
     }
 
     @Test
@@ -9417,15 +8616,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar</strong></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo "),
-                    StrongEmphasis("**", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo "), StrongEmphasis("**", Text("bar")))))
     }
 
     @Test
@@ -9436,15 +8627,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo<strong>bar</strong></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo"),
-                    StrongEmphasis("**", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"), StrongEmphasis("**", Text("bar")))))
     }
 
     @Test
@@ -9455,16 +8638,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo<em><strong>bar</strong></em>baz</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo"),
-                Emphasis(
-                    "*",
-                    StrongEmphasis("**", Text("bar")),
-                ),
-                Text("baz"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo"), Emphasis("*", StrongEmphasis("**", Text("bar"))), Text("baz")))
     }
 
     @Test
@@ -9478,12 +8652,9 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             Paragraph(
                 Text("foo"),
-                StrongEmphasis(
-                    "**",
-                    StrongEmphasis("**", StrongEmphasis("**", Text("bar"))),
-                ),
+                StrongEmphasis("**", StrongEmphasis("**", StrongEmphasis("**", Text("bar")))),
                 Text("***baz"),
-            ),
+            )
         )
     }
 
@@ -9500,15 +8671,10 @@ class MarkdownProcessorDocumentParsingTest {
                 Emphasis(
                     "*",
                     Text("foo "),
-                    StrongEmphasis(
-                        "**",
-                        Text("bar "),
-                        Emphasis("*", Text("baz")),
-                        Text(" bim"),
-                    ),
+                    StrongEmphasis("**", Text("bar "), Emphasis("*", Text("baz")), Text(" bim")),
                     Text(" bop"),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -9521,13 +8687,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo <a href="/url"><em>bar</em></a></em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo "),
-                    Link(destination = "/url", title = null, Emphasis("*", Text("bar"))),
-                ),
-            ),
+            Paragraph(Emphasis("*", Text("foo "), Link(destination = "/url", title = null, Emphasis("*", Text("bar")))))
         )
     }
 
@@ -9562,13 +8722,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><strong>foo <a href="/url">bar</a></strong></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    Link(destination = "/url", title = null, Text("bar")),
-                ),
-            ),
+            Paragraph(StrongEmphasis("**", Text("foo "), Link(destination = "/url", title = null, Text("bar"))))
         )
     }
 
@@ -9580,7 +8734,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |**foo
                 |bar**
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -9588,16 +8742,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><strong>foo
          * bar</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo"),
-                    SoftLineBreak,
-                    Text("bar"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo"), SoftLineBreak, Text("bar"))))
     }
 
     @Test
@@ -9608,16 +8753,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> baz</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    Text("foo "),
-                    Emphasis("_", Text("bar")),
-                    Text(" baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo "), Emphasis("_", Text("bar")), Text(" baz"))))
     }
 
     @Test
@@ -9629,14 +8765,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><strong>foo <strong>bar</strong> baz</strong></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    Text("foo "),
-                    StrongEmphasis("__", Text("bar")),
-                    Text(" baz"),
-                ),
-            ),
+            Paragraph(StrongEmphasis("__", Text("foo "), StrongEmphasis("__", Text("bar")), Text(" baz")))
         )
     }
 
@@ -9648,15 +8777,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong>foo</strong> bar</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    StrongEmphasis("__", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", StrongEmphasis("__", Text("foo")), Text(" bar"))))
     }
 
     @Test
@@ -9667,15 +8788,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <strong>bar</strong></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    StrongEmphasis("**", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo "), StrongEmphasis("**", Text("bar")))))
     }
 
     @Test
@@ -9686,16 +8799,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> baz</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    Emphasis("*", Text("bar")),
-                    Text(" baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo "), Emphasis("*", Text("bar")), Text(" baz"))))
     }
 
     @Test
@@ -9706,16 +8810,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo<em>bar</em>baz</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo"),
-                    Emphasis("*", Text("bar")),
-                    Text("baz"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo"), Emphasis("*", Text("bar")), Text("baz"))))
     }
 
     @Test
@@ -9726,15 +8821,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><em>foo</em> bar</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Emphasis("*", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Emphasis("*", Text("foo")), Text(" bar"))))
     }
 
     @Test
@@ -9745,15 +8832,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    Emphasis("*", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo "), Emphasis("*", Text("bar")))))
     }
 
     @Test
@@ -9764,7 +8843,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |**foo *bar **baz**
                 |bim* bop**
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -9777,16 +8856,10 @@ class MarkdownProcessorDocumentParsingTest {
                 StrongEmphasis(
                     "**",
                     Text("foo "),
-                    Emphasis(
-                        "*",
-                        Text("bar "),
-                        StrongEmphasis("**", Text("baz")),
-                        SoftLineBreak,
-                        Text("bim"),
-                    ),
+                    Emphasis("*", Text("bar "), StrongEmphasis("**", Text("baz")), SoftLineBreak, Text("bim")),
                     Text(" bop"),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -9800,12 +8873,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             Paragraph(
-                StrongEmphasis(
-                    "**",
-                    Text("foo "),
-                    Link(destination = "/url", title = null, Emphasis("*", Text("bar"))),
-                ),
-            ),
+                StrongEmphasis("**", Text("foo "), Link(destination = "/url", title = null, Emphasis("*", Text("bar"))))
+            )
         )
     }
 
@@ -9850,12 +8919,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>*</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                Emphasis("*", Text("*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), Emphasis("*", Text("*"))))
     }
 
     @Test
@@ -9866,12 +8930,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>_</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                Emphasis("*", Text("_")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), Emphasis("*", Text("_"))))
     }
 
     @Test
@@ -9893,12 +8952,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>*</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                StrongEmphasis("**", Text("*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), StrongEmphasis("**", Text("*"))))
     }
 
     @Test
@@ -9909,12 +8963,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>_</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                StrongEmphasis("**", Text("_")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), StrongEmphasis("**", Text("_"))))
     }
 
     @Test
@@ -9925,12 +8974,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<em>foo</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                Emphasis("*", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), Emphasis("*", Text("foo"))))
     }
 
     @Test
@@ -9941,12 +8985,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>*</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis("*", Text("foo")),
-                Text("*"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo")), Text("*")))
     }
 
     @Test
@@ -9957,12 +8996,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<strong>foo</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                StrongEmphasis("**", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), StrongEmphasis("**", Text("foo"))))
     }
 
     @Test
@@ -9973,12 +9007,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>***<em>foo</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("***"),
-                Emphasis("*", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("***"), Emphasis("*", Text("foo"))))
     }
 
     @Test
@@ -9989,12 +9018,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong>*</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis("**", Text("foo")),
-                Text("*"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo")), Text("*")))
     }
 
     @Test
@@ -10005,12 +9029,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>***</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis("*", Text("foo")),
-                Text("***"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo")), Text("***")))
     }
 
     @Test
@@ -10032,12 +9051,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>_</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                Emphasis("_", Text("_")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), Emphasis("_", Text("_"))))
     }
 
     @Test
@@ -10048,12 +9062,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>*</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                Emphasis("_", Text("*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), Emphasis("_", Text("*"))))
     }
 
     @Test
@@ -10075,12 +9084,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>_</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                StrongEmphasis("__", Text("_")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), StrongEmphasis("__", Text("_"))))
     }
 
     @Test
@@ -10091,12 +9095,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>*</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                StrongEmphasis("__", Text("*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), StrongEmphasis("__", Text("*"))))
     }
 
     @Test
@@ -10107,12 +9106,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_<em>foo</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("_"),
-                Emphasis("_", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("_"), Emphasis("_", Text("foo"))))
     }
 
     @Test
@@ -10123,12 +9117,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>_</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis("_", Text("foo")),
-                Text("_"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("foo")), Text("_")))
     }
 
     @Test
@@ -10139,12 +9128,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_<strong>foo</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("_"),
-                StrongEmphasis("__", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("_"), StrongEmphasis("__", Text("foo"))))
     }
 
     @Test
@@ -10155,12 +9139,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>___<em>foo</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("___"),
-                Emphasis("_", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("___"), Emphasis("_", Text("foo"))))
     }
 
     @Test
@@ -10171,12 +9150,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong>_</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis("__", Text("foo")),
-                Text("_"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo")), Text("_")))
     }
 
     @Test
@@ -10187,12 +9161,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>___</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis("_", Text("foo")),
-                Text("___"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("foo")), Text("___")))
     }
 
     @Test
@@ -10214,14 +9183,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo</em></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Emphasis("_", Text("foo")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Emphasis("_", Text("foo")))))
     }
 
     @Test
@@ -10243,18 +9205,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em></em></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Emphasis(
-                        "*",
-                        Text("foo "),
-                        Emphasis("_", Text("bar")),
-                    ),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Emphasis("*", Text("foo "), Emphasis("_", Text("bar"))))))
     }
 
     @Test
@@ -10265,15 +9216,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    Text("foo "),
-                    Emphasis("_", Text("bar")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo "), Emphasis("_", Text("bar")))))
     }
 
     @Test
@@ -10285,17 +9228,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em><em>foo <em>bar</em> a</em></em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Emphasis(
-                        "*",
-                        Text("foo "),
-                        Emphasis("_", Text("bar")),
-                        Text(" a"),
-                    ),
-                ),
-            ),
+            Paragraph(Emphasis("_", Emphasis("*", Text("foo "), Emphasis("_", Text("bar")), Text(" a"))))
         )
     }
 
@@ -10307,16 +9240,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> a</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    Text("foo "),
-                    Emphasis("_", Text("bar")),
-                    Text(" a"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo "), Emphasis("_", Text("bar")), Text(" a"))))
     }
 
     @Test
@@ -10328,17 +9252,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em><em>foo <em>bar</em> a</em></em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Emphasis(
-                        "*",
-                        Text("foo "),
-                        Emphasis("*", Text("bar")),
-                        Text(" a"),
-                    ),
-                ),
-            ),
+            Paragraph(Emphasis("_", Emphasis("*", Text("foo "), Emphasis("*", Text("bar")), Text(" a"))))
         )
     }
 
@@ -10350,14 +9264,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo</em></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Emphasis("*", Text("foo")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Emphasis("*", Text("foo")))))
     }
 
     @Test
@@ -10368,14 +9275,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong>foo</strong></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    StrongEmphasis("**", Text("foo")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", StrongEmphasis("**", Text("foo")))))
     }
 
     @Test
@@ -10386,14 +9286,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong>foo</strong></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "__",
-                    StrongEmphasis("__", Text("foo")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", StrongEmphasis("__", Text("foo")))))
     }
 
     @Test
@@ -10404,14 +9297,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong><strong>foo</strong></strong></strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                StrongEmphasis(
-                    "**",
-                    StrongEmphasis("**", StrongEmphasis("**", Text("foo"))),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", StrongEmphasis("**", StrongEmphasis("**", Text("foo"))))))
     }
 
     @Test
@@ -10422,14 +9308,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><strong>foo</strong></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    StrongEmphasis("**", Text("foo")),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", StrongEmphasis("**", Text("foo")))))
     }
 
     @Test
@@ -10440,14 +9319,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><strong><strong>foo</strong></strong></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    StrongEmphasis("__", StrongEmphasis("__", Text("foo"))),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", StrongEmphasis("__", StrongEmphasis("__", Text("foo"))))))
     }
 
     @Test
@@ -10458,12 +9330,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo _bar</em> baz_</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis("*", Text("foo _bar")),
-                Text(" baz_"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo _bar")), Text(" baz_")))
     }
 
     @Test
@@ -10475,14 +9342,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo <strong>bar *baz bim</strong> bam</em></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo "),
-                    StrongEmphasis("__", Text("bar *baz bim")),
-                    Text(" bam"),
-                ),
-            ),
+            Paragraph(Emphasis("*", Text("foo "), StrongEmphasis("__", Text("bar *baz bim")), Text(" bam")))
         )
     }
 
@@ -10494,12 +9354,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**foo <strong>bar baz</strong></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("**foo "),
-                StrongEmphasis("**", Text("bar baz")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("**foo "), StrongEmphasis("**", Text("bar baz"))))
     }
 
     @Test
@@ -10510,12 +9365,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*foo <em>bar baz</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*foo "),
-                Emphasis("*", Text("bar baz")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*foo "), Emphasis("*", Text("bar baz"))))
     }
 
     @Test
@@ -10526,12 +9376,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<a href="/url">bar*</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                Link(destination = "/url", title = null, Text("bar*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), Link(destination = "/url", title = null, Text("bar*"))))
     }
 
     @Test
@@ -10542,12 +9387,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_foo <a href="/url">bar_</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("_foo "),
-                Link(destination = "/url", title = null, Text("bar_")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("_foo "), Link(destination = "/url", title = null, Text("bar_"))))
     }
 
     @Test
@@ -10558,12 +9398,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<img src="foo" title="*"/></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                HtmlInline("<img src=\"foo\" title=\"*\"/>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), HtmlInline("<img src=\"foo\" title=\"*\"/>")))
     }
 
     @Test
@@ -10574,12 +9409,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**<a href="**"></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("**"),
-                HtmlInline("<a href=\"**\">"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("**"), HtmlInline("<a href=\"**\">")))
     }
 
     @Test
@@ -10590,12 +9420,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__<a href="__"></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("__"),
-                HtmlInline("<a href=\"__\">"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("__"), HtmlInline("<a href=\"__\">")))
     }
 
     @Test
@@ -10606,15 +9431,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>a <code>*</code></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("a "),
-                    Code("*"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("a "), Code("*"))))
     }
 
     @Test
@@ -10625,15 +9442,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>a <code>_</code></em></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "_",
-                    Text("a "),
-                    Code("_"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("a "), Code("_"))))
     }
 
     @Test
@@ -10648,7 +9457,7 @@ class MarkdownProcessorDocumentParsingTest {
             Paragraph(
                 Text("**a"),
                 Link(destination = "https://foo.bar/?q=**", title = null, Text("https://foo.bar/?q=**")),
-            ),
+            )
         )
     }
 
@@ -10664,7 +9473,7 @@ class MarkdownProcessorDocumentParsingTest {
             Paragraph(
                 Text("__a"),
                 Link(destination = "https://foo.bar/?q=__", title = null, Text("https://foo.bar/?q=__")),
-            ),
+            )
         )
     }
 
@@ -10764,7 +9573,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[link](foo
                 |bar)
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -10783,7 +9592,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[link](<foo
                 |bar>)
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -10825,7 +9634,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[a](<b)c>
                 |[a](<b>c)
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -10843,7 +9652,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text(content = "[a]("),
                 HtmlInline(content = "<b>"),
                 Text(content = "c)"),
-            ),
+            )
         )
     }
 
@@ -10924,7 +9733,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[link](https://example.com?foo=3#frag)
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -10982,7 +9791,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[link](/url 'title')
                 |[link](/url (title))
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -10998,7 +9807,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Link(destination = "/url", title = "title", Text("link")),
                 SoftLineBreak,
                 Link(destination = "/url", title = "title", Text("link")),
-            ),
+            )
         )
     }
 
@@ -11054,7 +9863,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[link](   /uri
                 |  "title"  )
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11105,12 +9914,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link <a href="/uri">bar</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("[link "),
-                Link(destination = "/uri", title = null, Text("bar")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("[link "), Link(destination = "/uri", title = null, Text("bar"))))
     }
 
     @Test
@@ -11138,15 +9942,9 @@ class MarkdownProcessorDocumentParsingTest {
                     destination = "/uri",
                     title = null,
                     Text("link "),
-                    Emphasis(
-                        "*",
-                        Text("foo "),
-                        StrongEmphasis("**", Text("bar")),
-                        Text(" "),
-                        Code("#"),
-                    ),
-                ),
-            ),
+                    Emphasis("*", Text("foo "), StrongEmphasis("**", Text("bar")), Text(" "), Code("#")),
+                )
+            )
         )
     }
 
@@ -11164,8 +9962,8 @@ class MarkdownProcessorDocumentParsingTest {
                     destination = "/uri",
                     title = null,
                     Image(source = "moon.jpg", alt = "moon", title = null, Text("moon")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -11178,11 +9976,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo <a href="/uri">bar</a>](/uri)</p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Text("[foo "),
-                Link(destination = "/uri", title = null, Text("bar")),
-                Text("](/uri)"),
-            ),
+            Paragraph(Text("[foo "), Link(destination = "/uri", title = null, Text("bar")), Text("](/uri)"))
         )
     }
 
@@ -11197,14 +9991,9 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             Paragraph(
                 Text("[foo "),
-                Emphasis(
-                    "*",
-                    Text("[bar "),
-                    Link(destination = "/uri", title = null, Text("baz")),
-                    Text("](/uri)"),
-                ),
+                Emphasis("*", Text("[bar "), Link(destination = "/uri", title = null, Text("baz")), Text("](/uri)")),
                 Text("](/uri)"),
-            ),
+            )
         )
     }
 
@@ -11225,8 +10014,8 @@ class MarkdownProcessorDocumentParsingTest {
                     Text("["),
                     Link(destination = "uri1", title = null, Text("foo")),
                     Text("](uri2)"),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -11238,12 +10027,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<a href="/uri">foo*</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                Link(destination = "/uri", title = null, Text("foo*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), Link(destination = "/uri", title = null, Text("foo*"))))
     }
 
     @Test
@@ -11265,15 +10049,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo [bar</em> baz]</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Emphasis(
-                    "*",
-                    Text("foo [bar"),
-                ),
-                Text(" baz]"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo [bar")), Text(" baz]")))
     }
 
     @Test
@@ -11295,12 +10071,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo<code>](/uri)</code></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("[foo"),
-                Code("](/uri)"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("[foo"), Code("](/uri)")))
     }
 
     @Test
@@ -11319,7 +10090,7 @@ class MarkdownProcessorDocumentParsingTest {
                     title = null,
                     Text("https://example.com/?search=](uri)"),
                 ),
-            ),
+            )
         )
     }
 
@@ -11332,7 +10103,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11351,7 +10122,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11370,7 +10141,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11389,7 +10160,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11402,15 +10173,9 @@ class MarkdownProcessorDocumentParsingTest {
                     destination = "/uri",
                     title = null,
                     Text("link "),
-                    Emphasis(
-                        "*",
-                        Text("foo "),
-                        StrongEmphasis("**", Text("bar")),
-                        Text(" "),
-                        Code("#"),
-                    ),
-                ),
-            ),
+                    Emphasis("*", Text("foo "), StrongEmphasis("**", Text("bar")), Text(" "), Code("#")),
+                )
+            )
         )
     }
 
@@ -11423,7 +10188,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11436,8 +10201,8 @@ class MarkdownProcessorDocumentParsingTest {
                     destination = "/uri",
                     title = null,
                     Image(source = "moon.jpg", alt = "moon", title = null, Text("moon")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -11450,7 +10215,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11463,7 +10228,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Link(destination = "/uri", title = null, Text("bar")),
                 Text("]"),
                 Link(destination = "/uri", title = null, Text("ref")),
-            ),
+            )
         )
     }
 
@@ -11476,7 +10241,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11486,14 +10251,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             Paragraph(
                 Text("[foo "),
-                Emphasis(
-                    "*",
-                    Text("bar "),
-                    Link("/uri", null, Text("baz")),
-                ),
+                Emphasis("*", Text("bar "), Link("/uri", null, Text("baz"))),
                 Text("]"),
                 Link(destination = "/uri", title = null, Text("ref")),
-            ),
+            )
         )
     }
 
@@ -11506,19 +10267,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>*<a href="/uri">foo*</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                Link(destination = "/uri", title = null, Text("foo*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), Link(destination = "/uri", title = null, Text("foo*"))))
     }
 
     @Test
@@ -11530,19 +10286,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p><a href="/uri">foo *bar</a>*</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Link(destination = "/uri", title = null, Text("foo *bar")),
-                Text("*"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("foo *bar")), Text("*")))
     }
 
     @Test
@@ -11554,7 +10305,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11573,7 +10324,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11592,7 +10343,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11607,7 +10358,7 @@ class MarkdownProcessorDocumentParsingTest {
                     title = null,
                     Text("https://example.com/?search=][ref]"),
                 ),
-            ),
+            )
         )
     }
 
@@ -11620,7 +10371,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11639,7 +10390,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[SS]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11659,7 +10410,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[Baz][Foo bar]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11678,19 +10429,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>[foo] <a href="/url" title="title">bar</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("[foo] "),
-                Link(destination = "/url", title = "title", Text("bar")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("[foo] "), Link(destination = "/url", title = "title", Text("bar"))))
     }
 
     @Test
@@ -11703,7 +10449,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11712,11 +10458,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <a href="/url" title="title">bar</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Text("[foo]"),
-                SoftLineBreak,
-                Link(destination = "/url", title = "title", Text("bar")),
-            ),
+            Paragraph(Text("[foo]"), SoftLineBreak, Link(destination = "/url", title = "title", Text("bar")))
         )
     }
 
@@ -11731,7 +10473,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar][foo]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11750,7 +10492,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo!]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11769,7 +10511,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref[]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11777,10 +10519,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo][ref[]</p>
          * <p>[ref[]: /uri</p>
          */
-        parsed.assertEquals(
-            paragraph("[foo][ref[]"),
-            paragraph("[ref[]: /uri"),
-        )
+        parsed.assertEquals(paragraph("[foo][ref[]"), paragraph("[ref[]: /uri"))
     }
 
     @Test
@@ -11792,7 +10531,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref[bar]]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11800,10 +10539,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo][ref[bar]]</p>
          * <p>[ref[bar]]: /uri</p>
          */
-        parsed.assertEquals(
-            paragraph("[foo][ref[bar]]"),
-            paragraph("[ref[bar]]: /uri"),
-        )
+        parsed.assertEquals(paragraph("[foo][ref[bar]]"), paragraph("[ref[bar]]: /uri"))
     }
 
     @Test
@@ -11815,7 +10551,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[[[foo]]]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11823,10 +10559,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[[[foo]]]</p>
          * <p>[[[foo]]]: /url</p>
          */
-        parsed.assertEquals(
-            paragraph("[[[foo]]]"),
-            paragraph("[[[foo]]]: /url"),
-        )
+        parsed.assertEquals(paragraph("[[[foo]]]"), paragraph("[[[foo]]]: /url"))
     }
 
     @Test
@@ -11838,7 +10571,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[ref\[]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11857,7 +10590,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar\\]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11876,7 +10609,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[]: /uri
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11884,10 +10617,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[]</p>
          * <p>[]: /uri</p>
          */
-        parsed.assertEquals(
-            paragraph("[]"),
-            paragraph("[]: /uri"),
-        )
+        parsed.assertEquals(paragraph("[]"), paragraph("[]: /uri"))
     }
 
     @Test
@@ -11901,7 +10631,7 @@ class MarkdownProcessorDocumentParsingTest {
             |[
             | ]: /uri
             """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11926,7 +10656,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11945,7 +10675,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[*foo* bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11953,14 +10683,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="/url" title="title"><em>foo</em> bar</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "/url",
-                    title = "title",
-                    Emphasis("*", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
+            Paragraph(Link(destination = "/url", title = "title", Emphasis("*", Text("foo")), Text(" bar")))
         )
     }
 
@@ -11973,7 +10696,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -11993,7 +10716,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12007,7 +10730,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text(""), // This looks wrong but apparently is correct
                 SoftLineBreak,
                 Text("[]"),
-            ),
+            )
         )
     }
 
@@ -12020,7 +10743,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12039,7 +10762,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[*foo* bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12047,14 +10770,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="/url" title="title"><em>foo</em> bar</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "/url",
-                    title = "title",
-                    Emphasis("*", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
+            Paragraph(Link(destination = "/url", title = "title", Emphasis("*", Text("foo")), Text(" bar")))
         )
     }
 
@@ -12067,7 +10783,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[*foo* bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12077,14 +10793,9 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             Paragraph(
                 Text("["),
-                Link(
-                    destination = "/url",
-                    title = "title",
-                    Emphasis("*", Text("foo")),
-                    Text(" bar"),
-                ),
+                Link(destination = "/url", title = "title", Emphasis("*", Text("foo")), Text(" bar")),
                 Text("]"),
-            ),
+            )
         )
     }
 
@@ -12097,19 +10808,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>[[bar <a href="/url">foo</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("[[bar "),
-                Link(destination = "/url", title = null, Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("[[bar "), Link(destination = "/url", title = null, Text("foo"))))
     }
 
     @Test
@@ -12121,7 +10827,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12140,19 +10846,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p><a href="/url">foo</a> bar</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Link(destination = "/url", title = null, Text("foo")),
-                Text(" bar"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = null, Text("foo")), Text(" bar")))
     }
 
     @Test
@@ -12164,7 +10865,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12183,19 +10884,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |*[foo*]
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>*<a href="/url">foo*</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("*"),
-                Link(destination = "/url", title = null, Text("foo*")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("*"), Link(destination = "/url", title = null, Text("foo*"))))
     }
 
     @Test
@@ -12208,7 +10904,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[foo]: /url1
                 |[bar]: /url2
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12227,7 +10923,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url1
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12246,7 +10942,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url1
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12265,19 +10961,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url1
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p><a href="/url1">foo</a>(not a link)</p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Link(destination = "/url1", title = null, Text("foo")),
-                Text("(not a link)"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "/url1", title = null, Text("foo")), Text("(not a link)")))
     }
 
     @Test
@@ -12289,19 +10980,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[baz]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>[foo]<a href="/url">bar</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("[foo]"),
-                Link(destination = "/url", title = null, Text("bar")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("[foo]"), Link(destination = "/url", title = null, Text("bar"))))
     }
 
     @Test
@@ -12314,7 +11000,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |[baz]: /url1
                 |[bar]: /url2
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12325,7 +11011,7 @@ class MarkdownProcessorDocumentParsingTest {
             Paragraph(
                 Link(destination = "/url2", title = null, Text("foo")),
                 Link(destination = "/url1", title = null, Text("baz")),
-            ),
+            )
         )
     }
 
@@ -12339,19 +11025,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |[baz]: /url1
                 |[foo]: /url2
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>[foo]<a href="/url1">bar</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("[foo]"),
-                Link(destination = "/url1", title = null, Text("bar")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("[foo]"), Link(destination = "/url1", title = null, Text("bar"))))
     }
 
     @Test
@@ -12362,11 +11043,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo" title="title" /></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Image(source = "/url", alt = "foo", title = "title", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "foo", title = "title", Text("foo"))))
     }
 
     @Test
@@ -12378,7 +11055,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo *bar*]: train.jpg "train & tracks"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12393,8 +11070,8 @@ class MarkdownProcessorDocumentParsingTest {
                     title = "train & tracks",
                     Text("foo "),
                     Emphasis("*", Text("bar")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -12414,8 +11091,8 @@ class MarkdownProcessorDocumentParsingTest {
                     title = null,
                     Text("foo "),
                     Image(source = "/url", alt = "bar", title = null, Text("bar")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -12435,8 +11112,8 @@ class MarkdownProcessorDocumentParsingTest {
                     title = null,
                     Text("foo "),
                     Link(destination = "/url", title = null, Text("bar")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -12449,7 +11126,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo *bar*]: train.jpg "train & tracks"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12464,8 +11141,8 @@ class MarkdownProcessorDocumentParsingTest {
                     title = "train & tracks",
                     Text("foo "),
                     Emphasis("*", Text("bar")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -12478,7 +11155,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[FOOBAR]: train.jpg "train & tracks"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12493,8 +11170,8 @@ class MarkdownProcessorDocumentParsingTest {
                     title = "train & tracks",
                     Text("foo "),
                     Emphasis("*", Text("bar")),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -12506,11 +11183,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="train.jpg" alt="foo" /></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Image(source = "train.jpg", alt = "foo", title = null, Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Image(source = "train.jpg", alt = "foo", title = null, Text("foo"))))
     }
 
     @Test
@@ -12525,7 +11198,7 @@ class MarkdownProcessorDocumentParsingTest {
             Paragraph(
                 Text("My "),
                 Image(source = "/path/to/train.jpg", alt = "foo bar", title = "title", Text("foo bar")),
-            ),
+            )
         )
     }
 
@@ -12537,11 +11210,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="url" alt="foo" /></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Image(source = "url", alt = "foo", title = null, Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Image(source = "url", alt = "foo", title = null, Text("foo"))))
     }
 
     @Test
@@ -12564,7 +11233,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[bar]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12583,7 +11252,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[BAR]: /url
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12602,7 +11271,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12621,7 +11290,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[*foo* bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12630,14 +11299,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             Paragraph(
-                Image(
-                    source = "/url",
-                    alt = "foo bar",
-                    title = "title",
-                    Emphasis("*", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
+                Image(source = "/url", alt = "foo bar", title = "title", Emphasis("*", Text("foo")), Text(" bar"))
+            )
         )
     }
 
@@ -12650,7 +11313,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12670,7 +11333,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12684,7 +11347,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text(""), // This looks wrong but it's correct
                 SoftLineBreak,
                 Text("[]"),
-            ),
+            )
         )
     }
 
@@ -12697,7 +11360,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12716,7 +11379,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[*foo* bar]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12725,14 +11388,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             Paragraph(
-                Image(
-                    source = "/url",
-                    alt = "foo bar",
-                    title = "title",
-                    Emphasis("*", Text("foo")),
-                    Text(" bar"),
-                ),
-            ),
+                Image(source = "/url", alt = "foo bar", title = "title", Emphasis("*", Text("foo")), Text(" bar"))
+            )
         )
     }
 
@@ -12745,7 +11402,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[[foo]]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12753,10 +11410,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>![[foo]]</p>
          * <p>[[foo]]: /url &quot;title&quot;</p>
          */
-        parsed.assertEquals(
-            paragraph("![[foo]]"),
-            paragraph("[[foo]]: /url \"title\""),
-        )
+        parsed.assertEquals(paragraph("![[foo]]"), paragraph("[[foo]]: /url \"title\""))
     }
 
     @Test
@@ -12768,7 +11422,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12787,7 +11441,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -12806,19 +11460,14 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |[foo]: /url "title"
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
          * Expected HTML:
          * <p>!<a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("!"),
-                Link(destination = "/url", title = "title", Text("foo")),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("!"), Link(destination = "/url", title = "title", Text("foo"))))
     }
 
     @Test
@@ -12830,9 +11479,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="http://foo.bar.baz">http://foo.bar.baz</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(destination = "http://foo.bar.baz", title = null, Text("http://foo.bar.baz")),
-            ),
+            Paragraph(Link(destination = "http://foo.bar.baz", title = null, Text("http://foo.bar.baz")))
         )
     }
 
@@ -12850,8 +11497,8 @@ class MarkdownProcessorDocumentParsingTest {
                     destination = "https://foo.bar.baz/test?q=hello&id=22&boolean",
                     title = null,
                     Text("https://foo.bar.baz/test?q=hello&id=22&boolean"),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -12864,13 +11511,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="irc://foo.bar:2233/baz">irc://foo.bar:2233/baz</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "irc://foo.bar:2233/baz",
-                    title = null,
-                    Text("irc://foo.bar:2233/baz"),
-                ),
-            ),
+            Paragraph(Link(destination = "irc://foo.bar:2233/baz", title = null, Text("irc://foo.bar:2233/baz")))
         )
     }
 
@@ -12883,13 +11524,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="MAILTO:FOO@BAR.BAZ">MAILTO:FOO@BAR.BAZ</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "MAILTO:FOO@BAR.BAZ",
-                    title = null,
-                    Text("MAILTO:FOO@BAR.BAZ"),
-                ),
-            ),
+            Paragraph(Link(destination = "MAILTO:FOO@BAR.BAZ", title = null, Text("MAILTO:FOO@BAR.BAZ")))
         )
     }
 
@@ -12901,15 +11536,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="a+b+c:d">a+b+c:d</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "a+b+c:d",
-                    title = null,
-                    Text("a+b+c:d"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "a+b+c:d", title = null, Text("a+b+c:d"))))
     }
 
     @Test
@@ -12921,13 +11548,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="made-up-scheme://foo,bar">made-up-scheme://foo,bar</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "made-up-scheme://foo,bar",
-                    title = null,
-                    Text("made-up-scheme://foo,bar"),
-                ),
-            ),
+            Paragraph(Link(destination = "made-up-scheme://foo,bar", title = null, Text("made-up-scheme://foo,bar")))
         )
     }
 
@@ -12939,15 +11560,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="https://../">https://../</a></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "https://../",
-                    title = null,
-                    Text("https://../"),
-                ),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Link(destination = "https://../", title = null, Text("https://../"))))
     }
 
     @Test
@@ -12959,13 +11572,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="localhost:5001/foo">localhost:5001/foo</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "localhost:5001/foo",
-                    title = null,
-                    Text("localhost:5001/foo"),
-                ),
-            ),
+            Paragraph(Link(destination = "localhost:5001/foo", title = null, Text("localhost:5001/foo")))
         )
     }
 
@@ -12989,13 +11596,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="https://example.com/%5C%5B%5C">https://example.com/\[\</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "https://example.com/\\[\\",
-                    title = null,
-                    Text("https://example.com/\\[\\"),
-                ),
-            ),
+            Paragraph(Link(destination = "https://example.com/\\[\\", title = null, Text("https://example.com/\\[\\")))
         )
     }
 
@@ -13008,13 +11609,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="mailto:foo@bar.example.com">foo@bar.example.com</a></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Link(
-                    destination = "mailto:foo@bar.example.com",
-                    title = null,
-                    Text("foo@bar.example.com"),
-                ),
-            ),
+            Paragraph(Link(destination = "mailto:foo@bar.example.com", title = null, Text("foo@bar.example.com")))
         )
     }
 
@@ -13032,8 +11627,8 @@ class MarkdownProcessorDocumentParsingTest {
                     destination = "mailto:foo+special@Bar.baz-bar0.com",
                     title = null,
                     Text("foo+special@Bar.baz-bar0.com"),
-                ),
-            ),
+                )
+            )
         )
     }
 
@@ -13122,13 +11717,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a><bab><c2c></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                HtmlInline("<a>"),
-                HtmlInline("<bab>"),
-                HtmlInline("<c2c>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(HtmlInline("<a>"), HtmlInline("<bab>"), HtmlInline("<c2c>")))
     }
 
     @Test
@@ -13139,12 +11728,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a/><b2/></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                HtmlInline("<a/>"),
-                HtmlInline("<b2/>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(HtmlInline("<a/>"), HtmlInline("<b2/>")))
     }
 
     @Test
@@ -13155,7 +11739,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<a  /><b2
                 |data="foo" >
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13163,12 +11747,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a  /><b2
          * data="foo" ></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                HtmlInline("<a  />"),
-                HtmlInline("<b2\ndata=\"foo\" >"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(HtmlInline("<a  />"), HtmlInline("<b2\ndata=\"foo\" >")))
     }
 
     @Test
@@ -13179,7 +11758,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<a foo="bar" bam = 'baz <em>"</em>'
                 |_boolean zoop:33=zoop:33 />
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13188,9 +11767,7 @@ class MarkdownProcessorDocumentParsingTest {
          * _boolean zoop:33=zoop:33 /></p>
          */
         parsed.assertEquals(
-            Paragraph(
-                HtmlInline("<a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 />"),
-            ),
+            Paragraph(HtmlInline("<a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 />"))
         )
     }
 
@@ -13202,12 +11779,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>Foo <responsive-image src="foo.jpg" /></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("Foo "),
-                HtmlInline("<responsive-image src=\"foo.jpg\" />"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("Foo "), HtmlInline("<responsive-image src=\"foo.jpg\" />")))
     }
 
     @Test
@@ -13253,7 +11825,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<foo bar=baz
                 |bim!bop />
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13272,7 +11844,7 @@ class MarkdownProcessorDocumentParsingTest {
                 Text("<foo bar=baz"),
                 SoftLineBreak,
                 Text("bim!bop />"),
-            ),
+            )
         )
     }
 
@@ -13295,12 +11867,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p></a></foo ></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                HtmlInline("</a>"),
-                HtmlInline("</foo >"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(HtmlInline("</a>"), HtmlInline("</foo >")))
     }
 
     @Test
@@ -13322,7 +11889,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo <!-- this is a --
                 |comment - with hyphens -->
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13330,12 +11897,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo <!-- this is a --
          * comment - with hyphens --></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<!-- this is a --\ncomment - with hyphens -->"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), HtmlInline("<!-- this is a --\ncomment - with hyphens -->")))
     }
 
     @Test
@@ -13347,7 +11909,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |
                 |foo <!---> foo -->
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13356,16 +11918,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo <!---> foo --&gt;</p>
          */
         parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<!-->"),
-                Text(" foo -->"),
-            ),
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<!--->"),
-                Text(" foo -->"),
-            ),
+            Paragraph(Text("foo "), HtmlInline("<!-->"), Text(" foo -->")),
+            Paragraph(Text("foo "), HtmlInline("<!--->"), Text(" foo -->")),
         )
     }
 
@@ -13377,12 +11931,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <?php echo $a; ?></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<?php echo \$a; ?>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), HtmlInline("<?php echo \$a; ?>")))
     }
 
     @Test
@@ -13393,12 +11942,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <!ELEMENT br EMPTY></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<!ELEMENT br EMPTY>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), HtmlInline("<!ELEMENT br EMPTY>")))
     }
 
     @Test
@@ -13409,12 +11953,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <![CDATA[>&<]]></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<![CDATA[>&<]]>"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), HtmlInline("<![CDATA[>&<]]>")))
     }
 
     @Test
@@ -13425,12 +11964,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <a href="&ouml;"></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<a href=\"&ouml;\">"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), HtmlInline("<a href=\"&ouml;\">")))
     }
 
     @Test
@@ -13441,12 +11975,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <a href="\*"></p>
          */
-        parsed.assertEquals(
-            Paragraph(
-                Text("foo "),
-                HtmlInline("<a href=\"\\*\">"),
-            ),
-        )
+        parsed.assertEquals(Paragraph(Text("foo "), HtmlInline("<a href=\"\\*\">")))
     }
 
     @Test
@@ -13468,7 +11997,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo  
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13487,7 +12016,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo\
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13506,7 +12035,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo       
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13525,7 +12054,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo  
                 |     bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13544,7 +12073,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo\
                 |     bar
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13563,7 +12092,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*foo  
                 |bar*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13571,9 +12100,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo<br />
          * bar</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(Emphasis("*", Text("foo"), HardLineBreak, Text("bar"))),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"), HardLineBreak, Text("bar"))))
     }
 
     @Test
@@ -13584,7 +12111,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |*foo\
                 |bar*
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13592,9 +12119,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo<br />
          * bar</em></p>
          */
-        parsed.assertEquals(
-            Paragraph(Emphasis("*", Text("foo"), HardLineBreak, Text("bar"))),
-        )
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo"), HardLineBreak, Text("bar"))))
     }
 
     @Test
@@ -13605,7 +12130,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |`code  
                 |span`
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13623,7 +12148,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |`code\
                 |span`
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13641,7 +12166,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<a href="foo  
                 |bar">
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13660,7 +12185,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |<a href="foo\
                 |bar">
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13723,7 +12248,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo
                 |baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*
@@ -13742,7 +12267,7 @@ class MarkdownProcessorDocumentParsingTest {
                 |foo 
                 | baz
                 """
-                    .trimMargin(),
+                    .trimMargin()
             )
 
         /*

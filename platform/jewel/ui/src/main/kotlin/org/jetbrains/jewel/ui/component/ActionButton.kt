@@ -42,17 +42,8 @@ public fun ActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
-    CoreActionButton(
-        onClick,
-        enabled,
-        focusable,
-        style,
-        interactionSource,
-        modifier,
-    ) {
-        Box(Modifier.padding(contentPadding)) {
-            content()
-        }
+    CoreActionButton(onClick, enabled, focusable, style, interactionSource, modifier) {
+        Box(Modifier.padding(contentPadding)) { content() }
     }
 }
 
@@ -70,12 +61,7 @@ public fun ActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
-    Tooltip(
-        tooltip,
-        style = tooltipStyle,
-        tooltipPlacement = tooltipPlacement,
-        modifier = modifier,
-    ) {
+    Tooltip(tooltip, style = tooltipStyle, tooltipPlacement = tooltipPlacement, modifier = modifier) {
         CoreActionButton(
             onClick = onClick,
             enabled = enabled,
@@ -83,9 +69,7 @@ public fun ActionButton(
             style = style,
             interactionSource = interactionSource,
         ) {
-            Box(Modifier.padding(contentPadding)) {
-                content()
-            }
+            Box(Modifier.padding(contentPadding)) { content() }
         }
     }
 }
@@ -100,7 +84,5 @@ private fun CoreActionButton(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
-        content()
-    }
+    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) { content() }
 }

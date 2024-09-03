@@ -105,11 +105,7 @@ internal fun InputField(
             modifier
                 .then(backgroundModifier)
                 .thenIf(!undecorated && hasNoOutline) {
-                    focusOutline(
-                        state = inputFieldState,
-                        outlineShape = shape,
-                        alignment = Stroke.Alignment.Center,
-                    )
+                    focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)
                 }
                 .then(borderModifier)
                 .outline(inputFieldState, outline, shape, Stroke.Alignment.Center),

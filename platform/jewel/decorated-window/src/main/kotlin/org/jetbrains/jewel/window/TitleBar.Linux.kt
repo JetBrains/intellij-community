@@ -14,6 +14,9 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.dp
 import com.jetbrains.JBR
+import java.awt.Frame
+import java.awt.event.MouseEvent
+import java.awt.event.WindowEvent
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
@@ -23,9 +26,6 @@ import org.jetbrains.jewel.ui.painter.PainterProvider
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 import org.jetbrains.jewel.window.styling.TitleBarStyle
-import java.awt.Frame
-import java.awt.event.MouseEvent
-import java.awt.event.WindowEvent
 
 @Composable
 internal fun DecoratedWindowScope.TitleBarOnLinux(
@@ -38,12 +38,14 @@ internal fun DecoratedWindowScope.TitleBarOnLinux(
     val viewConfig = LocalViewConfiguration.current
     TitleBarImpl(
         modifier.onPointerEvent(PointerEventType.Press, PointerEventPass.Main) {
-            if (this.currentEvent.button == PointerButton.Primary &&
-                this.currentEvent.changes.any { changed -> !changed.isConsumed }
+            if (
+                this.currentEvent.button == PointerButton.Primary &&
+                    this.currentEvent.changes.any { changed -> !changed.isConsumed }
             ) {
                 JBR.getWindowMove()?.startMovingTogetherWithMouse(window, MouseEvent.BUTTON1)
-                if (System.currentTimeMillis() - lastPress in
-                    viewConfig.doubleTapMinTimeMillis..viewConfig.doubleTapTimeoutMillis
+                if (
+                    System.currentTimeMillis() - lastPress in
+                        viewConfig.doubleTapMinTimeMillis..viewConfig.doubleTapTimeoutMillis
                 ) {
                     if (state.isMaximized) {
                         window.extendedState = Frame.NORMAL
@@ -58,19 +60,10 @@ internal fun DecoratedWindowScope.TitleBarOnLinux(
         style,
         { _, _ -> PaddingValues(0.dp) },
     ) { state ->
-        CloseButton(
-            { window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING)) },
-            state,
-            style,
-        )
+        CloseButton({ window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING)) }, state, style)
 
         if (state.isMaximized) {
-            ControlButton(
-                { window.extendedState = Frame.NORMAL },
-                state,
-                style.icons.restoreButton,
-                "Restore",
-            )
+            ControlButton({ window.extendedState = Frame.NORMAL }, state, style.icons.restoreButton, "Restore")
         } else {
             ControlButton(
                 { window.extendedState = Frame.MAXIMIZED_BOTH },
@@ -79,12 +72,7 @@ internal fun DecoratedWindowScope.TitleBarOnLinux(
                 "Maximize",
             )
         }
-        ControlButton(
-            { window.extendedState = Frame.ICONIFIED },
-            state,
-            style.icons.minimizeButton,
-            "Minimize",
-        )
+        ControlButton({ window.extendedState = Frame.ICONIFIED }, state, style.icons.minimizeButton, "Minimize")
         content(state)
     }
 }
@@ -95,14 +83,7 @@ private fun TitleBarScope.CloseButton(
     state: DecoratedWindowState,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
 ) {
-    ControlButton(
-        onClick,
-        state,
-        style.icons.closeButton,
-        "Close",
-        style,
-        style.paneCloseButtonStyle,
-    )
+    ControlButton(onClick, state, style.icons.closeButton, "Close", style, style.paneCloseButtonStyle)
 }
 
 @Composable
@@ -119,10 +100,7 @@ private fun TitleBarScope.ControlButton(
         Modifier.align(Alignment.End).focusable(false).size(style.metrics.titlePaneButtonSize),
         style = iconButtonStyle,
     ) {
-        Icon(
-            painterProvider.getPainter(if (state.isActive) PainterHint else Inactive).value,
-            description,
-        )
+        Icon(painterProvider.getPainter(if (state.isActive) PainterHint else Inactive).value, description)
     }
 }
 

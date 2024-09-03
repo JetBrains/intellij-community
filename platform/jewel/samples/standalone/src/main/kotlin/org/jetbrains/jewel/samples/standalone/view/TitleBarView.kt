@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import java.awt.Desktop
+import java.net.URI
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
@@ -22,30 +24,31 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
-import java.awt.Desktop
-import java.net.URI
 
 @Composable
 fun DecoratedWindowScope.TitleBarView() {
     TitleBar(Modifier.newFullscreenControls(), gradientStartColor = MainViewModel.projectColor) {
         Row(Modifier.align(Alignment.Start)) {
-            Dropdown(Modifier.height(30.dp), menuContent = {
-                MainViewModel.views.forEach {
-                    selectableItem(
-                        selected = MainViewModel.currentView == it,
-                        onClick = { MainViewModel.currentView = it },
-                        keybinding = it.keyboardShortcut?.forCurrentOs(),
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+            Dropdown(
+                Modifier.height(30.dp),
+                menuContent = {
+                    MainViewModel.views.forEach {
+                        selectableItem(
+                            selected = MainViewModel.currentView == it,
+                            onClick = { MainViewModel.currentView = it },
+                            keybinding = it.keyboardShortcut?.forCurrentOs(),
                         ) {
-                            Icon(it.iconKey, null, modifier = Modifier.size(20.dp), hint = Size(20))
-                            Text(it.title)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(it.iconKey, null, modifier = Modifier.size(20.dp), hint = Size(20))
+                                Text(it.title)
+                            }
                         }
                     }
-                }
-            }) {
+                },
+            ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(3.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -64,12 +67,11 @@ fun DecoratedWindowScope.TitleBarView() {
         Text(title)
 
         Row(Modifier.align(Alignment.End)) {
-            Tooltip({
-                Text("Open Jewel Github repository")
-            }) {
-                IconButton({
-                    Desktop.getDesktop().browse(URI.create("https://github.com/JetBrains/jewel"))
-                }, Modifier.size(40.dp).padding(5.dp)) {
+            Tooltip({ Text("Open Jewel Github repository") }) {
+                IconButton(
+                    { Desktop.getDesktop().browse(URI.create("https://github.com/JetBrains/jewel")) },
+                    Modifier.size(40.dp).padding(5.dp),
+                ) {
                     Icon(StandaloneSampleIcons.gitHub, "Github")
                 }
             }
@@ -78,17 +80,22 @@ fun DecoratedWindowScope.TitleBarView() {
                 when (MainViewModel.theme) {
                     IntUiThemes.Light -> Text("Switch to light theme with light header")
                     IntUiThemes.LightWithLightHeader -> Text("Switch to dark theme")
-                    IntUiThemes.Dark, IntUiThemes.System -> Text("Switch to light theme")
+                    IntUiThemes.Dark,
+                    IntUiThemes.System -> Text("Switch to light theme")
                 }
             }) {
-                IconButton({
-                    MainViewModel.theme =
-                        when (MainViewModel.theme) {
-                            IntUiThemes.Light -> IntUiThemes.LightWithLightHeader
-                            IntUiThemes.LightWithLightHeader -> IntUiThemes.Dark
-                            IntUiThemes.Dark, IntUiThemes.System -> IntUiThemes.Light
-                        }
-                }, Modifier.size(40.dp).padding(5.dp)) {
+                IconButton(
+                    {
+                        MainViewModel.theme =
+                            when (MainViewModel.theme) {
+                                IntUiThemes.Light -> IntUiThemes.LightWithLightHeader
+                                IntUiThemes.LightWithLightHeader -> IntUiThemes.Dark
+                                IntUiThemes.Dark,
+                                IntUiThemes.System -> IntUiThemes.Light
+                            }
+                    },
+                    Modifier.size(40.dp).padding(5.dp),
+                ) {
                     when (MainViewModel.theme) {
                         IntUiThemes.Light ->
                             Icon(

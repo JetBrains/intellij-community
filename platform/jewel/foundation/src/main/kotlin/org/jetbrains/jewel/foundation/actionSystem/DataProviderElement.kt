@@ -2,9 +2,8 @@ package org.jetbrains.jewel.foundation.actionSystem
 
 import androidx.compose.ui.node.ModifierNodeElement
 
-internal class DataProviderElement(
-    val dataProvider: DataProviderContext.() -> Unit,
-) : ModifierNodeElement<DataProviderNode>() {
+internal class DataProviderElement(val dataProvider: DataProviderContext.() -> Unit) :
+    ModifierNodeElement<DataProviderNode>() {
     override fun create(): DataProviderNode = DataProviderNode(dataProvider)
 
     override fun update(node: DataProviderNode) {

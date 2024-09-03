@@ -93,18 +93,8 @@ public fun Text(
                 textDecoration = textDecoration,
                 fontStyle = fontStyle,
                 letterSpacing = letterSpacing,
-            ),
+            )
         )
 
-    BasicText(
-        text,
-        modifier,
-        mergedStyle,
-        onTextLayout,
-        overflow,
-        softWrap,
-        maxLines,
-        minLines = 1,
-        inlineContent,
-    )
+    BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, minLines = 1, inlineContent)
 }

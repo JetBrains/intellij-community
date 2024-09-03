@@ -12,18 +12,16 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
 @ExperimentalJewelApi
-public open class DefaultInlineMarkdownRenderer(
-    private val rendererExtensions: List<MarkdownRendererExtension>,
-) : InlineMarkdownRenderer {
+public open class DefaultInlineMarkdownRenderer(private val rendererExtensions: List<MarkdownRendererExtension>) :
+    InlineMarkdownRenderer {
     public override fun renderAsAnnotatedString(
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
         enabled: Boolean,
         onUrlClicked: ((String) -> Unit)?,
-    ): AnnotatedString =
-        buildAnnotatedString {
-            appendInlineMarkdownFrom(inlineMarkdown, styling, enabled, onUrlClicked)
-        }
+    ): AnnotatedString = buildAnnotatedString {
+        appendInlineMarkdownFrom(inlineMarkdown, styling, enabled, onUrlClicked)
+    }
 
     private fun Builder.appendInlineMarkdownFrom(
         inlineMarkdown: Iterable<InlineMarkdown>,
@@ -37,11 +35,7 @@ public open class DefaultInlineMarkdownRenderer(
 
                 is InlineMarkdown.Emphasis -> {
                     withStyles(styling.emphasis.withEnabled(enabled), child) {
-                        appendInlineMarkdownFrom(
-                            it.inlineContent,
-                            styling,
-                            enabled,
-                        )
+                        appendInlineMarkdownFrom(it.inlineContent, styling, enabled)
                     }
                 }
 
@@ -70,9 +64,7 @@ public open class DefaultInlineMarkdownRenderer(
                 }
 
                 is InlineMarkdown.Code -> {
-                    withStyles(styling.inlineCode.withEnabled(enabled), child) {
-                        append(it.content)
-                    }
+                    withStyles(styling.inlineCode.withEnabled(enabled), child) { append(it.content) }
                 }
 
                 is InlineMarkdown.HardLineBreak -> appendLine()
@@ -80,10 +72,7 @@ public open class DefaultInlineMarkdownRenderer(
 
                 is InlineMarkdown.HtmlInline -> {
                     if (styling.renderInlineHtml) {
-                        withStyles(
-                            styling.inlineHtml.withEnabled(enabled),
-                            child,
-                        ) { append(it.content.trim()) }
+                        withStyles(styling.inlineHtml.withEnabled(enabled), child) { append(it.content.trim()) }
                     }
                 }
 

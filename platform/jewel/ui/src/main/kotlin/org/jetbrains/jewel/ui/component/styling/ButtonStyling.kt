@@ -57,7 +57,7 @@ public class ButtonColors(
                 pressed = backgroundPressed,
                 hovered = backgroundHovered,
                 active = background,
-            ),
+            )
         )
 
     @Composable
@@ -70,7 +70,7 @@ public class ButtonColors(
                 pressed = contentPressed,
                 hovered = contentHovered,
                 active = content,
-            ),
+            )
         )
 
     @Composable
@@ -93,7 +93,7 @@ public class ButtonColors(
                     state.isHovered -> borderHovered
                     else -> border
                 }
-            },
+            }
         )
 
     public companion object
@@ -111,12 +111,10 @@ public class ButtonMetrics(
     public companion object
 }
 
-public val LocalDefaultButtonStyle: ProvidableCompositionLocal<ButtonStyle> =
-    staticCompositionLocalOf {
-        error("No default ButtonStyle provided. Have you forgotten the theme?")
-    }
+public val LocalDefaultButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
+    error("No default ButtonStyle provided. Have you forgotten the theme?")
+}
 
-public val LocalOutlinedButtonStyle: ProvidableCompositionLocal<ButtonStyle> =
-    staticCompositionLocalOf {
-        error("No outlined ButtonStyle provided. Have you forgotten the theme?")
-    }
+public val LocalOutlinedButtonStyle: ProvidableCompositionLocal<ButtonStyle> = staticCompositionLocalOf {
+    error("No outlined ButtonStyle provided. Have you forgotten the theme?")
+}

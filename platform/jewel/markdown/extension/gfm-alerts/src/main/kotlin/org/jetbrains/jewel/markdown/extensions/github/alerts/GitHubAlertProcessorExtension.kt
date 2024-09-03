@@ -30,8 +30,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
 public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
     override val parserExtension: ParserExtension = GitHubAlertCommonMarkExtension
-    override val textRendererExtension: TextContentRendererExtension =
-        GitHubAlertCommonMarkExtension
+    override val textRendererExtension: TextContentRendererExtension = GitHubAlertCommonMarkExtension
 
     override val blockProcessorExtension: MarkdownBlockProcessorExtension = GitHubAlertProcessorExtension
 
@@ -58,17 +57,13 @@ public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
     }
 }
 
-public class GitHubAlertRendererExtension(
-    alertStyling: AlertStyling,
-    rootStyling: MarkdownStyling,
-) : MarkdownRendererExtension {
-    override val blockRenderer: MarkdownBlockRendererExtension =
-        GitHubAlertBlockRenderer(alertStyling, rootStyling)
+public class GitHubAlertRendererExtension(alertStyling: AlertStyling, rootStyling: MarkdownStyling) :
+    MarkdownRendererExtension {
+    override val blockRenderer: MarkdownBlockRendererExtension = GitHubAlertBlockRenderer(alertStyling, rootStyling)
 }
 
 private object GitHubAlertCommonMarkExtension : ParserExtension, TextContentRendererExtension {
-    private val AlertStartRegex =
-        ">\\s+\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)]\\s*".toRegex(RegexOption.IGNORE_CASE)
+    private val AlertStartRegex = ">\\s+\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)]\\s*".toRegex(RegexOption.IGNORE_CASE)
 
     override fun extend(parserBuilder: Builder) {
         parserBuilder.customBlockParserFactory { state, _ ->
@@ -77,8 +72,7 @@ private object GitHubAlertCommonMarkExtension : ParserExtension, TextContentRend
 
             if (matchResult != null) {
                 val type = matchResult.groupValues[1]
-                BlockStart.of(AlertParser(type))
-                    .atColumn(state.column + state.indent + matchResult.value.length)
+                BlockStart.of(AlertParser(type)).atColumn(state.column + state.indent + matchResult.value.length)
             } else {
                 BlockStart.none()
             }
@@ -128,8 +122,7 @@ private class AlertParser(type: String) : AbstractBlockParser() {
     }
 }
 
-private class AlertTextContentNodeRenderer(private val context: TextContentNodeRendererContext) :
-    NodeRenderer {
+private class AlertTextContentNodeRenderer(private val context: TextContentNodeRendererContext) : NodeRenderer {
     private val writer = context.writer
 
     override fun getNodeTypes(): Set<Class<out Node>> = setOf(AlertBlock::class.java)

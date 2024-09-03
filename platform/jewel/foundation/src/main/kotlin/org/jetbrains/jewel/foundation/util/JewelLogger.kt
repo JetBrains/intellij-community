@@ -1,16 +1,14 @@
 package org.jetbrains.jewel.foundation.util
 
-import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Method
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import java.util.logging.Logger
+import org.jetbrains.annotations.ApiStatus
 
 public inline fun <reified T : Any> T.myLogger(): JewelLogger = JewelLogger.getInstance(T::class.java)
 
-/**
- * A wrapper which uses either IDE logging subsystem (if available) or java.util.logging.
- */
+/** A wrapper which uses either IDE logging subsystem (if available) or java.util.logging. */
 @ApiStatus.NonExtendable
 @Suppress("OptionalUnit")
 public abstract class JewelLogger {
@@ -38,30 +36,15 @@ public abstract class JewelLogger {
 
     public fun error(t: Throwable): Unit = error(t.message, t)
 
-    public abstract fun trace(
-        message: String?,
-        t: Throwable?,
-    )
+    public abstract fun trace(message: String?, t: Throwable?)
 
-    public abstract fun debug(
-        message: String?,
-        t: Throwable?,
-    )
+    public abstract fun debug(message: String?, t: Throwable?)
 
-    public abstract fun info(
-        message: String?,
-        t: Throwable?,
-    )
+    public abstract fun info(message: String?, t: Throwable?)
 
-    public abstract fun warn(
-        message: String?,
-        t: Throwable?,
-    )
+    public abstract fun warn(message: String?, t: Throwable?)
 
-    public abstract fun error(
-        message: String?,
-        t: Throwable?,
-    )
+    public abstract fun error(message: String?, t: Throwable?)
 
     private class JavaFactory : Factory {
         override fun getInstance(category: String?): JewelLogger {
@@ -84,38 +67,23 @@ public abstract class JewelLogger {
                 l
             }
             return object : JewelLogger() {
-                override fun trace(
-                    message: String?,
-                    t: Throwable?,
-                ) {
+                override fun trace(message: String?, t: Throwable?) {
                     logger.log(Level.FINER, message, t)
                 }
 
-                override fun debug(
-                    message: String?,
-                    t: Throwable?,
-                ) {
+                override fun debug(message: String?, t: Throwable?) {
                     logger.log(Level.FINE, message, t)
                 }
 
-                override fun info(
-                    message: String?,
-                    t: Throwable?,
-                ) {
+                override fun info(message: String?, t: Throwable?) {
                     logger.log(Level.INFO, message, t)
                 }
 
-                override fun warn(
-                    message: String?,
-                    t: Throwable?,
-                ) {
+                override fun warn(message: String?, t: Throwable?) {
                     logger.log(Level.WARNING, message, t)
                 }
 
-                override fun error(
-                    message: String?,
-                    t: Throwable?,
-                ) {
+                override fun error(message: String?, t: Throwable?) {
                     logger.log(Level.SEVERE, message, t)
                 }
             }
@@ -130,54 +98,34 @@ public abstract class JewelLogger {
                 val logger = getLogger(category)
 
                 return object : JewelLogger() {
-                    override fun trace(
-                        message: String?,
-                        t: Throwable?,
-                    ) {
+                    override fun trace(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.trace(message, t, logger)
-                        } catch (ignored: Exception) {
-                        }
+                        } catch (ignored: Exception) {}
                     }
 
-                    override fun debug(
-                        message: String?,
-                        t: Throwable?,
-                    ) {
+                    override fun debug(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.debug(message, t, logger)
-                        } catch (ignored: Exception) {
-                        }
+                        } catch (ignored: Exception) {}
                     }
 
-                    override fun info(
-                        message: String?,
-                        t: Throwable?,
-                    ) {
+                    override fun info(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.info(message, t, logger)
-                        } catch (ignored: Exception) {
-                        }
+                        } catch (ignored: Exception) {}
                     }
 
-                    override fun warn(
-                        message: String?,
-                        t: Throwable?,
-                    ) {
+                    override fun warn(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.warn(message, t, logger)
-                        } catch (ignored: Exception) {
-                        }
+                        } catch (ignored: Exception) {}
                     }
 
-                    override fun error(
-                        message: String?,
-                        t: Throwable?,
-                    ) {
+                    override fun error(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.error(message, t, logger)
-                        } catch (ignored: Exception) {
-                        }
+                        } catch (ignored: Exception) {}
                     }
                 }
             } catch (e: Exception) {
@@ -185,43 +133,17 @@ public abstract class JewelLogger {
             }
         }
 
-        @Throws(Exception::class)
-        protected abstract fun trace(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        )
+        @Throws(Exception::class) protected abstract fun trace(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class)
-        protected abstract fun debug(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        )
+        @Throws(Exception::class) protected abstract fun debug(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class)
-        protected abstract fun error(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        )
+        @Throws(Exception::class) protected abstract fun error(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class)
-        protected abstract fun warn(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        )
+        @Throws(Exception::class) protected abstract fun warn(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class)
-        protected abstract fun info(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        )
+        @Throws(Exception::class) protected abstract fun info(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class)
-        protected abstract fun getLogger(category: String?): Any
+        @Throws(Exception::class) protected abstract fun getLogger(category: String?): Any
     }
 
     private class IdeaFactory : ReflectionBasedFactory() {
@@ -249,52 +171,31 @@ public abstract class JewelLogger {
         }
 
         @Throws(Exception::class)
-        override fun trace(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun trace(message: String?, t: Throwable?, logger: Any?) {
             ideaTrace.invoke(logger, t)
         }
 
         @Throws(Exception::class)
-        override fun debug(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun debug(message: String?, t: Throwable?, logger: Any?) {
             ideaDebug.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun error(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun error(message: String?, t: Throwable?, logger: Any?) {
             ideaError.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun warn(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun warn(message: String?, t: Throwable?, logger: Any?) {
             ideaWarn.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun info(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun info(message: String?, t: Throwable?, logger: Any?) {
             ideaInfo.invoke(logger, message, t)
         }
 
-        @Throws(Exception::class)
-        override fun getLogger(category: String?): Any = myGetInstance.invoke(null, category)
+        @Throws(Exception::class) override fun getLogger(category: String?): Any = myGetInstance.invoke(null, category)
     }
 
     private class Slf4JFactory : ReflectionBasedFactory() {
@@ -324,57 +225,35 @@ public abstract class JewelLogger {
         }
 
         @Throws(Exception::class)
-        override fun trace(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun trace(message: String?, t: Throwable?, logger: Any?) {
             myTrace.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun debug(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun debug(message: String?, t: Throwable?, logger: Any?) {
             myDebug.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun error(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun error(message: String?, t: Throwable?, logger: Any?) {
             myError.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun warn(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun warn(message: String?, t: Throwable?, logger: Any?) {
             myWarn.invoke(logger, message, t)
         }
 
         @Throws(Exception::class)
-        override fun info(
-            message: String?,
-            t: Throwable?,
-            logger: Any?,
-        ) {
+        override fun info(message: String?, t: Throwable?, logger: Any?) {
             myInfo.invoke(logger, message, t)
         }
 
-        @Throws(Exception::class)
-        override fun getLogger(category: String?): Any = myGetLogger.invoke(null, category)
+        @Throws(Exception::class) override fun getLogger(category: String?): Any = myGetLogger.invoke(null, category)
     }
 
     public companion object {
-        @get:Synchronized
-        private val factory: Factory = createFactory()
+        @get:Synchronized private val factory: Factory = createFactory()
 
         @Suppress("SwallowedException", "TooGenericExceptionCaught")
         private fun createFactory(): Factory =

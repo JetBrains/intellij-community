@@ -18,8 +18,7 @@ import org.junit.Rule
 import org.junit.Test
 
 class ProvideDataTest {
-    @JvmField @Rule
-    val rule = createComposeRule()
+    @JvmField @Rule val rule = createComposeRule()
 
     @Test
     fun `one component`() {
@@ -31,11 +30,7 @@ class ProvideDataTest {
                 focusManager = LocalFocusManager.current
                 Box(
                     modifier =
-                        rootDataProviderModifier.testTag("provider")
-                            .provideData {
-                                set("data", "ok")
-                            }
-                            .focusable(),
+                        rootDataProviderModifier.testTag("provider").provideData { set("data", "ok") }.focusable()
                 )
             }
             rule.awaitIdle()
@@ -59,12 +54,13 @@ class ProvideDataTest {
                 focusManager = LocalFocusManager.current
                 Box(
                     modifier =
-                        rootDataProviderModifier.testTag("root_provider")
+                        rootDataProviderModifier
+                            .testTag("root_provider")
                             .provideData {
                                 set("is_root", "yes")
                                 set("data", "notOk")
                             }
-                            .focusable(),
+                            .focusable()
                 ) {
                     Box(modifier = Modifier.testTag("non_data_provider").focusable()) {
                         Box(
@@ -74,7 +70,7 @@ class ProvideDataTest {
                                         set("data", "ok")
                                         set("one", "1")
                                     }
-                                    .focusable(),
+                                    .focusable()
                         )
                     }
                 }
@@ -97,7 +93,8 @@ class ProvideDataTest {
 
             rule.onNodeWithTag("non_data_provider").assertIsFocused()
             rootDataProviderModifier.uiDataSnapshot(sink)
-            // non_data_provider still should provide isRoot == true because it should be taken from root
+            // non_data_provider still should provide isRoot == true because it should be taken from
+            // root
             // but shouldn't provide "one" yet
             assertEquals("yes", sink.get("is_root"))
             assertEquals("notOk", sink.get("data"))

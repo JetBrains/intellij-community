@@ -178,30 +178,27 @@ public fun TitleBarStyle.Companion.dark(
             ),
     )
 
-private fun titleBarIconButtonStyle(
-    hoveredBackground: Color,
-    pressedBackground: Color,
-    metrics: IconButtonMetrics,
-) = IconButtonStyle(
-    IconButtonColors(
-        foregroundSelectedActivated = Color.Unspecified,
-        background = Color.Unspecified,
-        backgroundDisabled = Color.Unspecified,
-        backgroundSelected = Color.Unspecified,
-        backgroundSelectedActivated = Color.Unspecified,
-        backgroundFocused = Color.Unspecified,
-        backgroundPressed = hoveredBackground,
-        backgroundHovered = pressedBackground,
-        border = Color.Unspecified,
-        borderDisabled = Color.Unspecified,
-        borderSelected = Color.Unspecified,
-        borderSelectedActivated = Color.Unspecified,
-        borderFocused = hoveredBackground,
-        borderPressed = pressedBackground,
-        borderHovered = Color.Unspecified,
-    ),
-    metrics,
-)
+private fun titleBarIconButtonStyle(hoveredBackground: Color, pressedBackground: Color, metrics: IconButtonMetrics) =
+    IconButtonStyle(
+        IconButtonColors(
+            foregroundSelectedActivated = Color.Unspecified,
+            background = Color.Unspecified,
+            backgroundDisabled = Color.Unspecified,
+            backgroundSelected = Color.Unspecified,
+            backgroundSelectedActivated = Color.Unspecified,
+            backgroundFocused = Color.Unspecified,
+            backgroundPressed = hoveredBackground,
+            backgroundHovered = pressedBackground,
+            border = Color.Unspecified,
+            borderDisabled = Color.Unspecified,
+            borderSelected = Color.Unspecified,
+            borderSelectedActivated = Color.Unspecified,
+            borderFocused = hoveredBackground,
+            borderPressed = pressedBackground,
+            borderHovered = Color.Unspecified,
+        ),
+        metrics,
+    )
 
 @Composable
 public fun TitleBarColors.Companion.light(
@@ -226,7 +223,8 @@ public fun TitleBarColors.Companion.light(
     // but in com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI#paintBackground,
     // transparentHoveredBackground is used first, which is guessed to be due to the gradient
     // background
-    // caused by the project color of the titlebar, which makes the pure color background look strange
+    // caused by the project color of the titlebar, which makes the pure color background look
+    // strange
     // in the area. In order to simplify the use in Jewel, here directly use
     // transparentHoveredBackground
     // as hoveredBackground.

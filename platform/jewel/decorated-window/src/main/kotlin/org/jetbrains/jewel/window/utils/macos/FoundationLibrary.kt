@@ -12,18 +12,11 @@ import com.sun.jna.Pointer
     "ConstPropertyName",
 ) // Borrowed code
 internal interface FoundationLibrary : Library {
-    fun NSLog(
-        pString: Pointer?,
-        thing: Any?,
-    )
+    fun NSLog(pString: Pointer?, thing: Any?)
 
     fun NSFullUserName(): ID?
 
-    fun objc_allocateClassPair(
-        supercls: ID?,
-        name: String?,
-        extraBytes: Int,
-    ): ID?
+    fun objc_allocateClassPair(supercls: ID?, name: String?, extraBytes: Int): ID?
 
     fun objc_registerClassPair(cls: ID?)
 
@@ -35,12 +28,7 @@ internal interface FoundationLibrary : Library {
         isExternalRepresentation: Byte,
     ): ID?
 
-    fun CFStringGetCString(
-        theString: ID?,
-        buffer: ByteArray?,
-        bufferSize: Int,
-        encoding: Int,
-    ): Byte
+    fun CFStringGetCString(theString: ID?, buffer: ByteArray?, bufferSize: Int, encoding: Int): Byte
 
     fun CFStringGetLength(theString: ID?): Int
 
@@ -62,56 +50,26 @@ internal interface FoundationLibrary : Library {
 
     fun objc_getProtocol(name: String?): ID?
 
-    fun class_createInstance(
-        pClass: ID?,
-        extraBytes: Int,
-    ): ID?
+    fun class_createInstance(pClass: ID?, extraBytes: Int): ID?
 
     fun sel_registerName(selectorName: String?): Pointer?
 
-    fun class_replaceMethod(
-        cls: ID?,
-        selName: Pointer?,
-        impl: Callback?,
-        types: String?,
-    ): ID?
+    fun class_replaceMethod(cls: ID?, selName: Pointer?, impl: Callback?, types: String?): ID?
 
     fun objc_getMetaClass(name: String?): ID?
 
     /**
-     * Note: Vararg version. Should only be used only for selectors with a
-     * single fixed argument followed by varargs.
+     * Note: Vararg version. Should only be used only for selectors with a single fixed argument followed by varargs.
      */
-    fun objc_msgSend(
-        receiver: ID?,
-        selector: Pointer?,
-        firstArg: Any?,
-        vararg args: Any?,
-    ): ID?
+    fun objc_msgSend(receiver: ID?, selector: Pointer?, firstArg: Any?, vararg args: Any?): ID?
 
-    fun class_respondsToSelector(
-        cls: ID?,
-        selName: Pointer?,
-    ): Boolean
+    fun class_respondsToSelector(cls: ID?, selName: Pointer?): Boolean
 
-    fun class_addMethod(
-        cls: ID?,
-        selName: Pointer?,
-        imp: Callback?,
-        types: String?,
-    ): Boolean
+    fun class_addMethod(cls: ID?, selName: Pointer?, imp: Callback?, types: String?): Boolean
 
-    fun class_addMethod(
-        cls: ID?,
-        selName: Pointer?,
-        imp: ID?,
-        types: String?,
-    ): Boolean
+    fun class_addMethod(cls: ID?, selName: Pointer?, imp: ID?, types: String?): Boolean
 
-    fun class_addProtocol(
-        aClass: ID?,
-        protocol: ID?,
-    ): Boolean
+    fun class_addProtocol(aClass: ID?, protocol: ID?): Boolean
 
     fun class_isMetaClass(cls: ID?): Boolean
 

@@ -47,8 +47,7 @@ public fun Markdown(
 ) {
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
     LaunchedEffect(markdown, processor) {
-        markdownBlocks =
-            withContext(renderingDispatcher) { processor.processMarkdownDocument(markdown) }
+        markdownBlocks = withContext(renderingDispatcher) { processor.processMarkdownDocument(markdown) }
     }
 
     Markdown(
@@ -118,9 +117,7 @@ public fun LazyMarkdown(
                 contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
             ) {
-                items(markdownBlocks) { block ->
-                    blockRenderer.render(block, enabled, onUrlClick, onTextClick)
-                }
+                items(markdownBlocks) { block -> blockRenderer.render(block, enabled, onUrlClick, onTextClick) }
             }
         }
     } else {
@@ -130,9 +127,7 @@ public fun LazyMarkdown(
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
-            items(markdownBlocks) { block ->
-                blockRenderer.render(block, enabled, onUrlClick, onTextClick)
-            }
+            items(markdownBlocks) { block -> blockRenderer.render(block, enabled, onUrlClick, onTextClick) }
         }
     }
 }

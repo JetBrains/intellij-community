@@ -3,9 +3,9 @@ package org.jetbrains.jewel.bridge.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import com.intellij.openapi.diagnostic.Logger
+import java.util.TreeMap
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
-import java.util.TreeMap
 
 private val logger = Logger.getInstance("BridgeThemeColorPalette")
 
@@ -23,18 +23,17 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
     val teal = readPaletteColors("Teal")
     val windowsPopupBorder = readPaletteColor("windowsPopupBorder")
 
-    val rawMap =
-        buildMap {
-            putAll(gray)
-            putAll(blue)
-            putAll(green)
-            putAll(red)
-            putAll(yellow)
-            putAll(orange)
-            putAll(purple)
-            putAll(teal)
-            if (windowsPopupBorder.isSpecified) put("windowsPopupBorder", windowsPopupBorder)
-        }
+    val rawMap = buildMap {
+        putAll(gray)
+        putAll(blue)
+        putAll(green)
+        putAll(red)
+        putAll(yellow)
+        putAll(orange)
+        putAll(purple)
+        putAll(teal)
+        if (windowsPopupBorder.isSpecified) put("windowsPopupBorder", windowsPopupBorder)
+    }
 
     return ThemeColorPalette(
         gray = gray.values.toList(),

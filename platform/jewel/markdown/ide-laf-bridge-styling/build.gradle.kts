@@ -13,9 +13,7 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     mavenCentral()
 
-    intellijPlatform {
-        defaultRepositories()
-    }
+    intellijPlatform { defaultRepositories() }
 }
 
 dependencies {
@@ -23,9 +21,7 @@ dependencies {
     api(projects.ideLafBridge)
     compileOnly(projects.markdown.extension.gfmAlerts)
 
-    intellijPlatform {
-        intellijIdeaCommunity(libs.versions.idea)
-    }
+    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
 }

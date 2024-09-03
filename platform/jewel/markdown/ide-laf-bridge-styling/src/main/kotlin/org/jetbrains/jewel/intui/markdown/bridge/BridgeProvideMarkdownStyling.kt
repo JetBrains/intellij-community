@@ -20,11 +20,7 @@ public fun ProvideMarkdownStyling(
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
     markdownBlockRenderer: MarkdownBlockRenderer =
-        remember(markdownStyling) {
-            MarkdownBlockRenderer.create(
-                markdownStyling,
-            )
-        },
+        remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(

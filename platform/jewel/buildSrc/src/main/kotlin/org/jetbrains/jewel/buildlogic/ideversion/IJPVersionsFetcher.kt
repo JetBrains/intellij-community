@@ -1,10 +1,10 @@
 package org.jetbrains.jewel.buildlogic.ideversion
 
+import java.io.IOException
+import java.net.URI
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.logging.Logger
-import java.io.IOException
-import java.net.URI
 
 internal object IJPVersionsFetcher {
 
@@ -16,7 +16,8 @@ internal object IJPVersionsFetcher {
 
         val icReleases =
             try {
-                URI.create(releasesUrl).toURL()
+                URI.create(releasesUrl)
+                    .toURL()
                     .openStream()
                     .use { json.decodeFromStream<List<ApiIdeaReleasesItem>>(it) }
                     .first()
@@ -42,22 +43,17 @@ internal object IJPVersionsFetcher {
         majorPlatformVersion: String,
         logger: Logger,
     ): List<ApiIdeaReleasesItem.Release>? {
-        val releases = fetchIJPVersions(releasesUrl, logger)
-            ?: return null
+        val releases = fetchIJPVersions(releasesUrl, logger) ?: return null
 
-        return releases.asSequence()
+        return releases
+            .asSequence()
             .filter { it.majorVersion == majorPlatformVersion }
             .sortedWith(ReleaseComparator)
             .toList()
     }
 
-    fun fetchLatestBuildForCurrentMajorVersion(
-        releasesUrl: String,
-        majorPlatformVersion: String,
-        logger: Logger,
-    ) =
-        fetchBuildsForCurrentMajorVersion(releasesUrl, majorPlatformVersion, logger)
-            ?.last()
+    fun fetchLatestBuildForCurrentMajorVersion(releasesUrl: String, majorPlatformVersion: String, logger: Logger) =
+        fetchBuildsForCurrentMajorVersion(releasesUrl, majorPlatformVersion, logger)?.last()
 
     fun compare(first: ApiIdeaReleasesItem.Release, second: ApiIdeaReleasesItem.Release): Int =
         VersionComparator.compare(first.build, second.build)

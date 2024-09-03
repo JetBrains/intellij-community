@@ -15,15 +15,13 @@ private object HiDpiImpl : PainterSuffixHint() {
 }
 
 /**
- * Selects the `@2x` HiDPI variant for bitmap images when running on a
- * HiDPI screen.
+ * Selects the `@2x` HiDPI variant for bitmap images when running on a HiDPI screen.
  *
  * If an image does not have a HiDPI variant, the base image will be used.
  *
- * Note that combining a [Size] with [HiDpi] could lead to unexpected
- * results and is not supported as of now. Generally speaking, however, the
- * IntelliJ Platform tends to use only [Size] for SVGs and only [HiDpi]
- * for PNGs, even though both are in theory supported for all formats.
+ * Note that combining a [Size] with [HiDpi] could lead to unexpected results and is not supported as of now. Generally
+ * speaking, however, the IntelliJ Platform tends to use only [Size] for SVGs and only [HiDpi] for PNGs, even though
+ * both are in theory supported for all formats.
  *
  * | Base image name | HiDPI image name |
  * |-----------------|------------------|
@@ -32,5 +30,4 @@ private object HiDpiImpl : PainterSuffixHint() {
  *
  * @see Size
  */
-@Suppress("FunctionName")
-public fun HiDpi(): PainterHint = HiDpiImpl
+@Suppress("FunctionName") public fun HiDpi(): PainterHint = HiDpiImpl

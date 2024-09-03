@@ -89,9 +89,7 @@ internal data class AnchorVerticalMenuPositionProvider(
 
         // The content offset specified using the dropdown offset parameter.
         val contentOffsetX =
-            with(density) {
-                contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1
-            }
+            with(density) { contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1 }
         val contentOffsetY = with(density) { contentOffset.y.roundToPx() }
 
         // Compute horizontal position.
@@ -115,8 +113,7 @@ internal data class AnchorVerticalMenuPositionProvider(
             }
 
         val popupBounds =
-            IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height)
-                .constrainedIn(windowSpaceBounds)
+            IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height).constrainedIn(windowSpaceBounds)
 
         return IntOffset(popupBounds.left, popupBounds.top)
     }
@@ -150,16 +147,11 @@ internal data class AnchorHorizontalMenuPositionProvider(
 
         // The content offset specified using the dropdown offset parameter.
         val contentOffsetX =
-            with(density) {
-                contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1
-            }
+            with(density) { contentOffset.x.roundToPx() * if (layoutDirection == LayoutDirection.Ltr) 1 else -1 }
         val contentOffsetY = with(density) { contentOffset.y.roundToPx() }
 
         // Compute horizontal position.
-        val y =
-            anchorBounds.top +
-                alignment.align(popupContentSize.height, anchorBounds.height) +
-                contentOffsetY
+        val y = anchorBounds.top + alignment.align(popupContentSize.height, anchorBounds.height) + contentOffsetY
 
         // Compute vertical position.
         val leftSpacing = anchorBounds.left - contentOffsetX - windowSpaceBounds.left
@@ -173,8 +165,7 @@ internal data class AnchorHorizontalMenuPositionProvider(
             }
 
         val popupBounds =
-            IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height)
-                .constrainedIn(windowSpaceBounds)
+            IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height).constrainedIn(windowSpaceBounds)
 
         return IntOffset(popupBounds.left, popupBounds.top)
     }

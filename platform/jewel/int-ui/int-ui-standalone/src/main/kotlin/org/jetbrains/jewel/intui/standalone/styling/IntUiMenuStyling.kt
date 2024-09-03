@@ -39,13 +39,7 @@ public fun MenuColors.Companion.light(
     border: Color = IntUiLightTheme.colors.gray(9),
     shadow: Color = Color(0x78919191), // Not a palette color
     itemColors: MenuItemColors = MenuItemColors.light(),
-): MenuColors =
-    MenuColors(
-        background = background,
-        border = border,
-        shadow = shadow,
-        itemColors = itemColors,
-    )
+): MenuColors = MenuColors(background = background, border = border, shadow = shadow, itemColors = itemColors)
 
 @Composable
 public fun MenuColors.Companion.dark(
@@ -53,13 +47,7 @@ public fun MenuColors.Companion.dark(
     border: Color = IntUiDarkTheme.colors.gray(3),
     shadow: Color = Color(0x66000000), // Not a palette color
     itemColors: MenuItemColors = MenuItemColors.dark(),
-): MenuColors =
-    MenuColors(
-        background = background,
-        border = border,
-        shadow = shadow,
-        itemColors = itemColors,
-    )
+): MenuColors = MenuColors(background = background, border = border, shadow = shadow, itemColors = itemColors)
 
 @Composable
 public fun MenuItemColors.Companion.light(
@@ -167,16 +155,7 @@ public fun MenuMetrics.Companion.defaults(
     itemMetrics: MenuItemMetrics = MenuItemMetrics.defaults(),
     submenuMetrics: SubmenuMetrics = SubmenuMetrics.defaults(),
 ): MenuMetrics =
-    MenuMetrics(
-        cornerSize,
-        menuMargin,
-        contentPadding,
-        offset,
-        shadowSize,
-        borderWidth,
-        itemMetrics,
-        submenuMetrics,
-    )
+    MenuMetrics(cornerSize, menuMargin, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
 
 public fun MenuItemMetrics.Companion.defaults(
     selectionCornerSize: CornerSize = CornerSize(4.dp),
@@ -201,6 +180,8 @@ public fun MenuItemMetrics.Companion.defaults(
         minHeight,
     )
 
-public fun SubmenuMetrics.Companion.defaults(offset: DpOffset = DpOffset(0.dp, (-8).dp)): SubmenuMetrics = SubmenuMetrics(offset)
+public fun SubmenuMetrics.Companion.defaults(offset: DpOffset = DpOffset(0.dp, (-8).dp)): SubmenuMetrics =
+    SubmenuMetrics(offset)
 
-public fun MenuIcons.Companion.defaults(submenuChevron: IconKey = AllIconsKeys.General.ChevronRight): MenuIcons = MenuIcons(submenuChevron)
+public fun MenuIcons.Companion.defaults(submenuChevron: IconKey = AllIconsKeys.General.ChevronRight): MenuIcons =
+    MenuIcons(submenuChevron)

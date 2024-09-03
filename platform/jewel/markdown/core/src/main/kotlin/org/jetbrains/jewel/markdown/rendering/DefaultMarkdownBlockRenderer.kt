@@ -78,12 +78,7 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: MarkdownBlock,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-    ) {
+    override fun render(block: MarkdownBlock, enabled: Boolean, onUrlClick: (String) -> Unit, onTextClick: () -> Unit) {
         when (block) {
             is BlockQuote -> render(block, rootStyling.blockQuote, enabled, onUrlClick, onTextClick)
             is FencedCodeBlock -> render(block, rootStyling.code.fenced)
@@ -198,19 +193,19 @@ public open class DefaultMarkdownBlockRenderer(
     ) {
         Column(
             Modifier.drawBehind {
-                val isLtr = layoutDirection == Ltr
-                val lineWidthPx = styling.lineWidth.toPx()
-                val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
+                    val isLtr = layoutDirection == Ltr
+                    val lineWidthPx = styling.lineWidth.toPx()
+                    val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
 
-                drawLine(
-                    styling.lineColor,
-                    Offset(x, 0f),
-                    Offset(x, size.height),
-                    lineWidthPx,
-                    styling.strokeCap,
-                    styling.pathEffect,
-                )
-            }
+                    drawLine(
+                        styling.lineColor,
+                        Offset(x, 0f),
+                        Offset(x, size.height),
+                        lineWidthPx,
+                        styling.strokeCap,
+                        styling.pathEffect,
+                    )
+                }
                 .padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
@@ -308,22 +303,14 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: ListItem,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
-    ) {
+    override fun render(block: ListItem, enabled: Boolean, onUrlClick: (String) -> Unit, onTextClick: () -> Unit) {
         Column(verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
             render(block.children, enabled, onUrlClick, onTextClick)
         }
     }
 
     @Composable
-    override fun render(
-        block: CodeBlock,
-        styling: MarkdownStyling.Code,
-    ) {
+    override fun render(block: CodeBlock, styling: MarkdownStyling.Code) {
         when (block) {
             is FencedCodeBlock -> render(block, styling.fenced)
             is IndentedCodeBlock -> render(block, styling.indented)
@@ -331,10 +318,7 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: IndentedCodeBlock,
-        styling: MarkdownStyling.Code.Indented,
-    ) {
+    override fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented) {
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
@@ -354,10 +338,7 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: FencedCodeBlock,
-        styling: MarkdownStyling.Code.Fenced,
-    ) {
+    override fun render(block: FencedCodeBlock, styling: MarkdownStyling.Code.Fenced) {
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
@@ -422,10 +403,7 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(
-        block: HtmlBlock,
-        styling: MarkdownStyling.HtmlBlock,
-    ) {
+    override fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock) {
         // HTML blocks are intentionally not rendered
     }
 
@@ -435,9 +413,10 @@ public open class DefaultMarkdownBlockRenderer(
         styling: InlinesStyling,
         enabled: Boolean,
         onUrlClick: ((String) -> Unit)? = null,
-    ) = remember(block.inlineContent, styling, enabled) {
-        inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
-    }
+    ) =
+        remember(block.inlineContent, styling, enabled) {
+            inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
+        }
 
     @Composable
     private fun MaybeScrollingContainer(

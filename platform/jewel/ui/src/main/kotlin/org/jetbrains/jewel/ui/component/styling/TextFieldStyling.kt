@@ -13,10 +13,8 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Stable
 @GenerateDataFunctions
-public class TextFieldStyle(
-    override val colors: TextFieldColors,
-    override val metrics: TextFieldMetrics,
-) : InputFieldStyle {
+public class TextFieldStyle(override val colors: TextFieldColors, override val metrics: TextFieldMetrics) :
+    InputFieldStyle {
     public companion object
 }
 
@@ -59,7 +57,6 @@ public class TextFieldMetrics(
     public companion object
 }
 
-public val LocalTextFieldStyle: ProvidableCompositionLocal<TextFieldStyle> =
-    staticCompositionLocalOf {
-        error("No TextFieldStyle provided. Have you forgotten the theme?")
-    }
+public val LocalTextFieldStyle: ProvidableCompositionLocal<TextFieldStyle> = staticCompositionLocalOf {
+    error("No TextFieldStyle provided. Have you forgotten the theme?")
+}

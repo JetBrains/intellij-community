@@ -63,9 +63,7 @@ public fun Dropdown(
     var expanded by remember { mutableStateOf(false) }
     var skipNextClick by remember { mutableStateOf(false) }
 
-    var dropdownState by remember(interactionSource) {
-        mutableStateOf(DropdownState.of(enabled = enabled))
-    }
+    var dropdownState by remember(interactionSource) { mutableStateOf(DropdownState.of(enabled = enabled)) }
 
     remember(enabled) { dropdownState = dropdownState.copy(enabled = enabled) }
 
@@ -74,8 +72,7 @@ public fun Dropdown(
             when (interaction) {
                 is PressInteraction.Press -> dropdownState = dropdownState.copy(pressed = true)
                 is PressInteraction.Cancel,
-                is PressInteraction.Release,
-                -> dropdownState = dropdownState.copy(pressed = false)
+                is PressInteraction.Release -> dropdownState = dropdownState.copy(pressed = false)
                 is HoverInteraction.Enter -> dropdownState = dropdownState.copy(hovered = true)
                 is HoverInteraction.Exit -> dropdownState = dropdownState.copy(hovered = false)
                 is FocusInteraction.Focus -> dropdownState = dropdownState.copy(focused = true)
@@ -110,9 +107,7 @@ public fun Dropdown(
                     indication = null,
                 )
                 .background(colors.backgroundFor(dropdownState).value, shape)
-                .thenIf(hasNoOutline) {
-                    border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-                }
+                .thenIf(hasNoOutline) { border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape) }
                 .thenIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
                 .outline(dropdownState, outline, shape)
                 .width(IntrinsicSize.Max)
@@ -123,9 +118,7 @@ public fun Dropdown(
         CompositionLocalProvider(LocalContentColor provides colors.contentFor(dropdownState).value) {
             Box(
                 modifier =
-                    Modifier.fillMaxWidth()
-                        .padding(style.metrics.contentPadding)
-                        .padding(end = arrowMinSize.width),
+                    Modifier.fillMaxWidth().padding(style.metrics.contentPadding).padding(end = arrowMinSize.width),
                 contentAlignment = Alignment.CenterStart,
                 content = content,
             )
@@ -138,7 +131,7 @@ public fun Dropdown(
                     key = style.icons.chevronDown,
                     contentDescription = null,
                     tint = colors.iconTintFor(dropdownState).value,
-                    hint = Stateful(dropdownState)
+                    hint = Stateful(dropdownState),
                 )
             }
         }
@@ -154,7 +147,8 @@ public fun Dropdown(
                     true
                 },
                 modifier =
-                    menuModifier.focusProperties { canFocus = true }
+                    menuModifier
+                        .focusProperties { canFocus = true }
                         .defaultMinSize(minWidth = with(density) { componentWidth.toDp() }),
                 style = style.menuStyle,
                 horizontalAlignment = Alignment.Start,
@@ -188,14 +182,7 @@ public value class DropdownState(public val state: ULong) : FocusableComponentSt
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ): DropdownState =
-        of(
-            enabled = enabled,
-            focused = focused,
-            pressed = pressed,
-            hovered = hovered,
-            active = active,
-        )
+    ): DropdownState = of(enabled = enabled, focused = focused, pressed = pressed, hovered = hovered, active = active)
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
@@ -214,7 +201,7 @@ public value class DropdownState(public val state: ULong) : FocusableComponentSt
                     (if (focused) Focused else 0UL) or
                     (if (hovered) Hovered else 0UL) or
                     (if (pressed) Pressed else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }

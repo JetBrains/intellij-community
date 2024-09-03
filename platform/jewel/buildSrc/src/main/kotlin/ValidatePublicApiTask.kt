@@ -1,17 +1,16 @@
+import java.io.File
+import java.util.Stack
+import java.util.regex.PatternSyntaxException
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
-import java.util.Stack
-import java.util.regex.PatternSyntaxException
 
 @CacheableTask
 open class ValidatePublicApiTask : SourceTask() {
 
-    @Input
-    var excludedClassRegexes: Set<String> = emptySet()
+    @Input var excludedClassRegexes: Set<String> = emptySet()
 
     init {
         group = "verification"
@@ -23,28 +22,29 @@ open class ValidatePublicApiTask : SourceTask() {
     private val classFqnRegex = "public (?:\\w+ )*class (\\S+)\\b".toRegex()
 
     @Suppress("ConvertToStringTemplate") // The odd concatenation is needed because of $; escapes get confused
-    private val copyMethodRegex =
-        ("public static synthetic fun copy(-\\w+)?" + "\\$" + "default\\b").toRegex()
+    private val copyMethodRegex = ("public static synthetic fun copy(-\\w+)?" + "\\$" + "default\\b").toRegex()
 
     @TaskAction
     fun validatePublicApi() {
         logger.info("Validating ${source.files.size} API file(s)...")
 
         val violations = mutableMapOf<File, Set<String>>()
-        val excludedRegexes = excludedClassRegexes.map {
-            try {
-                it.toRegex()
-            } catch (ignored: PatternSyntaxException) {
-                throw GradleException("Invalid data exclusion regex: '$it'")
-            }
-        }.toSet()
+        val excludedRegexes =
+            excludedClassRegexes
+                .map {
+                    try {
+                        it.toRegex()
+                    } catch (ignored: PatternSyntaxException) {
+                        throw GradleException("Invalid data exclusion regex: '$it'")
+                    }
+                }
+                .toSet()
 
         inputs.files.forEach { apiFile ->
             logger.lifecycle("Validating public API from file ${apiFile.path}")
 
             apiFile.useLines { lines ->
-                val actualDataClasses = findDataClasses(lines)
-                    .filterExclusions(excludedRegexes)
+                val actualDataClasses = findDataClasses(lines).filterExclusions(excludedRegexes)
 
                 if (actualDataClasses.isNotEmpty()) {
                     violations[apiFile] = actualDataClasses
@@ -101,9 +101,7 @@ open class ValidatePublicApiTask : SourceTask() {
             }
         }
 
-        val actualDataClasses =
-            dataClasses.filterValues { it.hasCopyMethod && !it.isLikelyValueClass }
-                .keys
+        val actualDataClasses = dataClasses.filterValues { it.hasCopyMethod && !it.isLikelyValueClass }.keys
         return actualDataClasses
     }
 
@@ -111,13 +109,14 @@ open class ValidatePublicApiTask : SourceTask() {
         if (excludedRegexes.isEmpty()) return this
 
         return filterNot { dataClassFqn ->
-            val isExcluded = excludedRegexes.any { it.matchEntire(dataClassFqn) != null }
+                val isExcluded = excludedRegexes.any { it.matchEntire(dataClassFqn) != null }
 
-            if (isExcluded) {
-                logger.info("  Ignoring excluded data class $dataClassFqn")
+                if (isExcluded) {
+                    logger.info("  Ignoring excluded data class $dataClassFqn")
+                }
+                isExcluded
             }
-            isExcluded
-        }.toSet()
+            .toSet()
     }
 }
 

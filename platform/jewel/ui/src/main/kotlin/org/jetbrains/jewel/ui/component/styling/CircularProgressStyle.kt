@@ -7,14 +7,10 @@ import androidx.compose.ui.graphics.Color
 import kotlin.time.Duration
 
 @Immutable
-public class CircularProgressStyle(
-    public val frameTime: Duration,
-    public val color: Color,
-) {
+public class CircularProgressStyle(public val frameTime: Duration, public val color: Color) {
     public companion object
 }
 
-public val LocalCircularProgressStyle: ProvidableCompositionLocal<CircularProgressStyle> =
-    staticCompositionLocalOf {
-        error("No CircularProgressStyle provided. Have you forgotten the theme?")
-    }
+public val LocalCircularProgressStyle: ProvidableCompositionLocal<CircularProgressStyle> = staticCompositionLocalOf {
+    error("No CircularProgressStyle provided. Have you forgotten the theme?")
+}

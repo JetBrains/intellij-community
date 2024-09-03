@@ -17,12 +17,7 @@ private val ContentItemClassName =
 
 internal object AndroidStudioReleasesReader {
 
-    fun readFrom(
-        releases: ApiAndroidStudioReleases,
-        className: ClassName,
-        url: String,
-        resourceDirs: Set<File>,
-    ) =
+    fun readFrom(releases: ApiAndroidStudioReleases, className: ClassName, url: String, resourceDirs: Set<File>) =
         FileSpec.builder(className)
             .apply {
                 indent("    ")
@@ -36,48 +31,37 @@ internal object AndroidStudioReleasesReader {
             }
             .build()
 
-    private fun createBaseTypeSpec(
-        className: ClassName,
-        releases: ApiAndroidStudioReleases,
-        resourceDirs: Set<File>,
-    ) = TypeSpec.objectBuilder(className)
-        .superclass(
-            ClassName.bestGuess("org.jetbrains.jewel.samples.ideplugin.releasessample.ContentSource")
-                .parameterizedBy(ContentItemClassName)
-        )
-        .apply {
-            addProperty(
-                PropertySpec.builder(
-                    name = "items",
-                    type =
-                    List::class.asClassName().parameterizedBy(ContentItemClassName),
-                    KModifier.OVERRIDE
-                )
-                    .initializer(readReleases(releases, resourceDirs))
-                    .build()
+    private fun createBaseTypeSpec(className: ClassName, releases: ApiAndroidStudioReleases, resourceDirs: Set<File>) =
+        TypeSpec.objectBuilder(className)
+            .superclass(
+                ClassName.bestGuess("org.jetbrains.jewel.samples.ideplugin.releasessample.ContentSource")
+                    .parameterizedBy(ContentItemClassName)
             )
+            .apply {
+                addProperty(
+                    PropertySpec.builder(
+                            name = "items",
+                            type = List::class.asClassName().parameterizedBy(ContentItemClassName),
+                            KModifier.OVERRIDE,
+                        )
+                        .initializer(readReleases(releases, resourceDirs))
+                        .build()
+                )
 
-            addProperty(
-                PropertySpec.builder(
-                    "displayName",
-                    type = String::class.asClassName(),
-                    KModifier.OVERRIDE
+                addProperty(
+                    PropertySpec.builder("displayName", type = String::class.asClassName(), KModifier.OVERRIDE)
+                        .initializer("\"%L\"", "Android Studio releases")
+                        .build()
                 )
-                    .initializer("\"%L\"", "Android Studio releases")
-                    .build()
-            )
-        }
-        .build()
+            }
+            .build()
 
     private fun readReleases(releases: ApiAndroidStudioReleases, resourceDirs: Set<File>) =
         releases.content.item
             .map { readRelease(it, resourceDirs) }
             .joinToCode(prefix = "listOf(\n", separator = ",\n", suffix = ")")
 
-    private fun readRelease(
-        release: ApiAndroidStudioReleases.Content.Item,
-        resourceDirs: Set<File>,
-    ) =
+    private fun readRelease(release: ApiAndroidStudioReleases.Content.Item, resourceDirs: Set<File>) =
         CodeBlock.builder()
             .apply {
                 add("AndroidStudio(\n")
@@ -94,25 +78,24 @@ internal object AndroidStudioReleasesReader {
             }
             .build()
 
-    private fun imagePathForOrNull(
-        release: ApiAndroidStudioReleases.Content.Item,
-        resourceDirs: Set<File>,
-    ): String? {
+    private fun imagePathForOrNull(release: ApiAndroidStudioReleases.Content.Item, resourceDirs: Set<File>): String? {
         // Take the release animal from the name, remove spaces and voila'
-        val releaseAnimal = release.name
-            .substringBefore(" | ")
-            .substringAfter("Android Studio")
-            .trim()
-            .replace(" ", "")
+        val releaseAnimal = release.name.substringBefore(" | ").substringAfter("Android Studio").trim().replace(" ", "")
 
         if (releaseAnimal.isEmpty() || releaseAnimal.any { it.isDigit() }) return null
 
         // We only have stable and canary splash screens. Betas use the stable ones.
-        val channel = release.channel.lowercase()
-            .let {
+        val channel =
+            release.channel.lowercase().let {
                 when (it) {
-                    "release", "rc", "stable", "beta", "patch" -> "stable"
-                    "canary", "preview", "alpha" -> "canary"
+                    "release",
+                    "rc",
+                    "stable",
+                    "beta",
+                    "patch" -> "stable"
+                    "canary",
+                    "preview",
+                    "alpha" -> "canary"
                     else -> {
                         println("  Note: channel '${it}' isn't supported for splash screens")
                         null
@@ -134,8 +117,7 @@ internal object AndroidStudioReleasesReader {
     private fun translateDate(rawDate: String): String {
         val month = rawDate.substringBefore(" ").trimStart('0')
         val year = rawDate.substringAfterLast(" ".trimStart('0'))
-        val day = rawDate.substring(month.length + 1, rawDate.length - year.length - 1)
-            .trimStart('0')
+        val day = rawDate.substring(month.length + 1, rawDate.length - year.length - 1).trimStart('0')
 
         if (day.isEmpty()) {
             println("$rawDate\nMonth: '$month'\nYear: '$year'")
@@ -163,7 +145,9 @@ internal object AndroidStudioReleasesReader {
 
     private fun readChannel(rawChannel: String) =
         when (rawChannel.lowercase().trim()) {
-            "stable", "patch", "release" -> "ReleaseChannel.Stable"
+            "stable",
+            "patch",
+            "release" -> "ReleaseChannel.Stable"
             "beta" -> "ReleaseChannel.Beta"
             "canary" -> "ReleaseChannel.Canary"
             else -> "ReleaseChannel.Other"

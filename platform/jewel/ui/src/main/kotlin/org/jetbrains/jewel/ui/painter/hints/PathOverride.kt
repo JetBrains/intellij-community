@@ -15,13 +15,12 @@ private class PathOverrideImpl(private val overrides: Map<String, String>) : Pai
 }
 
 /**
- * A [PainterPathHint] that will override the paths passed as keys in the
- * [overrides] map with the corresponding map values.
+ * A [PainterPathHint] that will override the paths passed as keys in the [overrides] map with the corresponding map
+ * values.
  *
  * This is used, for example, to implement the
- * [New UI Icon Mapping](https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries)
- * when running in standalone mode. In the IntelliJ Platform, this logic is
- * delegated to the platform by
+ * [New UI Icon Mapping](https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries) when running in
+ * standalone mode. In the IntelliJ Platform, this logic is delegated to the platform by
  * [org.jetbrains.jewel.bridge.BridgeOverride].
  */
 @Suppress("FunctionName")

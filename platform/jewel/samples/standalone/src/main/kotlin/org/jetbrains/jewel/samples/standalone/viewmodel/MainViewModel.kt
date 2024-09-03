@@ -50,7 +50,8 @@ private val mainMenuItems =
         ViewInfo(
             title = "Markdown",
             iconKey = StandaloneSampleIcons.markdown,
-            keyboardShortcut = KeyBinding(macOs = setOf("⌥", "M"), windows = setOf("Alt", "M"), linux = setOf("Alt", "M")),
+            keyboardShortcut =
+                KeyBinding(macOs = setOf("⌥", "M"), windows = setOf("Alt", "M"), linux = setOf("Alt", "M")),
             content = { MarkdownDemo() },
         ),
     )

@@ -30,11 +30,7 @@ public class TextColors(
 
 @Immutable
 @GenerateDataFunctions
-public class BorderColors(
-    public val normal: Color,
-    public val focused: Color,
-    public val disabled: Color,
-) {
+public class BorderColors(public val normal: Color, public val focused: Color, public val disabled: Color) {
     public companion object
 }
 
@@ -50,7 +46,6 @@ public class OutlineColors(
     public companion object
 }
 
-public val LocalGlobalColors: ProvidableCompositionLocal<GlobalColors> =
-    staticCompositionLocalOf {
-        error("No GlobalColors provided. Have you forgotten the theme?")
-    }
+public val LocalGlobalColors: ProvidableCompositionLocal<GlobalColors> = staticCompositionLocalOf {
+    error("No GlobalColors provided. Have you forgotten the theme?")
+}

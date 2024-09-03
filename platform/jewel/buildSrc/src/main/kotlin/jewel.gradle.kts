@@ -1,3 +1,4 @@
+import com.ncorti.ktfmt.gradle.tasks.KtfmtBaseTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -9,36 +10,35 @@ group = "org.jetbrains.jewel"
 
 val gitHubRef: String? = System.getenv("GITHUB_REF")
 
-version = when {
-    properties.containsKey("versionOverride") -> {
-        val rawVersion = (properties["versionOverride"] as String).trim()
-        if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
-            throw GradleException("Invalid versionOverride: $rawVersion")
+version =
+    when {
+        properties.containsKey("versionOverride") -> {
+            val rawVersion = (properties["versionOverride"] as String).trim()
+            if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
+                throw GradleException("Invalid versionOverride: $rawVersion")
+            }
+            logger.warn("Using version override: $rawVersion")
+            rawVersion
         }
-        logger.warn("Using version override: $rawVersion")
-        rawVersion
-    }
-    gitHubRef?.startsWith("refs/tags/") == true -> {
-        gitHubRef.substringAfter("refs/tags/")
-            .removePrefix("v")
-    }
-    properties.containsKey("useCurrentVersion") -> {
-        val rawVersion = (properties["jewel.release.version"] as String).trim()
-        if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
-            throw GradleException("Invalid jewel.release.version found in gradle.properties: $rawVersion")
+        gitHubRef?.startsWith("refs/tags/") == true -> {
+            gitHubRef.substringAfter("refs/tags/").removePrefix("v")
         }
-        logger.warn("Using jewel.release.version: $rawVersion")
-        rawVersion
-    }
+        properties.containsKey("useCurrentVersion") -> {
+            val rawVersion = (properties["jewel.release.version"] as String).trim()
+            if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
+                throw GradleException("Invalid jewel.release.version found in gradle.properties: $rawVersion")
+            }
+            logger.warn("Using jewel.release.version: $rawVersion")
+            rawVersion
+        }
 
-    else -> "1.0.0-SNAPSHOT"
-}
+        else -> "1.0.0-SNAPSHOT"
+    }
 
 val jdkLevel = project.property("jdk.level") as String
+
 kotlin {
-    jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(jdkLevel)
-    }
+    jvmToolchain { languageVersion = JavaLanguageVersion.of(jdkLevel) }
 
     compilerOptions.jvmTarget.set(JvmTarget.fromTarget(jdkLevel))
 
@@ -62,8 +62,7 @@ detekt {
     buildUponDefaultConfig = true
 }
 
-val sarifReport: Provider<RegularFile> =
-    layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
+val sarifReport: Provider<RegularFile> = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
 
 tasks {
     detektMain {
@@ -75,9 +74,8 @@ tasks {
         }
     }
 
-    formatKotlinMain {
-        exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") }
-    }
+    formatKotlinMain { exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") } }
+    withType<KtfmtBaseTask> { exclude { it.file.absolutePath.contains("build/generated") } }
 
     lintKotlinMain {
         exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") }
@@ -86,7 +84,7 @@ tasks {
             mapOf(
                 "plain" to layout.buildDirectory.file("reports/ktlint-${project.name}.txt").get().asFile,
                 "html" to layout.buildDirectory.file("reports/ktlint-${project.name}.html").get().asFile,
-                "sarif" to sarifReport.get().asFile
+                "sarif" to sarifReport.get().asFile,
             )
         }
     }

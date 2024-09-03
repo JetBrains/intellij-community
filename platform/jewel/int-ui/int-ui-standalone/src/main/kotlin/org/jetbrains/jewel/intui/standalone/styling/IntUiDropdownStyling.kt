@@ -259,4 +259,5 @@ public fun DropdownMetrics.Companion.undecorated(
     borderWidth: Dp = 0.dp,
 ): DropdownMetrics = DropdownMetrics(arrowMinSize, minSize, cornerSize, contentPadding, borderWidth)
 
-public fun DropdownIcons.Companion.defaults(chevronDown: IconKey = AllIconsKeys.General.ChevronDown): DropdownIcons = DropdownIcons(chevronDown)
+public fun DropdownIcons.Companion.defaults(chevronDown: IconKey = AllIconsKeys.General.ChevronDown): DropdownIcons =
+    DropdownIcons(chevronDown)

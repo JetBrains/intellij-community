@@ -59,6 +59,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
 import icons.JewelIcons
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.toJavaLocalDate
@@ -86,9 +89,6 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ReleasesSampleCompose(project: Project) {
@@ -101,12 +101,7 @@ fun ReleasesSampleCompose(project: Project) {
                 onSelectedItemChange = { selectedItem = it },
             )
         },
-        second = { modifier ->
-            RightColumn(
-                selectedItem = selectedItem,
-                modifier = modifier.fillMaxSize(),
-            )
-        },
+        second = { modifier -> RightColumn(selectedItem = selectedItem, modifier = modifier.fillMaxSize()) },
         Modifier.fillMaxSize(),
         initialDividerPosition = 400.dp,
         minRatio = .15f,
@@ -115,20 +110,13 @@ fun ReleasesSampleCompose(project: Project) {
 }
 
 @Composable
-private fun LeftColumn(
-    project: Project,
-    modifier: Modifier = Modifier,
-    onSelectedItemChange: (ContentItem?) -> Unit,
-) {
+private fun LeftColumn(project: Project, modifier: Modifier = Modifier, onSelectedItemChange: (ContentItem?) -> Unit) {
     val service = remember(project) { project.service<ReleasesSampleService>() }
     val currentContentSource by service.content.collectAsState()
 
     Column(modifier) {
         Row(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(IntrinsicSize.Min)
-                    .padding(4.dp, 6.dp),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(4.dp, 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Filter elements:")
@@ -139,9 +127,7 @@ private fun LeftColumn(
 
             Spacer(Modifier.width(4.dp))
 
-            OverflowMenu(currentContentSource) {
-                service.setContentSource(it)
-            }
+            OverflowMenu(currentContentSource) { service.setContentSource(it) }
         }
 
         val listState = rememberSelectableLazyListState()
@@ -171,9 +157,7 @@ private fun LeftColumn(
                         }
                     },
                 ) {
-                    ContentItemRow(it, isSelected, isActive) { newFilter ->
-                        service.filterContent(newFilter)
-                    }
+                    ContentItemRow(it, isSelected, isActive) { newFilter -> service.filterContent(newFilter) }
                 }
             }
         }
@@ -181,12 +165,7 @@ private fun LeftColumn(
 }
 
 @Composable
-private fun ContentItemRow(
-    item: ContentItem,
-    isSelected: Boolean,
-    isActive: Boolean,
-    onTagClick: (String) -> Unit,
-) {
+private fun ContentItemRow(item: ContentItem, isSelected: Boolean, isActive: Boolean, onTagClick: (String) -> Unit) {
     val color =
         when {
             isSelected && isActive -> retrieveColorOrUnspecified("List.selectionBackground")
@@ -202,12 +181,7 @@ private fun ContentItemRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = item.displayText,
-            modifier = Modifier.weight(1f),
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1,
-        )
+        Text(text = item.displayText, modifier = Modifier.weight(1f), overflow = TextOverflow.Ellipsis, maxLines = 1)
 
         val pointerModifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
         when (item) {
@@ -246,10 +220,7 @@ private fun ItemTag(
         text = text,
         style = Typography.medium(),
         color = foregroundColor,
-        modifier =
-            modifier
-                .background(backgroundColor, shape)
-                .padding(padding),
+        modifier = modifier.background(backgroundColor, shape).padding(padding),
     )
 }
 
@@ -259,29 +230,19 @@ private enum class ItemType {
 }
 
 @Composable
-private fun SearchBar(
-    service: ReleasesSampleService,
-    modifier: Modifier = Modifier,
-) {
+private fun SearchBar(service: ReleasesSampleService, modifier: Modifier = Modifier) {
     val filterText by service.filter.collectAsState()
 
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     val state = rememberTextFieldState(filterText)
-    LaunchedEffect(state) {
-        snapshotFlow { state.text }
-            .collect { service.filterContent(it.toString()) }
-    }
+    LaunchedEffect(state) { snapshotFlow { state.text }.collect { service.filterContent(it.toString()) } }
     TextField(
         state = state,
         modifier = modifier.focusRequester(focusRequester),
-        leadingIcon = {
-            Icon(AllIconsKeys.Actions.Find, contentDescription = null, Modifier.padding(end = 8.dp))
-        },
+        leadingIcon = { Icon(AllIconsKeys.Actions.Find, contentDescription = null, Modifier.padding(end = 8.dp)) },
         trailingIcon = {
             if (filterText.isNotBlank()) {
                 CloseIconButton(service)
@@ -308,21 +269,18 @@ private fun CloseIconButton(service: ReleasesSampleService) {
         key = if (hovered) AllIconsKeys.Actions.CloseHovered else AllIconsKeys.Actions.Close,
         contentDescription = "Clear",
         modifier =
-            Modifier
-                .pointerHoverIcon(PointerIcon.Default)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    role = Role.Button,
-                ) { service.resetFilter() },
+            Modifier.pointerHoverIcon(PointerIcon.Default).clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+            ) {
+                service.resetFilter()
+            },
     )
 }
 
 @Composable
-private fun OverflowMenu(
-    currentContentSource: ContentSource<*>,
-    onContentSourceChange: (ContentSource<*>) -> Unit,
-) {
+private fun OverflowMenu(currentContentSource: ContentSource<*>, onContentSourceChange: (ContentSource<*>) -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     var hovered by remember { mutableStateOf(false) }
     var pressed by remember { mutableStateOf(false) }
@@ -333,7 +291,8 @@ private fun OverflowMenu(
                 is HoverInteraction.Enter -> hovered = true
                 is HoverInteraction.Exit -> hovered = false
                 is PressInteraction.Press -> pressed = true
-                is PressInteraction.Release, is PressInteraction.Cancel -> pressed = false
+                is PressInteraction.Release,
+                is PressInteraction.Cancel -> pressed = false
             }
         }
     }
@@ -343,26 +302,23 @@ private fun OverflowMenu(
     // Emulates Swing actions that pop up menus — they stay pressed while the menu is open
     IconButton(
         modifier =
-            Modifier.fillMaxHeight()
-                .thenIf(menuVisible) {
-                    background(
+            Modifier.fillMaxHeight().thenIf(menuVisible) {
+                background(
                         color = JewelTheme.iconButtonStyle.colors.backgroundPressed,
                         shape = RoundedCornerShape(JewelTheme.iconButtonStyle.metrics.cornerSize),
-                    ).border(
+                    )
+                    .border(
                         width = JewelTheme.iconButtonStyle.metrics.borderWidth,
                         color = JewelTheme.iconButtonStyle.colors.backgroundPressed,
                         shape = RoundedCornerShape(JewelTheme.iconButtonStyle.metrics.cornerSize),
                     )
-                },
+            },
         onClick = { menuVisible = !menuVisible },
     ) {
         Icon(key = AllIconsKeys.Ide.Notification.Gear, contentDescription = "Select data source")
     }
 
-    val contentSources =
-        remember {
-            listOf(AndroidStudioReleases, AndroidReleases)
-        }
+    val contentSources = remember { listOf(AndroidStudioReleases, AndroidReleases) }
 
     if (menuVisible) {
         PopupMenu(
@@ -401,20 +357,14 @@ private fun OverflowMenu(
 }
 
 @Composable
-private fun RightColumn(
-    selectedItem: ContentItem?,
-    modifier: Modifier,
-) {
+private fun RightColumn(selectedItem: ContentItem?, modifier: Modifier) {
     if (selectedItem == null) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Text("Nothing to see here", color = JBUI.CurrentTheme.Label.disabledForeground().toComposeColor())
         }
     } else {
         VerticallyScrollableContainer(modifier = modifier) {
-            Column(
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Start,
-            ) {
+            Column(verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.Start) {
                 val imagePath = selectedItem.imagePath
                 if (imagePath != null) {
                     ReleaseImage(imagePath)
@@ -431,16 +381,17 @@ private fun ReleaseImage(imagePath: String) {
     val painterProvider = rememberResourcePainterProvider(imagePath, JewelIcons::class.java)
     val painter by painterProvider.getPainter()
     val transition = rememberInfiniteTransition("HoloFoil")
-    val offset by transition.animateFloat(
-        initialValue = -1f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                tween(durationMillis = 2.seconds.inWholeMilliseconds.toInt(), easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        "holoFoil offset",
-    )
+    val offset by
+        transition.animateFloat(
+            initialValue = -1f,
+            targetValue = 1f,
+            animationSpec =
+                infiniteRepeatable(
+                    tween(durationMillis = 2.seconds.inWholeMilliseconds.toInt(), easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+            "holoFoil offset",
+        )
     var isHovered by remember { mutableStateOf(false) }
     var applyModifier by remember { mutableStateOf(false) }
     val intensity by animateFloatAsState(if (isHovered) 1f else 0f, animationSpec = tween(300))
@@ -467,14 +418,10 @@ private fun ReleaseImage(imagePath: String) {
 
 @Composable
 private fun ItemDetailsText(selectedItem: ContentItem) {
-    Column(
-        Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(selectedItem.displayText, style = Typography.h1TextStyle())
 
-        val formatter =
-            remember(Locale.current) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
+        val formatter = remember(Locale.current) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
         val releaseDate = selectedItem.releaseDate
         if (releaseDate != null) {
             Text(
@@ -510,10 +457,7 @@ private fun AndroidStudioReleaseDetails(item: ContentItem.AndroidStudio) {
 }
 
 @Composable
-private fun TextWithLabel(
-    labelText: String,
-    valueText: String,
-) {
+private fun TextWithLabel(labelText: String, valueText: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(labelText)
         Text(valueText, style = Typography.regular().copy(fontWeight = FontWeight.Bold))

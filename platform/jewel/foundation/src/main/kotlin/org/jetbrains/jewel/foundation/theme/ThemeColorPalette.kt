@@ -21,8 +21,7 @@ public class ThemeColorPalette(
     public val teal: List<Color>,
     public val rawMap: Map<String, Color>,
 ) {
-    @Deprecated("Use gray() instead", ReplaceWith("gray(index)"))
-    public fun grey(index: Int): Color = gray(index)
+    @Deprecated("Use gray() instead", ReplaceWith("gray(index)")) public fun grey(index: Int): Color = gray(index)
 
     @Deprecated("Use grayOrNull() instead", ReplaceWith("grayOrNull(index)"))
     public fun greyOrNull(index: Int): Color? = grayOrNull(index)
@@ -69,7 +68,8 @@ public class ThemeColorPalette(
         }
 
         return when (colorGroup) {
-            "grey", "gray" -> gray(colorIndex)
+            "grey",
+            "gray" -> gray(colorIndex)
             "blue" -> blue(colorIndex)
             "green" -> green(colorIndex)
             "red" -> red(colorIndex)

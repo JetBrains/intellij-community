@@ -19,9 +19,7 @@ dependencies {
     iconGeneration(libs.intellijPlatform.util.ui)
     iconGeneration(libs.intellijPlatform.icons)
     testImplementation(compose.desktop.uiTestJUnit4)
-    testImplementation(compose.desktop.currentOs) {
-        exclude(group = "org.jetbrains.compose.material")
-    }
+    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }
 
 intelliJIconKeysGenerator {

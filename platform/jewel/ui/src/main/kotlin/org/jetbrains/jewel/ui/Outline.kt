@@ -13,14 +13,10 @@ import org.jetbrains.jewel.ui.util.thenIf
 public enum class Outline {
     None,
     Warning,
-    Error,
-    ;
+    Error;
 
     public companion object {
-        public fun of(
-            warning: Boolean,
-            error: Boolean,
-        ): Outline =
+        public fun of(warning: Boolean, error: Boolean): Outline =
             when {
                 error -> Error
                 warning -> Warning

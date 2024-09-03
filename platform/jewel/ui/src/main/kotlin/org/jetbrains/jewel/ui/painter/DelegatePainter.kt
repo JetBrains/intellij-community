@@ -7,8 +7,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.LayoutDirection
 
 /**
- * A painter that delegates drawing to another [Painter], but can apply
- * custom alphas, filters and layoutDirection to it.
+ * A painter that delegates drawing to another [Painter], but can apply custom alphas, filters and layoutDirection to
+ * it.
  */
 public open class DelegatePainter(private val delegate: Painter) : Painter() {
     override val intrinsicSize: Size

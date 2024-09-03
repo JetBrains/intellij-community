@@ -7,8 +7,7 @@ enum class IntUiThemes {
     Light,
     LightWithLightHeader,
     Dark,
-    System,
-    ;
+    System;
 
     fun isDark() = (if (this == System) fromSystemTheme(currentSystemTheme) else this) == Dark
 

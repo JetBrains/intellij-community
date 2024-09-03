@@ -59,17 +59,7 @@ public fun MarkdownStyling.Companion.light(
     thematicBreak: ThematicBreak = ThematicBreak.light(),
     htmlBlock: HtmlBlock = HtmlBlock.light(editorTextStyle.copy(color = blockContentColorLight)),
 ): MarkdownStyling =
-    MarkdownStyling(
-        blockVerticalSpacing,
-        paragraph,
-        heading,
-        blockQuote,
-        code,
-        list,
-        image,
-        thematicBreak,
-        htmlBlock,
-    )
+    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -91,21 +81,13 @@ public fun MarkdownStyling.Companion.dark(
     thematicBreak: ThematicBreak = ThematicBreak.dark(),
     htmlBlock: HtmlBlock = HtmlBlock.dark(editorTextStyle.copy(color = blockContentColorLight)),
 ): MarkdownStyling =
-    MarkdownStyling(
-        blockVerticalSpacing,
-        paragraph,
-        heading,
-        blockQuote,
-        code,
-        list,
-        image,
-        thematicBreak,
-        htmlBlock,
-    )
+    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
-public fun Paragraph.Companion.light(inlinesStyling: InlinesStyling = InlinesStyling.light()): Paragraph = Paragraph(inlinesStyling)
+public fun Paragraph.Companion.light(inlinesStyling: InlinesStyling = InlinesStyling.light()): Paragraph =
+    Paragraph(inlinesStyling)
 
-public fun Paragraph.Companion.dark(inlinesStyling: InlinesStyling = InlinesStyling.dark()): Paragraph = Paragraph(inlinesStyling)
+public fun Paragraph.Companion.dark(inlinesStyling: InlinesStyling = InlinesStyling.dark()): Paragraph =
+    Paragraph(inlinesStyling)
 
 public fun Heading.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -115,7 +97,7 @@ public fun Heading.Companion.light(
                 fontSize = baseTextStyle.fontSize * 2,
                 lineHeight = baseTextStyle.fontSize * 2 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h2: Heading.H2 =
         Heading.H2.light(
@@ -123,7 +105,7 @@ public fun Heading.Companion.light(
                 fontSize = baseTextStyle.fontSize * 1.5,
                 lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h3: Heading.H3 =
         Heading.H3.light(
@@ -131,7 +113,7 @@ public fun Heading.Companion.light(
                 fontSize = baseTextStyle.fontSize * 1.25,
                 lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h4: Heading.H4 =
         Heading.H4.light(
@@ -139,7 +121,7 @@ public fun Heading.Companion.light(
                 fontSize = baseTextStyle.fontSize,
                 lineHeight = baseTextStyle.fontSize * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h5: Heading.H5 =
         Heading.H5.light(
@@ -147,7 +129,7 @@ public fun Heading.Companion.light(
                 fontSize = baseTextStyle.fontSize * .875,
                 lineHeight = baseTextStyle.fontSize * .875 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h6: Heading.H6 =
         Heading.H6.light(
@@ -156,7 +138,7 @@ public fun Heading.Companion.light(
                 fontSize = baseTextStyle.fontSize * .85,
                 lineHeight = baseTextStyle.fontSize * .85 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
@@ -168,7 +150,7 @@ public fun Heading.Companion.dark(
                 fontSize = baseTextStyle.fontSize * 2,
                 lineHeight = baseTextStyle.fontSize * 2 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h2: Heading.H2 =
         Heading.H2.light(
@@ -176,7 +158,7 @@ public fun Heading.Companion.dark(
                 fontSize = baseTextStyle.fontSize * 1.5,
                 lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h3: Heading.H3 =
         Heading.H3.light(
@@ -184,7 +166,7 @@ public fun Heading.Companion.dark(
                 fontSize = baseTextStyle.fontSize * 1.25,
                 lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h4: Heading.H4 =
         Heading.H4.light(
@@ -192,7 +174,7 @@ public fun Heading.Companion.dark(
                 fontSize = baseTextStyle.fontSize,
                 lineHeight = baseTextStyle.fontSize * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h5: Heading.H5 =
         Heading.H5.light(
@@ -200,7 +182,7 @@ public fun Heading.Companion.dark(
                 fontSize = baseTextStyle.fontSize * .875,
                 lineHeight = baseTextStyle.fontSize * .875 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h6: Heading.H6 =
         Heading.H6.light(
@@ -209,7 +191,7 @@ public fun Heading.Companion.dark(
                 fontSize = baseTextStyle.fontSize * .85,
                 lineHeight = baseTextStyle.fontSize * .85 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
@@ -466,15 +448,7 @@ public fun Unordered.Companion.light(
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
     padding: PaddingValues = PaddingValues(start = 16.dp),
-): Unordered =
-    Unordered(
-        bullet,
-        bulletStyle,
-        bulletContentGap,
-        itemVerticalSpacing,
-        itemVerticalSpacingTight,
-        padding,
-    )
+): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
 
 public fun Unordered.Companion.dark(
     bullet: Char? = '•',
@@ -483,15 +457,7 @@ public fun Unordered.Companion.dark(
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
     padding: PaddingValues = PaddingValues(start = 16.dp),
-): Unordered =
-    Unordered(
-        bullet,
-        bulletStyle,
-        bulletContentGap,
-        itemVerticalSpacing,
-        itemVerticalSpacingTight,
-        padding,
-    )
+): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
 
 public fun Code.Companion.light(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorLight),
@@ -515,16 +481,7 @@ public fun Indented.Companion.light(
     fillWidth: Boolean = true,
     scrollsHorizontally: Boolean = true,
 ): Indented =
-    Indented(
-        editorTextStyle,
-        padding,
-        shape,
-        background,
-        borderWidth,
-        borderColor,
-        fillWidth,
-        scrollsHorizontally,
-    )
+    Indented(editorTextStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
 public fun Indented.Companion.dark(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorDark),
@@ -536,16 +493,7 @@ public fun Indented.Companion.dark(
     fillWidth: Boolean = true,
     scrollsHorizontally: Boolean = true,
 ): Indented =
-    Indented(
-        editorTextStyle,
-        padding,
-        shape,
-        background,
-        borderWidth,
-        borderColor,
-        fillWidth,
-        scrollsHorizontally,
-    )
+    Indented(editorTextStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
 public fun Fenced.Companion.light(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorLight),
@@ -650,10 +598,7 @@ public fun InlinesStyling.Companion.light(
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
             .toSpanStyle(),
     link: SpanStyle =
-        textStyle.copy(
-            color = IntUiLightTheme.colors.blue(2),
-            textDecoration = TextDecoration.Underline,
-        ).toSpanStyle(),
+        textStyle.copy(color = IntUiLightTheme.colors.blue(2), textDecoration = TextDecoration.Underline).toSpanStyle(),
     linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.gray(8)),
     linkHovered: SpanStyle = link,
     linkFocused: SpanStyle = link.copy(background = Color(0x12000000)),
@@ -686,10 +631,7 @@ public fun InlinesStyling.Companion.dark(
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
             .toSpanStyle(),
     link: SpanStyle =
-        textStyle.copy(
-            color = IntUiDarkTheme.colors.blue(9),
-            textDecoration = TextDecoration.Underline,
-        ).toSpanStyle(),
+        textStyle.copy(color = IntUiDarkTheme.colors.blue(9), textDecoration = TextDecoration.Underline).toSpanStyle(),
     linkDisabled: SpanStyle = link.copy(color = IntUiDarkTheme.colors.gray(8)),
     linkHovered: SpanStyle = link,
     linkFocused: SpanStyle = link.copy(background = Color(0x16FFFFFF)),
@@ -724,20 +666,10 @@ private val blockContentColorDark = Color(0xFFBCBEC4)
 private val defaultTextSize = 13.sp
 
 private val defaultTextStyle
-    get() =
-        JewelTheme.createDefaultTextStyle(
-            fontSize = defaultTextSize,
-            lineHeight = defaultTextSize * 1.5,
-        )
+    get() = JewelTheme.createDefaultTextStyle(fontSize = defaultTextSize, lineHeight = defaultTextSize * 1.5)
 
 private val defaultEditorTextStyle
-    get() =
-        JewelTheme.createEditorTextStyle(
-            fontSize = defaultTextSize,
-            lineHeight = defaultTextSize * 1.2,
-        )
+    get() = JewelTheme.createEditorTextStyle(fontSize = defaultTextSize, lineHeight = defaultTextSize * 1.2)
 
-private val inlineCodeBackgroundColorLight =
-    Color(red = 212, green = 222, blue = 231, alpha = 255 / 4)
-private val inlineCodeBackgroundColorDark =
-    Color(red = 212, green = 222, blue = 231, alpha = 25)
+private val inlineCodeBackgroundColorLight = Color(red = 212, green = 222, blue = 231, alpha = 255 / 4)
+private val inlineCodeBackgroundColorDark = Color(red = 212, green = 222, blue = 231, alpha = 25)

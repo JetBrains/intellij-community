@@ -91,10 +91,4 @@ public fun LazyTreeIcons.Companion.defaults(
     chevronExpanded: IconKey = AllIconsKeys.General.ChevronDown,
     chevronSelectedCollapsed: IconKey = chevronCollapsed,
     chevronSelectedExpanded: IconKey = chevronExpanded,
-): LazyTreeIcons =
-    LazyTreeIcons(
-        chevronCollapsed,
-        chevronExpanded,
-        chevronSelectedCollapsed,
-        chevronSelectedExpanded,
-    )
+): LazyTreeIcons = LazyTreeIcons(chevronCollapsed, chevronExpanded, chevronSelectedCollapsed, chevronSelectedExpanded)

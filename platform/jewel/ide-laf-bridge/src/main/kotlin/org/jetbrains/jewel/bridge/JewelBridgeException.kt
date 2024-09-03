@@ -7,7 +7,7 @@ public sealed class JewelBridgeException(override val message: String?) : Runtim
     public class KeysNotFoundException(keys: List<String>, type: String) :
         JewelBridgeException(
             "Keys ${keys.joinToString(", ") { "'$it'" }} not found in Swing LaF, " +
-                "was expecting a value of type $type",
+                "was expecting a value of type $type"
         )
 }
 

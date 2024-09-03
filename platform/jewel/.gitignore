@@ -42,7 +42,9 @@ local.properties
 !.idea/icon.png
 !.idea/icon_dark.png
 !.idea/inspectionProfiles/
+!.idea/ktfmt.xml
 !.idea/ktlint.xml
+!.idea/ktlint-plugin.xml
 !.idea/runConfigurations/
 !.idea/scopes/
 !.idea/vcs.xml

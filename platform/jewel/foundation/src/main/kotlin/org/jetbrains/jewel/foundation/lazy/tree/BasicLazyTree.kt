@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
@@ -37,48 +39,31 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Renders a lazy tree view based on the provided tree data structure.
  *
  * @param tree The tree structure to be rendered.
  * @param selectionMode The selection mode for the tree nodes.
- * @param onElementClick Callback function triggered when a tree node is
- *     clicked.
- * @param elementBackgroundFocused The background color of a tree node when
- *     focused.
- * @param elementBackgroundSelectedFocused The background color of a
- *     selected tree node when focused.
- * @param elementBackgroundSelected The background color of a selected tree
- *     node.
- * @param indentSize The size of the indent for each level of the tree
- *     node.
- * @param elementBackgroundCornerSize The corner size of the background
- *     shape of a tree node.
+ * @param onElementClick Callback function triggered when a tree node is clicked.
+ * @param elementBackgroundFocused The background color of a tree node when focused.
+ * @param elementBackgroundSelectedFocused The background color of a selected tree node when focused.
+ * @param elementBackgroundSelected The background color of a selected tree node.
+ * @param indentSize The size of the indent for each level of the tree node.
+ * @param elementBackgroundCornerSize The corner size of the background shape of a tree node.
  * @param elementPadding The padding for the entire tree node.
- * @param elementContentPadding The padding for the content within a tree
- *     node.
+ * @param elementContentPadding The padding for the content within a tree node.
  * @param elementMinHeight The minimum height of a tree node.
- * @param chevronContentGap The gap between the chevron icon and the node
- *     content.
+ * @param chevronContentGap The gap between the chevron icon and the node content.
  * @param treeState The state object for managing the tree view state.
- * @param modifier Optional modifier for styling or positioning the tree
- *     view.
- * @param onElementDoubleClick Callback function triggered when a tree node
- *     is double-clicked.
- * @param onSelectionChange Callback function triggered when the selected
- *     tree nodes change.
- * @param platformDoubleClickDelay The duration between two consecutive
- *     clicks to be considered a double-click.
+ * @param modifier Optional modifier for styling or positioning the tree view.
+ * @param onElementDoubleClick Callback function triggered when a tree node is double-clicked.
+ * @param onSelectionChange Callback function triggered when the selected tree nodes change.
+ * @param platformDoubleClickDelay The duration between two consecutive clicks to be considered a double-click.
  * @param keyActions The key binding actions for the tree view.
- * @param pointerEventScopedActions The pointer event actions for the tree
- *     view.
- * @param chevronContent The composable function responsible for rendering
- *     the chevron icon.
- * @param nodeContent The composable function responsible for rendering the
- *     content of a tree node.
+ * @param pointerEventScopedActions The pointer event actions for the tree view.
+ * @param chevronContent The composable function responsible for rendering the chevron icon.
+ * @param nodeContent The composable function responsible for rendering the content of a tree node.
  *
  * @suppress("UNCHECKED_CAST")
  *
@@ -112,16 +97,15 @@ public fun <T> BasicLazyTree(
     val scope = rememberCoroutineScope()
 
     val flattenedTree =
-        remember(tree, treeState.openNodes, treeState.allNodes) {
-            tree.roots.flatMap { it.flattenTree(treeState) }
-        }
+        remember(tree, treeState.openNodes, treeState.allNodes) { tree.roots.flatMap { it.flattenTree(treeState) } }
 
     remember(tree) { // if tree changes we need to update selection changes
         onSelectionChange(
-            flattenedTree.asSequence()
+            flattenedTree
+                .asSequence()
                 .filter { it.id in treeState.delegate.selectedKeys }
                 .map { element -> element as Tree.Element<T> }
-                .toList(),
+                .toList()
         )
     }
 
@@ -136,30 +120,21 @@ public fun <T> BasicLazyTree(
         },
         interactionSource = remember { MutableInteractionSource() },
     ) {
-        itemsIndexed(
-            items = flattenedTree,
-            key = { _, item -> item.id },
-            contentType = { _, item -> item.data },
-        ) { index, element ->
+        itemsIndexed(items = flattenedTree, key = { _, item -> item.id }, contentType = { _, item -> item.data }) {
+            index,
+            element ->
             val elementState =
                 TreeElementState.of(
                     active = isActive,
                     selected = isSelected,
-                    expanded =
-                        (element as? Tree.Element.Node)
-                            ?.let { it.id in treeState.openNodes }
-                            ?: false,
+                    expanded = (element as? Tree.Element.Node)?.let { it.id in treeState.openNodes } ?: false,
                 )
 
             val backgroundShape by derivedStateOf {
                 val hasRoundedTopCorners =
-                    flattenedTree.getOrNull(index - 1)?.id?.let {
-                        it !in treeState.delegate.selectedKeys
-                    } ?: true
+                    flattenedTree.getOrNull(index - 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
                 val hasRoundedBottomCorners =
-                    flattenedTree.getOrNull(index + 1)?.id?.let {
-                        it !in treeState.delegate.selectedKeys
-                    } ?: true
+                    flattenedTree.getOrNull(index + 1)?.id?.let { it !in treeState.delegate.selectedKeys } ?: true
                 val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
                 val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
                 RoundedCornerShape(
@@ -183,18 +158,14 @@ public fun <T> BasicLazyTree(
                         )
                         .padding(elementContentPadding)
                         .padding(start = (element.depth * indentSize.value).dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) {
-                            (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)
-                                ?.notifyItemClicked(
-                                    item = flattenedTree[index] as Tree.Element<T>,
-                                    scope = scope,
-                                    doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
-                                    onElementClick = onElementClick,
-                                    onElementDoubleClick = onElementDoubleClick,
-                                )
+                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                            (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)?.notifyItemClicked(
+                                item = flattenedTree[index] as Tree.Element<T>,
+                                scope = scope,
+                                doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
+                                onElementClick = onElementClick,
+                                onElementDoubleClick = onElementDoubleClick,
+                            )
                             treeState.delegate.lastActiveItemIndex = index
                         },
             ) {
@@ -207,7 +178,7 @@ public fun <T> BasicLazyTree(
                             ) {
                                 treeState.toggleNode(element.id)
                                 onElementDoubleClick(element as Tree.Element<T>)
-                            },
+                            }
                     ) {
                         chevronContent(elementState)
                     }
@@ -219,10 +190,8 @@ public fun <T> BasicLazyTree(
     }
 }
 
-private fun computerCornerSize(
-    isRounded: Boolean,
-    cornerSize: CornerSize,
-) = if (isRounded) cornerSize else CornerSize(0.dp)
+private fun computerCornerSize(isRounded: Boolean, cornerSize: CornerSize) =
+    if (isRounded) cornerSize else CornerSize(0.dp)
 
 private fun Modifier.elementBackground(
     state: TreeElementState,
@@ -230,21 +199,21 @@ private fun Modifier.elementBackground(
     focused: Color,
     selected: Color,
     backgroundShape: RoundedCornerShape,
-) = background(
-    color =
-        when {
-            state.isActive && state.isSelected -> selectedFocused
-            state.isActive && !state.isSelected -> focused
-            state.isSelected && !state.isActive -> selected
-            else -> Color.Unspecified
-        },
-    shape = backgroundShape,
-)
+) =
+    background(
+        color =
+            when {
+                state.isActive && state.isSelected -> selectedFocused
+                state.isActive && !state.isSelected -> focused
+                state.isSelected && !state.isActive -> selected
+                else -> Color.Unspecified
+            },
+        shape = backgroundShape,
+    )
 
 @Immutable
 @JvmInline
-public value class TreeElementState(public val state: ULong) :
-    FocusableComponentState, SelectableComponentState {
+public value class TreeElementState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
     @Stable
     override val isActive: Boolean
         get() = state and Active != 0UL
@@ -317,7 +286,7 @@ public value class TreeElementState(public val state: ULong) :
                     (if (pressed) Pressed else 0UL) or
                     (if (hovered) Hovered else 0UL) or
                     (if (selected) Selected else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }
@@ -347,10 +316,8 @@ private fun Tree.Element<*>.flattenTree(state: TreeState): MutableList<Tree.Elem
 }
 
 private infix fun MutableSet<Any>.getAllSubNodes(node: Tree.Element.Node<*>) {
-    node.children
-        ?.filterIsInstance<Tree.Element.Node<*>>()
-        ?.forEach {
-            add(it.id)
-            this@getAllSubNodes getAllSubNodes (it)
-        }
+    node.children?.filterIsInstance<Tree.Element.Node<*>>()?.forEach {
+        add(it.id)
+        this@getAllSubNodes getAllSubNodes (it)
+    }
 }

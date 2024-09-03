@@ -14,22 +14,14 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     mavenCentral()
 
-    intellijPlatform {
-        defaultRepositories()
-    }
+    intellijPlatform { defaultRepositories() }
 }
 
 dependencies {
-    api(projects.ui) {
-        exclude(group = "org.jetbrains.kotlinx")
-    }
+    api(projects.ui) { exclude(group = "org.jetbrains.kotlinx") }
 
-    intellijPlatform {
-        intellijIdeaCommunity(libs.versions.idea)
-    }
+    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
-    testImplementation(compose.desktop.currentOs) {
-        exclude(group = "org.jetbrains.compose.material")
-    }
+    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }

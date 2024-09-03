@@ -59,7 +59,7 @@ public class TitleBarColors(
             when {
                 !state.isActive -> inactiveBackground
                 else -> background
-            },
+            }
         )
 
     public companion object
@@ -87,7 +87,6 @@ public class TitleBarIcons(
     public companion object
 }
 
-public val LocalTitleBarStyle: ProvidableCompositionLocal<TitleBarStyle> =
-    staticCompositionLocalOf {
-        error("No TitleBarStyle provided. Have you forgotten the theme?")
-    }
+public val LocalTitleBarStyle: ProvidableCompositionLocal<TitleBarStyle> = staticCompositionLocalOf {
+    error("No TitleBarStyle provided. Have you forgotten the theme?")
+}

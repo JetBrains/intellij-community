@@ -36,10 +36,7 @@ internal fun Borders() {
 
     GroupHeader("Border alignment/expand")
     var borderAlignment by remember { mutableStateOf(Stroke.Alignment.Center) }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         RadioButtonRow(
             text = "Inside",
             selected = borderAlignment == Stroke.Alignment.Inside,
@@ -58,89 +55,37 @@ internal fun Borders() {
     }
     var width by remember { mutableStateOf(1.dp) }
     var expand by remember { mutableStateOf(0.dp) }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        OutlinedButton({
-            width += 1.dp
-        }) {
-            Text("+width")
-        }
-        OutlinedButton({
-            width -= 1.dp
-        }, enabled = width > 1.dp) {
-            Text("-width")
-        }
-        OutlinedButton({
-            expand += 1.dp
-        }) {
-            Text("+expand")
-        }
-        OutlinedButton({
-            expand -= 1.dp
-        }) {
-            Text("-expand")
-        }
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedButton({ width += 1.dp }) { Text("+width") }
+        OutlinedButton({ width -= 1.dp }, enabled = width > 1.dp) { Text("-width") }
+        OutlinedButton({ expand += 1.dp }) { Text("+expand") }
+        OutlinedButton({ expand -= 1.dp }) { Text("-expand") }
     }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         val isDark = JewelTheme.isDark
         val colorPalette = JewelTheme.colorPalette
-        val borderColor =
-            remember(isDark) {
-                if (isDark) colorPalette.blue(6) else colorPalette.blue(4)
-            }
-        val backgroundColor =
-            remember(isDark) {
-                if (isDark) colorPalette.gray(4) else colorPalette.gray(11)
-            }
+        val borderColor = remember(isDark) { if (isDark) colorPalette.blue(6) else colorPalette.blue(4) }
+        val backgroundColor = remember(isDark) { if (isDark) colorPalette.gray(4) else colorPalette.gray(11) }
 
         Box(
             Modifier.size(28.dp, 28.dp)
                 .background(backgroundColor, shape = CircleShape)
-                .border(
-                    borderAlignment,
-                    width,
-                    borderColor,
-                    CircleShape,
-                    expand,
-                ),
+                .border(borderAlignment, width, borderColor, CircleShape, expand)
         )
         Box(
             Modifier.size(72.dp, 28.dp)
                 .background(backgroundColor, shape = RectangleShape)
-                .border(
-                    borderAlignment,
-                    width,
-                    borderColor,
-                    RectangleShape,
-                    expand,
-                ),
+                .border(borderAlignment, width, borderColor, RectangleShape, expand)
         )
         Box(
             Modifier.size(72.dp, 28.dp)
                 .background(backgroundColor, shape = RoundedCornerShape(4.dp))
-                .border(
-                    borderAlignment,
-                    width,
-                    borderColor,
-                    RoundedCornerShape(4.dp),
-                    expand,
-                ),
+                .border(borderAlignment, width, borderColor, RoundedCornerShape(4.dp), expand)
         )
         Box(
             Modifier.size(72.dp, 28.dp)
                 .background(backgroundColor, shape = RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp))
-                .border(
-                    borderAlignment,
-                    width,
-                    borderColor,
-                    RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp),
-                    expand,
-                ),
+                .border(borderAlignment, width, borderColor, RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp), expand)
         )
     }
 }

@@ -15,13 +15,7 @@ public fun GlobalColors.Companion.light(
     outlines: OutlineColors = OutlineColors.light(),
     text: TextColors = TextColors.light(),
     paneBackground: Color = IntUiLightTheme.colors.gray(13),
-): GlobalColors =
-    GlobalColors(
-        borders = borders,
-        outlines = outlines,
-        text = text,
-        panelBackground = paneBackground,
-    )
+): GlobalColors = GlobalColors(borders = borders, outlines = outlines, text = text, panelBackground = paneBackground)
 
 @Composable
 public fun GlobalColors.Companion.dark(
@@ -29,13 +23,7 @@ public fun GlobalColors.Companion.dark(
     outlines: OutlineColors = OutlineColors.dark(),
     text: TextColors = TextColors.dark(),
     paneBackground: Color = IntUiDarkTheme.colors.gray(2),
-): GlobalColors =
-    GlobalColors(
-        borders = borders,
-        outlines = outlines,
-        text = text,
-        panelBackground = paneBackground,
-    )
+): GlobalColors = GlobalColors(borders = borders, outlines = outlines, text = text, panelBackground = paneBackground)
 
 @Composable
 public fun BorderColors.Companion.light(

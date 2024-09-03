@@ -73,7 +73,7 @@ public class MenuItemColors(
                 focused = backgroundFocused,
                 pressed = backgroundPressed,
                 hovered = backgroundHovered,
-            ),
+            )
         )
 
     @Composable
@@ -86,7 +86,7 @@ public class MenuItemColors(
                 pressed = contentPressed,
                 hovered = contentHovered,
                 active = content,
-            ),
+            )
         )
 
     @Composable
@@ -99,7 +99,7 @@ public class MenuItemColors(
                 pressed = iconTintPressed,
                 hovered = iconTintHovered,
                 active = iconTint,
-            ),
+            )
         )
 
     @Composable
@@ -112,7 +112,7 @@ public class MenuItemColors(
                 pressed = keybindingTintPressed,
                 hovered = keybindingTintHovered,
                 active = keybindingTint,
-            ),
+            )
         )
 
     public companion object
@@ -161,7 +161,6 @@ public class MenuIcons(public val submenuChevron: IconKey) {
     public companion object
 }
 
-public val LocalMenuStyle: ProvidableCompositionLocal<MenuStyle> =
-    staticCompositionLocalOf {
-        error("No MenuStyle provided. Have you forgotten the theme?")
-    }
+public val LocalMenuStyle: ProvidableCompositionLocal<MenuStyle> = staticCompositionLocalOf {
+    error("No MenuStyle provided. Have you forgotten the theme?")
+}

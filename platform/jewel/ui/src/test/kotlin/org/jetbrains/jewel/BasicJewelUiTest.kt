@@ -7,15 +7,12 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 
 open class BasicJewelUiTest {
-    @get:Rule
-    val composeRule = createComposeRule()
+    @get:Rule val composeRule = createComposeRule()
 
     @Suppress("ImplicitUnitReturnType")
-    protected fun runComposeTest(
-        composable: @Composable () -> Unit,
-        block: suspend ComposeContentTestRule.() -> Unit,
-    ) = runBlocking {
-        composeRule.setContent(composable)
-        composeRule.block()
-    }
+    protected fun runComposeTest(composable: @Composable () -> Unit, block: suspend ComposeContentTestRule.() -> Unit) =
+        runBlocking {
+            composeRule.setContent(composable)
+            composeRule.block()
+        }
 }

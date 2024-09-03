@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -49,7 +50,6 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
-import java.util.Locale
 
 @Composable
 fun Scrollbars() {
@@ -78,7 +78,7 @@ fun Scrollbars() {
                             trackClickBehavior = clickBehavior,
                             scrollbarVisibility = ScrollbarVisibility.WhenScrolling.default(),
                         )
-                    },
+                    }
                 )
             }
 
@@ -127,10 +127,7 @@ private fun SettingsRow(
 }
 
 @Composable
-private fun LazyColumnWithScrollbar(
-    style: ScrollbarStyle,
-    modifier: Modifier,
-) {
+private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
     Column(modifier) {
         Text("LazyColumn", style = Typography.h2TextStyle())
 
@@ -172,10 +169,7 @@ private fun LazyColumnWithScrollbar(
 }
 
 @Composable
-private fun ColumnWithScrollbar(
-    style: ScrollbarStyle,
-    modifier: Modifier,
-) {
+private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
     Column(modifier) {
         Text("Column", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
@@ -186,7 +180,7 @@ private fun ColumnWithScrollbar(
                 modifier =
                     Modifier.background(JewelTheme.textAreaStyle.colors.background)
                         .verticalScroll(scrollState)
-                        .align(Alignment.CenterStart),
+                        .align(Alignment.CenterStart)
             ) {
                 LIST_ITEMS.forEachIndexed { index, line ->
                     Text(
@@ -207,10 +201,7 @@ private fun ColumnWithScrollbar(
 }
 
 @Composable
-private fun HorizontalScrollbarContent(
-    scrollbarStyle: ScrollbarStyle,
-    modifier: Modifier,
-) {
+private fun HorizontalScrollbarContent(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
     HorizontallyScrollableContainer(
         modifier = modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
         style = scrollbarStyle,

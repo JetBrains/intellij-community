@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
@@ -43,7 +44,6 @@ import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.theme.colorPalette
-import kotlin.random.Random
 
 @Composable
 fun ChipsAndTrees() {
@@ -67,22 +67,16 @@ fun ChipsAndTrees() {
 
 @Composable
 fun SelectableLazyColumnSample() {
-    var listOfItems by remember {
-        mutableStateOf(emptyList<String>())
-    }
+    var listOfItems by remember { mutableStateOf(emptyList<String>()) }
 
     LaunchedEffect(Unit) {
         @Suppress("InjectDispatcher") // Ok for demo code
-        launch(Dispatchers.Default) {
-            listOfItems = List(5_000_000) { "Item $it" }
-        }
+        launch(Dispatchers.Default) { listOfItems = List(5_000_000) { "Item $it" } }
     }
 
     val interactionSource = remember { MutableInteractionSource() }
     val state = rememberSelectableLazyListState()
-    Box(
-        modifier = Modifier.size(200.dp, 200.dp),
-    ) {
+    Box(modifier = Modifier.size(200.dp, 200.dp)) {
         if (listOfItems.isEmpty()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
@@ -91,26 +85,19 @@ fun SelectableLazyColumnSample() {
                 modifier = Modifier.focusable(interactionSource = interactionSource),
                 state = state,
                 content = {
-                    items(
-                        count = listOfItems.size,
-                        key = { index -> listOfItems[index] },
-                    ) { index ->
+                    items(count = listOfItems.size, key = { index -> listOfItems[index] }) { index ->
                         Text(
                             text = listOfItems[index],
                             modifier =
-                                Modifier
-                                    .fillMaxWidth()
+                                Modifier.fillMaxWidth()
                                     .then(
                                         when {
                                             isSelected && isActive -> Modifier.background(Color.Blue)
                                             isSelected && !isActive -> Modifier.background(Color.Gray)
                                             else -> Modifier
-                                        },
-                                    ).clickable {
-                                        JewelLogger
-                                            .getInstance("ChipsAndTree")
-                                            .info("Click on $index")
-                                    },
+                                        }
+                                    )
+                                    .clickable { JewelLogger.getInstance("ChipsAndTree").info("Click on $index") },
                         )
                     }
                 },
@@ -129,59 +116,29 @@ fun ChipsSample(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             var selectedIndex by remember { mutableStateOf(-1) }
-            RadioButtonChip(
-                selected = selectedIndex == 0,
-                onClick = { selectedIndex = 0 },
-                enabled = true,
-            ) {
+            RadioButtonChip(selected = selectedIndex == 0, onClick = { selectedIndex = 0 }, enabled = true) {
                 Text("First")
             }
 
-            RadioButtonChip(
-                selected = selectedIndex == 1,
-                onClick = { selectedIndex = 1 },
-                enabled = true,
-            ) {
+            RadioButtonChip(selected = selectedIndex == 1, onClick = { selectedIndex = 1 }, enabled = true) {
                 Text("Second")
             }
 
-            RadioButtonChip(
-                selected = selectedIndex == 2,
-                onClick = { selectedIndex = 2 },
-                enabled = true,
-            ) {
+            RadioButtonChip(selected = selectedIndex == 2, onClick = { selectedIndex = 2 }, enabled = true) {
                 Text("Third")
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             var isChecked by remember { mutableStateOf(false) }
-            ToggleableChip(
-                checked = isChecked,
-                onClick = {
-                    isChecked = it
-                },
-                enabled = true,
-            ) {
-                Text("Toggleable")
-            }
+            ToggleableChip(checked = isChecked, onClick = { isChecked = it }, enabled = true) { Text("Toggleable") }
 
             var count by remember { mutableStateOf(1) }
-            Chip(
-                enabled = true,
-                onClick = { count++ },
-            ) {
-                Text("Clicks: $count")
-            }
+            Chip(enabled = true, onClick = { count++ }) { Text("Clicks: $count") }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Chip(
-                enabled = false,
-                onClick = {},
-            ) {
-                Text("Disabled")
-            }
+            Chip(enabled = false, onClick = {}) { Text("Disabled") }
         }
     }
 }
@@ -206,18 +163,17 @@ fun TreeSample(modifier: Modifier = Modifier) {
                     addLeaf("leaf 3.1")
                     addLeaf("leaf 3.2")
                 }
-            },
+            }
         )
     }
 
     OutlinedButton({
-        tree =
-            buildTree {
-                addNode("root ${Random.nextInt()}") {
-                    addLeaf("leaf 1")
-                    addLeaf("leaf 2")
-                }
+        tree = buildTree {
+            addNode("root ${Random.nextInt()}") {
+                addLeaf("leaf 1")
+                addLeaf("leaf 2")
             }
+        }
     }) {
         Text("Update tree")
     }
@@ -236,9 +192,7 @@ fun TreeSample(modifier: Modifier = Modifier) {
             onElementClick = {},
             onElementDoubleClick = {},
         ) { element ->
-            Box(Modifier.fillMaxWidth()) {
-                Text(element.data, Modifier.padding(2.dp))
-            }
+            Box(Modifier.fillMaxWidth()) { Text(element.data, Modifier.padding(2.dp)) }
         }
     }
 }

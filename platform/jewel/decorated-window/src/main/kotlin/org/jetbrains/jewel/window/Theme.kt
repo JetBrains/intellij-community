@@ -9,9 +9,7 @@ import org.jetbrains.jewel.window.styling.LocalTitleBarStyle
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
 public val JewelTheme.Companion.defaultTitleBarStyle: TitleBarStyle
-    @Composable @ReadOnlyComposable
-    get() = LocalTitleBarStyle.current
+    @Composable @ReadOnlyComposable get() = LocalTitleBarStyle.current
 
 public val JewelTheme.Companion.defaultDecoratedWindowStyle: DecoratedWindowStyle
-    @Composable @ReadOnlyComposable
-    get() = LocalDecoratedWindowStyle.current
+    @Composable @ReadOnlyComposable get() = LocalDecoratedWindowStyle.current

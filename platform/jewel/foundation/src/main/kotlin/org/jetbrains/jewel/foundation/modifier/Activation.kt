@@ -33,7 +33,7 @@ public fun Modifier.trackWindowActivation(window: Window): Modifier =
         debugInspectorInfo {
             name = "activateRoot"
             properties["window"] = window
-        },
+        }
     ) {
         var parentActivated by remember { mutableStateOf(false) }
 
@@ -59,7 +59,7 @@ public fun Modifier.trackComponentActivation(awtParent: Component): Modifier =
         debugInspectorInfo {
             name = "activateRoot"
             properties["parent"] = awtParent
-        },
+        }
     ) {
         var parentActivated by remember { mutableStateOf(false) }
 
@@ -83,9 +83,7 @@ public fun Modifier.trackComponentActivation(awtParent: Component): Modifier =
 
 @Stable
 public fun Modifier.trackActivation(): Modifier =
-    composed(
-        debugInspectorInfo { name = "trackActivation" },
-    ) {
+    composed(debugInspectorInfo { name = "trackActivation" }) {
         val activatedModifierLocal = remember { ActivatedModifierLocal() }
         Modifier.focusGroup()
             .onFocusChanged {
@@ -108,9 +106,7 @@ private class ActivatedModifierLocal : ModifierLocalProvider<Boolean>, ModifierL
     }
 
     override val key: ProvidableModifierLocal<Boolean> = ModifierLocalActivated
-    override val value: Boolean by derivedStateOf(structuralEqualityPolicy()) {
-        parentActivated && hasFocus
-    }
+    override val value: Boolean by derivedStateOf(structuralEqualityPolicy()) { parentActivated && hasFocus }
 
     fun childLostFocus() {
         hasFocus = false
@@ -123,10 +119,7 @@ private class ActivatedModifierLocal : ModifierLocalProvider<Boolean>, ModifierL
 
 public val ModifierLocalActivated: ProvidableModifierLocal<Boolean> = modifierLocalOf { false }
 
-public fun Modifier.onActivated(
-    enabled: Boolean = true,
-    onChanged: (Boolean) -> Unit,
-): Modifier =
+public fun Modifier.onActivated(enabled: Boolean = true, onChanged: (Boolean) -> Unit): Modifier =
     this then
         if (enabled) {
             ActivateChangedModifierElement(

@@ -5,6 +5,5 @@ import org.commonmark.parser.Parser.ParserExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
 public object AutolinkProcessorExtension : MarkdownProcessorExtension {
-    override val parserExtension: ParserExtension =
-        AutolinkExtension.create() as ParserExtension
+    override val parserExtension: ParserExtension = AutolinkExtension.create() as ParserExtension
 }

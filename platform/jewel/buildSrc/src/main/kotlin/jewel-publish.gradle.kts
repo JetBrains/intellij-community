@@ -7,26 +7,28 @@ plugins {
     signing
 }
 
-val sourcesJar by tasks.registering(Jar::class) {
-    from(kotlin.sourceSets.main.map { it.kotlin })
-    archiveClassifier = "sources"
-    destinationDirectory = layout.buildDirectory.dir("artifacts")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
+val sourcesJar by
+    tasks.registering(Jar::class) {
+        from(kotlin.sourceSets.main.map { it.kotlin })
+        archiveClassifier = "sources"
+        destinationDirectory = layout.buildDirectory.dir("artifacts")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 
-val javadocJar by tasks.registering(Jar::class) {
-    from(tasks.dokkaHtml)
-    archiveClassifier = "javadoc"
-    destinationDirectory = layout.buildDirectory.dir("artifacts")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
+val javadocJar by
+    tasks.registering(Jar::class) {
+        from(tasks.dokkaHtml)
+        archiveClassifier = "javadoc"
+        destinationDirectory = layout.buildDirectory.dir("artifacts")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 
 val publishingExtension = extensions.getByType<PublishingExtension>()
 
 signing {
     useInMemoryPgpKeys(
         System.getenv("PGP_PRIVATE_KEY") ?: properties["signing.privateKey"] as String?,
-        System.getenv("PGP_PASSWORD") ?: properties["signing.password"] as String?
+        System.getenv("PGP_PASSWORD") ?: properties["signing.password"] as String?,
     )
 
     if (project.hasProperty("no-sign")) {

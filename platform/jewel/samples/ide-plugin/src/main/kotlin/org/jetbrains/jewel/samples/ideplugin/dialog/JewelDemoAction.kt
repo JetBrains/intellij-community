@@ -18,6 +18,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -27,12 +28,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Typography
-import kotlin.time.Duration.Companion.seconds
 
-@Service(Service.Level.PROJECT)
-private class ProjectScopeProviderService(
-    val scope: CoroutineScope,
-)
+@Service(Service.Level.PROJECT) private class ProjectScopeProviderService(val scope: CoroutineScope)
 
 internal class JewelDemoAction : DumbAwareAction() {
     override fun actionPerformed(event: AnActionEvent) {
@@ -41,17 +38,16 @@ internal class JewelDemoAction : DumbAwareAction() {
 
         scope.launch(Dispatchers.EDT) {
             WizardDialogWrapper(
-                project = project,
-                title = "Jewel Demo wizard",
-                pages = listOf(FirstPage(project), SecondPage()),
-            ).showAndGet()
+                    project = project,
+                    title = "Jewel Demo wizard",
+                    pages = listOf(FirstPage(project), SecondPage()),
+                )
+                .showAndGet()
         }
     }
 }
 
-private class FirstPage(
-    private val project: Project,
-) : WizardPage {
+private class FirstPage(private val project: Project) : WizardPage {
     override val canGoBackwards: StateFlow<Boolean> = MutableStateFlow(true)
 
     private val checkboxChecked = MutableStateFlow(false)

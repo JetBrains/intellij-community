@@ -36,19 +36,13 @@ internal class TestDataSink : DataSink {
         allData.remove(key.name)
     }
 
-    override fun <T : Any> set(
-        key: DataKey<T>,
-        data: T?,
-    ) {
+    override fun <T : Any> set(key: DataKey<T>, data: T?) {
         if (data != null) {
             allData[key.name] = data
         }
     }
 
-    override fun <T : Any> lazy(
-        key: DataKey<T>,
-        data: () -> T?,
-    ) {
+    override fun <T : Any> lazy(key: DataKey<T>, data: () -> T?) {
         set(key, data())
     }
 

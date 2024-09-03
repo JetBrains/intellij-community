@@ -61,7 +61,7 @@ public class DropdownColors(
                 state.isFocused -> backgroundFocused
                 state.isActive -> background
                 else -> background
-            },
+            }
         )
 
     @Composable
@@ -74,7 +74,7 @@ public class DropdownColors(
                 pressed = contentPressed,
                 hovered = contentHovered,
                 active = content,
-            ),
+            )
         )
 
     @Composable
@@ -87,7 +87,7 @@ public class DropdownColors(
                 pressed = borderPressed,
                 hovered = borderHovered,
                 active = border,
-            ),
+            )
         )
 
     @Composable
@@ -100,7 +100,7 @@ public class DropdownColors(
                 pressed = iconTintPressed,
                 hovered = iconTintHovered,
                 active = iconTint,
-            ),
+            )
         )
 
     public companion object
@@ -124,12 +124,10 @@ public class DropdownIcons(public val chevronDown: IconKey) {
     public companion object
 }
 
-public val LocalDefaultDropdownStyle: ProvidableCompositionLocal<DropdownStyle> =
-    staticCompositionLocalOf {
-        error("No DefaultDropdownStyle provided. Have you forgotten the theme?")
-    }
+public val LocalDefaultDropdownStyle: ProvidableCompositionLocal<DropdownStyle> = staticCompositionLocalOf {
+    error("No DefaultDropdownStyle provided. Have you forgotten the theme?")
+}
 
-public val LocalUndecoratedDropdownStyle: ProvidableCompositionLocal<DropdownStyle> =
-    staticCompositionLocalOf {
-        error("No UndecoratedDropdownStyle provided. Have you forgotten the theme?")
-    }
+public val LocalUndecoratedDropdownStyle: ProvidableCompositionLocal<DropdownStyle> = staticCompositionLocalOf {
+    error("No UndecoratedDropdownStyle provided. Have you forgotten the theme?")
+}

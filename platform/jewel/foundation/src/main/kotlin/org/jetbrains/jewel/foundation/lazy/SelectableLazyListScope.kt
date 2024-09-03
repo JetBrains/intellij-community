@@ -6,17 +6,14 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.NotSelectable
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
 
-/**
- * Interface defining the scope for building a selectable lazy list.
- */
+/** Interface defining the scope for building a selectable lazy list. */
 public interface SelectableLazyListScope {
     /**
      * Represents an item in a selectable lazy list.
      *
      * @param key The unique identifier for the item.
      * @param contentType The type of content displayed in the item.
-     * @param selectable Determines if the item is selectable. Default is
-     *     `true`.
+     * @param selectable Determines if the item is selectable. Default is `true`.
      * @param content The content of the item as a composable function.
      */
     public fun item(
@@ -30,14 +27,11 @@ public interface SelectableLazyListScope {
      * Represents a list of items based on the provided parameters.
      *
      * @param count The number of items in the list.
-     * @param key A function that generates a unique key for each item based on
-     *     its index.
-     * @param contentType A function that returns the content type of an item
-     *     based on its index. Defaults to `null`.
-     * @param selectable A function that determines if an item is selectable
-     *     based on its index. Defaults to `true`.
-     * @param itemContent The content of each individual item, specified as a
-     *     composable function that takes the item's index as a parameter.
+     * @param key A function that generates a unique key for each item based on its index.
+     * @param contentType A function that returns the content type of an item based on its index. Defaults to `null`.
+     * @param selectable A function that determines if an item is selectable based on its index. Defaults to `true`.
+     * @param itemContent The content of each individual item, specified as a composable function that takes the item's
+     *   index as a parameter.
      */
     public fun items(
         count: Int,
@@ -53,8 +47,7 @@ public interface SelectableLazyListScope {
      * @param key The unique identifier for the sticky header.
      * @param contentType The type of content in the sticky header.
      * @param selectable Specifies whether the sticky header is selectable.
-     * @param content The content to be displayed in the sticky header,
-     *     provided as a composable function
+     * @param content The content to be displayed in the sticky header, provided as a composable function
      */
     public fun stickyHeader(
         key: Any,
@@ -66,9 +59,8 @@ public interface SelectableLazyListScope {
 
 internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
     /**
-     * Provides a set of keys that cannot be selected.
-     * Here we use an assumption that amount of selectable items >> amount of non-selectable items.
-     * So, for optimization we will keep only this set.
+     * Provides a set of keys that cannot be selected. Here we use an assumption that amount of selectable items >>
+     * amount of non-selectable items. So, for optimization we will keep only this set.
      *
      * @see [isKeySelectable]
      */
@@ -130,7 +122,8 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         selectable: (index: Int) -> Boolean,
         itemContent: @Composable (SelectableLazyItemScope.(index: Int) -> Unit),
     ) {
-        // TODO: [performance] now the implementation requires O(count) operations but should be done in ~ O(1)
+        // TODO: [performance] now the implementation requires O(count) operations but should be
+        // done in ~ O(1)
         for (index in 0 until count) {
             val isSelectable = selectable(index)
             val currentKey = key(index)

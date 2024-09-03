@@ -133,9 +133,8 @@ private fun ChipImpl(
     modifier: Modifier,
     content: @Composable () -> Unit,
 ) {
-    var chipState by remember(interactionSource) {
-        mutableStateOf(ChipState.of(enabled = enabled, selected = selected))
-    }
+    var chipState by
+        remember(interactionSource) { mutableStateOf(ChipState.of(enabled = enabled, selected = selected)) }
 
     remember(enabled, selected) { chipState = chipState.copy(enabled = enabled, selected = selected) }
 
@@ -143,7 +142,8 @@ private fun ChipImpl(
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> chipState = chipState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release -> chipState = chipState.copy(pressed = false)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> chipState = chipState.copy(pressed = false)
                 is HoverInteraction.Enter -> chipState = chipState.copy(hovered = true)
                 is HoverInteraction.Exit -> chipState = chipState.copy(hovered = false)
                 is FocusInteraction.Focus -> chipState = chipState.copy(focused = true)
@@ -173,20 +173,15 @@ private fun ChipImpl(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        val resolvedContentColor =
-            colors.contentFor(state = chipState).value
-                .takeOrElse { LocalContentColor.current }
+        val resolvedContentColor = colors.contentFor(state = chipState).value.takeOrElse { LocalContentColor.current }
 
-        CompositionLocalProvider(LocalContentColor provides resolvedContentColor) {
-            content()
-        }
+        CompositionLocalProvider(LocalContentColor provides resolvedContentColor) { content() }
     }
 }
 
 @Immutable
 @JvmInline
-public value class ChipState(public val state: ULong) :
-    FocusableComponentState, SelectableComponentState {
+public value class ChipState(public val state: ULong) : FocusableComponentState, SelectableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 
@@ -241,7 +236,7 @@ public value class ChipState(public val state: ULong) :
                     (if (selected) Selected else 0UL) or
                     (if (hovered) Hovered else 0UL) or
                     (if (pressed) Pressed else 0UL) or
-                    (if (active) Active else 0UL),
+                    (if (active) Active else 0UL)
             )
     }
 }

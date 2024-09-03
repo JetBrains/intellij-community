@@ -25,17 +25,13 @@ public fun Modifier.newFullscreenControls(newControls: Boolean = true): Modifier
             },
         )
 
-private class NewFullscreenControlsElement(
-    val newControls: Boolean,
-    val inspectorInfo: InspectorInfo.() -> Unit,
-) : ModifierNodeElement<NewFullscreenControlsNode>() {
+private class NewFullscreenControlsElement(val newControls: Boolean, val inspectorInfo: InspectorInfo.() -> Unit) :
+    ModifierNodeElement<NewFullscreenControlsNode>() {
     override fun create(): NewFullscreenControlsNode = NewFullscreenControlsNode(newControls)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        val otherModifier =
-            other as? NewFullscreenControlsElement
-                ?: return false
+        val otherModifier = other as? NewFullscreenControlsElement ?: return false
         return newControls == otherModifier.newControls
     }
 

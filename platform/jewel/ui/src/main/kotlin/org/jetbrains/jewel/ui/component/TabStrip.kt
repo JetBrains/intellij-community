@@ -31,26 +31,20 @@ import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 
 @Composable
-public fun TabStrip(
-    tabs: List<TabData>,
-    style: TabStyle,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
+public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
     var tabStripState: TabStripState by remember { mutableStateOf(TabStripState.of(enabled = true)) }
 
     remember(enabled) { tabStripState = tabStripState.copy(enabled) }
 
     val scrollState = rememberScrollState()
     Box(
-        modifier
-            .focusable(true, remember { MutableInteractionSource() })
-            .onHover { tabStripState = tabStripState.copy(hovered = it) },
+        modifier.focusable(true, remember { MutableInteractionSource() }).onHover {
+            tabStripState = tabStripState.copy(hovered = it)
+        }
     ) {
         Row(
             modifier =
-                Modifier
-                    .horizontalScroll(scrollState)
+                Modifier.horizontalScroll(scrollState)
                     .scrollable(
                         orientation = Orientation.Vertical,
                         reverseDirection =
@@ -61,7 +55,8 @@ public fun TabStrip(
                             ),
                         state = scrollState,
                         interactionSource = remember { MutableInteractionSource() },
-                    ).selectableGroup(),
+                    )
+                    .selectableGroup()
         ) {
             tabs.forEach { TabImpl(isActive = tabStripState.isActive, tabData = it) }
         }
@@ -71,11 +66,7 @@ public fun TabStrip(
             enter = fadeIn(tween(durationMillis = 125, delayMillis = 0, easing = LinearEasing)),
             exit = fadeOut(tween(durationMillis = 125, delayMillis = 700, easing = LinearEasing)),
         ) {
-            HorizontalScrollbar(
-                scrollState,
-                style = style.scrollbarStyle,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -133,14 +124,7 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         active: Boolean = isActive,
-    ): TabStripState =
-        of(
-            enabled = enabled,
-            focused = focused,
-            pressed = pressed,
-            hovered = hovered,
-            active = active,
-        )
+    ): TabStripState = of(enabled = enabled, focused = focused, pressed = pressed, hovered = hovered, active = active)
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
@@ -159,7 +143,7 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
                     (if (focused) CommonStateBitMask.Focused else 0UL) or
                     (if (hovered) CommonStateBitMask.Hovered else 0UL) or
                     (if (pressed) CommonStateBitMask.Pressed else 0UL) or
-                    (if (active) CommonStateBitMask.Active else 0UL),
+                    (if (active) CommonStateBitMask.Active else 0UL)
             )
     }
 }

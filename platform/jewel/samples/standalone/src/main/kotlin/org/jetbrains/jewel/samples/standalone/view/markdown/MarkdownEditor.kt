@@ -33,37 +33,22 @@ import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
-internal fun MarkdownEditor(
-    state: TextFieldState,
-    modifier: Modifier = Modifier,
-) {
+internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
     Column(modifier) {
         ControlsRow(
             modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),
             onLoadMarkdown = { state.edit { replace(0, length, it) } },
         )
         Divider(orientation = Orientation.Horizontal)
-        Editor(
-            state = state,
-            modifier = Modifier.fillMaxWidth().weight(1f),
-        )
+        Editor(state = state, modifier = Modifier.fillMaxWidth().weight(1f))
     }
 }
 
 @Composable
-private fun ControlsRow(
-    modifier: Modifier = Modifier,
-    onLoadMarkdown: (String) -> Unit,
-) {
-    Row(
-        modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) -> Unit) {
+    Row(modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         var showFilePicker by remember { mutableStateOf(false) }
-        OutlinedButton(
-            onClick = { showFilePicker = true },
-            modifier = Modifier.padding(start = 2.dp),
-        ) {
+        OutlinedButton(onClick = { showFilePicker = true }, modifier = Modifier.padding(start = 2.dp)) {
             Text("Load file...")
         }
 
@@ -90,10 +75,13 @@ private fun ControlsRow(
 
             if (showPresets) {
                 var selected by remember { mutableStateOf("Jewel readme") }
-                PopupMenu(onDismissRequest = {
-                    showPresets = false
-                    false
-                }, horizontalAlignment = Alignment.Start) {
+                PopupMenu(
+                    onDismissRequest = {
+                        showPresets = false
+                        false
+                    },
+                    horizontalAlignment = Alignment.Start,
+                ) {
                     selectableItem(
                         selected = selected == "Jewel readme",
                         onClick = {
@@ -120,10 +108,7 @@ private fun ControlsRow(
 }
 
 @Composable
-private fun Editor(
-    state: TextFieldState,
-    modifier: Modifier = Modifier,
-) {
+private fun Editor(state: TextFieldState, modifier: Modifier = Modifier) {
     Box(modifier) {
         TextArea(
             state = state,

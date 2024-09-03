@@ -19,16 +19,10 @@ import org.jetbrains.jewel.ui.component.Divider
 fun MarkdownDemo() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         val editorState = rememberTextFieldState(JewelReadme)
-        MarkdownEditor(
-            state = editorState,
-            modifier = Modifier.fillMaxHeight().weight(1f),
-        )
+        MarkdownEditor(state = editorState, modifier = Modifier.fillMaxHeight().weight(1f))
 
         Divider(Orientation.Vertical, Modifier.fillMaxHeight())
 
-        MarkdownPreview(
-            modifier = Modifier.fillMaxHeight().weight(1f),
-            rawMarkdown = editorState.text,
-        )
+        MarkdownPreview(modifier = Modifier.fillMaxHeight().weight(1f), rawMarkdown = editorState.text)
     }
 }

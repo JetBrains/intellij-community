@@ -32,10 +32,8 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 
-public class GitHubAlertBlockRenderer(
-    private val styling: AlertStyling,
-    private val rootStyling: MarkdownStyling,
-) : MarkdownBlockRendererExtension {
+public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private val rootStyling: MarkdownStyling) :
+    MarkdownBlockRendererExtension {
     override fun canRender(block: CustomBlock): Boolean = block is Alert
 
     @Composable
@@ -49,8 +47,7 @@ public class GitHubAlertBlockRenderer(
     ) {
         // Smart cast doesn't work in this case, and then the detection for redundant suppression is
         // also borked
-        @Suppress("MoveVariableDeclarationIntoWhen", "RedundantSuppression")
-        val alert = block as? Alert
+        @Suppress("MoveVariableDeclarationIntoWhen", "RedundantSuppression") val alert = block as? Alert
 
         when (alert) {
             is Caution -> Alert(alert, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick)
@@ -73,26 +70,23 @@ public class GitHubAlertBlockRenderer(
     ) {
         Column(
             Modifier.drawBehind {
-                val isLtr = layoutDirection == Ltr
-                val lineWidthPx = styling.lineWidth.toPx()
-                val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
+                    val isLtr = layoutDirection == Ltr
+                    val lineWidthPx = styling.lineWidth.toPx()
+                    val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
 
-                drawLine(
-                    styling.lineColor,
-                    Offset(x, 0f),
-                    Offset(x, size.height),
-                    lineWidthPx,
-                    styling.strokeCap,
-                    styling.pathEffect,
-                )
-            }
+                    drawLine(
+                        styling.lineColor,
+                        Offset(x, 0f),
+                        Offset(x, size.height),
+                        lineWidthPx,
+                        styling.strokeCap,
+                        styling.pathEffect,
+                    )
+                }
                 .padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 val titleIconProvider = styling.titleIconKey
                 if (titleIconProvider != null) {
                     val colorFilter =
@@ -113,8 +107,7 @@ public class GitHubAlertBlockRenderer(
                 }
 
                 CompositionLocalProvider(
-                    LocalContentColor provides
-                        styling.titleTextStyle.color.takeOrElse { LocalContentColor.current },
+                    LocalContentColor provides styling.titleTextStyle.color.takeOrElse { LocalContentColor.current }
                 ) {
                     Text(
                         text = block.javaClass.simpleName,
@@ -124,7 +117,7 @@ public class GitHubAlertBlockRenderer(
                 }
             }
             CompositionLocalProvider(
-                LocalContentColor provides styling.textColor.takeOrElse { LocalContentColor.current },
+                LocalContentColor provides styling.textColor.takeOrElse { LocalContentColor.current }
             ) {
                 blockRenderer.render(block.content, enabled, onUrlClick, onTextClick)
             }

@@ -21,22 +21,14 @@ fun SegmentedControls() {
             buttonIds.map { index ->
                 SegmentedControlButtonData(
                     selected = index == selectedButtonIndex,
-                    content = { _ ->
-                        Text("Button ${index + 1}")
-                    },
+                    content = { _ -> Text("Button ${index + 1}") },
                     onSelect = { selectedButtonIndex = index },
                 )
             }
         }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SegmentedControl(
-            buttons = buttons,
-            enabled = true,
-        )
+        SegmentedControl(buttons = buttons, enabled = true)
 
-        SegmentedControl(
-            buttons = buttons,
-            enabled = false,
-        )
+        SegmentedControl(buttons = buttons, enabled = false)
     }
 }

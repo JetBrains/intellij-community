@@ -16,9 +16,7 @@ internal fun PublishingExtension.configureJewelRepositories(project: Project) {
             }
         }
 
-        maven(project.rootProject.layout.buildDirectory.dir("maven-test")) {
-            name = "LocalTest"
-        }
+        maven(project.rootProject.layout.buildDirectory.dir("maven-test")) { name = "LocalTest" }
     }
 }
 

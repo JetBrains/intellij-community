@@ -61,19 +61,10 @@ public fun MarkdownStyling.Companion.create(
     thematicBreak: ThematicBreak = ThematicBreak.create(),
     htmlBlock: HtmlBlock = HtmlBlock.create(editorTextStyle),
 ): MarkdownStyling =
-    MarkdownStyling(
-        blockVerticalSpacing,
-        paragraph,
-        heading,
-        blockQuote,
-        code,
-        list,
-        image,
-        thematicBreak,
-        htmlBlock,
-    )
+    MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
-public fun Paragraph.Companion.create(inlinesStyling: InlinesStyling = InlinesStyling.create()): Paragraph = Paragraph(inlinesStyling)
+public fun Paragraph.Companion.create(inlinesStyling: InlinesStyling = InlinesStyling.create()): Paragraph =
+    Paragraph(inlinesStyling)
 
 public fun Heading.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -83,7 +74,7 @@ public fun Heading.Companion.create(
                 fontSize = baseTextStyle.fontSize * 2,
                 lineHeight = baseTextStyle.fontSize * 2 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h2: Heading.H2 =
         Heading.H2.create(
@@ -91,7 +82,7 @@ public fun Heading.Companion.create(
                 fontSize = baseTextStyle.fontSize * 1.5,
                 lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h3: Heading.H3 =
         Heading.H3.create(
@@ -99,7 +90,7 @@ public fun Heading.Companion.create(
                 fontSize = baseTextStyle.fontSize * 1.25,
                 lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h4: Heading.H4 =
         Heading.H4.create(
@@ -107,7 +98,7 @@ public fun Heading.Companion.create(
                 fontSize = baseTextStyle.fontSize,
                 lineHeight = baseTextStyle.fontSize * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h5: Heading.H5 =
         Heading.H5.create(
@@ -115,7 +106,7 @@ public fun Heading.Companion.create(
                 fontSize = baseTextStyle.fontSize * .875,
                 lineHeight = baseTextStyle.fontSize * .875 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     h6: Heading.H6 =
         Heading.H6.create(
@@ -124,7 +115,7 @@ public fun Heading.Companion.create(
                 fontSize = baseTextStyle.fontSize * .85,
                 lineHeight = baseTextStyle.fontSize * .85 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
@@ -136,7 +127,7 @@ public fun Heading.H1.Companion.create(
                 fontSize = baseTextStyle.fontSize * 2,
                 lineHeight = baseTextStyle.fontSize * 2 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = dividerColor,
@@ -152,7 +143,7 @@ public fun Heading.H2.Companion.create(
                 fontSize = baseTextStyle.fontSize * 1.5,
                 lineHeight = baseTextStyle.fontSize * 1.5 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = dividerColor,
@@ -169,7 +160,7 @@ public fun Heading.H3.Companion.create(
                 fontSize = baseTextStyle.fontSize * 1.25,
                 lineHeight = baseTextStyle.fontSize * 1.25 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -186,7 +177,7 @@ public fun Heading.H4.Companion.create(
                 fontSize = baseTextStyle.fontSize,
                 lineHeight = baseTextStyle.fontSize * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -203,7 +194,7 @@ public fun Heading.H5.Companion.create(
                 fontSize = baseTextStyle.fontSize * .875,
                 lineHeight = baseTextStyle.fontSize * .875 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -221,7 +212,7 @@ public fun Heading.H6.Companion.create(
                 fontSize = baseTextStyle.fontSize * .85,
                 lineHeight = baseTextStyle.fontSize * .85 * 1.25,
                 fontWeight = FontWeight.SemiBold,
-            ),
+            )
         ),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
@@ -270,15 +261,7 @@ public fun Unordered.Companion.create(
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
     padding: PaddingValues = PaddingValues(start = 16.dp),
-): Unordered =
-    Unordered(
-        bullet,
-        bulletStyle,
-        bulletContentGap,
-        itemVerticalSpacing,
-        itemVerticalSpacingTight,
-        padding,
-    )
+): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
 
 public fun Code.Companion.create(
     editorTextStyle: TextStyle = defaultEditorTextStyle,
@@ -295,17 +278,7 @@ public fun Indented.Companion.create(
     borderColor: Color = Color.Unspecified,
     fillWidth: Boolean = true,
     scrollsHorizontally: Boolean = true,
-): Indented =
-    Indented(
-        textStyle,
-        padding,
-        shape,
-        background,
-        borderWidth,
-        borderColor,
-        fillWidth,
-        scrollsHorizontally,
-    )
+): Indented = Indented(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
 public fun Fenced.Companion.create(
     textStyle: TextStyle = defaultEditorTextStyle,
@@ -367,10 +340,12 @@ public fun InlinesStyling.Companion.create(
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColor)
             .toSpanStyle(),
     link: SpanStyle =
-        textStyle.copy(
-            color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
-            textDecoration = TextDecoration.Underline,
-        ).toSpanStyle(),
+        textStyle
+            .copy(
+                color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
+                textDecoration = TextDecoration.Underline,
+            )
+            .toSpanStyle(),
     linkDisabled: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.DISABLED.toComposeColor()),
     linkHovered: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
     linkFocused: SpanStyle =

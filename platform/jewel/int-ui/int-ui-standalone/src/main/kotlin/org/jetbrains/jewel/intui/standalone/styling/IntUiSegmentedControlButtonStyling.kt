@@ -89,9 +89,4 @@ public fun SegmentedControlButtonMetrics.Companion.defaults(
     minSize: DpSize = DpSize(width = Dp.Unspecified, height = 24.dp - 2.dp),
     borderWidth: Dp = 1.dp,
 ): SegmentedControlButtonMetrics =
-    SegmentedControlButtonMetrics(
-        cornerSize,
-        segmentedButtonPadding,
-        minSize,
-        borderWidth,
-    )
+    SegmentedControlButtonMetrics(cornerSize, segmentedButtonPadding, minSize, borderWidth)

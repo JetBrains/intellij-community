@@ -36,7 +36,7 @@ public interface InputFieldColors {
                 pressed = backgroundPressed,
                 hovered = backgroundHovered,
                 active = background,
-            ),
+            )
         )
 
     public val content: Color
@@ -55,7 +55,7 @@ public interface InputFieldColors {
                 pressed = contentPressed,
                 hovered = contentHovered,
                 active = content,
-            ),
+            )
         )
 
     public val border: Color
@@ -74,7 +74,7 @@ public interface InputFieldColors {
                 pressed = borderPressed,
                 hovered = borderHovered,
                 active = border,
-            ),
+            )
         )
 
     public val caret: Color
@@ -93,7 +93,7 @@ public interface InputFieldColors {
                 pressed = caretPressed,
                 hovered = caretHovered,
                 active = caret,
-            ),
+            )
         )
 }
 

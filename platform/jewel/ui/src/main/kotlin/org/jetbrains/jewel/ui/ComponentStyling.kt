@@ -9,31 +9,30 @@ public interface ComponentStyling {
         return with(StaticComponentStyling(values = values))
     }
 
-    public fun provide(provider: @Composable () -> Array<out ProvidedValue<*>>): ComponentStyling = with(LazyComponentStyling(provider))
+    public fun provide(provider: @Composable () -> Array<out ProvidedValue<*>>): ComponentStyling =
+        with(LazyComponentStyling(provider))
 
     public fun with(styling: ComponentStyling): ComponentStyling {
         if (styling is Companion) return this
         return CombinedComponentStyling(this, styling)
     }
 
-    public fun with(styling: @Composable () -> ComponentStyling): ComponentStyling = with(LazyComponentStyling { styling().styles() })
+    public fun with(styling: @Composable () -> ComponentStyling): ComponentStyling =
+        with(LazyComponentStyling { styling().styles() })
 
-    @Composable
-    public fun styles(): Array<out ProvidedValue<*>>
+    @Composable public fun styles(): Array<out ProvidedValue<*>>
 
     public companion object : ComponentStyling {
         override fun with(styling: ComponentStyling): ComponentStyling = styling
 
-        @Composable
-        override fun styles(): Array<out ProvidedValue<*>> = emptyArray()
+        @Composable override fun styles(): Array<out ProvidedValue<*>> = emptyArray()
 
         override fun toString(): String = "ComponentStyleProvider"
     }
 }
 
 private class StaticComponentStyling(private val values: Array<out ProvidedValue<*>>) : ComponentStyling {
-    @Composable
-    override fun styles(): Array<out ProvidedValue<*>> = values
+    @Composable override fun styles(): Array<out ProvidedValue<*>> = values
 
     override fun equals(other: Any?): Boolean = other is StaticComponentStyling && values.contentEquals(other.values)
 
@@ -43,8 +42,7 @@ private class StaticComponentStyling(private val values: Array<out ProvidedValue
 }
 
 private class LazyComponentStyling(val provider: @Composable () -> Array<out ProvidedValue<*>>) : ComponentStyling {
-    @Composable
-    override fun styles(): Array<out ProvidedValue<*>> = provider()
+    @Composable override fun styles(): Array<out ProvidedValue<*>> = provider()
 
     override fun equals(other: Any?): Boolean = other is LazyComponentStyling && provider == other.provider
 
@@ -53,14 +51,14 @@ private class LazyComponentStyling(val provider: @Composable () -> Array<out Pro
     override fun toString(): String = "DynamicComponentStyleProvider(provider=$provider)"
 }
 
-private class CombinedComponentStyling(
-    private val left: ComponentStyling,
-    private val right: ComponentStyling,
-) : ComponentStyling {
+private class CombinedComponentStyling(private val left: ComponentStyling, private val right: ComponentStyling) :
+    ComponentStyling {
     @Composable
-    override fun styles(): Array<out ProvidedValue<*>> = (left.styles().toList() + right.styles().toList()).toTypedArray()
+    override fun styles(): Array<out ProvidedValue<*>> =
+        (left.styles().toList() + right.styles().toList()).toTypedArray()
 
-    override fun equals(other: Any?): Boolean = other is CombinedComponentStyling && left == other.left && right == other.right
+    override fun equals(other: Any?): Boolean =
+        other is CombinedComponentStyling && left == other.left && right == other.right
 
     override fun hashCode(): Int = left.hashCode() + 31 * right.hashCode()
 

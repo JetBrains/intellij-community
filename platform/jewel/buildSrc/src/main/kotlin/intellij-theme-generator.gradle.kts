@@ -17,10 +17,11 @@ extensions.add("intelliJThemeGenerator", extension)
 extension.all {
     val task =
         tasks.register<IntelliJThemeGeneratorTask>("generate${GUtil.toCamelCase(name)}Theme") {
-            val paths = this@all.themeClassName.map {
-                val className = ClassName.bestGuess(it)
-                className.packageName.replace(".", "/") + "/${className.simpleName}.kt"
-            }
+            val paths =
+                this@all.themeClassName.map {
+                    val className = ClassName.bestGuess(it)
+                    className.packageName.replace(".", "/") + "/${className.simpleName}.kt"
+                }
 
             outputFile = targetDir.file(paths)
             themeClassName = this@all.themeClassName

@@ -18,27 +18,22 @@ import org.jetbrains.jewel.ui.painter.hints.HiDpi
 @Immutable
 public interface PainterHintsProvider {
     /**
-     * These hints will be consumed before the hints which are passed as a
-     * parameter to [PainterProvider.getPainter].
+     * These hints will be consumed before the hints which are passed as a parameter to [PainterProvider.getPainter].
      */
     @Composable public fun priorityHints(path: String): List<PainterHint> = emptyList()
 
-    /**
-     * These hints will be consumed after the hints which are passed as a
-     * parameter to [PainterProvider.getPainter].
-     */
+    /** These hints will be consumed after the hints which are passed as a parameter to [PainterProvider.getPainter]. */
     @Composable public fun hints(path: String): List<PainterHint>
 }
 
 /**
- * The default [PainterHintsProvider] to load dark theme
- * icon variants. It will provide the [Dark] hint when
+ * The default [PainterHintsProvider] to load dark theme icon variants. It will provide the [Dark] hint when
  * [LocalIsDarkTheme][org.jetbrains.jewel.LocalIsDarkTheme] is true.
  */
 public object CommonPainterHintsProvider : PainterHintsProvider {
-    @Composable
-    override fun hints(path: String): List<PainterHint> = listOf(HiDpi(), Dark(JewelTheme.isDark))
+    @Composable override fun hints(path: String): List<PainterHint> = listOf(HiDpi(), Dark(JewelTheme.isDark))
 }
 
-public val LocalPainterHintsProvider: ProvidableCompositionLocal<PainterHintsProvider> =
-    staticCompositionLocalOf { CommonPainterHintsProvider }
+public val LocalPainterHintsProvider: ProvidableCompositionLocal<PainterHintsProvider> = staticCompositionLocalOf {
+    CommonPainterHintsProvider
+}

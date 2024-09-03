@@ -14,36 +14,14 @@ import org.jetbrains.jewel.ui.component.RadioButtonRow
 
 @Composable
 fun RadioButtons() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         var index by remember { mutableStateOf(0) }
-        RadioButtonRow(
-            text = "Default",
-            selected = index == 0,
-            onClick = { index = 0 },
-        )
+        RadioButtonRow(text = "Default", selected = index == 0, onClick = { index = 0 })
 
-        RadioButtonRow(
-            text = "Error",
-            selected = index == 1,
-            onClick = { index = 1 },
-            outline = Outline.Error,
-        )
+        RadioButtonRow(text = "Error", selected = index == 1, onClick = { index = 1 }, outline = Outline.Error)
 
-        RadioButtonRow(
-            text = "Warning",
-            selected = index == 2,
-            onClick = { index = 2 },
-            outline = Outline.Warning,
-        )
+        RadioButtonRow(text = "Warning", selected = index == 2, onClick = { index = 2 }, outline = Outline.Warning)
 
-        RadioButtonRow(
-            text = "Disabled",
-            selected = index == 3,
-            onClick = { index = 3 },
-            enabled = false,
-        )
+        RadioButtonRow(text = "Disabled", selected = index == 3, onClick = { index = 3 }, enabled = false)
     }
 }

@@ -76,7 +76,7 @@ public class TabColors(
                         hovered = contentHovered,
                         active = content,
                     )
-            },
+            }
         )
 
     @Composable
@@ -89,7 +89,7 @@ public class TabColors(
                 state.isActive -> background
                 state.isSelected -> backgroundSelected
                 else -> background
-            },
+            }
         )
 
     @Composable
@@ -105,7 +105,7 @@ public class TabColors(
                         hovered = underlineHovered,
                         active = underline,
                     )
-            },
+            }
         )
 
     public companion object
@@ -138,7 +138,7 @@ public class TabContentAlpha(
                         hovered = iconHovered,
                         active = iconNormal,
                     )
-            },
+            }
         )
 
     @Composable
@@ -154,7 +154,7 @@ public class TabContentAlpha(
                         hovered = contentHovered,
                         active = contentNormal,
                     )
-            },
+            }
         )
 
     public companion object
@@ -162,13 +162,7 @@ public class TabContentAlpha(
 
 // Tabs are the only components that handle hover states
 @Composable
-private fun <T> TabState.chooseValueIgnoreCompat(
-    normal: T,
-    disabled: T,
-    pressed: T,
-    hovered: T,
-    active: T,
-): T =
+private fun <T> TabState.chooseValueIgnoreCompat(normal: T, disabled: T, pressed: T, hovered: T, active: T): T =
     when {
         !isEnabled -> disabled
         isPressed -> pressed
@@ -177,12 +171,10 @@ private fun <T> TabState.chooseValueIgnoreCompat(
         else -> normal
     }
 
-public val LocalDefaultTabStyle: ProvidableCompositionLocal<TabStyle> =
-    staticCompositionLocalOf {
-        error("No LocalDefaultTabStyle provided. Have you forgotten the theme?")
-    }
+public val LocalDefaultTabStyle: ProvidableCompositionLocal<TabStyle> = staticCompositionLocalOf {
+    error("No LocalDefaultTabStyle provided. Have you forgotten the theme?")
+}
 
-public val LocalEditorTabStyle: ProvidableCompositionLocal<TabStyle> =
-    staticCompositionLocalOf {
-        error("No LocalEditorTabStyle provided. Have you forgotten the theme?")
-    }
+public val LocalEditorTabStyle: ProvidableCompositionLocal<TabStyle> = staticCompositionLocalOf {
+    error("No LocalEditorTabStyle provided. Have you forgotten the theme?")
+}

@@ -20,11 +20,7 @@ public class ThemeIconData(
 
     public companion object {
         public val Empty: ThemeIconData =
-            ThemeIconData(
-                iconOverrides = emptyMap(),
-                colorPalette = emptyMap(),
-                selectionColorPalette = emptyMap(),
-            )
+            ThemeIconData(iconOverrides = emptyMap(), colorPalette = emptyMap(), selectionColorPalette = emptyMap())
     }
 }
 

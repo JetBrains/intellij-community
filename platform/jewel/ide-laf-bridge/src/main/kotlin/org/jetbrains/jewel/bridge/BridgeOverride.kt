@@ -9,8 +9,8 @@ import org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 
 /**
  * A [PainterPathHint] that implements the
- * [New UI Icon Mapping](https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries)
- * by delegating to the IntelliJ Platform.
+ * [New UI Icon Mapping](https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries) by delegating to the
+ * IntelliJ Platform.
  */
 internal object BridgeOverride : PainterPathHint {
     private val dirProvider = DirProvider()
@@ -51,7 +51,8 @@ internal object BridgeOverride : PainterPathHint {
 
         return buildString {
             append("expui/")
-            iconPath.split('.')
+            iconPath
+                .split('.')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .forEach {
@@ -66,7 +67,7 @@ internal object BridgeOverride : PainterPathHint {
             Logger.getInstance("IconsPathPatching")
                 .warn(
                     "IntelliJ returned a reflective path: $patchedPath for $iconPath." +
-                        " We reverted that to a plausible-looking resource path: ${toString()}",
+                        " We reverted that to a plausible-looking resource path: ${toString()}"
                 )
         }
     }

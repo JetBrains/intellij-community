@@ -8,9 +8,9 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Stable
 @GenerateDataFunctions
@@ -44,10 +44,7 @@ public class ScrollbarColors(
 
 @Stable
 @GenerateDataFunctions
-public class ScrollbarMetrics(
-    public val thumbCornerSize: CornerSize,
-    public val minThumbLength: Dp,
-) {
+public class ScrollbarMetrics(public val thumbCornerSize: CornerSize, public val minThumbLength: Dp) {
     public companion object
 }
 
@@ -99,7 +96,6 @@ public enum class TrackClickBehavior {
     JumpToSpot,
 }
 
-public val LocalScrollbarStyle: ProvidableCompositionLocal<ScrollbarStyle> =
-    staticCompositionLocalOf {
-        error("No ScrollbarStyle provided. Have you forgotten the theme?")
-    }
+public val LocalScrollbarStyle: ProvidableCompositionLocal<ScrollbarStyle> = staticCompositionLocalOf {
+    error("No ScrollbarStyle provided. Have you forgotten the theme?")
+}

@@ -32,56 +32,32 @@ fun Links() {
             }
         }
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Link("Link", {})
 
         Link("Always underlined", {}, style = alwaysUnderlinedStyle)
 
         ExternalLink("ExternalLink", {})
 
-        val items =
-            remember {
-                listOf(
-                    "Light",
-                    "Dark",
-                    "---",
-                    "High Contrast",
-                    "Darcula",
-                    "IntelliJ Light",
-                )
-            }
+        val items = remember { listOf("Light", "Dark", "---", "High Contrast", "Darcula", "IntelliJ Light") }
         var selected by remember { mutableStateOf(items.first()) }
         DropdownLink("DropdownLink") {
             items.forEach {
                 if (it == "---") {
                     separator()
                 } else {
-                    selectableItem(
-                        selected = selected == it,
-                        onClick = {
-                            selected = it
-                        },
-                    ) {
-                        Text(it)
-                    }
+                    selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
                 }
             }
         }
     }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Link("Link", {}, enabled = false)
 
         Link("Always underlined", {}, style = alwaysUnderlinedStyle, enabled = false)
 
         ExternalLink("ExternalLink", {}, enabled = false)
 
-        DropdownLink("DropdownLink", enabled = false) {
-        }
+        DropdownLink("DropdownLink", enabled = false) {}
     }
 }

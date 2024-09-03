@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,7 +41,6 @@ import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrollin
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
-import kotlin.time.Duration
 
 private const val ID_CONTENT = "VerticallyScrollableContainer_content"
 private const val ID_VERTICAL_SCROLLBAR = "VerticallyScrollableContainer_verticalScrollbar"

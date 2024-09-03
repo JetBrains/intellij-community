@@ -10,28 +10,19 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Immutable
 @GenerateDataFunctions
-public class DividerStyle(
-    public val color: Color,
-    public val metrics: DividerMetrics,
-) {
+public class DividerStyle(public val color: Color, public val metrics: DividerMetrics) {
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
-public class DividerMetrics(
-    public val thickness: Dp,
-    public val startIndent: Dp,
-) {
+public class DividerMetrics(public val thickness: Dp, public val startIndent: Dp) {
     public companion object {
-        public fun defaults(
-            thickness: Dp = 1.dp,
-            startIndent: Dp = 0.dp,
-        ): DividerMetrics = DividerMetrics(thickness, startIndent)
+        public fun defaults(thickness: Dp = 1.dp, startIndent: Dp = 0.dp): DividerMetrics =
+            DividerMetrics(thickness, startIndent)
     }
 }
 
-public val LocalDividerStyle: ProvidableCompositionLocal<DividerStyle> =
-    staticCompositionLocalOf {
-        error("No DividerStyle provided. Have you forgotten the theme?")
-    }
+public val LocalDividerStyle: ProvidableCompositionLocal<DividerStyle> = staticCompositionLocalOf {
+    error("No DividerStyle provided. Have you forgotten the theme?")
+}

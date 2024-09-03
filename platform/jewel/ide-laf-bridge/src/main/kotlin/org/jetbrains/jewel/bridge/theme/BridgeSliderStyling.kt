@@ -86,4 +86,5 @@ public fun SliderMetrics.Companion.defaults(
     stepLineHeight: Dp = 8.dp,
     stepLineWidth: Dp = 1.dp,
     trackToStepSpacing: Dp = thumbSize.height / 2 + 4.dp,
-): SliderMetrics = SliderMetrics(trackHeight, thumbSize, thumbBorderWidth, stepLineHeight, stepLineWidth, trackToStepSpacing)
+): SliderMetrics =
+    SliderMetrics(trackHeight, thumbSize, thumbBorderWidth, stepLineHeight, stepLineWidth, trackToStepSpacing)

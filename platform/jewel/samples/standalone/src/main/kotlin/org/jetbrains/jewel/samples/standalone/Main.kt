@@ -12,6 +12,7 @@ import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
+import java.io.InputStream
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.Inter
@@ -32,12 +33,9 @@ import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel.currentVie
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarStyle
-import java.io.InputStream
 
 fun main() {
-    JewelLogger
-        .getInstance("StandaloneSample")
-        .info("Starting Jewel Standalone sample")
+    JewelLogger.getInstance("StandaloneSample").info("Starting Jewel Standalone sample")
 
     val icon = svgResource("icons/jewel-logo.svg")
 
@@ -55,20 +53,21 @@ fun main() {
         IntUiTheme(
             theme = themeDefinition,
             styling =
-                ComponentStyling.default().decoratedWindow(
-                    titleBarStyle =
-                        when (MainViewModel.theme) {
-                            IntUiThemes.Light -> TitleBarStyle.light()
-                            IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
-                            IntUiThemes.Dark -> TitleBarStyle.dark()
-                            IntUiThemes.System ->
-                                if (MainViewModel.theme.isDark()) {
-                                    TitleBarStyle.dark()
-                                } else {
-                                    TitleBarStyle.light()
-                                }
-                        },
-                ),
+                ComponentStyling.default()
+                    .decoratedWindow(
+                        titleBarStyle =
+                            when (MainViewModel.theme) {
+                                IntUiThemes.Light -> TitleBarStyle.light()
+                                IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
+                                IntUiThemes.Dark -> TitleBarStyle.dark()
+                                IntUiThemes.System ->
+                                    if (MainViewModel.theme.isDark()) {
+                                        TitleBarStyle.dark()
+                                    } else {
+                                        TitleBarStyle.light()
+                                    }
+                            }
+                    ),
             swingCompatMode = MainViewModel.swingCompat,
         ) {
             DecoratedWindow(
@@ -76,10 +75,7 @@ fun main() {
                 title = "Jewel standalone sample",
                 icon = icon,
                 onKeyEvent = { keyEvent ->
-                    processKeyShortcuts(
-                        keyEvent = keyEvent,
-                        onNavigateTo = MainViewModel::onNavigateTo,
-                    )
+                    processKeyShortcuts(keyEvent = keyEvent, onNavigateTo = MainViewModel::onNavigateTo)
                 },
                 content = {
                     TitleBarView()
@@ -91,14 +87,11 @@ fun main() {
 }
 
 /*
-    Alt + W -> Welcome
-    Alt + M -> Markdown
-    Alt + C -> Components
- */
-private fun processKeyShortcuts(
-    keyEvent: KeyEvent,
-    onNavigateTo: (String) -> Unit,
-): Boolean {
+   Alt + W -> Welcome
+   Alt + M -> Markdown
+   Alt + C -> Components
+*/
+private fun processKeyShortcuts(keyEvent: KeyEvent, onNavigateTo: (String) -> Unit): Boolean {
     if (!keyEvent.isAltPressed || keyEvent.type != KeyEventType.KeyDown) return false
     return when (keyEvent.key) {
         Key.W -> {
@@ -120,12 +113,5 @@ private fun processKeyShortcuts(
     }
 }
 
-private fun svgResource(
-    resourcePath: String,
-    loader: ResourceLoader = ResourceLoader.Default,
-): Painter =
-    loader
-        .load(resourcePath)
-        .use { stream: InputStream ->
-            loadSvgPainter(stream, Density(1f))
-        }
+private fun svgResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter =
+    loader.load(resourcePath).use { stream: InputStream -> loadSvgPainter(stream, Density(1f)) }

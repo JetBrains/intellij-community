@@ -38,22 +38,12 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 
 @Composable
 fun TextFields() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         val state1 = rememberTextFieldState("TextField")
-        TextField(
-            state = state1,
-            modifier = Modifier.width(200.dp),
-        )
+        TextField(state = state1, modifier = Modifier.width(200.dp))
 
         val state2 = rememberTextFieldState("")
-        TextField(
-            state = state2,
-            placeholder = { Text("Placeholder") },
-            modifier = Modifier.width(200.dp),
-        )
+        TextField(state = state2, placeholder = { Text("Placeholder") }, modifier = Modifier.width(200.dp))
 
         val state3 = rememberTextFieldState("")
         TextField(
@@ -64,10 +54,7 @@ fun TextFields() {
         )
     }
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
         val state1 = rememberTextFieldState("")
         TextField(
             state = state1,
@@ -77,17 +64,10 @@ fun TextFields() {
         )
 
         val state2 = rememberTextFieldState("Disabled")
-        TextField(
-            state = state2,
-            enabled = false,
-            modifier = Modifier.width(200.dp),
-        )
+        TextField(state = state2, enabled = false, modifier = Modifier.width(200.dp))
     }
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
         val state1 = rememberTextFieldState("")
         TextField(
             state = state1,
@@ -119,10 +99,7 @@ fun TextFields() {
 }
 
 @Composable
-private fun CloseIconButton(
-    isVisible: Boolean,
-    onClick: () -> Unit,
-) {
+private fun CloseIconButton(isVisible: Boolean, onClick: () -> Unit) {
     Box(Modifier.size(16.dp)) {
         AnimatedVisibility(
             visible = isVisible,
@@ -133,16 +110,9 @@ private fun CloseIconButton(
             val isDark = JewelTheme.isDark
 
             val colors = noBackgroundIconButtonColors(isDark)
-            val style =
-                remember(isDark, colors) {
-                    IconButtonStyle(colors, IconButtonMetrics.defaults())
-                }
+            val style = remember(isDark, colors) { IconButtonStyle(colors, IconButtonMetrics.defaults()) }
 
-            IconButton(
-                onClick,
-                style = style,
-                modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-            ) { state ->
+            IconButton(onClick, style = style, modifier = Modifier.pointerHoverIcon(PointerIcon.Default)) { state ->
                 Icon(AllIconsKeys.General.Close, contentDescription = "Clear", hint = Stateful(state))
             }
         }

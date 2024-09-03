@@ -17,9 +17,8 @@ public fun rememberTreeState(
     selectableLazyListState: SelectableLazyListState = SelectableLazyListState(lazyListState),
 ): TreeState = remember { TreeState(selectableLazyListState) }
 
-public class TreeState(
-    internal val delegate: SelectableLazyListState,
-) : SelectableScope by delegate, ScrollableState by delegate {
+public class TreeState(internal val delegate: SelectableLazyListState) :
+    SelectableScope by delegate, ScrollableState by delegate {
     internal val allNodes = mutableStateListOf<Pair<Any, Int>>()
 
     public var openNodes: Set<Any> by mutableStateOf<Set<Any>>(emptySet())

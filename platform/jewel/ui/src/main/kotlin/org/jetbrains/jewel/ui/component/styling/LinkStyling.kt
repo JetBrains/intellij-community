@@ -46,7 +46,7 @@ public class LinkColors(
                 hovered = contentHovered,
                 visited = contentVisited,
                 active = content,
-            ),
+            )
         )
 
     public companion object
@@ -64,18 +64,15 @@ public class LinkMetrics(
 
 @Immutable
 @GenerateDataFunctions
-public class LinkIcons(
-    public val dropdownChevron: IconKey,
-    public val externalLink: IconKey,
-) {
+public class LinkIcons(public val dropdownChevron: IconKey, public val externalLink: IconKey) {
     public companion object
 }
 
-public val LocalLinkStyle: ProvidableCompositionLocal<LinkStyle> =
-    staticCompositionLocalOf {
-        error("No LinkStyle provided. Have you forgotten the theme?")
-    }
+public val LocalLinkStyle: ProvidableCompositionLocal<LinkStyle> = staticCompositionLocalOf {
+    error("No LinkStyle provided. Have you forgotten the theme?")
+}
 
 public enum class LinkUnderlineBehavior {
-    ShowAlways, ShowOnHover
+    ShowAlways,
+    ShowOnHover,
 }

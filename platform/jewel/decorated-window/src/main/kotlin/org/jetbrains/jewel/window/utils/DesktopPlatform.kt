@@ -4,8 +4,7 @@ public enum class DesktopPlatform {
     Linux,
     Windows,
     MacOS,
-    Unknown,
-    ;
+    Unknown;
 
     public companion object {
         public val Current: DesktopPlatform by lazy {

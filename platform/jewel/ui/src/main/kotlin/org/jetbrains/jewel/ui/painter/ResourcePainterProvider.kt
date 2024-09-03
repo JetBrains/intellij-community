@@ -14,11 +14,6 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.loadXmlImageVector
 import androidx.compose.ui.unit.Density
-import org.jetbrains.jewel.foundation.util.myLogger
-import org.jetbrains.jewel.ui.icon.IconKey
-import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
-import org.w3c.dom.Document
-import org.xml.sax.InputSource
 import java.io.IOException
 import java.io.InputStream
 import java.io.StringWriter
@@ -32,23 +27,23 @@ import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import org.jetbrains.jewel.foundation.util.myLogger
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
+import org.w3c.dom.Document
+import org.xml.sax.InputSource
 
 private val errorPainter = ColorPainter(Color.Magenta)
 
 /**
- * Provide [Painter] by resources in the module and jars, it use the
- * ResourceResolver to load resources.
+ * Provide [Painter] by resources in the module and jars, it use the ResourceResolver to load resources.
  *
- * It will cache the painter by [PainterHint]s, so it is safe to call
- * [getPainter] multiple times.
+ * It will cache the painter by [PainterHint]s, so it is safe to call [getPainter] multiple times.
  *
- * If a resource fails to load, it will be silently replaced by a
- * magenta color painter, and the exception logged as error.
+ * If a resource fails to load, it will be silently replaced by a magenta color painter, and the exception logged as
+ * error.
  */
-public class ResourcePainterProvider(
-    private val basePath: String,
-    vararg classLoaders: ClassLoader,
-) : PainterProvider {
+public class ResourcePainterProvider(private val basePath: String, vararg classLoaders: ClassLoader) : PainterProvider {
     private val logger = myLogger()
 
     private val classLoaders = classLoaders.toSet()
@@ -58,9 +53,7 @@ public class ResourcePainterProvider(
     private val contextClassLoaders = classLoaders.toList()
 
     private val documentBuilderFactory =
-        DocumentBuilderFactory.newDefaultInstance().apply {
-            setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
-        }
+        DocumentBuilderFactory.newDefaultInstance().apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
 
     private fun Scope.resolveHint(hint: PainterHint) {
         with(hint) {
@@ -76,15 +69,11 @@ public class ResourcePainterProvider(
         val scope = Scope(density, basePath, classLoaders)
 
         val currentHintsProvider = LocalPainterHintsProvider.current
-        currentHintsProvider
-            .priorityHints(basePath)
-            .forEach { scope.resolveHint(it) }
+        currentHintsProvider.priorityHints(basePath).forEach { scope.resolveHint(it) }
 
         hints.forEach { scope.resolveHint(it) }
 
-        currentHintsProvider
-            .hints(basePath)
-            .forEach { scope.resolveHint(it) }
+        currentHintsProvider.hints(basePath).forEach { scope.resolveHint(it) }
 
         val cacheKey = scope.acceptedHints.hashCode() * 31 + LocalDensity.current.hashCode()
 
@@ -149,10 +138,7 @@ public class ResourcePainterProvider(
     }
 
     @Composable
-    private fun createSvgPainter(
-        scope: Scope,
-        url: URL,
-    ): Painter =
+    private fun createSvgPainter(scope: Scope, url: URL): Painter =
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
@@ -164,11 +150,7 @@ public class ResourcePainterProvider(
             paintAction = { it },
         )
 
-    private fun patchSvg(
-        scope: Scope,
-        inputStream: InputStream,
-        hints: List<PainterHint>,
-    ): InputStream {
+    private fun patchSvg(scope: Scope, inputStream: InputStream, hints: List<PainterHint>): InputStream {
         if (hints.all { it !is PainterSvgPatchHint }) {
             return inputStream
         }
@@ -190,10 +172,7 @@ public class ResourcePainterProvider(
     }
 
     @Composable
-    private fun createVectorDrawablePainter(
-        scope: Scope,
-        url: URL,
-    ): Painter =
+    private fun createVectorDrawablePainter(scope: Scope, url: URL): Painter =
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
@@ -238,8 +217,7 @@ public class ResourcePainterProvider(
         override val classLoaders: Set<ClassLoader>,
         override val path: String = rawPath,
         override val acceptedHints: MutableList<PainterHint> = mutableListOf(),
-    ) : ResourcePainterProviderScope,
-        Density by localDensity {
+    ) : ResourcePainterProviderScope, Density by localDensity {
         fun apply(pathHint: PainterPathHint): Scope? {
             with(pathHint) {
                 val patched = patch()
@@ -283,15 +261,10 @@ public fun rememberResourcePainterProvider(
 ): PainterProvider {
     val isNewUi = LocalNewUiChecker.current.isNewUi()
     return remember(iconKey, iconClass.classLoader, isNewUi) {
-        ResourcePainterProvider(
-            iconKey.path(isNewUi),
-            iconClass.classLoader,
-        )
+        ResourcePainterProvider(iconKey.path(isNewUi), iconClass.classLoader)
     }
 }
 
 @Composable
-public fun rememberResourcePainterProvider(
-    path: String,
-    iconClass: Class<*>,
-): PainterProvider = remember(path, iconClass.classLoader) { ResourcePainterProvider(path, iconClass.classLoader) }
+public fun rememberResourcePainterProvider(path: String, iconClass: Class<*>): PainterProvider =
+    remember(path, iconClass.classLoader) { ResourcePainterProvider(path, iconClass.classLoader) }

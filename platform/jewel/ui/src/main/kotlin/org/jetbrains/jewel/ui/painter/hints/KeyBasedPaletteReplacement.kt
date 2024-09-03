@@ -45,10 +45,7 @@ private fun parseKeysFromId(id: String): Pair<String, String> {
     }
 }
 
-private fun Element.patchColorAttribute(
-    attrName: String,
-    newColor: Color?,
-) {
+private fun Element.patchColorAttribute(attrName: String, newColor: Color?) {
     if (newColor == null) return
     if (!hasAttribute(attrName)) return
 
@@ -61,9 +58,8 @@ private fun Element.patchColorAttribute(
 }
 
 /**
- * Creates a PainterHint that replaces colors with their corresponding new
- * value, based on the IDs of each element. It is used in IJ 24.1 and later
- * to support patching the SVG colors for checkboxes and radio buttons.
+ * Creates a PainterHint that replaces colors with their corresponding new value, based on the IDs of each element. It
+ * is used in IJ 24.1 and later to support patching the SVG colors for checkboxes and radio buttons.
  */
 @Suppress("FunctionName")
 public fun KeyBasedPaletteReplacement(paletteMap: Map<String, Color>): PainterHint =

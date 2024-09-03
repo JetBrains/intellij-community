@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -77,7 +78,6 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior.JumpToSpot
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior.NextPage
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.util.thenIf
-import kotlin.math.roundToInt
 
 @Composable
 public fun VerticalScrollbar(

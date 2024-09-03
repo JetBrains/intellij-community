@@ -15,74 +15,45 @@ import org.jetbrains.jewel.foundation.LocalGlobalMetrics
 public interface JewelTheme {
     public companion object {
         public val name: String
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalThemeName.current
+            @Composable @ReadOnlyComposable get() = LocalThemeName.current
 
         public val globalColors: GlobalColors
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalGlobalColors.current
+            @Composable @ReadOnlyComposable get() = LocalGlobalColors.current
 
         public val globalMetrics: GlobalMetrics
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalGlobalMetrics.current
+            @Composable @ReadOnlyComposable get() = LocalGlobalMetrics.current
 
         @Deprecated("Use defaultTextStyle instead", ReplaceWith("JewelTheme.defaultTextStyle"), DeprecationLevel.ERROR)
         public val textStyle: TextStyle
-            @Composable
-            @ReadOnlyComposable
-            get() = defaultTextStyle
+            @Composable @ReadOnlyComposable get() = defaultTextStyle
 
         public val defaultTextStyle: TextStyle
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalTextStyle.current
+            @Composable @ReadOnlyComposable get() = LocalTextStyle.current
 
         public val editorTextStyle: TextStyle
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalEditorTextStyle.current
+            @Composable @ReadOnlyComposable get() = LocalEditorTextStyle.current
 
         public val consoleTextStyle: TextStyle
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalConsoleTextStyle.current
+            @Composable @ReadOnlyComposable get() = LocalConsoleTextStyle.current
 
         public val contentColor: Color
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalContentColor.current
+            @Composable @ReadOnlyComposable get() = LocalContentColor.current
 
         public val isDark: Boolean
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalIsDarkTheme.current
+            @Composable @ReadOnlyComposable get() = LocalIsDarkTheme.current
 
         public val isSwingCompatMode: Boolean
-            @Composable
-            @ReadOnlyComposable
-            get() = LocalSwingCompatMode.current
+            @Composable @ReadOnlyComposable get() = LocalSwingCompatMode.current
     }
 }
 
 @Composable
-public fun JewelTheme(
-    theme: ThemeDefinition,
-    swingCompatMode: Boolean,
-    content: @Composable () -> Unit,
-) {
-    CompositionLocalProvider(LocalSwingCompatMode provides swingCompatMode) {
-        JewelTheme(theme, content)
-    }
+public fun JewelTheme(theme: ThemeDefinition, swingCompatMode: Boolean, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalSwingCompatMode provides swingCompatMode) { JewelTheme(theme, content) }
 }
 
 @Composable
-public fun JewelTheme(
-    theme: ThemeDefinition,
-    content: @Composable () -> Unit,
-) {
+public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalThemeName provides theme.name,
         LocalIsDarkTheme provides theme.isDark,
@@ -96,58 +67,46 @@ public fun JewelTheme(
     )
 }
 
-public val LocalThemeName: ProvidableCompositionLocal<String> =
-    staticCompositionLocalOf {
-        error("No ThemeName provided")
-    }
+public val LocalThemeName: ProvidableCompositionLocal<String> = staticCompositionLocalOf {
+    error("No ThemeName provided")
+}
 
-public val LocalContentColor: ProvidableCompositionLocal<Color> =
-    staticCompositionLocalOf {
-        error("No ContentColor provided. Have you forgotten the theme?")
-    }
+public val LocalContentColor: ProvidableCompositionLocal<Color> = staticCompositionLocalOf {
+    error("No ContentColor provided. Have you forgotten the theme?")
+}
 
-internal val LocalIsDarkTheme: ProvidableCompositionLocal<Boolean> =
-    staticCompositionLocalOf {
-        error("No IsDarkTheme provided. Have you forgotten the theme?")
-    }
+internal val LocalIsDarkTheme: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf {
+    error("No IsDarkTheme provided. Have you forgotten the theme?")
+}
 
-internal val LocalSwingCompatMode: ProvidableCompositionLocal<Boolean> =
-    staticCompositionLocalOf {
-        // By default, Swing compat is not enabled
-        false
-    }
+internal val LocalSwingCompatMode: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf {
+    // By default, Swing compat is not enabled
+    false
+}
 
-public val LocalColorPalette: ProvidableCompositionLocal<ThemeColorPalette> =
-    staticCompositionLocalOf {
-        ThemeColorPalette.Empty
-    }
+public val LocalColorPalette: ProvidableCompositionLocal<ThemeColorPalette> = staticCompositionLocalOf {
+    ThemeColorPalette.Empty
+}
 
-public val LocalIconData: ProvidableCompositionLocal<ThemeIconData> =
-    staticCompositionLocalOf {
-        ThemeIconData.Empty
-    }
+public val LocalIconData: ProvidableCompositionLocal<ThemeIconData> = staticCompositionLocalOf { ThemeIconData.Empty }
 
-public val LocalTextStyle: ProvidableCompositionLocal<TextStyle> =
-    staticCompositionLocalOf {
-        error("No TextStyle provided. Have you forgotten the theme?")
-    }
+public val LocalTextStyle: ProvidableCompositionLocal<TextStyle> = staticCompositionLocalOf {
+    error("No TextStyle provided. Have you forgotten the theme?")
+}
 
-public val LocalEditorTextStyle: ProvidableCompositionLocal<TextStyle> =
-    staticCompositionLocalOf {
-        error("No EditorTextStyle provided. Have you forgotten the theme?")
-    }
+public val LocalEditorTextStyle: ProvidableCompositionLocal<TextStyle> = staticCompositionLocalOf {
+    error("No EditorTextStyle provided. Have you forgotten the theme?")
+}
 
-public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> =
-    staticCompositionLocalOf {
-        error("No ConsoleTextStyle provided. Have you forgotten the theme?")
-    }
+public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> = staticCompositionLocalOf {
+    error("No ConsoleTextStyle provided. Have you forgotten the theme?")
+}
 
 /**
- * Overrides the [isDark] value for the [content]. It is used to inject a
- * different dark mode style in a sub-tree.
+ * Overrides the [isDark] value for the [content]. It is used to inject a different dark mode style in a sub-tree.
  *
- * Note: this does _not_ change the theme. If you want to change the theme,
- * you need to do it by yourself. For example, in standalone:
+ * Note: this does _not_ change the theme. If you want to change the theme, you need to do it by yourself. For example,
+ * in standalone:
  * ```kotlin
  * IntUiTheme(isDark = false) {
  *   Text("I am light")
@@ -159,9 +118,6 @@ public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> =
  * ```
  */
 @Composable
-public fun OverrideDarkMode(
-    isDark: Boolean,
-    content: @Composable () -> Unit,
-) {
+public fun OverrideDarkMode(isDark: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalIsDarkTheme provides isDark, content = content)
 }

@@ -20,10 +20,7 @@ import org.jetbrains.jewel.ui.component.ToggleableIconButtonState
 
 @Stable
 @GenerateDataFunctions
-public class IconButtonStyle(
-    public val colors: IconButtonColors,
-    public val metrics: IconButtonMetrics,
-) {
+public class IconButtonStyle(public val colors: IconButtonColors, public val metrics: IconButtonMetrics) {
     public companion object
 }
 
@@ -55,7 +52,7 @@ public class IconButtonColors(
                 state.isHovered -> backgroundHovered
                 state.isFocused -> backgroundFocused
                 else -> background
-            },
+            }
         )
 
     @Composable
@@ -69,7 +66,7 @@ public class IconButtonColors(
                 state.isHovered -> backgroundHovered
                 state.isFocused -> backgroundFocused
                 else -> background
-            },
+            }
         )
 
     @Composable
@@ -83,7 +80,7 @@ public class IconButtonColors(
                 state.isHovered -> backgroundHovered
                 state.isFocused -> backgroundFocused
                 else -> background
-            },
+            }
         )
 
     @Composable
@@ -92,7 +89,7 @@ public class IconButtonColors(
             when {
                 state.isActive && state.isSelected -> foregroundSelectedActivated
                 else -> Color.Unspecified
-            },
+            }
         )
 
     @Composable
@@ -101,7 +98,7 @@ public class IconButtonColors(
             when {
                 state.isActive && state.toggleableState == ToggleableState.On -> foregroundSelectedActivated
                 else -> Color.Unspecified
-            },
+            }
         )
 
     @Composable
@@ -113,7 +110,7 @@ public class IconButtonColors(
                 state.isPressed -> borderPressed
                 state.isHovered -> borderHovered
                 else -> border
-            },
+            }
         )
 
     @Composable
@@ -127,7 +124,7 @@ public class IconButtonColors(
                 state.isPressed -> borderPressed
                 state.isHovered -> borderHovered
                 else -> border
-            },
+            }
         )
 
     @Composable
@@ -141,7 +138,7 @@ public class IconButtonColors(
                 state.isPressed -> borderPressed
                 state.isHovered -> borderHovered
                 else -> border
-            },
+            }
         )
 
     public companion object
@@ -158,7 +155,6 @@ public class IconButtonMetrics(
     public companion object
 }
 
-public val LocalIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> =
-    staticCompositionLocalOf {
-        error("No IconButtonStyle provided. Have you forgotten the theme?")
-    }
+public val LocalIconButtonStyle: ProvidableCompositionLocal<IconButtonStyle> = staticCompositionLocalOf {
+    error("No IconButtonStyle provided. Have you forgotten the theme?")
+}

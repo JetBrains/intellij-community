@@ -10,8 +10,7 @@ val extension: StudioVersionsGenerationExtension =
 val task =
     tasks.register<AndroidStudioReleasesGeneratorTask>("generateAndroidStudioReleasesList") {
         val className = ClassName.bestGuess(STUDIO_RELEASES_OUTPUT_CLASS_NAME)
-        val filePath = className.packageName.replace(".", "/") +
-            "/${className.simpleName}.kt"
+        val filePath = className.packageName.replace(".", "/") + "/${className.simpleName}.kt"
         outputFile = extension.targetDir.file(filePath)
         dataUrl = extension.dataUrl
         resourcesDirs = extension.resourcesDirs

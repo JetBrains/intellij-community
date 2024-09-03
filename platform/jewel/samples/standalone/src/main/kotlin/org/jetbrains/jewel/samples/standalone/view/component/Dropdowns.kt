@@ -9,88 +9,61 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import kotlin.random.Random
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
-import kotlin.random.Random
 
 @Composable
 fun Dropdowns() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val items =
-            remember {
-                listOf(
-                    "Light",
-                    "Dark",
-                    "---",
-                    "High Contrast",
-                    "Darcula",
-                    "IntelliJ Light",
-                )
-            }
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        val items = remember { listOf("Light", "Dark", "---", "High Contrast", "Darcula", "IntelliJ Light") }
         var selected by remember { mutableStateOf(items.first()) }
 
-        Dropdown(
-            enabled = false,
-            menuContent = {},
-        ) {
-            Text("Disabled")
-        }
+        Dropdown(enabled = false, menuContent = {}) { Text("Disabled") }
         Dropdown(
             menuContent = {
                 items.forEach {
                     if (it == "---") {
                         separator()
                     } else {
-                        selectableItem(
-                            selected = selected == it,
-                            onClick = { selected = it },
-                        ) {
-                            Text(it)
-                        }
+                        selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
                     }
                 }
                 separator()
-                submenu(submenu = {
-                    items.forEach {
-                        if (it == "---") {
-                            separator()
-                        } else {
-                            selectableItem(
-                                selected = selected == it,
-                                onClick = { selected = it },
-                            ) {
-                                Text(it)
-                            }
-                        }
-                    }
-                    separator()
-                    submenu(submenu = {
+                submenu(
+                    submenu = {
                         items.forEach {
                             if (it == "---") {
                                 separator()
                             } else {
-                                selectableItem(
-                                    selected = selected == it,
-                                    onClick = { selected = it },
-                                ) {
-                                    Text(it)
-                                }
+                                selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
                             }
                         }
-                    }) {
-                        Text("Submenu2")
+                        separator()
+                        submenu(
+                            submenu = {
+                                items.forEach {
+                                    if (it == "---") {
+                                        separator()
+                                    } else {
+                                        selectableItem(selected = selected == it, onClick = { selected = it }) {
+                                            Text(it)
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("Submenu2")
+                        }
                     }
-                }) {
+                ) {
                     Text("Submenu")
                 }
-            },
+            }
         ) {
             Text(selected)
         }
@@ -101,12 +74,7 @@ fun Dropdowns() {
                     if (it == "---") {
                         separator()
                     } else {
-                        selectableItem(
-                            selected = selected == it,
-                            onClick = { selected = it },
-                        ) {
-                            Text(it)
-                        }
+                        selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
                     }
                 }
             },
@@ -126,42 +94,17 @@ fun Dropdowns() {
                                 if (Random.nextBoolean()) {
                                     null
                                 } else {
-                                    dropdownKeybindingsSample.shuffled()
-                                        .take(2)
-                                        .toSet()
+                                    dropdownKeybindingsSample.shuffled().take(2).toSet()
                                 },
                             selected = false,
-                            onClick = { },
+                            onClick = {},
                         ) {
                             Text(it)
                         }
                     }
                 }
-                submenu(submenu = {
-                    items.forEach {
-                        if (it == "---") {
-                            separator()
-                        } else {
-                            selectableItem(
-                                iconKey = dropdownIconsSample.random(),
-                                iconClass = DropdownStyle::class.java,
-                                keybinding =
-                                    if (Random.nextBoolean()) {
-                                        null
-                                    } else {
-                                        dropdownKeybindingsSample.shuffled()
-                                            .take(2)
-                                            .toSet()
-                                    },
-                                selected = false,
-                                onClick = { },
-                            ) {
-                                Text(it)
-                            }
-                        }
-                    }
-                    separator()
-                    submenu(submenu = {
+                submenu(
+                    submenu = {
                         items.forEach {
                             if (it == "---") {
                                 separator()
@@ -169,20 +112,45 @@ fun Dropdowns() {
                                 selectableItem(
                                     iconKey = dropdownIconsSample.random(),
                                     iconClass = DropdownStyle::class.java,
+                                    keybinding =
+                                        if (Random.nextBoolean()) {
+                                            null
+                                        } else {
+                                            dropdownKeybindingsSample.shuffled().take(2).toSet()
+                                        },
                                     selected = false,
-                                    onClick = { },
+                                    onClick = {},
                                 ) {
                                     Text(it)
                                 }
                             }
                         }
-                    }) {
-                        Text("Submenu2")
+                        separator()
+                        submenu(
+                            submenu = {
+                                items.forEach {
+                                    if (it == "---") {
+                                        separator()
+                                    } else {
+                                        selectableItem(
+                                            iconKey = dropdownIconsSample.random(),
+                                            iconClass = DropdownStyle::class.java,
+                                            selected = false,
+                                            onClick = {},
+                                        ) {
+                                            Text(it)
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("Submenu2")
+                        }
                     }
-                }) {
+                ) {
                     Text("Submenu")
                 }
-            },
+            }
         ) {
             Text("With icons")
         }

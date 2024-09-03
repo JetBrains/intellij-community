@@ -18,10 +18,7 @@ import org.jetbrains.jewel.ui.component.ChipState
 
 @Stable
 @GenerateDataFunctions
-public class ChipStyle(
-    public val colors: ChipColors,
-    public val metrics: ChipMetrics,
-) {
+public class ChipStyle(public val colors: ChipColors, public val metrics: ChipMetrics) {
     public companion object
 }
 
@@ -78,7 +75,7 @@ public class ChipColors(
                     state.isHovered -> backgroundHovered
                     else -> background
                 }
-            },
+            }
         )
 
     @Composable
@@ -100,7 +97,7 @@ public class ChipColors(
                     state.isHovered -> contentHovered
                     else -> content
                 }
-            },
+            }
         )
 
     @Composable
@@ -122,7 +119,7 @@ public class ChipColors(
                     state.isHovered && !JewelTheme.isSwingCompatMode -> borderHovered
                     else -> border
                 }
-            },
+            }
         )
 
     public companion object
@@ -139,7 +136,6 @@ public class ChipMetrics(
     public companion object
 }
 
-public val LocalChipStyle: ProvidableCompositionLocal<ChipStyle> =
-    staticCompositionLocalOf {
-        error("No ChipStyle provided. Have you forgotten the theme?")
-    }
+public val LocalChipStyle: ProvidableCompositionLocal<ChipStyle> = staticCompositionLocalOf {
+    error("No ChipStyle provided. Have you forgotten the theme?")
+}

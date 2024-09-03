@@ -12,6 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import java.awt.Desktop
+import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -33,18 +35,12 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
-import java.awt.Desktop
-import java.net.URI
 
 @Composable
-internal fun MarkdownPreview(
-    modifier: Modifier = Modifier,
-    rawMarkdown: CharSequence,
-) {
+internal fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSequence) {
     val isDark = JewelTheme.isDark
 
-    val markdownStyling =
-        remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
+    val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
     val extensions = remember { listOf(GitHubAlertProcessorExtension, AutolinkProcessorExtension) }
@@ -55,13 +51,11 @@ internal fun MarkdownPreview(
     val processor = remember { MarkdownProcessor(extensions, editorMode = true) }
 
     LaunchedEffect(rawMarkdown) {
-        // TODO you may want to debounce or drop on backpressure, in real usages. You should also not do this
+        // TODO you may want to debounce or drop on backpressure, in real usages. You should also
+        // not do this
         //  in the UI to begin with.
         @Suppress("InjectDispatcher") // This should never go in the composable IRL
-        markdownBlocks =
-            withContext(Dispatchers.Default) {
-                processor.processMarkdownDocument(rawMarkdown.toString())
-            }
+        markdownBlocks = withContext(Dispatchers.Default) { processor.processMarkdownDocument(rawMarkdown.toString()) }
     }
 
     val blockRenderer =

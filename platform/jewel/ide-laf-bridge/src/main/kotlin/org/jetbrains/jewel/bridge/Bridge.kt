@@ -24,17 +24,14 @@ private fun Application.lookAndFeelFlow(scope: CoroutineScope): Flow<Unit> =
 internal fun Application.lookAndFeelChangedFlow(
     scope: CoroutineScope,
     sharingStarted: SharingStarted = SharingStarted.Eagerly,
-): Flow<Unit> =
-    lookAndFeelFlow(scope).onStart { emit(Unit) }
-        .shareIn(scope, sharingStarted, replay = 1)
+): Flow<Unit> = lookAndFeelFlow(scope).onStart { emit(Unit) }.shareIn(scope, sharingStarted, replay = 1)
 
 internal fun <L : Any, K> MessageBus.flow(
     topic: Topic<L>,
     parentScope: CoroutineScope,
     listener: ProducerScope<K>.() -> L,
-): Flow<K> =
-    callbackFlow {
-        val connection: SimpleMessageBusConnection = connect(parentScope)
-        connection.subscribe(topic, listener())
-        awaitClose { connection.disconnect() }
-    }
+): Flow<K> = callbackFlow {
+    val connection: SimpleMessageBusConnection = connect(parentScope)
+    connection.subscribe(topic, listener())
+    awaitClose { connection.disconnect() }
+}

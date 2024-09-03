@@ -30,26 +30,14 @@ object ComponentsViewModel {
 
 private val componentsMenuItems =
     mutableStateListOf(
-        ViewInfo(
-            title = "Buttons",
-            iconKey = StandaloneSampleIcons.Components.button,
-            content = { Buttons() },
-        ),
+        ViewInfo(title = "Buttons", iconKey = StandaloneSampleIcons.Components.button, content = { Buttons() }),
         ViewInfo(
             title = "Radio Buttons",
             iconKey = StandaloneSampleIcons.Components.radioButton,
             content = { RadioButtons() },
         ),
-        ViewInfo(
-            title = "Checkboxes",
-            iconKey = StandaloneSampleIcons.Components.checkbox,
-            content = { Checkboxes() },
-        ),
-        ViewInfo(
-            title = "Dropdowns",
-            iconKey = StandaloneSampleIcons.Components.comboBox,
-            content = { Dropdowns() },
-        ),
+        ViewInfo(title = "Checkboxes", iconKey = StandaloneSampleIcons.Components.checkbox, content = { Checkboxes() }),
+        ViewInfo(title = "Dropdowns", iconKey = StandaloneSampleIcons.Components.comboBox, content = { Dropdowns() }),
         ViewInfo(
             title = "Chips and trees",
             iconKey = StandaloneSampleIcons.Components.tree,
@@ -60,54 +48,22 @@ private val componentsMenuItems =
             iconKey = StandaloneSampleIcons.Components.progressBar,
             content = { ProgressBar() },
         ),
-        ViewInfo(
-            title = "Icons",
-            iconKey = StandaloneSampleIcons.Components.toolbar,
-            content = { Icons() },
-        ),
-        ViewInfo(
-            title = "Links",
-            iconKey = StandaloneSampleIcons.Components.links,
-            content = { Links() },
-        ),
-        ViewInfo(
-            title = "Borders",
-            iconKey = StandaloneSampleIcons.Components.borders,
-            content = { Borders() },
-        ),
+        ViewInfo(title = "Icons", iconKey = StandaloneSampleIcons.Components.toolbar, content = { Icons() }),
+        ViewInfo(title = "Links", iconKey = StandaloneSampleIcons.Components.links, content = { Links() }),
+        ViewInfo(title = "Borders", iconKey = StandaloneSampleIcons.Components.borders, content = { Borders() }),
         ViewInfo(
             title = "Segmented Controls",
             iconKey = StandaloneSampleIcons.Components.segmentedControls,
             content = { SegmentedControls() },
         ),
-        ViewInfo(
-            title = "Sliders",
-            iconKey = StandaloneSampleIcons.Components.slider,
-            content = { Sliders() },
-        ),
-        ViewInfo(
-            title = "Tabs",
-            iconKey = StandaloneSampleIcons.Components.tabs,
-            content = { Tabs() },
-        ),
-        ViewInfo(
-            title = "Tooltips",
-            iconKey = StandaloneSampleIcons.Components.tooltip,
-            content = { Tooltips() },
-        ),
-        ViewInfo(
-            title = "TextAreas",
-            iconKey = StandaloneSampleIcons.Components.textArea,
-            content = { TextAreas() },
-        ),
+        ViewInfo(title = "Sliders", iconKey = StandaloneSampleIcons.Components.slider, content = { Sliders() }),
+        ViewInfo(title = "Tabs", iconKey = StandaloneSampleIcons.Components.tabs, content = { Tabs() }),
+        ViewInfo(title = "Tooltips", iconKey = StandaloneSampleIcons.Components.tooltip, content = { Tooltips() }),
+        ViewInfo(title = "TextAreas", iconKey = StandaloneSampleIcons.Components.textArea, content = { TextAreas() }),
         ViewInfo(
             title = "TextFields",
             iconKey = StandaloneSampleIcons.Components.textField,
             content = { TextFields() },
         ),
-        ViewInfo(
-            title = "Scrollbars",
-            iconKey = StandaloneSampleIcons.Components.scrollbar,
-            content = { Scrollbars() },
-        ),
+        ViewInfo(title = "Scrollbars", iconKey = StandaloneSampleIcons.Components.scrollbar, content = { Scrollbars() }),
     )

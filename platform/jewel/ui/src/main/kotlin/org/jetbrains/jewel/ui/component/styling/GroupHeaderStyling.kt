@@ -9,10 +9,7 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Immutable
 @GenerateDataFunctions
-public class GroupHeaderStyle(
-    public val colors: GroupHeaderColors,
-    public val metrics: GroupHeaderMetrics,
-) {
+public class GroupHeaderStyle(public val colors: GroupHeaderColors, public val metrics: GroupHeaderMetrics) {
     public companion object
 }
 
@@ -24,14 +21,10 @@ public class GroupHeaderColors(public val divider: Color) {
 
 @Immutable
 @GenerateDataFunctions
-public class GroupHeaderMetrics(
-    public val dividerThickness: Dp,
-    public val indent: Dp,
-) {
+public class GroupHeaderMetrics(public val dividerThickness: Dp, public val indent: Dp) {
     public companion object
 }
 
-public val LocalGroupHeaderStyle: ProvidableCompositionLocal<GroupHeaderStyle> =
-    staticCompositionLocalOf {
-        error("No GroupHeaderStyle provided. Have you forgotten the theme?")
-    }
+public val LocalGroupHeaderStyle: ProvidableCompositionLocal<GroupHeaderStyle> = staticCompositionLocalOf {
+    error("No GroupHeaderStyle provided. Have you forgotten the theme?")
+}

@@ -52,10 +52,7 @@ public class SegmentedControlColors(
 
 @Stable
 @GenerateDataFunctions
-public class SegmentedControlMetrics(
-    public val cornerSize: CornerSize,
-    public val borderWidth: Dp,
-) {
+public class SegmentedControlMetrics(public val cornerSize: CornerSize, public val borderWidth: Dp) {
 
     public companion object
 }
@@ -76,7 +73,6 @@ private fun <T> SegmentedControlState.chooseValueIgnoreCompat(
         else -> normal
     }
 
-public val LocalSegmentedControlStyle: ProvidableCompositionLocal<SegmentedControlStyle> =
-    staticCompositionLocalOf {
-        error("No LocalSegmentedControlStyle provided. Have you forgotten the theme?")
-    }
+public val LocalSegmentedControlStyle: ProvidableCompositionLocal<SegmentedControlStyle> = staticCompositionLocalOf {
+    error("No LocalSegmentedControlStyle provided. Have you forgotten the theme?")
+}

@@ -39,7 +39,7 @@ public class CheckboxColors(
                 !state.isEnabled -> contentDisabled
                 state.toggleableState == ToggleableState.On -> contentSelected
                 else -> content
-            },
+            }
         )
 
     public companion object
@@ -67,7 +67,7 @@ public class CheckboxMetrics(
                 !state.isFocused && state.isSelected -> outlineSelectedCornerSize
                 state.isFocused && !state.isSelected -> outlineFocusedCornerSize
                 else -> outlineCornerSize
-            },
+            }
         )
 
     @Composable
@@ -78,7 +78,7 @@ public class CheckboxMetrics(
                 !state.isFocused && state.isSelected -> outlineSelectedSize
                 state.isFocused && !state.isSelected -> outlineFocusedSize
                 else -> outlineSize
-            },
+            }
         )
 
     public companion object
@@ -90,7 +90,6 @@ public class CheckboxIcons(public val checkbox: IconKey) {
     public companion object
 }
 
-public val LocalCheckboxStyle: ProvidableCompositionLocal<CheckboxStyle> =
-    staticCompositionLocalOf {
-        error("No CheckboxStyle provided. Have you forgotten the theme?")
-    }
+public val LocalCheckboxStyle: ProvidableCompositionLocal<CheckboxStyle> = staticCompositionLocalOf {
+    error("No CheckboxStyle provided. Have you forgotten the theme?")
+}

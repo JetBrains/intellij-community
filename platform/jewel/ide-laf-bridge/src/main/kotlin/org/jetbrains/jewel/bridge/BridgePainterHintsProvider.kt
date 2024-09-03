@@ -21,7 +21,8 @@ import org.jetbrains.jewel.ui.util.toRgbaHexString
  * This is an internal Jewel API and should not be used directly.
  */
 @InternalJewelApi
-public class BridgePainterHintsProvider private constructor(
+public class BridgePainterHintsProvider
+private constructor(
     isDark: Boolean,
     intellijIconPalette: Map<String, String?> = emptyMap(),
     themeIconPalette: Map<String, String?> = emptyMap(),
@@ -59,11 +60,7 @@ public class BridgePainterHintsProvider private constructor(
         uiPaletteHint = ColorBasedPaletteReplacement(ui)
     }
 
-    private fun registerColorBasedReplacement(
-        map: MutableMap<Color, Color>,
-        key: String,
-        value: String,
-    ) {
+    private fun registerColorBasedReplacement(map: MutableMap<Color, Color>, key: String, value: String) {
         // If either the key or the resolved value aren't valid colors, ignore the entry
         val keyAsColor = resolveKeyColor(key, intellijIconPalette, isDark) ?: return
         val resolvedColor = resolveColor(value) ?: return
@@ -72,11 +69,7 @@ public class BridgePainterHintsProvider private constructor(
         map[keyAsColor] = resolvedColor
     }
 
-    private fun registerIdBasedReplacement(
-        map: MutableMap<String, Color>,
-        key: String,
-        value: String,
-    ) {
+    private fun registerIdBasedReplacement(map: MutableMap<String, Color>, key: String, value: String) {
         val adjustedKey = if (isDark) key.removeSuffix(".Dark") else key
 
         if (adjustedKey !in supportedCheckboxKeys) {
@@ -85,7 +78,9 @@ public class BridgePainterHintsProvider private constructor(
         }
 
         if (adjustedKey != key) {
-            logger.warn("${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead")
+            logger.warn(
+                "${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead"
+            )
         }
 
         val parsedValue = resolveColor(value)
@@ -98,13 +93,12 @@ public class BridgePainterHintsProvider private constructor(
     }
 
     @Composable
-    override fun hints(path: String): List<PainterHint> =
-        buildList {
-            add(BridgeOverride)
-            add(getPaletteHint(path, isNewUi = isNewUiTheme()))
-            add(HiDpi())
-            add(Dark(JewelTheme.isDark))
-        }
+    override fun hints(path: String): List<PainterHint> = buildList {
+        add(BridgeOverride)
+        add(getPaletteHint(path, isNewUi = isNewUiTheme()))
+        add(HiDpi())
+        add(Dark(JewelTheme.isDark))
+    }
 
     public companion object {
         private val logger = thisLogger()

@@ -3,6 +3,8 @@ package org.jetbrains.jewel.buildlogic.demodata
 import com.squareup.kotlinpoet.ClassName
 import gradle.kotlin.dsl.accessors._34fcf23848cfa0f534eebf6913e08a53.kotlin
 import gradle.kotlin.dsl.accessors._34fcf23848cfa0f534eebf6913e08a53.sourceSets
+import java.io.File
+import java.net.URI
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.DefaultTask
@@ -19,8 +21,6 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
-import java.io.File
-import java.net.URI
 
 open class StudioVersionsGenerationExtension(project: Project) {
 
@@ -28,28 +28,25 @@ open class StudioVersionsGenerationExtension(project: Project) {
         project.objects
             .directoryProperty()
             .convention(
-                project.layout.dir(
-                    project.provider { project.sourceSets.named("main").get().kotlin.srcDirs.first() }
-                )
+                project.layout.dir(project.provider { project.sourceSets.named("main").get().kotlin.srcDirs.first() })
             )
 
     val resourcesDirs: SetProperty<File> =
         project.objects
             .setProperty<File>()
-            .convention(project.provider {
-                when {
-                    project.plugins.hasPlugin("org.gradle.jvm-ecosystem") ->
-                        project.extensions.getByType<SourceSetContainer>()["main"]
-                            .resources.srcDirs
+            .convention(
+                project.provider {
+                    when {
+                        project.plugins.hasPlugin("org.gradle.jvm-ecosystem") ->
+                            project.extensions.getByType<SourceSetContainer>()["main"].resources.srcDirs
 
-                    else -> emptySet()
+                        else -> emptySet()
+                    }
                 }
-            })
+            )
 
     val dataUrl: Property<String> =
-        project.objects
-            .property<String>()
-            .convention("https://jb.gg/android-studio-releases-list.json")
+        project.objects.property<String>().convention("https://jb.gg/android-studio-releases-list.json")
 }
 
 internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME =
@@ -57,14 +54,11 @@ internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME =
 
 open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
 
-    @get:OutputFile
-    val outputFile: RegularFileProperty = project.objects.fileProperty()
+    @get:OutputFile val outputFile: RegularFileProperty = project.objects.fileProperty()
 
-    @get:Input
-    val dataUrl = project.objects.property<String>()
+    @get:Input val dataUrl = project.objects.property<String>()
 
-    @get:Input
-    val resourcesDirs = project.objects.setProperty<File>()
+    @get:Input val resourcesDirs = project.objects.setProperty<File>()
 
     init {
         group = "jewel"
@@ -80,12 +74,8 @@ open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
         val lookupDirs = resourcesDirs.get()
 
         logger.lifecycle("Fetching Android Studio releases list from $url...")
-        logger.debug(
-            "Registered resources directories:\n" +
-                lookupDirs.joinToString("\n") { " * ${it.absolutePath}" }
-        )
-        val releases = URI.create(url).toURL().openStream()
-            .use { json.decodeFromStream<ApiAndroidStudioReleases>(it) }
+        logger.debug("Registered resources directories:\n" + lookupDirs.joinToString("\n") { " * ${it.absolutePath}" })
+        val releases = URI.create(url).toURL().openStream().use { json.decodeFromStream<ApiAndroidStudioReleases>(it) }
 
         val className = ClassName.bestGuess(STUDIO_RELEASES_OUTPUT_CLASS_NAME)
         val file = AndroidStudioReleasesReader.readFrom(releases, className, url, lookupDirs)

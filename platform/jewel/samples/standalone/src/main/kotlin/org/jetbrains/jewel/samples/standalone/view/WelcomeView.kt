@@ -31,17 +31,10 @@ import org.jetbrains.jewel.ui.painter.hints.Selected
 fun WelcomeView() {
     Column(
         modifier =
-            Modifier.trackActivation()
-                .fillMaxSize()
-                .background(JewelTheme.globalColors.panelBackground)
-                .padding(24.dp),
+            Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Icon(
-            key = StandaloneSampleIcons.jewelLogo,
-            contentDescription = null,
-            modifier = Modifier.size(200.dp),
-        )
+        Icon(key = StandaloneSampleIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))
 
         Text("Meet Jewel", style = Typography.h1TextStyle())
 
@@ -80,11 +73,7 @@ fun WelcomeView() {
 }
 
 @Composable
-fun ThemeSelectionChip(
-    theme: IntUiThemes,
-    name: String,
-    iconKey: IconKey,
-) {
+fun ThemeSelectionChip(theme: IntUiThemes, name: String, iconKey: IconKey) {
     RadioButtonChip(
         selected = MainViewModel.theme == theme,
         onClick = { MainViewModel.theme = theme },

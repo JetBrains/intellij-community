@@ -53,7 +53,7 @@ public class SliderColors(
                 focused = thumbFillFocused,
                 pressed = thumbFillPressed,
                 hovered = thumbFillHovered,
-            ),
+            )
         )
 
     @Composable
@@ -65,7 +65,7 @@ public class SliderColors(
                 focused = thumbBorderFocused,
                 pressed = thumbBorderPressed,
                 hovered = thumbBorderHovered,
-            ),
+            )
         )
 
     @Composable
@@ -75,13 +75,14 @@ public class SliderColors(
         pressed: Color,
         hovered: Color,
         focused: Color,
-    ) = when {
-        !isEnabled -> disabled
-        isFocused -> focused
-        isPressed && !JewelTheme.isSwingCompatMode -> pressed
-        isHovered && !JewelTheme.isSwingCompatMode -> hovered
-        else -> normal
-    }
+    ) =
+        when {
+            !isEnabled -> disabled
+            isFocused -> focused
+            isPressed && !JewelTheme.isSwingCompatMode -> pressed
+            isHovered && !JewelTheme.isSwingCompatMode -> hovered
+            else -> normal
+        }
 
     public companion object
 }
@@ -99,7 +100,6 @@ public class SliderMetrics(
     public companion object
 }
 
-public val LocalSliderStyle: ProvidableCompositionLocal<SliderStyle> =
-    staticCompositionLocalOf {
-        error("No default SliderStyle provided. Have you forgotten the theme?")
-    }
+public val LocalSliderStyle: ProvidableCompositionLocal<SliderStyle> = staticCompositionLocalOf {
+    error("No default SliderStyle provided. Have you forgotten the theme?")
+}

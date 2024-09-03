@@ -1,9 +1,9 @@
 package org.jetbrains.jewel.buildlogic.ideversion
 
+import java.io.File
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class CheckIdeaVersionTask : DefaultTask() {
 
@@ -12,11 +12,9 @@ open class CheckIdeaVersionTask : DefaultTask() {
             "fields=code,releases,releases.version,releases.build,releases.type,releases.majorVersion&" +
             "code=IC"
 
-    private val ideaVersionRegex =
-        "202\\d\\.(\\d\\.)?\\d".toRegex(RegexOption.IGNORE_CASE)
+    private val ideaVersionRegex = "202\\d\\.(\\d\\.)?\\d".toRegex(RegexOption.IGNORE_CASE)
 
-    private val intelliJPlatformBuildRegex =
-        "2\\d{2}\\.\\d+\\.\\d+(?:-EAP-SNAPSHOT)?".toRegex(RegexOption.IGNORE_CASE)
+    private val intelliJPlatformBuildRegex = "2\\d{2}\\.\\d+\\.\\d+(?:-EAP-SNAPSHOT)?".toRegex(RegexOption.IGNORE_CASE)
 
     private val currentIjpVersion = project.currentIjpVersion
 
@@ -30,11 +28,8 @@ open class CheckIdeaVersionTask : DefaultTask() {
         val ideaVersion = readCurrentVersionInfo()
         validateIdeaVersion(ideaVersion)
 
-        val platformBuildsForThisMajorVersion = IJPVersionsFetcher.fetchBuildsForCurrentMajorVersion(
-            releasesUrl,
-            ideaVersion.majorVersion,
-            logger
-        )
+        val platformBuildsForThisMajorVersion =
+            IJPVersionsFetcher.fetchBuildsForCurrentMajorVersion(releasesUrl, ideaVersion.majorVersion, logger)
 
         if (platformBuildsForThisMajorVersion == null) {
             logger.error("Cannot check platform version, no builds found for current version $ideaVersion")
@@ -71,10 +66,10 @@ open class CheckIdeaVersionTask : DefaultTask() {
                     }
 
                     appendLine(
-                        "Please update the 'idea' and 'intelliJPlatformBuild' " +
-                            "versions in the catalog accordingly."
+                        "Please update the 'idea' and 'intelliJPlatformBuild' " + "versions in the catalog accordingly."
                     )
-                })
+                }
+            )
         }
 
         logger.lifecycle(
@@ -104,8 +99,7 @@ open class CheckIdeaVersionTask : DefaultTask() {
         )
     }
 
-    private fun asMajorPlatformVersion(rawVersion: String) =
-        rawVersion.take(6)
+    private fun asMajorPlatformVersion(rawVersion: String) = rawVersion.take(6)
 
     private fun inferMajorPlatformVersion(rawBuildNumber: String) =
         "20${rawBuildNumber.take(2)}.${rawBuildNumber.substringBefore('.').last()}"
@@ -120,11 +114,7 @@ open class CheckIdeaVersionTask : DefaultTask() {
                 )
 
         val dependencyVersion =
-            catalogDependencyLine
-                .substringAfter(versionName)
-                .trimStart(' ', '=')
-                .trimEnd()
-                .trim('"')
+            catalogDependencyLine.substringAfter(versionName).trimStart(' ', '=').trimEnd().trim('"')
 
         if (!dependencyVersion.matches(ideaVersionRegex) && !dependencyVersion.matches(intelliJPlatformBuildRegex)) {
             throw GradleException("Invalid IJ IDEA version found in version catalog: '$dependencyVersion'")
@@ -143,11 +133,7 @@ open class CheckIdeaVersionTask : DefaultTask() {
                 )
 
         val declaredPlatformBuild =
-            catalogDependencyLine
-                .substringAfter(versionName)
-                .trimStart(' ', '=')
-                .trimEnd()
-                .trim('"')
+            catalogDependencyLine.substringAfter(versionName).trimStart(' ', '=').trimEnd().trim('"')
 
         if (!declaredPlatformBuild.matches(intelliJPlatformBuildRegex)) {
             throw GradleException("Invalid IJP build found in version catalog: '$declaredPlatformBuild'")
@@ -156,14 +142,14 @@ open class CheckIdeaVersionTask : DefaultTask() {
         return declaredPlatformBuild
     }
 
-    private fun validateIdeaVersion(
-        currentVersion: ApiIdeaReleasesItem.Release,
-    ) {
-        val candidateMatches = IJPVersionsFetcher.fetchIJPVersions(releasesUrl, logger)
-            ?: throw GradleException("Can't fetch all IJP releases.")
+    private fun validateIdeaVersion(currentVersion: ApiIdeaReleasesItem.Release) {
+        val candidateMatches =
+            IJPVersionsFetcher.fetchIJPVersions(releasesUrl, logger)
+                ?: throw GradleException("Can't fetch all IJP releases.")
 
-        val match = candidateMatches.find { it.build == currentVersion.build }
-            ?: throw GradleException("IJ build ${currentVersion.build} seemingly does not exist")
+        val match =
+            candidateMatches.find { it.build == currentVersion.build }
+                ?: throw GradleException("IJ build ${currentVersion.build} seemingly does not exist")
 
         if (currentVersion.type != "eap" && match.version != currentVersion.version) {
             throw GradleException(

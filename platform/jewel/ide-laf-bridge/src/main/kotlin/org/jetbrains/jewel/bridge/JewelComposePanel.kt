@@ -13,25 +13,24 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.toSize
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
-import java.awt.BorderLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
-public fun JewelComposePanel(content: @Composable () -> Unit): JComponent =
-    createJewelComposePanel { jewelPanel ->
-        setContent {
-            SwingBridgeTheme {
-                CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
-                    ComponentDataProviderBridge(jewelPanel, content = content)
-                }
+public fun JewelComposePanel(content: @Composable () -> Unit): JComponent = createJewelComposePanel { jewelPanel ->
+    setContent {
+        SwingBridgeTheme {
+            CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                ComponentDataProviderBridge(jewelPanel, content = content)
             }
         }
     }
+}
 
 @InternalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
@@ -66,21 +65,17 @@ internal class JewelComposePanel : JPanel(), UiDataProvider {
 }
 
 @ExperimentalJewelApi
-public val LocalComponent: ProvidableCompositionLocal<JComponent> =
-    staticCompositionLocalOf {
-        error("CompositionLocal LocalComponent not provided")
-    }
+public val LocalComponent: ProvidableCompositionLocal<JComponent> = staticCompositionLocalOf {
+    error("CompositionLocal LocalComponent not provided")
+}
 
 /**
- * Workaround until the issue with Compose 1.7 + fillMax__ + IntelliJ
- * Panels is fixed: https://github.com/JetBrains/jewel/issues/504
- * https://youtrack.jetbrains.com/issue/CMP-5856.
+ * Workaround until the issue with Compose 1.7 + fillMax__ + IntelliJ Panels is fixed:
+ * https://github.com/JetBrains/jewel/issues/504 https://youtrack.jetbrains.com/issue/CMP-5856.
  */
 @Composable
 private fun Compose17IJSizeBugWorkaround(content: @Composable () -> Unit) {
     with(LocalDensity.current) {
-        Box(modifier = Modifier.requiredSize(LocalWindowInfo.current.containerSize.toSize().toDpSize())) {
-            content()
-        }
+        Box(modifier = Modifier.requiredSize(LocalWindowInfo.current.containerSize.toSize().toDpSize())) { content() }
     }
 }

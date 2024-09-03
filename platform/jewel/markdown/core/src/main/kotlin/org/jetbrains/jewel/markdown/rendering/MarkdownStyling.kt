@@ -35,9 +35,7 @@ public class MarkdownStyling(
     public val htmlBlock: HtmlBlock,
 ) {
     @GenerateDataFunctions
-    public class Paragraph(
-        override val inlinesStyling: InlinesStyling,
-    ) : WithInlinesStyling {
+    public class Paragraph(override val inlinesStyling: InlinesStyling) : WithInlinesStyling {
         public companion object
     }
 
@@ -136,10 +134,7 @@ public class MarkdownStyling(
     }
 
     @GenerateDataFunctions
-    public class List(
-        public val ordered: Ordered,
-        public val unordered: Unordered,
-    ) {
+    public class List(public val ordered: Ordered, public val unordered: Unordered) {
         @GenerateDataFunctions
         public class Ordered(
             public val numberStyle: TextStyle,
@@ -169,10 +164,7 @@ public class MarkdownStyling(
     }
 
     @GenerateDataFunctions
-    public class Code(
-        public val indented: Indented,
-        public val fenced: Fenced,
-    ) {
+    public class Code(public val indented: Indented, public val fenced: Fenced) {
         @GenerateDataFunctions
         public class Indented(
             public val editorTextStyle: TextStyle,
@@ -281,12 +273,7 @@ public class InlinesStyling(
     public val renderInlineHtml: Boolean,
 ) {
     public val textLinkStyles: TextLinkStyles =
-        TextLinkStyles(
-            style = link,
-            focusedStyle = linkFocused,
-            hoveredStyle = linkHovered,
-            pressedStyle = linkPressed,
-        )
+        TextLinkStyles(style = link, focusedStyle = linkFocused, hoveredStyle = linkHovered, pressedStyle = linkPressed)
 
     public companion object
 }
@@ -296,13 +283,11 @@ internal val InfoPosition.verticalAlignment
         when (this) {
             TopStart,
             TopCenter,
-            TopEnd,
-            -> Alignment.Top
+            TopEnd -> Alignment.Top
 
             BottomStart,
             BottomCenter,
-            BottomEnd,
-            -> Alignment.Bottom
+            BottomEnd -> Alignment.Bottom
 
             Hide -> null
         }
@@ -311,16 +296,13 @@ internal val InfoPosition.horizontalAlignment
     get() =
         when (this) {
             TopStart,
-            BottomStart,
-            -> Alignment.Start
+            BottomStart -> Alignment.Start
 
             TopCenter,
-            BottomCenter,
-            -> Alignment.CenterHorizontally
+            BottomCenter -> Alignment.CenterHorizontally
 
             TopEnd,
-            BottomEnd,
-            -> Alignment.End
+            BottomEnd -> Alignment.End
 
             Hide -> null
         }

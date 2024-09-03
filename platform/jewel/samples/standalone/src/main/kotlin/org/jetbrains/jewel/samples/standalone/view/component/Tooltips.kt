@@ -11,9 +11,7 @@ import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable
 fun Tooltips() {
-    Tooltip(tooltip = {
-        Text("This is a tooltip")
-    }) {
+    Tooltip(tooltip = { Text("This is a tooltip") }) {
         Text(modifier = Modifier.border(1.dp, JewelTheme.globalColors.borders.normal).padding(4.dp), text = "Hover Me!")
     }
 }
