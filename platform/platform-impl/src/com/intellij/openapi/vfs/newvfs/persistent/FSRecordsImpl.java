@@ -208,6 +208,7 @@ public final class FSRecordsImpl implements Closeable {
   public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
                                       @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
+      //TODO RC: this has very little sense now: mmapped storages always use native byte order, regardless of this property
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
     try {
@@ -323,6 +324,7 @@ public final class FSRecordsImpl implements Closeable {
 
   private final FileRecordLock updateLock = new FileRecordLock();
 
+  //TODO RC: why to have it both here, and also in PersistentFSConnection? Mb one place is enough?
   private volatile boolean closed = false;
 
   /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
@@ -496,7 +498,7 @@ public final class FSRecordsImpl implements Closeable {
   void force() {
     checkNotClosed();
     try {
-      connection.doForce();
+      connection.force();
     }
     catch (IOException e) {
       throw handleError(e);

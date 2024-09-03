@@ -346,7 +346,7 @@ public class VFSInitializationTest {
     final int version = 1;
 
     final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
-    connection.doForce(); //persist VFS initial state
+    connection.force(); //persist VFS initial state
     try {
       final PersistentFSRecordsStorage records = connection.getRecords();
       records.force();
