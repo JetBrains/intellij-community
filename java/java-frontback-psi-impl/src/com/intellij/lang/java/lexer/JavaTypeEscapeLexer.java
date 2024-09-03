@@ -4,6 +4,7 @@ package com.intellij.lang.java.lexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergeFunction;
 import com.intellij.lexer.MergingLexerAdapterBase;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 
@@ -29,16 +30,15 @@ public class JavaTypeEscapeLexer extends MergingLexerAdapterBase {
   private static class EscapeMarkdownFunction implements MergeFunction {
     @Override
     public IElementType merge(IElementType type, Lexer originalLexer) {
-      if(type != TokenType.BAD_CHARACTER) return type;
+      if (type != TokenType.BAD_CHARACTER) return type;
 
-      CharSequence tokenText = originalLexer.getTokenSequence();
-      if (tokenText.length() != 1 || (tokenText.charAt(0) != '[' && tokenText.charAt(0) != ']')) {
+      final IElementType tokenType = originalLexer.getTokenType();
+      if (tokenType != JavaTokenType.LBRACKET && tokenType != JavaTokenType.RBRACKET) {
         return type;
       }
 
-      type = originalLexer.getTokenType();
       originalLexer.advance();
-      return type;
+      return tokenType;
     }
   }
 }

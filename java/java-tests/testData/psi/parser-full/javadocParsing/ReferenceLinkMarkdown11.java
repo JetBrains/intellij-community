@@ -1,2 +1,2 @@
-/// [java.lang.String#copyValueOf(char\[\])]
+/// [java.lang.String#copyValueOf(char\[\], int, int)]
 class C{}

@@ -1932,4 +1932,19 @@ public class Test {
       }
     """.trimIndent())
   }
+
+  fun testBracketsInReferenceLink(){
+    doTextTest("""
+      /// [String#copyValueOf(char \[ \], int, int)]
+      public class Main {
+        void test(char[] foo) {}
+      }
+    """.trimIndent(), """
+      /// [String#copyValueOf(char\[\], int, int)]
+      public class Main {
+          void test(char[] foo) {
+          }
+      }
+    """.trimIndent())
+  }
 }
