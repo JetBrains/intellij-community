@@ -432,7 +432,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
-    return vfsPeer.readAttributeWithLock(getFileId(file), att);
+    return vfsPeer.readAttribute(getFileId(file), att);
   }
 
   @Override

@@ -62,7 +62,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
     ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
       int count = DataInputOutputUtil.readINT(buffer);
       List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
-      int maxID = connection.getRecords().maxAllocatedID();
+      int maxID = records.maxAllocatedID();
       int prevId = parentId;
       for (int i = 0; i < count; i++) {
         int childId = DataInputOutputUtil.readINT(buffer) + prevId;

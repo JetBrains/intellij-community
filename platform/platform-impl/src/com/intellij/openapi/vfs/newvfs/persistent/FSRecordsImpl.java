@@ -305,11 +305,12 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  //MAYBE RC: maybe move this to PersistentFSImpl -- i.e. leave FSRecordsImpl unsynchronized, and all synchronisation is
-  //          for PersistentFSImpl? The only cons is that FSRecords sometimes used directly
   private final com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock fileRecordLock =
     new com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock();
 
+  //TODO RC: better join this with fileRecordLock, and use one unified way to lock.
+  //         Currently we invoke a lambda under the updateLock, and the lambda sometimes does quite a lot of other stuff, and
+  //         it is hard to limit the lambda to be non-recursive
   private final FileRecordLock updateLock = new FileRecordLock();
 
   //TODO RC: why to have it both here, and also in PersistentFSConnection? Mb one place is enough?
@@ -828,6 +829,7 @@ public final class FSRecordsImpl implements Closeable {
           }
         }
       }
+
       return null;
     }
     catch (IOException e) {
@@ -1210,33 +1212,66 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== file attributes accessors: ========================================
 
-  @Nullable
-  AttributeInputStream readAttributeWithLock(int fileId,
-                                             @NotNull FileAttribute attribute) {
-    //RC: attributeAccessor acquires lock anyway, no need for additional lock here
-    try {
-      return readAttribute(fileId, attribute);
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
+  //About locking for attribute storage:
+  // 1. Speculative lock.tryOptimisticRead() is not applicable, since attribute record is not just a set of (volatile) fields,
+  //    it is variable-size record, hence full-fledged read lock needed.
+  // 2. The way we use locking to protect attribute storage access here is coupled to the details of attribute storage implementation.
+  //    E.g. we know that appending a new record to the storage is lock-free (just atomic increment of a cursor) => we could use
+  //    lock segmented by fileId to protect read, and write, and _append_. Without atomic append a global lock would be needed here.
+  //    E.g. we assume here that inputStreams and outputStream provided by attributes storage are both byte[]-backed, so there is
+  //    no need to protect the _use_ of the in/out streams with locks -- only creation, and (for a write stream) a .close() method,
+  //    which commits changes to the storage.
+  //    So beware: if you change the attribute storage implementation, re-view the locking below
 
-  /** must be called under r or w lock */
-  private @Nullable AttributeInputStream readAttribute(int fileId,
-                                                       @NotNull FileAttribute attribute) throws IOException {
+
+  @Nullable AttributeInputStream readAttribute(int fileId,
+                                               @NotNull FileAttribute attribute) {
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long lockStamp = lock.readLock();
     try {
       return attributeAccessor.readAttribute(fileId, attribute);
     }
     catch (IOException e) {
       throw handleError(e);
     }
+    finally {
+      lock.unlockRead(lockStamp);
+    }
   }
 
-  @NotNull
-  AttributeOutputStream writeAttribute(int fileId,
-                                       @NotNull FileAttribute attribute) {
-    return attributeAccessor.writeAttribute(fileId, attribute);
+  @NotNull AttributeOutputStream writeAttribute(int fileId,
+                                                @NotNull FileAttribute attribute) {
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long lockStamp = lock.writeLock();
+    try {
+      AttributeOutputStream stream = attributeAccessor.writeAttribute(fileId, attribute);
+      //AttributeOutputStream is byte[]-backed stream that commits the changes in .close() method
+      // Create a delegating stream: overwrite .close() and protect it with a write lock:
+      return new AttributeOutputStream(stream) {
+        @Override
+        public void writeEnumeratedString(String str) throws IOException {
+          stream.writeEnumeratedString(str);
+        }
+
+        @Override
+        public void close() throws IOException {
+          long lockStamp = lock.writeLock();
+          try {
+            super.close();
+          }
+          catch (Throwable t) {
+            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
+            throw handleError(t);
+          }
+          finally {
+            lock.unlockWrite(lockStamp);
+          }
+        }
+      };
+    }
+    finally {
+      lock.unlockWrite(lockStamp);
+    }
   }
 
   //'raw' (lambda + ByteBuffer instead of Input/OutputStream) attributes access: experimental
@@ -1249,13 +1284,17 @@ public final class FSRecordsImpl implements Closeable {
   @ApiStatus.Internal
   <R> @Nullable R readAttributeRaw(int fileId,
                                    @NotNull FileAttribute attribute,
-                                   ByteBufferReader<R> reader) {
-    //RC: attributeAccessor acquires lock anyway, no need for additional lock here
+                                   @NotNull ByteBufferReader<R> reader) {
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long lockStamp = lock.readLock();
     try {
       return attributeAccessor.readAttributeRaw(fileId, attribute, reader);
     }
     catch (IOException e) {
       throw handleError(e);
+    }
+    finally {
+      lock.unlockRead(lockStamp);
     }
   }
 
@@ -1263,7 +1302,14 @@ public final class FSRecordsImpl implements Closeable {
   void writeAttributeRaw(int fileId,
                          @NotNull FileAttribute attribute,
                          @NotNull ByteBufferWriter writer) {
-    attributeAccessor.writeAttributeRaw(fileId, attribute, writer);
+    StampedLock lock = fileRecordLock.lockFor(fileId);
+    long lockStamp = lock.writeLock();
+    try {
+      attributeAccessor.writeAttributeRaw(fileId, attribute, writer);
+    }
+    finally {
+      lock.unlockWrite(lockStamp);
+    }
   }
 
 

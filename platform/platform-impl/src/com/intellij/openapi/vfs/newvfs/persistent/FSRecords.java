@@ -268,7 +268,7 @@ public final class FSRecords {
 
   public static @Nullable AttributeInputStream readAttributeWithLock(int fileId,
                                                                      @NotNull FileAttribute attribute) {
-    return implOrFail().readAttributeWithLock(fileId, attribute);
+    return implOrFail().readAttribute(fileId, attribute);
   }
 
   public static @NotNull AttributeOutputStream writeAttribute(int fileId,
