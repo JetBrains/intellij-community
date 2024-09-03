@@ -280,10 +280,10 @@ final class ServiceViewDragHelper {
         event.setDropPossible(true);
         Rectangle bounds = eventContext.cellBounds;
         bounds.y -= -1;
-        bounds.height = 2;
         if (position != ABOVE) {
           bounds.y += bounds.height;
         }
+        bounds.height = 2;
         RelativeRectangle rectangle = new RelativeRectangle(myTree, bounds);
         event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
         return false;
