@@ -97,8 +97,6 @@ public final class FSRecordsImpl implements Closeable {
   //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
 
-  //TODO RC: inline and get rid of this configuration (works well long enough to not go back)
-  public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", true);
 
   /** Supported values: 'none', 'slru', 'mru' */
   private static final String NAME_CACHE_IMPL = System.getProperty("vfs.name-cache.impl", "mru");
@@ -191,7 +189,7 @@ public final class FSRecordsImpl implements Closeable {
            nextMask(true,  // former PersistentHashMapValueStorage.COMPRESSION_ENABLED, feel free to re-use
            nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
            nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-           nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+           nextMask(true,  // former USE_FAST_NAMES_IMPLEMENTATION, free to reuse
            nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0)))))))))))));
     //@formatter:on
   }

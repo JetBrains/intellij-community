@@ -444,20 +444,6 @@ public final class PersistentFSLoader {
                    "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
         return false;
       }
-      else if (!FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-        int reCheckNameId = namesStorage.tryEnumerate(name);
-        if (reCheckNameId != nameId) {
-          addProblem(NAME_STORAGE_INCOMPLETE,
-                     "namesEnumerator is corrupted: file[#" + fileId + "]" +
-                     ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
-          );
-          return false;
-        }
-        //Fast (DurableStringEnumerator) implementation persists only forward (id->name) index, and re-build inverse
-        // (name->id) index in memory, on each loading, so:
-        // 1) no need to check inverse index since it can't be corrupted on disk
-        // 2) inverse index is building async, so by trying to check it we force the building and ruin async-ness
-      }
     }
     catch (Throwable t) {
       addProblem(NAME_STORAGE_INCOMPLETE,
@@ -582,20 +568,11 @@ public final class PersistentFSLoader {
   }
 
   private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
-    if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-      LOG.info("VFS uses 'fast' names enumerator (over mmapped file)");
-      //if we use _same_ namesFile for fast/regular enumerator (which seems natural at a first glance), then
-      // on transition, fast enumerator couldn't recognize regular enumerator file format, and throws some
-      // bizare exception => VFS is rebuilt, but with rebuildCause=UNRECOGNIZED instead of 'version mismatch'.
-      //To get an expected exception on transition, we need regular/fast enumerator to use different files,
-      // e.g. 'names.dat' / 'names.dat.mmap'
-      Path namesPathEx = Path.of(namesFile + ".mmap");
-      return DurableStringEnumerator.openAsync(namesPathEx, executorService);
-    }
-    else {
-      LOG.info("VFS uses regular (btree) names enumerator");
-      return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
-    }
+    LOG.info("VFS uses names enumerator over mmapped file");
+    //MAYBE RC: remove .mmap suffix, and use namesFile directly? Suffix was needed during transition from regular to mmapped impls,
+    //          and long unused
+    Path namesPathEx = Path.of(namesFile + ".mmap");
+    return DurableStringEnumerator.openAsync(namesPathEx, executorService);
   }
 
   public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsHashesFile,
