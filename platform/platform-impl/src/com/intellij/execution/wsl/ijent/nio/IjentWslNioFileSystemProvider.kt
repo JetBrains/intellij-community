@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
@@ -194,14 +195,14 @@ class IjentWslNioFileSystemProvider(
 
   @OptIn(ExperimentalPathApi::class)
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-    val sourceIsIjent = source.toOriginalPath() !== source
-    val targetIsIjent = target.toOriginalPath() !== target
+    val sourceWsl = WslPath.parseWindowsUncPath(source.root.toString())
+    val targetWsl = WslPath.parseWindowsUncPath(target.root.toString())
     when {
-      sourceIsIjent && targetIsIjent -> {
+      sourceWsl != null && sourceWsl == targetWsl -> {
         ijentFsProvider.copy(source.toIjentPath(), target.toIjentPath(), *options)
       }
 
-      !sourceIsIjent && !targetIsIjent -> {
+      sourceWsl == null && targetWsl == null -> {
         LOG.warn("This branch is not supposed to execute. Copying ${source} => ${target} through inappropriate FileSystemProvider")
         originalFsProvider.copy(source.toOriginalPath(), target.toOriginalPath(), *options)
       }
@@ -213,14 +214,14 @@ class IjentWslNioFileSystemProvider(
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    val sourceIsIjent = source.toOriginalPath() !== source
-    val targetIsIjent = target.toOriginalPath() !== target
+    val sourceWsl = WslPath.parseWindowsUncPath(source.root.toString())
+    val targetWsl = WslPath.parseWindowsUncPath(target.root.toString())
     when {
-      sourceIsIjent && targetIsIjent -> {
+      sourceWsl != null && sourceWsl == targetWsl -> {
         ijentFsProvider.move(source.toIjentPath(), target.toIjentPath(), *options)
       }
 
-      !sourceIsIjent && !targetIsIjent -> {
+      sourceWsl == null && targetWsl == null -> {
         LOG.warn("This branch is not supposed to execute. Moving ${source} => ${target} through inappropriate FileSystemProvider")
         originalFsProvider.move(source.toOriginalPath(), target.toOriginalPath(), *options)
       }
