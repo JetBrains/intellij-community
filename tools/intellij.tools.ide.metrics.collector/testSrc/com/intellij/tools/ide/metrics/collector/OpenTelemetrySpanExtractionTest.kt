@@ -49,7 +49,7 @@ class OpenTelemetrySpanExtractionTest {
       OpenTelemetrySpanCollector(SpanFilter.nameEquals(spanName)).collect(file)
     }.flatten()
 
-    val result = OpenTelemetrySpanCollector(SpanFilter.containsNameIn(spanNames))
+    val result = OpenTelemetrySpanCollector(SpanFilter.nameInList(spanNames))
       .collect(file)
 
     result.shouldContainExactlyInAnyOrder(expected)

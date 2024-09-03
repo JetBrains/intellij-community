@@ -29,7 +29,7 @@ private val logger = logger<OpentelemetrySpanJsonParser>()
  */
 fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: String, toSpanName: String): List<Metric> {
   val betweenSpanProcessor = SpanInfoProcessor()
-  val spanElements = OpentelemetrySpanJsonParser(SpanFilter.containsNameIn(listOf(fromSpanName, toSpanName))).getSpanElements(file)
+  val spanElements = OpentelemetrySpanJsonParser(SpanFilter.nameInList(listOf(fromSpanName, toSpanName))).getSpanElements(file)
   val spanToMetricMap = spanElements
     .mapNotNull { betweenSpanProcessor.process(it) }
     .groupBy { it.name }
@@ -78,7 +78,7 @@ fun getStartupTimestampMs(file: Path): Long {
 fun getMetricsForStartup(file: Path): List<Metric> {
   val spansToPublish = listOf("bootstrap", "startApplication", "ProjectImpl container")
   val spansSuffixesToIgnore = listOf(": scheduled", ": completing")
-  val filter = SpanFilter.containsNameIn(spansToPublish)
+  val filter = SpanFilter.nameInList(spansToPublish)
   val childFilter = SpanFilter(
     filter = { span -> spansSuffixesToIgnore.none { span.name.endsWith(it) } },
     rawFilter = { span -> spansSuffixesToIgnore.none { span.operationName.endsWith(it) } },
