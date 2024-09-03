@@ -304,19 +304,20 @@ class _JavaDocLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\17\0\3\1\1\2\1\3\1\4\1\5\1\6\2\2"+
-    "\1\7\1\2\1\10\1\11\1\12\1\13\1\2\1\14"+
-    "\1\15\1\16\1\17\1\20\1\21\1\22\1\23\1\24"+
-    "\1\25\1\21\1\26\1\1\2\27\1\30\1\27\1\31"+
-    "\1\32\1\21\1\33\1\34\1\31\1\35\1\21\1\14"+
-    "\1\3\1\36\1\37\1\21\1\3\1\40\1\13\1\21"+
-    "\1\3\1\13\1\0\1\41\2\0\2\42\2\0\5\42"+
-    "\1\0\1\43\1\44\1\42\2\45\4\42\1\46\1\42"+
-    "\2\45\5\42\2\45\1\47\3\42\1\50\2\45\1\42"+
-    "\1\50\1\42\2\45\2\42\2\45\1\51\27\45";
+    "\17\0\3\1\1\2\1\3\1\4\1\5\1\6\1\2"+
+    "\1\7\1\2\1\10\1\2\1\11\1\12\1\13\1\14"+
+    "\1\2\1\15\1\16\1\17\1\20\1\21\1\22\1\23"+
+    "\1\24\1\25\1\26\1\22\1\27\1\1\2\30\1\31"+
+    "\1\30\1\32\1\33\1\22\1\34\1\35\1\32\1\36"+
+    "\1\22\1\15\1\3\1\37\1\40\1\22\1\3\1\41"+
+    "\1\14\1\22\1\3\1\14\1\0\1\42\2\0\2\43"+
+    "\2\0\5\43\1\0\1\44\1\45\1\43\2\46\4\43"+
+    "\1\47\1\43\2\46\5\43\2\46\1\50\3\43\1\51"+
+    "\2\46\1\43\1\51\1\43\2\46\2\43\2\46\1\52"+
+    "\27\46";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[142];
+    int [] result = new int[143];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -344,24 +345,24 @@ class _JavaDocLexer implements FlexLexer {
     "\0\0\0\53\0\126\0\201\0\254\0\327\0\u0102\0\u012d"+
     "\0\u0158\0\u0183\0\u01ae\0\u01d9\0\u0204\0\u022f\0\u025a\0\u0285"+
     "\0\u02b0\0\u02db\0\u0285\0\u0306\0\u0285\0\u0285\0\u0285\0\u02b0"+
-    "\0\u0331\0\u0285\0\u035c\0\u0285\0\u0387\0\u0285\0\u0285\0\u03b2"+
-    "\0\u03dd\0\u0408\0\u0433\0\u045e\0\u0285\0\u0489\0\u0285\0\u0285"+
-    "\0\u0285\0\u0285\0\u04b4\0\u0285\0\u04df\0\u0285\0\u050a\0\u050a"+
-    "\0\u02b0\0\u0285\0\u0285\0\u0535\0\u0285\0\u02b0\0\u0560\0\u0285"+
-    "\0\u0285\0\u058b\0\u05b6\0\u0285\0\u0285\0\u05e1\0\u060c\0\u0285"+
-    "\0\u05e1\0\u0637\0\u0662\0\u0637\0\u02b0\0\u0285\0\u068d\0\u06b8"+
-    "\0\u06e3\0\u070e\0\u0739\0\u0764\0\u078f\0\u07ba\0\u07e5\0\u0810"+
-    "\0\u083b\0\u0866\0\u0285\0\u0285\0\u0891\0\u08bc\0\u08e7\0\u0912"+
-    "\0\u093d\0\u0968\0\u0993\0\u0285\0\u09be\0\u09e9\0\u0a14\0\u0a3f"+
-    "\0\u0a6a\0\u0a95\0\u0ac0\0\u0aeb\0\u0b16\0\u0b41\0\u078f\0\u0b6c"+
-    "\0\u0b97\0\u0bc2\0\u06e3\0\u0bed\0\u0c18\0\u0c43\0\u078f\0\u0c6e"+
-    "\0\u0c99\0\u0cc4\0\u0cef\0\u0d1a\0\u0d45\0\u0d70\0\u078f\0\u0d9b"+
-    "\0\u0dc6\0\u0df1\0\u0e1c\0\u0e47\0\u0e72\0\u0e9d\0\u0ec8\0\u0ef3"+
-    "\0\u0f1e\0\u0f49\0\u0f74\0\u0f9f\0\u0fca\0\u0ff5\0\u1020\0\u104b"+
-    "\0\u1076\0\u10a1\0\u10cc\0\u10f7\0\u1122\0\u0285";
+    "\0\u0285\0\u0331\0\u0285\0\u035c\0\u0285\0\u0387\0\u0285\0\u0285"+
+    "\0\u03b2\0\u03dd\0\u0408\0\u0433\0\u045e\0\u0285\0\u0489\0\u0285"+
+    "\0\u0285\0\u0285\0\u0285\0\u04b4\0\u0285\0\u04df\0\u0285\0\u050a"+
+    "\0\u050a\0\u02b0\0\u0285\0\u0285\0\u0535\0\u0285\0\u02b0\0\u0560"+
+    "\0\u0285\0\u0285\0\u058b\0\u05b6\0\u0285\0\u0285\0\u05e1\0\u060c"+
+    "\0\u0285\0\u05e1\0\u0637\0\u0662\0\u0637\0\u02b0\0\u0285\0\u068d"+
+    "\0\u06b8\0\u06e3\0\u070e\0\u0739\0\u0764\0\u078f\0\u07ba\0\u07e5"+
+    "\0\u0810\0\u083b\0\u0866\0\u0285\0\u0285\0\u0891\0\u08bc\0\u08e7"+
+    "\0\u0912\0\u093d\0\u0968\0\u0993\0\u0285\0\u09be\0\u09e9\0\u0a14"+
+    "\0\u0a3f\0\u0a6a\0\u0a95\0\u0ac0\0\u0aeb\0\u0b16\0\u0b41\0\u078f"+
+    "\0\u0b6c\0\u0b97\0\u0bc2\0\u06e3\0\u0bed\0\u0c18\0\u0c43\0\u078f"+
+    "\0\u0c6e\0\u0c99\0\u0cc4\0\u0cef\0\u0d1a\0\u0d45\0\u0d70\0\u078f"+
+    "\0\u0d9b\0\u0dc6\0\u0df1\0\u0e1c\0\u0e47\0\u0e72\0\u0e9d\0\u0ec8"+
+    "\0\u0ef3\0\u0f1e\0\u0f49\0\u0f74\0\u0f9f\0\u0fca\0\u0ff5\0\u1020"+
+    "\0\u104b\0\u1076\0\u10a1\0\u10cc\0\u10f7\0\u1122\0\u0285";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[142];
+    int [] result = new int[143];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -385,80 +386,80 @@ class _JavaDocLexer implements FlexLexer {
 
   private static final String ZZ_TRANS_PACKED_0 =
     "\14\20\1\21\3\20\1\22\32\20\1\23\2\24\1\20"+
-    "\2\24\1\23\1\25\2\23\1\26\1\27\1\30\11\23"+
-    "\1\31\1\32\1\33\1\34\1\35\15\23\1\36\1\37"+
-    "\1\40\1\23\1\41\1\24\1\20\1\41\1\24\1\23"+
-    "\1\25\2\23\1\26\1\27\1\30\12\23\1\32\1\33"+
-    "\1\34\1\35\15\23\1\36\1\37\1\40\1\20\2\42"+
-    "\1\20\2\42\6\20\1\21\34\20\1\37\2\20\2\43"+
-    "\1\20\2\43\6\20\1\21\36\20\1\23\2\44\1\20"+
-    "\2\44\1\23\1\45\1\46\1\23\1\47\1\23\1\30"+
-    "\1\50\1\23\1\46\1\23\1\46\1\23\1\51\3\23"+
-    "\1\46\1\23\1\46\1\23\15\46\1\23\1\37\1\23"+
-    "\1\20\2\24\1\20\2\24\2\20\1\46\2\20\1\52"+
-    "\1\21\1\50\1\20\1\46\1\20\1\46\5\20\1\46"+
-    "\1\20\1\46\1\20\15\46\13\20\1\53\3\20\1\21"+
-    "\10\20\1\54\5\20\15\53\17\20\1\21\11\20\1\55"+
-    "\24\20\1\56\1\57\1\60\1\20\2\60\6\56\1\61"+
-    "\33\56\1\36\1\37\2\56\1\57\1\60\1\20\2\60"+
-    "\6\56\1\61\34\56\1\37\1\56\1\62\2\24\1\62"+
-    "\2\24\1\63\1\62\1\64\1\65\2\62\1\66\3\62"+
-    "\1\67\1\62\1\70\1\62\1\71\6\62\15\64\1\62"+
-    "\1\37\1\62\1\72\1\73\1\24\1\72\2\73\42\72"+
-    "\1\74\1\75\1\72\1\76\1\77\1\24\1\76\2\77"+
-    "\1\100\42\76\1\101\1\76\1\102\1\103\1\24\1\102"+
-    "\2\103\3\102\1\100\37\102\1\104\1\102\67\0\1\105"+
-    "\3\0\1\106\46\0\1\107\3\0\1\110\33\0\2\24"+
-    "\1\0\2\24\45\0\1\111\2\0\1\111\2\0\36\111"+
-    "\1\112\6\111\12\0\2\23\13\0\1\23\1\0\1\23"+
-    "\53\0\1\113\72\0\1\114\1\0\1\41\2\0\1\41"+
-    "\47\0\2\42\1\0\2\42\46\0\2\43\1\0\2\43"+
-    "\46\0\2\44\1\0\2\44\55\0\1\46\6\0\1\46"+
-    "\1\0\1\46\5\0\1\46\1\0\1\46\1\0\15\46"+
-    "\13\0\1\53\5\0\2\53\1\0\2\53\10\0\15\53"+
-    "\3\0\1\115\2\0\1\115\2\0\26\115\1\116\3\115"+
-    "\1\117\3\115\1\120\1\115\1\121\2\115\1\0\1\115"+
-    "\1\0\2\60\1\0\2\60\55\0\1\64\10\0\1\64"+
-    "\11\0\15\64\23\0\1\122\32\0\2\72\1\0\45\72"+
-    "\2\0\2\72\1\73\1\24\1\72\2\73\42\72\2\0"+
-    "\1\72\2\76\1\0\3\76\1\0\45\76\1\77\1\24"+
-    "\1\76\2\77\1\0\44\76\2\102\1\0\6\102\1\0"+
-    "\42\102\1\103\1\24\1\102\2\103\3\102\1\0\41\102"+
-    "\14\0\1\123\56\0\1\124\32\0\1\111\2\0\1\111"+
-    "\2\0\46\111\2\0\1\111\2\0\25\111\1\125\17\111"+
-    "\32\0\1\126\72\0\1\127\1\115\2\0\1\115\2\0"+
-    "\43\115\1\0\2\115\2\0\1\115\2\0\35\115\1\130"+
-    "\5\115\1\0\2\115\2\0\1\115\2\0\31\115\1\131"+
-    "\11\115\1\0\2\115\2\0\1\115\2\0\25\115\1\132"+
-    "\15\115\1\0\2\115\2\0\1\115\2\0\34\115\1\133"+
-    "\6\115\1\0\1\115\20\0\1\134\32\0\1\111\2\0"+
-    "\1\111\2\0\37\111\1\135\5\111\32\0\1\136\72\0"+
-    "\1\137\1\115\2\0\1\115\2\0\27\115\1\140\13\115"+
-    "\1\0\2\115\2\0\1\115\2\0\41\115\1\141\1\115"+
-    "\1\0\2\115\2\0\1\115\2\0\37\115\1\142\3\115"+
-    "\1\0\2\115\2\0\1\115\2\0\31\115\1\143\11\115"+
-    "\1\0\1\115\1\111\2\0\1\111\2\0\25\111\1\144"+
-    "\17\111\32\0\1\145\72\0\1\146\1\115\2\0\1\115"+
-    "\2\0\30\115\1\147\12\115\1\0\2\115\2\0\1\115"+
-    "\2\0\30\115\1\150\12\115\1\0\2\115\2\0\1\115"+
-    "\2\0\25\115\1\151\15\115\1\0\2\115\2\0\1\115"+
-    "\2\0\36\115\1\152\4\115\1\0\1\115\1\111\2\0"+
-    "\1\111\2\0\33\111\1\153\11\111\32\0\1\154\72\0"+
-    "\1\155\1\115\2\0\1\115\2\0\37\115\1\156\3\115"+
-    "\1\0\2\115\2\0\1\115\2\0\33\115\1\157\7\115"+
-    "\1\0\2\115\2\0\1\115\2\0\36\115\1\160\4\115"+
-    "\1\0\1\115\32\0\1\161\72\0\1\162\1\115\2\0"+
-    "\1\115\2\0\25\115\1\163\15\115\1\0\2\115\2\0"+
-    "\1\115\2\0\30\115\1\164\12\115\1\0\1\115\32\0"+
-    "\1\165\72\0\1\166\1\115\2\0\1\115\2\0\32\115"+
-    "\1\147\10\115\1\0\2\115\2\0\1\115\2\0\41\115"+
-    "\1\167\1\115\1\0\1\115\32\0\1\170\72\0\1\171"+
-    "\32\0\1\172\72\0\1\173\32\0\1\174\72\0\1\175"+
-    "\32\0\1\176\72\0\1\177\32\0\1\200\72\0\1\201"+
-    "\32\0\1\202\72\0\1\203\32\0\1\204\72\0\1\205"+
-    "\32\0\1\206\72\0\1\207\32\0\1\210\72\0\1\211"+
-    "\32\0\1\212\72\0\1\213\32\0\1\214\72\0\1\215"+
-    "\32\0\1\216\72\0\1\216";
+    "\2\24\1\23\1\25\2\23\1\26\1\27\1\30\1\31"+
+    "\10\23\1\32\1\33\1\34\1\35\1\36\15\23\1\37"+
+    "\1\40\1\41\1\23\1\42\1\24\1\20\1\42\1\24"+
+    "\1\23\1\25\2\23\1\26\1\27\1\30\1\31\11\23"+
+    "\1\33\1\34\1\35\1\36\15\23\1\37\1\40\1\41"+
+    "\1\20\2\43\1\20\2\43\6\20\1\21\34\20\1\40"+
+    "\2\20\2\44\1\20\2\44\6\20\1\21\36\20\1\23"+
+    "\2\45\1\20\2\45\1\23\1\46\1\47\1\23\1\50"+
+    "\1\23\1\30\1\51\1\23\1\47\1\23\1\47\1\23"+
+    "\1\52\3\23\1\47\1\23\1\47\1\23\15\47\1\23"+
+    "\1\40\1\23\1\20\2\24\1\20\2\24\2\20\1\47"+
+    "\2\20\1\53\1\21\1\51\1\20\1\47\1\20\1\47"+
+    "\5\20\1\47\1\20\1\47\1\20\15\47\13\20\1\54"+
+    "\3\20\1\21\10\20\1\55\5\20\15\54\17\20\1\21"+
+    "\11\20\1\56\24\20\1\57\1\60\1\61\1\20\2\61"+
+    "\6\57\1\62\33\57\1\37\1\40\2\57\1\60\1\61"+
+    "\1\20\2\61\6\57\1\62\34\57\1\40\1\57\1\63"+
+    "\2\24\1\63\2\24\1\64\1\63\1\65\1\66\2\63"+
+    "\1\67\3\63\1\70\1\63\1\71\1\63\1\72\6\63"+
+    "\15\65\1\63\1\40\1\63\1\73\1\74\1\24\1\73"+
+    "\2\74\42\73\1\75\1\76\1\73\1\77\1\100\1\24"+
+    "\1\77\2\100\1\101\42\77\1\102\1\77\1\103\1\104"+
+    "\1\24\1\103\2\104\3\103\1\101\37\103\1\105\1\103"+
+    "\67\0\1\106\3\0\1\107\46\0\1\110\3\0\1\111"+
+    "\33\0\2\24\1\0\2\24\45\0\1\112\2\0\1\112"+
+    "\2\0\36\112\1\113\6\112\12\0\2\23\13\0\1\23"+
+    "\1\0\1\23\53\0\1\114\72\0\1\115\1\0\1\42"+
+    "\2\0\1\42\47\0\2\43\1\0\2\43\46\0\2\44"+
+    "\1\0\2\44\46\0\2\45\1\0\2\45\55\0\1\47"+
+    "\6\0\1\47\1\0\1\47\5\0\1\47\1\0\1\47"+
+    "\1\0\15\47\13\0\1\54\5\0\2\54\1\0\2\54"+
+    "\10\0\15\54\3\0\1\116\2\0\1\116\2\0\26\116"+
+    "\1\117\3\116\1\120\3\116\1\121\1\116\1\122\2\116"+
+    "\1\0\1\116\1\0\2\61\1\0\2\61\55\0\1\65"+
+    "\10\0\1\65\11\0\15\65\23\0\1\123\32\0\2\73"+
+    "\1\0\45\73\2\0\2\73\1\74\1\24\1\73\2\74"+
+    "\42\73\2\0\1\73\2\77\1\0\3\77\1\0\45\77"+
+    "\1\100\1\24\1\77\2\100\1\0\44\77\2\103\1\0"+
+    "\6\103\1\0\42\103\1\104\1\24\1\103\2\104\3\103"+
+    "\1\0\41\103\14\0\1\124\56\0\1\125\32\0\1\112"+
+    "\2\0\1\112\2\0\46\112\2\0\1\112\2\0\25\112"+
+    "\1\126\17\112\32\0\1\127\72\0\1\130\1\116\2\0"+
+    "\1\116\2\0\43\116\1\0\2\116\2\0\1\116\2\0"+
+    "\35\116\1\131\5\116\1\0\2\116\2\0\1\116\2\0"+
+    "\31\116\1\132\11\116\1\0\2\116\2\0\1\116\2\0"+
+    "\25\116\1\133\15\116\1\0\2\116\2\0\1\116\2\0"+
+    "\34\116\1\134\6\116\1\0\1\116\20\0\1\135\32\0"+
+    "\1\112\2\0\1\112\2\0\37\112\1\136\5\112\32\0"+
+    "\1\137\72\0\1\140\1\116\2\0\1\116\2\0\27\116"+
+    "\1\141\13\116\1\0\2\116\2\0\1\116\2\0\41\116"+
+    "\1\142\1\116\1\0\2\116\2\0\1\116\2\0\37\116"+
+    "\1\143\3\116\1\0\2\116\2\0\1\116\2\0\31\116"+
+    "\1\144\11\116\1\0\1\116\1\112\2\0\1\112\2\0"+
+    "\25\112\1\145\17\112\32\0\1\146\72\0\1\147\1\116"+
+    "\2\0\1\116\2\0\30\116\1\150\12\116\1\0\2\116"+
+    "\2\0\1\116\2\0\30\116\1\151\12\116\1\0\2\116"+
+    "\2\0\1\116\2\0\25\116\1\152\15\116\1\0\2\116"+
+    "\2\0\1\116\2\0\36\116\1\153\4\116\1\0\1\116"+
+    "\1\112\2\0\1\112\2\0\33\112\1\154\11\112\32\0"+
+    "\1\155\72\0\1\156\1\116\2\0\1\116\2\0\37\116"+
+    "\1\157\3\116\1\0\2\116\2\0\1\116\2\0\33\116"+
+    "\1\160\7\116\1\0\2\116\2\0\1\116\2\0\36\116"+
+    "\1\161\4\116\1\0\1\116\32\0\1\162\72\0\1\163"+
+    "\1\116\2\0\1\116\2\0\25\116\1\164\15\116\1\0"+
+    "\2\116\2\0\1\116\2\0\30\116\1\165\12\116\1\0"+
+    "\1\116\32\0\1\166\72\0\1\167\1\116\2\0\1\116"+
+    "\2\0\32\116\1\150\10\116\1\0\2\116\2\0\1\116"+
+    "\2\0\41\116\1\170\1\116\1\0\1\116\32\0\1\171"+
+    "\72\0\1\172\32\0\1\173\72\0\1\174\32\0\1\175"+
+    "\72\0\1\176\32\0\1\177\72\0\1\200\32\0\1\201"+
+    "\72\0\1\202\32\0\1\203\72\0\1\204\32\0\1\205"+
+    "\72\0\1\206\32\0\1\207\72\0\1\210\32\0\1\211"+
+    "\72\0\1\212\32\0\1\213\72\0\1\214\32\0\1\215"+
+    "\72\0\1\216\32\0\1\217\72\0\1\217";
 
   private static int [] zzUnpacktrans() {
     int [] result = new int[4429];
@@ -499,15 +500,15 @@ class _JavaDocLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\17\0\1\11\2\1\1\11\1\1\3\11\2\1\1\11"+
-    "\1\1\1\11\1\1\2\11\5\1\1\11\1\1\4\11"+
-    "\1\1\1\11\1\1\1\11\3\1\2\11\1\1\1\11"+
-    "\2\1\2\11\2\1\2\11\2\1\1\11\4\1\1\0"+
-    "\1\11\2\0\2\1\2\0\5\1\1\0\2\11\7\1"+
-    "\1\11\61\1\1\11";
+    "\17\0\1\11\2\1\1\11\1\1\3\11\1\1\1\11"+
+    "\1\1\1\11\1\1\1\11\1\1\2\11\5\1\1\11"+
+    "\1\1\4\11\1\1\1\11\1\1\1\11\3\1\2\11"+
+    "\1\1\1\11\2\1\2\11\2\1\2\11\2\1\1\11"+
+    "\4\1\1\0\1\11\2\0\2\1\2\0\5\1\1\0"+
+    "\2\11\7\1\1\11\61\1\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[142];
+    int [] result = new int[143];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -848,17 +849,17 @@ class _JavaDocLexer implements FlexLexer {
             { return myTokenTypes.badCharacter();
             }
           // fall through
-          case 42: break;
+          case 43: break;
           case 2:
             { yybegin(COMMENT_DATA); return myTokenTypes.commentData();
             }
           // fall through
-          case 43: break;
+          case 44: break;
           case 3:
             { return myTokenTypes.space();
             }
           // fall through
-          case 44: break;
+          case 45: break;
           case 4:
             { yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
@@ -867,7 +868,7 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentData();
             }
           // fall through
-          case 45: break;
+          case 46: break;
           case 5:
             { yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
@@ -876,7 +877,7 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentData();
             }
           // fall through
-          case 46: break;
+          case 47: break;
           case 6:
             { yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
@@ -885,8 +886,17 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentData();
             }
           // fall through
-          case 47: break;
+          case 48: break;
           case 7:
+            { yybegin(COMMENT_DATA);
+          if(myMarkdownMode) {
+            return myTokenTypes.comma();
+          }
+          return myTokenTypes.commentData();
+            }
+          // fall through
+          case 49: break;
+          case 8:
             { yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
           return myTokenTypes.leftBracket();
@@ -894,8 +904,8 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentData();
             }
           // fall through
-          case 48: break;
-          case 8:
+          case 50: break;
+          case 9:
             { yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
           return myTokenTypes.rightBracket();
@@ -903,8 +913,8 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentData();
             }
           // fall through
-          case 49: break;
-          case 9:
+          case 51: break;
+          case 10:
             { yybegin(COMMENT_DATA);
           if(myMarkdownMode) {
             return myTokenTypes.inlineCodeFence();
@@ -912,8 +922,8 @@ class _JavaDocLexer implements FlexLexer {
           return myTokenTypes.commentData();
             }
           // fall through
-          case 50: break;
-          case 10:
+          case 52: break;
+          case 11:
             { if (checkAhead('@')) {
     yybegin(INLINE_TAG_NAME);
     return myTokenTypes.inlineTagStart();
@@ -924,56 +934,56 @@ class _JavaDocLexer implements FlexLexer {
   }
             }
           // fall through
-          case 51: break;
-          case 11:
+          case 53: break;
+          case 12:
             { yybegin(COMMENT_DATA); return myTokenTypes.inlineTagEnd();
             }
           // fall through
-          case 52: break;
-          case 12:
+          case 54: break;
+          case 13:
             { return myTokenTypes.commentData();
             }
           // fall through
-          case 53: break;
-          case 13:
+          case 55: break;
+          case 14:
             { if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA);
   else if (checkAhead('\u007b')) yybegin(COMMENT_DATA);  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE);
   return myTokenTypes.space();
             }
           // fall through
-          case 54: break;
-          case 14:
+          case 56: break;
+          case 15:
             { yybegin(DOC_TAG_VALUE); return myTokenTypes.space();
             }
           // fall through
-          case 55: break;
-          case 15:
+          case 57: break;
+          case 16:
             { yybegin(COMMENT_DATA); return myTokenTypes.space();
             }
           // fall through
-          case 56: break;
-          case 16:
+          case 58: break;
+          case 17:
             { return myTokenTypes.tagValueSharp();
             }
           // fall through
-          case 57: break;
-          case 17:
+          case 59: break;
+          case 18:
             { return myTokenTypes.tagValueToken();
             }
           // fall through
-          case 58: break;
-          case 18:
+          case 60: break;
+          case 19:
             { yybegin(DOC_TAG_VALUE_IN_PAREN); return myTokenTypes.tagValueLParen();
             }
           // fall through
-          case 59: break;
-          case 19:
+          case 61: break;
+          case 20:
             { return myTokenTypes.tagValueComma();
             }
           // fall through
-          case 60: break;
-          case 20:
+          case 62: break;
+          case 21:
             { if (myJdk15Enabled) {
     yybegin(DOC_TAG_VALUE_IN_LTGT);
     return myTokenTypes.tagValueLT();
@@ -984,61 +994,61 @@ class _JavaDocLexer implements FlexLexer {
   }
             }
           // fall through
-          case 61: break;
-          case 21:
+          case 63: break;
+          case 22:
             { yybegin(DOC_TAG_VALUE); return myTokenTypes.tagValueRParen();
             }
           // fall through
-          case 62: break;
-          case 22:
+          case 64: break;
+          case 23:
             { yybegin(COMMENT_DATA); return myTokenTypes.tagValueGT();
             }
           // fall through
-          case 63: break;
-          case 23:
+          case 65: break;
+          case 24:
             { yybegin(CODE_TAG); return myTokenTypes.commentData();
             }
           // fall through
-          case 64: break;
-          case 24:
+          case 66: break;
+          case 25:
             { yybegin(CODE_TAG); return myTokenTypes.space();
             }
           // fall through
-          case 65: break;
-          case 25:
+          case 67: break;
+          case 26:
             { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return myTokenTypes.commentData();
             }
           // fall through
-          case 66: break;
-          case 26:
+          case 68: break;
+          case 27:
             { yybegin(SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES); return myTokenTypes.tagValueQuote();
             }
           // fall through
-          case 67: break;
-          case 27:
+          case 69: break;
+          case 28:
             { yybegin(SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES); return myTokenTypes.tagValueQuote();
             }
           // fall through
-          case 68: break;
-          case 28:
+          case 70: break;
+          case 29:
             { if (myMarkdownMode) {
           return myTokenTypes.commentData();
         }
         return myTokenTypes.commentLeadingAsterisks();
             }
           // fall through
-          case 69: break;
-          case 29:
+          case 71: break;
+          case 30:
             { yybegin(SNIPPET_TAG_BODY_DATA); return myTokenTypes.tagValueColon();
             }
           // fall through
-          case 70: break;
-          case 30:
+          case 72: break;
+          case 31:
             { mySnippetBracesLevel++; return myTokenTypes.commentData();
             }
           // fall through
-          case 71: break;
-          case 31:
+          case 73: break;
+          case 32:
             { if (mySnippetBracesLevel > 0) {
           mySnippetBracesLevel--;
           return myTokenTypes.commentData();
@@ -1048,26 +1058,26 @@ class _JavaDocLexer implements FlexLexer {
         }
             }
           // fall through
-          case 72: break;
-          case 32:
+          case 74: break;
+          case 33:
             { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return myTokenTypes.tagValueQuote();
             }
           // fall through
-          case 73: break;
-          case 33:
+          case 75: break;
+          case 34:
             { if(myMarkdownMode) {
       return myTokenTypes.commentData();
     }
     return myTokenTypes.commentEnd();
             }
           // fall through
-          case 74: break;
-          case 34:
+          case 76: break;
+          case 35:
             { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName();
             }
           // fall through
-          case 75: break;
-          case 35:
+          case 77: break;
+          case 36:
             { if(myMarkdownMode) {
           return myTokenTypes.badCharacter();
         }
@@ -1075,8 +1085,8 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentStart();
             }
           // fall through
-          case 76: break;
-          case 36:
+          case 78: break;
+          case 37:
             { if(myMarkdownMode) {
           yybegin(COMMENT_DATA_START);
           return myTokenTypes.commentLeadingAsterisks();
@@ -1084,8 +1094,8 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.badCharacter();
             }
           // fall through
-          case 77: break;
-          case 37:
+          case 79: break;
+          case 38:
             { yybegin(COMMENT_DATA);
         if(myMarkdownMode) {
           return myTokenTypes.codeFence();
@@ -1093,30 +1103,30 @@ class _JavaDocLexer implements FlexLexer {
         return myTokenTypes.commentData();
             }
           // fall through
-          case 78: break;
-          case 38:
+          case 80: break;
+          case 39:
             { if (myMarkdownMode) {
           return myTokenTypes.commentLeadingAsterisks();
         }
         return myTokenTypes.commentData();
             }
           // fall through
-          case 79: break;
-          case 39:
+          case 81: break;
+          case 40:
             { yybegin(CODE_TAG_SPACE); return myTokenTypes.tagName();
             }
           // fall through
-          case 80: break;
-          case 40:
+          case 82: break;
+          case 41:
             { yybegin(PARAM_TAG_SPACE); return myTokenTypes.tagName();
             }
           // fall through
-          case 81: break;
-          case 41:
+          case 83: break;
+          case 42:
             { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return myTokenTypes.tagName();
             }
           // fall through
-          case 82: break;
+          case 84: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }
