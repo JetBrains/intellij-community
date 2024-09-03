@@ -995,7 +995,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback) {
+  public void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
     try {
       final PyStackFrame frame = currentFrame();
       myDebugger.loadReferrers(frame.getThreadId(), frame.getFrameId(), var, callback);
