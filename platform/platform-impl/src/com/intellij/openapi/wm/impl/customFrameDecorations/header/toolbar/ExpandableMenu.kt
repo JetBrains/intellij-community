@@ -4,7 +4,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -86,8 +86,8 @@ internal class ExpandableMenu(
     ideMenuHelper.updateUI()
   }
 
-  fun switchState(actionToShow: AnAction? = null) {
-    if (isShowing() && actionToShow == null) {
+  fun switchState(actionMenuToShow: ActionMenu? = null) {
+    if (isShowing() && actionMenuToShow == null) {
       hideExpandedMenuBar()
       return
     }
@@ -114,16 +114,15 @@ internal class ExpandableMenu(
 
     // The first menu usage has no selection in the menu. Fix it by invokeLater
     ApplicationManager.getApplication().invokeLater {
-      selectMenu(actionToShow)
+      selectMenu(actionMenuToShow)
     }
   }
 
-  private fun selectMenu(action: AnAction? = null) {
+  private fun selectMenu(actionMenu: ActionMenu? = null) {
     var menu = ideMenu.getMenu(0)
-    if (action != null) {
-      for (i in 0..ideMenu.menuCount - 1) {
-        val m = ideMenu.getMenu(i)
-        if (m.mnemonic == action.templatePresentation.mnemonic) {
+    if (actionMenu != null) {
+      for (m in ideMenu.rootMenuItems) {
+        if (m.mnemonic == actionMenu.mnemonic) {
           menu = m
           break
         }
