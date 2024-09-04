@@ -126,6 +126,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -643,37 +644,65 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMarkupModel.repaint(start, end);
     }
   }
-
+  private record HighlighterChange(int affectedStart,
+                                   int affectedEnd,
+                                   boolean canImpactGutterSize,
+                                   boolean fontStyleChanged,
+                                   boolean foregroundColorChanged,
+                                   boolean isAccessibleGutterElement,
+                                   boolean needRestart) {}
+  private final AtomicReference<HighlighterChange> myCompositeHighlighterChange = new AtomicReference<>();
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
                                     boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    EdtInvocationManager.invokeLaterIfNeeded(() -> {
-      if (isDisposed() || myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode()) return; // will be repainted later
-
-      if (canImpactGutterSize) {
-        updateGutterSize();
-      }
-
-      if (myDocumentChangeInProgress) return;
-
-      int textLength = myDocument.getTextLength();
-      int start = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
-      int end = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), start, textLength);
-
-      if (myGutterComponent.getCurrentAccessibleLine() != null &&
-          AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer())) {
-        escapeGutterAccessibleLine(start, end);
-      }
-      int startLine = myDocument.getLineNumber(start);
-      int endLine = myDocument.getLineNumber(end);
-      if (start != end && (fontStyleChanged || foregroundColorChanged)) {
-        myView.invalidateRange(start, end, fontStyleChanged);
-      }
-      if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
-        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-      }
-
-      updateCaretCursor();
+    int textLength = myDocument.getTextLength();
+    int hstart = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
+    int hend = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), hstart, textLength);
+    boolean isAccessibleGutterElement = AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer());
+    HighlighterChange change = new HighlighterChange(hstart, hend, canImpactGutterSize, fontStyleChanged, foregroundColorChanged, isAccessibleGutterElement, false);
+    HighlighterChange oldChange = myCompositeHighlighterChange.getAndAccumulate(change, (change1, change2) -> {
+      if (change1 == null) return change2;
+      if (change2 == null) return change1;
+      int start2 = MathUtil.clamp(Math.min(change1.affectedStart, change2.affectedStart), 0, textLength);
+      int end2 = MathUtil.clamp(Math.max(change1.affectedEnd, change2.affectedEnd), 0, textLength);
+      return new HighlighterChange(start2, end2,
+                                   change1.canImpactGutterSize() || change2.canImpactGutterSize(),
+                                   change1.fontStyleChanged() || change2.fontStyleChanged(),
+                                   change1.foregroundColorChanged() || change2.foregroundColorChanged(),
+                                   change1.isAccessibleGutterElement() || change2.isAccessibleGutterElement(),
+                                   change1.needRestart() || change2.needRestart());
     });
+    if (oldChange == null || oldChange.needRestart()) {
+      EdtInvocationManager.invokeLaterIfNeeded(() -> {
+        if (isDisposed() || myDocument.isInBulkUpdate() || myInlayModel.isInBatchMode() || myDocumentChangeInProgress) {
+          myCompositeHighlighterChange.getAndUpdate(old -> old == null ? null : new HighlighterChange(old.affectedStart(), old.affectedEnd(), old.canImpactGutterSize(), old.fontStyleChanged(), old.foregroundColorChanged(), old.isAccessibleGutterElement(), true));
+          return; // will be repainted later
+        }
+
+        HighlighterChange newChange = myCompositeHighlighterChange.getAndSet(null);
+        if (newChange == null) return;
+
+        if (newChange.canImpactGutterSize()) {
+          updateGutterSize();
+        }
+
+        int docTextLength = myDocument.getTextLength();
+        int start = MathUtil.clamp(newChange.affectedStart(), 0, docTextLength);
+        int end = MathUtil.clamp(newChange.affectedEnd(), start, docTextLength);
+
+        if (myGutterComponent.getCurrentAccessibleLine() != null && newChange.isAccessibleGutterElement()) {
+          escapeGutterAccessibleLine(start, end);
+        }
+        int startLine = myDocument.getLineNumber(start);
+        int endLine = myDocument.getLineNumber(end);
+        if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
+          myView.invalidateRange(start, end, newChange.fontStyleChanged());
+        }
+        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
+          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+        }
+        updateCaretCursor();
+      });
+    }
   }
 
   private void onInlayUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
