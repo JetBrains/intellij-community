@@ -5,6 +5,7 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
@@ -19,6 +20,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -59,14 +61,16 @@ class GradleVersionQuickFix(
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     return GradleCoroutineScopeProvider.getInstance(project).cs
       .launch {
-        updateOrCreateWrapper(project)
-        resetProjectDistributionType(project)
-        runWrapperTask(project)
-        showWrapperPropertiesFile(project, projectPath, gradleVersion.version)
-        if (requestImport) {
-          delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
-          val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
-          importFuture.await()
+        runBatchChange(project) {
+          updateOrCreateWrapper(project)
+          resetProjectDistributionType(project)
+          runWrapperTask(project)
+          showWrapperPropertiesFile(project, projectPath, gradleVersion.version)
+          if (requestImport) {
+            delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
+            val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
+            importFuture.await()
+          }
         }
       }.asCompletableFuture()
   }
@@ -165,6 +169,18 @@ class GradleVersionQuickFix(
     }
     configuration.distribution = getWrapperDistributionUri(gradleVersion)
     return configuration
+  }
+
+  // Auto-import and indexing should be disabled while Gradle wrapper is in an incorrect state and cannot be used
+  private suspend fun <T> runBatchChange(project: Project, execution: suspend () -> T): T {
+    val publisher = BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC)
+    publisher.batchChangeStarted(project, GradleBundle.message("grable.execution.name.upgrade.wrapper"))
+    try {
+      return execution.invoke()
+    }
+    finally {
+      publisher.batchChangeCompleted(project)
+    }
   }
 
   companion object {
