@@ -2,16 +2,20 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiMember
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
+import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 
 internal open class CallableImportCandidatesProvider(
@@ -62,4 +66,23 @@ internal class InfixCallableImportCandidatesProvider(
         kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && super.acceptsKotlinCallable(kotlinCallable)
 
     override fun acceptsJavaCallable(javaCallable: PsiMember): Boolean = false
+}
+
+
+internal class DelegateMethodImportCandidatesProvider(
+    private val unresolvedDelegateFunction: UnresolvedDelegateFunction,
+    override val positionContext: KotlinNameReferencePositionContext,
+    indexProvider: KtSymbolFromIndexProvider
+) : CallableImportCandidatesProvider(positionContext, indexProvider) {
+
+    context(KaSession) override fun collectCandidates(): List<KaCallableSymbol> {
+        val functionName = OperatorNameConventions.GET_VALUE.takeIf {
+            unresolvedDelegateFunction.expectedFunctionSignature.startsWith(OperatorNameConventions.GET_VALUE.asString() + "(")
+        } ?: OperatorNameConventions.SET_VALUE.takeIf {
+            unresolvedDelegateFunction.expectedFunctionSignature.startsWith(OperatorNameConventions.SET_VALUE.asString() + "(")
+        } ?: return emptyList()
+
+        val expressionType = positionContext.position.parentOfType<KtPropertyDelegate>()?.expression?.expressionType ?: return emptyList()
+        return indexProvider.getExtensionCallableSymbolsByName(functionName, listOf(expressionType), ::acceptsKotlinCallable).toList()
+    }
 }

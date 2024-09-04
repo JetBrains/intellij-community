@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQu
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.psi.KtElement
 
+
 class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val ktElement = reference.element as? KtElement ?: return

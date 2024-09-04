@@ -11,5 +11,3 @@ fun test() {
         State("Inside run")
     }
 }
-
-/* IGNORE_K2 */
