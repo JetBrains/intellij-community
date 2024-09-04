@@ -22,6 +22,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
+import org.jetbrains.kotlin.idea.highlighter.kotlinUnresolvedReferenceKinds
+import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind
+import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.positionContext.*
@@ -36,8 +39,23 @@ object ImportQuickFixProvider {
         val positionContext = position?.let { KotlinPositionContextDetector.detect(it) }
 
         if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
-
         val indexProvider = KtSymbolFromIndexProvider.createForElement(positionContext.nameExpression)
+
+        return diagnosticPsi.kotlinUnresolvedReferenceKinds
+            .ifEmpty { listOf(KotlinUnresolvedReferenceKind.Regular) }
+            .mapNotNull { unresolvedReferenceKind ->
+                when (unresolvedReferenceKind) {
+                    is KotlinUnresolvedReferenceKind.Regular -> getRegularImportQuickFix(positionContext, indexProvider)
+                    is UnresolvedDelegateFunction -> getUnresolvedDelegateQuickFix(positionContext, indexProvider, unresolvedReferenceKind)
+                }
+            }
+    }
+
+    context(KaSession)
+    private fun getRegularImportQuickFix(
+        positionContext: KotlinNameReferencePositionContext,
+        indexProvider: KtSymbolFromIndexProvider,
+    ): ImportQuickFix? {
         val candidateProviders = buildList {
             when (positionContext) {
                 is KotlinSuperTypeCallNameReferencePositionContext,
@@ -78,10 +96,21 @@ object ImportQuickFixProvider {
         }
 
         val candidates = candidateProviders.flatMap { it.collectCandidates() }
-        val quickFix = createImportFix(positionContext.nameExpression, candidates)
-
-        return listOfNotNull(quickFix)
+        return createImportFix(positionContext.nameExpression, candidates)
     }
+
+    context(KaSession)
+    private fun getUnresolvedDelegateQuickFix(
+        positionContext: KotlinNameReferencePositionContext,
+        indexProvider: KtSymbolFromIndexProvider,
+        unresolvedDelegate: UnresolvedDelegateFunction
+    ): ImportQuickFix? {
+        return createImportFix(
+            positionContext.nameExpression,
+            DelegateMethodImportCandidatesProvider(unresolvedDelegate, positionContext, indexProvider).collectCandidates()
+        )
+    }
+
 
     @KaExperimentalApi
     private val renderer: KaDeclarationRenderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {

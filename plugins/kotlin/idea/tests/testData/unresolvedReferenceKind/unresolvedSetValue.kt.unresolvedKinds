@@ -1,0 +1,3 @@
+42: [UnresolvedDelegateFunction(expectedFunctionSignature=setValue(Nothing?, KMutableProperty0<*>, String))]
+"": [UnresolvedDelegateFunction(expectedFunctionSignature=setValue(Nothing?, KMutableProperty0<*>, String))]
+unresolved: [Regular]

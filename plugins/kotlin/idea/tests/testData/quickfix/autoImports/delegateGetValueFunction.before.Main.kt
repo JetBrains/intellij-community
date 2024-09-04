@@ -9,5 +9,3 @@ import kotlinpackage.one.B
 class Some(a: A, b: B) {
     val x1 by a<caret>
 }
-
-/* IGNORE_K2 */
