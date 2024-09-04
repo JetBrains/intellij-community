@@ -30,6 +30,7 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
+import com.intellij.workspaceModel.ide.isCaseSensitive
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +66,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current

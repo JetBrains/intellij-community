@@ -15,10 +15,10 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
+public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
   private var emptyUrl: VirtualFileUrl? = null
-  private val fileNameStore = VirtualFileNameStore()
+  private val fileNameStore = VirtualFileNameStore(isRootDirCaseSensitive)
   private val id2NodeMapping = Int2ObjectOpenHashMap<FilePathNode>()
   private val rootNode = FilePathNode(0, 0)
 
