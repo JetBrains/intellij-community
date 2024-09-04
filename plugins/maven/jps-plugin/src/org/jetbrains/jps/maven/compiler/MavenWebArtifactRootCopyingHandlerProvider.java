@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FileHashUtilKt;
+import org.jetbrains.jps.incremental.FileHashUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootCopyingHandlerProvider;
 import org.jetbrains.jps.incremental.artifacts.instructions.FileCopyingHandler;
 import org.jetbrains.jps.incremental.artifacts.instructions.FilterCopyHandler;
@@ -183,8 +183,7 @@ public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRo
     protected void configurationHash(@NotNull HashSink hash) {
       super.configurationHash(hash);
 
-      FileHashUtilKt.normalizedPathHashCode(myTargetDir.toPath().toAbsolutePath().normalize().toString(), hash);
-
+      FileHashUtil.computePathHashCode(myTargetDir.toPath().toAbsolutePath().normalize().toString(), hash);
       for (ResourceRootConfiguration webResource : myWebResources) {
         hash.putUnorderedIterable(webResource.includes, HashFunnel.forString(), Hashing.komihash5_0());
         hash.putUnorderedIterable(webResource.excludes, HashFunnel.forString(), Hashing.komihash5_0());

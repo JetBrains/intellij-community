@@ -23,7 +23,7 @@ import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.FileHashUtilKt;
+import org.jetbrains.jps.incremental.FileHashUtil;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -334,7 +334,7 @@ public final class BuildTargetSourcesState implements BuildListener {
 
   private static long getOutputFileHash(@NotNull Path file, @NotNull Path rootPath, @NotNull HashStream64 hashToReuse) throws IOException {
     // reduce GC - reuse hashToReuse - do not inline fileHash variable
-    FileHashUtilKt.getFileHash(file, hashToReuse.reset());
+    FileHashUtil.getFileHash(file, hashToReuse.reset());
     long fileHash = hashToReuse.getAsLong();
     return hashToReuse
       .reset()

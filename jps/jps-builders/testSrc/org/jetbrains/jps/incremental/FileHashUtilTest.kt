@@ -23,6 +23,6 @@ class FileHashUtilTest {
   private fun doTest(dir: Path, data: ByteArray) {
     val file = dir.resolve("test.txt")
     Files.write(file, data)
-    assertThat(getFileHash(file)).isEqualTo(Hashing.komihash5_0().hashStream().putBytes(data).putLong(data.size.toLong()).asLong)
+    assertThat(FileHashUtil.getFileHash(file)).isEqualTo(Hashing.komihash5_0().hashStream().putBytes(data).putLong(data.size.toLong()).asLong)
   }
 }

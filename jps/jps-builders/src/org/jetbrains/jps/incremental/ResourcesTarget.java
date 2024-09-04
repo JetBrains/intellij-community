@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.jps.incremental.FileHashUtilKt.normalizedPathHashCode;
-
 /**
  * Describes a step of compilation process which copies resource's files from source and resource roots of a Java module.
  */
@@ -122,7 +120,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     List<ResourceRootDescriptor> roots = projectDescriptor.getBuildRootIndex().getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
       String path = relativizer.toRelative(root.rootFile.toString());
-      normalizedPathHashCode(path, hash);
+      FileHashUtil.computePathHashCode(path, hash);
       hash.putString(root.getPackagePrefix());
     }
     hash.putInt(roots.size());

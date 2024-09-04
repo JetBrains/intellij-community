@@ -43,9 +43,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.jps.incremental.FileHashUtilKt.getFileHash;
-import static org.jetbrains.jps.incremental.FileHashUtilKt.normalizedPathHashCode;
-
 /**
  * Describes a step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module.
  * These targets are built by {@link ModuleLevelBuilder} and they are the only targets that can have circular dependencies on each other.
@@ -189,7 +186,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       if (logBuilder != null) {
         logBuilder.append(path).append('\n');
       }
-      normalizedPathHashCode(path, hash);
+      FileHashUtil.computePathHashCode(path, hash);
     }
     hash.putInt(roots.size());
 
@@ -256,9 +253,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     }
   }
 
-  private void getDependenciesFingerprint(@Nullable StringBuilder logBuilder,
-                                          @NotNull PathRelativizerService relativizer,
-                                          @NotNull HashSink hash) {
+  private void getDependenciesFingerprint(@Nullable StringBuilder logBuilder, @NotNull PathRelativizerService relativizer, @NotNull HashSink hash) {
     if (!REBUILD_ON_DEPENDENCY_CHANGE) {
       hash.putInt(0);
       return;
@@ -285,27 +280,24 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
         }
         logBuilder.append("\n");
       }
-      normalizedPathHashCode(path, hash);
+      FileHashUtil.computePathHashCode(path, hash);
     }
     hash.putInt(roots.size());
   }
 
   private static void getContentHash(Path file, HashSink hash) {
-    if (!ProjectStamps.TRACK_LIBRARY_CONTENT) {
-      hash.putInt(0);
-      return;
-    }
-
-    try {
-      if (Files.isRegularFile(file) && file.getFileName().endsWith(".jar")) {
-        getFileHash(file, hash);
+    if (ProjectStamps.TRACK_LIBRARY_CONTENT) {
+      try {
+        if (Files.isRegularFile(file) && file.getFileName().endsWith(".jar")) {
+          FileHashUtil.getFileHash(file, hash);
+        }
+        else {
+          hash.putInt(0);
+        }
       }
-      else {
-        hash.putInt(0);
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
       }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
 }

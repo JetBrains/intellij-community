@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.FileHashUtil;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.DataInput;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static org.jetbrains.jps.incremental.FileHashUtilKt.getFileHash;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
 import static org.jetbrains.jps.incremental.storage.HashStampStorage.HashStampPerTarget;
 
@@ -122,7 +122,7 @@ final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTa
   @Override
   public HashStamp getCurrentStamp(Path file) throws IOException {
     FileTimestamp currentTimestamp = timestampStorage.getCurrentStamp(file);
-    return new HashStamp(getFileHash(file), currentTimestamp.asLong());
+    return new HashStamp(FileHashUtil.getFileHash(file), currentTimestamp.asLong());
   }
 
   @Override
@@ -141,7 +141,7 @@ final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTa
       return true;
     }
 
-    return hash != getFileHash(file.toPath());
+    return hash != FileHashUtil.getFileHash(file.toPath());
   }
 
   @Override
@@ -160,7 +160,7 @@ final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTa
       return true;
     }
 
-    return hash != getFileHash(file.toPath());
+    return hash != FileHashUtil.getFileHash(file.toPath());
   }
 
   @Override
