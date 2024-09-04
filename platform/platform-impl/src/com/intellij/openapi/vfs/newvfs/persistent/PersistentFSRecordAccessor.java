@@ -57,12 +57,9 @@ public final class PersistentFSRecordAccessor {
     }
     // important! Do not add fileId to free list until restart
     connection.getRecords().setFlags(id, FREE_RECORD_FLAG);
-    connection.markDirty();
   }
 
   public int createRecord(Iterable<FileIdIndexedStorage> fileIdIndexedStorages) throws IOException {
-    connection.markDirty();
-
     PersistentFSRecordsStorage records = connection.getRecords();
     if (!FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
       int newRecordId = records.allocateRecord();

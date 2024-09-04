@@ -40,6 +40,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ScheduledExecutorService;
@@ -535,7 +536,6 @@ public final class FSRecordsImpl implements Closeable {
     checkNotClosed();
     try {
       markAsDeletedRecursively(fileId);
-      connection.markDirty();
     }
     catch (IOException e) {
       throw handleError(e);
@@ -694,6 +694,8 @@ public final class FSRecordsImpl implements Closeable {
     SlowOperations.assertSlowOperationsAreAllowed();
     PersistentFSConnection.ensureIdIsValid(parentId);
 
+    checkNotClosed();
+
     updateLock.lock(parentId);
     try {
       ListResult children = list(parentId);
@@ -702,20 +704,14 @@ public final class FSRecordsImpl implements Closeable {
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
       if (!modifiedChildren.equals(children)) {
-        //if (LOG.isDebugEnabled()) {
-        //  LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + modifiedChildren);
-        //}
-        checkNotClosed();
-
         //TODO RC: why we update symlinks here, under the lock?
         updateSymlinksForNewChildren(parent, children, modifiedChildren);
 
         treeAccessor.doSaveChildren(parentId, modifiedChildren);
-        connection.markRecordAsModified(parentId);
       }
       return modifiedChildren;
     }
-    catch (ProcessCanceledException e) {
+    catch (CancellationException e) {
       // NewVirtualFileSystem.list methods can be interrupted now
       throw e;
     }
@@ -732,33 +728,35 @@ public final class FSRecordsImpl implements Closeable {
     assert fromParentId > 0 : fromParentId;
     assert toParentId > 0 : toParentId;
 
-    if (fromParentId == toParentId) return;
+    checkNotClosed();
+
+    if (fromParentId == toParentId) {
+      return;
+    }
 
     int minId = Math.min(fromParentId, toParentId);
     int maxId = Math.max(fromParentId, toParentId);
-
-    checkNotClosed();
     updateLock.lock(minId);
     try {
       updateLock.lock(maxId);
       try {
         try {
           ListResult childrenToMove = list(fromParentId);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + childrenToMove);
-          }
 
           for (ChildInfo childToMove : childrenToMove.children) {
-            setParent(childToMove.getId(), toParentId);
+            int fileId = childToMove.getId();
+            if (fileId == toParentId) {
+              LOG.error("Cyclic parent/child relations");
+              continue;
+            }
+            connection.getRecords().setParent(fileId, toParentId);
           }
 
           treeAccessor.doSaveChildren(toParentId, childrenToMove);
-          connection.markRecordAsModified(toParentId);
 
           treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
-          connection.markRecordAsModified(fromParentId);
         }
-        catch (ProcessCanceledException e) {
+        catch (CancellationException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
           throw e;
         }
@@ -1129,8 +1127,6 @@ public final class FSRecordsImpl implements Closeable {
 
       return true;
     });
-    connection.markDirty();
-
 
     return nameId;
   }

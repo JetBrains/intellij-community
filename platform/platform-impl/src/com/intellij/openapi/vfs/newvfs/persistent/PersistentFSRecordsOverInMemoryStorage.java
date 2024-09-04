@@ -249,6 +249,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
       final int offset = recordStartAtBytes + wordNo * Integer.BYTES;
       INT_HANDLE.setVolatile(records, offset, 0);
     }
+    markDirty();
   }
 
   @Override

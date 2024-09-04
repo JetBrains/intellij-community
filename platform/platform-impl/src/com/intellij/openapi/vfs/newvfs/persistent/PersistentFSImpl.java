@@ -826,7 +826,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  //@GuardedBy(myInputLock.writeLock)
   private void updateContentId(int fileId,
                                int newContentRecordId,
                                int newContentLength) throws IOException {
@@ -837,7 +836,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       record.setLength(newContentLength);
       return true;
     });
-    vfsPeer.connection().markDirty();
   }
 
   @Override

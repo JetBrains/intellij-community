@@ -213,9 +213,9 @@ class PersistentFSTreeAccessor {
 
       int[] rootUrls = ArrayUtilRt.EMPTY_INT_ARRAY;
       int[] rootIds = ArrayUtilRt.EMPTY_INT_ARRAY;
-      try (final DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         if (input != null) {
-          final int rootsCount = DataInputOutputUtil.readINT(input);
+          int rootsCount = DataInputOutputUtil.readINT(input);
           if (rootsCount < 0) {
             throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
           }
@@ -238,13 +238,12 @@ class PersistentFSTreeAccessor {
         }
       }
 
-      connection.markDirty();
       rootUrlId = connection.getNames().enumerate(rootUrl);
 
       try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        final int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
+        int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
 
-        final int index = Arrays.binarySearch(rootIds, newRootFileId);
+        int index = Arrays.binarySearch(rootIds, newRootFileId);
         if (index >= 0) {
           throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
                                    "rootIds(=" + Arrays.toString(rootIds) + "), rootUrls(=" + Arrays.toString(rootUrls) + "), " +
@@ -336,7 +335,7 @@ class PersistentFSTreeAccessor {
 
       int[] names;
       int[] ids;
-      try (final DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         assert input != null;
         int count = DataInputOutputUtil.readINT(input);
 
@@ -352,7 +351,7 @@ class PersistentFSTreeAccessor {
         }
       }
 
-      final int index = ArrayUtil.find(ids, fileId);
+      int index = ArrayUtil.find(ids, fileId);
       assert index >= 0;
 
       names = ArrayUtil.remove(names, index);
@@ -361,8 +360,6 @@ class PersistentFSTreeAccessor {
       try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
         saveNameIdSequenceWithDeltas(names, ids, output);
       }
-
-      connection.markDirty();
     }
     finally {
       rootsAccessLock.unlock();

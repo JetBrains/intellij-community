@@ -116,7 +116,6 @@ public class VFSChildrenUpdateBenchmark {
       ListResult modifiedChildren = children;
 
       vfs.treeAccessor().doSaveChildren(folderId, modifiedChildren);
-      vfs.connection().markRecordAsModified(folderId);
       return children;
     }
 
@@ -131,7 +130,6 @@ public class VFSChildrenUpdateBenchmark {
       vfs.updateSymlinksForNewChildren(FAKE_PARENT_FILE, children, modifiedChildren);
 
       vfs.treeAccessor().doSaveChildren(folderId, modifiedChildren);
-      vfs.connection().markRecordAsModified(folderId);
       return children;
     }
 

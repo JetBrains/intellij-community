@@ -425,6 +425,5 @@ public class VFSInitializationTest {
     for (int i = 0; i < nRecords; i++) {
       records.allocateRecord();
     }
-    connection.markDirty();
   }
 }

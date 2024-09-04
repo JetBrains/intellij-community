@@ -409,6 +409,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       int allocatedRecords = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET);
       int newAllocatedRecords = allocatedRecords + 1;
       if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET, allocatedRecords, newAllocatedRecords)) {
+        incrementGlobalModCount();//mark storage as dirty
         return newAllocatedRecords;
       }
     }
@@ -529,6 +530,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     ByteBuffer pageBuffer = page.rawPageBuffer();
     return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, RecordLayout.CONTENT_REF_OFFSET, newContentRecordId);
   }
+
   @Override
   public void markRecordAsModified(int recordId) throws IOException {
     long recordOffsetInFile = recordOffsetInFile(recordId);
@@ -555,6 +557,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       int offsetOfWord = recordOffsetOnPage + wordNo * Integer.BYTES;
       setIntVolatile(pageBuffer, offsetOfWord, 0);
     }
+
+    //make storage .dirty: usually it is done automatically, since we inc _global_ modCount while updating _record_ modCount,
+    // but here we don't update record modCount, so must increment global one explicitly
+    incrementGlobalModCount();
   }
 
 
