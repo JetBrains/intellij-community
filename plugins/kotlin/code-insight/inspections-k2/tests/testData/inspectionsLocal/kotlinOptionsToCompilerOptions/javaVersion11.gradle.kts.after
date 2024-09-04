@@ -24,6 +24,5 @@ tasks.test {
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
     jvmTarget.set(JvmTarget.JVM_11)
-    outputFile.set("<buildDir>/js/packages/<project.name>/kotlin/<project.name>.js")
     optIn.set(listOf("org.mylibrary.OptInAnnotation"))
 }

@@ -7889,6 +7889,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/jsTasksWithTypeOfFQNandConfigureEach.gradle.kts");
             }
 
+            @TestMetadata("jsTestOrdinaryStringOption.gradle.kts")
+            public void testJsTestOrdinaryStringOption_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/jsTestOrdinaryStringOption.gradle.kts");
+            }
+
             @TestMetadata("jvmTarget11.gradle.kts")
             public void testJvmTarget11_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/jvmTarget11.gradle.kts");

@@ -1,5 +1,5 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 
 plugins {
     kotlin("jvm") version "2.0.0"
@@ -19,9 +19,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+kotlin {
+    jvmToolchain(8)
+}
 
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.<caret>kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
-    optIn = listOf("org.mylibrary.OptInAnnotation")
+tasks.withType<Kotlin2JsCompile>().configureEach {
+    compilerOptions.outputFile.set("<buildDir>/js/packages/<project.name>/kotlin/<project.name>.js")
 }
