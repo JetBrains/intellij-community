@@ -12,7 +12,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 5)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 6)
 
     // fields
     private val compilerField = EventFields.Enum<CompilerType>("compiler")
