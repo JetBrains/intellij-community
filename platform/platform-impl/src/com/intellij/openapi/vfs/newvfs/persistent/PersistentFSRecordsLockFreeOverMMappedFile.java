@@ -402,14 +402,20 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
 
   @Override
-  public int allocateRecord() {
+  public int allocateRecord() throws IOException {
     Page headerPage = headerPage();
     ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
     while (true) {// CAS loop:
       int allocatedRecords = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET);
       int newAllocatedRecords = allocatedRecords + 1;
       if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET, allocatedRecords, newAllocatedRecords)) {
-        incrementGlobalModCount();//mark storage as dirty
+
+        long recordOffsetInFile = recordOffsetInFile(newAllocatedRecords);
+        int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+        Page page = storage.pageByOffset(recordOffsetInFile);
+        ByteBuffer pageBuffer = page.rawPageBuffer();
+        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+
         return newAllocatedRecords;
       }
     }

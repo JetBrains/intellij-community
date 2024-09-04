@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public class FSRecordsImplTest {
     for (int i = 0; i < contentsToInsert; i++) {
       int fileId = fileIds[i];
       String expectedContent = "testContent_" + (i % uniqueContentsCount);
-      try (DataInputStream stream = new DataInputStream(vfs.readContent(fileId))){
+      try (DataInputStream stream = new DataInputStream(vfs.readContent(fileId))) {
         String actualContent = stream.readUTF();
         assertEquals(
           expectedContent,
@@ -145,6 +146,43 @@ public class FSRecordsImplTest {
         );
       }
       previousContent = content;
+    }
+  }
+
+
+  @Test
+  public void fileRecordModCountChanges_ifFileAttributeWritten_regardlessOfActualValueChange() throws IOException {
+    FileAttribute fileAttribute = new FileAttribute("X");
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] randomAttributeValues = Stream.generate(
+        () -> StorageTestingUtils.randomString(rnd, rnd.nextInt(0, 128))
+      )
+      .limit(1024)
+      .toArray(String[]::new);
+
+    int fileId = vfs.createRecord();
+
+    String previousAttributeValue = "";
+    try (DataOutputStream stream = vfs.writeAttribute(fileId, fileAttribute)) {
+      stream.writeUTF(previousAttributeValue);
+    }
+    for (int attempt = 0; attempt < 1024; attempt++) {
+      int modCountBefore = vfs.getModCount(fileId);
+      String attributeValue = randomAttributeValues[rnd.nextInt(randomAttributeValues.length)];
+      try (DataOutputStream stream = vfs.writeAttribute(fileId, fileAttribute)) {
+        stream.writeUTF(attributeValue);
+      }
+      int modCountAfter = vfs.getModCount(fileId);
+
+      //'+1' is a bit of over-specification: modCount 'after' must be more than 'before' -- but it doesn't really
+      // matter how much more. But I also don't want to grow modCount without a reason, so I check the minimum
+      // increment:
+      assertEquals(
+        modCountAfter, modCountBefore + 1,
+        "[" + previousAttributeValue + "]->[" + attributeValue + "]:" +
+        "modCountAfter(" + modCountAfter + ") most be modCountBefore(" + modCountBefore + ")+1"
+      );
+      previousAttributeValue = attributeValue;
     }
   }
 

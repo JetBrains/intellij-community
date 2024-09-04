@@ -15,7 +15,7 @@ public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage,
   /**
    * @return id of newly allocated record
    */
-  int allocateRecord();
+  int allocateRecord() throws IOException;
 
   void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
@@ -55,11 +55,8 @@ public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage,
 
   int getModCount(int fileId) throws IOException;
 
-  //TODO RC: why we need this method? Record modification is detected by actual modification -- there
+  //TODO RC: do we need this method? Record modification is tracked by storage, by actual modification -- there
   //         are (seems to) no way to modify record bypassing it.
-  //         We use the method to mark file record modified there something derived is modified -- e.g.
-  //         children attribute or content. This looks suspicious to me: why we need to update _file_
-  //         record version in those cases?
   void markRecordAsModified(int fileId) throws IOException;
 
   int getContentRecordId(int fileId) throws IOException;

@@ -622,6 +622,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       if (child == null) {
+        //FIXME RC: inside makeChildRecord() there will be a fileRecordLock acquisition -- and recursive acquisition is
+        //          impossible with StampedLock
         child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
         foundChildRef.set(child);
         return children.insert(child);

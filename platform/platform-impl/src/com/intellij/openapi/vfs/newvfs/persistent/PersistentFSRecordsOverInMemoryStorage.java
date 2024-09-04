@@ -120,11 +120,12 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public int allocateRecord() {
+  public int allocateRecord() throws IOException {
     final int recordId = allocatedRecordsCount.incrementAndGet();
     if (recordId > maxRecords) {
       throw new IndexOutOfBoundsException("maxRecords(=" + maxRecords + ") limit exceeded");
     }
+    markRecordAsModified(recordId);
     markDirty();
     return recordId;
   }

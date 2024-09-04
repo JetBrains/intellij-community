@@ -401,7 +401,16 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                 storage.isDirty());
     storage.allocateRecord();
     assertTrue("Expect storage to be dirty after .allocateRecord()",
-                storage.isDirty());
+               storage.isDirty());
+  }
+
+  @Test
+  public void allocatedRecord_hasNonZeroModCount() throws Exception {
+    int recordId = storage.allocateRecord();
+
+    int recordModCount = storage.getModCount(recordId);
+    assertTrue("New record must have modCount assigned (>0), but: " + recordModCount,
+               recordModCount > 0);
   }
 
   @Test

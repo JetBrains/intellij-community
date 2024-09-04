@@ -387,20 +387,10 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   public int allocateRecord() {
     int recordId = allocatedRecordsCount.incrementAndGet();
     try {
-      //Ensure storage file is extended to fit new record.
-      // We calculate allocated records via file size on load, so file size must extend to include new record,
+      //Not only assigns new record modCount, but also ensures storage file is actually _extended_ to fit a new record.
+      // We calculate allocated records via file size on load, so must extend the file size to include a new record,
       // otherwise newly allocated record can be lost
-      long recordOffsetInFile = recordOffsetInFile(recordId);
-      int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-      try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-        page.lockPageForWrite();
-        try {
-          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
-        }
-        finally {
-          page.unlockPageForWrite();
-        }
-      }
+      markRecordAsModified(recordId);
     }
     catch (IOException e) {
       throw new UncheckedIOException("Can't ensure room for recordId=" + recordId, e);

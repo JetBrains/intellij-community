@@ -114,8 +114,9 @@ public final class PersistentFSRecordAccessor {
     int modCount = records.getModCount(newRecordId);
     long length = records.getLength(newRecordId);
     long timestamp = records.getTimestamp(newRecordId);
+
     if (parentId != NULL_FILE_ID || nameId != NULL_NAME_ID || contentId != NULL_ID || attributeRecordId != NULL_ID ||
-        flags != 0 || modCount != 0 || length != 0 || timestamp != 0) {
+        flags != 0 || length != 0 || timestamp != 0) {// modCount _should_ be !=0: it is set in .allocateRecord()
 
       IOException exception = new IOException(
         "new record (id: " + newRecordId + ") has non-empty fields: " +
