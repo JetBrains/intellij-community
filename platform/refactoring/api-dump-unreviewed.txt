@@ -17,7 +17,6 @@ a:com.intellij.codeInsight.highlighting.HighlightManager
 @:com.intellij.codeInsight.highlighting.HighlightManager$HideFlags
 - java.lang.annotation.Annotation
 *:com.intellij.find.FindInProjectSearchEngine
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createSearcher(com.intellij.find.FindModel,com.intellij.openapi.project.Project):com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
 *:com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
 - a:isCovered(com.intellij.openapi.vfs.VirtualFile):Z
@@ -119,7 +118,7 @@ c:com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 - navigate(Z):V
 - showSettings():V
 - update():V
-c:com.intellij.ide.actions.FqnUtil
+f:com.intellij.ide.actions.FqnUtil
 - <init>():V
 - s:elementToFqn(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):java.lang.String
 - s:getFileFqn(com.intellij.psi.PsiFile):java.lang.String
@@ -136,7 +135,6 @@ f:com.intellij.ide.actions.QualifiedNameProviderUtil
 - s:getQualifiedName(com.intellij.psi.PsiElement):java.lang.String
 - s:qualifiedNameToElement(java.lang.String,com.intellij.openapi.project.Project):com.intellij.psi.PsiElement
 com.intellij.ide.actions.VirtualFileQualifiedNameProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getQualifiedName(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.lang.ContextAwareActionHandler
 - a:isAvailableForQuickList(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.actionSystem.DataContext):Z
@@ -144,8 +142,8 @@ f:com.intellij.lang.LanguageRefactoringSupport
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageRefactoringSupport
 - forContext(com.intellij.psi.PsiElement):com.intellij.lang.refactoring.RefactoringSupportProvider
+- s:getInstance():com.intellij.lang.LanguageRefactoringSupport
 a:com.intellij.lang.refactoring.InlineActionHandler
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:canInlineElement(com.intellij.psi.PsiElement):Z
 - canInlineElementInEditor(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):Z
@@ -272,7 +270,7 @@ com.intellij.refactoring.RefactoringHelper
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:performOperation(com.intellij.openapi.project.Project,java.lang.Object):V
 - a:prepareOperation(com.intellij.usageView.UsageInfo[],java.util.List):java.lang.Object
-c:com.intellij.refactoring.RefactoringSettings
+f:com.intellij.refactoring.RefactoringSettings
 - com.intellij.openapi.components.PersistentStateComponent
 - ASK_FOR_RENAME_DECLARATION_WHEN_RENAME_FILE:Z
 - MOVE_SEARCH_FOR_REFERENCES_FOR_FILE:Z
@@ -398,7 +396,7 @@ c:com.intellij.refactoring.extractMethod.SimpleDuplicatesFinder
 - p:isDuplicateFragment(com.intellij.psi.PsiElement):com.intellij.refactoring.extractMethod.SimpleMatch
 - p:isVariable(com.intellij.psi.PsiElement):Z
 - setReplacement(com.intellij.psi.PsiElement):V
-c:com.intellij.refactoring.extractMethod.SimpleMatch
+f:com.intellij.refactoring.extractMethod.SimpleMatch
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - changeOutput(java.lang.String):V
 - changeParameter(java.lang.String,java.lang.String):V
@@ -406,7 +404,7 @@ c:com.intellij.refactoring.extractMethod.SimpleMatch
 - getChangedParameters():java.util.Map
 - getEndElement():com.intellij.psi.PsiElement
 - getStartElement():com.intellij.psi.PsiElement
-c:com.intellij.refactoring.listeners.RefactoringElementListenerComposite
+f:com.intellij.refactoring.listeners.RefactoringElementListenerComposite
 - com.intellij.refactoring.listeners.RefactoringElementListener
 - com.intellij.refactoring.listeners.UndoRefactoringElementListener
 - <init>():V
@@ -447,19 +445,9 @@ a:com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 - f:elementRenamed(com.intellij.psi.PsiElement):V
 - pa:refactored(com.intellij.psi.PsiElement,java.lang.String):V
 - f:undoElementMovedOrRenamed(com.intellij.psi.PsiElement,java.lang.String):V
-f:com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl
-- com.intellij.refactoring.listeners.RefactoringListenerManager
-- <init>(com.intellij.openapi.project.Project):V
-- addListenerProvider(com.intellij.refactoring.listeners.RefactoringElementListenerProvider):V
-- startTransaction():com.intellij.refactoring.listeners.impl.RefactoringTransaction
 com.intellij.refactoring.listeners.impl.RefactoringTransaction
 - a:commit():V
 - a:getElementListener(com.intellij.psi.PsiElement):com.intellij.refactoring.listeners.RefactoringElementListener
-c:com.intellij.refactoring.listeners.impl.RefactoringTransactionImpl
-- com.intellij.refactoring.listeners.impl.RefactoringTransaction
-- <init>(com.intellij.openapi.project.Project,java.util.List):V
-- commit():V
-- getElementListener(com.intellij.psi.PsiElement):com.intellij.refactoring.listeners.RefactoringElementListener
 com.intellij.refactoring.rename.NameSuggestionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getSuggestedNames(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,java.util.Set):com.intellij.psi.codeStyle.SuggestedNameInfo
@@ -571,7 +559,6 @@ com.intellij.refactoring.rename.RenameRefactoringDialog
 - a:performRename(java.lang.String):V
 - a:show():V
 a:com.intellij.refactoring.rename.RenameRefactoringDialogProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:createDialog(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):com.intellij.refactoring.rename.RenameRefactoringDialog
 - isApplicable(com.intellij.refactoring.rename.RenamePsiElementProcessorBase):Z
