@@ -1,15 +1,13 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
 import com.intellij.util.keyFMap.KeyFMap
 import java.util.*
-
-val NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY = DataKey.create<NotebookCellLines.Interval>("NOTEBOOK_CELL_LINES_INTERVAL")
 
 /**
  * Incrementally iterates over Notebook document, calculates line ranges of cells using lexer.
@@ -42,9 +40,54 @@ interface NotebookCellLines {
   ) : Comparable<Interval> {
     val language: Language = data.get(INTERVAL_LANGUAGE_KEY)!!
 
+    val firstContentLine: Int
+      get() =
+        if (markers.hasTopLine) lines.first + 1
+        else lines.first
+
+    val lastContentLine: Int
+      get() =
+        if (markers.hasBottomLine) lines.last - 1
+        else lines.last
+
+    val contentLines: IntRange
+      get() = firstContentLine..lastContentLine
+
+
     operator fun <V> get(key: Key<V>): V? = data.get(key)
 
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
+
+    fun getCellRange(editor: Editor): TextRange {
+      val document = editor.document
+      val startOffset = document.getLineNumber(document.getLineStartOffset(lines.first))
+      val endOffset = document.getLineNumber(document.getLineEndOffset(lines.last))
+      return TextRange(startOffset, endOffset)
+    }
+
+    fun getContentRange(editor: Editor): TextRange {
+      val contentLines = this.contentLines
+      val startOffset = editor.document.getLineStartOffset(contentLines.first)
+      val endOffset = editor.document.getLineEndOffset(contentLines.last)
+      return TextRange(startOffset, endOffset)
+    }
+
+    fun getContentText(editor: Editor): String {
+      val range = getContentRange(editor)
+      return editor.document.getText(range)
+    }
+
+    fun getCellText(editor: Editor): String {
+      val range = getCellRange(editor)
+      return editor.document.getText(range)
+    }
+
+
+    fun getTopMarker(document: Document): String? =
+      if (markers.hasTopLine) document.getLineText(lines.first) else null
+
+    fun getBottomMarker(document: Document): String? =
+      if (markers.hasBottomLine) document.getLineText(lines.last) else null
   }
 
   interface IntervalListener : EventListener {

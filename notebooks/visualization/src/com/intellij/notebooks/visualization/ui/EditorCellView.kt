@@ -1,6 +1,13 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
+import com.intellij.notebooks.ui.visualization.NotebookLineMarkerRenderer
+import com.intellij.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
+import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.visualization.*
+import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
+import com.intellij.notebooks.visualization.context.NotebookDataContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
@@ -17,12 +24,6 @@ import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
-import com.intellij.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
-import com.intellij.notebooks.ui.visualization.NotebookLineMarkerRenderer
-import com.intellij.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
-import com.intellij.notebooks.ui.visualization.notebookAppearance
-import com.intellij.notebooks.visualization.*
-import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
@@ -399,7 +400,7 @@ class EditorCellView(
   ) : DataProvider {
     override fun getData(key: String): Any? =
       when (key) {
-        NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY.name -> intervalProvider()
+        NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL.name -> intervalProvider()
         PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> component
         PlatformDataKeys.EDITOR.name -> editor
         else -> null

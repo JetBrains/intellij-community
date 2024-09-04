@@ -1,13 +1,13 @@
 package com.intellij.notebooks.ui.jupyterToolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
-import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle
@@ -97,7 +97,8 @@ class JupyterAddCellToolbarService(private val scope: CoroutineScope): Disposabl
 
   private fun createAndShowToolbar(editor: Editor) {
     actionGroup ?: return
-    if (currentToolbar == null) currentToolbar = JupyterAddNewCellToolbar(actionGroup, editor.contentComponent)
+    if (currentToolbar == null)
+      currentToolbar = JupyterAddNewCellToolbar(actionGroup, editor.contentComponent)
     editor.contentComponent.add(currentToolbar, 0)
     hideToolbarTimer.stop()
     adjustToolbarPosition()

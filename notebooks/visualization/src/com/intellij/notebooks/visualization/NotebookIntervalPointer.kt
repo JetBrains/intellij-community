@@ -1,6 +1,5 @@
 package com.intellij.notebooks.visualization
 
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -11,8 +10,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import java.util.*
-
-val NOTEBOOK_INTERVAL_POINTER_KEY = DataKey.create<NotebookIntervalPointer>("NOTEBOOK_INTERVAL_POINTER")
 
 /**
  * Pointer becomes invalid when code cell is removed.

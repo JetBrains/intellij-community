@@ -45,10 +45,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
 
-    <getDataRule
-      key="NOTEBOOK_CELL_LINES_INTERVAL"
-      implementationClass="com.intellij.notebooks.visualization.NotebookCellLinesIntervalDataRule"/>
-    <uiDataRule implementation="com.intellij.notebooks.visualization.EditorsWithOffsetsDataRule"/>
     <editorFactoryDocumentListener implementation="com.intellij.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
   </extensions>

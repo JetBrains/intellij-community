@@ -3,8 +3,6 @@ package com.intellij.notebooks.visualization
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface NotebookCellSelectionModelProvider {
   fun create(editor: Editor): NotebookCellSelectionModel
@@ -13,8 +11,7 @@ interface NotebookCellSelectionModelProvider {
 }
 
 val Editor.cellSelectionModel: NotebookCellSelectionModel?
-  @RequiresEdt get() {
-    ThreadingAssertions.assertEventDispatchThread()
+  get() {
     return key.get(this) ?: install(this)
   }
 

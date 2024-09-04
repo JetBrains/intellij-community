@@ -1,12 +1,19 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.notebooks.visualization.NotebookCellInlayManager
+import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.cellSelectionModel
+import com.intellij.notebooks.visualization.context.NotebookDataContext.notebookEditor
+import com.intellij.notebooks.visualization.context.NotebookDataContext.selectedCellIntervals
+import com.intellij.notebooks.visualization.ui.EditorCellOutput
+import com.intellij.notebooks.visualization.ui.NOTEBOOK_CELL_OUTPUT_DATA_KEY
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
-import com.intellij.notebooks.visualization.*
-import com.intellij.notebooks.visualization.ui.EditorCellOutput
-import com.intellij.notebooks.visualization.ui.NOTEBOOK_CELL_OUTPUT_DATA_KEY
 
 internal class NotebookOutputCollapseAllAction private constructor() : ToggleAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -39,7 +46,7 @@ internal class NotebookOutputCollapseAllInSelectedCellsAction private constructo
     super.update(e)
     val editor = e.notebookEditor
     e.presentation.isEnabled = editor != null
-    e.presentation.isVisible = editor?.cellSelectionModel?.let { it.selectedCells.size > 1 } ?: false
+    e.presentation.isVisible = editor?.cellSelectionModel?.let { it.selectedCells.size > 1 } == true
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
@@ -87,7 +94,7 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    getExpectedComponent(e)?.collapsed ?: false
+    getExpectedComponent(e)?.collapsed == true
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     getExpectedComponent(e)?.collapsed = state
@@ -98,9 +105,10 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
 }
 
 private fun getCollapsingComponents(e: AnActionEvent): List<EditorCellOutput> {
-  return e.dataContext.getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY)?.let { interval ->
-    e.getData(PlatformDataKeys.EDITOR)?.let { getCollapsingComponents(it, interval) }
-  } ?: emptyList()
+  val selectedCellIntervals = e.dataContext.selectedCellIntervals ?: return emptyList()
+  val notebookEditor = e.dataContext.notebookEditor ?: return emptyList()
+
+  return selectedCellIntervals.flatMap { getCollapsingComponents(notebookEditor, it) }
 }
 
 private fun getCollapsingComponents(editor: Editor, interval: NotebookCellLines.Interval): List<EditorCellOutput> =
