@@ -6869,6 +6869,7 @@ c:com.intellij.ide.plugins.CountComponent
 - javax.swing.JLabel
 - <init>():V
 - getForeground():java.awt.Color
+- p:getOvalColor():java.awt.Color
 - getPreferredSize():java.awt.Dimension
 - p:paintComponent(java.awt.Graphics):V
 - setSelected(Z):V
