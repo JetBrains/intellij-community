@@ -416,10 +416,10 @@ final class PassExecutorService implements Disposable {
 
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
               String fileName = myFileEditor.getFile().getName();
-              String passClassName = StringUtil.getShortName(myPass.getClass());
+              String passClassName = myPass.getClass().getSimpleName();
               try (Scope __ = myOpenTelemetryContext.makeCurrent()) {
                 TraceKt.use(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder(passClassName), span -> {
-                  Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
+                  Activity startupActivity = StartUpMeasurer.startActivity(passClassName);
                   boolean cancelled = false;
                   try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
                     myPass.collectInformation(myUpdateProgress);
