@@ -123,6 +123,8 @@ class KotlinLambdaAsyncMethodFilter(
 
             val frameIndex = if (methodName.isGeneratedIrBackendLambdaMethodName()) 1 else 0
             return isTargetLambda(thread, frameIndex)
+                    // On ART SAM converted lambdas get an additional stack frame from r8 in their stack trace
+                    || DexDebugFacility.isDex(context.debugProcess) && isTargetLambda(thread, 2)
                     // For lambdas passed to Java functions, the lambda could be additionally wrapped for type compatibility.
                     // One of the previous frames (heuristically 3rd frame) should contain the original lambda.
                     || isTargetLambda(thread, 3)
