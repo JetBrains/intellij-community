@@ -116,7 +116,6 @@
         <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
         <separator/>
         <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="AllIcons.Debugger.EvaluateExpression"/>
-        <action id="QuickEvaluateExpression" class="com.intellij.xdebugger.impl.actions.QuickEvaluateAction"/>
         <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
                 icon="AllIcons.Debugger.ShowCurrentFrame"/>
         <separator/>

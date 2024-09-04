@@ -5,22 +5,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.asEntity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.projectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler.CancellableHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHint
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
@@ -42,7 +40,6 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
     return null
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
   override fun createValueHintAsync(project: Project, editor: Editor, point: Point, type: ValueHintType?): CancellableHint {
     if (type == null) {
       return CancellableHint(resolvedPromise(), null)
@@ -54,11 +51,7 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
     val hint: Deferred<AbstractValueHint?> = coroutineScope.async(Dispatchers.IO) {
       withKernel {
         val remoteApi = RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
-        val projectEntity = project.asEntity()
-        if (projectEntity == null) {
-          return@withKernel null
-        }
-        val projectId = projectEntity.projectId
+        val projectId = project.projectId()
         val editorId = editor.editorId()
         val canShowHint = remoteApi.canShowHint(projectId, editorId, offset, type)
         if (!canShowHint) {
@@ -92,7 +85,7 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
 
 private class ValueLookupManagerValueHint(
   private val parentCoroutineScope: CoroutineScope,
-  project: Project, private val projectId: UID,
+  project: Project, private val projectId: ProjectId,
   private val editor: Editor,
   point: Point,
   private val type: ValueHintType,
@@ -101,7 +94,6 @@ private class ValueLookupManagerValueHint(
   private var remoteHint: Deferred<RemoteValueHint?>? = null
   private var hintCoroutineScope: CoroutineScope? = null
 
-  @OptIn(DelicateCoroutinesApi::class)
   override fun evaluateAndShowHint() {
     hintCoroutineScope = parentCoroutineScope.childScope("ValueLookupManagerValueHintScope")
     val remoteHint = hintCoroutineScope!!.async(Dispatchers.IO) {

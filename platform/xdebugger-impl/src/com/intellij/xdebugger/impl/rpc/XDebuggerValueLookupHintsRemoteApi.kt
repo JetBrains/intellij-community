@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.platform.project.ProjectId
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -13,13 +14,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
-  suspend fun canShowHint(projectId: UID, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean
+  suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean
 
-  suspend fun createHint(projectId: UID, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint?
+  suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint?
 
-  suspend fun showHint(projectId: UID, hintId: Int): Flow<Unit>
+  suspend fun showHint(projectId: ProjectId, hintId: Int): Flow<Unit>
 
-  suspend fun removeHint(projectId: UID, hintId: Int)
+  suspend fun removeHint(projectId: ProjectId, hintId: Int)
 }
 
 @ApiStatus.Internal

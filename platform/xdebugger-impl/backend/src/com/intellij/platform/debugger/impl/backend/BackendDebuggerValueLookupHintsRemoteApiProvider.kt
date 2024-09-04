@@ -7,19 +7,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectEntity
-import com.intellij.openapi.project.impl.asProject
-import com.intellij.platform.kernel.KernelService
-import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHint
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
-import com.jetbrains.rhizomedb.entity
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -41,9 +37,9 @@ private class BackendDebuggerValueLookupHintsRemoteApiProvider : RemoteApiProvid
 }
 
 private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
-  override suspend fun canShowHint(projectId: UID, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean {
+  override suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean {
     return withContext(Dispatchers.Main) {
-      val project = getProjectFromUID(projectId) ?: return@withContext false
+      val project = projectId.findProject()
       val editor = editorId.findEditor()
       val point = editor.offsetToXY(offset)
 
@@ -52,9 +48,9 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
     }
   }
 
-  override suspend fun createHint(projectId: UID, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint? {
+  override suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint? {
     return withContext(Dispatchers.Main) {
-      val project = getProjectFromUID(projectId) ?: return@withContext null
+      val project = projectId.findProject()
       val editor = editorId.findEditor()
       val point = editor.offsetToXY(offset)
 
@@ -82,8 +78,8 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
     return null
   }
 
-  override suspend fun showHint(projectId: UID, hintId: Int): Flow<Unit> {
-    val project = getProjectFromUID(projectId) ?: return emptyFlow()
+  override suspend fun showHint(projectId: ProjectId, hintId: Int): Flow<Unit> {
+    val project = projectId.findProject()
     val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId) ?: return emptyFlow()
     return callbackFlow {
       withContext(Dispatchers.Main) {
@@ -96,19 +92,12 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
     }
   }
 
-  override suspend fun removeHint(projectId: UID, hintId: Int) {
-    val project = getProjectFromUID(projectId) ?: return
+  override suspend fun removeHint(projectId: ProjectId, hintId: Int) {
+    val project = projectId.findProject()
     val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId) ?: return
     BackendDebuggerValueLookupHintsHolder.getInstance(project).removeHint(hintId)
     withContext(Dispatchers.Main) {
       hint.hideHint()
-    }
-  }
-
-  private suspend fun getProjectFromUID(projectId: UID): Project? {
-    return withKernel {
-      val projectEntity = entity<ProjectEntity, UID>(ProjectEntity.ProjectId, projectId)
-      projectEntity?.asProject()
     }
   }
 }

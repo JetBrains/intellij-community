@@ -2,12 +2,14 @@
 package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.asProject
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupHideHintsRequestEntity
 import com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupListeningStartedEntity
 import fleet.kernel.change
-import fleet.kernel.rete.*
+import fleet.kernel.rete.collect
+import fleet.kernel.rete.each
+import fleet.kernel.rete.filter
 import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +24,7 @@ internal fun subscribeForDebuggingStart(cs: CoroutineScope, project: Project, on
           register(XDebuggerValueLookupListeningStartedEntity)
         }
       }
-      XDebuggerValueLookupListeningStartedEntity.each().filter { it.projectEntity.asProject()!! === project }.collect {
+      XDebuggerValueLookupListeningStartedEntity.each().filter { it.projectEntity.asProject() === project }.collect {
         withContext(Dispatchers.Main) {
           onStartListening()
         }
@@ -39,7 +41,7 @@ internal fun subscribeForValueHintHideRequest(cs: CoroutineScope, project: Proje
           register(XDebuggerValueLookupHideHintsRequestEntity)
         }
       }
-      XDebuggerValueLookupHideHintsRequestEntity.each().filter { it.projectEntity.asProject()!! === project }.collect { entity ->
+      XDebuggerValueLookupHideHintsRequestEntity.each().filter { it.projectEntity.asProject() === project }.collect { entity ->
         withContext(Dispatchers.Main) {
           onHintHidden()
         }

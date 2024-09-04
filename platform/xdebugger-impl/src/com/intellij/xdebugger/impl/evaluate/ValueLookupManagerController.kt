@@ -4,10 +4,10 @@ package com.intellij.xdebugger.impl.evaluate
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectEntity
-import com.intellij.openapi.project.impl.asEntity
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.asEntity
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import fleet.kernel.DurableEntityType
@@ -69,7 +69,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
           change {
             shared {
               XDebuggerValueLookupListeningStartedEntity.new {
-                it[XDebuggerValueLookupListeningStartedEntity.Project] = project.asEntity()!!
+                it[XDebuggerValueLookupListeningStartedEntity.Project] = project.asEntity()
               }
             }
           }
@@ -89,7 +89,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
           shared {
             register(XDebuggerValueLookupHideHintsRequestEntity)
             XDebuggerValueLookupHideHintsRequestEntity.new {
-              it[XDebuggerValueLookupHideHintsRequestEntity.Project] = project.asEntity()!!
+              it[XDebuggerValueLookupHideHintsRequestEntity.Project] = project.asEntity()
             }
           }
         }
