@@ -51,6 +51,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.*;
 
 public final class RunDashboardServiceViewContributor
@@ -162,17 +164,19 @@ public final class RunDashboardServiceViewContributor
 
   @Nullable
   private static RunDashboardRunConfigurationNode getRunConfigurationNode(@NotNull DnDEvent event, @NotNull Project project) {
-    Object object = event.getAttachedObject();
-    if (!(object instanceof ServiceViewDragBeanBase dragBean)) return null;
+    try {
+      List<?> items = (List<?>)event.getTransferData(ServiceViewDnDDescriptor.LIST_DATA_FLAVOR);
+      Object item = ContainerUtil.getOnlyItem(items);
+      if (item == null) return null;
 
-    List<Object> items = dragBean.getSelectedItems();
-    Object item = ContainerUtil.getOnlyItem(items);
-    if (item == null) return null;
+      RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(item, RunDashboardRunConfigurationNode.class);
+      if (node != null && !node.getConfigurationSettings().getConfiguration().getProject().equals(project)) return null;
 
-    RunDashboardRunConfigurationNode node = ObjectUtils.tryCast(item, RunDashboardRunConfigurationNode.class);
-    if (node != null && !node.getConfigurationSettings().getConfiguration().getProject().equals(project)) return null;
-
-    return node;
+      return node;
+    }
+    catch (UnsupportedFlavorException | IOException e) {
+      return null;
+    }
   }
 
   private static final class RunConfigurationServiceViewDescriptor implements ServiceViewDescriptor,

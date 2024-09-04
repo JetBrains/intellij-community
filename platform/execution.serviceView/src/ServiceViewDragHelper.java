@@ -2,8 +2,11 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.services.*;
+import com.intellij.execution.services.ServiceViewContributor;
+import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewDnDDescriptor;
 import com.intellij.execution.services.ServiceViewDnDDescriptor.Position;
+import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -28,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -142,7 +148,7 @@ final class ServiceViewDragHelper {
     return content;
   }
 
-  static final class ServiceViewDragBean implements ServiceViewDragBeanBase {
+  static final class ServiceViewDragBean implements Transferable {
     private final ServiceView myServiceView;
     private final List<ServiceViewItem> myItems;
     private final ServiceViewContributor myContributor;
@@ -177,10 +183,26 @@ final class ServiceViewDragHelper {
       return myContributor;
     }
 
-    @Override
-    @NotNull
-    public List<Object> getSelectedItems() {
+    private List<Object> getSelectedItems() {
       return ContainerUtil.map(myItems, ServiceViewItem::getValue);
+    }
+
+    @Override
+    public DataFlavor[] getTransferDataFlavors() {
+      return new DataFlavor[] {ServiceViewDnDDescriptor.LIST_DATA_FLAVOR};
+    }
+
+    @Override
+    public boolean isDataFlavorSupported(DataFlavor flavor) {
+      return ServiceViewDnDDescriptor.LIST_DATA_FLAVOR.equals(flavor);
+    }
+
+    @Override
+    public @NotNull Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+      if (ServiceViewDnDDescriptor.LIST_DATA_FLAVOR.equals(flavor)) {
+        return getSelectedItems();
+      }
+      throw new UnsupportedFlavorException(flavor);
     }
   }
 

@@ -4,6 +4,9 @@ package com.intellij.execution.services;
 import com.intellij.ide.dnd.DnDEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.datatransfer.DataFlavor;
+import java.util.List;
+
 /**
  * {@link ServiceViewDescriptor} should implement this interface in order to accept and process DnD events.
  */
@@ -29,4 +32,9 @@ public interface ServiceViewDnDDescriptor {
   enum Position {
     ABOVE, INTO, BELOW
   }
+
+  /**
+   * Represents the {@link DataFlavor} for transferring lists of service view items during drag-and-drop operations.
+   */
+  DataFlavor LIST_DATA_FLAVOR = new DataFlavor(List.class, "Service View items");
 }

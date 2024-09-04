@@ -2200,6 +2200,7 @@ com.intellij.execution.services.ServiceViewDescriptor
 - onNodeSelected(java.util.List):V
 - onNodeUnselected():V
 com.intellij.execution.services.ServiceViewDnDDescriptor
+- sf:LIST_DATA_FLAVOR:java.awt.datatransfer.DataFlavor
 - a:canDrop(com.intellij.ide.dnd.DnDEvent,com.intellij.execution.services.ServiceViewDnDDescriptor$Position):Z
 - a:drop(com.intellij.ide.dnd.DnDEvent,com.intellij.execution.services.ServiceViewDnDDescriptor$Position):V
 e:com.intellij.execution.services.ServiceViewDnDDescriptor$Position
@@ -2209,8 +2210,6 @@ e:com.intellij.execution.services.ServiceViewDnDDescriptor$Position
 - sf:INTO:com.intellij.execution.services.ServiceViewDnDDescriptor$Position
 - s:valueOf(java.lang.String):com.intellij.execution.services.ServiceViewDnDDescriptor$Position
 - s:values():com.intellij.execution.services.ServiceViewDnDDescriptor$Position[]
-com.intellij.execution.services.ServiceViewDragBeanBase
-- a:getSelectedItems():java.util.List
 com.intellij.execution.services.ServiceViewGroupingContributor
 - com.intellij.execution.services.ServiceViewContributor
 - a:getGroupDescriptor(java.lang.Object):com.intellij.execution.services.ServiceViewDescriptor
