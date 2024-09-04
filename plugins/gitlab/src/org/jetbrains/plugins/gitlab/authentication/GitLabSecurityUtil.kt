@@ -13,7 +13,7 @@ object GitLabSecurityUtil {
   internal fun buildNewTokenUrl(serverUri: String): String? {
     val productName = ApplicationNamesInfo.getInstance().fullProductName
 
-    return parseEncoded("${serverUri}/-/profile/personal_access_tokens")
+    return parseEncoded("${serverUri}/-/user_settings/personal_access_tokens")
       ?.addParameters(
         mapOf(
           "name" to "$productName $DEFAULT_CLIENT_NAME",
