@@ -16,6 +16,7 @@ import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
+import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CompletableFuture
@@ -34,7 +35,17 @@ internal class BlockTerminalSession(
 ) : Disposable {
 
   val model: TerminalModel
+
+  /**
+   * Use [terminalOutputStream] whenever possible instead of this field.
+   * @see [terminalOutputStream]
+   */
   internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
+
+  /**
+   * Wrapper for future. Holds
+   */
+  internal val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 

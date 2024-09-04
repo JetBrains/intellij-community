@@ -24,10 +24,8 @@ internal class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.m
   override fun actionPerformed(e: AnActionEvent) {
     val session = e.terminalSession?.takeIf { it.model.isCommandRunning } ?: return
     e.selectionController?.clearSelection()
-    session.terminalStarterFuture.thenAccept {
-      // Send Ctrl+C
-      it?.sendString("\u0003", false)
-    }
+    // Send Ctrl+C
+    session.terminalOutputStream.sendString("\u0003", false)
   }
 
   override fun update(e: AnActionEvent) {

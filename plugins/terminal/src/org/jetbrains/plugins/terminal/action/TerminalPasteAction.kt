@@ -61,11 +61,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
     e.simpleTerminalController?.clearTextSelection()
 
     e.outputController?.scrollToBottom()
-    session.terminalStarterFuture.thenAccept {
-      if (it != null) {
-        doPasteIntoTerminalSession(it)
-      }
-    }
+    doPasteIntoTerminalSession(session.terminalOutputStream)
   }
 
   private fun doPasteIntoTerminalSession(output: TerminalOutputStream) {
