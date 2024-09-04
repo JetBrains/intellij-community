@@ -7296,11 +7296,14 @@ f:com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvid
 *e:com.intellij.codeInsight.intention.IntentionSource
 - java.lang.Enum
 - sf:CONTEXT_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
+- sf:CUSTOM_SHORTCUT:com.intellij.codeInsight.intention.IntentionSource
 - sf:DAEMON_TOOLTIP:com.intellij.codeInsight.intention.IntentionSource
 - sf:FILE_LEVEL_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
 - sf:FLOATING_TOOLBAR:com.intellij.codeInsight.intention.IntentionSource
 - sf:LIGHT_BULB:com.intellij.codeInsight.intention.IntentionSource
+- sf:OTHER:com.intellij.codeInsight.intention.IntentionSource
 - sf:PROBLEMS_VIEW:com.intellij.codeInsight.intention.IntentionSource
+- sf:SEARCH_EVERYWHERE:com.intellij.codeInsight.intention.IntentionSource
 - s:valueOf(java.lang.String):com.intellij.codeInsight.intention.IntentionSource
 - s:values():com.intellij.codeInsight.intention.IntentionSource[]
 f:com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction
@@ -7512,6 +7515,8 @@ f:com.intellij.codeInsight.intention.impl.IntentionShortcutManager$Companion
 - f:getInstance():com.intellij.codeInsight.intention.impl.IntentionShortcutManager
 f:com.intellij.codeInsight.intention.impl.IntentionShortcutUtils
 - sf:invokeAsAction(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- sf:invokeAsAction(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.intention.IntentionSource):V
+- bs:invokeAsAction$default(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.intention.IntentionSource,I,java.lang.Object):V
 com.intellij.codeInsight.intention.impl.IntentionsOrderProvider
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - a:getSortedIntentions(com.intellij.codeInsight.intention.impl.CachedIntentions,java.util.List):java.util.List

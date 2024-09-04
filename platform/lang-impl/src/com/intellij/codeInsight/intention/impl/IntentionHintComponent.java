@@ -890,7 +890,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           ((WizardPopup)myListPopup).registerAction(
             IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), createAction(e -> {
               close();
-              IntentionShortcutUtils.invokeAsAction(intention, myEditor, myFile);
+              IntentionShortcutUtils.invokeAsAction(intention, myEditor, myFile, IntentionSource.CUSTOM_SHORTCUT);
             })
           );
         }

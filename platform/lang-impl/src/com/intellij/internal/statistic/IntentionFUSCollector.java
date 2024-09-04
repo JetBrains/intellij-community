@@ -31,7 +31,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
     EventFields.StringValidatedByCustomRule("inspection_id", InspectionUsageFUSCollector.InspectionToolValidator.class);
   private static final EnumEventField<IntentionSource> SOURCE_FIELD = EventFields.Enum("source", IntentionSource.class);
 
-  private static final EventLogGroup GROUP = new EventLogGroup("intentions", 65);
+  private static final EventLogGroup GROUP = new EventLogGroup("intentions", 66);
 
   private static final VarargEventId CALLED = GROUP.registerVarargEvent(
     "called",
@@ -53,11 +53,10 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
     SOURCE_FIELD
   );
 
-  private static final EventId3<Long, FileType, Boolean> POPUP_DELAY =
+  private static final EventId2<Long, FileType> POPUP_DELAY =
     GROUP.registerEvent("popup.delay",
                         EventFields.DurationMs,
-                        EventFields.FileType,
-                        EventFields.Dumb);
+                        EventFields.FileType);
 
   @Override
   public EventLogGroup getGroup() {
