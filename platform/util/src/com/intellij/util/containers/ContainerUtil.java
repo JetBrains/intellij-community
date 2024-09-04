@@ -2384,7 +2384,7 @@ public final class ContainerUtil {
    * Processes the list, remove all duplicates and return the list with unique elements.
    * @param list must be sorted (according to the comparator), all elements must be not-null
    */
-  public static @Unmodifiable @NotNull <T> List<? extends T> removeDuplicatesFromSorted(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator) {
+  public static @NotNull <T> List<? extends T> removeDuplicatesFromSorted(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator) {
     T prev = null;
     List<T> result = null;
     for (int i = 0; i < list.size(); i++) {
@@ -2407,7 +2407,7 @@ public final class ContainerUtil {
       }
       prev = t;
     }
-    return result == null ? list : Collections.unmodifiableList(result);
+    return result == null ? list : result;
   }
 
   /**

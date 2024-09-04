@@ -99,6 +99,10 @@ public final class LibraryScopeCache {
     modulesLibraryUsedIn.sort(comparator);
     List<? extends Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
 
+    if (uniquesList instanceof ArrayList) {
+      // Don't waste memory for myLibraryScopes keys
+      ((ArrayList<?>)uniquesList).trimToSize();
+    }
     GlobalSearchScope allCandidates = uniquesList.isEmpty() ? myLibrariesOnlyScope : getScopeForLibraryUsedIn(uniquesList);
     if (lib != null) {
       final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
