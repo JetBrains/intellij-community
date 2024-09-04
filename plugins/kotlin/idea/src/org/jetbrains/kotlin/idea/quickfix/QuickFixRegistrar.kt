@@ -690,7 +690,7 @@ class QuickFixRegistrar : QuickFixContributor {
         OPT_IN_MARKER_ON_OVERRIDE_WARNING.registerFactory(RemoveAnnotationFix)
         OPT_IN_WITHOUT_ARGUMENTS.registerFactory(RemoveAnnotationFix)
 
-        TYPE_VARIANCE_CONFLICT.registerFactory(RemoveTypeVarianceFixFactory, AddAnnotationFix.TypeVarianceConflictFactory)
+        TYPE_VARIANCE_CONFLICT.registerFactory(RemoveTypeVarianceFixFactory, AddUnsafeVarianceAnnotationFixFactory)
 
         CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT.registerFactory(
             MoveMemberToCompanionObjectIntention.Factory,

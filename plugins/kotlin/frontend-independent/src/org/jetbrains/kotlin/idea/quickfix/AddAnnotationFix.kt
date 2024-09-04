@@ -2,24 +2,19 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 open class AddAnnotationFix(
     element: KtElement,
@@ -66,20 +61,5 @@ open class AddAnnotationFix(
         data class Declaration(val name: String?) : Kind()
         data class ContainingClass(val name: String?) : Kind()
         data class Copy(val source: String, val target: String) : Kind()
-    }
-
-    object TypeVarianceConflictFactory :
-        QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val typeReference = psiElement.parent as? KtTypeReference ?: return emptyList()
-            return listOf(AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self))
-        }
-    }
-
-    object AddConsistentCopyVisibilityAnnotationFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val containingClass = psiElement.parents(withSelf = true).firstIsInstanceOrNull<KtClass>() ?: return emptyList()
-            return listOf(AddAnnotationFix(containingClass, StandardClassIds.Annotations.ConsistentCopyVisibility))
-        }
     }
 }

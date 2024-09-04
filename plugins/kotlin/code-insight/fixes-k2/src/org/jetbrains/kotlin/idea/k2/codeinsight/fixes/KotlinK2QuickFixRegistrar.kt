@@ -432,11 +432,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         )
         registerPsiQuickFixes(
             KaFirDiagnostic.DataClassCopyVisibilityWillBeChangedWarning::class,
-            AddAnnotationFix.AddConsistentCopyVisibilityAnnotationFactory,
+            AddConsistentCopyVisibilityAnnotationFixFactory,
         )
         registerPsiQuickFixes(
             KaFirDiagnostic.DataClassCopyVisibilityWillBeChangedError::class,
-            AddAnnotationFix.AddConsistentCopyVisibilityAnnotationFactory,
+            AddConsistentCopyVisibilityAnnotationFixFactory,
         )
         registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
