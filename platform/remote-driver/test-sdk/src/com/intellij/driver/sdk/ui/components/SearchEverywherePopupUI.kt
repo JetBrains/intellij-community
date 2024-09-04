@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
 
 
-fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='HeavyWeightWindow'][//div[contains(@class, 'SearchEverywhereUI')]]",
+fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) },
                                                                                SearchEverywherePopupUI::class.java)
 
 class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
