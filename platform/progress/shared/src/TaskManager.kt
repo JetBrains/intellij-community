@@ -2,9 +2,8 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withKernel
 import fleet.kernel.*
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -22,7 +21,7 @@ object TaskManager {
    *
    * @param taskInfoEntity task to cancel
    */
-  suspend fun cancelTask(taskInfoEntity: TaskInfoEntity) = withContext(KernelService.kernelCoroutineContext()) {
+  suspend fun cancelTask(taskInfoEntity: TaskInfoEntity) = withKernel {
     tryWithEntities(taskInfoEntity) {
       if (taskInfoEntity.cancellation is TaskCancellation.NonCancellable) {
         LOG.error("Task ${taskInfoEntity.eid} is not cancellable")
@@ -39,7 +38,7 @@ object TaskManager {
    *
    * @param taskInfoEntity task to pause
    */
-  suspend fun pauseTask(taskInfoEntity: TaskInfoEntity) = withContext(KernelService.kernelCoroutineContext()) {
+  suspend fun pauseTask(taskInfoEntity: TaskInfoEntity) = withKernel {
     tryWithEntities(taskInfoEntity) {
       // TODO Check that task can be suspended RDCT-1620
 
@@ -53,7 +52,7 @@ object TaskManager {
    *
    * @param taskInfoEntity task to pause
    */
-  suspend fun resumeTask(taskInfoEntity: TaskInfoEntity) = withContext(KernelService.kernelCoroutineContext()) {
+  suspend fun resumeTask(taskInfoEntity: TaskInfoEntity) = withKernel {
     tryWithEntities(taskInfoEntity) {
       taskInfoEntity.setTaskStatus(TaskStatus.RUNNING)
     }

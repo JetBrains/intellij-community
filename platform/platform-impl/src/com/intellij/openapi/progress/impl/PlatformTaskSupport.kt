@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
-import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
@@ -114,7 +114,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext): Job {
     return launch {
-      withContext(KernelService.kernelCoroutineContext()) {
+      withKernel {
         taskInfo.statuses.collect { status ->
           when (status) {
             TaskStatus.RUNNING -> { /* TODO RDCT-1620 */ }

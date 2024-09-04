@@ -2,11 +2,10 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
 import fleet.kernel.withEntities
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -27,7 +26,7 @@ abstract class TaskStorage {
   suspend fun addTask(
     title: String,
     cancellation: TaskCancellation,
-  ): TaskInfoEntity = withContext(KernelService.kernelCoroutineContext()) {
+  ): TaskInfoEntity = withKernel {
     createTaskInfoEntity {
       TaskInfoEntity.new {
         it[TaskInfoEntity.Title] = title
@@ -43,7 +42,7 @@ abstract class TaskStorage {
    * The implementation can decide whether the entity should be created locally on in the shared DB scope.
    *
    * It's guaranteed that the method is called in the correct coroutine context,
-   * which includes kernel (see [KernelService.kernelCoroutineContext])
+   * which includes kernel (see [withKernel])
    *
    * @param provider The provider used to create the [TaskInfoEntity].
    * @return The created [TaskInfoEntity].
@@ -56,7 +55,7 @@ abstract class TaskStorage {
    *
    * @param taskInfoEntity The task to be removed.
    */
-  suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withContext(KernelService.kernelCoroutineContext()) {
+  suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     withEntities(taskInfoEntity) {
       removeTaskInfoEntity(taskInfoEntity)
     }
@@ -70,7 +69,7 @@ abstract class TaskStorage {
    * are going to be passed to this method.
    *
    * It is also guaranteed that the method is called in the correct coroutine context,
-   * which includes kernel (see [KernelService.kernelCoroutineContext])
+   * which includes kernel (see [withKernel])
    *
    * @param taskInfoEntity The task entity to be removed.
    */
@@ -84,7 +83,7 @@ abstract class TaskStorage {
    * @param state The new progress state to set on the task.
    * @return Unit
    */
-  suspend fun updateTask(taskInfoEntity: TaskInfoEntity, state: ProgressState): Unit = withContext(KernelService.kernelCoroutineContext()) {
+  suspend fun updateTask(taskInfoEntity: TaskInfoEntity, state: ProgressState): Unit = withKernel {
     withEntities(taskInfoEntity) {
       updateTaskInfoEntity {
         taskInfoEntity[TaskInfoEntity.ProgressStateType] = state
@@ -99,7 +98,7 @@ abstract class TaskStorage {
    * are going to be passed to this method.
    *
    * It is also guaranteed that the method is called in the correct coroutine context,
-   * which includes kernel (see [KernelService.kernelCoroutineContext])
+   * which includes kernel (see [withKernel])
    *
    * @param updater A lambda provided with a [ChangeScope] receiver to modify the task information.
    */
