@@ -936,7 +936,6 @@ com.intellij.codeInsight.lookup.LookupListener
 *f:com.intellij.codeInsight.lookup.LookupPresentation$Builder
 - <init>():V
 - <init>(com.intellij.codeInsight.lookup.LookupPresentation):V
-- b:<init>(com.intellij.codeInsight.lookup.LookupPresentation,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:build():com.intellij.codeInsight.lookup.LookupPresentation
 - f:withMaxVisibleItemsCount(kotlin.properties.ReadWriteProperty):com.intellij.codeInsight.lookup.LookupPresentation$Builder
 - f:withMostRelevantOnTop(Z):com.intellij.codeInsight.lookup.LookupPresentation$Builder
