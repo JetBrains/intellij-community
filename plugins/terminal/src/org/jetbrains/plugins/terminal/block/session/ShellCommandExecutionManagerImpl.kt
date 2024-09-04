@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.input.InputEvent.CTRL_MASK
@@ -25,7 +26,6 @@ import org.jetbrains.plugins.terminal.util.ShellType
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -38,7 +38,7 @@ internal class ShellCommandExecutionManagerImpl(
   commandManager: ShellCommandManager,
 ) : ShellCommandExecutionManager {
 
-  private val listeners: CopyOnWriteArrayList<ShellCommandSentListener> = CopyOnWriteArrayList()
+  private val listeners: EventDispatcher<ShellCommandSentListener>  = EventDispatcher.create(ShellCommandSentListener::class.java)
 
   /**
    * Used to synchronize access to several private fields of this object.
@@ -299,24 +299,20 @@ internal class ShellCommandExecutionManagerImpl(
   }
 
   override fun addListener(listener: ShellCommandSentListener) {
-    TerminalUtil.addItem(listeners, listener, session)
+    listeners.addListener(listener, session)
   }
 
   override fun addListener(listener: ShellCommandSentListener, parentDisposable: Disposable) {
-    TerminalUtil.addItem(listeners, listener, parentDisposable)
+    listeners.addListener(listener, parentDisposable)
   }
 
   private fun fireUserCommandSent(userCommand: String) {
-    for (listener in listeners) {
-      listener.userCommandSent(userCommand)
-    }
+    listeners.multicaster.userCommandSent(userCommand)
     debug { "User command sent: $userCommand" }
   }
 
   private fun fireGeneratorCommandSent(generatorCommand: String) {
-    for (listener in listeners) {
-      listener.generatorCommandSent(generatorCommand)
-    }
+    listeners.multicaster.generatorCommandSent(generatorCommand)
     debug { "Generator command sent: $generatorCommand" }
   }
 
