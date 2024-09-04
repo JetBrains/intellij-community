@@ -506,8 +506,6 @@ object CommunityLibraryLicenses {
     ffmpegLibraryLicense("javacpp-macos-aarch64"),
     ffmpegLibraryLicense("javacpp-macos-x64"),
     ffmpegLibraryLicense("javacpp-windows-x64"),
-    LibraryLicense(name = "vavr", libraryName = "vavr", url = "https://vavr.io/").mit("https://github.com/vavr-io/vavr/blob/master/LICENSE")
-      .suppliedByPersons("Daniel Dietrich"),
     LibraryLicense(name = "javawriter", attachedTo = "intellij.android.core",
                    url = "https://github.com/square/javawriter",
                    version = LibraryLicense.CUSTOM_REVISION).apache(),
@@ -1077,6 +1075,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/unitsofmeasurement/uom-lib")
       .newBsd("https://github.com/unitsofmeasurement/uom-lib/blob/master/LICENSE")
       .suppliedByPersons("Jean-Marie Dautelle", "Werner Keil"),
+    LibraryLicense(name = "vavr", libraryName = "vavr", url = "https://vavr.io/").mit("https://github.com/vavr-io/vavr/blob/master/LICENSE")
+      .suppliedByPersons("Daniel Dietrich"),
     LibraryLicense(libraryName = "Velocity", url = "https://velocity.apache.org/")
       .suppliedByOrganizations(Suppliers.APACHE)
       .apache("https://gitbox.apache.org/repos/asf?p=velocity-engine.git;a=blob_plain;f=LICENSE;hb=HEAD"),
