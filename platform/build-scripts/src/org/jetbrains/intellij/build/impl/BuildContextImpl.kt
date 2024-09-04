@@ -61,7 +61,7 @@ class BuildContextImpl internal constructor(
 
   override fun checkDistributionBuildNumber() {
     val suppliedBuildNumber = options.buildNumber
-    val baseBuildNumber = SnapshotBuildNumber.VALUE.removeSuffix(".SNAPSHOT")
+    val baseBuildNumber = SnapshotBuildNumber.BASE
     check(suppliedBuildNumber == null || suppliedBuildNumber.startsWith(baseBuildNumber)) {
       "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
       "defined in ${SnapshotBuildNumber.PATH}"
