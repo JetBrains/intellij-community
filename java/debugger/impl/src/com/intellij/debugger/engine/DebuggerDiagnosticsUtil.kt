@@ -173,7 +173,10 @@ object DebuggerDiagnosticsUtil {
 
   @JvmStatic
   @JvmOverloads
-  fun getAttachments(process: DebugProcessImpl, first: Attachment? = null): Array<Attachment?> {
+  fun getAttachments(process: DebugProcessImpl, first: Attachment? = null): Array<Attachment> {
+    if (!DebuggerManagerThreadImpl.isManagerThread()) {
+      return Attachment.EMPTY_ARRAY
+    }
     val paramAttachment = if (first != null) listOf(first) else emptyList()
     val result = paramAttachment + createStateAttachments(process)
     for (attachment in result) {
