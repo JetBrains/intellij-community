@@ -833,7 +833,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Document document = psiFile.getViewProvider().getDocument();
     if (document == null) return;
     String reason = "Psi file restart: " + psiFile.getName();
-    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), psiFile.getTextLength(), reason);
+    myFileStatusMap.markWholeFileScopeDirty(document, reason);
     stopProcess(true, reason);
   }
 

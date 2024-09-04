@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
@@ -109,7 +108,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
 
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
-    getFileStatusMap().markFileScopeDirty(document, new TextRange(0, document.getTextLength()), document.getTextLength(), reason);
+    getFileStatusMap().markWholeFileScopeDirty(document, reason);
   }
 
   public static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -117,23 +118,28 @@ public final class FileStatusMap implements Disposable {
       return true;
     }
 
-    private void combineScopesWith(@NotNull TextRange scope, int fileLength, @NotNull Document document) {
-      dirtyScopes.replaceAll((__, oldScope) -> combineScopes(oldScope, scope, fileLength, document));
+    private void combineScopesWith(@NotNull TextRange scope, @NotNull Document document) {
+      dirtyScopes.replaceAll((__, oldScope) -> combineScopes(oldScope, scope, document));
     }
 
-    private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
-      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
+    private static final TextRange WHOLE_FILE_TEXT_RANGE = new UnfairTextRange(-1, -1);
+    private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, @NotNull Document document) {
+      if (scope == WHOLE_FILE_TEXT_RANGE || old == WHOLE_FILE_DIRTY_MARKER) {
+        return WHOLE_FILE_DIRTY_MARKER;
+      }
       if (old == null) {
         return document.createRangeMarker(scope);
       }
-      if (old == WHOLE_FILE_DIRTY_MARKER) return old;
       TextRange oldRange = old.getTextRange();
       TextRange union = scope.union(oldRange);
       if (old.isValid() && union.equals(oldRange)) {
         return old;
       }
-      if (union.getEndOffset() > textLength) {
-        union = union.intersection(new TextRange(0, textLength));
+      if (union.getEndOffset() > document.getTextLength()) {
+        if (union.getStartOffset() == 0) {
+          return WHOLE_FILE_DIRTY_MARKER;
+        }
+        union =  union.intersection(new TextRange(0, document.getTextLength()));
       }
       assert union != null;
       old.dispose();
@@ -261,7 +267,10 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength, @NotNull @NonNls Object reason) {
+  void markWholeFileScopeDirty(@NotNull Document document, @NotNull @NonNls Object reason) {
+    markFileScopeDirty(document, FileStatus.WHOLE_FILE_TEXT_RANGE, reason);
+  }
+  void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     log("Mark scope dirty: ",scope,reason);
     synchronized(myDocumentToStatusMap) {
@@ -270,7 +279,7 @@ public final class FileStatusMap implements Disposable {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      status.combineScopesWith(scope, fileLength, document);
+      status.combineScopesWith(scope, document);
     }
   }
 
@@ -394,8 +403,10 @@ public final class FileStatusMap implements Disposable {
       // optimisation: the change is inside the RangeMarker which should take care of the change by itself
       return;
     }
-    int textLength = document.getTextLength();
-    RangeMarker combined = FileStatus.combineScopes(oldRange, new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), textLength)), textLength, document);
+    TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
+    RangeMarker combined = oldRange == WHOLE_FILE_DIRTY_MARKER || event.isWholeTextReplaced() ||
+                           scope.getStartOffset() == 0 && scope.getEndOffset() == document.getTextLength() ? WHOLE_FILE_DIRTY_MARKER :
+                           FileStatus.combineScopes(oldRange, scope, document);
     if (combined != WHOLE_FILE_DIRTY_MARKER) {
       combined.setGreedyToRight(true);
       combined.setGreedyToLeft(true);
@@ -419,5 +430,4 @@ public final class FileStatusMap implements Disposable {
       document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, null);
     }
   }
-
 }
