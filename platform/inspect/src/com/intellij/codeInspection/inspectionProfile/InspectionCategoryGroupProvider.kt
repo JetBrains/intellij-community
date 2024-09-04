@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
 private const val CATEGORY_PROVIDER_PREFIX = "category:"
-class InspectionCategoryGroupProvider : InspectionGroupProvider {
+
+internal class InspectionCategoryGroupProvider : InspectionGroupProvider {
 
   override fun findGroup(groupId: String): YamlInspectionGroup? {
     if (!groupId.startsWith(CATEGORY_PROVIDER_PREFIX)) return null

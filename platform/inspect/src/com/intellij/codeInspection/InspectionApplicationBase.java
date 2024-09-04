@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -497,7 +497,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         List<File> results = ContainerUtil.map(inspectionsResults, Path::toFile);
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 results);
-        InspectResultsConsumer.runConsumers(context.getTools(), results, project);
+        InspectResultsConsumerEP.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
           reportConverter.projectData(project, Paths.get(myOutPath).resolve(PROJECT_STRUCTURE_DIR));
         }

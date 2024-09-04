@@ -65,25 +65,17 @@ c:com.intellij.codeInspection.InspectionApplicationBase
 - setVerboseLevel(I):V
 - setupSecondAnalysisHandler(com.intellij.openapi.project.Project,com.intellij.codeInspection.ex.GlobalInspectionContextEx):V
 - startup():V
-c:com.intellij.codeInspection.InspectionApplicationException
+f:com.intellij.codeInspection.InspectionApplicationException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
-f:com.intellij.codeInspection.InspectionDiff
-- <init>():V
-- s:main(java.lang.String[]):V
-f:com.intellij.codeInspection.InspectionMain
-- com.intellij.openapi.application.ApplicationStarter
-- <init>():V
-- premain(java.util.List):V
-- start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.codeInspection.InspectionProfileLoader
 - a:loadProfileByName(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
 - a:loadProfileByPath(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
 - tryLoadProfileByNameOrPath(java.lang.String,java.lang.String,java.lang.String,java.util.function.Consumer):com.intellij.codeInspection.ex.InspectionProfileImpl
 a:com.intellij.codeInspection.InspectionProfileLoaderBase
 - com.intellij.codeInspection.InspectionProfileLoader
-- p:project:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project):V
+- p:getProject():com.intellij.openapi.project.Project
 - p:tryLoadProfileFromYaml(java.lang.String,com.intellij.codeInspection.ex.InspectionToolsSupplier,com.intellij.profile.codeInspection.BaseInspectionProfileManager):com.intellij.codeInspection.ex.InspectionProfileImpl
 com.intellij.codeInspection.InspectionToolCmdlineOptionHelpProvider
 - a:printHelpAndExit():V
@@ -94,36 +86,14 @@ com.intellij.codeInspection.InspectionToolCmdlineOptions
 - a:initApplication(com.intellij.codeInspection.InspectionApplicationBase):V
 - a:suppressHelp():Z
 - a:validate():V
-c:com.intellij.codeInspection.InspectionToolCmdlineOptions$CmdlineArgsValidationException
+f:com.intellij.codeInspection.InspectionToolCmdlineOptions$CmdlineArgsValidationException
 - java.lang.Exception
 - <init>(java.lang.String):V
-f:com.intellij.codeInspection.inspectionProfile.DefaultSeverityGroupProvider
-- com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
-- <init>():V
-- findGroup(java.lang.String):com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
-f:com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider
-- com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
-- <init>():V
-- findGroup(java.lang.String):com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
-f:com.intellij.codeInspection.inspectionProfile.InspectionCategoryGroupProvider
-- com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
-- <init>():V
-- findGroup(java.lang.String):com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
 f:com.intellij.codeInspection.inspectionProfile.InspectionCategoryGroupProviderKt
 - sf:escapeToolGroupPathElement(java.lang.String):java.lang.String
 - sf:makeCategoryId(java.lang.String[]):java.lang.String
 com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
-- sf:Companion:com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider$Companion
-- s:createDynamicGroupProvider():com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
 - a:findGroup(java.lang.String):com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
-- s:getEP():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider$Companion
-- f:createDynamicGroupProvider():com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.codeInspection.inspectionProfile.LoadDefaultYamlProfile
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.codeInspection.inspectionProfile.YamlBaseConfig
 - a:getEnabled():java.lang.Boolean
 - a:getIgnore():java.util.List
@@ -146,11 +116,3 @@ com.intellij.codeInspection.inspectionProfile.YamlInspectionProfile
 - a:getInspectionProfileManager():com.intellij.profile.codeInspection.BaseInspectionProfileManager
 - a:getInspectionToolsSupplier():com.intellij.codeInspection.ex.InspectionToolsSupplier
 - a:getProfileName():java.lang.String
-f:com.intellij.codeInspection.inspectionProfile.YmlInspectionProfileKt
-- sf:includesInspection(com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup,com.intellij.codeInspection.ex.InspectionToolWrapper):Z
-f:com.intellij.inspectopedia.extractor.data.Utils
-- <init>():V
-- s:safeId(java.lang.String):java.lang.String
-f:com.intellij.inspectopedia.extractor.utils.HtmlUtils
-- <init>():V
-- s:cleanupHtml(java.lang.String,java.lang.String):java.lang.String

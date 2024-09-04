@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public final class InspectionDiff {
+final class InspectionDiff {
   private static HashMap<String, ArrayList<Element>> ourFileToProblem;
   @NonNls
   private static final String FILE_ELEMENT = "file";

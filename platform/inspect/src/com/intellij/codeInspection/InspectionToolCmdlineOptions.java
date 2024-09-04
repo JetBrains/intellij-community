@@ -1,8 +1,12 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
+
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Roman.Chernyatchik
  */
+@ApiStatus.OverrideOnly
 public interface InspectionToolCmdlineOptions extends InspectionToolCmdlineOptionHelpProvider {
   /**
    * @param app Inspection Application
@@ -27,7 +31,7 @@ public interface InspectionToolCmdlineOptions extends InspectionToolCmdlineOptio
    */
   void beforeStartup();
 
-  class CmdlineArgsValidationException extends Exception {
+  final class CmdlineArgsValidationException extends Exception {
     public CmdlineArgsValidationException(String message) {
       super(message);
     }

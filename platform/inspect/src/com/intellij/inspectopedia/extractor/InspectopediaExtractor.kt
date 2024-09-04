@@ -12,7 +12,6 @@ import com.intellij.codeInspection.options.*
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.inspectopedia.extractor.data.Inspection
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
-import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationManagerEx

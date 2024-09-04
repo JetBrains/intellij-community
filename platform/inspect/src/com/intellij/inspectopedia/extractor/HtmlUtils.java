@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.inspectopedia.extractor.utils;
+package com.intellij.inspectopedia.extractor;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public final class HtmlUtils {
+final class HtmlUtils {
   private static final Safelist SAFELIST = new Safelist();
 
   static {
@@ -45,6 +45,8 @@ public final class HtmlUtils {
     "pre",
     "code[style=block] > *"
   );
+
+  private HtmlUtils() {}
 
   public static @NotNull String cleanupHtml(@NotNull String source, @Nullable String languageForCodeBlocks) {
     final Document document = Jsoup.parse(source);

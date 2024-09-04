@@ -104,7 +104,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
-      groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
+      groupProvider.addProvider(InspectionGroupProviderEP.createDynamicGroupProvider())
 
       val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
       val customGroupProvider = object : InspectionGroupProvider {

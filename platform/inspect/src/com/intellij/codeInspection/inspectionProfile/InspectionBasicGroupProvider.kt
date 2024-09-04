@@ -26,7 +26,7 @@ private object LocalGroup : YamlInspectionGroup {
   }
 }
 
-class InspectionBasicGroupProvider : InspectionGroupProvider {
+internal class InspectionBasicGroupProvider : InspectionGroupProvider {
   private val commonGroups: Map<String, YamlInspectionGroup> by lazy {
     listOf(LocalGroup, GlobalGroup, AllGroup).associateBy(YamlInspectionGroup::groupId)
   }
