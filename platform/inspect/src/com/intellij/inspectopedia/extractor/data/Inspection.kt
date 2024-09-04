@@ -10,7 +10,7 @@ private val WHITELIST = Safelist()
   .addTags("p", "br", "li", "ul", "ol", "b", "i", "code", "a")
   .addAttributes("a", "href")
 
-data class Inspection(
+internal data class Inspection(
   @JvmField var id: String? = null,
 
   @JvmField val name: String,
@@ -42,7 +42,7 @@ data class Inspection(
   override fun compareTo(other: Inspection) = name.compareTo(other.name)
 }
 
-data class OptionsPanelInfo(
+internal data class OptionsPanelInfo(
   @JvmField var type: String? = null,
   @JvmField var text: String? = null,
 ) {

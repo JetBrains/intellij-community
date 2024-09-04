@@ -14,7 +14,6 @@ import com.intellij.inspectopedia.extractor.data.Inspection
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
 import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -191,14 +190,14 @@ private fun retrievePanelStructure(component: OptComponent, controller: OptionCo
 }
 
 @Suppress("unused")
-data class Plugins(
+private data class Plugins(
   @JvmField val plugins: List<Plugin>,
   @JvmField val ideCode: String,
   @JvmField val ideName: String,
   @JvmField val ideVersion: String,
 )
 
-data class Plugin(
+private data class Plugin(
   @JvmField val id: String,
   @JvmField val name: String,
   @JvmField val version: String?,
