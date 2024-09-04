@@ -125,7 +125,7 @@ class PyPackagingTablesView(
   }
 
   fun selectPackage(packageName: String) {
-    val repos = listOf(installedPackages) + repositories
+    val repos = getRepos()
     for (repo in repos) {
       val pyPackage = repo.items.firstOrNull { it.name == packageName } ?: continue
       repo.table.selectPackage(pyPackage)
@@ -190,7 +190,13 @@ class PyPackagingTablesView(
   }
 
   fun getSelectedPackages(): List<DisplayablePackage> {
-    val repos = listOf(installedPackages) + repositories
+    val repos = getRepos()
     return repos.flatMap { it.table.selectedItems() }
   }
+
+  fun collapseAll() {
+    getRepos().forEach { it.collapse() }
+  }
+
+  private fun getRepos() = listOf(installedPackages) + repositories
 }

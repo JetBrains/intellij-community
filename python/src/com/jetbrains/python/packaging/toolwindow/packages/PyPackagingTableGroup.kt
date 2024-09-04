@@ -47,7 +47,8 @@ internal class PyPackagingTableGroup(val repository: PyPackageRepository, val ta
 
   fun setSdkToHeader(@Nls sdkName: String?) {
     itemsCount = null
-    label.text = name + " (${sdkName})"
+    @Suppress("HardCodedStringLiteral")
+    label.text = "<html>$name <b>(${sdkName})</b></html>"
   }
 
 

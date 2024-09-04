@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -111,15 +112,23 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     }
 
     val actionGroup = DefaultActionGroup()
-    actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
+    val collapseAllAction = DumbAwareAction.create(message("python.toolwindow.packages.collapse.all.action"), AllIcons.Actions.Collapseall) {
+      packageListController.collapseAll()
+    }
+    actionGroup.add(collapseAllAction)
+
+    val reloadReposAction = DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
       startLoadingSdk()
       moduleController.rebuildList()
       service.reloadPackages()
-    })
+    }
+    actionGroup.add(reloadReposAction)
 
     actionGroup.add(ActionManager.getInstance().getAction("PyPackageToolbarAdditional"))
+    actionGroup.isPopup = false
     val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, actionGroup, true)
     actionToolbar.targetComponent = this
+    actionToolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     mainPanel = PyPackagesUiComponents.borderPanel {
       val topToolbar = PyPackagesUiComponents.boxPanel {
@@ -128,7 +137,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
         minimumSize = Dimension(minimumSize.width, 30)
         maximumSize = Dimension(maximumSize.width, 30)
         add(searchTextField)
-        actionToolbar.component.maximumSize = Dimension(70, actionToolbar.component.maximumSize.height)
+        //actionToolbar.component.maximumSize = Dimension(70, actionToolbar.component.maximumSize.height)
         add(actionToolbar.component)
       }
       add(topToolbar, BorderLayout.NORTH)

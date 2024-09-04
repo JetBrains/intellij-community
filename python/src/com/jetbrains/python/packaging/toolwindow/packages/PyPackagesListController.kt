@@ -68,6 +68,10 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
     setLoadingState(true)
   }
 
+  fun collapseAll() {
+    tablesView.collapseAll()
+  }
+
   private fun setLoadingState(isLoading: Boolean) {
     val newPanel = if (isLoading) loadingPanel else scrollingPackageListComponent
 
