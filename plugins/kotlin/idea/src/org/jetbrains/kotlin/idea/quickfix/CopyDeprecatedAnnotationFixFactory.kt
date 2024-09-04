@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * A factory for `OVERRIDE_DEPRECATION` warning. It provides an action that copies the `@Deprecated` annotation
  * from the ancestor's deprecated function/property to the overriding function/property in the derived class.
  */
-internal object CopyDeprecatedAnnotation : KotlinIntentionActionsFactory() {
+internal object CopyDeprecatedAnnotationFixFactory : KotlinIntentionActionsFactory() {
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         if (diagnostic.factory != Errors.OVERRIDE_DEPRECATION) return emptyList()
 

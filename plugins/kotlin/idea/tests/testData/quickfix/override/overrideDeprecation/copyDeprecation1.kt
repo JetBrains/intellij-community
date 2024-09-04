@@ -10,4 +10,4 @@ class Derived : Base() {
     override fun <caret>foo() {}
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotation$doCreateActions$1$1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFixFactory$doCreateActions$1$1
