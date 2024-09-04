@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
@@ -90,17 +91,15 @@ public final class InspectionDiff {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Document createDelta(@Nullable Element oldRoot, Element newRoot) {
+  private static @NotNull Document createDelta(@Nullable Element oldRoot, Element newRoot) {
     ourFileToProblem = new HashMap<>();
-    List newProblems = newRoot.getChildren("problem");
-    for (final Object o : newProblems) {
-      Element newProblem = (Element)o;
-      addProblem(newProblem);
+    List<Element> newProblems = newRoot.getChildren("problem");
+    for (Element problem : newProblems) {
+      addProblem(problem);
     }
 
     if (oldRoot != null) {
-      for (final Element oldProblem : oldRoot.getChildren("problem")) {
+      for (Element oldProblem : oldRoot.getChildren("problem")) {
         if (!removeIfEquals(oldProblem)) {
           addProblem(oldProblem);
         }
