@@ -275,7 +275,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     for (component in cellsPanel.components) {
       val result = when (component) {
         is SimpleColoredComponent -> component.getCharSequence(true).toString()
-        is JLabel -> component.text
+        is JLabel -> component.text // todo dead code?
         else -> throw UiDslException("Unsupported component type: ${component.javaClass.name}")
       }
 

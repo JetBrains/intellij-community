@@ -34,5 +34,5 @@ class LcrTextInitParams(foreground: Color) : LcrInitParams() {
   /**
    * true if the text is used by speed search and therefore should be highlighted while searching
    */
-  var speedSearchHighlighting: Boolean = true
+  var speedSearchHighlighting: Boolean = false
 }
