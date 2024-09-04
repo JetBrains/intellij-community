@@ -7,7 +7,7 @@ import kotlin.random.Random
 val isFleetDebugMode: Boolean by lazy { fleetFlag("fleet.debug.mode") }
 
 // Enable auxiliary features to facilitate dev flow e.g. code reload etc. It means that we're running from sources.
-@Deprecated("most probably you want use FleetPath.isRunningFromSources or FleetCommonSettingsKeys.kt#isInternalMode")
+@Deprecated("most probably you want use FleetFromSourcesPaths.isRunningFromSources or FleetCommonSettingsKeys.kt#isInternalMode")
 val isFleetDevMode: Boolean by lazy { fleetFlag("fleet.dev.mode") }
 
 // Defined the default value for internal mode
@@ -15,6 +15,7 @@ val isFleetDevMode: Boolean by lazy { fleetFlag("fleet.dev.mode") }
   "we still have usages due to lack of dependency injection, most probably you want use FleetCommonSettingsKeys.kt#isInternalMode")
 val isFleetInternalDefaultValue: Boolean by lazy { fleetFlag("fleet.internal.mode.default") }
 
+@Deprecated("remove on next Dock API breakage")
 // Key for testing fus internal functionality. Should not be easily accessible from settings.
 val isFusInternalMode: Boolean by lazy { fleetFlag("fus.recorder.internal.test.mode") }
 
