@@ -1,6 +1,10 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
 import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.JDK_HOME
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.PREVIEW_JDK_HOME
+import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.SINCE_VERSION
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
@@ -87,6 +91,10 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     doCollectSinceApiUsages()
   }
 
+  /**
+   * Run to generate API lists.
+   * Setting [LANGUAGE_LEVEL], [SINCE_VERSION] and [JDK_HOME] or [PREVIEW_JDK_HOME] is required.
+   */
   private fun doCollectSinceApiUsages() {
     val previews = mutableSetOf<String>()
     val previewContentIterator = object : ContentIterator {
@@ -153,8 +161,17 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     private const val OLD_API_DIR = "REPLACE_ME"
 
     private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-20"
+
     private const val JDK_HOME = "/home/me/.jdks/openjdk-20"
+
+    /**
+     * The language level to check for.
+     */
     private val LANGUAGE_LEVEL = LanguageLevel.JDK_20
+
+    /**
+     * The @since tag value used should match [LANGUAGE_LEVEL].
+     */
     private const val SINCE_VERSION = "20"
   }
 }
