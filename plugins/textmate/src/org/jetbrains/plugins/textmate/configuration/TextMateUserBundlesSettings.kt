@@ -29,6 +29,13 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
     }
   }
 
+  fun removeBundle(path: String) {
+    val normalizedPath = FileUtil.toSystemIndependentName(path)
+    updateState { state ->
+      TextMateUserBundleServiceState(state.bundles.filter { it.key != normalizedPath })
+    }
+  }
+
   fun disableBundle(path: String) {
     val normalizedPath = FileUtil.toSystemIndependentName(path)
     updateState { state ->
@@ -36,6 +43,11 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
         TextMateUserBundleServiceState(state.bundles + (normalizedPath to bundle.copy(enabled = false)))
       } ?: state
     }
+  }
+
+  fun hasEnabledBundle(path: String): Boolean {
+    val normalizedPath = FileUtil.toSystemIndependentName(path)
+    return bundles[normalizedPath]?.enabled == true
   }
 
   companion object {
