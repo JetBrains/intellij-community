@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.toolbarLayout
 
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.util.*
@@ -78,6 +77,10 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
 
   override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
     val res = Dimension()
+    //var parent = toolbar.component.parent
+    //while (parent is ActionToolbar) {
+    //  parent = parent.parent
+    //}
     val toolbarComponent = toolbar.component
     val preferredAndRealSize = getPreferredAndRealWidth(toolbarComponent.parent)
     var toolbarWidthRatio = preferredAndRealSize.second / preferredAndRealSize.first
@@ -87,6 +90,9 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
     val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     toolbar.component.components.forEach {
       if (!it.isVisible || it !is JComponent) return@forEach
+      if (it is com.intellij.openapi.actionSystem.ActionToolbar && it.layoutPolicy == ActionToolbar.NOWRAP_LAYOUT_POLICY) {
+        
+      }
       val size = componentSizes[it] ?: it.preferredSize.apply { width = (it.preferredSize.width * toolbarWidthRatio).toInt() }
       size.height = max(size.height, minButtonSize.height)
 
@@ -115,21 +121,24 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
         totalWidth += component.preferredSize.width
       }
     }
-    val width = mainToolbar.width
+    val width = if (mainToolbar !is com.intellij.openapi.actionSystem.ActionToolbar) mainToolbar.width else {
+      val toolbar = mainToolbar as com.intellij.openapi.actionSystem.ActionToolbar
+      val otherComponentsWidth = toolbar.component.parent.components.filter { it != mainToolbar }.sumOf { it.size.width}
+      toolbar.component.parent.width - otherComponentsWidth
+    }
     return Pair((totalWidth).toDouble(), (width - getNonCompressibleWidth(mainToolbar)).toDouble())
   }
 
   protected open fun getNonCompressibleWidth(mainToolbar: Container): Int {
-    return mainToolbar.components.filterNot { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.sumOf { it.preferredSize.width}
+    return mainToolbar.components.filterNot { (it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy) || it.isMinimumSizeSet  }.sumOf { it.preferredSize.width}
   }
 
   private fun calculateComponentSizes(toolbar: ActionToolbar, preferredAndRealSize: Pair<Double, Double>): Map<Component, Dimension> {
     val mainToolbar = toolbar.component.parent
     val toolbarWidthDiff = preferredAndRealSize.first - preferredAndRealSize.second
     return if (toolbarWidthDiff > 0) {
-      val components = mainToolbar.components.filter { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.flatMap {
-        (it as? JComponent)?.components?.toList() ?: listOf(it)
-      }
+      val components = (mainToolbar.components.filter { (it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy)}.flatMap {
+        (it as? JComponent)?.components?.toMutableList() ?: listOf(it) }) + mainToolbar.components.filter { it !is ActionToolbar && it.isMinimumSizeSet }
       calculateComponentWidths(preferredAndRealSize.second, components).map { entry -> Pair(entry.key, Dimension(entry.value, entry.key.preferredSize.height)) }.toMap()
     }
     else {
@@ -166,7 +175,13 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
   }
 
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
-    return JBUI.emptySize()
+    val components = toolbar.component.components
+    val res = Dimension()
+    val insets: Insets = toolbar.component.insets
+    res.width = components.sumOf { it.minimumSize.width }
+    res.height = components.maxOfOrNull { it.minimumSize.height } ?: 0
+    JBInsets.addTo(res, insets)
+    return res
   }
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, toolbarHeight: Int) {
