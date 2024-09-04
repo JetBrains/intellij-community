@@ -10,6 +10,8 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.SimpleChannelInboundHandler
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpStatusClass
 import io.netty.handler.codec.http2.*
 import io.netty.handler.ssl.SslContext
 import io.opentelemetry.api.common.AttributeKey
@@ -29,6 +31,8 @@ import kotlin.random.asJavaRandom
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+internal class UnexpectedHttpStatus(@JvmField val status: HttpResponseStatus) : RuntimeException("Unexpected HTTP response status: $status")
+
 private class ConnectionState(
   @JvmField val bootstrap: Http2StreamChannelBootstrap,
   @JvmField val channel: Channel,
@@ -37,6 +41,7 @@ private class ConnectionState(
 
 private const val MAX_ATTEMPTS = 2
 
+// https://cabulous.medium.com/http-2-and-how-it-works-9f645458e4b2
 // https://stackoverflow.com/questions/55087292/how-to-handle-http-2-goaway-with-java-net-httpclient
 // Server can send GOAWAY frame after X streams, that's why we need manager for channel - open a new one in case of such error
 internal class Http2ConnectionProvider(
@@ -150,6 +155,12 @@ internal class Http2ConnectionProvider(
         if (coroutineContext.isActive) {
           // task is canceled (due to GoAway or other such reasons), but not parent context - retry (without incrementing attemptIndex)
           continue
+        }
+      }
+      catch (e: UnexpectedHttpStatus) {
+        // retry only for sever errors
+        if (e.status.codeClass() != HttpStatusClass.SERVER_ERROR) {
+          throw e
         }
       }
       catch (e: Throwable) {

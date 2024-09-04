@@ -62,7 +62,7 @@ internal suspend fun <T> withHttp2ClientConnectionFactory(
   useSsl: Boolean = true,
   trustAll: Boolean = false,
   block: suspend (Http2ClientConnectionFactory) -> T,
-) {
+): T {
   var connection: Http2ClientConnectionFactory? = null
   try {
     return supervisorScope {

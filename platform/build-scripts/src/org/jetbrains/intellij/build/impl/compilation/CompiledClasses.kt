@@ -9,7 +9,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
@@ -22,8 +21,6 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 internal fun checkCompilationOptions(context: CompilationContext) {
   val options = context.options
@@ -189,18 +186,20 @@ internal suspend fun doCompile(
   check(isCompilationRequired(context.options)) {
     "Unexpected compilation request, unable to proceed"
   }
-  context.messages.progress("Compiling project")
   context.compilationData.statisticsReported = false
   val runner = JpsCompilationRunner(context)
   try {
     val (status, isIncrementalCompilation) = when {
       context.options.forceRebuild -> "forced rebuild" to false
       availableCommitDepth >= 0 -> portableJpsCacheUsageStatus(availableCommitDepth) to true
-      isIncrementalCompilationDataAvailable(context) -> "compiled using local cache" to true
+      isIncrementalCompilationDataAvailable(context) -> "compile using local cache" to true
       else -> "clean build" to false
     }
     context.options.incrementalCompilation = isIncrementalCompilation
-    if (!isIncrementalCompilation) {
+    if (isIncrementalCompilation) {
+      Span.current().addEvent("status: $status")
+    }
+    else {
       Span.current().addEvent(
         "no compiled classes can be reused",
         Attributes.of(
@@ -209,20 +208,22 @@ internal suspend fun doCompile(
         )
       )
     }
-    block(status) {
-      if (isIncrementalCompilation) {
-        // workaround for KT-55695
-        compileWithTimeout(
-          compilationRunner = runner,
+
+    val incrementalCompilationTimeout = context.options.incrementalCompilationTimeout
+    if (isIncrementalCompilation && incrementalCompilationTimeout != null) {
+      // workaround for KT-55695
+      withTimeout(incrementalCompilationTimeout) {
+        compile(
+          jpsCompilationRunner = runner,
           context = context,
           moduleNames = moduleNames,
           includingTestsInModules = includingTestsInModules,
-          timeout = context.options.incrementalCompilationTimeout.minutes,
+          canceledStatus = CanceledStatus { !isActive },
         )
       }
-      else {
-        compile(jpsCompilationRunner = runner, context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
-      }
+    }
+    else {
+      compile(jpsCompilationRunner = runner, context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
     }
     context.messages.buildStatus(status)
   }
@@ -243,26 +244,6 @@ private suspend fun unpackCompiledClasses(classOutput: Path, context: Compilatio
     NioFiles.deleteRecursively(classOutput)
     Decompressor.Zip(context.options.pathToCompiledClassesArchive ?: error("intellij.build.compiled.classes.archive is not set"))
       .extract(classOutput)
-  }
-}
-
-private suspend fun compileWithTimeout(
-  compilationRunner: JpsCompilationRunner,
-  context: CompilationContext,
-  moduleNames: Collection<String>?,
-  includingTestsInModules: List<String>?,
-  timeout: Duration,
-) {
-  withTimeout(timeout) {
-    launch {
-      compile(
-        jpsCompilationRunner = compilationRunner,
-        context = context,
-        moduleNames = moduleNames,
-        includingTestsInModules = includingTestsInModules,
-        canceledStatus = CanceledStatus { !isActive },
-      )
-    }
   }
 }
 

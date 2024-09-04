@@ -22,8 +22,7 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
         Span.current().addEvent("artifact built: ${message.text}")
       }
       LogMessage.Kind.COMPILATION_ERRORS -> {
-        val errorsString = (message as CompilationErrorsLogMessage).errorMessages.joinToString(separator = "\n")
-        Span.current().addEvent("compilation errors (${message.compilerName}):\n$errorsString")
+        // reported as span event
       }
       LogMessage.Kind.BUILD_CANCEL, LogMessage.Kind.BUILD_PROBLEM -> {
         throw BuildScriptsLoggedError(message.text)

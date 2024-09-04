@@ -1,19 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class CommitsHistory(private val commitsPerRemote: Map<String, Set<String>>) {
   companion object {
-    const val JSON_FILE = "commit_history.json"
-    private val JSON_TYPE = object : TypeToken<Map<String, Set<String>>>() {}.type
+    internal const val JSON_FILE = "commit_history.json"
   }
 
-  constructor(json: String) : this(Gson().fromJson(json, JSON_TYPE) as Map<String, Set<String>>)
+  constructor(json: String) : this(Json.decodeFromString<Map<String, Set<String>>>(json))
 
   fun toJson(): String {
-    return Gson().toJson(commitsPerRemote)
+    return Json.encodeToString(commitsPerRemote)
   }
 
   fun commitsForRemote(remote: String): Collection<String> {

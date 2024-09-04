@@ -8,8 +8,8 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
+import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
@@ -279,7 +279,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         TargetTypeBuildScope.newBuilder()
           .setTypeId(RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID)
           .setForceBuild(false)
-          .setAllTargets(true).build()
+          .setAllTargets(true)
+          .build()
       )
     }
 
@@ -299,7 +300,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       .setAttribute("modules", moduleSet.joinToString(separator = ", "))
       .setAttribute("incremental", context.options.incrementalCompilation)
       .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
-      .block(Dispatchers.IO) { span ->
+      .use(Dispatchers.IO) { span ->
         withJpsLogging(context, span) { messageHandler ->
           Standalone.runBuild(
             { context.projectModel },
@@ -311,18 +312,27 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
             canceledStatus,
           )
 
-          if (!messageHandler.errorMessagesByCompiler.isEmpty) {
-            for ((key, value) in messageHandler.errorMessagesByCompiler.entrySet()) {
-              @Suppress("UNCHECKED_CAST")
-              context.messages.compilationErrors(key, value as List<String>)
+          if (!messageHandler.errorMessagesByCompiler.isEmpty()) {
+            for ((key, value) in messageHandler.errorMessagesByCompiler) {
+              span.addEvent(
+                "compilation error",
+                Attributes.of(
+                  AttributeKey.stringKey("compiler"), key,
+                  AttributeKey.stringArrayKey("errors"), value,
+                )
+              )
+
+              context.messages.compilationErrors(key, value)
             }
+            span.recordException(RuntimeException("Compilation failed"))
+            TraceManager.scheduleExportPendingSpans()
             throw RuntimeException("Compilation failed")
           }
           else if (!compilationData.statisticsReported && context.options.compilationLogEnabled) {
             messageHandler.printPerModuleCompilationStatistics(compilationStart)
             context.messages.reportStatisticValue(
               "Compilation time, ms",
-              TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart).toString()
+              TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart).toString(),
             )
             compilationData.statisticsReported = true
           }

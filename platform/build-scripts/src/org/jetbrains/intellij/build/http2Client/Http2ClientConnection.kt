@@ -3,20 +3,16 @@
 
 package org.jetbrains.intellij.build.http2Client
 
-import io.netty.buffer.ByteBufUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.HttpHeaderNames
-import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http2.Http2Headers
 import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.handler.codec.http2.ReadOnlyHttp2Headers
 import io.netty.util.AsciiString
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.serializer
 
-// https://cabulous.medium.com/http-2-and-how-it-works-9f645458e4b2
+// user-facing API on top of implementation API Http2ConnectionProvider
 internal class Http2ClientConnection internal constructor(
   private val scheme: AsciiString,
   private val authority: AsciiString,
@@ -33,30 +29,13 @@ internal class Http2ClientConnection internal constructor(
     connection.close()
   }
 
-  internal suspend inline fun <reified T : Any> post(path: String, data: String, contentType: AsciiString): T {
-    return post(path = AsciiString.of(path), data = data, contentType = contentType, deserializer = serializer<T>())
-  }
-
-  private suspend fun <T : Any> post(path: AsciiString, data: String, contentType: AsciiString, deserializer: DeserializationStrategy<T>): T {
-    return connection.stream { stream, result ->
-      val bufferAllocator = stream.alloc()
-      stream.pipeline().addLast(Http2StreamJsonInboundHandler(result = result, bufferAllocator = bufferAllocator, deserializer = deserializer))
-
-      stream.writeHeaders(
-        headers = ReadOnlyHttp2Headers.clientHeaders(
-          true,
-          HttpMethod.POST.asciiName(),
-          path,
-          scheme,
-          authority,
-          HttpHeaderNames.CONTENT_TYPE, contentType,
-          HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP,
-          *commonHeaders
-        ),
-        endStream = false,
-      )
-      stream.writeData(ByteBufUtil.writeUtf8(bufferAllocator, data), endStream = true)
-    }
+  fun withAuth(authHeader: CharSequence): Http2ClientConnection {
+    return Http2ClientConnection(
+      scheme = scheme,
+      authority = scheme,
+      commonHeaders = commonHeaders + arrayOf(HttpHeaderNames.AUTHORIZATION, AsciiString.of(authHeader)),
+      connection = connection,
+    )
   }
 
   suspend fun head(path: CharSequence): HttpResponseStatus {
@@ -92,8 +71,11 @@ internal class Http2ClientConnection internal constructor(
     }
   }
 
-
-  internal fun createHeaders(method: HttpMethod, path: AsciiString): Http2Headers {
-    return ReadOnlyHttp2Headers.clientHeaders(true, method.asciiName(), path, scheme, authority, *commonHeaders)
+  internal fun createHeaders(method: HttpMethod, path: AsciiString, vararg extraHeaders: AsciiString): Http2Headers {
+    var otherHeaders = commonHeaders
+    if (extraHeaders.isNotEmpty()) {
+      otherHeaders += extraHeaders
+    }
+    return ReadOnlyHttp2Headers.clientHeaders(true, method.asciiName(), path, scheme, authority, *otherHeaders)
   }
 }

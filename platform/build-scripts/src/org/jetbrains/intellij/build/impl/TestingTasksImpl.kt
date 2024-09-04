@@ -37,9 +37,10 @@ import java.util.regex.Pattern
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readLines
 
+private const val NO_TESTS_ERROR = 42
+
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private val context: CompilationContext = if (options.useArchivedCompiledClasses) ArchivedCompilationContext(context) else context
-  private val NO_TESTS_ERROR = 42
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     return try {
@@ -259,13 +260,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val testDiscovery = "intellij-test-discovery"
     val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
-                  ?: throw RuntimeException("Can't find the ${testDiscovery} library, but test discovery capturing enabled.")
+                  ?: throw RuntimeException("Can't find the $testDiscovery library, but test discovery capturing enabled.")
 
     val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
                      .firstOrNull {
                        val name = it.fileName.toString()
                        name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
-                     } ?: throw RuntimeException("Can't find the agent in ${testDiscovery} library, but test discovery capturing enabled.")
+                     } ?: throw RuntimeException("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
     additionalJvmOptions += "-javaagent:${agentJar}"
     val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
@@ -292,7 +293,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
       context.messages.error(
-        "Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is ${testConfigurationType}")
+        "Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType")
     }
     val testObject = System.getProperty("teamcity.remote-debug.junit.type")
     val junitClass = System.getProperty("teamcity.remote-debug.junit.class")
@@ -300,7 +301,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       val message = "Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '${testObject}'"
       if (testObject == "method") {
         context.messages.warning(message)
-        context.messages.warning("Launching all test methods in the class ${junitClass}")
+        context.messages.warning("Launching all test methods in the class $junitClass")
       }
       else {
         context.messages.error(message)
@@ -386,7 +387,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     prepareEnvForTestRun(allJvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
     val messages = context.messages
     if (isRunningInBatchMode) {
-      messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
+      messages.info("Running tests from $mainModule matched by '${options.batchTestIncludes}' pattern.")
     }
     else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
@@ -397,20 +398,20 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     spanBuilder("test classpath and runtime info").use {
       withContext(Dispatchers.IO) {
         val runtime = getRuntimeExecutablePath().toString()
-        messages.info("Runtime: ${runtime}")
+        messages.info("Runtime: $runtime")
         runProcess(args = listOf(runtime, "-version"), inheritOut = true, inheritErrToOut = true)
       }
 
-      messages.info("Runtime options: ${allJvmArgs}")
-      messages.info("System properties: ${systemProperties}")
-      messages.info("Bootstrap classpath: ${bootstrapClasspath}")
-      messages.info("Tests classpath: ${testClasspath}")
+      messages.info("Runtime options: $allJvmArgs")
+      messages.info("System properties: $systemProperties")
+      messages.info("Bootstrap classpath: $bootstrapClasspath")
+      messages.info("Tests classpath: $testClasspath")
       modulePath?.let { mp ->
         @Suppress("SpellCheckingInspection")
         messages.info("Tests modulepath: $mp")
       }
       if (!envVariables.isEmpty()) {
-        messages.info("Environment variables: ${envVariables}")
+        messages.info("Environment variables: $envVariables")
       }
     }
     runJUnit5Engine(
@@ -448,7 +449,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.customRuntimePath != null) {
       runtimeDir = Path.of(checkNotNull(options.customRuntimePath))
       check(Files.isDirectory(runtimeDir)) {
-        "Custom Jre path from system property '${TestingOptions.TEST_JRE_PROPERTY}' is missing: ${runtimeDir}"
+        "Custom Jre path from system property '${TestingOptions.TEST_JRE_PROPERTY}' is missing: $runtimeDir"
       }
     }
     else {
@@ -459,7 +460,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (SystemInfoRt.isMac && Files.notExists(java)) {
       java = runtimeDir.resolve("Contents/Home/bin/java")
     }
-    check(Files.exists(java)) { "java executable is missing: ${java}" }
+    check(Files.exists(java)) { "java executable is missing: $java" }
     return java
   }
 
@@ -666,7 +667,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     } ?: listOf()
 
     if (testClasses.isEmpty()) {
-      throw RuntimeException("No tests were found in ${root} with ${filteringPattern}")
+      throw RuntimeException("No tests were found in $root with $filteringPattern")
     }
 
     return testClasses
@@ -740,12 +741,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         noTestsInAllClasses = noTestsInAllClasses && noTests
       }
       catch (e: Throwable) {
-        throw RuntimeException("Failed to process ${qName}", e)
+        throw RuntimeException("Failed to process $qName", e)
       }
     }
 
     if (noTestsInAllClasses) {
-      throw RuntimeException("No tests were found in ${mainModule} with ${pattern}")
+      throw RuntimeException("No tests were found in $mainModule with $pattern")
     }
   }
 
@@ -1041,7 +1042,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
     val runtime = runBlocking(Dispatchers.IO) { getRuntimeExecutablePath().toString() }
-    context.messages.info("Starting tests on runtime ${runtime}")
+    context.messages.info("Starting tests on runtime $runtime")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
     if(TeamCityHelper.isUnderTeamCity) {
@@ -1054,7 +1055,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     val exitCode = builder.start().waitFor()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
-      context.messages.error("Tests failed with exit code ${exitCode}")
+      context.messages.error("Tests failed with exit code $exitCode")
     }
     return exitCode
   }
@@ -1114,7 +1115,7 @@ private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
 private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   val serverUrl = System.getProperty("intellij.test.discovery.url")
   val token = System.getProperty("intellij.test.discovery.token")
-  messages.info("Trying to upload ${file} into ${serverUrl}.")
+  messages.info("Trying to upload $file into ${serverUrl}.")
   val path = file?.let { Path.of(it) }
   if (path != null && Files.exists(path)) {
     if (serverUrl == null) {

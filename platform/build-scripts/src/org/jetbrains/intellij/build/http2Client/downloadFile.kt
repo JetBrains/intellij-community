@@ -24,6 +24,16 @@ private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardO
 
 internal data class DownloadResult(@JvmField var size: Long, @JvmField val digest: MessageDigest)
 
+internal suspend fun Http2ClientConnection.download(path: String, file: Path): Long {
+  Files.createDirectories(file.parent)
+
+  return connection.stream { stream, result ->
+    stream.pipeline().addLast(FileDownloadHandler(result = result, file = file))
+
+    stream.writeHeaders(createHeaders(HttpMethod.GET, AsciiString.of(path)), endStream = true)
+  }
+}
+
 internal suspend fun Http2ClientConnection.download(
   path: String,
   file: Path,
@@ -34,7 +44,7 @@ internal suspend fun Http2ClientConnection.download(
 
   return connection.stream { stream, result ->
     stream.pipeline().addLast(
-      DownloadHandler(
+      ZstdDecompressingFileDownloadHandler(
         result = result,
         downloadResult = DownloadResult(size = 0, digest = digestFactory()),
         file = file,
@@ -43,12 +53,10 @@ internal suspend fun Http2ClientConnection.download(
     )
 
     stream.writeHeaders(createHeaders(HttpMethod.GET, AsciiString.of(path)), endStream = true)
-
-    result.await()
   }
 }
 
-private class DownloadHandler(
+private class ZstdDecompressingFileDownloadHandler(
   private val result: CompletableDeferred<DownloadResult>,
   private val downloadResult: DownloadResult,
   private val file: Path,
@@ -82,7 +90,7 @@ private class DownloadHandler(
     if (frame is Http2HeadersFrame) {
       val status = HttpResponseStatus.parseLine(frame.headers().status())
       if (status != HttpResponseStatus.OK) {
-        result.completeExceptionally(IllegalStateException("Unexpected response status: $status"))
+        result.completeExceptionally(UnexpectedHttpStatus(status))
       }
     }
     else if (frame is Http2DataFrame) {
@@ -123,5 +131,52 @@ private class DownloadHandler(
       }
     }
     while (sourceBuffer.hasRemaining())
+  }
+}
+
+private class FileDownloadHandler(
+  private val result: CompletableDeferred<Long>,
+  private val file: Path,
+) : InboundHandlerResultTracker<Http2StreamFrame>(result) {
+  private var offset = 0L
+  private var fileChannel: FileChannel? = null
+
+  override fun acceptInboundMessage(message: Any): Boolean = message is Http2DataFrame || message is Http2HeadersFrame
+
+  override fun handlerAdded(ctx: ChannelHandlerContext?) {
+    fileChannel = FileChannel.open(file, OVERWRITE_OPERATION)
+  }
+
+  override fun handlerRemoved(context: ChannelHandlerContext) {
+    fileChannel?.close()
+    fileChannel = null
+  }
+
+  override fun channelRead0(context: ChannelHandlerContext, frame: Http2StreamFrame) {
+    if (frame is Http2HeadersFrame) {
+      val status = HttpResponseStatus.parseLine(frame.headers().status())
+      if (status != HttpResponseStatus.OK) {
+        if (status == HttpResponseStatus.NOT_FOUND) {
+          result.complete(-1)
+        }
+        else {
+          result.completeExceptionally(UnexpectedHttpStatus(status))
+        }
+      }
+    }
+    else if (frame is Http2DataFrame) {
+      val content = frame.content()
+      val fileChannel = fileChannel!!
+      while (true) {
+        val readableBytes = content.readableBytes()
+        if (readableBytes == 0) {
+          break
+        }
+        offset += content.readBytes(fileChannel, offset, readableBytes)
+      }
+      if (frame.isEndStream) {
+        result.complete(offset)
+      }
+    }
   }
 }

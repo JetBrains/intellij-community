@@ -5,33 +5,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
 import okhttp3.internal.closeQuietly
-import org.jetbrains.intellij.build.NoMoreRetriesException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resumeWithException
-
-internal suspend fun OkHttpClient.head(url: String, authHeader: String): Int {
-  return newCall(Request.Builder().url(url).head().header("Authorization", authHeader).build()).executeAsync().use { response ->
-    if (response.code != 200 && response.code != 404) {
-      throw IOException("Unexpected code $response")
-    }
-    response.code
-  }
-}
-
-internal suspend fun <T> OkHttpClient.get(url: String, authHeader: String, task: (Response) -> T): T {
-  return newCall(Request.Builder().url(url).header("Authorization", authHeader).build()).executeAsync().useSuccessful(task)
-}
-
-internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {
-  return use { response ->
-    when {
-      response.isSuccessful -> task(response)
-      response.code == 404 -> throw NoMoreRetriesException("Unexpected code $response")
-      else -> throw IOException("Unexpected code $response")
-    }
-  }
-}
 
 internal val httpClient: OkHttpClient by lazy {
   val timeout = 1L
@@ -79,7 +55,7 @@ internal val httpClient: OkHttpClient by lazy {
     .build()
 }
 
-@ExperimentalCoroutinesApi // resume with a resource cleanup.
+@ExperimentalCoroutinesApi
 internal suspend fun Call.executeAsync(): Response {
   return suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation {

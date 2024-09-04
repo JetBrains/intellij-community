@@ -9,8 +9,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -19,21 +19,16 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.forEachConcurrent
-import org.jetbrains.intellij.build.http2Client.READ_OPERATION
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.math.BigInteger
 import java.net.InetSocketAddress
 import java.net.URI
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -310,7 +305,7 @@ suspend fun fetchAndUnpackCompiledClasses(
       }
       true
     }
-      .forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtMost(4)) { item ->
+      .forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
         val file = item.file
         when {
           Files.notExists(file) -> toDownload.add(item)
@@ -331,40 +326,9 @@ suspend fun fetchAndUnpackCompiledClasses(
   }
 
   spanBuilder("cleanup outdated compiled class archives").use {
-    val start = System.nanoTime()
-    var count = 0
-    var bytes = 0L
-    try {
-      val preserve = items.mapTo(HashSet<Path>(items.size)) { it.file }
-      val epoch = FileTime.fromMillis(0)
-      val daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
-      Files.createDirectories(tempDownloadStorage)
-      // we need to traverse with depth 3 since the first level is [production, test], second level is module name, third is a file
-      Files.walk(tempDownloadStorage, 3, FileVisitOption.FOLLOW_LINKS).use { stream ->
-        stream
-          .filter { !preserve.contains(it) }
-          .forEach { file ->
-            val attr = Files.readAttributes(file, BasicFileAttributes::class.java)
-            if (attr.isRegularFile) {
-              val lastAccessTime = attr.lastAccessTime()
-              if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
-                count++
-                bytes += attr.size()
-                Files.deleteIfExists(file)
-              }
-            }
-          }
-      }
-    }
-    catch (e: Throwable) {
-      Span.current().addEvent("failed to cleanup outdated archives", Attributes.of(AttributeKey.stringKey("error"), e.message ?: ""))
-    }
-
-    reportStatisticValue("compile-parts:verify:time", TimeUnit.NANOSECONDS.toMillis(verifyTime).toString())
-    reportStatisticValue("compile-parts:cleanup:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-    reportStatisticValue("compile-parts:removed:bytes", bytes.toString())
-    reportStatisticValue("compile-parts:removed:count", count.toString())
+    cleanupOutdatedCompiledClassArchives(items = items, tempDownloadStorage = tempDownloadStorage, reportStatisticValue = reportStatisticValue)
   }
+  reportStatisticValue("compile-parts:verify:time", TimeUnit.NANOSECONDS.toMillis(verifyTime).toString())
 
   spanBuilder("fetch compiled classes archives").use {
     val start = System.nanoTime()
@@ -389,18 +353,55 @@ suspend fun fetchAndUnpackCompiledClasses(
   }
 
   val start = System.nanoTime()
-  spanBuilder("unpack compiled classes archives").use {
-    for (item in toUnpack) {
-      launch {
-        spanBuilder("unpack").setAttribute("name", item.name).use {
-          unpackArchive(item, saveHash)
-        }
+  spanBuilder("unpack compiled classes archives").use(Dispatchers.IO) {
+    toUnpack.forEachConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { item ->
+      spanBuilder("unpack").setAttribute("name", item.name).use {
+        unpackCompilationPartArchive(item, saveHash)
       }
     }
   }
   reportStatisticValue("compile-parts:unpacked:bytes", toUnpack.sumOf { Files.size(it.file) }.toString())
   reportStatisticValue("compile-parts:unpacked:count", toUnpack.size.toString())
   reportStatisticValue("compile-parts:unpack:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+}
+
+private fun cleanupOutdatedCompiledClassArchives(
+  items: List<FetchAndUnpackItem>,
+  tempDownloadStorage: Path,
+  reportStatisticValue: (key: String, value: String) -> Unit,
+) {
+  val start = System.nanoTime()
+  var count = 0
+  var bytes = 0L
+  try {
+    val preserve = items.mapTo(HashSet<Path>(items.size)) { it.file }
+    val epoch = FileTime.fromMillis(0)
+    val daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
+    Files.createDirectories(tempDownloadStorage)
+    // we need to traverse with depth 3 since the first level is [production, test], second level is module name, third is a file
+    Files.walk(tempDownloadStorage, 3, FileVisitOption.FOLLOW_LINKS).use { stream ->
+      stream
+        .filter { !preserve.contains(it) }
+        .forEach { file ->
+          val attr = Files.readAttributes(file, BasicFileAttributes::class.java)
+          if (attr.isRegularFile) {
+            val lastAccessTime = attr.lastAccessTime()
+            if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
+              count++
+              bytes += attr.size()
+              Files.deleteIfExists(file)
+            }
+          }
+        }
+    }
+  }
+  catch (e: Throwable) {
+    Span.current().addEvent("failed to cleanup outdated archives", Attributes.of(AttributeKey.stringKey("error"), e.message ?: ""))
+  }
+
+  reportStatisticValue("compile-parts:cleanup:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+  reportStatisticValue("compile-parts:removed:bytes", bytes.toString())
+  reportStatisticValue("compile-parts:removed:count", count.toString())
 }
 
 private suspend fun checkPreviouslyUnpackedDirectories(
@@ -415,53 +416,51 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   }
 
   val start = System.nanoTime()
-  coroutineScope {
-    launch(Dispatchers.IO) {
+  withContext(Dispatchers.IO) {
+    launch {
       spanBuilder("remove stalled directories not present in metadata").setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
         removeStalledDirs(metadata, classOutput)
       }
     }
 
-    for (item in items) {
-      launch {
-        val out = item.output
-        if (Files.notExists(out)) {
-          span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))
-          return@launch
-        }
+    items.forEachConcurrent { item ->
+      val out = item.output
+      if (Files.notExists(out)) {
+        span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))
+        return@forEachConcurrent
+      }
 
-        val hashFile = out.resolve(".hash")
-        if (!Files.isRegularFile(hashFile)) {
-          span.addEvent("no .hash file in output directory", Attributes.of(AttributeKey.stringKey("name"), item.name))
-          out.deleteRecursively()
-          return@launch
-        }
+      val hashFile = out.resolve(".hash")
+      if (!Files.isRegularFile(hashFile)) {
+        span.addEvent("no .hash file in output directory", Attributes.of(AttributeKey.stringKey("name"), item.name))
+        out.deleteRecursively()
+        return@forEachConcurrent
+      }
 
-        try {
-          val actual = Files.readString(hashFile)
-          if (actual == item.hash) {
-            upToDate.add(item.name)
-          }
-          else {
-            span.addEvent(
-              "output directory hash mismatch",
-              Attributes.of(
-                AttributeKey.stringKey("name"), item.name,
-                AttributeKey.stringKey("expected"), item.hash,
-                AttributeKey.stringKey("actual"), actual,
-              )
+      try {
+        val actual = Files.readString(hashFile)
+        if (actual == item.hash) {
+          upToDate.add(item.name)
+        }
+        else {
+          span.addEvent(
+            "output directory hash mismatch",
+            Attributes.of(
+              AttributeKey.stringKey("name"), item.name,
+              AttributeKey.stringKey("expected"), item.hash,
+              AttributeKey.stringKey("actual"), actual,
             )
-            out.deleteRecursively()
-          }
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          span.addEvent("output directory hash calculation failed", Attributes.of(AttributeKey.stringKey("name"), item.name))
-          span.recordException(e, Attributes.of(AttributeKey.stringKey("name"), item.name))
+          )
           out.deleteRecursively()
         }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        span.addEvent("output directory hash calculation failed", Attributes.of(AttributeKey.stringKey("name"), item.name))
+        span.recordException(e, Attributes.of(AttributeKey.stringKey("name"), item.name))
+        out.deleteRecursively()
       }
     }
   }
@@ -504,34 +503,6 @@ private fun CoroutineScope.removeStalledDirs(
     }
   }
 }
-
-private val sharedDigest = MessageDigest.getInstance("SHA-256", java.security.Security.getProvider("SUN"))
-internal fun sha256() = sharedDigest.clone() as MessageDigest
-
-internal fun computeHash(file: Path): String {
-  val messageDigest = sha256()
-  FileChannel.open(file, READ_OPERATION).use { channel ->
-    val fileSize = channel.size()
-    // java message digest doesn't support native buffer (copies to a heap byte array in any case)
-    val bufferSize = 256 * 1024
-    val buffer = ByteBuffer.allocate(bufferSize)
-    var offset = 0L
-    var readBytes: Int
-    while (offset < fileSize) {
-      buffer.clear()
-      readBytes = channel.read(buffer, offset)
-      if (readBytes <= 0) {
-        break
-      }
-
-      messageDigest.update(buffer.array(), 0, readBytes)
-      offset += readBytes
-    }
-  }
-  return digestToString(messageDigest)
-}
-
-internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "z"
 
 internal data class PackAndUploadItem(
   @JvmField val output: Path,

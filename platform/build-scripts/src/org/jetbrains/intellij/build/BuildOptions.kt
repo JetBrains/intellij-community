@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
@@ -15,6 +16,8 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 data class BuildOptions(
   @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
@@ -99,6 +102,11 @@ data class BuildOptions(
    * If `true`, the project modules will be compiled incrementally.
    */
   var incrementalCompilation: Boolean = getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION),
+
+  /**
+   * Full rebuild will be triggered if this timeout is exceeded for incremental compilation.
+   */
+  val incrementalCompilationTimeout: Duration? = System.getProperty("intellij.build.incremental.compilation.timeoutMin")?.toLong()?.minutes,
 ) {
   companion object {
     /**
@@ -384,11 +392,6 @@ data class BuildOptions(
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
    */
   var incrementalCompilationFallbackRebuild: Boolean = getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
-
-  /**
-   * Full rebuild will be triggered if this timeout is exceeded for incremental compilation.
-   */
-  val incrementalCompilationTimeout: Long = System.getProperty("intellij.build.incremental.compilation.timeoutMin")?.toLong() ?: Long.MAX_VALUE
 
   /**
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.

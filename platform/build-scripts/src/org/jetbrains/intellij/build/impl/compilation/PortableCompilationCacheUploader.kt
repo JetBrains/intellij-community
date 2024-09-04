@@ -3,270 +3,279 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.stream.JsonReader
-import com.intellij.util.io.Compressor
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody
-import okio.BufferedSink
-import okio.source
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
+import org.jetbrains.intellij.build.http2Client.getJsonOrDefaultIfNotFound
+import org.jetbrains.intellij.build.http2Client.upload
+import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
+import kotlin.random.Random
 
 private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
-private val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
-internal class PortableCompilationCacheUploader(
-  private val context: CompilationContext,
-  internal val remoteCache: PortableJpsCacheRemoteCacheConfig,
-  @JvmField val remoteGitUrl: String,
-  private val commitHash: String,
-  private val s3Folder: Path,
-  private val forcedUpload: Boolean,
+internal suspend fun uploadJpsCache(
+  forcedUpload: Boolean,
+  commitHash: String,
+  authHeader: CharSequence,
+  s3Dir: Path?,
+  uploadUrl: URI,
+  context: CompilationContext,
 ) {
-  init {
-    s3Folder.deleteRecursively()
-    Files.createDirectories(s3Folder)
+  if (s3Dir != null) {
+    s3Dir.deleteRecursively()
+    Files.createDirectories(s3Dir)
   }
 
-  suspend fun upload(messages: BuildMessages) {
-    val sourceStateFile = context.compilationData.dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
-
-    val sourceState = try {
-      Files.newBufferedReader(sourceStateFile).use {
-        BuildTargetSourcesState.readJson(JsonReader(it))
-      }
+  val sourceStateFile = context.compilationData.dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
+  val sourceState = try {
+    Files.newBufferedReader(sourceStateFile).use {
+      BuildTargetSourcesState.readJson(JsonReader(it))
     }
-    catch (e: NoSuchFileException) {
-      throw IllegalStateException(
-        "Compilation outputs doesn't contain source state file, " +
-        "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag", e
-      )
-    }
+  }
+  catch (e: NoSuchFileException) {
+    throw IllegalStateException("Compilation outputs doesn't contain source state file, please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag", e)
+  }
 
-    val start = System.nanoTime()
-    val totalUploadedBytes = AtomicLong()
-    val uploadedOutputCount = AtomicInteger()
-    val uploader = Uploader(remoteCache.uploadUrl, remoteCache.authHeader)
-    withContext(Dispatchers.IO) {
-      // Jps Caches upload is started first because of significant size
-      launch {
-        spanBuilder("upload jps cache").use {
-          uploadJpsCaches(uploader)
+  val start = System.nanoTime()
+  val totalUploadedBytes = LongAdder()
+  val uploadedOutputCount = LongAdder()
+  val messages = context.messages
+  withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
+    client.connect(uploadUrl.host, uploadUrl.port).withAuth(authHeader).use { connection ->
+      val urlPathPrefix = uploadUrl.path
+      withContext(Dispatchers.IO) {
+        launch {
+          spanBuilder("upload jps cache").use {
+            uploadJpsCaches(urlPathPrefix = urlPathPrefix, connection = connection, s3Dir = s3Dir, forcedUpload = forcedUpload, commitHash = commitHash, context = context)
+          }
+        }
+
+        spanBuilder("upload compilation outputs").use {
+          val allCompilationOutputs = getAllCompilationOutputs(sourceState = sourceState, classOutDir = context.classesOutputDirectory)
+          val tempDir = Files.createTempDirectory(context.paths.tempDir, "jps-cache-bytecode-")
+          try {
+            uploadCompilationOutputs(
+              uploadedOutputCount = uploadedOutputCount,
+              totalUploadedBytes = totalUploadedBytes,
+              allCompilationOutputs = allCompilationOutputs,
+              urlPathPrefix = urlPathPrefix,
+              connection = connection,
+              s3Dir = s3Dir,
+              forcedUpload = forcedUpload,
+              tempDir = tempDir,
+            )
+          }
+          finally {
+            tempDir.deleteRecursively()
+          }
+          messages.reportStatisticValue("Total outputs", allCompilationOutputs.size.toString())
         }
       }
 
-      spanBuilder("upload compilation outputs").use {
-        val allCompilationOutputs = getAllCompilationOutputs(sourceState = sourceState, classOutDir = context.classesOutputDirectory)
-        uploadCompilationOutputs(
-          uploader = uploader,
-          uploadedOutputCount = uploadedOutputCount,
-          allCompilationOutputs = allCompilationOutputs,
-        )
-        messages.reportStatisticValue("Total outputs", allCompilationOutputs.size.toString())
-      }
-    }
-
-    messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString())
-    messages.reportStatisticValue("jps-cache:uploaded:count", (uploadedOutputCount.get() + 1).toString())
-    messages.reportStatisticValue("jps-cache:uploaded:bytes", "$totalUploadedBytes")
-
-    messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
-
-    uploadMetadata(sourceStateFile = sourceStateFile, uploader = uploader)
-    uploadToS3()
-  }
-
-  private suspend fun uploadToS3() {
-    spanBuilder("aws s3 sync").use {
-      awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", s3Folder.toString(), "s3://intellij-jps-cache", returnStdOut = false)
-    }
-  }
-
-  private suspend fun uploadJpsCaches(uploader: Uploader) {
-    val dataStorageRoot = context.compilationData.dataStorageRoot
-    val zipFile = dataStorageRoot.parent.resolve(commitHash)
-    Compressor.Zip(zipFile).use { zip ->
-      zip.addDirectory(dataStorageRoot)
-    }
-    val cachePath = "caches/$commitHash"
-    if (forcedUpload || !uploader.isExist(cachePath, true)) {
-      uploader.upload(cachePath, zipFile)
-    }
-    moveFile(zipFile, s3Folder.resolve(cachePath))
-  }
-
-  private suspend fun uploadMetadata(sourceStateFile: Path, uploader: Uploader) {
-    val metadataPath = "metadata/$commitHash"
-    spanBuilder("upload metadata").setAttribute("path", metadataPath).use {
-      uploader.upload(metadataPath, sourceStateFile)
-      copyFile(sourceStateFile, s3Folder.resolve(metadataPath))
-    }
-  }
-
-  private suspend fun uploadCompilationOutputs(
-    uploader: Uploader,
-    uploadedOutputCount: AtomicInteger,
-    allCompilationOutputs: List<CompilationOutput>,
-  ) {
-    allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
-      val outDir = compilationOutput.path
-      spanBuilder("upload output part")
-        .setAttribute("part", compilationOutput.remotePath)
-        .setAttribute("path", outDir.toString())
-        .use { span ->
-          val sourcePath = compilationOutput.remotePath
-          if (Files.notExists(outDir)) {
-            span.addEvent("doesn't exist, was a respective module removed?")
-            return@use
-          }
-
-          val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
-          zipWithCompression(zipFile, mapOf(outDir to ""))
-          if (forcedUpload || !uploader.isExist(sourcePath)) {
-            uploader.upload(sourcePath, zipFile)
-            uploadedOutputCount.incrementAndGet()
-          }
-          moveFile(zipFile, s3Folder.resolve(sourcePath))
+      val metadataPath = "metadata/$commitHash"
+      val metadataUrl = "$urlPathPrefix/$metadataPath"
+      spanBuilder("upload metadata").setAttribute("path", metadataUrl).use {
+        connection.upload(metadataUrl, sourceStateFile)
+        if (s3Dir != null) {
+          copyFile(file = sourceStateFile, target = s3Dir.resolve(metadataPath))
         }
-    }
-  }
-
-  /**
-   * Upload and publish a file with commits history
-   */
-  internal suspend fun updateCommitHistory(overrideCommits: Set<String>? = null) {
-    val overrideRemoteHistory = overrideCommits != null
-    val commitHistory = CommitsHistory(mapOf(remoteGitUrl to (overrideCommits ?: setOf(commitHash))))
-    val uploader = Uploader(serverUrl = remoteCache.uploadUrl, authHeader = remoteCache.authHeader)
-    for (commitHash in commitHistory.commitsForRemote(remoteGitUrl)) {
-      val cacheUploaded = uploader.isExist("caches/$commitHash")
-      val metadataUploaded = uploader.isExist("metadata/$commitHash")
-      if (!cacheUploaded && !metadataUploaded) {
-        val msg = "Unable to publish $commitHash due to missing caches/$commitHash and metadata/$commitHash. " +
-                  "Probably caused by previous cleanup build."
-        if (overrideRemoteHistory) context.messages.error(msg) else context.messages.warning(msg)
-        return
-      }
-      check(cacheUploaded == metadataUploaded) {
-        "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
       }
     }
-    val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory(uploader)
-    uploader.upload(path = CommitsHistory.JSON_FILE, file = writeCommitHistory(newHistory))
-    val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
-    val actual = remoteCommitHistory(uploader).commitsForRemote(remoteGitUrl).toSet()
-    val missing = expected - actual
-    val unexpected = actual - expected
-    check(missing.none() && unexpected.none()) {
-      """
-        Missing: $missing
-        Unexpected: $unexpected
-      """.trimIndent()
-    }
   }
 
-  private suspend fun remoteCommitHistory(uploader: Uploader): CommitsHistory {
-    return if (uploader.isExist(CommitsHistory.JSON_FILE)) {
-      CommitsHistory(uploader.getAsString(CommitsHistory.JSON_FILE, remoteCache.authHeader))
-    }
-    else {
-      CommitsHistory(emptyMap())
-    }
-  }
+  messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString())
+  messages.reportStatisticValue("jps-cache:uploaded:count", (uploadedOutputCount.sum() + 1).toString())
+  messages.reportStatisticValue("jps-cache:uploaded:bytes", totalUploadedBytes.sum().toString())
 
-  private fun writeCommitHistory(commitHistory: CommitsHistory): Path {
-    val commitHistoryFile = s3Folder.resolve(CommitsHistory.JSON_FILE)
-    Files.createDirectories(commitHistoryFile.parent)
-    val json = commitHistory.toJson()
-    Files.writeString(commitHistoryFile, json)
-    Span.current().addEvent("write commit history", Attributes.of(AttributeKey.stringKey("data"), json))
-    return commitHistoryFile
+  messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.sum().toString())
+
+  if (s3Dir != null) {
+    uploadToS3(s3Dir)
   }
 }
 
-private class Uploader(serverUrl: String, @JvmField val authHeader: String) {
-  private val serverUrl = serverUrl.trimEnd('/')
+private suspend fun uploadToS3(s3Dir: Path) {
+  spanBuilder("aws s3 sync").use {
+    awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", s3Dir.toString(), "s3://intellij-jps-cache", returnStdOut = false)
+  }
+}
 
-  suspend fun upload(path: String, file: Path) {
-    val url = pathToUrl(path)
-    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).use {
-      val fileSize = Files.size(file)
-      retryWithExponentialBackOff {
-        httpClient.newCall(Request.Builder().url(url)
-          .header("Authorization", authHeader)
-          .put(object : RequestBody() {
-            override fun contentType() = MEDIA_TYPE_BINARY
+private suspend fun uploadJpsCaches(
+  urlPathPrefix: String,
+  connection: Http2ClientConnection,
+  commitHash: String,
+  forcedUpload: Boolean,
+  s3Dir: Path?,
+  context: CompilationContext,
+) {
+  val dataStorageRoot = context.compilationData.dataStorageRoot
+  val zipFile = context.paths.tempDir.resolve("$commitHash-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}.zip")
+  try {
+    val compressed by lazy {
+      zipWithCompression(zipFile, mapOf(dataStorageRoot to ""))
+      zipFile
+    }
 
-            override fun contentLength(): Long = fileSize
+    val cachePath = "caches/$commitHash"
+    val urlPath = "$urlPathPrefix/$cachePath"
+    if (forcedUpload || !checkExists(connection, urlPath, logIfExists = true)) {
+      connection.upload(path = urlPath, file = compressed)
+    }
 
-            override fun writeTo(sink: BufferedSink) {
-              file.source().use {
-                sink.writeAll(it)
-              }
-            }
-          }).build()).executeAsync().useSuccessful {}
-      }
+    if (s3Dir != null) {
+      moveFile(compressed, s3Dir.resolve(cachePath))
     }
   }
+  finally {
+    Files.deleteIfExists(zipFile)
+  }
+}
 
-  suspend fun isExist(path: String, logIfExists: Boolean = false): Boolean {
-    val url = pathToUrl(path)
-    return spanBuilder("head").setAttribute("url", url).use { span ->
-      val code = retryWithExponentialBackOff {
-        httpClient.head(url, authHeader)
-      }
+private suspend fun uploadCompilationOutputs(
+  uploadedOutputCount: LongAdder,
+  allCompilationOutputs: List<CompilationOutput>,
+  urlPathPrefix: String,
+  connection: Http2ClientConnection,
+  totalUploadedBytes: LongAdder,
+  forcedUpload: Boolean,
+  tempDir: Path,
+  s3Dir: Path?,
+) {
+  allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
+    val outDir = compilationOutput.path
+    spanBuilder("upload output part")
+      .setAttribute("part", compilationOutput.remotePath)
+      .setAttribute("path", outDir.toString())
+      .use { span ->
+        if (Files.notExists(outDir)) {
+          span.addEvent("doesn't exist, was a respective module removed?")
+          return@use
+        }
 
-      if (code != 200) {
-        return@use false
-      }
+        val sourcePath = compilationOutput.remotePath
+        val zipFile = tempDir.resolve("${sourcePath.replace('/', '_')}.zip")
+        zipWithCompression(targetFile = zipFile, dirs = mapOf(outDir to ""), createFileParentDirs = false)
 
-      try {
-        /**
-         * FIXME dirty workaround for unreliable [serverUrl]
-         */
-        httpClient.get(url, authHeader) {
-          it.peekBody(byteCount = 1)
+        val urlPath = "$urlPathPrefix/$sourcePath"
+        if (forcedUpload || !checkExists(connection, urlPath)) {
+          spanBuilder("upload").setAttribute("urlPath", urlPath).setAttribute("path", sourcePath).use {
+            val result = connection.upload(path = urlPath, file = zipFile)
+            totalUploadedBytes.add(result.uploadedSize)
+          }
+          uploadedOutputCount.increment()
+        }
+
+        if (s3Dir != null) {
+          moveFile(zipFile, s3Dir.resolve(sourcePath))
         }
       }
-      catch (_: Exception) {
-        return@use false
+  }
+}
+
+/**
+ * Upload and publish a file with commits history
+ */
+internal suspend fun updateJpsCacheCommitHistory(
+  overrideCommits: Set<String>?,
+  remoteGitUrl: String,
+  commitHash: String,
+  uploadUrl: URI,
+  authHeader: CharSequence,
+  s3Dir: Path?,
+  context: CompilationContext,
+) {
+  val overrideRemoteHistory = overrideCommits != null
+  val commitHistory = CommitsHistory(mapOf(remoteGitUrl to (overrideCommits ?: setOf(commitHash))))
+  withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
+    val urlPathPrefix = uploadUrl.path
+    client.connect(uploadUrl.host, uploadUrl.port).withAuth(authHeader).use { connection ->
+      for (commitHashForRemote in commitHistory.commitsForRemote(remoteGitUrl)) {
+        val cacheUploaded = checkExists(connection, "$urlPathPrefix/caches/$commitHashForRemote")
+        val metadataUploaded = checkExists(connection, "$urlPathPrefix/metadata/$commitHashForRemote")
+        if (!cacheUploaded && !metadataUploaded) {
+          val msg = "Unable to publish $commitHashForRemote due to missing caches/$commitHashForRemote and metadata/$commitHashForRemote." +
+                    " Probably caused by previous cleanup build."
+          if (overrideRemoteHistory) {
+            context.messages.error(msg)
+          }
+          else {
+            context.messages.warning(msg)
+          }
+          return@use false
+        }
+        check(cacheUploaded == metadataUploaded) {
+          "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
+        }
       }
 
-      if (logIfExists) {
-        span.addEvent("File '$path' already exists on server, nothing to upload")
+      val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory(connection, urlPathPrefix)
+      connection.upload(path = "$urlPathPrefix/${CommitsHistory.JSON_FILE}", file = writeCommitHistory(commitHistory = newHistory, context = context, s3Dir = s3Dir))
+      val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
+      val actual = remoteCommitHistory(connection, urlPathPrefix).commitsForRemote(remoteGitUrl).toSet()
+      val missing = expected - actual
+      val unexpected = actual - expected
+      check(missing.none() && unexpected.none()) {
+        """
+          Missing: $missing
+          Unexpected: $unexpected
+        """.trimIndent()
       }
-      true
     }
   }
+}
 
-  suspend fun getAsString(path: String, authHeader: String) = retryWithExponentialBackOff {
-    httpClient.get(pathToUrl(path), authHeader) { it.body.string() }
+private suspend fun remoteCommitHistory(connection: Http2ClientConnection, urlPathPrefix: String): CommitsHistory {
+  return CommitsHistory(connection.getJsonOrDefaultIfNotFound(path = "$urlPathPrefix/${CommitsHistory.JSON_FILE}", defaultIfNotFound = emptyMap()))
+}
+
+private fun writeCommitHistory(commitHistory: CommitsHistory, context: CompilationContext, s3Dir: Path?): Path {
+  val commitHistoryFile = (s3Dir ?: context.paths.tempDir).resolve(CommitsHistory.JSON_FILE)
+  Files.createDirectories(commitHistoryFile.parent)
+  val json = commitHistory.toJson()
+  Files.writeString(commitHistoryFile, json)
+  Span.current().addEvent("write commit history", Attributes.of(AttributeKey.stringKey("data"), json))
+  return commitHistoryFile
+}
+
+private suspend fun checkExists(
+  connection: Http2ClientConnection,
+  urlPath: String,
+  logIfExists: Boolean = false,
+): Boolean {
+  val status = connection.head(urlPath)
+  if (status == HttpResponseStatus.OK) {
+    // already exists
+    if (logIfExists) {
+      Span.current().addEvent("File $urlPath already exists on server, nothing to upload")
+    }
+    return true
   }
-
-  private fun pathToUrl(path: String) = "$serverUrl/${path.trimStart('/')}"
+  else if (status != HttpResponseStatus.NOT_FOUND) {
+    Span.current().addEvent("unexpected response status for HEAD request", Attributes.of(AttributeKey.stringKey("status"), status.toString()))
+  }
+  return false
 }

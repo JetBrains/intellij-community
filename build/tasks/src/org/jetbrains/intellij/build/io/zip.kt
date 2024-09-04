@@ -14,15 +14,19 @@ enum class AddDirEntriesMode {
   ALL
 }
 
+// `createFileParentDirs = false` can be used for performance reasons if you do create a lot of zip files
 fun zipWithCompression(
   targetFile: Path,
   dirs: Map<Path, String>,
   compressionLevel: Int = Deflater.DEFAULT_COMPRESSION,
   addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE,
   overwrite: Boolean = false,
+  createFileParentDirs: Boolean = true,
   fileFilter: ((name: String) -> Boolean)? = null,
 ) {
-  Files.createDirectories(targetFile.parent)
+  if (createFileParentDirs) {
+    Files.createDirectories(targetFile.parent)
+  }
   ZipFileWriter(
     channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
     deflater = if (compressionLevel == Deflater.NO_COMPRESSION) null else Deflater(compressionLevel, true),

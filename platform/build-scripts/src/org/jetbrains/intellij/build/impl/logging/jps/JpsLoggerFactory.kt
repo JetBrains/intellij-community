@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "HardCodedStringLiteral")
 
 package org.jetbrains.intellij.build.impl.logging.jps
 
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -23,11 +22,12 @@ import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
 @Internal
-suspend fun withJpsLogging(context: CompilationContext, span: Span, action: suspend (JpsMessageHandler) -> Unit) {
+internal suspend fun withJpsLogging(context: CompilationContext, span: Span, action: suspend (JpsMessageHandler) -> Unit) {
   val messageHandler = JpsMessageHandler(context, span)
   JpsLoggerFactory.messageHandler = messageHandler
   if (context.options.compilationLogEnabled) {
@@ -69,7 +69,9 @@ suspend fun withJpsLogging(context: CompilationContext, span: Span, action: susp
 @VisibleForTesting
 class JpsLoggerFactory : Logger.Factory {
   companion object {
-    var messageHandler: JpsMessageHandler? = null
+    @JvmField
+    internal var messageHandler: JpsMessageHandler? = null
+    @JvmField
     var fileLoggerFactory: JpsFileLoggerFactory? = null
   }
 
@@ -78,12 +80,12 @@ class JpsLoggerFactory : Logger.Factory {
   }
 }
 
-@Internal
-class JpsMessageHandler(private val context: CompilationContext, private val span: Span) : MessageHandler {
-  val errorMessagesByCompiler = MultiMap.createConcurrent<String, String>()
+internal class JpsMessageHandler(private val context: CompilationContext, private val span: Span) : MessageHandler {
+  @JvmField
+  val errorMessagesByCompiler = ConcurrentHashMap<String, MutableList<String>>()
   private val compilationStartTimeForTarget = ConcurrentHashMap<String, Long>()
   private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
-  private var progress = (-1.0).toFloat()
+  private var progress = -1.0f
 
   override fun processMessage(message: BuildMessage): Unit = TeamCityBuildMessageLogger.withFlow(span) {
     val text = message.messageText
@@ -97,8 +99,10 @@ class JpsMessageHandler(private val context: CompilationContext, private val spa
           messageText = buildString {
             if (sourcePath != null) {
               append(sourcePath)
-              if (message.line != -1L) append(":" + message.line)
-              appendLine(":")
+              if (message.line != -1L) {
+                append(':').append(message.line)
+              }
+              appendLine(':')
             }
             append(text)
             val moduleNames = message.moduleNames
@@ -111,7 +115,7 @@ class JpsMessageHandler(private val context: CompilationContext, private val spa
           compilerName = ""
           messageText = text
         }
-        errorMessagesByCompiler.putValue(compilerName, messageText)
+        errorMessagesByCompiler.computeIfAbsent(compilerName) { CopyOnWriteArrayList() }.add(messageText)
       }
       BuildMessage.Kind.WARNING -> context.messages.warning(text)
       BuildMessage.Kind.INFO, BuildMessage.Kind.JPS_INFO -> if (message is BuilderStatisticsMessage) {

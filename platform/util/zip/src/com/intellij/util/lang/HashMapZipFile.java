@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -96,7 +96,7 @@ public final class HashMapZipFile implements ZipFile {
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
     ImmutableZipEntry entry = getRawEntry(path.charAt(0) == '/' ? path.substring(1) : path);
-    return entry == null ? null : entry.getByteBuffer(this);
+    return entry == null ? null : entry.getByteBuffer(this, null);
   }
 
   /**
@@ -122,7 +122,7 @@ public final class HashMapZipFile implements ZipFile {
 
       @Override
       public @NotNull ByteBuffer getByteBuffer() throws IOException {
-        return entry.getByteBuffer(HashMapZipFile.this);
+        return entry.getByteBuffer(HashMapZipFile.this, null);
       }
 
       @Override

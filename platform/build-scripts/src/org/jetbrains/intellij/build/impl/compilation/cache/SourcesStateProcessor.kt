@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
-import com.google.gson.stream.JsonReader
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.java.ResourcesTargetType
 import org.jetbrains.jps.cache.model.BuildTargetState
-import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
 import java.nio.file.Path
 
 private const val IDENTIFIER = "\$BUILD_DIR\$"
@@ -21,10 +19,6 @@ private enum class BothClassAndResourceBuildTargetType(@JvmField val typeId: Str
 
 internal fun getAllCompilationOutputs(sourceState: Map<String, Map<String, BuildTargetState>>, classOutDir: Path): List<CompilationOutput> {
   return getProductionCompilationOutputs(sourceState, classOutDir) + getTestsCompilationOutputs(sourceState, classOutDir)
-}
-
-internal fun parseSourcesStateFile(json: String): Map<String, Map<String, BuildTargetState>> {
-  return BuildTargetSourcesState.readJson(JsonReader(json.reader()))
 }
 
 private fun getProductionCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>, classOutDir: Path): List<CompilationOutput> {

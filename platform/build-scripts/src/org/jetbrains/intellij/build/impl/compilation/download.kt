@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import kotlinx.coroutines.isActive
@@ -11,20 +10,13 @@ import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
 import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
 import org.jetbrains.intellij.build.http2Client.download
-import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.net.URI
-import java.nio.channels.FileChannel
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
-
-private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 
 internal suspend fun downloadCompilationCache(
   serverUrl: String,
@@ -35,38 +27,10 @@ internal suspend fun downloadCompilationCache(
   skipUnpack: Boolean,
   saveHash: Boolean,
 ) {
-  var urlPathWithPrefix = "/$prefix/"
-  // first let's check for initial redirect (mirror selection)
-  val initialServerUri = URI(serverUrl)
-  var effectiveServerUri = initialServerUri
-  var connection: Http2ClientConnection? = client.connect(effectiveServerUri.host, effectiveServerUri.port)
-  try {
-    spanBuilder("mirror selection").use { span ->
-      val newLocation = connection!!.getRedirectLocation(urlPathWithPrefix)
-      if (newLocation == null) {
-        span.addEvent("origin server will be used", Attributes.of(AttributeKey.stringKey("url"), urlPathWithPrefix))
-      }
-      else {
-        effectiveServerUri = URI(newLocation.toString())
-        urlPathWithPrefix = effectiveServerUri.path
-        span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlPathWithPrefix))
-      }
-    }
-  }
-  finally {
-    if (initialServerUri != effectiveServerUri) {
-      connection?.close()
-      connection = null
-    }
-  }
-
-  if (connection == null) {
-    connection = client.connect(effectiveServerUri.host, effectiveServerUri.port)
-  }
-  try {
+  checkMirrorAndConnect(serverUrl = serverUrl, client = client, prefix = prefix) { connection, urlPathPrefix ->
     val zstdDecompressContextPool = ZstdDecompressContextPool()
     toDownload.forEachConcurrent(downloadParallelism) { item ->
-      val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
+      val urlPath = "$urlPathPrefix/${item.name}/${item.file.fileName}"
       spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
         try {
           downloadedBytes.getAndAdd(
@@ -93,8 +57,46 @@ internal suspend fun downloadCompilationCache(
       }
     }
   }
+}
+
+internal suspend fun checkMirrorAndConnect(
+  serverUrl: String,
+  client: Http2ClientConnectionFactory,
+  prefix: String,
+  block: suspend (connection: Http2ClientConnection, urlPathPrefix: String) -> Unit,
+) {
+  var urlPathWithSlash = "/$prefix/"
+  // first let's check for initial redirect (mirror selection)
+  val initialServerUri = URI(serverUrl)
+  var effectiveServerUri = initialServerUri
+  var connection: Http2ClientConnection? = client.connect(effectiveServerUri.host, effectiveServerUri.port)
+  var connectionToClose = connection
+  try {
+    spanBuilder("mirror selection").use { span ->
+      val newLocation = connection!!.getRedirectLocation(urlPathWithSlash)
+      if (newLocation == null) {
+        span.addEvent("origin server will be used", Attributes.of(AttributeKey.stringKey("url"), urlPathWithSlash))
+        connectionToClose = null
+      }
+      else {
+        effectiveServerUri = URI(newLocation.toString())
+        urlPathWithSlash = effectiveServerUri.path
+        span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlPathWithSlash))
+        connection = null
+      }
+    }
+  }
   finally {
-    connection.close()
+    connectionToClose?.close()
+    connectionToClose = null
+  }
+
+  val effectiveConnection = connection ?: client.connect(effectiveServerUri.host, effectiveServerUri.port)
+  try {
+    block(effectiveConnection, urlPathWithSlash.trimEnd('/'))
+  }
+  finally {
+    effectiveConnection.close()
   }
 }
 
@@ -123,7 +125,7 @@ private suspend fun download(
 
   if (!skipUnpack) {
     spanBuilder("unpack").setAttribute("name", item.name).use {
-      unpackArchive(item, saveHash)
+      unpackCompilationPartArchive(item, saveHash)
     }
   }
   return downloaded
@@ -135,29 +137,8 @@ internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpack
 
 internal class HashMismatchException(message: String) : IOException(message)
 
-internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
-  HashMapZipFile.load(item.file).use { zipFile ->
-    val root = item.output
-    Files.createDirectories(root)
-    val createdDirs = HashSet<Path>()
-    createdDirs.add(root)
-    for (entry in zipFile.entries) {
-      if (entry.isDirectory || entry.name == INDEX_FILENAME) {
-        continue
-      }
-
-      val file = root.resolve(entry.name)
-      val parent = file.parent
-      if (createdDirs.add(parent)) {
-        Files.createDirectories(parent)
-      }
-
-      FileChannel.open(file, OVERWRITE_OPERATION).use { channel ->
-        channel.write(entry.getByteBuffer(zipFile), 0)
-      }
-    }
-  }
-
+internal fun unpackCompilationPartArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
+  unpackArchiveUsingNettyByteBufferPool(archiveFile = item.file, outDir = item.output, isCompressed = false)
   if (saveHash) {
     // save actual hash
     Files.writeString(item.output.resolve(".hash"), item.hash)

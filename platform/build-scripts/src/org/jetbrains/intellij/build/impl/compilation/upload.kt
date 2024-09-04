@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
+import org.jetbrains.intellij.build.http2Client.post
 import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
