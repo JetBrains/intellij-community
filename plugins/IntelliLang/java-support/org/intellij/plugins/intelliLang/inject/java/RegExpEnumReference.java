@@ -22,7 +22,6 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.plugins.intelliLang.util.RegExpUtil;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.util;
+package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class RegExpUtil {
+final class RegExpUtil {
   private RegExpUtil() {
   }
 

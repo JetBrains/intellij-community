@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.references;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class InjectedReferencesContributor extends PsiReferenceContributor {
+public final class InjectedReferencesContributor extends PsiReferenceContributor {
 
   public static boolean isInjected(@Nullable PsiReference reference) {
     if (reference == null) return false;

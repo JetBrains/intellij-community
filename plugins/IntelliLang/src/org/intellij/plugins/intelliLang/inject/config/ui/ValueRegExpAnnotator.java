@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  * Annotator that is used to validate the "Value-Pattern" textfield: The regex entered there should contain exactly
  * one capturing group that determines the text-range the configured language will be injected into.
  */
-public class ValueRegExpAnnotator implements Annotator {
+public final class ValueRegExpAnnotator implements Annotator {
   public static final Key<Boolean> KEY = Key.create("IS_VALUE_REGEXP");
 
   static {

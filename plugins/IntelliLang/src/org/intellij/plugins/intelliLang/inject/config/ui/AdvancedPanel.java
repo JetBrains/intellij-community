@@ -24,7 +24,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 
 import javax.swing.*;
 
-public class AdvancedPanel extends AbstractInjectionPanel<BaseInjection> {
+public final class AdvancedPanel extends AbstractInjectionPanel<BaseInjection> {
 
   private JPanel myRoot;
 

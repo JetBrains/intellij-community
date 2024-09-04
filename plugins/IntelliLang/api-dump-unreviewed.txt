@@ -80,18 +80,6 @@ c:org.intellij.plugins.intelliLang.Configuration$Prj
 - getParentConfiguration():org.intellij.plugins.intelliLang.Configuration
 - p:invokeAfterReload(java.lang.Runnable):V
 - replaceInjections(java.util.List,java.util.List,Z):Z
-f:org.intellij.plugins.intelliLang.InjectionsSettingsUI
-- com.intellij.openapi.options.SearchableConfigurable$Parent$Abstract
-- com.intellij.openapi.options.Configurable$NoScroll
-- <init>(com.intellij.openapi.project.Project):V
-- apply():V
-- createComponent():javax.swing.JComponent
-- getDisplayName():java.lang.String
-- getHelpTopic():java.lang.String
-- getId():java.lang.String
-- hasOwnContent():Z
-- isModified():Z
-- reset():V
 f:org.intellij.plugins.intelliLang.IntelliLangBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
@@ -118,30 +106,7 @@ a:org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport
 - ps:showEditInjectionDialog(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel,java.lang.String,java.lang.String):Z
 - useDefaultCommentInjector():Z
 - useDefaultInjector(com.intellij.psi.PsiLanguageInjectionHost):Z
-c:org.intellij.plugins.intelliLang.inject.CommentLanguageInjector
-- com.intellij.lang.injection.general.LanguageInjectionContributor
-- <init>():V
-- getInjection(com.intellij.psi.PsiElement):com.intellij.lang.injection.general.Injection
-f:org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector
-- com.intellij.lang.injection.general.LanguageInjectionContributor
-- <init>():V
-- getInjection(com.intellij.psi.PsiElement):com.intellij.lang.injection.general.Injection
-c:org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction
-- com.intellij.codeInsight.intention.IntentionAction
-- com.intellij.codeInsight.intention.LowPriorityAction
-- <init>():V
-- getFamilyName():java.lang.String
-- getText():java.lang.String
-- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- startInWriteAction():Z
-c:org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter
-- com.intellij.codeInsight.highlighting.HighlightErrorFilter
-- com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
-- <init>():V
-- accept(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.psi.PsiFile):Z
-- shouldHighlightErrorElement(com.intellij.psi.PsiErrorElement):Z
-c:org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+f:org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction
 - sf:FIX_KEY:com.intellij.openapi.util.Key
@@ -149,7 +114,6 @@ c:org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 - <init>():V
 - s:addFixer(com.intellij.psi.PsiLanguageInjectionHost,com.intellij.util.Processor,java.lang.String):V
 - s:doChooseLanguageToInject(com.intellij.openapi.editor.Editor,com.intellij.util.Processor):Z
-- ps:findInjectionHost(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.psi.PsiLanguageInjectionHost
 - generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:getAllInjectables():java.util.List
 - getFamilyName():java.lang.String
@@ -209,13 +173,7 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils$InjectionInfo
 - host():com.intellij.psi.PsiLanguageInjectionHost
 - language():org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - range():com.intellij.openapi.util.TextRange
-f:org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean
-- myConfigUrl:java.lang.String
-- <init>():V
-- getConfigUrl():java.lang.String
 a:org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
-- sf:CONFIG_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:INJECTOR_SUPPORT:com.intellij.openapi.util.Key
 - sf:SETTINGS_EDITOR:com.intellij.openapi.util.Key
 - sf:TEMPORARY_INJECTED_LANGUAGE:com.intellij.openapi.util.Key
@@ -235,10 +193,6 @@ a:org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 - a:setupPresentation(org.intellij.plugins.intelliLang.inject.config.BaseInjection,com.intellij.ui.SimpleColoredText,Z):V
 - a:useDefaultCommentInjector():Z
 - a:useDefaultInjector(com.intellij.psi.PsiLanguageInjectionHost):Z
-f:org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector
-- com.intellij.lang.injection.general.LanguageInjectionContributor
-- <init>():V
-- getInjection(com.intellij.psi.PsiElement):com.intellij.lang.injection.general.Injection
 f:org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 - sf:SUPPORT_ID:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V
@@ -310,7 +264,7 @@ org.intellij.plugins.intelliLang.inject.config.Injection
 - a:acceptsPsiElement(com.intellij.psi.PsiElement):Z
 - a:getDisplayName():java.lang.String
 - a:getInjectedArea(com.intellij.psi.PsiElement):java.util.List
-c:org.intellij.plugins.intelliLang.inject.config.InjectionPlace
+f:org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 - sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
 - sf:EMPTY_ARRAY:org.intellij.plugins.intelliLang.inject.config.InjectionPlace[]
 - <init>(com.intellij.patterns.ElementPattern,Z):V
@@ -338,20 +292,16 @@ a:org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
 - f:reset():V
 - pa:resetImpl():V
 - p:updateTree():V
-c:org.intellij.plugins.intelliLang.inject.config.ui.AdvancedPanel
+f:org.intellij.plugins.intelliLang.inject.config.ui.AdvancedPanel
 - org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
 - b:$$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
-- p:apply(org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
 - getComponent():javax.swing.JPanel
-- p:resetImpl():V
-c:org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel
+f:org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel
 - org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
 - b:$$$getRootComponent$$$():javax.swing.JComponent
 - <init>(org.intellij.plugins.intelliLang.inject.config.BaseInjection,com.intellij.openapi.project.Project):V
-- p:apply(org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
 - getComponent():javax.swing.JPanel
-- p:resetImpl():V
 org.intellij.plugins.intelliLang.inject.config.ui.InjectionPanel
 - a:addUpdater(java.lang.Runnable):V
 - a:apply():V
@@ -360,56 +310,38 @@ org.intellij.plugins.intelliLang.inject.config.ui.InjectionPanel
 - a:init(org.intellij.plugins.intelliLang.inject.config.Injection):V
 - a:isModified():Z
 - a:reset():V
-c:org.intellij.plugins.intelliLang.inject.config.ui.LanguagePanel
+f:org.intellij.plugins.intelliLang.inject.config.ui.LanguagePanel
 - org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel
 - b:$$$getRootComponent$$$():javax.swing.JComponent
 - <init>(com.intellij.openapi.project.Project,org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
-- p:apply(org.intellij.plugins.intelliLang.inject.config.BaseInjection):V
 - getComponent():javax.swing.JPanel
 - getLanguage():java.lang.String
 - getPrefix():java.lang.String
 - getSuffix():java.lang.String
-- p:resetImpl():V
 - setLanguage(java.lang.String):V
 - setPrefix(java.lang.String):V
 - setSuffix(java.lang.String):V
-c:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
+f:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
 - com.intellij.lang.annotation.Annotator
 - sf:KEY:com.intellij.openapi.util.Key
 - <init>():V
 - annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
-c:org.intellij.plugins.intelliLang.references.FileReferenceInjector
+f:org.intellij.plugins.intelliLang.references.FileReferenceInjector
 - com.intellij.psi.injection.ReferenceInjector
 - <init>():V
 - getDisplayName():java.lang.String
 - getId():java.lang.String
 - getReferences(com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
-c:org.intellij.plugins.intelliLang.references.InjectedReferencesContributor
+f:org.intellij.plugins.intelliLang.references.InjectedReferencesContributor
 - com.intellij.psi.PsiReferenceContributor
 - <init>():V
 - s:getInjectedReferences(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
 - s:isInjected(com.intellij.psi.PsiReference):Z
 - registerReferenceProviders(com.intellij.psi.PsiReferenceRegistrar):V
-c:org.intellij.plugins.intelliLang.references.InjectedReferencesInspection
+f:org.intellij.plugins.intelliLang.references.InjectedReferencesInspection
 - com.intellij.codeInspection.LocalInspectionTool
 - <init>():V
 - buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z):com.intellij.psi.PsiElementVisitor
-f:org.intellij.plugins.intelliLang.references.LanguageCommentFolding
-- com.intellij.lang.folding.FoldingBuilderEx
-- <init>():V
-- buildFoldRegions(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,Z):com.intellij.lang.folding.FoldingDescriptor[]
-- getPlaceholderText(com.intellij.lang.ASTNode):java.lang.String
-- isCollapsedByDefault(com.intellij.lang.ASTNode):Z
-f:org.intellij.plugins.intelliLang.references.LanguageReferenceContributor
-- com.intellij.model.psi.PsiSymbolReferenceProvider
-- <init>():V
-- getReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
-- getSearchRequests(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.Collection
-f:org.intellij.plugins.intelliLang.references.LanguageWordInCommentCompletionContributor
-- com.intellij.codeInsight.completion.CompletionContributor
-- <init>():V
-f:org.intellij.plugins.intelliLang.util.RegExpUtil
-- s:getEnumValues(com.intellij.openapi.project.Project,java.lang.String):java.util.Set
 a:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY_PATTERN:org.intellij.plugins.intelliLang.util.StringMatcher

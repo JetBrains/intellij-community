@@ -23,7 +23,7 @@
 
   <extensionPoints>
     <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
-    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean" dynamic="true"/>
+    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.LanguageInjectionConfigBean" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
