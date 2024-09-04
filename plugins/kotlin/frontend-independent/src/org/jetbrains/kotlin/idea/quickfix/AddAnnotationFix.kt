@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSu
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
@@ -26,18 +25,22 @@ open class AddAnnotationFix(
     element: KtElement,
     private val annotationClassId: ClassId,
     private val kind: Kind = Kind.Self,
-    private val argumentClassFqName: FqName? = null,
+    private val arguments: List<String?> = emptyList(),
     private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
 ) : KotlinQuickFixAction<KtElement>(element) {
     override fun getText(): String {
-        val annotationArguments = (argumentClassFqName?.shortName()?.let { "($it::class)" } ?: "")
-        val annotationCall = annotationClassId.shortClassName.asString() + annotationArguments
+        val annotationCall = annotationClassId.shortClassName.render() + renderArgumentsForIntentionName()
         return when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
             Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
             is Kind.Declaration -> KotlinBundle.message("fix.add.annotation.text.declaration", annotationCall, kind.name ?: "?")
             is Kind.ContainingClass -> KotlinBundle.message("fix.add.annotation.text.containing.class", annotationCall, kind.name ?: "?")
+            is Kind.Copy -> KotlinBundle.message("fix.add.annotation.with.arguments.text.copy", annotationCall, kind.source, kind.target)
         }
+    }
+
+    open fun renderArgumentsForIntentionName(): String {
+        return arguments.takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") ?: ""
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.annotation.family")
@@ -45,7 +48,7 @@ open class AddAnnotationFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val annotationEntry = existingAnnotationEntry?.element
-        val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class" }
+        val annotationInnerText = arguments.takeIf { it.isNotEmpty() }?.joinToString(", ")
         if (annotationEntry != null) {
             if (annotationInnerText == null) return
             val psiFactory = KtPsiFactory(project)
@@ -58,10 +61,11 @@ open class AddAnnotationFix(
     }
 
     sealed class Kind {
-        object Self : Kind()
-        object Constructor : Kind()
-        class Declaration(val name: String?) : Kind()
-        class ContainingClass(val name: String?) : Kind()
+        data object Self : Kind()
+        data object Constructor : Kind()
+        data class Declaration(val name: String?) : Kind()
+        data class ContainingClass(val name: String?) : Kind()
+        data class Copy(val source: String, val target: String) : Kind()
     }
 
     object TypeVarianceConflictFactory :

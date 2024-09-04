@@ -10,4 +10,4 @@ class MyImplementation : MyInterface {
     override fun <caret>deprecatedFun() {
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationWithArgumentsFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotation$doCreateActions$1$1

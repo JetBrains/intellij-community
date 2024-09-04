@@ -31,7 +31,7 @@ class OptInFixes {
         private val kind: Kind,
         private val argumentClassFqName: FqName,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationFix(element, optInClassId, kind, argumentClassFqName, existingAnnotationEntry) {
+    ) : AddAnnotationWithClassLiteralArgumentFix(element, optInClassId, kind, existingAnnotationEntry, argumentClassFqName) {
 
         override fun getText(): String {
             val argumentText = argumentClassFqName.shortName().asString()
@@ -87,7 +87,7 @@ class OptInFixes {
         private val kind: Kind,
         private val argumentClassFqName: FqName? = null,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationFix(element, annotationClassId, Kind.Self, argumentClassFqName, existingAnnotationEntry) {
+    ) : AddAnnotationWithClassLiteralArgumentFix(element, annotationClassId, Kind.Self, existingAnnotationEntry, argumentClassFqName) {
 
         override fun getText(): String {
             val annotationName = annotationClassId.shortClassName.asString()
