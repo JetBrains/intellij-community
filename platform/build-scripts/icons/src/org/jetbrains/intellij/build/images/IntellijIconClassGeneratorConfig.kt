@@ -135,6 +135,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.jpa.jpb.model"
       )
 
+      "intellij.android.ml-api" -> IntellijIconClassGeneratorModuleConfig(
+        className = "AndroidAIPluginIcons",
+        packageName = "com.android.tools.idea.studiobot.icons",
+        iconDirectory = "icons"
+      )
       else -> super.getConfigForModule(moduleName)
     }
   }

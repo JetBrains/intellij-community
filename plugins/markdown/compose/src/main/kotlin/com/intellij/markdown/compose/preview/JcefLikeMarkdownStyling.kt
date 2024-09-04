@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
@@ -69,21 +71,33 @@ fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): Mar
 private fun createInlinesStyling(
   baseTextStyle: TextStyle,
   scheme: PreviewStyleScheme,
+  link: SpanStyle = baseTextStyle.copy(
+    color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
+    textDecoration = TextDecoration.Underline,
+  ).toSpanStyle()
 ): InlinesStyling = InlinesStyling(
-  baseTextStyle,
-  baseTextStyle
+  textStyle = baseTextStyle,
+  inlineCode = baseTextStyle
     .copy(
       fontSize = baseTextStyle.fontSize,
       background = scheme.fenceBackgroundColor.toComposeColor(),
     )
     .toSpanStyle(),
-  baseTextStyle.copy(
-    color = scheme.linkActiveForegroundColor.toComposeColor(),
-    textDecoration = TextDecoration.Underline,
-  ).toSpanStyle(),
+  link = link,
   emphasis = baseTextStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
   strongEmphasis = baseTextStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
   inlineHtml = baseTextStyle.toSpanStyle(),
+  linkDisabled = link.copy(color = JBUI.CurrentTheme.Link.Foreground.DISABLED.toComposeColor()),
+  linkHovered = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
+  linkFocused = link.copy(
+    color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor(),
+    background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
+  ),
+  linkPressed = link.copy(
+    color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
+    background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
+  ),
+  linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
   renderInlineHtml = false,
 )
 

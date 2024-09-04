@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="studio-test-platform" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:studio-test-platform:2024.1.3-canary1-182">
+    <properties maven-id="org.jetbrains.intellij.deps:studio-test-platform:2024.2.1-canary7-194">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.1.3-canary1-182/studio-test-platform-2024.1.3-canary1-182.jar">
-          <sha256sum>dcf5957c83e840e105f818b8e1c5d1ac4111dad929e9f9c43806744308e320a6</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.2.1-canary7-194/studio-test-platform-2024.2.1-canary7-194.jar">
+          <sha256sum>819a962a08459c0f744141a9d6c2b81a10e0dc6a2959503cf2f055ec084f4263</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.1.3-canary1-182/studio-test-platform-2024.1.3-canary1-182.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.2.1-canary7-194/studio-test-platform-2024.2.1-canary7-194.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.1.3-canary1-182/studio-test-platform-2024.1.3-canary1-182-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-test-platform/2024.2.1-canary7-194/studio-test-platform-2024.2.1-canary7-194-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
