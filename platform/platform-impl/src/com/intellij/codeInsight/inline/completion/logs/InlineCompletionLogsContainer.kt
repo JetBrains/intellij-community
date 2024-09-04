@@ -13,9 +13,14 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.math.absoluteValue
 
 @ApiStatus.Internal
-class InlineCompletionLogsContainer {
+class InlineCompletionLogsContainer(private val requestId: Long) {
+
+  private val fullLogsShare = 0.01f
+
+  private var randomPass = false
 
   /**
    * Describes phase of the Inline completion session.
@@ -80,10 +85,19 @@ class InlineCompletionLogsContainer {
    */
   fun logCurrent() {
     cancelAsyncAdds()
+    val sendFullLogs = randomPass || requestId.absoluteValue % 100 < fullLogsShare * 100
+
     InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
-      logs.filter { it.value.isNotEmpty() }.map { (phase, events) ->
-        InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(events.toList()))
-      }
+      logs.filter { it.value.isNotEmpty() }
+        .map { (phase, logs) ->
+
+          val filteredEvents = if (sendFullLogs)
+            logs
+          else
+            logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
+
+          InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(filteredEvents.toList()))
+        }
     )
     logs.forEach { (_, events) -> events.clear() }
   }
@@ -102,8 +116,8 @@ class InlineCompletionLogsContainer {
     /**
      * Create, store in editor and get log container
      */
-    fun create(editor: Editor): InlineCompletionLogsContainer {
-      val container = InlineCompletionLogsContainer()
+    fun create(editor: Editor, requestId: Long): InlineCompletionLogsContainer {
+      val container = InlineCompletionLogsContainer(requestId)
       editor.putUserData(KEY, container)
       return container
     }
