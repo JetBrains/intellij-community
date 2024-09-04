@@ -26,9 +26,9 @@ enum class TaskStatus {
 
   /**
    * Indicates that a task has been requested to stop.
+   * Not that the task might still be running until it can be safely aborted.
    *
-   * A canceled task does not change its status anymore.
-   * Although the status is [CANCELED], the task might still be running until it can be safely aborted.
+   * A task in this state cannot be resumed or paused anymore.
    */
   CANCELED
 }
