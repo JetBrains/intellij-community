@@ -469,6 +469,9 @@ sun.util.resources.ParallelListResourceBundle#keySet()
 sun.util.resources.BreakIteratorResourceBundle#handleKeySet()
 sun.util.BuddhistCalendar#getDisplayName(int;int;java.util.Locale;)
 sun.util.BuddhistCalendar#getDisplayNames(int;int;java.util.Locale;)
+sun.security.ec.ECKeyFactory
+sun.security.ec.ECPublicKeyImpl
+sun.security.ec.ECPrivateKeyImpl
 sun.security.ssl.SSLEngineImpl#getSSLParameters()
 sun.security.ssl.SSLEngineImpl#setSSLParameters(javax.net.ssl.SSLParameters;)
 sun.security.ssl.SSLSocketImpl#getSSLParameters()
@@ -844,7 +847,11 @@ javax.security.auth.login.Configuration.Parameters
 javax.security.auth.login.ConfigurationSpi
 com.sun.tools.attach.spi.AttachProvider
 com.sun.tools.attach.VirtualMachine
+com.sun.tools.attach.AttachPermission
+com.sun.tools.attach.AgentLoadException
 com.sun.tools.attach.VirtualMachineDescriptor
+com.sun.tools.attach.AttachNotSupportedException
+com.sun.tools.attach.AgentInitializationException
 javax.naming.InitialContext#doLookup(javax.naming.Name;)
 javax.naming.InitialContext#doLookup(java.lang.String;)
 com.sun.java.swing.plaf.gtk.GTKPainter#paintSeparatorBackground(javax.swing.plaf.synth.SynthContext;java.awt.Graphics;int;int;int;int;int;)
@@ -1510,6 +1517,7 @@ com.sun.source.tree.ParameterizedTypeTree
 com.sun.source.tree.CompoundAssignmentTree
 com.sun.source.tree.ExpressionStatementTree
 com.sun.source.tree.ConditionalExpressionTree
+com.sun.source.util.Trees
 com.sun.source.util.TreePath
 com.sun.source.util.JavacTask
 com.sun.source.util.TaskEvent.Kind
@@ -1611,6 +1619,7 @@ javax.script.ScriptEngineFactory
 javax.script.ScriptEngineManager
 javax.script.SimpleScriptContext
 javax.script.AbstractScriptEngine
+com.sun.net.httpserver.spi.HttpServerProvider
 com.sun.net.httpserver.Filter
 com.sun.net.httpserver.Headers
 com.sun.net.httpserver.HttpServer
@@ -1618,10 +1627,13 @@ com.sun.net.httpserver.HttpContext
 com.sun.net.httpserver.HttpHandler
 com.sun.net.httpserver.HttpsServer
 com.sun.net.httpserver.HttpExchange
+com.sun.net.httpserver.Authenticator
+com.sun.net.httpserver.HttpPrincipal
 com.sun.net.httpserver.HttpsExchange
 com.sun.net.httpserver.HttpsParameters
 com.sun.net.httpserver.HttpsConfigurator#configure(com.sun.net.httpserver.HttpsParameters;)
 com.sun.net.httpserver.HttpsConfigurator
+com.sun.net.httpserver.BasicAuthenticator
 com.sun.management.VMOption.Origin
 com.sun.management.VMOption
 sun.instrument.InstrumentationImpl#addTransformer(java.lang.instrument.ClassFileTransformer;boolean;)

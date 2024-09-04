@@ -53,6 +53,7 @@ java.security.spec.NamedParameterSpec#ED448
 java.security.interfaces.EdECKey
 java.security.interfaces.EdECPublicKey
 java.security.interfaces.EdECPrivateKey
+jdk.javadoc.doclet.Taglet#isBlockTag()
 com.sun.tools.javac.api.JavacTrees#getType(com.sun.source.util.DocTreePath;)
 com.sun.source.util.DocTrees#getType(com.sun.source.util.DocTreePath;)
 javax.lang.model.SourceVersion#RELEASE_15

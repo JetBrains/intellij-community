@@ -1,4 +1,7 @@
+jdk.jfr.consumer.EventStream#onMetadata(java.util.function.Consumer<jdk.jfr.consumer.MetadataEvent>;)
 jdk.jfr.consumer.MetadataEvent
+jdk.jfr.consumer.RecordingStream#onMetadata(java.util.function.Consumer<jdk.jfr.consumer.MetadataEvent>;)
+jdk.jfr.internal.consumer.AbstractEventStream#onMetadata(java.util.function.Consumer<jdk.jfr.consumer.MetadataEvent>;)
 jdk.jfr.internal.Throttle
 jdk.net.UnixDomainPrincipal
 jdk.net.ExtendedSocketOptions#SO_PEERCRED
@@ -132,10 +135,24 @@ java.lang.invoke.VarHandleReferences.FieldStaticReadWrite#withInvokeExactBehavio
 java.lang.invoke.VarHandleReferences.FieldStaticReadWrite#withInvokeBehavior()
 java.lang.invoke.VarHandleReferences.Array#withInvokeExactBehavior()
 java.lang.invoke.VarHandleReferences.Array#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsInts#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsInts#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsBytes#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsBytes#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsChars#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsChars#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsLongs#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsLongs#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsInts.ArrayHandle#withInvokeExactBehavior()
 java.lang.invoke.VarHandleByteArrayAsInts.ArrayHandle#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsInts.ByteBufferHandle#withInvokeExactBehavior()
 java.lang.invoke.VarHandleByteArrayAsInts.ByteBufferHandle#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsFloats#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsFloats#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsShorts#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsShorts#withInvokeBehavior()
+java.lang.invoke.LazyInitializingVarHandle#withInvokeExactBehavior()
+java.lang.invoke.LazyInitializingVarHandle#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsChars.ArrayHandle#withInvokeExactBehavior()
 java.lang.invoke.VarHandleByteArrayAsChars.ArrayHandle#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsChars.ByteBufferHandle#withInvokeExactBehavior()
@@ -144,6 +161,8 @@ java.lang.invoke.VarHandleByteArrayAsLongs.ArrayHandle#withInvokeExactBehavior()
 java.lang.invoke.VarHandleByteArrayAsLongs.ArrayHandle#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsLongs.ByteBufferHandle#withInvokeExactBehavior()
 java.lang.invoke.VarHandleByteArrayAsLongs.ByteBufferHandle#withInvokeBehavior()
+java.lang.invoke.VarHandleSegmentAsDoubles#withInvokeExactBehavior()
+java.lang.invoke.VarHandleSegmentAsDoubles#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsFloats.ArrayHandle#withInvokeExactBehavior()
 java.lang.invoke.VarHandleByteArrayAsFloats.ArrayHandle#withInvokeBehavior()
 java.lang.invoke.VarHandleByteArrayAsFloats.ByteBufferHandle#withInvokeExactBehavior()
@@ -209,6 +228,7 @@ java.security.spec.MGF1ParameterSpec#SHA3_512
 jdk.internal.jshell.tool.Selector
 java.util.logging.LogRecord#getLongThreadID()
 java.util.logging.LogRecord#setLongThreadID(long;)
+com.sun.tools.javac.api.JavacTrees#getCharacters(com.sun.source.doctree.EntityTree;)
 com.sun.tools.javac.code.Symbol.ClassSymbol#getRecordComponents()
 com.sun.tools.javac.tree.DCTree.DCReturn#isInline()
 com.sun.tools.javac.tree.JCTree.JCInstanceOf#getPattern()
@@ -222,6 +242,7 @@ com.sun.source.tree.PatternTree
 com.sun.source.tree.TreeVisitor#visitBindingPattern(com.sun.source.tree.BindingPatternTree;P;)
 com.sun.source.tree.InstanceOfTree#getPattern()
 com.sun.source.tree.BindingPatternTree
+com.sun.source.util.DocTrees#getCharacters(com.sun.source.doctree.EntityTree;)
 com.sun.source.util.DocTreeFactory#newReturnTree(boolean;java.util.List<? extends com.sun.source.doctree.DocTree>;)
 com.sun.source.doctree.ReturnTree#isInline()
 javax.lang.model.util.Elements#recordComponentFor(javax.lang.model.element.ExecutableElement;)
@@ -229,6 +250,7 @@ javax.lang.model.util.ElementFilter#recordComponentsIn(java.lang.Iterable<? exte
 javax.lang.model.util.ElementFilter#recordComponentsIn(java.util.Set<? extends javax.lang.model.element.Element>;)
 javax.lang.model.util.ElementScanner14
 javax.lang.model.util.ElementKindVisitor6#visitTypeAsRecord(javax.lang.model.element.TypeElement;P;)
+javax.lang.model.util.ElementKindVisitor14#visitVariableAsBindingVariable(javax.lang.model.element.VariableElement;P;)
 javax.lang.model.util.ElementKindVisitor14
 javax.lang.model.util.SimpleElementVisitor14
 javax.lang.model.util.AbstractElementVisitor14
@@ -241,4 +263,5 @@ javax.lang.model.element.RecordComponentElement
 javax.lang.model.SourceVersion#RELEASE_16
 java.net.http.HttpRequest#newBuilder(java.net.http.HttpRequest;java.util.function.BiPredicate<java.lang.String,java.lang.String>;)
 java.net.http.HttpRequest.BodyPublishers#concat(java.net.http.HttpRequest.BodyPublisher[];)
+jdk.management.jfr.RemoteRecordingStream#onMetadata(java.util.function.Consumer<jdk.jfr.consumer.MetadataEvent>;)
 jdk.management.jfr.RemoteRecordingStream

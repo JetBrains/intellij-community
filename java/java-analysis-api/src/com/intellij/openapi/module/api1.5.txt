@@ -187,7 +187,9 @@ com.sun.crypto.provider.RC2Parameters
 com.sun.crypto.provider.KeyGeneratorCore
 com.sun.crypto.provider.GaloisCounterMode#engineUpdate(java.nio.ByteBuffer;java.nio.ByteBuffer;)
 com.sun.crypto.provider.GaloisCounterMode#engineDoFinal(java.nio.ByteBuffer;java.nio.ByteBuffer;)
+jdk.internal.misc.CarrierThread#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler;)
 jdk.internal.misc.InnocuousThread#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler;)
+jdk.internal.misc.CarrierThreadLocal#remove()
 jdk.internal.misc.TerminatingThreadLocal#remove()
 jdk.internal.util.xml.SAXParser#isXIncludeAware()
 sun.net.www.protocol.ftp.Handler#openConnection(java.net.URL;java.net.Proxy;)
@@ -238,6 +240,8 @@ sun.reflect.annotation.AnnotationInvocationHandler
 sun.reflect.annotation.TypeNotPresentExceptionProxy
 sun.reflect.annotation.AnnotationTypeMismatchExceptionProxy
 sun.reflect.annotation.EnumConstantNotPresentExceptionProxy
+sun.security.ec.ECDSASignature.RawECDSA#engineUpdate(java.nio.ByteBuffer;)
+sun.security.ec.ECDSASignature#engineUpdate(java.nio.ByteBuffer;)
 sun.security.jca.JCAUtil
 sun.security.jca.Providers
 sun.security.jca.ServiceId
@@ -1141,9 +1145,11 @@ java.awt.Component#firePropertyChange(java.lang.String;double;double;)
 java.awt.Component#canBeFocusOwnerRecursively()
 java.awt.Container#focusTraversalPolicyProvider
 java.awt.Container#checkAdding(java.awt.Component;int;)
+java.awt.Container#removeDelicately(java.awt.Component;java.awt.Container;int;)
 java.awt.Container#canContainFocusOwner(java.awt.Component;)
 java.awt.Container#hasHeavyweightDescendants()
 java.awt.Container#getHeavyweightContainer()
+java.awt.Container#isRemoveNotifyNeeded(java.awt.Component;java.awt.Container;java.awt.Container;)
 java.awt.Container#setComponentZOrder(java.awt.Component;int;)
 java.awt.Container#reparentTraverse(java.awt.peer.ContainerPeer;java.awt.Container;)
 java.awt.Container#reparentChild(java.awt.Component;)
@@ -1371,8 +1377,11 @@ java.util.logging.Logging
 java.util.logging.LogManager#LOGGING_MXBEAN_NAME
 java.util.logging.LogManager#getLoggingMXBean()
 java.util.logging.LoggingMXBean
+com.sun.tools.javac.Main
 sun.tools.jconsole.Plotter#getComponentPopupMenu()
 sun.tools.jconsole.PlotterPanel#getComponentPopupMenu()
+netscape.javascript.JSObject
+netscape.javascript.JSException
 jdk.internal.net.http.common.ImmutableSSLSession#isValid()
 jdk.internal.net.http.common.ImmutableSSLSession#getPeerPrincipal()
 jdk.internal.net.http.common.ImmutableSSLSession#getLocalPrincipal()
@@ -1679,9 +1688,10 @@ javax.management.remote.rmi.RMIConnector
 javax.management.remote.rmi.RMIConnection
 javax.management.remote.rmi.RMIServerImpl
 javax.management.remote.rmi.RMIConnectionImpl
-javax.management.remote.rmi.RMIIIOPServerImpl
 javax.management.remote.rmi.RMIJRMPServerImpl
 javax.management.remote.rmi.RMIConnectorServer
+javax.management.remote.rmi.RMIServerImpl_Stub
+javax.management.remote.rmi.RMIConnectionImpl_Stub
 sun.security.pkcs11.Token
 sun.security.pkcs11.Config
 sun.security.pkcs11.P11Key

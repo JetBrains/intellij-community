@@ -65,6 +65,9 @@ sun.util.locale.provider.SPILocaleProviderAdapter.CurrencyNameProviderDelegate#g
 sun.util.locale.provider.SPILocaleProviderAdapter.LocaleNameProviderDelegate#getDisplayScript(java.lang.String;java.util.Locale;)
 sun.util.logging.PlatformLogger
 sun.util.calendar.ZoneInfo#observesDaylightTime()
+sun.security.ec.ECDSASignature
+sun.security.ec.ECDHKeyAgreement
+sun.security.ec.ECKeyPairGenerator
 sun.security.ssl.SSLEngineImpl#getHandshakeSession()
 sun.security.ssl.SSLSocketImpl#getHandshakeSession()
 sun.security.ssl.SSLServerSocketImpl#getSSLParameters()
@@ -528,6 +531,7 @@ sun.java2d.marlin.DMarlinRenderingEngine#strokeTo(java.awt.Shape;java.awt.geom.A
 sun.java2d.marlin.DMarlinRenderingEngine#getAATileGenerator(java.awt.Shape;java.awt.geom.AffineTransform;sun.java2d.pipe.Region;java.awt.BasicStroke;boolean;boolean;int[];)
 sun.java2d.marlin.DMarlinRenderingEngine#getAATileGenerator(double;double;double;double;double;double;double;double;sun.java2d.pipe.Region;int[];)
 sun.java2d.marlin.DMarlinRenderingEngine#getMinimumAAPenSize()
+sun.java2d.marlin.DualPivotQuicksort20191112Ext
 sun.java2d.SurfaceData#getState()
 sun.java2d.SurfaceData#getStateTracker()
 sun.java2d.StateTracker#ALWAYS_CURRENT
@@ -716,6 +720,7 @@ javax.swing.SwingUtilities#getUnwrappedParent(java.awt.Component;)
 javax.swing.SwingUtilities#getUnwrappedView(javax.swing.JViewport;)
 javax.swing.SwingUtilities#getValidateRoot(java.awt.Container;boolean;)
 java.util.logging.Logger#getGlobal()
+com.sun.tools.javac.launcher.MemoryClassLoader.MemoryURLConnection#getContentLengthLong()
 com.sun.tools.javac.launcher.Main.MemoryClassLoader.MemoryURLConnection#getContentLengthLong()
 com.sun.source.tree.UnionTypeTree
 sun.tools.jconsole.ThreadTab.PromptingTextField#revalidate()
@@ -745,6 +750,7 @@ sun.security.ec.ECKeyPairGenerator
 com.sun.management.internal.OperatingSystemImpl#getProcessCpuLoad()
 com.sun.management.OperatingSystemMXBean#getSystemCpuLoad()
 com.sun.management.OperatingSystemMXBean#getProcessCpuLoad()
+com.sun.management.GarbageCollectionNotificationInfo
 java.lang.management.BufferPoolMXBean
 java.lang.management.ManagementFactory#getPlatformMXBean(java.lang.Class<T>;)
 java.lang.management.ManagementFactory#getPlatformMXBeans(java.lang.Class<T>;)
@@ -777,6 +783,10 @@ com.sun.nio.file.ExtendedWatchEventModifier
 com.sun.nio.file.SensitivityWatchEventModifier
 sun.misc.Unsafe#setMemory(java.lang.Object;long;long;byte;)
 sun.misc.Unsafe#copyMemory(java.lang.Object;long;java.lang.Object;long;long;)
+com.sun.security.jgss.InquireType
+com.sun.security.jgss.ExtendedGSSContext
+com.sun.security.jgss.AuthorizationDataEntry
+com.sun.security.jgss.InquireSecContextPermission
 sun.security.krb5.KrbAsReqBuilder
 sun.security.krb5.KrbServiceLocator
 javax.security.auth.kerberos.KeyTab

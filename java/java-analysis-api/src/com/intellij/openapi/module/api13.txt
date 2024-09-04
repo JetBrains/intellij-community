@@ -171,6 +171,7 @@ com.sun.source.util.ParameterNameProvider
 javax.lang.model.SourceVersion#RELEASE_13
 javax.tools.StandardJavaFileManager#getJavaFileObjectsFromPaths(java.util.Collection<? extends java.nio.file.Path>;)
 javax.annotation.processing.ProcessingEnvironment#isPreviewEnabled()
+javax.xml.crypto.dsig.keyinfo.KeyValue#EC_TYPE
 javax.xml.crypto.dsig.CanonicalizationMethod#INCLUSIVE_11
 javax.xml.crypto.dsig.CanonicalizationMethod#INCLUSIVE_11_WITH_COMMENTS
 javax.security.auth.kerberos.KerberosPrincipal#KRB_NT_ENTERPRISE

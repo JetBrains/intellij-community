@@ -199,7 +199,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test language level 14 with JDK 15`() {
+  fun `test language level 14`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_14)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Main {
@@ -214,7 +214,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test language level 15 with JDK 16`() {
+  fun `test language level 15`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_15)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Main {
@@ -226,13 +226,28 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test language level 16 with JDK 17`() {
+  fun `test language level 16`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_16)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       class Main {
         {
           String.class.isRecord();
           String.class.<error descr="Usage of API documented as @since 17+">isSealed</error>();
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test language level 17`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_17)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.time.Duration;
+      
+      class Main {
+        {
+          try {
+            Thread.<error descr="Usage of API documented as @since 19+">sleep</error>(Duration.ofSeconds(5));
+          } catch (InterruptedException e) { }
         }
       }
     """.trimIndent())
