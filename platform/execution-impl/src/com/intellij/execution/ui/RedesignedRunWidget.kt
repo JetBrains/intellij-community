@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook.getIconPosition
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook.paintIconImpl
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -50,18 +52,9 @@ import com.intellij.ui.icons.TextIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Insets
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.InputEvent
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -99,7 +92,7 @@ private fun createRunActionToolbar(): ActionToolbar {
   val toolbar = ActionToolbarImpl(ActionPlaces.NEW_UI_RUN_TOOLBAR, group, true)
   toolbar.targetComponent = null
   toolbar.isReservePlaceAutoPopupIcon = false
-  toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+  toolbar.layoutStrategy = ToolbarLayoutStrategy.COMPRESSING_STRATEGY
   toolbar.component.isOpaque = false
   toolbar.component.border = null
   toolbar.setMinimumButtonSize {
