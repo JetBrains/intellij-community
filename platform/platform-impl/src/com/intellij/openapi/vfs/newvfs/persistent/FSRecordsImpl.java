@@ -800,6 +800,7 @@ public final class FSRecordsImpl implements Closeable {
       int id = info.getId();
       String symlinkTarget = info.getSymlinkTarget();
       storeSymlinkTarget(id, symlinkTarget);
+
       CharSequence name = info.getName();
       VirtualFileSystem fs = parent.getFileSystem();
       if (fs instanceof LocalFileSystemImpl) {
@@ -839,9 +840,8 @@ public final class FSRecordsImpl implements Closeable {
 
   void storeSymlinkTarget(int fileId,
                           @Nullable String symlinkTarget) {
+    checkNotClosed();
     try {
-      checkNotClosed();
-      connection.markDirty();
       try (DataOutputStream stream = writeAttribute(fileId, SYMLINK_TARGET_ATTRIBUTE)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
@@ -854,8 +854,8 @@ public final class FSRecordsImpl implements Closeable {
   //========== file by name iterations: ========================================
 
   boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return connection.getNames().forEach((nameId, name) -> processor.process(name));
     }
     catch (IOException e) {
@@ -865,13 +865,13 @@ public final class FSRecordsImpl implements Closeable {
 
   boolean processFilesWithNames(@NotNull Set<String> names,
                                 @NotNull IntPredicate processor) {
+    checkNotClosed();
+
+    if (names.isEmpty()) {
+      return true;
+    }
+
     try {
-      checkNotClosed();
-
-      if (names.isEmpty()) {
-        return true;
-      }
-
       IntList nameIds = new IntArrayList(names.size());
       for (String name : names) {
         int nameId = fileNamesEnumerator.tryEnumerate(name);
@@ -892,8 +892,8 @@ public final class FSRecordsImpl implements Closeable {
 
   @PersistentFS.Attributes
   int getFlags(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return connection.getRecords().getFlags(fileId);
     }
     catch (IOException e) {
@@ -902,6 +902,7 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   boolean isDeleted(int fileId) {
+    checkNotClosed();
     try {
       return recordAccessor.isDeleted(fileId);
     }
@@ -911,8 +912,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   int getModCount(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return connection.getRecords().getModCount(fileId);
     }
     catch (IOException e) {
@@ -922,8 +923,8 @@ public final class FSRecordsImpl implements Closeable {
 
 
   public int getParent(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       int parentId = connection.getRecords().getParent(fileId);
       if (parentId == fileId) {
         throw new IllegalStateException("Cyclic parent child relations in the database: fileId = " + fileId + " == parentId");
@@ -944,10 +945,9 @@ public final class FSRecordsImpl implements Closeable {
       return;
     }
 
+    checkNotClosed();
     try {
-      checkNotClosed();
       connection.getRecords().setParent(fileId, parentId);
-      connection.markDirty();
     }
     catch (IOException e) {
       throw handleError(e);
@@ -961,8 +961,8 @@ public final class FSRecordsImpl implements Closeable {
    * This method changes VFS content (if name is a new one)!
    */
   public int getNameId(@NotNull String name) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return fileNamesEnumerator.enumerate(name);
     }
     catch (Throwable e) {
@@ -972,8 +972,8 @@ public final class FSRecordsImpl implements Closeable {
 
   /** @return name by fileId, using FileNameCache */
   public @NotNull String getName(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       int nameId = connection.getRecords().getNameId(fileId);
       return nameId == NULL_NAME_ID ? "" : fileNamesEnumerator.valueOf(nameId);
     }
@@ -983,8 +983,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   public int getNameIdByFileId(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return connection.getRecords().getNameId(fileId);
     }
     catch (IOException e) {
@@ -1005,29 +1005,30 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   public void setName(int fileId, @NotNull String name) {
-    try {
-      checkNotClosed();
-      int nameId = getNameId(name);
+    checkNotClosed();
 
-      int previousNameId = connection.getRecords().updateNameId(fileId, nameId);
-      connection.markDirty();
+    int nameId = getNameId(name);
+
+    updateRecordFields(fileId, record -> {
+      int previousNameId = record.getNameId();
+      if (previousNameId == nameId) {
+        return false;
+      }
+
+      record.setNameId(nameId);
 
       invertedNameIndexLazy.get().updateFileName(fileId, nameId, previousNameId);
       invertedNameIndexModCount.incrementAndGet();
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
+      return true;
+    });
   }
 
   @ApiStatus.Obsolete
   void setFlags(int fileId,
                 @PersistentFS.Attributes int flags) {
+    checkNotClosed();
     try {
-      checkNotClosed();
-      if (connection.getRecords().setFlags(fileId, flags)) {
-        connection.markDirty();
-      }
+      connection.getRecords().setFlags(fileId, flags);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1035,8 +1036,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   long getLength(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return connection.getRecords().getLength(fileId);
     }
     catch (IOException e) {
@@ -1047,11 +1048,9 @@ public final class FSRecordsImpl implements Closeable {
   @ApiStatus.Obsolete
   void setLength(int fileId,
                  long len) {
+    checkNotClosed();
     try {
-      checkNotClosed();
-      if (connection.getRecords().setLength(fileId, len)) {
-        connection.markDirty();
-      }
+      connection.getRecords().setLength(fileId, len);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1059,8 +1058,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   long getTimestamp(int fileId) {
+    checkNotClosed();
     try {
-      checkNotClosed();
       return connection.getRecords().getTimestamp(fileId);
     }
     catch (IOException e) {
@@ -1071,11 +1070,9 @@ public final class FSRecordsImpl implements Closeable {
   @ApiStatus.Obsolete
   void setTimestamp(int fileId,
                     long value) {
+    checkNotClosed();
     try {
-      checkNotClosed();
-      if (connection.getRecords().setTimestamp(fileId, value)) {
-        connection.markDirty();
-      }
+      connection.getRecords().setTimestamp(fileId, value);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1083,6 +1080,7 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   int getContentRecordId(int fileId) {
+    checkNotClosed();
     try {
       return connection.getRecords().getContentRecordId(fileId);
     }
@@ -1092,6 +1090,7 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   int getAttributeRecordId(int fileId) {
+    checkNotClosed();
     try {
       return connection.getRecords().getAttributeRecordId(fileId);
     }
@@ -1109,6 +1108,7 @@ public final class FSRecordsImpl implements Closeable {
                          @NotNull String name,
                          boolean cleanAttributeRef) {
     checkNotClosed();
+
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
@@ -1142,6 +1142,7 @@ public final class FSRecordsImpl implements Closeable {
 
   int updateRecordFields(int fileId, @NotNull RecordUpdater updater) {
     checkNotClosed();
+
     PersistentFSRecordsStorage fileRecords = connection.getRecords();
     long lockStamp = fileRecordLock.lockForWrite(fileId);
     try {
@@ -1152,7 +1153,9 @@ public final class FSRecordsImpl implements Closeable {
       // we could insert new record with .allocateRecords(), and then update its fields with .updateRecordFields() -- there is no
       // concurrency issue with it, because newly allocated id is not yet published, so no one else could access it (except for iterating
       // through VFS with for(fileId in 0..maxId) -- which is a very low-level access anyway). So, maybe change the fileRecords.updateRecord()
-      // semantics so that it returns 'modified' property instead of 
+      // semantics so that it returns 'modified' property instead of newRecordId?
+      // ...on th other hand, do we need .markDirty() at all? Seems like fileRecords storage tracks its modified state by itself, and
+      // we don't need connection.dirty at all!
     }
     catch (IOException ex) {
       throw handleError(ex);
@@ -1164,6 +1167,7 @@ public final class FSRecordsImpl implements Closeable {
 
   <R> R readRecordFields(int fileId, @NotNull RecordReader<R> reader) {
     checkNotClosed();
+
     PersistentFSRecordsStorage fileRecords = connection.getRecords();
     long lockStamp = fileRecordLock.lockForRead(fileId);
     try {
