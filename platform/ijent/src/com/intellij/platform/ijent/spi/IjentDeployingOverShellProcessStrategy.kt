@@ -214,7 +214,7 @@ private suspend fun createDeployingContext(
 
 @VisibleForTesting
 internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Collection<String>) -> Collection<String>): DeployingContext {
-  var busybox: Lazy<String>? = null
+  var busybox: String? = null
 
   // This strange at first glance code helps reduce copy-paste errors.
   val commands: Set<String> = setOf(
@@ -238,8 +238,7 @@ internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Coll
       return directCandidate
     }
 
-    if (name != "busybox") {
-      val busybox = busybox!!.value // Throws an error.
+    if (name != "busybox" && busybox != null) {
       return "$busybox $name"
     }
 
@@ -248,7 +247,7 @@ internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Coll
 
   outputOfWhich += runWhichCmd(commands)
 
-  busybox = lazy { getCommandPath("busybox") }
+  busybox = outputOfWhich.firstOrNull { it.endsWith("/busybox") }
 
   return DeployingContext(
     chmod = getCommandPath("chmod"),
