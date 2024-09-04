@@ -173,12 +173,6 @@ f:com.intellij.analysis.problemsView.toolWindow.FileNode
 - getName():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - hashCode():I
-com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase
-- com.intellij.analysis.problemsView.ProblemsProvider
-- com.intellij.problems.ProblemListener
-- sf:Companion:com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase$Companion
-f:com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase
 f:com.intellij.analysis.problemsView.toolWindow.HighlightingPanel
 - com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 - com.intellij.ide.PowerSaveMode$Listener
