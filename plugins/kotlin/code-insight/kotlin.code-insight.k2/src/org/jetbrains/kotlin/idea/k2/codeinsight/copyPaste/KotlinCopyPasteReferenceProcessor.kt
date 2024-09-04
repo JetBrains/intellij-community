@@ -78,8 +78,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
             try {
                 return listOf(content.getTransferData(KotlinReferenceTransferableData.dataFlavor) as KotlinReferenceTransferableData)
-            } catch (ignored: UnsupportedFlavorException) {
-            } catch (ignored: IOException) {
+            } catch (_: UnsupportedFlavorException) {
+            } catch (_: IOException) {
             }
         }
         return emptyList()
@@ -136,7 +136,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
 
                     targetReferencesToRestore
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 emptyList()
             }
 

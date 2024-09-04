@@ -60,6 +60,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/NoSpecialCharsToSingleQuote.txt");
     }
 
+    @TestMetadata("Stacktrace.txt")
+    public void testStacktrace() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/Stacktrace.txt");
+    }
+
     @TestMetadata("TrailingLines.txt")
     public void testTrailingLines() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/TrailingLines.txt");

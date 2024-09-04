@@ -163,11 +163,13 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
                             val replaced = chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
                                 tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
                             }
-                            append(indentToAdd + replaced)
+                            append(indentToAdd)
+                            append(replaced)
                             indentToAdd = ""
                         }
                         is EntryChunk -> {
-                            append(indentToAdd + chunk.text)
+                            append(indentToAdd)
+                            append(chunk.text)
                             indentToAdd = ""
                         }
                         is NewLineChunk -> {
@@ -240,43 +242,50 @@ private class TemplateTokenSequence(private val inputString: String) : Sequence<
         }
     }
 
-    private fun iterTemplateChunks(): Iterator<TemplateChunk> {
-        if (inputString.isEmpty()) {
-            return emptySequence<TemplateChunk>().iterator()
-        }
-        return iterator {
-            var from = 0
-            var to = 0
-            while (to < inputString.length) {
-                val c = inputString[to]
-                if (c == '\\') {
-                    to += 1.toInt()
-                    if (to < inputString.length) to += 1.toInt()
-                    continue
-                } else if (c == '$') {
-                    if (inputString.substring(to).guessIsTemplateEntryStart()) {
-                        if (from < to) yieldLiteral(inputString.substring(from until to))
-                        from = to
-                        to = findTemplateEntryEnd(inputString, from)
-                        if (to != -1) {
-                            yield(EntryChunk(inputString.substring(from until to)))
-                        } else {
-                            to = inputString.length
-                            yieldLiteral(inputString.substring(from until to))
-                        }
-                        from = to
+    private fun templateChunkIterator(): Iterator<TemplateChunk> {
+        return if (inputString.isEmpty()) emptySequence<TemplateChunk>().iterator()
+        else
+            iterator {
+                val likeStackTrace = isAStackTrace(inputString)
+                var from = 0
+                var to = 0
+                while (to < inputString.length) {
+                    val c = inputString[to]
+                    if (c == '\\') {
+                        to += 1.toInt()
+                        if (to < inputString.length) to += 1.toInt()
                         continue
+                    } else if (c == '$') {
+                        val substring = inputString.substring(to)
+                        val guessIsTemplateEntryStart = !likeStackTrace && substring.guessIsTemplateEntryStart()
+                        if (guessIsTemplateEntryStart) {
+                            if (from < to) yieldLiteral(inputString.substring(from until to))
+                            from = to
+                            to = findTemplateEntryEnd(inputString, from)
+                            if (to != -1) {
+                                yield(EntryChunk(inputString.substring(from until to)))
+                            } else {
+                                to = inputString.length
+                                yieldLiteral(inputString.substring(from until to))
+                            }
+                            from = to
+                            continue
+                        }
                     }
+                    to++
                 }
-                to++
+                if (from < to) {
+                    yieldLiteral(inputString.substring(from until to))
+                }
             }
-            if (from < to) {
-                yieldLiteral(inputString.substring(from until to))
-            }
-        }
     }
 
-    override fun iterator(): Iterator<TemplateChunk> = iterTemplateChunks()
+    override fun iterator(): Iterator<TemplateChunk> = templateChunkIterator()
+
+    private fun isAStackTrace(string: String): Boolean =
+        stacktracePlaceRegex.containsMatchIn(string)
+
+    private val stacktracePlaceRegex = Regex("\\(\\w+\\.\\w+:\\d+\\)")
 }
 
 @TestOnly

@@ -60,6 +60,11 @@ public class LiteralTextToKotlinCopyPasteTestGenerated extends AbstractLiteralTe
         runTest("testData/copyPaste/plainTextLiteral/NoSpecialCharsToSingleQuote.txt");
     }
 
+    @TestMetadata("Stacktrace.txt")
+    public void testStacktrace() throws Exception {
+        runTest("testData/copyPaste/plainTextLiteral/Stacktrace.txt");
+    }
+
     @TestMetadata("TrailingLines.txt")
     public void testTrailingLines() throws Exception {
         runTest("testData/copyPaste/plainTextLiteral/TrailingLines.txt");
