@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class IdeVirtualFileUrlManagerImpl : VirtualFileUrlManagerImpl() {
+class IdeVirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManagerImpl(isRootDirCaseSensitive) {
   override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
     get() = VirtualFileUrlBridge::class.java
 
