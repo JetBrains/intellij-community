@@ -16,18 +16,18 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     @Test
     fun `all commands with busybox`(): Unit = runBlocking {
       val context = createDeployingContext { commands ->
-        commands.map { "/bin/$it" }
+        commands
       }
       context should be(DeployingContext(
-        chmod = "/bin/chmod",
-        cp = "/bin/cp",
-        cut = "/bin/cut",
-        env = "/bin/env",
-        getent = "/bin/getent",
-        head = "/bin/head",
-        mktemp = "/bin/mktemp",
-        uname = "/bin/uname",
-        whoami = "/bin/whoami",
+        chmod = "chmod",
+        cp = "cp",
+        cut = "cut",
+        env = "env",
+        getent = "getent",
+        head = "head",
+        mktemp = "mktemp",
+        uname = "uname",
+        whoami = "whoami",
       ))
     }
 
@@ -35,18 +35,18 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     fun `all commands without busybox`(): Unit = runBlocking {
       val context = createDeployingContext { commands ->
         "busybox" should beIn(commands)
-        (commands - "busybox").map { "/bin/$it" }
+        (commands - "busybox")
       }
       context should be(DeployingContext(
-        chmod = "/bin/chmod",
-        cp = "/bin/cp",
-        cut = "/bin/cut",
-        env = "/bin/env",
-        getent = "/bin/getent",
-        head = "/bin/head",
-        mktemp = "/bin/mktemp",
-        uname = "/bin/uname",
-        whoami = "/bin/whoami",
+        chmod = "chmod",
+        cp = "cp",
+        cut = "cut",
+        env = "env",
+        getent = "getent",
+        head = "head",
+        mktemp = "mktemp",
+        uname = "uname",
+        whoami = "whoami",
       ))
     }
 
@@ -54,18 +54,18 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     fun `all commands without chmod`(): Unit = runBlocking {
       val context = createDeployingContext { commands ->
         "chmod" should beIn(commands)
-        (commands - "chmod").map { "/bin/$it" }
+        (commands - "chmod")
       }
       context should be(DeployingContext(
-        chmod = "/bin/busybox chmod",
-        cp = "/bin/cp",
-        cut = "/bin/cut",
-        env = "/bin/env",
-        getent = "/bin/getent",
-        head = "/bin/head",
-        mktemp = "/bin/mktemp",
-        uname = "/bin/uname",
-        whoami = "/bin/whoami",
+        chmod = "busybox chmod",
+        cp = "cp",
+        cut = "cut",
+        env = "env",
+        getent = "getent",
+        head = "head",
+        mktemp = "mktemp",
+        uname = "uname",
+        whoami = "whoami",
       ))
     }
 
@@ -73,18 +73,18 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
     fun `only busybox`(): Unit = runBlocking {
       val context = createDeployingContext { commands ->
         "busybox" should beIn(commands)
-        listOf("/bin/busybox")
+        listOf("busybox")
       }
       context should be(DeployingContext(
-        chmod = "/bin/busybox chmod",
-        cp = "/bin/busybox cp",
-        cut = "/bin/busybox cut",
-        env = "/bin/busybox env",
-        getent = "/bin/busybox getent",
-        head = "/bin/busybox head",
-        mktemp = "/bin/busybox mktemp",
-        uname = "/bin/busybox uname",
-        whoami = "/bin/busybox whoami",
+        chmod = "busybox chmod",
+        cp = "busybox cp",
+        cut = "busybox cut",
+        env = "busybox env",
+        getent = "busybox getent",
+        head = "busybox head",
+        mktemp = "busybox mktemp",
+        uname = "busybox uname",
+        whoami = "busybox whoami",
       ))
     }
 
