@@ -290,6 +290,7 @@ object CommunityRepositoryModules {
     pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
+      spec.semanticVersioning = true
       spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
         val pluginXml = pluginXmlSupplier()
         if (pluginXml.indexOf("<version>") != -1) {
