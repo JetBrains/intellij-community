@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.DynamicGroupTool
@@ -17,8 +17,7 @@ import org.yaml.snakeyaml.nodes.NodeTuple
 import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Representer
 
-
-object YamlProfileUtils {
+internal object YamlProfileUtils {
 
   private fun copyFrom(source: ToolsImpl, target: ToolsImpl) {
     val defaultState = source.defaultState
