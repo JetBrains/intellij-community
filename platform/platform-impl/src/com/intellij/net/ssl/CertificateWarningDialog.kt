@@ -5,8 +5,6 @@ package com.intellij.net.ssl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
-import com.intellij.openapi.ui.DialogWrapper.MAC_ACTION_ORDER
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
@@ -15,24 +13,22 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.CheckboxTree.CheckboxTreeCellRenderer
-import com.intellij.ui.CheckboxTreeBase.CheckPolicy
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.CertificateManager
 import com.intellij.util.net.ssl.CertificateWrapper
 import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.html.width
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Point
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -125,7 +121,8 @@ internal class CertificateWarningDialog(
           }
         }
       }
-    }
+    }.withMinimumWidth(JBUIScale.scale(400))
+      .withPreferredWidth(JBUIScale.scale(600))
   }
 
   override fun doOKAction() {
@@ -183,7 +180,7 @@ internal class CertificateWarningDialog(
         TreeUtil.selectInTree(lastNode, false, defaultTree)
         @Suppress("HardCodedStringLiteral")
         defaultTree.cellRenderer = object : TreeCellRenderer {
-          override fun getTreeCellRendererComponent(tree: JTree?, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component? {
+          override fun getTreeCellRendererComponent(tree: JTree?, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean): Component {
             val textAndColor = getTreeCellTextAndColor(value)
             val component = JBLabel(textAndColor.first)
             component.foreground = textAndColor.component2()
@@ -284,15 +281,13 @@ internal class CertificateWarningDialog(
       }
       row {
         val status = EditorNotificationPanel.Status.Warning
-        val bannerText = IdeBundle.message("trust.certificate.warning.details")
         val banner = InlineBanner(IdeBundle.message("trust.certificate.warning.details"), status)
         banner.showCloseButton(false)
-        banner.minimumSize = Dimension(banner.getFontMetrics(banner.font).stringWidth(bannerText.substring(0,75)) + status.icon.iconWidth + banner.insets.width, JBUI.scale(70) )
         banner.addAction(IdeBundle.message("trust.certificate.warning.details.action")) {
           val certManager = CertificateManager.getInstance()
           val backgroundColor = UIUtil.getToolTipBackground()
           val foreground = UIUtil.getToolTipForeground()
-          val component = ComponentUtil.findComponentsOfType<LinkLabel<*>>(banner, LinkLabel::class.java).firstOrNull { it.isVisible } ?: banner
+          val component = ComponentUtil.findComponentsOfType(banner, LinkLabel::class.java).firstOrNull { it.isVisible } ?: banner
           JBPopupFactory.getInstance()
             .createHtmlTextBalloonBuilder(IdeBundle.message("trust.certificate.warning.details.popup", certManager.cacertsPath, certManager.password), null, foreground, backgroundColor, null)
             .setBorderColor(backgroundColor)
@@ -300,9 +295,8 @@ internal class CertificateWarningDialog(
             .createBalloon()
             .show(RelativePoint(component, Point()), Balloon.Position.above)
         }
-        banner.preferredSize = Dimension(300, banner.components.sumOf { it.preferredSize.height })
         cell(banner)
-          .align(AlignX.FILL + AlignY.FILL)
+          .align(AlignX.FILL)
           .applyToComponent {
             putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
           }
@@ -310,7 +304,7 @@ internal class CertificateWarningDialog(
     }
   }
 
-  fun getCertificateName(cert: X509Certificate): String {
+  private fun getCertificateName(cert: X509Certificate): String {
     return CertificateWrapper(cert).subjectFields[CommonField.COMMON_NAME.shortName] ?: cert.subjectX500Principal.name
   }
 
@@ -370,12 +364,7 @@ internal class CertificateWarningDialog(
   }
 
   private fun getTextPane(@NlsSafe text: String): JTextPane {
-    val pane = object : JTextPane() {
-      override fun getPreferredSize(): Dimension? {
-        val result = super.preferredSize
-        return Dimension(0, result.height)
-      }
-    }
+    val pane = JTextPane()
     pane.isOpaque = false
     pane.isEditable = false
     pane.border = null
