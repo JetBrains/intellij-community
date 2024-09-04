@@ -70,6 +70,13 @@ class PluginLayout private constructor(
   var retainProductDescriptorForBundledPlugin: Boolean = false
   var enableSymlinksAndExecutableResources: Boolean = false
 
+  /**
+   * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
+   * Then the plugin version will be checked against [org.jetbrains.intellij.build.impl.SemanticVersioningScheme].
+   */
+  var semanticVersioning: Boolean = false
+    private set
+
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
@@ -224,6 +231,14 @@ class PluginLayout private constructor(
      * Returns [PluginBundlingRestrictions] instance which can be used to exclude the plugin from some distributions.
      */
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
+
+    /**
+     * @see [PluginLayout.semanticVersioning]
+     */
+    var semanticVersioning: Boolean = false
+      set(value) {
+        layout.semanticVersioning = value
+      }
 
     var mainJarName: String
       get() = layout.mainJarName

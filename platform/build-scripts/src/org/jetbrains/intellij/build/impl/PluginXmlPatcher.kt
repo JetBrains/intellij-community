@@ -7,6 +7,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
 import java.nio.file.Files
+import java.nio.file.Path
 import java.time.format.DateTimeFormatter
 
 internal val pluginDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -57,7 +58,7 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, context.buildNumber, context)
+  val pluginVersion = getPluginVersion(plugin, pluginXmlFile, context)
   val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
   @Suppress("TestOnlyProblems") val content = try {
     plugin.pluginXmlPatcher(
@@ -79,6 +80,23 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     throw RuntimeException("Could not patch $pluginXmlFile", e)
   }
   moduleOutputPatcher.patchModuleOutput(plugin.mainModule, "META-INF/plugin.xml", content)
+}
+
+private fun devBuildScheme(context: BuildContext): Regex {
+  val snapshotBuildNumberBase = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).removeSuffix(".SNAPSHOT")
+  return Regex("^${snapshotBuildNumberBase.replace(".", "\\.")}\\.(SNAPSHOT|[0-9]+)$")
+}
+
+private fun getPluginVersion(plugin: PluginLayout, pluginXml: Path, context: BuildContext): String {
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXml = pluginXml, ideBuildVersion = context.buildNumber, context = context)
+  check(
+    !plugin.semanticVersioning ||
+    SemanticVersioningScheme.matches(pluginVersion) ||
+    devBuildScheme(context).matches(pluginVersion)
+  ) {
+    "$plugin version '${pluginVersion}' is expected to match either '${devBuildScheme(context)}' or the Semantic Versioning, see https://semver.org"
+  }
+  return pluginVersion
 }
 
 @TestOnly

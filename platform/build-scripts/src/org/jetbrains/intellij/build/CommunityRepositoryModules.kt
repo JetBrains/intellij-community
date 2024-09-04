@@ -395,6 +395,7 @@ object CommunityRepositoryModules {
     plugin(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
+      spec.semanticVersioning = true
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
           val text = Files.readString(pluginXml)
