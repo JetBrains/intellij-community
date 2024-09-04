@@ -3,7 +3,6 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
-import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
@@ -235,7 +234,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     fsBlocking {
       try {
-        path.nioFs.ijentFs.delete(path.ijentPath as IjentPath.Absolute, false, false)
+        path.nioFs.ijentFs.delete(path.ijentPath as IjentPath.Absolute, false)
       }
       catch (e: IjentFileSystemApi.DeleteException) {
         e.throwFileSystemException()

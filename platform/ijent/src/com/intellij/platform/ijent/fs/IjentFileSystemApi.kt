@@ -200,7 +200,7 @@ sealed interface IjentFileSystemApi {
 
 
   @Throws(DeleteException::class, IjentUnavailableException::class)
-  suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean, followLinks: Boolean)
+  suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean)
 
   sealed class DeleteException(
     where: IjentPath.Absolute,

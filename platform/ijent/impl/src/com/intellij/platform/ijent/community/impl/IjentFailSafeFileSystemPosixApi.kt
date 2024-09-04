@@ -168,9 +168,9 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       openForReadingAndWriting(options)
     }
 
-  override suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean, followLinks: Boolean) {
+  override suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean) {
     holder.withDelegateRetrying {
-      delete(path, removeContent, followLinks)
+      delete(path, removeContent)
     }
   }
 
