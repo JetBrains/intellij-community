@@ -21,32 +21,15 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 internal fun Node.readInlineContent(
     markdownProcessor: MarkdownProcessor,
     extensions: List<MarkdownProcessorExtension>,
-): List<InlineMarkdown> =
-    object : Iterable<InlineMarkdown> {
-            override fun iterator(): Iterator<InlineMarkdown> =
-                object : Iterator<InlineMarkdown> {
-                    var current = this@readInlineContent.firstChild
+): List<InlineMarkdown> = buildList {
+    var current = this@readInlineContent.firstChild
+    while (current != null) {
+        val inline = current.toInlineMarkdownOrNull(markdownProcessor, extensions)
+        if (inline != null) add(inline)
 
-                    override fun hasNext(): Boolean = current != null
-
-                    override fun next(): InlineMarkdown {
-                        while (hasNext()) {
-                            val inline = current.toInlineMarkdownOrNull(markdownProcessor, extensions)
-
-                            current = current.next
-
-                            if (inline == null) {
-                                continue
-                            } else {
-                                return inline
-                            }
-                        }
-
-                        throw NoSuchElementException()
-                    }
-                }
-        }
-        .toList()
+        current = current.next
+    }
+}
 
 @VisibleForTesting
 internal fun Node.toInlineMarkdownOrNull(
