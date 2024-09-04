@@ -58,7 +58,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       else {
         enabled = !elements.isEmpty();
         plural = elements.size() > 1;
-        paths = ContainerUtil.and(elements, el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
+        paths = ContainerUtil.and(elements, el -> el instanceof PsiFileSystemItem && FqnUtil.getQualifiedNameFromProviders(el) == null);
       }
       if (calcQualifiedName) {
         e.getPresentation().putClientProperty(CopyPathProvider.QUALIFIED_NAME, getQualifiedName(editor, elements));
@@ -108,7 +108,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
-        String toCopy = getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
+        String toCopy = FqnUtil.getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
         CopyPasteManager.getInstance().setContents(new StringSelection(toCopy));
         setStatusBarText(project, LangBundle.message("status.bar.text.reference.has.been.copied", toCopy));
       }

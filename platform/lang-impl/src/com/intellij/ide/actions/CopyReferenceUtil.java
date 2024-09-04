@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class CopyReferenceUtil extends FqnUtil {
+public final class CopyReferenceUtil {
   static void highlight(Editor editor, Project project, List<? extends PsiElement> elements) {
     if (project == null) return;
     HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -102,12 +102,21 @@ public final class CopyReferenceUtil extends FqnUtil {
 
     List<String> fqns = new ArrayList<>();
     for (PsiElement element : elements) {
-      String fqn = elementToFqn(element, editor);
+      String fqn = FqnUtil.elementToFqn(element, editor);
       if (fqn == null) return null;
 
       fqns.add(fqn);
     }
 
     return StringUtil.join(fqns, "\n");
+  }
+
+  /**
+   * @deprecated use {@link FqnUtil#getVirtualFileFqn}
+   */
+  @Deprecated
+  @NotNull
+  public static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    return FqnUtil.getVirtualFileFqn(virtualFile, project);
   }
 }

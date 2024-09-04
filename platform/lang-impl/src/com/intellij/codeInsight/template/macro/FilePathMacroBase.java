@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.ide.actions.CopyReferenceUtil;
+import com.intellij.ide.actions.FqnUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -79,7 +79,7 @@ public abstract class FilePathMacroBase extends Macro {
 
     @Override
     protected TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-      return new TextResult(FileUtil.toSystemDependentName(CopyReferenceUtil.getVirtualFileFqn(virtualFile, project)));
+      return new TextResult(FileUtil.toSystemDependentName(FqnUtil.getVirtualFileFqn(virtualFile, project)));
     }
   }
 }

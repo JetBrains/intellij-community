@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -125,7 +125,7 @@ class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     return if (virtualFile == null) null
-    else editor?.let { CopyReferenceUtil.getVirtualFileFqn(virtualFile, project) + ":" + (editor.caretModel.logicalPosition.line + 1) }
+    else editor?.let { FqnUtil.getVirtualFileFqn(virtualFile, project) + ":" + (editor.caretModel.logicalPosition.line + 1) }
   }
 }
 

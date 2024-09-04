@@ -12795,8 +12795,8 @@ c:com.intellij.ide.actions.CopyReferencePopup
 - beforeActionPerformedUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.CopyReferenceUtil
-- com.intellij.ide.actions.FqnUtil
 - <init>():V
+- s:getVirtualFileFqn(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
 f:com.intellij.ide.actions.CopySourceRootPathProvider
 - com.intellij.ide.actions.DumbAwareCopyPathProvider
 - <init>():V
