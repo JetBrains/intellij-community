@@ -109,14 +109,14 @@ private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
   val WAS_SHOWN = register(EventFields.Boolean("was_shown"))
-  val TIME_TO_START_SHOWING = register(EventFields.Long("time_to_start_showing"))
+  val TIME_TO_START_SHOWING = register(EventFields.Long("time_to_start_showing", "Time from the completion request to start showing at least one element"))
   val FINISH_TYPE = register(EventFields.Enum("finish_type", InlineCompletionUsageTracker.ShownEvents.FinishType::class.java))
-  val INVALIDATION_EVENT = register(EventFields.Class("invalidation_event"))
-  val FULL_INSERT_ACTIONS = register(EventFields.Int("full_insert_actions"))
-  val NEXT_WORD_ACTIONS = register(EventFields.Int("next_word_actions"))
-  val NEXT_LINE_ACTIONS = register(EventFields.Int("next_line_actions"))
-  val TOTAL_INSERTED_LENGTH = register(EventFields.Int("total_inserted_length"))
-  val TOTAL_INSERTED_LINES = register(EventFields.Int("total_inserted_lines"))
+  val INVALIDATION_EVENT = register(EventFields.Class("invalidation_event", "Which event invalidated the completion"))
+  val FULL_INSERT_ACTIONS = register(EventFields.Int("full_insert_actions", "Number of full inline completion inserts"))
+  val NEXT_WORD_ACTIONS = register(EventFields.Int("next_word_actions", "Number of next word inline completion inserts"))
+  val NEXT_LINE_ACTIONS = register(EventFields.Int("next_line_actions", "Number of next line inline completion inserts"))
+  val TOTAL_INSERTED_LENGTH = register(EventFields.Int("total_inserted_length", "Total length of inserted text"))
+  val TOTAL_INSERTED_LINES = register(EventFields.Int("total_inserted_lines", "Total number of inserted lines"))
 }
 
 internal class InlineCompletionListenerSessionLogs : InlineCompletionSessionLogsEP {
