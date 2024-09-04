@@ -59,7 +59,7 @@ internal suspend fun patchPluginXml(
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  val pluginVersion = getPluginVersion(plugin, descriptorContent, context)
   @Suppress("TestOnlyProblems")
   val content = try {
     val element = doPatchPluginXml(
@@ -89,6 +89,20 @@ internal suspend fun patchPluginXml(
   }
   // os-specific plugins being built several times - we expect that plugin.xml must be the same
   moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
+}
+
+private val DEV_BUILD_SCHEME: Regex = Regex("^${SnapshotBuildNumber.BASE.replace(".", "\\.")}\\.(SNAPSHOT|[0-9]+)$")
+
+private suspend fun getPluginVersion(plugin: PluginLayout, descriptorContent: String, context: BuildContext): PluginVersionEvaluatorResult {
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  check(
+    !plugin.semanticVersioning ||
+    SemanticVersioningScheme.matches(pluginVersion.pluginVersion) ||
+    DEV_BUILD_SCHEME.matches(pluginVersion.pluginVersion)
+  ) {
+    "$plugin version '${pluginVersion.pluginVersion}' is expected to match either '$DEV_BUILD_SCHEME' or the Semantic Versioning, see https://semver.org"
+  }
+  return pluginVersion
 }
 
 @TestOnly
