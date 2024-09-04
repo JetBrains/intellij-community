@@ -9,7 +9,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class LanguageRefactoringSupport extends LanguageExtension<RefactoringSupportProvider> {
+  /**
+   * @deprecated Use {@link #getInstance} instead
+   */
+  @Deprecated
   public static final LanguageRefactoringSupport INSTANCE = new LanguageRefactoringSupport();
+
+  public static @NotNull LanguageRefactoringSupport getInstance() {
+    return INSTANCE;
+  }
 
   private LanguageRefactoringSupport() {
     super("com.intellij.lang.refactoringSupport", new RefactoringSupportProvider() {});

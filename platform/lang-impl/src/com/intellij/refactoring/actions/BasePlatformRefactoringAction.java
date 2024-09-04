@@ -25,7 +25,7 @@ import java.util.List;
 
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
   private final CachedValue<Boolean> myHidden = new CachedValueImpl<>(
-    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.INSTANCE));
+    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.getInstance()));
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
 
   @Override
@@ -77,7 +77,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   protected @Nullable RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     if (providers.isEmpty()) return null;
     if (element == null) return getRefactoringHandler(providers.get(0));
     for (RefactoringSupportProvider provider : providers) {
@@ -95,7 +95,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected boolean isAvailableForLanguage(final Language language) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -7,12 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
-import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -94,7 +92,7 @@ public final class ChangeSignatureUtil {
   }
 
   public static void invokeChangeSignatureOn(PsiMethod method, Project project) {
-    RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forContext(method);
+    RefactoringSupportProvider provider = LanguageRefactoringSupport.getInstance().forContext(method);
     ChangeSignatureHandler handler = provider != null ? provider.getChangeSignatureHandler() : null;
     if (handler != null) {
       handler.invoke(project, new PsiElement[]{method}, null);

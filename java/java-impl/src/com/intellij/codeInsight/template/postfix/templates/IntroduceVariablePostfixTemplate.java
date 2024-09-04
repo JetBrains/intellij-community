@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -24,7 +24,7 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     // for advanced stuff use ((PsiJavaCodeReferenceElement)expression).advancedResolve(true).getElement();
-    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE)
+    JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE)
                                             .getIntroduceVariableHandler();
     assert handler != null;
     handler.invoke(expression.getProject(), editor, (PsiExpression)expression);

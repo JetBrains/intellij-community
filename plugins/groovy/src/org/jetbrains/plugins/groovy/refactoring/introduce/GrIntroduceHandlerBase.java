@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -514,7 +514,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   public static boolean isInplace(@NotNull Editor editor, @NotNull PsiElement place) {
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(place);
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forContext(place);
     return supportProvider != null &&
            (editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART) == null || !editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART)) &&
            editor.getUserData(AbstractInplaceIntroducer.ACTIVE_INTRODUCE) == null &&

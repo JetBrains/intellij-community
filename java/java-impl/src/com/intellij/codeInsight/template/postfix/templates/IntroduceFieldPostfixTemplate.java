@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -20,7 +20,7 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
 
   @Override
   protected void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
-    var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     JavaIntroduceFieldHandlerBase handler = (JavaIntroduceFieldHandlerBase)supportProvider.getIntroduceFieldHandler();
     assert handler != null;
     handler.invoke(expression.getProject(), expression, editor);
