@@ -4949,7 +4949,6 @@ f:com.intellij.util.ui.StartupUiUtil
 - sf:isJreHiDPI():Z
 - f:isJreHiDPI(com.intellij.ui.scale.ScaleContext):Z
 - sf:isJreHiDPI(java.awt.Component):Z
-- sf:isLWCToolkit():Z
 - sf:isUnderDarcula():Z
 - sf:isUnderIntelliJLaF():Z
 - sf:isWaylandToolkit():Z
