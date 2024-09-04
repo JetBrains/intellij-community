@@ -1596,7 +1596,7 @@ c:com.intellij.codeInsight.template.impl.TemplateStateBase
 - p:getSelectionBeforeTemplate():java.lang.String
 - p:getTemplate():com.intellij.codeInsight.template.impl.TemplateBase
 - getVariableValue(java.lang.String):com.intellij.codeInsight.template.TextResult
-- p:restoreEmptyVariables(it.unimi.dsi.fastutil.ints.IntList):V
+- p:restoreEmptyVariables(java.util.List):V
 - p:setDocument(com.intellij.openapi.editor.Document):V
 - p:setEditor(com.intellij.openapi.editor.Editor):V
 - p:setPredefinedVariableValues(java.util.Map):V
