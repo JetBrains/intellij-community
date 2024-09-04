@@ -26,5 +26,4 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
     if (convertedAtLeastOne) return result
     return emptyList()
   }
-  override fun forLogicalModelClass(): Class<PsiClassOwner> = PsiClassOwner::class.java
 }

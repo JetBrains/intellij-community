@@ -58,7 +58,6 @@ f:com.intellij.ide.structureView.logical.ConvertElementsProvider$Companion
 - f:convert(java.lang.Object):kotlin.sequences.Sequence
 *:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 - *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
-- a:forLogicalModelClass():java.lang.Class
 - a:getElements(java.lang.Object):java.util.List
 *f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
 - f:getProviders(java.lang.Object):kotlin.sequences.Sequence

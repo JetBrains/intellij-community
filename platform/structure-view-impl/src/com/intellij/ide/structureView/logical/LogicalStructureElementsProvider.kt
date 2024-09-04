@@ -2,6 +2,7 @@
 package com.intellij.ide.structureView.logical
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.ClassExtension
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
@@ -19,11 +20,9 @@ interface LogicalStructureElementsProvider<P, C> {
 
   companion object {
     fun <P> getProviders(p: P): Sequence<LogicalStructureElementsProvider<P, Any>> {
-      return EP_NAME.extensionList.asSequence()
-        .filter { it.forLogicalModelClass().isInstance(p) } as Sequence<LogicalStructureElementsProvider<P, Any>>
+      return PROVIDERS.forKey(p!!::class.java).asSequence() as Sequence<LogicalStructureElementsProvider<P, Any>>
     }
   }
-  fun forLogicalModelClass(): Class<P>
 }
 
 /**
@@ -41,5 +40,5 @@ interface PropertyElementProvider<P, C> : LogicalStructureElementsProvider<P, C>
 }
 
 private const val EP_FQN = "com.intellij.lang.logicalStructureElementsProvider"
-
 private val EP_NAME = ExtensionPointName.create<LogicalStructureElementsProvider<*, *>>(EP_FQN)
+private val PROVIDERS = ClassExtension<LogicalStructureElementsProvider<*, *>>(EP_NAME.name)

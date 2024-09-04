@@ -4,8 +4,4 @@ package com.intellij.lang.java.logical
 import com.intellij.ide.structureView.logical.ConvertElementsProvider
 import com.intellij.psi.PsiClass
 
-abstract class  PsiClassLogicalElementProvider<T> : ConvertElementsProvider<PsiClass, T>() {
-  override fun forLogicalModelClass(): Class<PsiClass> {
-    return PsiClass::class.java
-  }
-}
+abstract class  PsiClassLogicalElementProvider<T> : ConvertElementsProvider<PsiClass, T>()
