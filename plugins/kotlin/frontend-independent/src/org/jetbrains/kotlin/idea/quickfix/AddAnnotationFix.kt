@@ -39,7 +39,7 @@ open class AddAnnotationFix(
         }
     }
 
-    open fun renderArgumentsForIntentionName(): String {
+    protected open fun renderArgumentsForIntentionName(): String {
         return arguments.takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") ?: ""
     }
 
