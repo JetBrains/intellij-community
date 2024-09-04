@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -23,17 +24,17 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   }
 
   object Session {
-    private val phaseToFieldList: List<Pair<Phase, EventField<*>>> = run {
+    private val phaseToFieldList: List<Pair<Phase, InlineLogs<*>>> = run {
       val fields = Cancellation.withNonCancelableSection().use {
         // Non-cancellable section, because this function is often used in
         // static initializer code of `object`, and any exception (namely, CancellationException)
         // breaks the object with ExceptionInInitializerError, and subsequent NoClassDefFoundError
         InlineCompletionSessionLogsEP.EP_NAME.extensionsIfPointIsRegistered
-      }.flatMap { it.fields }.flatMap { phasedLogs ->
+      }.flatMap { it.logGroups }.flatMap { phasedLogs ->
         phasedLogs.fields.map { field -> phasedLogs.phase to field}
       }
 
-      fields.groupingBy { it.second.name }.eachCount().filter { it.value > 1 }.forEach {
+      fields.groupingBy { it.second.first }.eachCount().filter { it.value > 1 }.forEach {
         thisLogger().error("Log ${it.key} is registered multiple times: ${it.value}")
       }
       fields
@@ -41,10 +42,14 @@ object InlineCompletionLogs : CounterUsagesCollector() {
 
     // group logs to the phase so that each phase has its own object field
     val phases: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
-      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
+      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second.first }.toTypedArray())
     }
 
-    val eventFieldNameToPhase: Map<String, Phase> = phaseToFieldList.associate { it.second.name to it.first }
+    val eventFieldNameToPhase: Map<String, Phase> = phaseToFieldList.associate { it.second.first.name to it.first }
+
+    val eventFieldNameToBasic: Map<String, Boolean> = phaseToFieldList.associate { it.second.first.name to it.second.second }
+
+    fun isBasic(eventPair: EventPair<*>): Boolean = eventFieldNameToBasic[eventPair.field.name] == true
 
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
