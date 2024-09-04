@@ -14,6 +14,13 @@ sealed interface CommandBlock {
   val commandStartOffset: Int
   val outputStartOffset: Int
 
+  /**
+   * When the length of command output is exceeding the limit, we trim the start of it.
+   * This property should contain the count of trimmed starting lines in the command output.
+   * @see TerminalOutputModel.trimOutput
+   */
+  var trimmedLinesCount: Int
+
   /** If block is finalized it means that its length won't be expanded if some text is added before or after it */
   val isFinalized: Boolean
 }

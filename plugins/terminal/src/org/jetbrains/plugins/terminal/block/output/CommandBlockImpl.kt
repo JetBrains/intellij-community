@@ -25,6 +25,8 @@ internal data class CommandBlockImpl(
     // If command or right prompt are not empty, the line break will be added after them, so add +1
     get() = commandStartOffset + if (commandAndRightPromptLength > 0) commandAndRightPromptLength + 1 else 0
 
+  override var trimmedLinesCount: Int = 0
+
   override val isFinalized: Boolean
     get() = !range.isGreedyToRight
 }
