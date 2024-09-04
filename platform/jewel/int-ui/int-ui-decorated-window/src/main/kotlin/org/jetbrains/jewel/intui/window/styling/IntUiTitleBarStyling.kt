@@ -13,7 +13,7 @@ import org.jetbrains.jewel.intui.standalone.styling.Undecorated
 import org.jetbrains.jewel.intui.standalone.styling.defaults
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.intui.standalone.styling.undecorated
-import org.jetbrains.jewel.intui.window.decoratedWindowPainterProvider
+import org.jetbrains.jewel.intui.window.DecoratedWindowIconKeys
 import org.jetbrains.jewel.ui.component.styling.DropdownColors
 import org.jetbrains.jewel.ui.component.styling.DropdownMetrics
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
@@ -21,7 +21,7 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.window.styling.TitleBarColors
 import org.jetbrains.jewel.window.styling.TitleBarIcons
 import org.jetbrains.jewel.window.styling.TitleBarMetrics
@@ -319,8 +319,8 @@ public fun TitleBarMetrics.Companion.defaults(
 ): TitleBarMetrics = TitleBarMetrics(height, gradientStartX, gradientEndX, titlePaneButtonSize)
 
 public fun TitleBarIcons.Companion.defaults(
-    minimizeButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/minimize.svg"),
-    maximizeButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/maximize.svg"),
-    restoreButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/restore.svg"),
-    closeButton: PainterProvider = decoratedWindowPainterProvider("icons/intui/window/close.svg"),
+    minimizeButton: IconKey = DecoratedWindowIconKeys.minimize,
+    maximizeButton: IconKey = DecoratedWindowIconKeys.maximize,
+    restoreButton: IconKey = DecoratedWindowIconKeys.restore,
+    closeButton: IconKey = DecoratedWindowIconKeys.close,
 ): TitleBarIcons = TitleBarIcons(minimizeButton, maximizeButton, restoreButton, closeButton)

@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import java.io.InputStream
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.newUiChecker
@@ -48,6 +49,7 @@ import org.xml.sax.InputSource
         "org.jetbrains.jewel.ui.icon.PathIconKey",
     ),
 )
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun Icon(
     resource: String,
@@ -71,6 +73,7 @@ public fun Icon(
         "org.jetbrains.jewel.ui.icon.PathIconKey",
     ),
 )
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun Icon(
     resource: String,
@@ -94,6 +97,7 @@ public fun Icon(
         "org.jetbrains.jewel.ui.icon.PathIconKey",
     ),
 )
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun Icon(
     resource: String,
@@ -117,6 +121,7 @@ public fun Icon(
         "org.jetbrains.jewel.ui.icon.PathIconKey",
     ),
 )
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun Icon(
     resource: String,

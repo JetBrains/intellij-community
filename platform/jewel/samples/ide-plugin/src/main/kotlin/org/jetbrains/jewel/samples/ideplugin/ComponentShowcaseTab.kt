@@ -175,7 +175,7 @@ private fun RowScope.ColumnOne() {
             Tooltip(
                 tooltip = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(AllIconsKeys.General.ShowInfos, contentDescription = null)
+                        Icon(key = AllIconsKeys.General.ShowInfos, contentDescription = null)
                         Text("This is a tooltip")
                     }
                 }
@@ -246,7 +246,7 @@ private fun IconsShowcase() {
 
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
             Icon(
-                IdeSampleIconKeys.gitHub,
+                key = IdeSampleIconKeys.gitHub,
                 iconClass = IdeSampleIconKeys::class.java,
                 modifier = Modifier.border(1.dp, Color.Magenta),
                 contentDescription = "An owned icon",

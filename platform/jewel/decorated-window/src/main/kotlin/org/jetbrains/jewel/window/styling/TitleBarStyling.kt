@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.window.DecoratedWindowState
 
 @Stable
@@ -79,10 +79,10 @@ public class TitleBarMetrics(
 @Immutable
 @GenerateDataFunctions
 public class TitleBarIcons(
-    public val minimizeButton: PainterProvider,
-    public val maximizeButton: PainterProvider,
-    public val restoreButton: PainterProvider,
-    public val closeButton: PainterProvider,
+    public val minimizeButton: IconKey,
+    public val maximizeButton: IconKey,
+    public val restoreButton: IconKey,
+    public val closeButton: IconKey,
 ) {
     public companion object
 }

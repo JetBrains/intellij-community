@@ -184,12 +184,12 @@ public final class org/jetbrains/jewel/window/styling/TitleBarColors$Companion {
 public final class org/jetbrains/jewel/window/styling/TitleBarIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/window/styling/TitleBarIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCloseButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getMaximizeButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getMinimizeButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getRestoreButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getCloseButton ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getMaximizeButton ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getMinimizeButton ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getRestoreButton ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

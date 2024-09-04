@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -47,7 +44,8 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
     ) {
         // Smart cast doesn't work in this case, and then the detection for redundant suppression is
         // also borked
-        @Suppress("MoveVariableDeclarationIntoWhen", "RedundantSuppression") val alert = block as? Alert
+        @Suppress("MoveVariableDeclarationIntoWhen", "RedundantSuppression") // ktfmt: break line
+        val alert = block as? Alert
 
         when (alert) {
             is Caution -> Alert(alert, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick)
@@ -75,34 +73,25 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
                     val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
 
                     drawLine(
-                        styling.lineColor,
-                        Offset(x, 0f),
-                        Offset(x, size.height),
-                        lineWidthPx,
-                        styling.strokeCap,
-                        styling.pathEffect,
+                        color = styling.lineColor,
+                        start = Offset(x, 0f),
+                        end = Offset(x, size.height),
+                        strokeWidth = lineWidthPx,
+                        cap = styling.strokeCap,
+                        pathEffect = styling.pathEffect,
                     )
                 }
                 .padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                val titleIconProvider = styling.titleIconKey
-                if (titleIconProvider != null) {
-                    val colorFilter =
-                        remember(styling.titleIconTint) {
-                            if (styling.titleIconTint.isSpecified) {
-                                ColorFilter.tint(styling.titleIconTint)
-                            } else {
-                                null
-                            }
-                        }
-
+                val titleIconKey = styling.titleIconKey
+                if (titleIconKey != null) {
                     Icon(
-                        titleIconProvider,
+                        key = titleIconKey,
                         contentDescription = null,
                         iconClass = AlertStyling::class.java,
-                        colorFilter = colorFilter,
+                        tint = styling.titleIconTint,
                     )
                 }
 

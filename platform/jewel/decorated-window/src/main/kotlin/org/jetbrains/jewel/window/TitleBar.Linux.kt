@@ -21,8 +21,8 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.PainterHint
-import org.jetbrains.jewel.ui.painter.PainterProvider
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSuffixHint
 import org.jetbrains.jewel.window.styling.TitleBarStyle
@@ -90,7 +90,7 @@ private fun TitleBarScope.CloseButton(
 private fun TitleBarScope.ControlButton(
     onClick: () -> Unit,
     state: DecoratedWindowState,
-    painterProvider: PainterProvider,
+    iconKey: IconKey,
     description: String,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     iconButtonStyle: IconButtonStyle = style.paneButtonStyle,
@@ -100,12 +100,10 @@ private fun TitleBarScope.ControlButton(
         Modifier.align(Alignment.End).focusable(false).size(style.metrics.titlePaneButtonSize),
         style = iconButtonStyle,
     ) {
-        Icon(painterProvider.getPainter(if (state.isActive) PainterHint else Inactive).value, description)
+        Icon(iconKey, description, hint = if (state.isActive) PainterHint else Inactive)
     }
 }
 
-private object Inactive : PainterSuffixHint() {
+private data object Inactive : PainterSuffixHint() {
     override fun PainterProviderScope.suffix(): String = "Inactive"
-
-    override fun toString(): String = "Inactive"
 }
