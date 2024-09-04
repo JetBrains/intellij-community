@@ -143,6 +143,7 @@
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
                  description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
+    <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
   </extensions>
 
   <actions>

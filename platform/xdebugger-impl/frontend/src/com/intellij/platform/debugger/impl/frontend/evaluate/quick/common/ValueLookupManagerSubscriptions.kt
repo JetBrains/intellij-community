@@ -19,11 +19,6 @@ import kotlinx.coroutines.withContext
 internal fun subscribeForDebuggingStart(cs: CoroutineScope, project: Project, onStartListening: () -> Unit) {
   cs.launch(Dispatchers.Default) {
     withKernel {
-      change {
-        shared {
-          register(XDebuggerValueLookupListeningStartedEntity)
-        }
-      }
       XDebuggerValueLookupListeningStartedEntity.each().filter { it.projectEntity.asProject() === project }.collect {
         withContext(Dispatchers.Main) {
           onStartListening()
@@ -36,11 +31,6 @@ internal fun subscribeForDebuggingStart(cs: CoroutineScope, project: Project, on
 internal fun subscribeForValueHintHideRequest(cs: CoroutineScope, project: Project, onHintHidden: () -> Unit) {
   cs.launch(Dispatchers.Default) {
     withKernel {
-      change {
-        shared {
-          register(XDebuggerValueLookupHideHintsRequestEntity)
-        }
-      }
       XDebuggerValueLookupHideHintsRequestEntity.each().filter { it.projectEntity.asProject() === project }.collect { entity ->
         withContext(Dispatchers.Main) {
           onHintHidden()

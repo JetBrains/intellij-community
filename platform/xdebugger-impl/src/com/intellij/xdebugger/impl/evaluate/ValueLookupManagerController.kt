@@ -5,11 +5,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asEntity
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.EntityType
 import fleet.kernel.DurableEntityType
 import fleet.kernel.change
 import fleet.kernel.shared
@@ -18,6 +20,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
+
+private class XDebuggerValueLookupEntityTypesProvider : EntityTypeProvider {
+  override fun entityTypes(): List<EntityType<*>> {
+    return listOf(
+      XDebuggerValueLookupListeningStartedEntity,
+      XDebuggerValueLookupHideHintsRequestEntity,
+    )
+  }
+}
 
 @ApiStatus.Internal
 class XDebuggerValueLookupListeningStartedEntity(override val eid: EID) : Entity {
@@ -59,17 +70,13 @@ class ValueLookupManagerController(private val project: Project, private val cs:
     }
     cs.launch(Dispatchers.Main) {
       withKernel {
-        change {
-          shared {
-            register(XDebuggerValueLookupListeningStartedEntity)
-          }
-        }
         val entities = XDebuggerValueLookupListeningStartedEntity.all()
         if (entities.isEmpty()) {
           change {
+            val projectEntity = project.asEntity()
             shared {
               XDebuggerValueLookupListeningStartedEntity.new {
-                it[XDebuggerValueLookupListeningStartedEntity.Project] = project.asEntity()
+                it[XDebuggerValueLookupListeningStartedEntity.Project] = projectEntity
               }
             }
           }
@@ -86,10 +93,10 @@ class ValueLookupManagerController(private val project: Project, private val cs:
     cs.launch(Dispatchers.Main) {
       withKernel {
         change {
+          val projectEntity = project.asEntity()
           shared {
-            register(XDebuggerValueLookupHideHintsRequestEntity)
             XDebuggerValueLookupHideHintsRequestEntity.new {
-              it[XDebuggerValueLookupHideHintsRequestEntity.Project] = project.asEntity()
+              it[XDebuggerValueLookupHideHintsRequestEntity.Project] = projectEntity
             }
           }
         }
