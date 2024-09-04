@@ -204,7 +204,7 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
-  suspend fun getConnectionToLocalPort(address: HostAddress): EelNetworkResult<ConnectionAcceptor, EelConnectionError>
+  suspend fun getAcceptorForRemotePort(address: HostAddress): EelNetworkResult<ConnectionAcceptor, EelConnectionError>
 
   /**
    * This is a representation of a remote server bound to [boundAddress].
@@ -354,12 +354,12 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
 ): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
 
 
-suspend fun <T> EelTunnelsApi.withConnectionToLocalPort(
+suspend fun <T> EelTunnelsApi.withAcceptorForRemotePort(
   hostAddress: EelTunnelsApi.HostAddress,
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(EelTunnelsApi.ConnectionAcceptor) -> T,
 ): T =
-  when (val connectionResult = getConnectionToLocalPort(hostAddress)) {
+  when (val connectionResult = getAcceptorForRemotePort(hostAddress)) {
     is EelNetworkResult.Error -> errorHandler(connectionResult.error)
     is EelNetworkResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
   }
