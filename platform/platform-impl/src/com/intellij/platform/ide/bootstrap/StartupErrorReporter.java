@@ -188,7 +188,8 @@ public final class StartupErrorReporter {
     }
     catch (Throwable t) {
       var message = BootstrapBundle.message("bootstrap.error.message.reset.failed", t);
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);    }
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
+    }
   }
 
   private static void showBrowserError(Throwable t) {
