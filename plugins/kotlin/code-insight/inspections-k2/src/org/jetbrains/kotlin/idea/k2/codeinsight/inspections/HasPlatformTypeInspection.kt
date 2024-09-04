@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane.checkbox
@@ -39,11 +40,10 @@ class HasPlatformTypeInspection(
         }
     }
 
-    context(KaSession)
-    private fun KaType.isFlexibleRecursive(): Boolean {
-        if (hasFlexibleNullability) return true
-        val classType = this as? KaClassType ?: return false
-        return classType.typeArguments.any { it !is KaStarTypeProjection && it.type?.isFlexibleRecursive() == true }
+    private fun KaSession.isFlexibleRecursive(type: KaType): Boolean {
+        if (type.hasFlexibleNullability) return true
+        val classType = type as? KaClassType ?: return false
+        return classType.typeArguments.any { arg -> arg !is KaStarTypeProjection && arg.type?.let { isFlexibleRecursive(it) } == true }
     }
 
     private val publicApiVisibilities = setOf(
@@ -51,9 +51,10 @@ class HasPlatformTypeInspection(
         KaSymbolVisibility.PROTECTED,
     )
 
-    context(KaSession)
-    private fun dangerousFlexibleTypeOrNull(
-        declaration: KtCallableDeclaration, publicAPIOnly: Boolean, reportPlatformArguments: Boolean
+    private fun KaSession.dangerousFlexibleTypeOrNull(
+        declaration: KtCallableDeclaration,
+        publicAPIOnly: Boolean,
+        reportPlatformArguments: Boolean
     ): KaType? {
         when (declaration) {
             is KtFunction -> if (declaration.isLocal || declaration.hasDeclaredReturnType()) return null
@@ -65,7 +66,7 @@ class HasPlatformTypeInspection(
         val type = declaration.returnType
         if (type is KaDynamicType) return null
         if (reportPlatformArguments) {
-            if (!type.isFlexibleRecursive()) return null
+            if (!isFlexibleRecursive(type)) return null
         } else {
             if (!type.hasFlexibleNullability) return null
         }
@@ -73,31 +74,27 @@ class HasPlatformTypeInspection(
         return type
     }
 
-    context(KaSession)
-    fun checkForPlatformType(element: KtCallableDeclaration, nameIdentifier: PsiElement, holder: ProblemsHolder) {
+    private fun KaSession.checkForPlatformType(element: KtCallableDeclaration, nameIdentifier: PsiElement, holder: ProblemsHolder) {
         val dangerousFlexibleType = dangerousFlexibleTypeOrNull(element, publicAPIOnly, reportPlatformArguments) ?: return
+        val fixes = mutableListOf<IntentionAction>(
+            SpecifyExplicitTypeQuickFix(element, CallableReturnTypeUpdaterUtils.getTypeInfo(element))
+        )
 
         if (dangerousFlexibleType.canBeNull) {
             val nonNullableType = dangerousFlexibleType.withNullability(KaTypeNullability.NON_NULLABLE)
             val expression = element.node.findChildByType(KtTokens.EQ)?.psi?.getNextSiblingIgnoringWhitespaceAndComments()
-            if (expression != null &&
-                (!reportPlatformArguments || !nonNullableType.isFlexibleRecursive())
-            ) {
-                holder.registerProblem(
-                    nameIdentifier,
-                    KotlinBundle.message(
-                        "declaration.has.type.inferred.from.a.platform.call.which.can.lead.to.unchecked.nullability.issues"
-                    ),
-                    IntentionWrapper(AddExclExclCallFix(expression)),
-                    IntentionWrapper(
-                        SpecifyExplicitTypeQuickFix(
-                            element,
-                            CallableReturnTypeUpdaterUtils.getTypeInfo(element)
-                        )
-                    )
-                )
+
+            // Only add this fix if it can actually fully resolve the problem
+            if (expression != null && (!reportPlatformArguments || !isFlexibleRecursive(nonNullableType))) {
+                fixes.add(AddExclExclCallFix(expression))
             }
         }
+
+        holder.registerProblem(
+            nameIdentifier,
+            KotlinBundle.message("declaration.has.type.inferred.from.a.platform.call.which.can.lead.to.unchecked.nullability.issues"),
+            *fixes.map { action -> IntentionWrapper(action) }.toTypedArray()
+        )
     }
 
     override fun getOptionsPane() = pane(

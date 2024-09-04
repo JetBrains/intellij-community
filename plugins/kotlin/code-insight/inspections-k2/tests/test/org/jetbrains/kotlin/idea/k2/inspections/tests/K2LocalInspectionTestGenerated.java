@@ -7641,6 +7641,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/array.kt");
+            }
+
             @TestMetadata("extensionOnDynamic.kt")
             public void testExtensionOnDynamic() throws Exception {
                 runTest("testData/inspectionsLocal/hasPlatformType/extensionOnDynamic.kt");
@@ -7654,6 +7659,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("functionExclExcl.kt")
             public void testFunctionExclExcl() throws Exception {
                 runTest("testData/inspectionsLocal/hasPlatformType/functionExclExcl.kt");
+            }
+
+            @TestMetadata("internalFunction.kt")
+            public void testInternalFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/internalFunction.kt");
             }
 
             @TestMetadata("localClassFunction.kt")
@@ -7709,6 +7719,65 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("star.kt")
             public void testStar() throws Exception {
                 runTest("testData/inspectionsLocal/hasPlatformType/star.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/hasPlatformTypeWithSettings")
+        public static class HasPlatformTypeWithSettings extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/array.kt");
+            }
+
+            @TestMetadata("internalFunction.kt")
+            public void testInternalFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/internalFunction.kt");
+            }
+
+            @TestMetadata("localFunction.kt")
+            public void testLocalFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/localFunction.kt");
+            }
+
+            @TestMetadata("nullableArrayNoExclExcl.kt")
+            public void testNullableArrayNoExclExcl() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/nullableArrayNoExclExcl.kt");
+            }
+
+            @TestMetadata("privateFunction.kt")
+            public void testPrivateFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/privateFunction.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/property.kt");
+            }
+
+            @TestMetadata("propertyExclExcl.kt")
+            public void testPropertyExclExcl() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/propertyExclExcl.kt");
+            }
+
+            @TestMetadata("protectedFunction.kt")
+            public void testProtectedFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/protectedFunction.kt");
+            }
+
+            @TestMetadata("recursiveGeneric.kt")
+            public void testRecursiveGeneric() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformTypeWithSettings/recursiveGeneric.kt");
             }
         }
 
