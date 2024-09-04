@@ -118,19 +118,21 @@ class PyTypedDictInspection : PyInspection() {
                         PyPsiBundle.message("INSP.typeddict.specifying.metaclass.not.allowed.in.typeddict"))
       }
 
-      val ancestorsFields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
+      val allAncestorsFields = mutableMapOf<String, MutableList<PyTypedDictType.FieldTypeAndTotality>>()
       val typedDictAncestors = node.getAncestorTypes(myTypeEvalContext).filterIsInstance<PyTypedDictType>()
       typedDictAncestors.forEach { typedDict ->
         typedDict.fields.forEach { field ->
           val key = field.key
           val value = field.value
-          if (key in ancestorsFields && !matchTypedDictFieldTypeAndTotality(ancestorsFields[key]!!, value)) {
+          if (key !in allAncestorsFields) {
+            allAncestorsFields[key] = mutableListOf()
+          }
+          val listOfFieldsForKey = allAncestorsFields[key]!!
+          if (listOfFieldsForKey.isNotEmpty() && !matchTypedDictFieldTypeAndTotality(listOfFieldsForKey.first(), value)) {
             registerProblem(node.superClassExpressionList,
                             PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field.while.merging", key))
           }
-          else {
-            ancestorsFields[key] = value
-          }
+          listOfFieldsForKey.add(value)
         }
       }
 
@@ -145,6 +147,7 @@ class PyTypedDictInspection : PyInspection() {
         return
       }
 
+      val classTypedDictType = PyTypedDictTypeProvider.Companion.getTypedDictTypeForResolvedElement(node, myTypeEvalContext)
       node.processClassLevelDeclarations { element, _ ->
         if (element !is PyTargetExpression) {
           if (element is PyTypeParameter) {
@@ -160,9 +163,18 @@ class PyTypedDictInspection : PyInspection() {
                           PyPsiBundle.message("INSP.typeddict.right.hand.side.values.are.not.supported.in.typeddict"))
           return@processClassLevelDeclarations true
         }
-        if (element.name in ancestorsFields) {
-          registerProblem(element, PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field"))
-          return@processClassLevelDeclarations true
+
+        if (element.name in allAncestorsFields) {
+          val fieldsForKey = allAncestorsFields[element.name]
+          val classField = classTypedDictType?.fields[element.name]
+          if (fieldsForKey != null && classField != null) {
+            for (ancestorField in fieldsForKey) {
+              if (!matchTypedDictFieldTypeAndTotality(ancestorField, classField)) {
+                registerProblem(element, PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field"))
+                return@processClassLevelDeclarations true
+              }
+            }
+          }
         }
         checkValueIsAType(element.annotation?.value, element.annotationValue)
         true
