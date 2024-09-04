@@ -86,7 +86,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
         return operation()
       }
       finally {
-        print(ServiceMessageTypes.BLOCK_CLOSED)
+        println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.BLOCK_CLOSED, attributes = attributes))
         TraceManager.scheduleExportPendingSpans()
       }
     }
