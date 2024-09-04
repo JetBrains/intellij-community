@@ -261,8 +261,8 @@ f:org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
 c:org.intellij.plugins.intelliLang.inject.config.BaseInjection
-- com.intellij.lang.injection.general.Injection
 - com.intellij.openapi.components.PersistentStateComponent
+- org.intellij.plugins.intelliLang.inject.config.Injection
 - sf:INJECTION_KEY:com.intellij.openapi.util.Key
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,org.intellij.plugins.intelliLang.inject.config.InjectionPlace[]):V
@@ -305,6 +305,11 @@ c:org.intellij.plugins.intelliLang.inject.config.BaseInjection
 - shouldBeIgnored(com.intellij.psi.PsiElement):Z
 - shouldBeIgnored(java.util.Iterator,java.lang.String):Z
 - p:writeExternalImpl(org.jdom.Element):V
+org.intellij.plugins.intelliLang.inject.config.Injection
+- com.intellij.lang.injection.general.Injection
+- a:acceptsPsiElement(com.intellij.psi.PsiElement):Z
+- a:getDisplayName():java.lang.String
+- a:getInjectedArea(com.intellij.psi.PsiElement):java.util.List
 c:org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 - sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
 - sf:EMPTY_ARRAY:org.intellij.plugins.intelliLang.inject.config.InjectionPlace[]

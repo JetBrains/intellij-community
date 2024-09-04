@@ -17,9 +17,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,7 +32,6 @@ import java.util.List;
  * <li>friendly name for displaying the entry
  * </ul>
  */
-@ApiStatus.Internal
 public interface Injection extends com.intellij.lang.injection.general.Injection {
 
   @NotNull
