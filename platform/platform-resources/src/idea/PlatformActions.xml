@@ -1102,15 +1102,15 @@
     </group>
 
     <group id="WelcomeScreen.Options">
+      <reference ref="WelcomeScreen.Settings"/>
+      <reference ref="CheckForUpdate"/>
       <reference ref="About"/>
       <separator/>
-      <reference ref="WelcomeScreen.Settings"/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
-      <reference ref="CreateDesktopEntry"/>
       <reference ref="CollectZippedLogs"/>
       <separator/>
-      <reference ref="CheckForUpdate"/>
+      <reference ref="CreateDesktopEntry"/>
     </group>
 
     <group id="WelcomeScreen.LearnIdeHelp">
