@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.containsMultiDollarStringOperands
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.containsPrefixedStringOperands
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToStringLiteral
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isFirstStringPlusExpressionWithoutNewLineInOperands
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -30,7 +30,7 @@ internal class ConvertToRawStringTemplateIntention :
     context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): Context? {
         if (!isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
-        if (element.containsMultiDollarStringOperands()) return null
+        if (element.containsPrefixedStringOperands()) return null
         return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
     }
 

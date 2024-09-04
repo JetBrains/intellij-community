@@ -1910,9 +1910,24 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets8.kt");
         }
 
+        @TestMetadata("necessaryBrackets9.kt")
+        public void testNecessaryBrackets9() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/necessaryBrackets9.kt");
+        }
+
         @TestMetadata("unnecessaryBrackets1.kt")
         public void testUnnecessaryBrackets1() throws Exception {
             runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets1.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets10.kt")
+        public void testUnnecessaryBrackets10() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets10.kt");
+        }
+
+        @TestMetadata("unnecessaryBrackets11.kt")
+        public void testUnnecessaryBrackets11() throws Exception {
+            runTest("../testData/inspectionsLocal/removeCurlyBracesFromTemplate/unnecessaryBrackets11.kt");
         }
 
         @TestMetadata("unnecessaryBrackets2.kt")

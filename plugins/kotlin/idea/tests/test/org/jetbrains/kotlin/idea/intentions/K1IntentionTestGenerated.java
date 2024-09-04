@@ -10351,6 +10351,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToStringTemplate/ktij30491.kt");
         }
 
+        @TestMetadata("ktij30491_2.kt")
+        public void testKtij30491_2() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/ktij30491_2.kt");
+        }
+
         @TestMetadata("lambdaInParentheses.kt")
         public void testLambdaInParentheses() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/lambdaInParentheses.kt");

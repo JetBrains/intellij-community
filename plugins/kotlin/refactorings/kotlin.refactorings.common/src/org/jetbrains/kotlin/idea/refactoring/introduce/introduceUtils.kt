@@ -58,20 +58,30 @@ fun PsiElement.findExpressionsByCopyableDataAndClearIt(key: Key<Boolean>): List<
 }
 
 fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {
-    return with(this) {
-        val psiFactory = KtPsiFactory(replacement.project)
-        val parent = startEntry.parent
+    val psiFactory = KtPsiFactory(replacement.project)
+    val parent = startEntry.parent
 
-        psiFactory.createStringTemplate(prefix).entries.singleOrNull()?.let { parent.addBefore(it, startEntry) }
+    psiFactory.createStringTemplate(prefix).entries.singleOrNull()?.let { parent.addBefore(it, startEntry) }
 
-        val refEntry = psiFactory.createBlockStringTemplateEntry(replacement)
-        val addedRefEntry = parent.addBefore(refEntry, startEntry) as KtStringTemplateEntryWithExpression
+    val refEntry = createStringTemplateEntryFromExpression(replacement, psiFactory)
+    val addedRefEntry = parent.addBefore(refEntry, startEntry) as KtStringTemplateEntryWithExpression
 
-        psiFactory.createStringTemplate(suffix).entries.singleOrNull()?.let { parent.addAfter(it, endEntry) }
+    psiFactory.createStringTemplate(suffix).entries.singleOrNull()?.let { parent.addAfter(it, endEntry) }
 
-        parent.deleteChildRange(startEntry, endEntry)
+    parent.deleteChildRange(startEntry, endEntry)
 
-        addedRefEntry.expression!!
+    return addedRefEntry.expression!!
+}
+
+private fun ExtractableSubstringInfo.createStringTemplateEntryFromExpression(
+    replacement: KtExpression,
+    psiFactory: KtPsiFactory
+): KtStringTemplateEntryWithExpression {
+    val interpolationPrefix = template.interpolationPrefix
+    return if (interpolationPrefix != null) {
+        psiFactory.createMultiDollarBlockStringTemplateEntry(replacement, prefixLength = interpolationPrefix.textLength)
+    } else {
+        psiFactory.createBlockStringTemplateEntry(replacement)
     }
 }
 
@@ -149,7 +159,17 @@ fun selectElementsWithTargetSibling(
         continuation(elements, outermostParent)
     }
 
-    selectElementsWithTargetParent(operationName, editor, file, title, elementKinds, elementValidator, getContainers, ::onSelectionComplete, selection)
+    selectElementsWithTargetParent(
+        operationName,
+        editor,
+        file,
+        title,
+        elementKinds,
+        elementValidator,
+        getContainers,
+        ::onSelectionComplete,
+        selection
+    )
 }
 
 fun selectElementsWithTargetParent(

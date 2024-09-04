@@ -3208,6 +3208,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/ktij30491.kt");
         }
 
+        @TestMetadata("ktij30491_2.kt")
+        public void testKtij30491_2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/ktij30491_2.kt");
+        }
+
         @TestMetadata("lambdaInParentheses.kt")
         public void testLambdaInParentheses() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/lambdaInParentheses.kt");

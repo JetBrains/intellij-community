@@ -252,6 +252,170 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates")
+    public static class MultiDollarStringTemplates extends AbstractK2IntroduceVariableTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("brokenEntryWithBlockExpr.kt")
+        public void testBrokenEntryWithBlockExpr() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/brokenEntryWithBlockExpr.kt");
+        }
+
+        @TestMetadata("brokenEntryWithExpr.kt")
+        public void testBrokenEntryWithExpr() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/brokenEntryWithExpr.kt");
+        }
+
+        @TestMetadata("digitAfterSelection.kt")
+        public void testDigitAfterSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/digitAfterSelection.kt");
+        }
+
+        @TestMetadata("duplicateOutsideTheBlock.kt")
+        public void testDuplicateOutsideTheBlock() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/duplicateOutsideTheBlock.kt");
+        }
+
+        @TestMetadata("extractFalse.kt")
+        public void testExtractFalse() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractFalse.kt");
+        }
+
+        @TestMetadata("extractIntegerLiteral.kt")
+        public void testExtractIntegerLiteral() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractIntegerLiteral.kt");
+        }
+
+        @TestMetadata("extractTrue.kt")
+        public void testExtractTrue() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractTrue.kt");
+        }
+
+        @TestMetadata("extractTrueWithSpaces.kt")
+        public void testExtractTrueWithSpaces() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/extractTrueWithSpaces.kt");
+        }
+
+        @TestMetadata("fullContent.kt")
+        public void testFullContent() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullContent.kt");
+        }
+
+        @TestMetadata("fullEntryWithBlockExpr.kt")
+        public void testFullEntryWithBlockExpr() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullEntryWithBlockExpr.kt");
+        }
+
+        @TestMetadata("fullEntryWithSimpleName.kt")
+        public void testFullEntryWithSimpleName() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullEntryWithSimpleName.kt");
+        }
+
+        @TestMetadata("fullStringExtraction.kt")
+        public void testFullStringExtraction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/fullStringExtraction.kt");
+        }
+
+        @TestMetadata("letters1.kt")
+        public void testLetters1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/letters1.kt");
+        }
+
+        @TestMetadata("letters2.kt")
+        public void testLetters2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/letters2.kt");
+        }
+
+        @TestMetadata("letters3.kt")
+        public void testLetters3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/letters3.kt");
+        }
+
+        @TestMetadata("multiDollarKtij30272.kt")
+        public void testMultiDollarKtij30272() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multiDollarKtij30272.kt");
+        }
+
+        @TestMetadata("multipleEntriesWithPrefix.kt")
+        public void testMultipleEntriesWithPrefix() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multipleEntriesWithPrefix.kt");
+        }
+
+        @TestMetadata("multipleEntriesWithSubstring.kt")
+        public void testMultipleEntriesWithSubstring() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multipleEntriesWithSubstring.kt");
+        }
+
+        @TestMetadata("multipleEntriesWithSuffix.kt")
+        public void testMultipleEntriesWithSuffix() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/multipleEntriesWithSuffix.kt");
+        }
+
+        @TestMetadata("newBlock.kt")
+        public void testNewBlock() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/newBlock.kt");
+        }
+
+        @TestMetadata("rawTemplateUnescapedDollar.kt")
+        public void testRawTemplateUnescapedDollar() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/rawTemplateUnescapedDollar.kt");
+        }
+
+        @TestMetadata("rawTemplateWithSubstring.kt")
+        public void testRawTemplateWithSubstring() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/rawTemplateWithSubstring.kt");
+        }
+
+        @TestMetadata("singleEntryPrefix.kt")
+        public void testSingleEntryPrefix() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleEntryPrefix.kt");
+        }
+
+        @TestMetadata("singleEntrySubstring.kt")
+        public void testSingleEntrySubstring() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleEntrySubstring.kt");
+        }
+
+        @TestMetadata("singleEntrySuffix.kt")
+        public void testSingleEntrySuffix() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleEntrySuffix.kt");
+        }
+
+        @TestMetadata("singleOccurence.kt")
+        public void testSingleOccurence() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/singleOccurence.kt");
+        }
+
+        @TestMetadata("underscoreAfter.kt")
+        public void testUnderscoreAfter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/underscoreAfter.kt");
+        }
+
+        @TestMetadata("unescapedDollar.kt")
+        public void testUnescapedDollar() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/unescapedDollar.kt");
+        }
+
+        @TestMetadata("unescapedDollarLetterSuffix.kt")
+        public void testUnescapedDollarLetterSuffix() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/unescapedDollarLetterSuffix.kt");
+        }
+
+        @TestMetadata("unescapedDollarLongPrefix.kt")
+        public void testUnescapedDollarLongPrefix() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/multiDollarStringTemplates/unescapedDollarLongPrefix.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/qualifiers")
     public static class Qualifiers extends AbstractK2IntroduceVariableTest {
         @java.lang.Override

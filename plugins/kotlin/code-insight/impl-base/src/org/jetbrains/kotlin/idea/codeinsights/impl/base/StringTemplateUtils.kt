@@ -186,7 +186,7 @@ fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpression): KtSt
 context(KaSession)
 fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
     if (expression.textContains('\n')) return false
-    if (expression.containsMultiDollarStringOperands()) return false
+    if (expression.containsPrefixedStringOperands()) return false
 
     val entries = buildStringTemplateForBinaryExpression(expression).entries
     return entries.none { it is KtBlockStringTemplateEntry }
@@ -241,14 +241,14 @@ fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {
     return replaced(KtPsiFactory(project).createExpression("\"\"\"" + text + "\"\"\""))
 }
 
-private fun KtExpression?.isMultiDollarString(): Boolean =
-    this is KtStringTemplateExpression && interpolationPrefix?.textLength?.let { it > 1 } == true
+private fun KtExpression?.isPrefixedString(): Boolean =
+    this is KtStringTemplateExpression && interpolationPrefix != null
 
-fun KtBinaryExpression?.containsMultiDollarStringOperands(): Boolean {
+fun KtBinaryExpression?.containsPrefixedStringOperands(): Boolean {
     var containsMultiDollarString = false
     this?.accept(object : KtVisitorVoid() {
         override fun visitStringTemplateExpression(expression: KtStringTemplateExpression) {
-            if (expression.isMultiDollarString()) {
+            if (expression.isPrefixedString()) {
                 containsMultiDollarString = true
             }
         }
