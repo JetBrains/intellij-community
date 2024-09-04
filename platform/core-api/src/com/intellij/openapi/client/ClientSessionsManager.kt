@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<ClientSessionsManager<*>>()
+
 @ApiStatus.Experimental
 @ApiStatus.Internal
 open class ClientSessionsManager<T : ClientSession> {
@@ -77,12 +79,12 @@ open class ClientSessionsManager<T : ClientSession> {
     if (sessions.putIfAbsent(clientId, session) != null) {
       LOG.error("Session $session with such clientId is already registered")
     }
-    LOG.debug("Session added '$session'")
+    LOG.debug { "Session added '$session'" }
 
     Disposer.register(disposable, session)
     Disposer.register(disposable) {
       sessions.remove(clientId)
-      LOG.debug("Session removed '$clientId'")
+      LOG.debug { "Session removed '$clientId'" }
     }
   }
 
