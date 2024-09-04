@@ -451,6 +451,23 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testUpdateReadOnlyMember() {
+    doTestByText(
+      """
+        from typing import TypedDict, NotRequired
+        from typing_extensions import ReadOnly
+        
+        class A(TypedDict):
+            x: NotRequired[ReadOnly[int]]
+            y: int
+        
+        a1: A = { "x": 1, "y": 1 }
+        a2: A = { "x": 2, "y": 4 }
+        a1.<warning descr="TypedDict key \\"x\\" is ReadOnly">update</warning>(a2)
+        """
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

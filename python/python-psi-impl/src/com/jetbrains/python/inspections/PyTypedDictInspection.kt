@@ -191,12 +191,20 @@ class PyTypedDictInspection : PyInspection() {
 
       val nodeType = myTypeEvalContext.getType(callee.qualifier!!)
       if (nodeType !is PyTypedDictType || nodeType.isInferred()) return
-      val arguments = node.arguments
+      var arguments = node.arguments
 
       if (PyNames.UPDATE == callee.name) {
-        inspectUpdateSequenceArgument(
-          if (arguments.size == 1 && arguments[0] is PySequenceExpression) (arguments[0] as PySequenceExpression).elements else arguments,
-          nodeType)
+        if (arguments.size == 1 && arguments[0] is PyReferenceExpression) {
+          (PyUtil.resolveToTheTop(arguments[0]) as? PyTargetExpression)?.let { resolvedArg ->
+            resolvedArg.findAssignedValue()?.let {
+              arguments = arrayOf<PyExpression>(it)
+            }
+          }
+        }
+        if (arguments.size == 1 && arguments[0] is PySequenceExpression) {
+          arguments = (arguments[0] as PySequenceExpression).elements
+        }
+        inspectUpdateSequenceArgument(node, arguments, nodeType)
       }
 
       if (PyNames.CLEAR == callee.name || PyNames.POPITEM == callee.name) {
@@ -390,7 +398,7 @@ class PyTypedDictInspection : PyInspection() {
              PyTypeChecker.match(expected.type, actual.type, myTypeEvalContext)
     }
 
-    private fun inspectUpdateSequenceArgument(sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
+    private fun inspectUpdateSequenceArgument(updateCall: PyCallExpression, sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
       sequenceElements.forEach {
         var key: PsiElement? = null
         var keyAsString: String? = null
@@ -429,6 +437,10 @@ class PyTypedDictInspection : PyInspection() {
         if (!fields.containsKey(keyAsString)) {
           registerProblem(key, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.have.key", typedDictType.name, keyAsString))
           return@forEach
+        }
+        if (fields.get(keyAsString)!!.qualifiers.isReadOnly) {
+          val warningHolder = (updateCall.callee as? PyReferenceExpression)?.nameElement?.psi ?: updateCall
+          registerProblem(warningHolder, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", keyAsString))
         }
         val valueType = myTypeEvalContext.getType(value)
         if (!PyTypeChecker.match(fields[keyAsString]?.type, valueType, myTypeEvalContext)) {
