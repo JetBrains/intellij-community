@@ -9,7 +9,6 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -28,10 +27,8 @@ suspend fun <T> SpanBuilder.block(
   TraceManager.scheduleExportPendingSpans()
   return startSpan().useWithoutActiveScope { span ->
     // see `use` below why `withContext` must be inner
-    TeamCityBuildMessageLogger.withBlock(span) {
-      withContext(Context.current().with(span).asContextElement() + coroutineContext) {
-        operation(span)
-      }
+    withContext(Context.current().with(span).asContextElement() + coroutineContext) {
+      operation(span)
     }
   }
 }
@@ -47,10 +44,8 @@ suspend inline fun <T> SpanBuilder.use(
   return startSpan().useWithoutActiveScope { span ->
     // inner `withContext` to ensure that we report the end of the span only when all child tasks are completed,
     // the same for `withFlow` - must be out of `withContext`
-    TeamCityBuildMessageLogger.withFlow(span) {
-      withContext(Context.current().with(span).asContextElement() + context) {
+    withContext(Context.current().with(span).asContextElement() + context) {
         operation(span)
-      }
     }
   }
 }
