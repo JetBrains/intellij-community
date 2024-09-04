@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Indicates a place where intention actions UI is shown, used primarily for usage data.
+ * Currently, this information cannot be used by an intention's implementation; it's used by the platform only.
  */
 @ApiStatus.Experimental
 public enum IntentionSource {
@@ -29,12 +30,27 @@ public enum IntentionSource {
   FLOATING_TOOLBAR,
 
   /**
-   * File level notification panel in editors.
+   * The file level notification panel in editors.
    */
   FILE_LEVEL_ACTIONS,
 
   /**
    * Quick fixes button in the Problems tool window.
    */
-  PROBLEMS_VIEW
+  PROBLEMS_VIEW,
+
+  /**
+   * The Search Everywhere popup.
+   */
+  SEARCH_EVERYWHERE,
+
+  /**
+   * A shortcut assigned to an intention action.
+   */
+  CUSTOM_SHORTCUT,
+
+  /**
+   * Non-standard place.
+   */
+  OTHER
 }

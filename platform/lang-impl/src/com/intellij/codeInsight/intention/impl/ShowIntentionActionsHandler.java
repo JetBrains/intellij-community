@@ -292,7 +292,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
-    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, IntentionSource.CONTEXT_ACTIONS);
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, IntentionSource.OTHER);
   }
 
   /**
@@ -314,7 +314,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName,
                                               int fixOffset) {
-    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, fixOffset, IntentionSource.CONTEXT_ACTIONS);
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, fixOffset, IntentionSource.OTHER);
   }
 
   /**
