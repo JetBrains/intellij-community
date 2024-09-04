@@ -15,6 +15,7 @@ import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -923,7 +924,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun addTextInputListener() {
-    if (SystemInfoRt.isMac && !GraphicsEnvironment.isHeadless()) {
+    if (StartupUiUtil.isLWCToolkit()) {
       JBR.getTextInput()?.setGlobalEventListener(object : TextInput.EventListener {
         override fun handleSelectTextRangeEvent(event: TextInput.SelectTextRangeEvent) {
           val source = event.source

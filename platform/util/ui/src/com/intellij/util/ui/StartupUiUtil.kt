@@ -188,6 +188,12 @@ object StartupUiUtil {
            &&  "sun.awt.X11.XToolkit" == Toolkit.getDefaultToolkit().javaClass.name
   }
 
+  @JvmStatic
+  fun isLWCToolkit(): Boolean {
+    return SystemInfoRt.isMac
+           && "sun.lwawt.macosx.LWCToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+  }
+
   /**
    * Waits for the EDT to dispatch all its invocation events.
    * Must be called outside EDT.
