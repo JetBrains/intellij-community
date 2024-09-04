@@ -116,7 +116,7 @@ sealed class InlineCompletionEventType {
    * * [elements] indicates the list of new elements after update.
    */
   class Change @ApiStatus.Internal constructor(
-    val event: InlineCompletionEvent,
+    @ApiStatus.Internal val event: InlineCompletionEvent,
     override val variantIndex: Int,
     @ApiStatus.Internal val elements: List<InlineCompletionElement>,
     val lengthChange: Int,
@@ -133,7 +133,7 @@ sealed class InlineCompletionEventType {
   /**
    * This event is triggered when a variant is invalidated during some update.
    */
-  class Invalidated @ApiStatus.Internal constructor(val event: InlineCompletionEvent, override val variantIndex: Int) : PerVariantEventType()
+  class Invalidated @ApiStatus.Internal constructor(@ApiStatus.Internal val event: InlineCompletionEvent, override val variantIndex: Int) : PerVariantEventType()
 
   /**
    * This event is triggered when a variant is computed and turned out to be completely empty.
