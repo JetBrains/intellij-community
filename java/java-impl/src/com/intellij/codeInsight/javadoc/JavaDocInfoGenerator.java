@@ -1142,9 +1142,10 @@ public class JavaDocInfoGenerator {
     HtmlBuilder hb = new HtmlBuilder();
     hb.append(HtmlChunk.tag("h3").addText(JavaBundle.message("package.classes")));
     Comparator<PsiClass> comparator = Comparator.comparing(PsiClass::getName, Comparator.nullsLast(Comparator.naturalOrder()));
+    Set<String> links = new HashSet<>();
     Arrays.stream(aPackage.getClasses()).sorted(comparator).forEach(psiClass -> {
       String link = generateLink(psiClass, psiClass.getName());
-      if (link != null) {
+      if (link != null && links.add(link)) {
         hb.append(HtmlChunk.tag("div")
                     .children(
                       HtmlChunk.tag("icon").attr("src", getIcon(psiClass)),
