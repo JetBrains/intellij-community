@@ -223,27 +223,26 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
 
   private void updateByChange(@NotNull PsiElement child, @NotNull Document document, boolean whitespaceOptimizationAllowed) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    PsiFile file;
+    PsiFile psiFile;
     try {
-      file = child.getContainingFile();
+      psiFile = child.getContainingFile();
     }
     catch (PsiInvalidElementAccessException e) {
       myFileStatusMap.markAllFilesDirty(e);
       return;
     }
-    if (file == null || file instanceof PsiCompiledElement) {
+    if (psiFile == null || psiFile instanceof PsiCompiledElement) {
       myFileStatusMap.markAllFilesDirty(child);
       return;
     }
-    VirtualFile virtualFile = file.getVirtualFile();
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null && !shouldHandle(virtualFile)) {
       // ignore workspace.xml
       return;
     }
 
-    int fileLength = file.getTextLength();
-    if (!file.getViewProvider().isPhysical()) {
-      myFileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength, "Non-physical file update: "+file);
+    if (!psiFile.getViewProvider().isPhysical()) {
+      myFileStatusMap.markWholeFileScopeDirty(document, "Non-physical file update: " + psiFile);
       return;
     }
 
@@ -263,7 +262,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
         // and this PSI element is not expected to be highlighted alone, which could lead to unexpected highlighter disappearances
         // see DaemonRespondToChangesTest.testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting
         if (existingDirtyScope == null || scopeRange.contains(existingDirtyScope)) {
-          myFileStatusMap.markFileScopeDirty(document, scopeRange, fileLength, "Scope: " + scope);
+          myFileStatusMap.markFileScopeDirty(document, scopeRange, "Scope: " + scope);
           return;
         }
         existingDirtyScope = existingDirtyScope.union(scopeRange);
