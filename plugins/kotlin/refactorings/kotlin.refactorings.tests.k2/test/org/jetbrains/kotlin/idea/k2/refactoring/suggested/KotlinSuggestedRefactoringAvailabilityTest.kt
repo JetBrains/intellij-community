@@ -240,6 +240,19 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
         }
     }
 
+    fun testSpecifyExplicitTypeWithSignatureChange() {
+        doTest(
+            """
+                open class C {
+                    open fun foo()<caret> = 1
+                }
+            """.trimIndent(),
+            expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+        ) {
+            type(": Long")
+        }
+    }
+
     fun testRemoveExplicitType() {
         doTest(
             """
@@ -251,6 +264,19 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
             expectedAvailabilityAfterResolve = Availability.NotAvailable
         ) {
             deleteTextBeforeCaret(": Int")
+        }
+    }
+
+    fun testRemoveExplicitTypeWithSignatureChange() {
+        doTest(
+            """
+                open class C {
+                    open fun foo(): Long<caret> = 1
+                }
+            """.trimIndent(),
+            expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
+        ) {
+            deleteTextBeforeCaret(": Long")
         }
     }
 
@@ -485,6 +511,38 @@ class KotlinSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvail
             expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
         ) {
             type(", p2: Int, p3: Int = 3")
+        }
+    }
+
+    fun testAddExtensionReceiver() {
+        doTest(
+            """
+                fun <caret>foo(p1: Int) {
+                }
+                
+                fun bar() {
+                    foo(1)
+                }
+            """.trimIndent(),
+            expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
+        ) {
+            type("String.")
+        }
+    }
+
+    fun testRemoveExtensionReceiver() {
+        doTest(
+            """
+                fun String.<caret>foo(p1: Int) {
+                }
+                
+                fun bar() {
+                    "".foo(1)
+                }
+            """.trimIndent(),
+            expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
+        ) {
+            deleteTextBeforeCaret("String.")
         }
     }
 

@@ -1461,8 +1461,7 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest(), ExpectedP
         }
     }
 
-    //todo
-    fun _testReplaceTypeWithItsAlias() {
+    fun testReplaceTypeWithItsAlias() {
         doTestChangeSignature(
             """
                 typealias StringToUnit = (String) -> Unit
