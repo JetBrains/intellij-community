@@ -375,7 +375,10 @@ data class ClientId(val value: String) {
       val newContext = currentThreadContext + ClientIdContextElement(newClientId)
       if (errorOnMismatch) {
         if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId) {
-          logger.error(Throwable("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}", currentClientIdContextElement.creationTrace))
+          logger.error(Throwable("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}. " +
+                                 "Use 'withExplicitClientId' or 'withContext(clientId.asContextElement())' if you need to override ClientId").apply {
+                                   currentClientIdContextElement.creationTrace?.let { addSuppressed(it) }
+          })
         }
       }
       return installThreadContext(newContext, replace = true)
