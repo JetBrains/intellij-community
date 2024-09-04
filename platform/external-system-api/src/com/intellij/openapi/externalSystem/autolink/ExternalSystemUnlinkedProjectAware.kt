@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -42,6 +43,11 @@ interface ExternalSystemUnlinkedProjectAware {
   }
 
   fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable)
+
+  fun notificationShouldBeShown(project: Project): Boolean {
+    val manager = getManager(systemId) ?: return true
+    return manager.getSettingsProvider().`fun`(project).linkedProjectsSettings.isEmpty()
+  }
 
   companion object {
 

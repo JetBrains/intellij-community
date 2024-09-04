@@ -214,6 +214,8 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     extension: ExternalSystemUnlinkedProjectAware
   ) {
     blockingContext {
+      if (!extension.notificationShouldBeShown(project))
+        return@blockingContext
       val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
       UnlinkedProjectNotificationAware.getInstance(project)
         .notificationNotify(extension.createProjectId(externalProjectPath)) {

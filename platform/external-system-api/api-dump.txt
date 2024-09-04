@@ -170,6 +170,7 @@ com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - linkAndLoadProject(com.intellij.openapi.project.Project,java.lang.String):V
 - linkAndLoadProjectAsync(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - bs:linkAndLoadProjectAsync$suspendImpl(com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware,com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- notificationShouldBeShown(com.intellij.openapi.project.Project):Z
 - a:subscribe(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener,com.intellij.openapi.Disposable):V
 - unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - bs:unlinkProject$suspendImpl(com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware,com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object

@@ -32,6 +32,10 @@ internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     mavenProjectsManager.addProjectsTreeListener(ProjectsTreeListener(project, listener), parentDisposable)
   }
 
+  override fun notificationShouldBeShown(project: Project): Boolean {
+    return MavenProjectsManager.getInstance(project).projects.isEmpty()
+  }
+
   override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     MavenOpenProjectProvider().linkToExistingProjectAsync(externalProjectPath, project)
   }
