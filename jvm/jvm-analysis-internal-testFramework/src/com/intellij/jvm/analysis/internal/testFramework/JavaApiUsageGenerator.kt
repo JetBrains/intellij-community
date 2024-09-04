@@ -2,6 +2,7 @@ package com.intellij.jvm.analysis.internal.testFramework
 
 import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil
 import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.JarFileSystem
@@ -11,10 +12,10 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.lang.JavaVersion
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.junit.Ignore
 import java.nio.file.Files
 import java.nio.file.Path
@@ -29,7 +30,11 @@ import kotlin.io.path.writeLines
 @Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
-    override fun getSdk(): Sdk = IdeaTestUtil.createMockJdk("java-gen", JDK_HOME)
+    override fun getSdk(): Sdk {
+      val sdk = SdkTableImplementationDelegate.getInstance().createSdk("java-gen", JavaSdk.getInstance(), JDK_HOME)
+      JavaSdk.getInstance().setupSdkPaths(sdk)
+      return sdk
+    }
   }
 
   /**
