@@ -1,4 +1,3 @@
-// NOTE: wrong error message is KT-69090
 internal class J {
     private val strings = ArrayList<String>()
 

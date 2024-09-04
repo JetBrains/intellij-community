@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisExtensionFileContextModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -34,7 +34,7 @@ class KotlinK2CodeFragmentFactory : CodeFragmentFactory() {
                 .filter { module -> module.implementingModules.isEmpty() } // Looking for a leave
                 .firstOrNull { module -> module.platform.isJvm() }
 
-            virtualFile.analysisExtensionFileContextModule = jvmLeafModule?.productionOrTestSourceModuleInfo?.toKaModule()
+            virtualFile.analysisContextModule = jvmLeafModule?.productionOrTestSourceModuleInfo?.toKaModule()
         }
     }
 

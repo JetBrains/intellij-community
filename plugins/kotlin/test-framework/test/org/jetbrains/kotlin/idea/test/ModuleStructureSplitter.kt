@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.test
+package org.jetbrains.kotlin.idea.test
 
 import java.io.File
 
 data class TestFile(val relativePath: String, val text: String, val isMain: Boolean)
 
-object ModuleStructureSplitter {
+internal object ModuleStructureSplitter {
     private const val PLATFORM_PREFIX = "// PLATFORM:"
     private const val FILE_PATH_PREFIX = "// FILE:"
     private const val IS_MAIN = "// MAIN"
