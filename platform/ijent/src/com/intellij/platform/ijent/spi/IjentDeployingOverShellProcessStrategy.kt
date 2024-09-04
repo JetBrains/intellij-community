@@ -197,8 +197,12 @@ private suspend fun createDeployingContext(
     val outputOfWhich = mutableListOf<String>()
 
     val done = "done"
-    val whichCmd = commands.joinToString(" ").let { joined ->
-      "set +e; which $joined || /bin/busybox which $joined || /usr/bin/busybox which $joined; echo $done; set -e"
+    val whichCmd = buildString {
+      append("set +e; ")
+      for (command in commands) {
+        append("type $command 1>&2 && echo $command; ")
+      }
+      append("echo $done; set -e")
     }
 
     shellProcess.write(whichCmd)
@@ -215,9 +219,7 @@ private suspend fun createDeployingContext(
 }
 
 @VisibleForTesting
-internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Collection<String>) -> Collection<String>): DeployingContext {
-  var busybox: String? = null
-
+internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend (commands: Collection<String>) -> Collection<String>): DeployingContext {
   // This strange at first glance code helps reduce copy-paste errors.
   val commands: Set<String> = setOf(
     "busybox",
@@ -235,21 +237,14 @@ internal suspend fun createDeployingContext(runWhichCmd: suspend (commands: Coll
 
   fun getCommandPath(name: String): String {
     assert(name in commands)
-    val directCandidate = outputOfWhich.firstOrNull { it.endsWith("/$name") }
-    if (directCandidate != null) {
-      return directCandidate
+    return when {
+      name in outputOfWhich -> name
+      "busybox" in outputOfWhich -> "busybox $name"
+      else -> throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
     }
-
-    if (name != "busybox" && busybox != null) {
-      return "$busybox $name"
-    }
-
-    throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
   }
 
-  outputOfWhich += runWhichCmd(commands)
-
-  busybox = outputOfWhich.firstOrNull { it.endsWith("/busybox") }
+  outputOfWhich += filterAvailableBinariesCmd(commands)
 
   return DeployingContext(
     chmod = getCommandPath("chmod"),
