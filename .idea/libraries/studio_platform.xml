@@ -1,18 +1,12 @@
 <component name="libraryTable">
   <library name="studio-platform" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:studio-platform:2024.1.3-canary1-182">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.1.3-canary1-182/studio-platform-2024.1.3-canary1-182.jar">
-          <sha256sum>a0d783c0681648da3024ce2766cd3386be0b91e8b608178e4b8bea0bb2c086ef</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+    <properties maven-id="org.jetbrains.intellij.deps:studio-platform:2024.2.1-canary7-SNAPSHOT" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.1.3-canary1-182/studio-platform-2024.1.3-canary1-182.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.2.1-canary7-SNAPSHOT/studio-platform-2024.2.1-canary7-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.1.3-canary1-182/studio-platform-2024.1.3-canary1-182-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.2.1-canary7-SNAPSHOT/studio-platform-2024.2.1-canary7-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
