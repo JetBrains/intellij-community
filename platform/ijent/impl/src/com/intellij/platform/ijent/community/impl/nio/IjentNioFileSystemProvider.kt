@@ -293,7 +293,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           sourcePath,
           targetPath,
           replaceExisting = true,
-          // In NIO, `move` does not follow links regardless of NOFOLLOW_LINKS in CopyOptions
+          // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
           // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
           followLinks = false)
       }
