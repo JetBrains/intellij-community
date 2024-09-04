@@ -98,12 +98,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private final ProcessDebugger myDebugger;
-  private final XBreakpointHandler[] myBreakpointHandlers;
+  private final XBreakpointHandler<?>[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
   private final ProcessHandler myProcessHandler;
   private final ExecutionConsole myExecutionConsole;
-  private final Map<PySourcePosition, XLineBreakpoint> myRegisteredBreakpoints = new ConcurrentHashMap<>();
-  private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
+  private final Map<PySourcePosition, XLineBreakpoint<?>> myRegisteredBreakpoints = new ConcurrentHashMap<>();
+  private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties<?>>> myRegisteredExceptionBreakpoints =
     new ConcurrentHashMap<>();
 
   private final Set<PyThreadInfo> mySuspendedThreads = Collections.synchronizedSet(new HashSet<>());
@@ -489,7 +489,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void registerExceptionBreakpoints() {
-    for (XBreakpoint<? extends ExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
+    for (XBreakpoint<? extends ExceptionBreakpointProperties<?>> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
     }
   }
@@ -514,7 +514,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void registerLineBreakpoints() {
-    for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
+    for (Map.Entry<PySourcePosition, XLineBreakpoint<?>> entry : myRegisteredBreakpoints.entrySet()) {
       addBreakpoint(entry.getKey(), entry.getValue());
     }
   }
@@ -1131,7 +1131,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
+  public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties<?>> breakpoint) {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getExceptionBreakpointId(), breakpoint);
     if (isConnected()) {
       String conditionExpression = breakpoint.getConditionExpression() == null

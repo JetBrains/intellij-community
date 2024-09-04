@@ -7,7 +7,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import org.jetbrains.annotations.NotNull;
 
 
-public abstract class ExceptionBreakpointHandler<T extends ExceptionBreakpointProperties> extends XBreakpointHandler<XBreakpoint<T>> {
+public abstract class ExceptionBreakpointHandler<T extends ExceptionBreakpointProperties<?>> extends XBreakpointHandler<XBreakpoint<T>> {
 
   private final PyDebugProcess myDebugProcess;
 
