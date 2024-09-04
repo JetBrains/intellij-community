@@ -1,6 +1,8 @@
 // "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 import static java.util.Arrays.asList;
 
@@ -11,6 +13,16 @@ public class Main {
 
   String testTernary(String[] strings) {
     return Arrays.stream(strings).filter(Objects::nonNull).anyMatch(s -> !s.startsWith("xyz")) ? "s" : null;
+  }
+  
+  void predicateNot() {
+    boolean res = Stream.of(Optional.of(1), Optional.of(2), Optional.empty())
+      .anyMatch(Predicate.not(Optional::isEmpty));
+  }
+
+  void predicateNotLambda() {
+    boolean res = Stream.of(Optional.of(1), Optional.of(2), Optional.empty())
+      .anyMatch(Predicate.not(o -> o.isEmpty()));
   }
 
   public static void main(String[] args) {

@@ -1,6 +1,8 @@
 // "Fix all 'Stream API call chain can be replaced with loop' problems in file" "true"
 
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 import static java.util.Arrays.asList;
 
@@ -27,6 +29,26 @@ public class Main {
           }
       }
       return null;
+  }
+  
+  void predicateNot() {
+      boolean res = false;
+      for (Optional<?> o : asList(Optional.of(1), Optional.of(2), Optional.empty())) {
+          if (!o.isEmpty()) {
+              res = true;
+              break;
+          }
+      }
+  }
+
+  void predicateNotLambda() {
+      boolean res = false;
+      for (Optional<?> o : asList(Optional.of(1), Optional.of(2), Optional.empty())) {
+          if (o.isPresent()) {
+              res = true;
+              break;
+          }
+      }
   }
 
   public static void main(String[] args) {

@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -35,6 +36,9 @@ import java.util.function.Consumer;
  */
 public abstract class FunctionHelper {
   private static final Logger LOG = Logger.getInstance(FunctionHelper.class);
+  
+  private static final CallMatcher PREDICATE_NOT = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "not")
+    .parameterCount(1);
 
   private final PsiType myResultType;
 
@@ -42,7 +46,10 @@ public abstract class FunctionHelper {
     myResultType = resultType;
   }
 
-  public PsiType getResultType() {
+  /**
+   * @return result type of this function
+   */
+  public final PsiType getResultType() {
     return myResultType;
   }
 
@@ -193,6 +200,13 @@ public abstract class FunctionHelper {
       if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COMPARATOR, "reverseOrder", 0) ||
           MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_COLLECTIONS, "reverseOrder", 0)) {
         return paramCount == 2 ? new InlinedFunctionHelper(returnType, 2, "{1}.compareTo({0})") : null;
+      }
+      if (PREDICATE_NOT.test(call)) {
+        PsiExpression arg = call.getArgumentList().getExpressions()[0];
+        FunctionHelper delegate = create(arg, paramCount, false);
+        if (delegate != null) {
+          return new PredicateNotFunctionHelper(delegate);
+        }
       }
     }
     return new ComplexExpressionFunctionHelper(returnType, type, interfaceMethod.getName(), expression);
@@ -538,6 +552,48 @@ public abstract class FunctionHelper {
       myExpression = context.createExpression(MessageFormat.format(myTemplate, (Object[])argumentValues));
     }
   }
+  
+  private static class PredicateNotFunctionHelper extends FunctionHelper {
+    private final @NotNull FunctionHelper myDelegate;
+    private PsiExpression myExpression;
+
+    private PredicateNotFunctionHelper(@NotNull FunctionHelper delegate) {
+      super(delegate.getResultType());
+      myDelegate = delegate; 
+    }
+
+    @Override
+    public PsiExpression getExpression() {
+      LOG.assertTrue(myExpression != null);
+      return myExpression;
+    }
+
+    @Override
+    public void rename(String oldName, String newName, ChainContext context) {
+      myDelegate.rename(oldName, newName, context);
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
+      myDelegate.registerReusedElements(consumer);
+    }
+
+    @Override
+    public void suggestOutputNames(ChainContext context, ChainVariable var) {
+      myDelegate.suggestOutputNames(context, var);
+    }
+
+    @Override
+    public void preprocessVariable(ChainContext context, ChainVariable var, int index) {
+      myDelegate.preprocessVariable(context, var, index);
+    }
+
+    @Override
+    public void transform(ChainContext context, String... argumentValues) {
+      myDelegate.transform(context, argumentValues);
+      myExpression = context.createExpression(BoolUtils.getNegatedExpressionText(myDelegate.getExpression()));
+    }
+  }
 
   private static class LambdaFunctionHelper extends FunctionHelper {
     @NotNull String @NotNull [] myParameters;
@@ -605,8 +661,8 @@ public abstract class FunctionHelper {
         PsiParameter parameter = lambda.getParameterList().getParameters()[0];
         PsiElement body = lambda.getBody();
         LOG.assertTrue(body != null);
-        boolean mayBeNotFinal = ReferencesSearch.search(parameter, new LocalSearchScope(body))
-          .allMatch(e -> PsiTreeUtil.getParentOfType(e.getElement(), PsiLambdaExpression.class, PsiClass.class) == lambda);
+        boolean mayBeNotFinal = VariableAccessUtils.getVariableReferences(parameter)
+          .stream().allMatch(e -> PsiTreeUtil.getParentOfType(e, PsiLambdaExpression.class, PsiClass.class) == lambda);
         if (!mayBeNotFinal) {
           var.markFinal();
         }
