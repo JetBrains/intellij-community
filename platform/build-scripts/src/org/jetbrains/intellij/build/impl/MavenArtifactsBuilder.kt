@@ -48,7 +48,15 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       if (names.size < 2) {
         throw RuntimeException("Cannot generate Maven artifacts: incorrect module name '${moduleName}'")
       }
-
+      // handle "fleet.*" modules
+      if (names.first() == "fleet") {
+        val groupId = "com.jetbrains.intellij.fleet"
+        val artifactId = names.drop(1).flatMap { s ->
+          splitByCamelHumpsMergingNumbers(s).map { it.lowercase(Locale.US) }
+        }.joinToString(separator = "-")
+        return MavenCoordinates(groupId, artifactId, version)
+      }
+      // handle "intellij.*" modules
       val groupId = "com.jetbrains.${names.take(2).joinToString(separator = ".")}"
       val firstMeaningful = if (names.size > 2 && COMMON_GROUP_NAMES.contains(names[1])) 2 else 1
       val artifactId = names.drop(firstMeaningful).flatMap { s ->
@@ -91,6 +99,18 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     fun createDependencyTagByLibrary(descriptor: JpsMavenRepositoryLibraryDescriptor): Dependency {
       return createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
     }
+
+    private val FLEET_MODULES_IN_COMMUNITY = setOf(
+      "fleet.kernel",
+      "fleet.preferences",
+      "fleet.reporting.api",
+      "fleet.rhizomedb",
+      "fleet.rpc",
+      "fleet.rpc.server",
+      "fleet.util.core",
+      "fleet.util.logging.api",
+      "fleet.util.os",
+    )
   }
 
   suspend fun generateMavenArtifacts(
@@ -248,7 +268,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   protected open fun shouldSkipModule(moduleName: String, moduleIsDependency: Boolean): Boolean {
-    return if (moduleIsDependency) false else !moduleName.startsWith("intellij.")
+    val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_IN_COMMUNITY || moduleName.startsWith("intellij.")
+    return !moduleShouldBePublished
   }
 
   protected open fun generateMavenCoordinatesForModule(module: JpsModule): MavenCoordinates {
