@@ -2233,7 +2233,6 @@ com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 - a:widen():V
 c:com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl
 - com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
-- pf:myIdToEqClassesIndices:it.unimi.dsi.fastutil.ints.Int2IntMap
 - pf:myStack:com.intellij.util.containers.Stack
 - p:<init>(com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl):V
 - <init>(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):V
@@ -2264,6 +2263,7 @@ c:com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl
 - getFactory():com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 - getMergeabilityKey():java.lang.Object
 - p:getNonTrivialEqClasses():java.util.LinkedHashSet
+- p:getRawEqClassIndex(I):I
 - getRelation(com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.value.DfaValue):com.intellij.codeInspection.dataFlow.value.RelationType
 - getStackSize():I
 - getStackValue(I):com.intellij.codeInspection.dataFlow.value.DfaValue

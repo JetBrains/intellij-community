@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.memory;
 
@@ -36,7 +36,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final List<EqClassImpl> myEqClasses;
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
-  protected final Int2IntMap myIdToEqClassesIndices;
+  private final Int2IntMap myIdToEqClassesIndices;
   protected final Stack<DfaValue> myStack;
   private DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
@@ -598,10 +598,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * @return class index or -1 if not found
    */
   public int getEqClassIndex(@NotNull DfaValue dfaValue) {
-    int classIndex = myIdToEqClassesIndices.getOrDefault(dfaValue.getID(), -1);
+    int classIndex = getRawEqClassIndex(dfaValue.getID());
     if (classIndex == -1) {
       dfaValue = canonicalize(dfaValue);
-      classIndex = myIdToEqClassesIndices.getOrDefault(dfaValue.getID(), -1);
+      classIndex = getRawEqClassIndex(dfaValue.getID());
     }
 
     if (classIndex == -1) return -1;
@@ -609,6 +609,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass aClass = myEqClasses.get(classIndex);
     assert aClass.contains(dfaValue);
     return classIndex;
+  }
+
+  protected int getRawEqClassIndex(int dfaValueId) {
+    return myIdToEqClassesIndices.getOrDefault(dfaValueId, -1);
   }
 
   DfaVariableValue getCanonicalVariable(DfaValue val) {
@@ -1332,10 +1336,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private @NotNull DfaVariableValue canonicalizeQualifier(@NotNull DfaVariableValue qualifier) {
-    int index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
+    int index = getRawEqClassIndex(qualifier.getID());
     if (index == -1) {
       qualifier = canonicalize(qualifier);
-      index = myIdToEqClassesIndices.getOrDefault(qualifier.getID(), -1);
+      index = getRawEqClassIndex(qualifier.getID());
       if (index == -1) {
         return qualifier;
       }
@@ -1473,11 +1477,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void removeEquivalence(DfaVariableValue var) {
     int varID = var.getID();
-    int varClassIndex = myIdToEqClassesIndices.getOrDefault(varID, -1);
+    int varClassIndex = getRawEqClassIndex(varID);
     if (varClassIndex == -1) {
       var = canonicalize(var);
       varID = var.getID();
-      varClassIndex = myIdToEqClassesIndices.getOrDefault(varID, -1);
+      varClassIndex = getRawEqClassIndex(varID);
       if (varClassIndex == -1) return;
     }
 
