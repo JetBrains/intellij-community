@@ -9,6 +9,7 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest.wrapToFileComparisonFailure
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.configureMultiPlatformModuleStructure
 import java.io.File
 
 abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCodeInsightFixtureTestCase() {
@@ -21,7 +22,7 @@ abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCod
     }
 
     fun doTest(path: String) {
-        val virtualFile = configureModuleStructure(path).mainFile
+        val virtualFile = myFixture.configureMultiPlatformModuleStructure(path).mainFile
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.projectStructure.analysisExtensionFileContextModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtElement
 class KotlinResolveExtensionGeneratedSourcesFilter : GeneratedSourcesFilter() {
     @OptIn(KaImplementationDetail::class)
     override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean =
-        file.analysisExtensionFileContextModule != null
+        file.analysisContextModule != null
 
     private val KtElement.hasAnalysisExtensionContext: Boolean
         get() = containingKtFile.virtualFile?.let { isGeneratedSource(it, project) } == true

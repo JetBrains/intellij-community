@@ -1,5 +1,4 @@
 import java.util.*;
-// NOTE: wrong error message is KT-69090
 
 class J {
     private final ArrayList<String> strings = new ArrayList<>();
