@@ -122,8 +122,14 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             }
 
         private val wasImportedAndNotEvaluated: Boolean
-            get() = nearest is Imported &&
-                    getScriptFirstSeenTs(filePath) < nearest.data.importTs
+            get() {
+                if (KotlinPluginModeProvider.isK2Mode()) {
+                    return false
+                }
+
+                return nearest is Imported &&
+                        getScriptFirstSeenTs(filePath) < nearest.data.importTs
+            }
 
         override fun toString(): String {
             return "ScriptUnderRoot(root=$root, script=$script, standalone=$standalone, nearest=$nearest)"
