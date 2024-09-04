@@ -2928,25 +2928,8 @@ f:com.intellij.codeInspection.ex.InspectionToolsSupplier$Simple
 - com.intellij.codeInspection.ex.InspectionToolsSupplier
 - <init>(java.util.List):V
 - createTools():java.util.List
-c:com.intellij.codeInspection.ex.JsonInspectionsReportConverter
-- com.intellij.codeInspection.InspectionsReportConverter
-- sf:DUPLICATED_CODE:java.lang.String
-- sf:DUPLICATED_CODE_AGGREGATE:java.lang.String
-- sf:PHP_VULNERABLE_PATHS:java.lang.String
-- sf:PHP_VULNERABLE_PATHS_AGGREGATE:java.lang.String
-- psf:PROBLEM:java.lang.String
-- psf:PROBLEMS:java.lang.String
-- <init>():V
-- convert(java.lang.String,java.lang.String,java.util.Map,java.util.List):V
-- ps:convertDescriptionsContents(com.google.gson.stream.JsonWriter,org.jdom.Element,java.util.function.Predicate):V
-- s:convertDuplicates(com.google.gson.stream.JsonWriter,org.jdom.Element):V
-- s:convertPhpVulnerablePath(com.google.gson.stream.JsonWriter,org.jdom.Element):V
-- s:convertPhpVulnerablePaths(com.google.gson.stream.JsonWriter,org.jdom.Element):V
-- s:convertProblem(com.google.gson.stream.JsonWriter,org.jdom.Element):V
-- getFormatName():java.lang.String
-- useTmpDirForRawData():Z
 f:com.intellij.codeInspection.ex.JsonSingleFileInspectionsReportConverter
-- com.intellij.codeInspection.ex.JsonInspectionsReportConverter
+- com.intellij.codeInspection.InspectionsReportConverter
 - <init>():V
 - convert(java.lang.String,java.lang.String,java.util.Map,java.util.List):V
 - getFormatName():java.lang.String
