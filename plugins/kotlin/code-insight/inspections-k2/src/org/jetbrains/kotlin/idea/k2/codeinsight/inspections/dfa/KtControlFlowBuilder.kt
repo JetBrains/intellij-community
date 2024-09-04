@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtVariableDescri
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -900,6 +899,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 val skipBranch = DeferredOffset()
                 addInstruction(GotoInstruction(skipBranch))
                 setOffset(branchStart)
+                val guard = entry.guard
+                if (guard != null) {
+                    processExpression(guard.getExpression())
+                    addInstruction(ConditionalGotoInstruction(skipBranch, DfTypes.FALSE))
+                }
                 processExpression(entry.expression)
                 addInstruction(GotoInstruction(endOffset))
                 setOffset(skipBranch)

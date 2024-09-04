@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.inspections.tests
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.test.TestMetadata
 
 @TestRoot("idea/tests")
@@ -110,6 +111,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testWhenK2() = doTest()
     fun testWhenInLambdaK2() = doTest()
     fun testWhenIsObject() = doTest()
+    fun testWhenGuarded() = doTest()
     fun testWhileLoop() = doTest()
 
     fun doTest(warnOnConstantRefs: Boolean = true) {
@@ -129,9 +131,9 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
             !fromLightClassUtil
         }
         myFixture.configureByFile(fileName)
-        val inspection = KotlinConstantConditionsInspection()
-        inspection.warnOnConstantRefs = warnOnConstantRefs
-        myFixture.enableInspections(inspection)
-        myFixture.testHighlighting(true, false, true, fileName)
+        withCustomCompilerOptions(file.text, project, module) {
+            myFixture.enableInspections(KotlinConstantConditionsInspection().also { it.warnOnConstantRefs = warnOnConstantRefs })
+            myFixture.testHighlighting(true, false, true, fileName)
+        }
     }
 }
