@@ -77,8 +77,8 @@
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
   - name: vavr
     files:
-        - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
-        - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
+    - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
+    - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
     reason: withProjectLibrary
   modules:
   - name: kotlin.plugin.common
