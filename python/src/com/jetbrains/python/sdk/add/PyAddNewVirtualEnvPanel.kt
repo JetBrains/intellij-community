@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -16,6 +14,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PySdkSettings
@@ -23,7 +22,6 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -50,8 +48,8 @@ open class PyAddNewVirtualEnvPanel(private val project: Project?,
   protected val baseSdkField = PySdkPathChoosingComboBox()
   protected val pathField = TextFieldWithBrowseButton().apply {
     text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-    addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), null, project,
-                            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PySdkBundle.message("python.venv.location.chooser")))
   }
   val inheritSitePackagesField = JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))

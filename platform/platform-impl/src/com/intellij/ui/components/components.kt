@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 package com.intellij.ui.components
 
@@ -254,46 +254,41 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(
   project: Project?,
   component: ComponentWithBrowseButton<T>,
   textField: JTextField,
-  @DialogTitle browseDialogTitle: String?,
-  @Label browseDialogDescription: String? = null,
   fileChooserDescriptor: FileChooserDescriptor,
   textComponentAccessor: TextComponentAccessor<T>,
   fileChosen: ((chosenFile: VirtualFile) -> String)? = null
 ) {
   if (ApplicationManager.getApplication() == null) {
-    // tests
-    return
+    return // tests
   }
-
   val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
   if (fileChosen != null) {
     browseFolderDescriptor.convertFileToText = fileChosen
   }
-
-  component.addActionListener(
-    BrowseFolderActionListener(
-      browseDialogTitle,
-      browseDialogDescription,
-      component,
-      project,
-      browseFolderDescriptor,
-      textComponentAccessor
-    )
-  )
-  FileChooserFactory.getInstance().installFileCompletion(
-    textField,
-    fileChooserDescriptor,
-    true,
-    null /* infer disposable from UI context */
-  )
+  component.addActionListener(BrowseFolderActionListener(component, project, browseFolderDescriptor, textComponentAccessor))
+  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null /*infer disposable from context*/)
 }
 
+@Deprecated(
+  "Use `textFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, () -> List<String>, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
+  level = DeprecationLevel.ERROR
+)
 @JvmOverloads
-fun textFieldWithHistoryWithBrowseButton(project: Project?,
-                                         @DialogTitle browseDialogTitle: String,
-                                         fileChooserDescriptor: FileChooserDescriptor,
-                                         historyProvider: (() -> List<String>)? = null,
-                                         fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+fun textFieldWithHistoryWithBrowseButton(
+  project: Project?,
+  @DialogTitle browseDialogTitle: String,
+  fileChooserDescriptor: FileChooserDescriptor,
+  historyProvider: (() -> List<String>)? = null,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithHistoryWithBrowseButton = textFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), historyProvider, fileChosen)
+
+@JvmOverloads
+fun textFieldWithHistoryWithBrowseButton(
+  project: Project?,
+  fileChooserDescriptor: FileChooserDescriptor,
+  historyProvider: (() -> List<String>)? = null,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithHistoryWithBrowseButton {
   val component = TextFieldWithHistoryWithBrowseButton()
   val textFieldWithHistory = component.childComponent
   textFieldWithHistory.setHistorySize(-1)
@@ -301,66 +296,48 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
   if (historyProvider != null) {
     addHistoryOnExpansion(textFieldWithHistory, historyProvider)
   }
-  installFileCompletionAndBrowseDialog(
-    project = project,
-    component = component,
-    textField = component.childComponent.textEditor,
-    browseDialogTitle = browseDialogTitle,
-    fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-    fileChosen = fileChosen
-  )
+  val textField = component.childComponent.textEditor
+  val textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
+  installFileCompletionAndBrowseDialog(project, component, textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
 
+@Deprecated(
+  "Use `textFieldWithBrowseButton(Project, FileChooserDescriptor, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
+  level = DeprecationLevel.ERROR
+)
 @JvmOverloads
-fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String?,
-                              fileChooserDescriptor: FileChooserDescriptor,
-                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+fun textFieldWithBrowseButton(
+  project: Project?,
+  @DialogTitle browseDialogTitle: String?,
+  fileChooserDescriptor: FileChooserDescriptor,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithBrowseButton = textFieldWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), fileChosen)
+
+@JvmOverloads
+fun textFieldWithBrowseButton(
+  project: Project?,
+  fileChooserDescriptor: FileChooserDescriptor,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithBrowseButton {
   val component = TextFieldWithBrowseButton()
-  installFileCompletionAndBrowseDialog(
-    project = project,
-    component = component,
-    textField = component.textField,
-    browseDialogTitle = browseDialogTitle,
-    fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-    fileChosen = fileChosen
-  )
+  val textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+  installFileCompletionAndBrowseDialog(project, component, component.textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
 
 @JvmOverloads
-fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String?,
-                              textField: JTextField,
-                              fileChooserDescriptor: FileChooserDescriptor,
-                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
-  return textFieldWithBrowseButton(project, browseDialogTitle, null, textField, fileChooserDescriptor, fileChosen)
-}
-
-@JvmOverloads
-fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String?,
-                              @Label browseDialogDescription: String?,
-                              textField: JTextField,
-                              fileChooserDescriptor: FileChooserDescriptor,
-                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+fun textFieldWithBrowseButton(
+  project: Project?,
+  textField: JTextField,
+  fileChooserDescriptor: FileChooserDescriptor,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithBrowseButton {
   val component = TextFieldWithBrowseButton(textField)
-  installFileCompletionAndBrowseDialog(
-    project = project,
-    component = component,
-    textField = component.textField,
-    browseDialogTitle = browseDialogTitle,
-    browseDialogDescription = browseDialogDescription,
-    fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-    fileChosen = fileChosen
-  )
+  val textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+  installFileCompletionAndBrowseDialog(project, component, component.textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
-
 
 val JPasswordField.chars: CharSequence?
   get() {

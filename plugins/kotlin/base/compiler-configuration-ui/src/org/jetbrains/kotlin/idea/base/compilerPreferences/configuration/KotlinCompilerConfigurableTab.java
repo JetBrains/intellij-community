@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.compilerPreferences.configuration;
 
@@ -313,16 +313,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             boolean forFiles
     ) {
         label.setLabelFor(fileChooser);
-
-        fileChooser.addBrowseFolderListener(title, null, null,
-                                            new FileChooserDescriptor(forFiles, !forFiles, false, false, false, false),
-                                            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    }
-
-    private static boolean isBrowseFieldModifiedWithNullize(@NotNull TextFieldWithBrowseButton chooser, @Nullable String currentValue) {
-        return !StringUtil.equals(
-                StringUtil.nullize(chooser.getText(), true),
-                StringUtil.nullize(currentValue, true));
+        var descriptor = new FileChooserDescriptor(forFiles, !forFiles, false, false, false, false).withTitle(title);
+        fileChooser.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }
 
     private static boolean isBrowseFieldModified(@NotNull TextFieldWithBrowseButton chooser, @NotNull String currentValue) {

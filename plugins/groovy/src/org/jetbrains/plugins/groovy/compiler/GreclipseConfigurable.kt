@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts.ConfigurableName
@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyBundle.message
 import javax.swing.JComponent
 
 class GreclipseConfigurable(val settings: GreclipseSettings) : Configurable {
@@ -23,9 +24,7 @@ class GreclipseConfigurable(val settings: GreclipseSettings) : Configurable {
   val panel: DialogPanel = panel {
     group(GroovyBundle.message("configurable.greclipse.border.title")) {
       row(GroovyBundle.message("configurable.greclipse.path.label")) {
-        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-        textFieldWithBrowseButton(browseDialogTitle = GroovyBundle.message("configurable.greclipse.path.chooser.description"),
-                                  fileChooserDescriptor = fileChooserDescriptor)
+        textFieldWithBrowseButton(createSingleLocalFileDescriptor().withTitle(message("configurable.greclipse.path.chooser.description")))
           .align(AlignX.FILL)
           .bindText(settings::greclipsePath)
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
@@ -33,6 +33,7 @@ import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleBundle.message
 import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 
 class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
@@ -91,10 +92,10 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
                 label(GradleBundle.message("gradle.project.settings.distribution.local.location"))
                   .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
                 val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                  .withTitle(message("gradle.project.settings.distribution.local.location.dialog"))
                   .withPathToTextConvertor(::getPresentablePath)
                   .withTextToPathConvertor(::getCanonicalPath)
-                val title = GradleBundle.message("gradle.project.settings.distribution.local.location.dialog")
-                textFieldWithBrowseButton(title, null, fileChooserDescriptor)
+                textFieldWithBrowseButton(fileChooserDescriptor)
                   .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
                   .bindText(gradleHomeProperty.toUiPathProperty())
                   .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)

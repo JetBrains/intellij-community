@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -74,10 +74,10 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     }
     myFieldWithHistory.setHistory(foundJDKs);
     myPathField = new ComponentWithBrowseButton<>(myFieldWithHistory, null);
-    myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
-                                        ExecutionBundle.message("run.configuration.select.jre.dir.label"),
-                                        null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                        TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ExecutionBundle.message("run.configuration.select.alternate.jre.label"))
+      .withDescription(ExecutionBundle.message("run.configuration.select.jre.dir.label"));
+    myPathField.addBrowseFolderListener(null, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
 
     setLayout(new MigLayout("ins 0, gap 10, fill, flowx"));
     add(myCbEnabled, "shrinkx");

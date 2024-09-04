@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.black.configuration
 
 import com.intellij.codeInsight.AutoPopupController
@@ -69,13 +69,8 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   private lateinit var executionModeComboBox: ComboBox<BlackFormatterConfiguration.ExecutionMode>
 
   private val blackExecutablePathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener(
-      @Suppress("DialogTitleCapitalization")
-      PyBundle.message("black.select.path.to.executable"),
-      null,
-      project,
-      FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-    )
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+      .withTitle(@Suppress("DialogTitleCapitalization") PyBundle.message("black.select.path.to.executable")))
   }
 
   private val sdkSelectionComboBox = createPythonSdkComboBox(project.modules.mapNotNull { it.pythonSdk }, null)

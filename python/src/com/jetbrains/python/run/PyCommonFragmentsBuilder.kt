@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
 import com.intellij.execution.ExecutionBundle
@@ -18,20 +18,18 @@ import javax.swing.JComponent
 
 
 abstract class PyCommonFragmentsBuilder {
-  abstract fun <T : AbstractPythonRunConfiguration<*>> createEnvironmentFragments(fragments: MutableList<SettingsEditorFragment<T, *>>,
-                                                                                  config: T)
+  abstract fun <T : AbstractPythonRunConfiguration<*>> createEnvironmentFragments(
+    fragments: MutableList<SettingsEditorFragment<T, *>>,
+    config: T
+  )
 
-  fun <T : AbstractPythonRunConfiguration<*>> createWorkingDirectoryFragment(project: Project):
-    SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> {
+  fun <T : AbstractPythonRunConfiguration<*>> createWorkingDirectoryFragment(
+    project: Project
+  ): SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> {
     val textField = ExtendableTextField(10)
     val workingDirectoryField = TextFieldWithBrowseButton(textField)
-    workingDirectoryField.addBrowseFolderListener(
-      ExecutionBundle.message("select.working.directory.message"),
-      null,
-      project,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
-    )
+    val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"))
+    workingDirectoryField.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT)
     val field = LabeledComponent.create(
       workingDirectoryField,
       ExecutionBundle.message("run.configuration.working.directory.label"),

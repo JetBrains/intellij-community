@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.ExecutionBundle
@@ -12,16 +12,13 @@ import org.jetbrains.idea.maven.execution.MavenPomFileChooserDescriptor
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenWorkingDirectoryInfo(
-  private val project: Project
-) : WorkingDirectoryInfo {
-
+class MavenWorkingDirectoryInfo(private val project: Project) : WorkingDirectoryInfo {
   override val editorLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
 
   override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
 
-  override val fileChooserTitle: String = RunnerBundle.message("maven.select.working.directory")
-  override val fileChooserDescriptor: FileChooserDescriptor = MavenPomFileChooserDescriptor(project)
+  override val fileChooserDescriptor: FileChooserDescriptor
+    get() = MavenPomFileChooserDescriptor(project).withTitle(RunnerBundle.message("maven.select.working.directory"))
 
   override val emptyFieldError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 

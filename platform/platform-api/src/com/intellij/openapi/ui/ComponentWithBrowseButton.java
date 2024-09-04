@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -138,11 +138,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     Dimension size = GuiUtils.getSizeByChars(charCount, comp);
     comp.setPreferredSize(size);
     Dimension preferredSize = myBrowseButton.getPreferredSize();
-
-    boolean keepHeight = UIUtil.isUnderWin10LookAndFeel();
-    preferredSize.setSize(size.width + preferredSize.width + 2,
-                          keepHeight ? preferredSize.height : preferredSize.height + 2);
-
+    @SuppressWarnings("removal") boolean keepHeight = UIUtil.isUnderWin10LookAndFeel();
+    preferredSize.setSize(size.width + preferredSize.width + 2, keepHeight ? preferredSize.height : preferredSize.height + 2);
     setPreferredSize(preferredSize);
   }
 
@@ -193,30 +190,49 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsContexts.Label String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super Comp> accessor) {
-    addActionListener(new BrowseFolderActionListener<>(title, description, this, project, fileChooserDescriptor, accessor));
+  public void addBrowseFolderListener(
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super Comp> accessor
+  ) {
+    addActionListener(new BrowseFolderActionListener<>(this, project, fileChooserDescriptor, accessor));
   }
 
   /**
-   * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
    */
-  @Deprecated
-  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsContexts.Label String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
+  @Deprecated(forRemoval = true)
+  public void addBrowseFolderListener(
+    @Nullable @NlsContexts.DialogTitle String title,
+    @Nullable @NlsContexts.Label String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super Comp> accessor
+  ) {
+    addBrowseFolderListener(project, fileChooserDescriptor.withTitle(title).withDescription(description), accessor);
+  }
+
+  /**
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  public void addBrowseFolderListener(
+    @Nullable @NlsContexts.DialogTitle String title,
+    @Nullable @NlsContexts.Label String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super Comp> accessor,
+    boolean autoRemoveOnHide
+  ) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
   }
 
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated
+  /** @deprecated use {@link #addActionListener(ActionListener)} instead */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
     addActionListener(actionListener);
   }
@@ -278,13 +294,29 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
-    public BrowseFolderActionListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsContexts.Label String description,
-                                      @Nullable ComponentWithBrowseButton<T> textField,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super T> accessor) {
-      super(title, description, project, fileChooserDescriptor, textField != null ? textField.getChildComponent() : null, accessor);
+    public BrowseFolderActionListener(
+      @Nullable ComponentWithBrowseButton<T> textField,
+      @Nullable Project project,
+      FileChooserDescriptor fileChooserDescriptor,
+      TextComponentAccessor<? super T> accessor
+    ) {
+      super(project, fileChooserDescriptor, textField != null ? textField.getChildComponent() : null, accessor);
+    }
+
+    /**
+     * @deprecated use {@link #BrowseFolderActionListener(ComponentWithBrowseButton, Project, FileChooserDescriptor, TextComponentAccessor)}
+     * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+     */
+    @Deprecated(forRemoval = true)
+    public BrowseFolderActionListener(
+      @Nullable @NlsContexts.DialogTitle String title,
+      @Nullable @NlsContexts.Label String description,
+      @Nullable ComponentWithBrowseButton<T> textField,
+      @Nullable Project project,
+      FileChooserDescriptor fileChooserDescriptor,
+      TextComponentAccessor<? super T> accessor
+    ) {
+      this(textField, project, fileChooserDescriptor.withTitle(title).withDescription(description), accessor);
     }
 
     @Override

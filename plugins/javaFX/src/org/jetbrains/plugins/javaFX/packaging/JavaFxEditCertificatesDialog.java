@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -45,7 +45,9 @@ public final class JavaFxEditCertificatesDialog extends DialogWrapper {
     myPanel.myKeypassTF.setText(keypass != null ? new String(Base64.getDecoder().decode(keypass), StandardCharsets.UTF_8) : "");
     final String storepass = properties.getStorepass();
     myPanel.myStorePassTF.setText(storepass != null ? new String(Base64.getDecoder().decode(storepass), StandardCharsets.UTF_8) : "");
-    myPanel.myKeystore.addBrowseFolderListener(JavaFXBundle.message("javafx.certificates.dialog.choose.certificate.title"), JavaFXBundle.message("javafx.certificates.dialog.select.file.with.generated.keys"), project, BrowseFilesListener.SINGLE_FILE_DESCRIPTOR);
+    myPanel.myKeystore.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(JavaFXBundle.message("javafx.certificates.dialog.choose.certificate.title"))
+      .withDescription(JavaFXBundle.message("javafx.certificates.dialog.select.file.with.generated.keys")));
   }
 
   @Override

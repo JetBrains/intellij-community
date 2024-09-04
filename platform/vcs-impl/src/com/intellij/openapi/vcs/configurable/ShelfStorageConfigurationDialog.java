@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,10 +53,9 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     }
     myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.default.label"), true);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener(VcsBundle.message("shelf.tab"),
-                                                 VcsBundle.message("change.shelves.location.dialog.location.browser.title"),
-                                                 myProject,
-                                                 FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myShelfDirectoryPath.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(VcsBundle.message("shelf.tab"))
+      .withDescription(VcsBundle.message("change.shelves.location.dialog.location.browser.title")));
     myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
     setOKButtonText(VcsBundle.message("change.shelves.location.dialog.action.button"));
     initComponents();

@@ -19395,8 +19395,6 @@ c:com.intellij.platform.GeneratorPeerImpl
 - validate():com.intellij.openapi.ui.ValidationInfo
 com.intellij.platform.HideableProjectGenerator
 - a:isHidden():Z
-f:com.intellij.platform.LocationNameFieldsBinding
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.ui.TextFieldWithBrowseButton,javax.swing.JTextField,java.lang.String,java.lang.String):V
 f:com.intellij.platform.PlatformProjectOpenProcessor
 - com.intellij.projectImport.ProjectOpenProcessor
 - com.intellij.platform.CommandLineProjectOpenProcessor
@@ -23358,25 +23356,28 @@ f:com.intellij.ui.components.ComponentsKt
 - sf:htmlComponent(java.lang.String,java.awt.Font,java.awt.Color,java.awt.Color,Z):javax.swing.JEditorPane
 - sf:htmlComponent(java.lang.String,java.awt.Font,java.awt.Color,java.awt.Color,Z,javax.swing.event.HyperlinkListener):javax.swing.JEditorPane
 - bs:htmlComponent$default(java.lang.String,java.awt.Font,java.awt.Color,java.awt.Color,Z,javax.swing.event.HyperlinkListener,I,java.lang.Object):javax.swing.JEditorPane
-- sf:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
-- sf:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,java.lang.String,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
-- sf:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,java.lang.String,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,kotlin.jvm.functions.Function1):V
-- bs:installFileCompletionAndBrowseDialog$default(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,java.lang.String,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- sf:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
+- sf:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,kotlin.jvm.functions.Function1):V
+- bs:installFileCompletionAndBrowseDialog$default(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:noteComponent(java.lang.String):javax.swing.JComponent
 - sf:noteComponent(java.lang.String,kotlin.jvm.functions.Function1):javax.swing.JComponent
 - bs:noteComponent$default(java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):javax.swing.JComponent
+- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.ui.TextFieldWithBrowseButton
+- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.TextFieldWithBrowseButton
 - sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.ui.TextFieldWithBrowseButton
 - sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.TextFieldWithBrowseButton
-- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.ui.TextFieldWithBrowseButton
-- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.TextFieldWithBrowseButton
-- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.ui.TextFieldWithBrowseButton
-- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.TextFieldWithBrowseButton
+- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.ui.TextFieldWithBrowseButton
+- sf:textFieldWithBrowseButton(com.intellij.openapi.project.Project,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.TextFieldWithBrowseButton
+- bs:textFieldWithBrowseButton$default(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.TextFieldWithBrowseButton
 - bs:textFieldWithBrowseButton$default(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.TextFieldWithBrowseButton
-- bs:textFieldWithBrowseButton$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.TextFieldWithBrowseButton
-- bs:textFieldWithBrowseButton$default(com.intellij.openapi.project.Project,java.lang.String,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.TextFieldWithBrowseButton
+- bs:textFieldWithBrowseButton$default(com.intellij.openapi.project.Project,javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.ui.TextFieldWithBrowseButton
+- sf:textFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
+- sf:textFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function0):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
+- sf:textFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - sf:textFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - sf:textFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function0):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - sf:textFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
+- bs:textFieldWithHistoryWithBrowseButton$default(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - bs:textFieldWithHistoryWithBrowseButton$default(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 *f:com.intellij.ui.components.DarculaSearchBorder
 - com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder
@@ -24037,8 +24038,14 @@ com.intellij.ui.dsl.builder.Row
 - bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:textArea():com.intellij.ui.dsl.builder.Cell
 - a:textField():com.intellij.ui.dsl.builder.Cell
-- a:textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- a:textFieldWithBrowseButton(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- textFieldWithBrowseButton(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:threeStateCheckBox(java.lang.String):com.intellij.ui.dsl.builder.Cell
 - a:topGap(com.intellij.ui.dsl.builder.TopGap):com.intellij.ui.dsl.builder.Row
 - a:visible(Z):com.intellij.ui.dsl.builder.Row
@@ -24061,7 +24068,13 @@ Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,I,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 e:com.intellij.ui.dsl.builder.RowLayout
 - java.lang.Enum
 - sf:INDEPENDENT:com.intellij.ui.dsl.builder.RowLayout
@@ -26429,11 +26442,14 @@ f:com.intellij.util.ui.SwingHelper
 - s:buildHtml(java.lang.String,java.lang.String):java.lang.String
 - s:createHtmlLabel(java.lang.String,java.lang.String,com.intellij.util.Consumer):javax.swing.JEditorPane
 - s:createHtmlViewer(Z,java.awt.Font,java.awt.Color,java.awt.Color):javax.swing.JEditorPane
+- s:createTextFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.function.Supplier):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - s:createTextFieldWithHistoryWithBrowseButton(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.util.NotNullProducer):com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - s:createWebHyperlink(java.lang.String):com.intellij.ui.HyperlinkLabel
 - s:createWebHyperlink(java.lang.String,java.lang.String):com.intellij.ui.HyperlinkLabel
 - s:getComponentFromRecentMouseEvent():java.awt.Component
+- s:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - s:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.openapi.ui.TextFieldWithBrowseButton,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
+- s:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.ui.TextFieldWithHistoryWithBrowseButton,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - s:installFileCompletionAndBrowseDialog(com.intellij.openapi.project.Project,com.intellij.ui.TextFieldWithHistoryWithBrowseButton,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - s:newHorizontalPanel(F,java.awt.Component[]):javax.swing.JPanel
 - s:newLeftAlignedVerticalPanel(java.util.Collection):javax.swing.JPanel

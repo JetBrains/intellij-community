@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -95,10 +95,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myTopPanel.setBorder(JBUI.Borders.empty(0, 10));
     myBuildOnMakeCheckBox.setSelected(artifact.isBuildOnMake());
     final String outputPath = artifact.getOutputPath();
-    myOutputDirectoryField.addBrowseFolderListener(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"),
-                                                   JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
-                                                                              getArtifact().getName()), myProject,
-                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myOutputDirectoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaCompilerBundle.message("dialog.title.output.directory.for.artifact"))
+      .withDescription(JavaCompilerBundle.message("chooser.description.select.output.directory.for.0.artifact", getArtifact().getName())));
     myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

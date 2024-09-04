@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -27,42 +13,32 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.ui.TextAccessor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public final class MacroComboBoxWithBrowseButton extends ComboBox<String> implements TextAccessor {
-  private Module module;
-  private boolean always;
+  private final Module myModule;
 
   public MacroComboBoxWithBrowseButton(FileChooserDescriptor descriptor, Project project) {
     super(new MacroComboBoxModel());
-    descriptor.withShowHiddenFiles(true);
 
-    Runnable action = new BrowseFolderRunnable<ComboBox<String>>(null, null, project, descriptor, this, accessor) {
-      private Module getModule() {
-        if (module == null) module = myFileChooserDescriptor.getUserData(LangDataKeys.MODULE_CONTEXT);
-        if (module == null) module = myFileChooserDescriptor.getUserData(PlatformCoreDataKeys.MODULE);
-        return module;
-      }
+    var module = descriptor.getUserData(LangDataKeys.MODULE_CONTEXT);
+    if (module == null) module = descriptor.getUserData(PlatformCoreDataKeys.MODULE);
+    myModule = module;
 
-      @Override
-      protected @Nullable Project getProject() {
-        Project project = super.getProject();
-        if (project != null) return project;
-        Module module = getModule();
-        return module == null ? null : module.getProject();
-      }
+    if (project == null && module != null) {
+      project = module.getProject();
+    }
 
+    descriptor = descriptor.withShowHiddenFiles(true);
+
+    var action = new BrowseFolderRunnable<ComboBox<String>>(project, descriptor, this, accessor) {
       @Override
       protected @NotNull String expandPath(@NotNull String path) {
-        Project project = getProject();
+        var project = getProject();
         if (project != null) path = PathMacroManager.getInstance(project).expandPath(path);
-
-        Module module = getModule();
-        if (module != null) path = PathMacroManager.getInstance(module).expandPath(path);
-
+        if (myModule != null) path = PathMacroManager.getInstance(myModule).expandPath(path);
         return super.expandPath(path);
       }
     };
@@ -83,21 +59,6 @@ public final class MacroComboBoxWithBrowseButton extends ComboBox<String> implem
   @Override
   public void setText(String text) {
     accessor.setText(this, text != null ? text : "");
-  }
-
-  public void setModule(Module module) {
-    this.module = module;
-    configure();
-  }
-
-  public void showModuleMacroAlways() {
-    always = true;
-    configure();
-  }
-
-  private void configure() {
-    MacroComboBoxModel model = (MacroComboBoxModel)getModel();
-    if (model != null) model.useModuleDir(always || module != null);
   }
 
   private final TextComponentAccessor<ComboBox<String>> accessor = new TextComponentAccessor<>() {

@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
-import com.intellij.ide.util.BrowseFilesListener
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileTextField
 import com.intellij.openapi.project.DumbAwareAction
@@ -75,10 +75,9 @@ internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
       textArea.wrapStyleWord = true
       textArea.lineWrap = true
 
-      fileField = FileChooserFactory.getInstance().createFileTextField(BrowseFilesListener.SINGLE_FILE_DESCRIPTOR, disposable)
+      fileField = FileChooserFactory.getInstance().createFileTextField(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), disposable)
       val fileCombo = TextFieldWithBrowseButton(fileField.field)
-      val fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-      fileCombo.addBrowseFolderListener("Patch File", "Patch file", project, fileDescriptor)
+      fileCombo.addBrowseFolderListener(project, createSingleLocalFileDescriptor().withTitle("Patch File").withDescription("Patch file"))
 
       val panel = JPanel(BorderLayout(0, JBUI.scale(10)))
       panel.add(ScrollPaneFactory.createScrollPane(textArea), BorderLayout.CENTER)

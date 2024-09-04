@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -28,29 +15,24 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
-  private final JPanel myWholePanel = new JPanel(new GridBagLayout());
-  @NonNls private final JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", "META-INF" + File.separator + "plugin.xml:"));
-  private final TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
+  private static final String META_INF = "META-INF";
+  private static final String PLUGIN_XML = "plugin.xml";
+  private static final String MANIFEST_MF = "manifest.mf";
 
+  private final JPanel myWholePanel = new JPanel(new GridBagLayout());
+  private final JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", "META-INF" + File.separator + "plugin.xml:"));
+  private final TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
   private final TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
   private final JCheckBox myUseUserManifest = new JCheckBox(DevKitBundle.message("manifest.use.user.defined"));
-
   private final PluginBuildConfiguration myBuildProperties;
-
   private final Module myModule;
-  @NonNls private static final String META_INF = "META-INF";
-  @NonNls private static final String PLUGIN_XML = "plugin.xml";
-  @NonNls private static final String MANIFEST_MF = "manifest.mf";
 
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getCurrentRootModel().getModule();
@@ -59,17 +41,14 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   @Override
   public JComponent createComponent() {
-    myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), DevKitBundle.message("deployment.directory.location", META_INF), DevKitBundle.message("saved.message.common", META_INF + File.separator + PLUGIN_XML), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR));
-    myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), DevKitBundle.message("deployment.view.select", MANIFEST_MF), DevKitBundle.message("manifest.selection", MANIFEST_MF), BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
+    myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(DevKitBundle.message("deployment.directory.location", META_INF))
+      .withDescription(DevKitBundle.message("saved.message.common", META_INF + File.separator + PLUGIN_XML))));
+    myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(DevKitBundle.message("deployment.view.select", MANIFEST_MF))
+      .withDescription(DevKitBundle.message("manifest.selection", MANIFEST_MF))));
     myManifest.setEnabled(myBuildProperties.isUseUserManifest());
-    myUseUserManifest.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final boolean selected = myUseUserManifest.isSelected();
-
-        myManifest.setEnabled(selected);
-      }
-    });
+    myUseUserManifest.addActionListener(e -> myManifest.setEnabled(myUseUserManifest.isSelected()));
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, JBUI.insets(2), 0, 0);
     myWholePanel.add(myPluginXMLLabel, gc);

@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -60,11 +59,15 @@ public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEdit
     super();
     myProperties = properties;
     JavaFxApplicationClassBrowser.appClassBrowser(project, artifact).setField(myAppClass);
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("properties");
-    myHtmlParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description"), project, descriptor);
-    myParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description"), project, descriptor);
-    myHtmlTemplate.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description"), project,
-                                           FileChooserDescriptorFactory.createSingleFileDescriptor(HtmlFileType.INSTANCE));
+    myHtmlParams.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor("properties")
+      .withTitle(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ))
+      .withDescription(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description")));
+    myParams.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor("properties")
+      .withTitle(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"))
+      .withDescription(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description")));
+    myHtmlTemplate.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor(HtmlFileType.INSTANCE)
+      .withTitle(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"))
+      .withDescription(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description")));
     myEditSignCertificateButton.addActionListener(e -> {
       myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
       myDialog.show();

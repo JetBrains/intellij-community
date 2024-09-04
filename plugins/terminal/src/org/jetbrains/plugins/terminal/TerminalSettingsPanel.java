@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
@@ -164,24 +164,14 @@ public final class TerminalSettingsPanel {
   }
 
   private void configureStartDirectoryField() {
-    myStartDirectoryField.addBrowseFolderListener(
-      "",
-      TerminalBundle.message("settings.start.directory.browseFolder.description"),
-      null,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
-    );
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withDescription(TerminalBundle.message("settings.start.directory.browseFolder.description"));
+    myStartDirectoryField.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     setupTextFieldDefaultValue(myStartDirectoryField.getTextField(), () -> myProjectOptionsProvider.getDefaultStartingDirectory());
   }
 
   private void configureShellPathField() {
-    myShellPathField.addBrowseFolderListener(
-      "",
-      TerminalBundle.message("settings.terminal.shell.executable.path.browseFolder.description"),
-      null,
-      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-      TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
-    );
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(TerminalBundle.message("settings.terminal.shell.executable.path.browseFolder.description"));
+    myShellPathField.addBrowseFolderListener(null, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     setupTextFieldDefaultValue(myShellPathField.getChildComponent().getTextEditor(), () -> myProjectOptionsProvider.defaultShellPath());
   }
 

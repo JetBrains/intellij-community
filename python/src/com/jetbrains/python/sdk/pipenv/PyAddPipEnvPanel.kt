@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.application.options.ModuleListCellRenderer
@@ -62,12 +62,8 @@ class PyAddPipEnvPanel(private val project: Project?,
   }
 
   private val pipEnvPathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener(
-      PyBundle.message("python.sdk.pipenv.select.executable.title"),
-      null,
-      project,
-      FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-    )
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+      .withTitle(PyBundle.message("python.sdk.pipenv.select.executable.title")))
 
     val field = textField as? JBTextField ?: return@apply
     detectPipEnvExecutable()?.let {

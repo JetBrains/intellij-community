@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,60 +19,61 @@ import javax.swing.*;
 
 @ApiStatus.Experimental
 public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
-  private   final @NlsContexts.DialogTitle String myTitle;
-  private   final @NlsContexts.Label String myDescription;
-  protected final @NotNull TextComponentAccessor<? super T> myAccessor;
+  private final Project myProject;
+  protected final TextComponentAccessor<? super T> myAccessor;
   protected final FileChooserDescriptor myFileChooserDescriptor;
+  protected T myTextComponent;
 
-  protected  T myTextComponent;
-  private Project myProject;
-
-  public BrowseFolderRunnable(@Nullable @NlsContexts.DialogTitle String title,
-                              @Nullable @NlsContexts.Label String description,
-                              @Nullable Project project,
-                              FileChooserDescriptor fileChooserDescriptor,
-                              @Nullable T component,
-                              @NotNull TextComponentAccessor<? super T> accessor) {
-    if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
-      //LOG.error("multiple selection not supported");
-      fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {
-        @Override
-        public boolean isChooseMultiple() {
-          return false;
-        }
-      };
+  public BrowseFolderRunnable(
+    @Nullable Project project,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @Nullable T component,
+    @NotNull TextComponentAccessor<? super T> accessor
+  ) {
+    if (fileChooserDescriptor.isChooseMultiple()) {
+      Logger.getInstance(BrowseFolderRunnable.class).warn("multiple selection not supported");
     }
-
-    myTitle = title;
-    myDescription = description;
     myTextComponent = component;
     myProject = project;
     myFileChooserDescriptor = fileChooserDescriptor;
     myAccessor = accessor;
   }
 
-  protected @Nullable Project getProject() {
-    return myProject;
+  /**
+   * @deprecated use {@link #BrowseFolderRunnable(Project, FileChooserDescriptor, JComponent, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public BrowseFolderRunnable(
+    @Nullable @NlsContexts.DialogTitle String title,
+    @Nullable @NlsContexts.Label String description,
+    @Nullable Project project,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @Nullable T component,
+    @NotNull TextComponentAccessor<? super T> accessor
+  ) {
+    if (fileChooserDescriptor.isChooseMultiple()) {
+      Logger.getInstance(BrowseFolderRunnable.class).error("multiple selection not supported");
+    }
+    if (title != null) {
+      fileChooserDescriptor = fileChooserDescriptor.withTitle(title);
+    }
+    if (description != null) {
+      fileChooserDescriptor = fileChooserDescriptor.withDescription(description);
+    }
+    myTextComponent = component;
+    myProject = project;
+    myFileChooserDescriptor = fileChooserDescriptor;
+    myAccessor = accessor;
   }
 
-  protected void setProject(@Nullable Project project) {
-    myProject = project;
+  protected final @Nullable Project getProject() {
+    return myProject;
   }
 
   @Override
   public void run() {
-    FileChooserDescriptor fileChooserDescriptor = myFileChooserDescriptor;
-    if (myTitle != null || myDescription != null) {
-      fileChooserDescriptor = (FileChooserDescriptor)myFileChooserDescriptor.clone();
-      if (myTitle != null) {
-        fileChooserDescriptor.setTitle(myTitle);
-      }
-      if (myDescription != null) {
-        fileChooserDescriptor.setDescription(myDescription);
-      }
-    }
-
-    chooseFile(fileChooserDescriptor);
+    chooseFile(myFileChooserDescriptor);
   }
 
   protected void chooseFile(FileChooserDescriptor descriptor) {
@@ -80,29 +81,24 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   protected @Nullable VirtualFile getInitialFile() {
-    @NonNls String directoryName = myAccessor.getText(myTextComponent).trim();
-    if (StringUtil.isEmptyOrSpaces(directoryName)) {
-      return null;
-    }
+    var directoryName = myAccessor.getText(myTextComponent).trim();
+    if (directoryName.isBlank()) return null;
 
-    directoryName = FileUtil.toSystemIndependentName(directoryName);
-    VirtualFile path = LocalFileSystem.getInstance().findFileByPath(expandPath(directoryName));
-    while (path == null && directoryName.length() > 0) {
-      int pos = directoryName.lastIndexOf('/');
-      if (pos <= 0) break;
-      directoryName = directoryName.substring(0, pos);
-      path = LocalFileSystem.getInstance().findFileByPath(directoryName);
+    var path = NioFiles.toPath(expandPath(directoryName));
+    if (path == null || !path.isAbsolute()) return null;
+
+    while (path != null) {
+      var result = LocalFileSystem.getInstance().findFileByNioFile(path);
+      if (result != null) return result;
+      path = path.getParent();
     }
-    return path;
+    return null;
   }
 
-  protected @NotNull @NonNls String expandPath(@NotNull @NonNls String path) {
+  protected @NotNull @NonNls String expandPath(@NotNull String path) {
     var descriptor = BrowseFolderDescriptor.asBrowseFolderDescriptor(myFileChooserDescriptor);
     var convertTextToPath = descriptor.getConvertTextToPath();
-    if (convertTextToPath != null) {
-      return convertTextToPath.invoke(path);
-    }
-    return path;
+    return convertTextToPath != null ? convertTextToPath.invoke(path) : path;
   }
 
   protected @NotNull @NlsSafe String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
@@ -100,8 +100,9 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final JLabel srcPathLabel = new JLabel(JavaUiBundle.message("prompt.enter.relative.path.to.module.content.root", File.separator));
     panel.add(srcPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                    JBUI.insets(8, 30, 0, 0), 0, 0));
-    final FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    chooserDescriptor.withTreeRootVisible(true);
+    var chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("prompt.select.source.directory"))
+      .withTreeRootVisible(true);
     final FieldPanel fieldPanel = createFieldPanel(myTfSourceDirectoryName, null, new BrowsePathListener(myTfSourceDirectoryName, chooserDescriptor));
     panel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  JBUI.insets(8, 30, 0, 10), 0, 0));
@@ -351,7 +352,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     private final JTextField myField;
 
     BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
-      super(textField, JavaUiBundle.message("prompt.select.source.directory"), "", chooserDescriptor);
+      super(textField, chooserDescriptor);
       myField = textField;
     }
 

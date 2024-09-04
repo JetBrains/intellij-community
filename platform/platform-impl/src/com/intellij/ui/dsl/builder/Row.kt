@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.icons.AllIcons
@@ -94,7 +94,6 @@ enum class BottomGap {
 @LayoutDslMarker
 @JvmDefaultWithCompatibility
 interface Row {
-
   /**
    * Layout of the row.
    * Default value is [RowLayout.LABEL_ALIGNED] when label is provided for the row, [RowLayout.INDEPENDENT] otherwise
@@ -324,11 +323,42 @@ interface Row {
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
   fun textFieldWithBrowseButton(
+    project: Project? = null,
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): Cell<TextFieldWithBrowseButton> =
+    textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), project, fileChosen)
+
+  /**
+   * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
+   */
+  fun textFieldWithBrowseButton(
+    browseDialogTitle: @NlsContexts.DialogTitle String,
+    project: Project? = null,
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): Cell<TextFieldWithBrowseButton> =
+    textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(browseDialogTitle), project, fileChosen)
+
+  /**
+   * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
+   */
+  fun textFieldWithBrowseButton(
+    fileChooserDescriptor: FileChooserDescriptor,
+    project: Project? = null,
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+  ): Cell<TextFieldWithBrowseButton>
+
+  @Deprecated(
+    "Use [Row.textFieldWithBrowseButton(String, Project?, ((VirtualFile) -> String)?)] " +
+    "or [Row.textFieldWithBrowseButton(FileChooserDescriptor, Project?, ((VirtualFile) -> String)?)] together with [FileChooserDescriptor.withTitle]",
+    level = DeprecationLevel.ERROR,
+  )
+  fun textFieldWithBrowseButton(
     @NlsContexts.DialogTitle browseDialogTitle: String? = null,
     project: Project? = null,
     fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null
-  ): Cell<TextFieldWithBrowseButton>
+  ): Cell<TextFieldWithBrowseButton> =
+    textFieldWithBrowseButton(fileChooserDescriptor.withTitle(browseDialogTitle), project, fileChosen)
 
   /**
    * Creates password field with [columns] set to [COLUMNS_SHORT]

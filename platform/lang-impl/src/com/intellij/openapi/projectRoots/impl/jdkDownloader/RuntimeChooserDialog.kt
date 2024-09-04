@@ -205,9 +205,8 @@ internal class RuntimeChooserDialog(
       //download row
       row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         jdkInstallDirSelector = textFieldWithBrowseButton(
-          project = project,
-          browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
-          fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk")),
+          project
         ).align(AlignX.FILL)
           .comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
           .component

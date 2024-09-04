@@ -2998,9 +2998,7 @@ f:com.intellij.execution.ui.MacroComboBoxWithBrowseButton
 - com.intellij.ui.TextAccessor
 - <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project):V
 - getText():java.lang.String
-- setModule(com.intellij.openapi.module.Module):V
 - setText(java.lang.String):V
-- showModuleMacroAlways():V
 f:com.intellij.execution.ui.ProgramInputRedirectPanel
 - javax.swing.JPanel
 - com.intellij.ui.PanelWithAnchor

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -155,9 +155,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     setVerticalStretch(2);
     setTitle(applyPatchMode.getTitle());
 
-    final FileChooserDescriptor descriptor = createSelectPatchDescriptor();
-    descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
-
     myProject = project;
     myPatches = new ArrayList<>();
     myRecentPathFileChange = new AtomicReference<>();
@@ -197,7 +194,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myPatchFile = new TextFieldWithBrowseButton();
-    myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
+    myPatchFile.addBrowseFolderListener(project, createSelectPatchDescriptor().withTitle(VcsBundle.message("patch.apply.select.title")));
     myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

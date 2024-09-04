@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.options.JavaCompilersTab
@@ -45,9 +45,8 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
         cell(textField)
           .align(AlignX.FILL)
           .applyToComponent {
-            val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
-            addBrowseFolderListener(null, GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"), null,
-                                    descriptor)
+            val descriptor = FileChooserDescriptor(true, false, false, false, false, false).withDescription(GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"))
+            addBrowseFolderListener(null, descriptor)
           }.onReset {
             textField.text = normalizePath(config.configScript)
           }.onIsModified {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -403,8 +403,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);
-    outputDirectoryButton.addBrowseFolderListener(TestngBundle.message("testng.output.directory.button.title"), TestngBundle.message("testng.select.output.directory"), project,
-                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    outputDirectoryButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(TestngBundle.message("testng.output.directory.button.title"))
+      .withDescription(TestngBundle.message("testng.select.output.directory")));
     moduleClasspath.setEnabled(true);
 
     propertiesTableModel = new TestNGParametersTableModel();
@@ -413,16 +414,13 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
     propertiesFile.setComponent(textFieldWithBrowseButton);
 
-    FileChooserDescriptor propertiesFileDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+    textFieldWithBrowseButton.addBrowseFolderListener(project, new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile virtualFile, boolean showHidden) {
         if (!showHidden && virtualFile.getName().charAt(0) == '.') return false;
         return virtualFile.isDirectory() || "properties".equals(virtualFile.getExtension());
       }
-    };
-
-    textFieldWithBrowseButton
-      .addBrowseFolderListener(TestngBundle.message("testng.browse.button.title"), TestngBundle.message("testng.select.properties.file"), project, propertiesFileDescriptor);
+    }.withTitle(TestngBundle.message("testng.browse.button.title")).withDescription(TestngBundle.message("testng.select.properties.file")));
 
     propertiesTableView = new TableView(propertiesTableModel);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.InputData
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.annotations.SystemDependent
 import java.awt.BorderLayout
 import java.nio.file.Path
@@ -33,12 +32,8 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, localCondaBinary
     condaPathField.apply {
       localCondaBinaryPath?.let { text = it.pathString }
 
-      addBrowseFolderListener(
-        PyBundle.message("python.sdk.select.conda.path.title"),
-        null,
-        module.project,
-        FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-      )
+      addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+        .withTitle(PyBundle.message("python.sdk.select.conda.path.title")))
     }
 
     environmentYmlField.apply {
@@ -47,12 +42,8 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, localCondaBinary
         setTextFieldPreferredWidth(it.length)
       }
 
-      addBrowseFolderListener(
-        PyBundle.message("python.sdk.environment.yml.chooser"),
-        null,
-        module.project,
-        FileChooserDescriptorFactory.createSingleFileDescriptor("yml")
-      )
+      addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileDescriptor("yml")
+        .withTitle(PyBundle.message("python.sdk.environment.yml.chooser")))
     }
 
     layout = BorderLayout()

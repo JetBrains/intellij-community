@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -62,6 +62,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class SwingHelper {
 
@@ -385,41 +386,61 @@ public final class SwingHelper {
     }
   }
 
-  public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
-                                                          @NotNull TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                          @NotNull FileChooserDescriptor fileChooserDescriptor) {
-    doInstall(project,
-              textFieldWithHistoryWithBrowseButton,
-              textFieldWithHistoryWithBrowseButton.getChildComponent().getTextEditor(),
-              browseDialogTitle,
-              fileChooserDescriptor,
-              TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+  /**
+   * @deprecated use {@link #installFileCompletionAndBrowseDialog(Project, TextFieldWithHistoryWithBrowseButton, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithHistoryWithBrowseButton textField,
+    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    installFileCompletionAndBrowseDialog(project, textField, fileChooserDescriptor.withTitle(browseDialogTitle));
   }
 
-  public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
-                                                          @NotNull TextFieldWithBrowseButton textFieldWithBrowseButton,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                          @NotNull FileChooserDescriptor fileChooserDescriptor) {
-    doInstall(project,
-              textFieldWithBrowseButton,
-              textFieldWithBrowseButton.getTextField(),
-              browseDialogTitle,
-              fileChooserDescriptor,
-              TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithHistoryWithBrowseButton textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    doInstall(project, textField, textField.getChildComponent().getTextEditor(), fileChooserDescriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
   }
 
-  private static <T extends JComponent> void doInstall(@Nullable Project project,
-                                                       @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
-                                                       @NotNull JTextField textField,
-                                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                       @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                       @NotNull TextComponentAccessor<T> textComponentAccessor) {
+  /**
+   * @deprecated use {@link #installFileCompletionAndBrowseDialog(Project, TextFieldWithBrowseButton, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithBrowseButton textField,
+    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    installFileCompletionAndBrowseDialog(project, textField, fileChooserDescriptor.withTitle(browseDialogTitle));
+  }
+
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithBrowseButton textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    doInstall(project, textField, textField.getTextField(), fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  }
+
+  private static <T extends JComponent> void doInstall(
+    @Nullable Project project,
+    @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
+    @NotNull JTextField textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @NotNull TextComponentAccessor<T> textComponentAccessor
+  ) {
     ComponentsKt.installFileCompletionAndBrowseDialog(
       project,
       componentWithBrowseButton,
       textField,
-      browseDialogTitle,
       fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix),
       textComponentAccessor
     );
@@ -640,11 +661,26 @@ public final class SwingHelper {
     ).toString();
   }
 
-  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
-                                                                                                         @NotNull @NlsContexts.DialogTitle String browseDialogTitle,
-                                                                                                         @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                                                                         @Nullable NotNullProducer<? extends List<String>> historyProvider) {
-    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
+  /**
+   * @deprecated use {@link #createTextFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, Supplier)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(
+    @Nullable Project project,
+    @NotNull @NlsContexts.DialogTitle String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @SuppressWarnings("UsagesOfObsoleteApi") @Nullable NotNullProducer<? extends List<String>> historyProvider
+  ) {
+    return createTextFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), historyProvider);
+  }
+
+  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(
+    @Nullable Project project,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @Nullable Supplier<? extends List<String>> historyProvider
+  ) {
+    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor, historyProvider != null ? () -> historyProvider.get() : null);
   }
 
   public static @NotNull <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(final @NotNull C component,

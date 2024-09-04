@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
 import com.intellij.openapi.application.WriteAction
@@ -38,9 +38,10 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
 
   override fun createPanel(): DialogPanel = panel {
     row(PyBundle.message("form.edit.sdk.interpreter.path")) {
-      textFieldWithBrowseButton(PyBundle.message("sdk.edit.dialog.specify.interpreter.path"),
-                                project,
-                                PythonSdkType.getInstance().homeChooserDescriptor) { it.name }
+      textFieldWithBrowseButton(
+        PythonSdkType.getInstance().homeChooserDescriptor.withTitle(PyBundle.message("sdk.edit.dialog.specify.interpreter.path")),
+        project
+      ) { it.name }
         .bindText(interpreterPath)
         .align(AlignX.FILL)
     }

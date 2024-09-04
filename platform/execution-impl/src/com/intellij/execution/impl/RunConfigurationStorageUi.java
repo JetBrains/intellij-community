@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -485,10 +485,7 @@ public final class RunConfigurationStorageUi {
         }
       };
 
-      Runnable selectFolderAction = new BrowseFolderRunnable<>(null, null, project, descriptor, comboBox,
-                                                               TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT) {
-      };
-
+      Runnable selectFolderAction = new BrowseFolderRunnable<>(project, descriptor, comboBox, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
       comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
       return comboBox;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.async.launchNow
@@ -188,16 +188,12 @@ internal object GitLabCloneRepositoriesComponentFactory {
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel
   ): TextFieldWithBrowseButton {
-    val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor().apply {
-      isShowFileSystemRoots = true
-      isHideIgnored = false
-    }
     val directoryField = TextFieldWithBrowseButton().apply {
-      addBrowseFolderListener(
-        DvcsBundle.message("clone.destination.directory.browser.title"),
-        DvcsBundle.message("clone.destination.directory.browser.description"),
-        project,
-        fcd
+      addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withShowFileSystemRoots(true)
+        .withHideIgnored(false)
+        .withTitle(DvcsBundle.message("clone.destination.directory.browser.title"))
+        .withDescription(DvcsBundle.message("clone.destination.directory.browser.description"))
       )
       addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {

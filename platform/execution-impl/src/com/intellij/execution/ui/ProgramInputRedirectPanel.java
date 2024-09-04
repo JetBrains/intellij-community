@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -26,9 +26,8 @@ public final class ProgramInputRedirectPanel extends JPanel implements PanelWith
 
   public ProgramInputRedirectPanel() {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, 2));
-    myInputFile.addBrowseFolderListener(null, null, null,
-                                        FileChooserDescriptorFactory.createSingleFileDescriptor(),
-                                        TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
+    myInputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     add(myInputFile, BorderLayout.CENTER);
     myInputFile.setEnabled(false);
     add(myCheckBox, BorderLayout.WEST);

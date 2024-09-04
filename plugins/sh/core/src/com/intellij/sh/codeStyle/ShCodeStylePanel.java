@@ -59,7 +59,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myRightPanel);
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
-    myShfmtPathSelector.addBrowseFolderListener(ShBundle.message("sh.code.style.choose.path"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShfmtPathSelector.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle(ShBundle.message("sh.code.style.choose.path")));
     myShfmtPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {

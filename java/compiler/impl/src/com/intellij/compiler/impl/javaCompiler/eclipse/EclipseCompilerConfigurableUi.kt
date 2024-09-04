@@ -45,12 +45,10 @@ class EclipseCompilerConfigurableUi(project: Project) {
       }
         .bottomGap(BottomGap.SMALL)
       row {
-        pathToEcjField = textFieldWithBrowseButton(
-          JavaCompilerBundle.message("path.to.ecj.compiler.tool"), project,
-          object : FileChooserDescriptor(true, false, true, true, false, false) {}.withFileFilter { file ->
-            FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)
-          }
-        )
+        val descriptor = object : FileChooserDescriptor(true, false, true, true, false, false) {}
+          .withTitle(JavaCompilerBundle.message("path.to.ecj.compiler.tool"))
+          .withFileFilter { file -> FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE) }
+        pathToEcjField = textFieldWithBrowseButton(descriptor, project)
           .align(AlignX.FILL)
           .label(JavaCompilerBundle.message("eclipse.compiler.path.label"), LabelPosition.TOP)
           .comment(JavaCompilerBundle.message("eclipse.compiler.path.comment"))

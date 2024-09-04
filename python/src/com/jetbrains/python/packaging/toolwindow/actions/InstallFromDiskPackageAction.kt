@@ -30,8 +30,8 @@ internal class InstallFromDiskPackageAction : DumbAwareAction() {
     var editable = false
 
     val textField = TextFieldWithBrowseButton().apply {
-      addBrowseFolderListener(message("python.toolwindow.packages.add.package.path.selector"), "", service.project,
-                              FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor())
+      addBrowseFolderListener(service.project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+        .withTitle(message("python.toolwindow.packages.add.package.path.selector")))
     }
     val panel = panel {
       row(message("python.toolwindow.packages.add.package.path")) {

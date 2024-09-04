@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.UIBundle.message
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import java.nio.file.Paths
@@ -139,11 +140,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   protected fun setupModuleContentRootUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.content.root")) {
-      val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(message("label.project.wizard.new.project.content.root.title"))
         .withPathToTextConvertor(::getPresentablePath)
         .withTextToPathConvertor(::getCanonicalPath)
-      textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
+      textFieldWithBrowseButton(fileChooserDescriptor, context.project)
         .bindText(contentRootProperty.toUiPathProperty())
         .align(AlignX.FILL)
         .validationOnApply { validateContentRoot() }
@@ -154,11 +155,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   protected fun setupModuleFileLocationUI(builder: Panel) {
     builder.row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
-      val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(message("label.project.wizard.new.project.module.file.location.title"))
         .withPathToTextConvertor(::getPresentablePath)
         .withTextToPathConvertor(::getCanonicalPath)
-      textFieldWithBrowseButton(browseDialogTitle, context.project, fileChooserDescriptor)
+      textFieldWithBrowseButton(fileChooserDescriptor, context.project)
         .bindText(moduleFileLocationProperty.toUiPathProperty())
         .align(AlignX.FILL)
         .validationOnApply { validateModuleFileLocation() }

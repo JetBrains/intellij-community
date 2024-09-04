@@ -65,8 +65,8 @@ public class ToolEditorDialog extends DialogWrapper {
 
   protected void fillAdditionalOptionsPanel(final @NotNull JPanel panel) {}
 
-  protected void addWorkingDirectoryBrowseAction(final @NotNull TextFieldWithBrowseButton workingDirField) {
-    workingDirField.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+  protected void addWorkingDirectoryBrowseAction(@NotNull TextFieldWithBrowseButton workingDirField) {
+    workingDirField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
   }
 
   protected void addProgramBrowseAction(final @NotNull TextFieldWithBrowseButton programField) {

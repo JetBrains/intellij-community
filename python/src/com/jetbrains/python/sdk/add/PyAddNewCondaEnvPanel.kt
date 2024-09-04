@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
@@ -19,16 +19,16 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -51,8 +51,8 @@ open class PyAddNewCondaEnvPanel(
     path?.let {
       text = it
     }
-    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), null, project,
-                            FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+      .withTitle(PyBundle.message("python.sdk.select.conda.path.title")))
     textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         updatePathField()
@@ -61,8 +61,8 @@ open class PyAddNewCondaEnvPanel(
   }
 
   protected val pathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
-                            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PyBundle.message("python.sdk.select.location.for.conda.title")))
   }
   private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 

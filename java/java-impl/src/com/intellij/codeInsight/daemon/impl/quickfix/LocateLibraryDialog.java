@@ -53,9 +53,9 @@ public class LocateLibraryDialog extends DialogWrapper {
     myCopyLibraryFilesRadioButton.setText(QuickFixBundle.message("add.library.copy.files.to.radio.button", presentableName));
     @NlsSafe String path = new File(new File(module.getModuleFilePath()).getParent(), "lib").getAbsolutePath();
     myCopyToDir.setText(path);
-    myCopyToDir.addBrowseFolderListener(QuickFixBundle.message("add.library.title.choose.folder"),
-                                        QuickFixBundle.message("add.library.description.choose.folder"), myProject,
-                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myCopyToDir.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(QuickFixBundle.message("add.library.title.choose.folder"))
+      .withDescription(QuickFixBundle.message("add.library.description.choose.folder")));
 
     final ItemListener listener = new ItemListener() {
       @Override

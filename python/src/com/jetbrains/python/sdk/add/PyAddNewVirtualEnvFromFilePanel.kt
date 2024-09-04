@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -16,10 +16,10 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.InputData
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.RequirementsTxtOrSetupPyData
-import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -47,11 +47,8 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
     pathField.apply {
       text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
 
-      addBrowseFolderListener(
-        PySdkBundle.message("python.venv.location.chooser"),
-        null,
-        module.project,
-        FileChooserDescriptorFactory.createSingleFolderDescriptor())
+      addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(PySdkBundle.message("python.venv.location.chooser")))
     }
 
     requirementsTxtOrSetupPyField.apply {
@@ -60,14 +57,9 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
         setTextFieldPreferredWidth(it.length)
       }
 
-      addBrowseFolderListener(
-        PyBundle.message("sdk.create.venv.dependencies.chooser"),
-        null,
-        module.project,
-        FileChooserDescriptorFactory.createSingleFileDescriptor().withFileFilter { file ->
-          file.fileType.let { it == PlainTextFileType.INSTANCE || it == PythonFileType.INSTANCE }
-        }
-      )
+      addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileDescriptor()
+        .withFileFilter { file -> file.fileType.let { it == PlainTextFileType.INSTANCE || it == PythonFileType.INSTANCE } }
+        .withTitle(PyBundle.message("sdk.create.venv.dependencies.chooser")))
     }
 
     layout = BorderLayout()

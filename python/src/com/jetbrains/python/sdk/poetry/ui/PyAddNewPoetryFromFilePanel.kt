@@ -24,12 +24,8 @@ class PyAddNewPoetryFromFilePanel(private val module: Module) : JPanel() {
     poetryPathField.apply {
       getPoetryExecutable()?.absolutePathString()?.also { text = it }
 
-      addBrowseFolderListener(
-        PyBundle.message("python.sdk.poetry.select.executable.title"),
-        null,
-        module.project,
-        FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-      )
+      addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+        .withTitle(PyBundle.message("python.sdk.poetry.select.executable.title")))
     }
 
     layout = BorderLayout()

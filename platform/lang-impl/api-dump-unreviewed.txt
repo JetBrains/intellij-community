@@ -21916,10 +21916,10 @@ com.intellij.openapi.roots.ui.distribution.DistributionInfo
 - a:getName():java.lang.String
 com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 - sf:Companion:com.intellij.openapi.roots.ui.distribution.FileChooserInfo$Companion
-- a:getFileChooserDescription():java.lang.String
+- getFileChooserDescription():java.lang.String
 - a:getFileChooserDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - a:getFileChooserMacroFilter():kotlin.jvm.functions.Function1
-- a:getFileChooserTitle():java.lang.String
+- getFileChooserTitle():java.lang.String
 f:com.intellij.openapi.roots.ui.distribution.FileChooserInfo$Companion
 - f:getALL():kotlin.jvm.functions.Function1
 - f:getANY_PATH():kotlin.jvm.functions.Function1

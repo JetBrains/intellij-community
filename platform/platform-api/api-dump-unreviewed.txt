@@ -1291,6 +1291,7 @@ c:com.intellij.ide.util.BrowseFilesListener
 - sf:SINGLE_DIRECTORY_DESCRIPTOR:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - sf:SINGLE_FILE_DESCRIPTOR:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - pf:myChooserDescriptor:com.intellij.openapi.fileChooser.FileChooserDescriptor
+- <init>(javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - <init>(javax.swing.JTextField,java.lang.String,java.lang.String,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - actionPerformed(java.awt.event.ActionEvent):V
 - p:doSetText(java.lang.String):V
@@ -3591,16 +3592,16 @@ f:com.intellij.openapi.ui.BrowseFolderDescriptor$Companion
 - pf:myAccessor:com.intellij.openapi.ui.TextComponentAccessor
 - pf:myFileChooserDescriptor:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - p:myTextComponent:javax.swing.JComponent
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,javax.swing.JComponent,com.intellij.openapi.ui.TextComponentAccessor):V
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,javax.swing.JComponent,com.intellij.openapi.ui.TextComponentAccessor):V
 - p:chooseFile(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - p:chosenFileToResultingText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - p:expandPath(java.lang.String):java.lang.String
 - p:getComponentText():java.lang.String
 - p:getInitialFile():com.intellij.openapi.vfs.VirtualFile
-- p:getProject():com.intellij.openapi.project.Project
+- pf:getProject():com.intellij.openapi.project.Project
 - p:onFileChosen(com.intellij.openapi.vfs.VirtualFile):V
 - run():V
-- p:setProject(com.intellij.openapi.project.Project):V
 c:com.intellij.openapi.ui.ComboBox
 - com.intellij.openapi.ui.ComboBoxWithWidePopup
 - java.awt.event.AWTEventListener
@@ -3709,6 +3710,7 @@ c:com.intellij.openapi.ui.ComponentWithBrowseButton
 - com.intellij.openapi.Disposable
 - <init>(javax.swing.JComponent,java.awt.event.ActionListener):V
 - addActionListener(java.awt.event.ActionListener):V
+- addBrowseFolderListener(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - addBrowseFolderListener(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton$BrowseFolderActionListener):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,Z):V
@@ -3732,6 +3734,7 @@ c:com.intellij.openapi.ui.ComponentWithBrowseButton
 c:com.intellij.openapi.ui.ComponentWithBrowseButton$BrowseFolderActionListener
 - com.intellij.openapi.ui.BrowseFolderRunnable
 - java.awt.event.ActionListener
+- <init>(com.intellij.openapi.ui.ComponentWithBrowseButton,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.ui.ComponentWithBrowseButton,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - actionPerformed(java.awt.event.ActionEvent):V
 f:com.intellij.openapi.ui.ComponentWithBrowseButton$MyDoClickAction
@@ -4714,6 +4717,7 @@ c:com.intellij.openapi.ui.TextFieldWithBrowseButton
 - <init>(javax.swing.JTextField):V
 - <init>(javax.swing.JTextField,java.awt.event.ActionListener):V
 - <init>(javax.swing.JTextField,java.awt.event.ActionListener,com.intellij.openapi.Disposable):V
+- addBrowseFolderListener(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - addBrowseFolderListener(com.intellij.openapi.ui.TextBrowseFolderListener):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - addDocumentListener(javax.swing.event.DocumentListener):V
@@ -7709,6 +7713,7 @@ c:com.intellij.ui.TextFieldWithHistory$MyModel
 c:com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 - com.intellij.openapi.ui.ComponentWithBrowseButton
 - <init>():V
+- addBrowseFolderListener(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,Z):V
 - getText():java.lang.String

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -63,10 +63,10 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
 
     setAnchor(myTestMethodComponent.getLabel());
 
-    myTestFolderTextField.addBrowseFolderListener(PyBundle.message("runcfg.unittest.dlg.select.folder.path"), null, myProject,
-                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myTestScriptTextField.addBrowseFolderListener(PyBundle.message("runcfg.unittest.dlg.select.script.path"), null, myProject,
-                                                  FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myTestFolderTextField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PyBundle.message("runcfg.unittest.dlg.select.folder.path")));
+    myTestScriptTextField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(PyBundle.message("runcfg.unittest.dlg.select.script.path")));
 
     myPatternCheckBox.setSelected(configuration.usePattern());
 
@@ -297,5 +297,3 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     myParamCheckBox.setVisible(true);
   }
 }
-
-

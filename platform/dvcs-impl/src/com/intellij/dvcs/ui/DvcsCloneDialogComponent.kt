@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsRememberedInputs
@@ -42,13 +42,11 @@ abstract class DvcsCloneDialogComponent(var project: Project,
   protected lateinit var errorComponent: BorderLayoutPanel
 
   init {
-    val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    fcd.isShowFileSystemRoots = true
-    fcd.isHideIgnored = false
-    directoryField.addBrowseFolderListener(message("clone.destination.directory.browser.title"),
-                                           message("clone.destination.directory.browser.description"),
-                                           project,
-                                           fcd)
+    directoryField.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(message("clone.destination.directory.browser.title"))
+      .withDescription(message("clone.destination.directory.browser.description"))
+      .withShowFileSystemRoots(true)
+      .withHideIgnored(false))
     mainPanel = panel {
       row(VcsBundle.message("vcs.common.labels.url")) { cell(urlEditor).align(AlignX.FILL) }
       row(VcsBundle.message("vcs.common.labels.directory")) { cell(directoryField).align(AlignX.FILL) }

@@ -42,9 +42,9 @@ class ConfigureImageDialog(
 
   override fun createCenterPanel(): JComponent = panel {
     row(MarkdownImagesBundle.message("markdown.configure.image.dialog.path.label")) {
-      textFieldWithBrowseButton(MarkdownImagesBundle.message("markdown.configure.image.dialog.browse.image.title"),
-                                project,
-                                FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      textFieldWithBrowseButton(
+        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(MarkdownImagesBundle.message("markdown.configure.image.dialog.browse.image.title")),
+        project
       ).align(AlignX.FILL)
         .bindText(::pathFieldText)
         .focused()

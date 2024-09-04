@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -234,11 +233,10 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       if (recentEntries != null) {
         getTargetDirectoryComponent().setHistory(recentEntries);
       }
-      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                     RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
-                                                     myProject, descriptor,
-                                                     TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+      var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(RefactoringBundle.message("select.target.directory"))
+        .withDescription(RefactoringBundle.message("the.file.will.be.copied.to.this.directory"));
+      myTargetDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       getTargetDirectoryComponent().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {

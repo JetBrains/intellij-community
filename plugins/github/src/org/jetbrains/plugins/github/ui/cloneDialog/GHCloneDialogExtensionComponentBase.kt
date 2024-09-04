@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
@@ -91,13 +91,11 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   private val searchField: SearchTextField
   private val directoryField = TextFieldWithBrowseButton().apply {
-    val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    fcd.isShowFileSystemRoots = true
-    fcd.isHideIgnored = false
-    addBrowseFolderListener(message("clone.destination.directory.browser.title"),
-                            message("clone.destination.directory.browser.description"),
-                            project,
-                            fcd)
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withShowFileSystemRoots(true)
+      .withHideIgnored(false)
+      .withTitle(message("clone.destination.directory.browser.title"))
+      .withDescription(message("clone.destination.directory.browser.description")))
   }
   private val cloneDirectoryChildHandle = FilePathDocumentChildPathHandle
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))

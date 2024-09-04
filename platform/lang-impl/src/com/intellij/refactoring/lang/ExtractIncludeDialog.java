@@ -83,9 +83,9 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
     myTargetDirectoryField = new TextFieldWithBrowseButton();
     myTargetDirectoryField.setText(myCurrentDirectory.getVirtualFile().getPresentableUrl());
-    myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                   RefactoringBundle.message("select.target.directory.description"),
-                                                   null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myTargetDirectoryField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(RefactoringBundle.message("select.target.directory"))
+      .withDescription(RefactoringBundle.message("select.target.directory.description")));
 
     myTargetDirLabel.setText(RefactoringBundle.message("extract.to.directory"));
     panel.add(myTargetDirectoryField);

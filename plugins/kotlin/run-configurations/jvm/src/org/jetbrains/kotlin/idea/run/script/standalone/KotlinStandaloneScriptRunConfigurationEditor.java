@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.run.script.standalone;
 
@@ -6,7 +6,6 @@ import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.ShortenCommandLineModeCombo;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -38,14 +37,11 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     void initChooseFileField(Project project) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+                .withTitle(KotlinRunConfigurationsBundle.message("script.choose.file"))
                 .withFileFilter(file -> file.isDirectory() || KotlinParserDefinition.STD_SCRIPT_SUFFIX.equals(file.getExtension()))
                 .withTreeRootVisible(true);
-
-        chooseScriptFileTextField.addBrowseFolderListener(
-                KotlinRunConfigurationsBundle.message("script.choose.file"),
-                null, project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
-        );
+        chooseScriptFileTextField.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }
 
     @Override

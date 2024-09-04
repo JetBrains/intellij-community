@@ -10,7 +10,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
@@ -359,9 +358,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       textField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
     }
 
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener(IdeBundle.message("directory.project.location.title"),
-                                            IdeBundle.message("directory.project.location.description"), null, descriptor);
+    myLocationField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(IdeBundle.message("directory.project.location.title"))
+      .withDescription(IdeBundle.message("directory.project.location.description")));
     checkValid();
     return LabeledComponent.create(myLocationField,
                                    BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")),

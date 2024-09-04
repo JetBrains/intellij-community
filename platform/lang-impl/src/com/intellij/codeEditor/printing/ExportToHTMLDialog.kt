@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing
 
 import com.intellij.openapi.editor.EditorBundle
@@ -25,9 +25,9 @@ class ExportToHTMLDialog(private val fileName: String?,
   companion object {
     @JvmStatic
     fun addBrowseDirectoryListener(targetDirectoryField: TextFieldWithBrowseButton, project: Project) {
-      targetDirectoryField.addBrowseFolderListener(EditorBundle.message("export.to.html.select.output.directory.title"),
-                                                   EditorBundle.message("export.to.html.select.output.directory.description"),
-                                                   project, FileChooserDescriptorFactory.createSingleFolderDescriptor())
+      targetDirectoryField.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(EditorBundle.message("export.to.html.select.output.directory.title"))
+        .withDescription(EditorBundle.message("export.to.html.select.output.directory.description")))
     }
   }
 

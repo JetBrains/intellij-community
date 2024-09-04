@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.runner;
 
@@ -28,7 +28,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements PanelWithAnchor {
-
   private JPanel myMainPanel;
 
   private LabeledComponent<TextFieldWithBrowseButton> myScriptPathComponent;
@@ -43,13 +42,10 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JComponent myAnchor;
 
   public GroovyRunConfigurationEditor(@NotNull Project project) {
-    final TextFieldWithBrowseButton scriptPath = myScriptPathComponent.getComponent();
-    scriptPath.addBrowseFolderListener(
-      GroovyBundle.message("script.runner.chooser.title"),
-      GroovyBundle.message("script.runner.chooser.description"),
-      project,
-      FileChooserDescriptorFactory.createSingleFileDescriptor(GroovyFileType.GROOVY_FILE_TYPE)
-    );
+    var scriptPath = myScriptPathComponent.getComponent();
+    scriptPath.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor(GroovyFileType.GROOVY_FILE_TYPE)
+      .withTitle(GroovyBundle.message("script.runner.chooser.title"))
+      .withDescription(GroovyBundle.message("script.runner.chooser.description")));
 
     final ModulesComboBox modulesComboBox = myModulesComboBoxComponent.getComponent();
     modulesComboBox.addActionListener(e -> myCommonJavaParametersPanel.setModuleContext(modulesComboBox.getSelectedModule()));

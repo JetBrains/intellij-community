@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
@@ -301,11 +301,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun textFieldWithBrowseButton(browseDialogTitle: String?,
-                                         project: Project?,
-                                         fileChooserDescriptor: FileChooserDescriptor,
-                                         fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
-    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)).applyToComponent {
+  override fun textFieldWithBrowseButton(
+    fileChooserDescriptor: FileChooserDescriptor,
+    project: Project?,
+    fileChosen: ((chosenFile: VirtualFile) -> String)?
+  ): Cell<TextFieldWithBrowseButton> {
+    val result = cell(com.intellij.ui.components.textFieldWithBrowseButton(project, fileChooserDescriptor, fileChosen)).applyToComponent {
       isOpaque = false
       textField.isOpaque = false
     }

@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.repo.ClonePathProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -155,14 +154,12 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myTestButton = new JButton(DvcsBundle.message("clone.repository.url.test.label"));
     myTestButton.addActionListener(e -> test());
 
-    FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    fcd.setShowFileSystemRoots(true);
-    fcd.setHideIgnored(false);
     myDirectoryField = new MyTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(myProject, getRememberedInputs()));
-    myDirectoryField.addBrowseFolderListener(DvcsBundle.message("clone.destination.directory.browser.title"),
-                                             DvcsBundle.message("clone.destination.directory.browser.description"),
-                                             myProject,
-                                             fcd);
+    myDirectoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(DvcsBundle.message("clone.destination.directory.browser.title"))
+      .withDescription(DvcsBundle.message("clone.destination.directory.browser.description"))
+      .withShowFileSystemRoots(true)
+      .withHideIgnored(false));
 
     if (defaultUrl != null) {
       myRepositoryUrlField.setText(defaultUrl);

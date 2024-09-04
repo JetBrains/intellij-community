@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
@@ -235,15 +235,14 @@ abstract class CommonStarterInitialStep(
     return withValidation(this, errorValidationUnits, warningValidationUnit, validatedTextComponents, parentDisposable)
   }
 
-  private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
-                                       wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
+  private fun Row.projectLocationField(locationProperty: GraphProperty<String>, wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
     val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+      .withTitle(message("title.select.project.file.directory", wizardContext.presentationName))
       .withFileFilter { it.isDirectory }
       .withPathToTextConvertor(::getPresentablePath)
       .withTextToPathConvertor(::getCanonicalPath)
-    val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
     val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-    return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor)
+    return textFieldWithBrowseButton(fileChooserDescriptor, wizardContext.project)
       .bindText(property)
   }
 }

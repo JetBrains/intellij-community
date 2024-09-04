@@ -120,7 +120,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
     private JPanel myParametersPanel;
     private JComponent anchor;
 
-    private final AnyXMLDescriptor myXmlDescriptor;
+    private final FileChooserDescriptor myXmlDescriptor;
     private final FileChooserDescriptor myXsltDescriptor;
 
     Editor(final Project project) {
@@ -137,7 +137,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
             return psiFile != null && XsltSupport.isXsltFile(psiFile);
           });
         }
-      };
+      }.withTitle(XPathBundle.message("dialog.title.choose.xslt.file"));
       final TextComponentAccessor<JTextField> projectDefaultAccessor = new TextComponentAccessor<>() {
         @Override
         public String getText(JTextField component) {
@@ -151,7 +151,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           component.setText(text);
         }
       };
-      myXsltFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xslt.file"), null, project, myXsltDescriptor, projectDefaultAccessor);
+      myXsltFile.addBrowseFolderListener(project, myXsltDescriptor, projectDefaultAccessor);
       myXsltFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         final VirtualFileManager fileMgr = VirtualFileManager.getInstance();
         final FileAssociationsManager associationsManager = FileAssociationsManager.getInstance(project);
@@ -195,35 +195,34 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
 
       myXmlInputFile.getComboBox().setEditable(true);
 
-      myXmlDescriptor = new AnyXMLDescriptor(false);
-      myXmlInputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xml.file"), null, project, myXmlDescriptor,
-                                             new TextComponentAccessor<>() {
-                                               @Override
-                                               public String getText(JComboBox comboBox) {
-                                                 Object item = comboBox.getEditor().getItem();
-                                                 if (item.toString().length() == 0) {
-                                                   final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
-                                                   final VirtualFile file =
-                                                     VirtualFileManager.getInstance()
-                                                       .findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
-                                                   if (file != null && !file.isDirectory()) {
-                                                     final VirtualFile parent = file.getParent();
-                                                     assert parent != null;
-                                                     return parent.getPresentableUrl();
-                                                   }
-                                                 }
-                                                 return item.toString();
-                                               }
+      myXmlDescriptor = new AnyXMLDescriptor(false).withTitle(XPathBundle.message("dialog.title.choose.xml.file"));
+      myXmlInputFile.addBrowseFolderListener(project, myXmlDescriptor, new TextComponentAccessor<>() {
+        @Override
+        public String getText(JComboBox comboBox) {
+          Object item = comboBox.getEditor().getItem();
+          if (item.toString().length() == 0) {
+            final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
+            final VirtualFile file =
+              VirtualFileManager.getInstance()
+                .findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
+            if (file != null && !file.isDirectory()) {
+              final VirtualFile parent = file.getParent();
+              assert parent != null;
+              return parent.getPresentableUrl();
+            }
+          }
+          return item.toString();
+        }
 
-                                               @Override
-                                               public void setText(JComboBox comboBox, @NotNull String text) {
-                                                 comboBox.getEditor().setItem(text);
-                                               }
-                                             });
+        @Override
+        public void setText(JComboBox comboBox, @NotNull String text) {
+          comboBox.getEditor().setItem(text);
+        }
+      });
 
-      myOutputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.output.file"),
-                                           XPathBundle.message("label.selected.file.will.be.overwritten.during.execution"),
-                                           project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor());
+      myOutputFile.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+        .withTitle(XPathBundle.message("dialog.title.choose.output.file"))
+        .withDescription(XPathBundle.message("label.selected.file.will.be.overwritten.during.execution")));
 
       final ItemListener outputStateListener = new ItemListener() {
         @Override
@@ -326,8 +325,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJdkChoice.addItemListener(updateListener);
       updateJdkState();
 
-      myWorkingDirectory
-        .addBrowseFolderListener(XPathBundle.message("dialog.title.working.directory"), null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      myWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(XPathBundle.message("dialog.title.working.directory")));
 
       myVmArguments.setDialogCaption("VM Arguments");
 

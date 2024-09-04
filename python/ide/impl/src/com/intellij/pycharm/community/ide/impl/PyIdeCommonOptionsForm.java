@@ -54,9 +54,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
     boolean showModules = modules.length != 1;
     content = new PyIdeCommonOptionsPanel(data, showModules, myPythonSdks);
-
-    content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
-                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    content.workingDirectoryTextField.addBrowseFolderListener(data.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PyBundle.message("configurable.select.working.directory")));
     if (!showModules) {
       setModule(modules[0]);
     }

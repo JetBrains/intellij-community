@@ -72,8 +72,8 @@ public class SphinxBaseCommand {
       String path = baseDir != null ? baseDir.getPath() : "";
       myInputFile.setText(path);
       myInputFile.setEditable(false);
-      myInputFile.addBrowseFolderListener(RestBundle.message("sphinx.choose.working.directory.browse.folder.title"), null, project,
-                                          FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      myInputFile.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(RestBundle.message("sphinx.choose.working.directory.browse.folder.title")));
 
       myPanel.setPreferredSize(new Dimension(600, 20));
     }

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -181,10 +180,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
   private CommittableFieldPanel createOutputPathPanel(final @NlsContexts.DialogTitle String title, final CommitPathRunnable commitPathRunnable) {
-    final JTextField textField = new ExtendableTextField();
-    final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    var textField = new ExtendableTextField();
+    var outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(title)
+      .withHideIgnored(false);
     outputPathsChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModel().getModule());
-    outputPathsChooserDescriptor.setHideIgnored(false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     FileChooserFactory.getInstance().installFileCompletion(textField, outputPathsChooserDescriptor, true, null);
     final Runnable commitRunnable = () -> {
@@ -223,7 +223,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       }
     });
 
-    return new CommittableFieldPanel(textField, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+    return new CommittableFieldPanel(textField, new BrowseFilesListener(textField, outputPathsChooserDescriptor) {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -82,16 +82,13 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    myWorkingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
-                                                    getProject(),
-                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                    TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField,
-                                                          ExecutionBundle.message("run.configuration.working.directory.label"));
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    myWorkingDirectoryField.addBrowseFolderListener(getProject(), descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField, ExecutionBundle.message("run.configuration.working.directory.label"));
 
     myEnvVariablesComponent = createEnvironmentVariablesComponent();
-
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
+
     myProgramParametersComponent.setLabelLocation(BorderLayout.WEST);
     myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
 

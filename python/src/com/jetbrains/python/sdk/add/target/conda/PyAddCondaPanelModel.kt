@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -50,10 +50,11 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    */
   val languageLevels: List<LanguageLevel> = condaSupportedLanguages
 
-  val condaPathFileChooser: FileChooserDescriptor = object : FileChooserDescriptor(true, false, false, false, false, false) {
-    override fun isFileVisible(file: VirtualFile?, showHiddenFiles: Boolean): Boolean =
-      super.isFileVisible(file, showHiddenFiles) && (file?.let { it.isDirectory || condaPathIsValid(it.path) } != false)
-  }
+  val condaPathFileChooser: FileChooserDescriptor
+    get() = object : FileChooserDescriptor(true, false, false, false, false, false) {
+      override fun isFileVisible(file: VirtualFile?, showHiddenFiles: Boolean): Boolean =
+        super.isFileVisible(file, showHiddenFiles) && (file?.let { it.isDirectory || condaPathIsValid(it.path) } != false)
+    }
 
   /**
    * If target is mutable we can create new env on it

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,10 +6,10 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -224,14 +224,11 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     return model;
   }
 
-  @NotNull
   private Runnable getBrowseRunnable() {
-    return new BrowseFolderRunnable<>(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
-                                      ExecutionBundle.message("run.configuration.select.jre.dir.label"),
-                                      null,
-                                      BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                      getComponent(),
-                                      JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ExecutionBundle.message("run.configuration.select.alternate.jre.label"))
+      .withDescription(ExecutionBundle.message("run.configuration.select.jre.dir.label"));
+    return new BrowseFolderRunnable<>(null, descriptor, getComponent(), JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
   }
 
   @Nullable
@@ -493,4 +490,3 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     }
   }
 }
-

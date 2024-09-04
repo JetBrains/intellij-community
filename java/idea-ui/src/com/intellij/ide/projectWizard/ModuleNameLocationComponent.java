@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.core.CoreBundle;
@@ -6,8 +6,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -97,9 +97,9 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       }
     });
 
-    myModuleContentRoot.addBrowseFolderListener(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.title"),
-                                                JavaUiBundle.message("project.new.wizard.module.content.root.chooser.description"),
-                                                myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    myModuleContentRoot.addBrowseFolderListener(myWizardContext.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.title"))
+      .withDescription(JavaUiBundle.message("project.new.wizard.module.content.root.chooser.description")));
 
     namePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -153,9 +153,9 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
       }
     });
 
-    myModuleFileLocation.addBrowseFolderListener(JavaUiBundle.message("project.new.wizard.module.file.chooser.title"),
-                                                 JavaUiBundle.message("project.new.wizard.module.file.description"),
-                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    myModuleFileLocation.addBrowseFolderListener(myWizardContext.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("project.new.wizard.module.file.chooser.title"))
+      .withDescription(JavaUiBundle.message("project.new.wizard.module.file.description")));
     myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull final DocumentEvent e) {

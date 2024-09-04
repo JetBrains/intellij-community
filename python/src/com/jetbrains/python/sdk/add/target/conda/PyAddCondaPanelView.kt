@@ -48,11 +48,11 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddSdkVie
     row(PyBundle.message("python.add.sdk.panel.path.to.conda.field") + ":") {
 
       cell(condaPathField.apply {
-        addBrowseFolderListener(PyBundle.message("python.add.sdk.panel.path.to.conda.field"),
-                                model.project,
-                                model.targetConfiguration,
-                                TargetBrowserHints(false, model.condaPathFileChooser))
-
+        addBrowseFolderListener(
+          model.project,
+          model.targetConfiguration,
+          TargetBrowserHints(showLocalFsInBrowser = false, model.condaPathFileChooser.withTitle(PyBundle.message("python.add.sdk.panel.path.to.conda.field")))
+        )
       }).applyToComponent { emptyText.text = PyBundle.message("python.add.sdk.panel.path.to.conda.field") }
         .bindText(model.condaPathTextBoxRwProp)
         .columns(COLUMNS_LARGE)

@@ -295,10 +295,8 @@ internal class JdkDownloadDialog(
         isEditable = true
         initBrowsableEditor(
           BrowseFolderRunnable(
-            ProjectBundle.message("dialog.title.select.path.to.install.jdk"),
-            null,
             project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+            FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ProjectBundle.message("dialog.title.select.path.to.install.jdk")),
             installDirCombo,
             TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT
           ), disposable)
@@ -309,9 +307,8 @@ internal class JdkDownloadDialog(
     }
     else {
       installDirTextField = textFieldWithBrowseButton(
-        project = project,
-        browseDialogTitle = ProjectBundle.message("dialog.title.select.path.to.install.jdk"),
-        fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        project,
+        FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ProjectBundle.message("dialog.title.select.path.to.install.jdk"))
       ).apply {
         onTextChange { onTargetPathChanged(it) }
         textField.columns = 36

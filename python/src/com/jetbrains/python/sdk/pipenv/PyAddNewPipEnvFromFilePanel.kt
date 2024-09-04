@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -23,12 +23,8 @@ class PyAddNewPipEnvFromFilePanel(private val module: Module) : JPanel() {
     pipEnvPathField.apply {
       getPipEnvExecutable()?.absolutePath?.also { text = it }
 
-      addBrowseFolderListener(
-        PyBundle.message("python.sdk.pipenv.select.executable.title"),
-        null,
-        module.project,
-        FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-      )
+      addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+        .withTitle(PyBundle.message("python.sdk.pipenv.select.executable.title")))
     }
 
     layout = BorderLayout()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -12,5 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
  *  [customFileChooserDescriptor] to browse files. It also might be ignored by some targets.
  **/
 
-data class TargetBrowserHints @JvmOverloads constructor(val showLocalFsInBrowser: Boolean = true,
-                                                        val customFileChooserDescriptor: FileChooserDescriptor? = null)
+data class TargetBrowserHints @JvmOverloads constructor(
+  val showLocalFsInBrowser: Boolean,
+  val customFileChooserDescriptor: FileChooserDescriptor? = null
+)

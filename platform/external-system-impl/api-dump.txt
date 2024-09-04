@@ -1311,7 +1311,6 @@ f:com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWork
 - getEditorLabel():java.lang.String
 - getEmptyFieldError():java.lang.String
 - getFileChooserDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
-- getFileChooserTitle():java.lang.String
 - getSettingsName():java.lang.String
 f:com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 - com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
@@ -1336,7 +1335,6 @@ com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 - a:collectExternalProjects(kotlin.coroutines.Continuation):java.lang.Object
 - a:getEmptyFieldError():java.lang.String
 - getExternalProjectModificationTracker():com.intellij.openapi.util.ModificationTracker
-- getFileChooserDescription():java.lang.String
 - getFileChooserMacroFilter():kotlin.jvm.functions.Function1
 - getSettingsActionHint():java.lang.String
 - getSettingsGroup():java.lang.String
@@ -1408,7 +1406,6 @@ a:com.intellij.openapi.externalSystem.service.ui.util.ObservableDialogWrapper
 com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 - com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 - com.intellij.openapi.roots.ui.distribution.FileChooserInfo
-- getFileChooserDescription():java.lang.String
 - getSettingsActionHint():java.lang.String
 - getSettingsHint():java.lang.String
 com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo

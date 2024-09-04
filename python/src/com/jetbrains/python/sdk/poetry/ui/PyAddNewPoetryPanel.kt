@@ -70,7 +70,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
   }
 
   private val poetryPathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor())
+    addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     val field = textField as? JBTextField ?: return@apply
     detectPoetryExecutable()?.let {
       field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
