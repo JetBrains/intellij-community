@@ -33,10 +33,6 @@ import java.util.function.Consumer
  * Scheduled runnables will be executed on EDT thread after all three conditions met:
  * 1. There is no scanning in progress, and initial project scanning (on project open) has finished
  * 2. There is no dumb mode
- * 3. All the [com.intellij.openapi.startup.StartupActivity] completed
- *
- * It is important to note that while dumb mode cannot start without write action, scanning can start without write action, so by the
- * moment when runnable executes scanning can run, but it is guaranteed that initial scanning on project open has finished.
  */
 @Internal
 @Service(Service.Level.PROJECT)
