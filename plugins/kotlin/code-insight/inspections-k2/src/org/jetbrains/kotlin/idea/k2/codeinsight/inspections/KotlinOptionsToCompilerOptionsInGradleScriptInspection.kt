@@ -6,12 +6,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -20,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.expressionContainsOperationForbiddenToReplace
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.AbstractKotlinGradleScriptInspection
@@ -83,13 +81,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 when (expressionParent) {
                     is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources` OR kotlinOptions.options
                         val parentOfExpressionParent = expressionParent.parent
-
-                        if (parentOfExpressionParent !is KtBinaryExpression) { // like kotlinOptions.sourceMapEmbedSources = "inlining"
-                            // like kotlinOptions.options.jvmTarget = JvmTarget.JVM_11
-                            if (parentOfExpressionParent is KtDotQualifiedExpression &&
-                                parentOfExpressionParent.parent !is KtBinaryExpression)
-                                return
-                        }
+                        if (elementContainsOperationForbiddenToReplaceOrCantBeProcessed(parentOfExpressionParent)) return
                     }
 
                     is KtCallExpression -> {
@@ -101,6 +93,14 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                             apiVersion = "1.9"
                         }
                          */
+                        val lambdaStatements = expressionParent.lambdaArguments.getOrNull(0)
+                            ?.getLambdaExpression()?.bodyExpression?.statements?.requireNoNulls()
+
+                        if (lambdaStatements?.isNotEmpty() == true) { // compileKotlin.kotlinOptions { .. }
+                            lambdaStatements.forEach {
+                                if (binaryExpressionsContainForbiddenOperations(it)) return
+                            }
+                        }
                     }
 
                     else -> return
@@ -118,6 +118,25 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
         }
     }
 
+    private fun elementContainsOperationForbiddenToReplaceOrCantBeProcessed(psiElement: PsiElement): Boolean {
+        when (psiElement) {
+            is KtBinaryExpression -> {
+                return expressionContainsOperationForbiddenToReplace(psiElement)
+            }
+
+            is KtDotQualifiedExpression -> {
+                val psiElementParent = psiElement.parent
+                if (psiElementParent is KtBinaryExpression) {
+                    return expressionContainsOperationForbiddenToReplace(psiElementParent)
+                } else { // Can't be processed
+                    return true
+                }
+            }
+
+            else -> return true
+        }
+    }
+
     private fun isDescendantOfDslInWhichReplacementIsNotNeeded(ktExpression: KtExpression): Boolean {
         val scriptText = ktExpression.containingFile.text
         if (scriptText.contains("android")) {
@@ -125,6 +144,17 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 if ("android" == it.text) {
                     return true
                 }
+            }
+        }
+        return false
+    }
+
+    private fun binaryExpressionsContainForbiddenOperations(element: PsiElement): Boolean {
+        if (element is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
+            if (expressionContainsOperationForbiddenToReplace(element)) return true
+        } else {
+            element.children.forEach {
+                if (binaryExpressionsContainForbiddenOperations(it)) return true
             }
         }
         return false
@@ -151,6 +181,7 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
                     is KtBinaryExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
                         getReplacementForOldKotlinOptionIfNeeded(parentOfExpressionParent)?.let { expressionsToFix.add(it) }
                     }
+
                     is KtDotQualifiedExpression -> {
                         val parent = parentOfExpressionParent.parent
                         if (parent is KtBinaryExpression) { // like `kotlinOptions.options.jvmTarget = JvmTarget.JVM_11`

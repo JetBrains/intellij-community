@@ -1,4 +1,4 @@
-// FIX: Replace 'kotlinOptions' with 'compilerOptions'
+// PROBLEM: none
 plugins {
     kotlin("jvm") version "2.0.0"
 }

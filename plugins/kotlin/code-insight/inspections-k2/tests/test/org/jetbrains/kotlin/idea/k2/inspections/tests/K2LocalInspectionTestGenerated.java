@@ -7809,6 +7809,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontMergeConvertedOptionsToAnotherCompilerOptions.gradle.kts");
             }
 
+            @TestMetadata("dontReplaceIfForbiddenOperation2.gradle.kts")
+            public void testDontReplaceIfForbiddenOperation2_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceIfForbiddenOperation2.gradle.kts");
+            }
+
+            @TestMetadata("dontReplaceIfForbiddenOperation.gradle.kts")
+            public void testDontReplaceIfForbiddenOperation_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceIfForbiddenOperation.gradle.kts");
+            }
+
             @TestMetadata("dontReplaceIfOptionValueIsWrong.gradle.kts")
             public void testDontReplaceIfOptionValueIsWrong_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceIfOptionValueIsWrong.gradle.kts");
@@ -7912,11 +7922,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("lambdaWithSeveralStatements.gradle.kts")
             public void testLambdaWithSeveralStatements_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/lambdaWithSeveralStatements.gradle.kts");
-            }
-
-            @TestMetadata("minusAssign.gradle.kts")
-            public void testMinusAssign_gradle() throws Exception {
-                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/minusAssign.gradle.kts");
             }
 
             @TestMetadata("optionsBeforeDotInBiggerDotQualifiedExpression.gradle.kts")

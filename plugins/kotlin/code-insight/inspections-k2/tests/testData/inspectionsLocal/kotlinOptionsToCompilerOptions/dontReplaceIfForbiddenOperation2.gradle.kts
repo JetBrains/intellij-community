@@ -1,4 +1,6 @@
-// FIX: Replace 'kotlinOptions' with 'compilerOptions'
+// PROBLEM: none
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "2.0.0"
 }
@@ -21,6 +23,8 @@ kotlin {
     jvmToolchain(8)
 }
 
-tasks.named("compileKotlin", org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java) {
-    compilerOptions.freeCompilerArgs -= "-Xexport-kdoc"
+tasks.withType<KotlinCompile<*>> {
+    <caret>kotlinOptions {
+        freeCompilerArgs -= "-Xexport-kdoc"
+    }
 }
