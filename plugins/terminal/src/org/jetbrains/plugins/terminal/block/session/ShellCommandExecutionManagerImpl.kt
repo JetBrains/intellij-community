@@ -38,6 +38,7 @@ internal class ShellCommandExecutionManagerImpl(
   private val session: BlockTerminalSession,
   commandManager: ShellCommandManager,
   private val shellIntegration: ShellIntegration,
+  private val terminal: Terminal,
   private val parentDisposable: Disposable
 ) : ShellCommandExecutionManager {
 
@@ -227,16 +228,13 @@ internal class ShellCommandExecutionManagerImpl(
 
       val keyBindings = scheduledKeyBindings.drainToList()
       if (keyBindings.isNotEmpty()) {
-        session.terminalStarterFuture.thenAccept { terminalStarter ->
-          terminalStarter ?: return@thenAccept
-          keyBindings.forEach { keyBinding ->
-            terminalStarter.sendBytes(keyBinding.bytes, false)
-          }
-          if (shellIntegration.shellType == ShellType.BASH ) { // reset prompt state to trigger all shell events.
-            val clearPrompt: String = createClearPromptShortcut(terminalStarter.terminal)
-            val enterCode = String(terminalStarter.terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
-            terminalStarter.sendString(clearPrompt + enterCode, false)
-          }
+        keyBindings.forEach { keyBinding ->
+          session.terminalOutputStream.sendBytes(keyBinding.bytes, false)
+        }
+        if (shellIntegration.shellType == ShellType.BASH ) { // reset prompt state to trigger all shell events.
+          val clearPrompt: String = createClearPromptShortcut(terminal)
+          val enterCode = String(terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
+          session.terminalOutputStream.sendString(clearPrompt + enterCode, false)
         }
       }
 
@@ -281,7 +279,7 @@ internal class ShellCommandExecutionManagerImpl(
 
   private fun doSendCommandToExecute(starter: TerminalStarter, shellCommand: String, isGenerator: Boolean) {
     var adjustedCommand = shellCommand
-    val enterCode = String(starter.terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
+    val enterCode = String(terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
     if (session.model.isBracketedPasteMode && (adjustedCommand.contains("\n") || adjustedCommand.contains(System.lineSeparator()))) {
       adjustedCommand = bracketed(adjustedCommand)
     }
@@ -289,7 +287,7 @@ internal class ShellCommandExecutionManagerImpl(
       // in the IDE we use '\n' line separator, but Windows requires '\r\n'
       adjustedCommand = adjustedCommand.replace("\n", enterCode)
     }
-    val clearPrompt = createClearPromptShortcut(starter.terminal)
+    val clearPrompt = createClearPromptShortcut(terminal)
     TerminalUtil.sendCommandToExecute(clearPrompt + adjustedCommand, starter)
 
     if (isGenerator) {
