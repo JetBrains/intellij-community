@@ -595,7 +595,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       //          This way here we'll have read-only scan without concurrent modification problems
       //          I.e. the whole code below is (seems to be) just a 'small local refresh' -- executed during
       //          children lookup, under the VFS lock.
-      //          I really want to remove it entirely, and just rely on automatic/explicit refresh
+      //          I really want to remove it entirely, and just rely on automatic/explicit refresh, but seems like there is a lot
+      //          to do to implement this
       Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
       if (childData == null) {
         return children;

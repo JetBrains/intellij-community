@@ -143,6 +143,9 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
   public @NotNull AttributeOutputStream writeAttribute(@NotNull PersistentFSConnection connection,
                                                        int fileId,
                                                        @NotNull FileAttribute attribute) {
+    //MAYBE RC: it is probably better to return plain OutputStream from this storage, and add everything else
+    //          (.writeEnumeratedString() method, locking around .close()) in FSRecordsImpl, then wrapping it into
+    //          a DataOutputStream
     return new AttributeOutputStreamImpl(
       new WritesAccumulatingOutputStream(connection, fileId, attribute),
       connection.getEnumeratedAttributes()

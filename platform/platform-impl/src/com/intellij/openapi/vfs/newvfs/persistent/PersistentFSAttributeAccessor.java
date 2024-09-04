@@ -86,6 +86,12 @@ public final class PersistentFSAttributeAccessor {
     });
   }
 
+  //TODO RC: it seems there is no real use for 'raw' writes:
+  //         1. most frequently-updated small-size attributes are moved to FastFileAttributes impl
+  //         2. remaining attributes are not fixed-size, so 'raw' write still needs to allocate temporary buffer and copy from it,
+  //            which reduces the performance benefits of 'raw' access. And without performance benefits, OutputStream is way more
+  //            convenient/familiar API to use, than ByteBufferWriter.
+  //
   public void writeAttributeRaw(int fileId,
                                 @NotNull FileAttribute attribute,
                                 @NotNull ByteBufferWriter writer) {
