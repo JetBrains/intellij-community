@@ -67,6 +67,22 @@ public class StringFormatSymbolReferenceProviderTest extends LightJavaCodeInsigh
     Map<String, String> expected = Map.of("{0}", "s", "{1}", "123");
     checkRefs(refs, str, str, expected);
   }
+  public void testMessageFormatWithStyle() {
+    myFixture.configureByText("Test.java", """
+      import java.text.MessageFormat;
+      
+      final class Demo {
+        static void process(String s) {
+          String pattern = "<caret>{0} choice: {0,   choice,-1#'''' - 2 quotes|0<more|2<''1{1}'' '''' - 1 quote|3≤{1, number, '#'.00}}";
+          System.out.println(MessageFormat.format(pattern, 1, 123));
+        }
+      }""");
+    PsiLiteralExpression str = getLiteral();
+    Collection<? extends @NotNull PsiSymbolReference> refs = PsiSymbolReferenceService.getService().getReferences(str);
+    assertEquals(3, refs.size());
+    Map<String, String> expected = Map.of("{0}", "1", "{0,", "1", "{1,", "123");
+    checkRefs(refs, str, str, expected);
+  }
 
   private @NotNull PsiLiteralExpression getLiteral() {
     PsiLiteralExpression str =

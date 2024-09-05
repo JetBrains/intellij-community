@@ -84,7 +84,9 @@ public final class MessageFormatUtil {
           part.getMessageFormatElement() != null &&
           part.getMessageFormatElement().getIndex() != null) {
         placeholderIndexes.add(new MessageFormatPlaceholder(part.getMessageFormatElement().getIndex(),
-                                                            new TextRange(part.start, part.start + part.text.length()),
+                                                            part.getMessageFormatElement().formatType != null ?
+                              new TextRange(part.start, part.getMessageFormatElement().formatTypeSegmentStart) :
+                              new TextRange(part.start, part.start + part.text.length()),
                                                             part.getMessageFormatElement().formatType == null &&
                                                             part.getMessageFormatElement().currentPart == MessageFormatElementPart.ARGUMENT_INDEX));
       }
