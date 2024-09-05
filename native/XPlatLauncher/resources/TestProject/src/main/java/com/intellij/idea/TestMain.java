@@ -16,6 +16,11 @@ import java.util.stream.IntStream;
 
 public class TestMain {
   public static void main(String[] args) throws Exception {
+    if (args.length > 0 && "serverMode".equals(args[0])) {
+      System.out.println("Started in server mode");
+      args = Arrays.copyOfRange(args, 1, args.length);
+    }
+
     if (args.length > 0) {
       switch (args[0]) {
         case "dump-launch-parameters" -> dumpLaunchParameters(args);

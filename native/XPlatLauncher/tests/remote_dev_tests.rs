@@ -76,6 +76,20 @@ mod tests {
     }
 
     #[test]
+    fn remote_dev_launch_via_common_launcher_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let remote_dev_command = &["serverMode", "print-cwd"];
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(remote_dev_command));
+        let output = launch_result.stdout;
+
+
+        assert!(output.contains("Started in server mode"), "'serverMode' was not included in arguments:\n{}", output);
+        assert!(output.contains("Mode: remote-dev"), "Launched in non-remote mode:\n{}", output);
+        assert!(output.contains("CWD="), "Working directory was not printed:\n{}", output);
+    }
+
+    #[test]
     fn remote_dev_new_ui_test1() {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let env = HashMap::from([("REMOTE_DEV_NEW_UI_ENABLED", "1")]);

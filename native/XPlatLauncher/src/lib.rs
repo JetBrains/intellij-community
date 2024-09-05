@@ -70,7 +70,9 @@ const CLASS_PATH_SEPARATOR: &str = ":";
 
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
-    let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    let remote_dev_launcher_used = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    let server_mode_argument_used = env::args().nth(1).map(|x| x == "serverMode").unwrap_or(false);
+    let remote_dev = remote_dev_launcher_used || server_mode_argument_used;
     let sandbox_subprocess = cfg!(target_os = "windows") && env::args().any(|arg| arg.contains("--type="));
 
     let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
