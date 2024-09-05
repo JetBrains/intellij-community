@@ -15,6 +15,7 @@ import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
@@ -1043,7 +1044,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.messages.info("Starting tests on runtime ${runtime}")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
-    builder.inheritIO()
+    if(TeamCityHelper.isUnderTeamCity) {
+      val outputFile = Files.createTempFile("testOutput", ".txt").apply { Files.delete(this) }.toFile()
+      builder.redirectOutput(outputFile)
+      builder.redirectError(ProcessBuilder.Redirect.INHERIT)
+      context.messages.startWritingFileToBuildLog(outputFile.absolutePath)
+    } else {
+      builder.inheritIO()
+    }
     val exitCode = builder.start().waitFor()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
       context.messages.error("Tests failed with exit code ${exitCode}")

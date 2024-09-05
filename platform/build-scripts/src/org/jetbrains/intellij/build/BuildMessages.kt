@@ -36,6 +36,8 @@ interface BuildMessages: System.Logger {
    */
   fun artifactBuilt(relativeArtifactPath: String)
 
+  fun startWritingFileToBuildLog(artifactPath: String)
+
   fun reportStatisticValue(key: String, value: String)
 
   fun reportBuildProblem(description: String, identity: String? = null)

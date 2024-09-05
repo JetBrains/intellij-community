@@ -129,6 +129,10 @@ class BuildMessagesImpl private constructor(
     logger.processMessage(LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
   }
 
+  override fun startWritingFileToBuildLog(artifactPath: String) {
+    logger.processMessage(LogMessage(LogMessage.Kind.IMPORT_DATA, artifactPath))
+  }
+
   override fun reportStatisticValue(key: String, value: String) {
     processMessage(LogMessage(LogMessage.Kind.STATISTICS, "$key=$value"))
   }
