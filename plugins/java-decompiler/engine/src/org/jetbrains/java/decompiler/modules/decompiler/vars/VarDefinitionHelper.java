@@ -865,7 +865,7 @@ public class VarDefinitionHelper {
       }
 
       for (StructMethod meth : methods) {
-        meth.getVariableNamer().addParentContext(VarDefinitionHelper.this.mt.getVariableNamer());
+        meth.getVariableNamer().addParentContext(this.mt.getVariableNamer());
       }
       return 0;
     });

@@ -274,9 +274,11 @@ public class FlattenStatementsHelper {
               node = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
               mapDestinationNodes.put(stat.id, new String[]{node.id, null});
 
-              if (stat.type == StatementType.IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
+              if (stat.type == StatementType.IF && stat instanceof IfStatement && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
                 lstSuccEdges.add(stat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));  // exactly one edge
-                sourcenode = tailexprlst.get(0) == null ? node : graph.nodes.getWithKey(node.id + "_tail");
+                sourcenode = tailexprlst != null && !tailexprlst.isEmpty() && tailexprlst.get(0) == null
+                             ? node
+                             : graph.nodes.getWithKey(node.id + "_tail");
               }
             }
           }

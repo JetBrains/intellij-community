@@ -144,8 +144,8 @@ public class ClassesProcessor {
                 else if (!Inner.equal(existingRec, rec)) {
                   String message = "Inconsistent inner class entries for " + innerName + "!";
                   DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-                  DecompilerContext.getLogger().writeMessage("  Old: " + existingRec.toString(), IFernflowerLogger.Severity.WARN);
-                  DecompilerContext.getLogger().writeMessage("  New: " + rec.toString(), IFernflowerLogger.Severity.WARN);
+                  DecompilerContext.getLogger().writeMessage("  Old: " + existingRec, IFernflowerLogger.Severity.WARN);
+                  DecompilerContext.getLogger().writeMessage("  New: " + rec, IFernflowerLogger.Severity.WARN);
                   int oldPriority = existingRec.source.equals(innerName) ? 1 : existingRec.source.equals(enclClassName) ? 2 : 3;
                   int newPriority = rec.source.equals(innerName) ? 1 : rec.source.equals(enclClassName) ? 2 : 3;
                   if (newPriority < oldPriority) {
