@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.ui.configuration
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -19,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.ThreadingAssertions
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -119,7 +119,7 @@ class SdkLookupImpl : SdkLookup {
   }
 
   override fun lookupBlocking(lookup: SdkLookupParameters) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertBackgroundThread()
 
     object : SdkLookupContextEx(lookup) {
       override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
@@ -127,7 +127,7 @@ class SdkLookupImpl : SdkLookup {
                   "Use another " + SdkLookupDownloadDecision::class.simpleName)
 
         return {
-          ApplicationManager.getApplication().assertIsNonDispatchThread()
+          ThreadingAssertions.assertBackgroundThread()
           onSdkNameResolved(sdk)
 
           ///we do not have a better API on SdkDownloadTracker to wait for a download
