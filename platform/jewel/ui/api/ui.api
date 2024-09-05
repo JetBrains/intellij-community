@@ -497,6 +497,7 @@ public final class org/jetbrains/jewel/ui/component/MenuItemState$Companion {
 public final class org/jetbrains/jewel/ui/component/MenuKt {
 	public static final fun MenuSeparator (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuItemMetrics;Lorg/jetbrains/jewel/ui/component/styling/MenuItemColors;Landroidx/compose/runtime/Composer;II)V
 	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZZLjava/lang/String;Ljava/lang/Class;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/icon/IconKey;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PopupMenu (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/ui/window/PopupProperties;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun items (Lorg/jetbrains/jewel/ui/component/MenuScope;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
 	public static final fun items (Lorg/jetbrains/jewel/ui/component/MenuScope;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
@@ -521,13 +522,13 @@ public final class org/jetbrains/jewel/ui/component/MenuManagerKt {
 
 public abstract interface class org/jetbrains/jewel/ui/component/MenuScope {
 	public abstract fun passiveItem (Lkotlin/jvm/functions/Function2;)V
-	public abstract fun selectableItem (ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
-	public abstract fun submenu (ZLjava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public abstract fun selectableItem (ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
+	public abstract fun submenu (ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuScope$DefaultImpls {
-	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLjava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/PlatformIconKt {

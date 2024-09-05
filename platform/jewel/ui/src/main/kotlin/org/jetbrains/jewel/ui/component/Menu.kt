@@ -82,6 +82,7 @@ import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.skiko.hostOs
@@ -187,7 +188,6 @@ private fun ShowMenuItem(item: MenuItem, canShowIcon: Boolean = false, canShowKe
                 canShowIcon = canShowIcon,
                 canShowKeybinding = canShowKeybinding,
                 iconKey = item.iconKey,
-                iconClass = item.iconClass,
                 keybinding = item.keybinding,
                 content = item.content,
             )
@@ -197,8 +197,7 @@ private fun ShowMenuItem(item: MenuItem, canShowIcon: Boolean = false, canShowKe
                 enabled = item.isEnabled,
                 submenu = item.submenu,
                 canShowIcon = canShowIcon,
-                iconResource = item.iconResource,
-                iconClass = item.iconClass,
+                iconKey = item.iconKey,
                 content = item.content,
             )
 
@@ -210,7 +209,6 @@ public interface MenuScope {
     public fun selectableItem(
         selected: Boolean,
         iconKey: IconKey? = null,
-        iconClass: Class<*>? = iconKey?.let { it::class.java },
         keybinding: Set<String>? = null,
         onClick: () -> Unit,
         enabled: Boolean = true,
@@ -219,8 +217,7 @@ public interface MenuScope {
 
     public fun submenu(
         enabled: Boolean = true,
-        iconResource: String? = null,
-        iconClass: Class<*> = this::class.java,
+        iconKey: IconKey? = null,
         submenu: MenuScope.() -> Unit,
         content: @Composable () -> Unit,
     )
@@ -258,7 +255,6 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
             override fun selectableItem(
                 selected: Boolean,
                 iconKey: IconKey?,
-                iconClass: Class<*>?,
                 keybinding: Set<String>?,
                 onClick: () -> Unit,
                 enabled: Boolean,
@@ -269,7 +265,6 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
                         isSelected = selected,
                         isEnabled = enabled,
                         iconKey = iconKey,
-                        iconClass = iconClass,
                         keybinding = keybinding,
                         onClick = onClick,
                         content = content,
@@ -283,12 +278,11 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
 
             override fun submenu(
                 enabled: Boolean,
-                iconResource: String?,
-                iconClass: Class<*>,
+                iconKey: IconKey?,
                 submenu: MenuScope.() -> Unit,
                 content: @Composable () -> Unit,
             ) {
-                add(SubmenuItem(enabled, iconResource, iconClass, submenu, content))
+                add(SubmenuItem(enabled, iconKey, submenu, content))
             }
         }
     )
@@ -302,7 +296,6 @@ private data class MenuSelectableItem(
     val isSelected: Boolean,
     val isEnabled: Boolean,
     val iconKey: IconKey?,
-    val iconClass: Class<*>?,
     val keybinding: Set<String>?,
     val onClick: () -> Unit = {},
     override val content: @Composable () -> Unit,
@@ -312,8 +305,7 @@ private data class MenuPassiveItem(override val content: @Composable () -> Unit)
 
 private data class SubmenuItem(
     val isEnabled: Boolean = true,
-    val iconResource: String?,
-    val iconClass: Class<*>,
+    val iconKey: IconKey?,
     val submenu: MenuScope.() -> Unit,
     override val content: @Composable () -> Unit,
 ) : MenuItem
@@ -341,7 +333,6 @@ internal fun MenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconKey: IconKey?,
-    iconClass: Class<*>?,
     keybinding: Set<String>?,
     canShowIcon: Boolean,
     canShowKeybinding: Boolean,
@@ -421,12 +412,7 @@ internal fun MenuItem(
                 if (canShowIcon) {
                     val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)
                     if (iconKey != null) {
-                        Icon(
-                            key = iconKey,
-                            contentDescription = null,
-                            iconClass = iconClass ?: iconKey.javaClass,
-                            modifier = iconModifier,
-                        )
+                        Icon(key = iconKey, contentDescription = null, modifier = iconModifier)
                     } else {
                         Box(modifier = iconModifier)
                     }
@@ -454,6 +440,14 @@ internal fun MenuItem(
     }
 }
 
+@Deprecated(
+    "Use the IconKey variant",
+    ReplaceWith(
+        "MenuSubmenuItem(modifier, enabled, canShowIcon, iconResource?.let { PathIconKey(it, iconClass) }, " +
+            "interactionSource, style, submenu, content)",
+        "org/jetbrains/jewel/ui/component/Menu.kt:472",
+    ),
+)
 @Composable
 public fun MenuSubmenuItem(
     modifier: Modifier = Modifier,
@@ -461,6 +455,21 @@ public fun MenuSubmenuItem(
     canShowIcon: Boolean,
     iconResource: String?,
     iconClass: Class<*>,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    submenu: MenuScope.() -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val iconKey = remember(iconResource, iconClass) { iconResource?.let { PathIconKey(it, iconClass) } }
+    MenuSubmenuItem(modifier, enabled, canShowIcon, iconKey, interactionSource, style, submenu, content)
+}
+
+@Composable
+public fun MenuSubmenuItem(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    canShowIcon: Boolean,
+    iconKey: IconKey?,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
     submenu: MenuScope.() -> Unit,
@@ -525,8 +534,8 @@ public fun MenuSubmenuItem(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 if (canShowIcon) {
-                    if (iconResource != null) {
-                        Icon(resource = iconResource, iconClass = iconClass, contentDescription = "")
+                    if (iconKey != null) {
+                        Icon(key = iconKey, contentDescription = null)
                     } else {
                         Box(Modifier.size(style.metrics.itemMetrics.iconSize))
                     }

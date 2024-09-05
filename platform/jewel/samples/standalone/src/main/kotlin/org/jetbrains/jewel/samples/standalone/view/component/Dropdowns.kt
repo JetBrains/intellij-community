@@ -14,7 +14,6 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
-import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
@@ -89,7 +88,6 @@ fun Dropdowns() {
                     } else {
                         selectableItem(
                             iconKey = dropdownIconsSample.random(),
-                            iconClass = DropdownStyle::class.java,
                             keybinding =
                                 if (Random.nextBoolean()) {
                                     null
@@ -111,7 +109,6 @@ fun Dropdowns() {
                             } else {
                                 selectableItem(
                                     iconKey = dropdownIconsSample.random(),
-                                    iconClass = DropdownStyle::class.java,
                                     keybinding =
                                         if (Random.nextBoolean()) {
                                             null
@@ -134,7 +131,6 @@ fun Dropdowns() {
                                     } else {
                                         selectableItem(
                                             iconKey = dropdownIconsSample.random(),
-                                            iconClass = DropdownStyle::class.java,
                                             selected = false,
                                             onClick = {},
                                         ) {
