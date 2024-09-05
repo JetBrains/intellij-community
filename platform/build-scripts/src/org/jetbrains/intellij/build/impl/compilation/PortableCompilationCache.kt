@@ -3,22 +3,20 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import io.netty.util.AsciiString
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
-import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.withTracer
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.net.URI
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CancellationException
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 internal val IS_PORTABLE_COMPILATION_CACHE_ENABLED: Boolean
   get() = ProjectStamps.PORTABLE_CACHES && IS_JPS_CACHE_URL_CONFIGURED
@@ -26,30 +24,35 @@ internal val IS_PORTABLE_COMPILATION_CACHE_ENABLED: Boolean
 private var isAlreadyUpdated = false
 
 internal object TestJpsCompilationCacheDownload {
+  @ExperimentalPathApi
   @JvmStatic
-  fun main(args: Array<String>) = runBlocking(Dispatchers.Default) {
+  fun main(args: Array<String>) = withTracer {
     System.setProperty("jps.cache.test", "true")
     System.setProperty("org.jetbrains.jps.portable.caches", "true")
-    if (System.getProperty(URL_PROPERTY) == null) {
-      System.setProperty(URL_PROPERTY, "https://127.0.0.1:1900/cache/jps")
-    }
 
     val projectHome = ULTIMATE_HOME
-    val outputDir = projectHome.resolve("out/compilation")
-    val context = createCompilationContext(
+    val outputDir = projectHome.resolve("out/test-jps-cache-downloaded")
+    outputDir.deleteRecursively()
+    downloadJpsCache(
+      cacheUrl = URI(System.getProperty(URL_PROPERTY, "https://127.0.0.1:1900/cache/jps")),
+      gitUrl = computeRemoteGitUrl(),
+      authHeader = getAuthHeader(),
       projectHome = projectHome,
-      defaultOutputRoot = outputDir,
-      options = BuildOptions(
-        incrementalCompilation = true,
-        useCompiledClassesFromProjectOutput = true,
-      ),
+      classOutDir = outputDir.resolve("classes"),
+      cacheDestination = outputDir.resolve("jps-build-data"),
+      reportStatisticValue = { k, v ->
+        println("$k: $v")
+      }
     )
-    downloadCacheAndCompileProject(forceDownload = false, gitUrl = computeRemoteGitUrl(), context = context)
   }
 }
 
 internal suspend fun downloadJpsCacheAndCompileProject(context: CompilationContext) {
-  downloadCacheAndCompileProject(forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY).toBoolean(), gitUrl = computeRemoteGitUrl(), context = context)
+  downloadCacheAndCompileProject(
+    forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY).toBoolean(),
+    gitUrl = computeRemoteGitUrl(),
+    context = context,
+  )
 }
 
 /**
@@ -112,10 +115,11 @@ private suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitUr
   spanBuilder("download JPS cache and compile")
     .setAttribute("forceRebuild", forceRebuild)
     .setAttribute("forceDownload", forceDownload)
-    .block { span ->
+    .use { span ->
+      val cacheUrl = URI(require(URL_PROPERTY, "Remote Cache url"))
       if (isAlreadyUpdated) {
         span.addEvent("PortableCompilationCache is already updated")
-        return@block
+        return@use
       }
 
       check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
@@ -126,11 +130,17 @@ private suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitUr
         cleanOutput(context = context, keepCompilationState = false)
       }
 
-      val downloader = PortableCompilationCacheDownloader(context = context, git = Git(context.paths.projectHome))
-
+      val reportStatisticValue = context.messages::reportStatisticValue
       val portableCompilationCache = PortableCompilationCache(forceDownload = forceDownload)
       val availableCommitDepth = if (!forceRebuild && (forceDownload || !isIncrementalCompilationDataAvailable(context))) {
-        portableCompilationCache.downloadCache(downloader = downloader, gitUrl = computeRemoteGitUrl(), context = context)
+        portableCompilationCache.downloadCache(
+          cacheUrl = cacheUrl,
+          gitUrl = gitUrl,
+          reportStatisticValue = reportStatisticValue,
+          classOutDir = context.classesOutputDirectory,
+          projectHome = context.paths.projectHome,
+          context = context,
+        )
       }
       else {
         -1
@@ -146,9 +156,10 @@ private suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitUr
           handleCompilationFailureBeforeRetry = { successMessage ->
             portableCompilationCache.handleCompilationFailureBeforeRetry(
               successMessage = successMessage,
-              portableCompilationCacheDownloader = downloader,
               forceDownload = portableCompilationCache.forceDownload,
+              cacheUrl = cacheUrl,
               gitUrl = gitUrl,
+              reportStatisticValue = reportStatisticValue,
               context = context,
             )
           },
@@ -167,11 +178,12 @@ private class PortableCompilationCache(forceDownload: Boolean) {
    * @return updated [successMessage]
    */
   suspend fun handleCompilationFailureBeforeRetry(
+    cacheUrl: URI,
     successMessage: String,
-    portableCompilationCacheDownloader: PortableCompilationCacheDownloader,
     context: CompilationContext,
     forceDownload: Boolean,
     gitUrl: String,
+    reportStatisticValue: (key: String, value: String) -> Unit,
   ): String {
     when {
       forceDownload -> {
@@ -184,7 +196,14 @@ private class PortableCompilationCache(forceDownload: Boolean) {
         // If download isn't forced, then locally available cache will be used which may suffer from those issues.
         // Hence, compilation failure. Replacing local cache with remote one may help.
         Span.current().addEvent("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
-        val availableCommitDepth = downloadCache(portableCompilationCacheDownloader, gitUrl = gitUrl, context)
+        val availableCommitDepth = downloadCache(
+          cacheUrl = cacheUrl,
+          gitUrl = gitUrl,
+          reportStatisticValue = reportStatisticValue,
+          classOutDir = context.classesOutputDirectory,
+          projectHome = context.paths.projectHome,
+          context = context,
+        )
         if (availableCommitDepth >= 0) {
           return portableJpsCacheUsageStatus(availableCommitDepth)
         }
@@ -193,10 +212,25 @@ private class PortableCompilationCache(forceDownload: Boolean) {
     return successMessage
   }
 
-  suspend fun downloadCache(downloader: PortableCompilationCacheDownloader, gitUrl: String, context: CompilationContext): Int {
-    return spanBuilder("downloading Portable Compilation Cache").use { span ->
+  suspend fun downloadCache(
+    cacheUrl: URI,
+    gitUrl: String,
+    reportStatisticValue: (key: String, value: String) -> Unit,
+    projectHome: Path,
+    classOutDir: Path,
+    context: CompilationContext,
+  ): Int {
+    return spanBuilder("download Portable Compilation Cache").use { span ->
       try {
-        downloader.download(cacheUrl = require(URL_PROPERTY, "Remote Cache url"), gitUrl = gitUrl, authHeader = getAuthHeader())
+        downloadJpsCache(
+          cacheUrl = cacheUrl,
+          gitUrl = gitUrl,
+          authHeader = getAuthHeader(),
+          projectHome = projectHome,
+          classOutDir = classOutDir,
+          cacheDestination = context.compilationData.dataStorageRoot,
+          reportStatisticValue = reportStatisticValue,
+        )
       }
       catch (e: CancellationException) {
         throw e
@@ -277,11 +311,11 @@ internal class CompilationOutput(
 
 private fun getJpsCacheUploadUrl(): URI = URI(require(UPLOAD_URL_PROPERTY, "Remote Cache upload url"))
 
-private fun getAuthHeader(): CharSequence {
+private fun getAuthHeader(): CharSequence? {
   val username = System.getProperty("jps.auth.spaceUsername")
   val password = System.getProperty("jps.auth.spacePassword")
   return when {
-    password == null -> AsciiString.EMPTY_STRING
+    password == null -> null
     username == null -> AsciiString.of("Bearer $password")
     else -> AsciiString.of("Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray()))
   }

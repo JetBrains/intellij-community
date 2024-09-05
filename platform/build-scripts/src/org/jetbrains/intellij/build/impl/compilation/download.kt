@@ -19,15 +19,14 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
 
 internal suspend fun downloadCompilationCache(
-  serverUrl: String,
+  serverUrl: URI,
   client: Http2ClientConnectionFactory,
-  prefix: String,
   toDownload: Collection<FetchAndUnpackItem>,
   downloadedBytes: AtomicLong,
   skipUnpack: Boolean,
   saveHash: Boolean,
 ) {
-  checkMirrorAndConnect(serverUrl = serverUrl, client = client, prefix = prefix) { connection, urlPathPrefix ->
+  checkMirrorAndConnect(initialServerUri = serverUrl, client = client) { connection, urlPathPrefix ->
     val zstdDecompressContextPool = ZstdDecompressContextPool()
     toDownload.forEachConcurrent(downloadParallelism) { item ->
       val urlPath = "$urlPathPrefix/${item.name}/${item.file.fileName}"
@@ -56,47 +55,6 @@ internal suspend fun downloadCompilationCache(
         }
       }
     }
-  }
-}
-
-internal suspend fun checkMirrorAndConnect(
-  serverUrl: String,
-  client: Http2ClientConnectionFactory,
-  prefix: String,
-  block: suspend (connection: Http2ClientConnection, urlPathPrefix: String) -> Unit,
-) {
-  var urlPathWithSlash = "/$prefix/"
-  // first let's check for initial redirect (mirror selection)
-  val initialServerUri = URI(serverUrl)
-  var effectiveServerUri = initialServerUri
-  var connection: Http2ClientConnection? = client.connect(effectiveServerUri.host, effectiveServerUri.port)
-  var connectionToClose = connection
-  try {
-    spanBuilder("mirror selection").use { span ->
-      val newLocation = connection!!.getRedirectLocation(urlPathWithSlash)
-      if (newLocation == null) {
-        span.addEvent("origin server will be used", Attributes.of(AttributeKey.stringKey("url"), urlPathWithSlash))
-        connectionToClose = null
-      }
-      else {
-        effectiveServerUri = URI(newLocation.toString())
-        urlPathWithSlash = effectiveServerUri.path
-        span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlPathWithSlash))
-        connection = null
-      }
-    }
-  }
-  finally {
-    connectionToClose?.close()
-    connectionToClose = null
-  }
-
-  val effectiveConnection = connection ?: client.connect(effectiveServerUri.host, effectiveServerUri.port)
-  try {
-    block(effectiveConnection, urlPathWithSlash.trimEnd('/'))
-  }
-  finally {
-    effectiveConnection.close()
   }
 }
 

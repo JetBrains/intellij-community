@@ -16,18 +16,45 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("SSBasedInspection")
-var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
+// don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing a ~500KB JSON file
+fun withTracer(block: suspend () -> Unit): Unit = runBlocking(Dispatchers.Default) {
+  val batchSpanProcessorScope = CoroutineScope(SupervisorJob(parent = coroutineContext.job)) + CoroutineName("BatchSpanProcessor")
+  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+  val spanProcessor = BatchSpanProcessor(
+    coroutineScope = batchSpanProcessorScope,
+    spanExporters = java.util.List.of(ConsoleSpanExporter()),
+    scheduleDelay = 10.seconds,
+  )
+  try {
+    val tracerProvider = SdkTracerProvider.builder()
+      .addSpanProcessor(spanProcessor)
+      .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
+      .build()
+
+    traceManagerInitializer = {
+      val openTelemetry = OpenTelemetrySdk.builder()
+        .setTracerProvider(tracerProvider)
+        .build()
+      val tracer = openTelemetry.getTracer("build-script")
+      BuildDependenciesDownloader.TRACER = tracer
+      tracer to spanProcessor
+    }
+    block()
+  }
+  finally {
+    batchSpanProcessorScope.cancel()
+    traceManagerInitializer = { throw IllegalStateException("already built") }
+  }
+}
+
+private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
   val batchSpanProcessor = BatchSpanProcessor(
     scheduleDelay = 10.seconds,
     coroutineScope = CoroutineScope(Job()),
@@ -56,7 +83,7 @@ object TraceManager {
     batchSpanProcessor = config.second
   }
 
-  fun setTracer(tracer: Tracer){
+  fun setTracer(tracer: Tracer) {
     this.tracer = tracer
   }
 

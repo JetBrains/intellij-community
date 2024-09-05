@@ -268,7 +268,7 @@ class CompilationContextImpl private constructor(
     overrideClassesOutputDirectory()
     if (!this::compilationData.isInitialized) {
       compilationData = JpsCompilationData(
-        dataStorageRoot = paths.buildOutputDir.resolve(".jps-build-data"),
+        dataStorageRoot = paths.buildOutputDir.resolve("jps-build-data"),
         classesOutputDirectory = classesOutputDirectory,
         buildLogFile = logDir.resolve("compilation.log"),
         categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")

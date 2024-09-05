@@ -171,6 +171,9 @@ private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBui
       if ((k.key == "modulesWithSearchableOptions" || v is List<*>) && (v as List<*>).size > 16) {
         sb.append("…")
       }
+      else if (v is List<*> && v.isEmpty()) {
+        sb.append("<empty list>")
+      }
       else if (v is Iterable<*>) {
         for (s in v) {
           writeValueAsHumanReadable(s as String, sb)

@@ -29,15 +29,6 @@ internal class Http2ClientConnection internal constructor(
     connection.close()
   }
 
-  fun withAuth(authHeader: CharSequence): Http2ClientConnection {
-    return Http2ClientConnection(
-      scheme = scheme,
-      authority = scheme,
-      commonHeaders = commonHeaders + arrayOf(HttpHeaderNames.AUTHORIZATION, AsciiString.of(authHeader)),
-      connection = connection,
-    )
-  }
-
   suspend fun head(path: CharSequence): HttpResponseStatus {
     return connection.stream { stream, result ->
       stream.pipeline().addLast(object : InboundHandlerResultTracker<Http2HeadersFrame>(result) {

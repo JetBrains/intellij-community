@@ -337,8 +337,7 @@ suspend fun fetchAndUnpackCompiledClasses(
     withHttp2ClientConnectionFactory(trustAll = metadata.serverUrl.contains("127.0.0.1")) { client ->
       downloadCompilationCache(
         client = client,
-        serverUrl = metadata.serverUrl,
-        prefix = metadata.prefix,
+        serverUrl = if (metadata.prefix.trim('/').isEmpty()) URI(metadata.serverUrl) else URI(metadata.serverUrl.trimEnd('/') + '/' + metadata.prefix),
         toDownload = toDownload,
         downloadedBytes = downloadedBytes,
         skipUnpack = skipUnpack,

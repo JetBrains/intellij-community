@@ -40,7 +40,7 @@ private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
 internal suspend fun uploadJpsCache(
   forcedUpload: Boolean,
   commitHash: String,
-  authHeader: CharSequence,
+  authHeader: CharSequence?,
   s3Dir: Path?,
   uploadUrl: URI,
   context: CompilationContext,
@@ -65,7 +65,7 @@ internal suspend fun uploadJpsCache(
   val uploadedOutputCount = LongAdder()
   val messages = context.messages
   withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
-    client.connect(uploadUrl.host, uploadUrl.port).withAuth(authHeader).use { connection ->
+    client.connect(host = uploadUrl.host, port = uploadUrl.port, authHeader = authHeader).use { connection ->
       val urlPathPrefix = uploadUrl.path
       withContext(Dispatchers.IO) {
         launch {
@@ -204,7 +204,7 @@ internal suspend fun updateJpsCacheCommitHistory(
   remoteGitUrl: String,
   commitHash: String,
   uploadUrl: URI,
-  authHeader: CharSequence,
+  authHeader: CharSequence?,
   s3Dir: Path?,
   context: CompilationContext,
 ) {
@@ -212,7 +212,7 @@ internal suspend fun updateJpsCacheCommitHistory(
   val commitHistory = CommitsHistory(mapOf(remoteGitUrl to (overrideCommits ?: setOf(commitHash))))
   withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
     val urlPathPrefix = uploadUrl.path
-    client.connect(uploadUrl.host, uploadUrl.port).withAuth(authHeader).use { connection ->
+    client.connect(uploadUrl.host, uploadUrl.port, authHeader = authHeader).use { connection ->
       for (commitHashForRemote in commitHistory.commitsForRemote(remoteGitUrl)) {
         val cacheUploaded = checkExists(connection, "$urlPathPrefix/caches/$commitHashForRemote")
         val metadataUploaded = checkExists(connection, "$urlPathPrefix/metadata/$commitHashForRemote")

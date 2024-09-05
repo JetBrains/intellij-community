@@ -34,11 +34,15 @@ internal class Http2ClientConnectionFactory(
   private val ioDispatcher: CoroutineDispatcher,
   private val coroutineScope: CoroutineScope,
 ) {
-  fun connect(host: String, port: Int = 443): Http2ClientConnection {
-    return connect(InetSocketAddress.createUnresolved(host, port.let { if (it == -1) 443 else it }))
+  fun connect(host: String, port: Int = 443, authHeader: CharSequence? = null): Http2ClientConnection {
+    return connect(InetSocketAddress.createUnresolved(host, port.let { if (it == -1) 443 else it }), authHeader)
   }
 
-  fun connect(server: InetSocketAddress): Http2ClientConnection {
+  fun connect(server: InetSocketAddress, auth: CharSequence? = null): Http2ClientConnection {
+    var commonHeaders = arrayOf(HttpHeaderNames.USER_AGENT, AsciiString.of("IJ Builder"))
+    if (auth != null) {
+      commonHeaders += arrayOf(HttpHeaderNames.AUTHORIZATION, AsciiString.of(auth))
+    }
     return Http2ClientConnection(
       connection = Http2ConnectionProvider(
         server = server,
@@ -49,7 +53,7 @@ internal class Http2ClientConnectionFactory(
       ),
       scheme = AsciiString.of(if (sslContext == null) "http" else "https"),
       authority = AsciiString.of(server.hostString + ":" + server.port),
-      commonHeaders = arrayOf(HttpHeaderNames.USER_AGENT, AsciiString.of("IJ Builder")),
+      commonHeaders = commonHeaders,
     )
   }
 
