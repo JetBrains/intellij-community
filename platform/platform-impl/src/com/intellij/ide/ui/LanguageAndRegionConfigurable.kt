@@ -50,185 +50,183 @@ import javax.swing.event.PopupMenuEvent
  */
 
 @Internal
-class LanguageAndRegionUi {
-  companion object {
-    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?, source: EventSource) {
-      val statistics = LocalizationActionsStatistics().apply { setSource(source) }
-      val comboGroup = "language_and_region_combo"
+object LanguageAndRegionUi {
+  fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?, source: EventSource) {
+    val statistics = LocalizationActionsStatistics().apply { setSource(source) }
+    val comboGroup = "language_and_region_combo"
 
-      panel.row(IdeBundle.message("combobox.language")) {
-        val locales = getAllAvailableLocales()
-        val initSelectionLocale = LocalizationUtil.getLocale(true)
-        val localizationService = LocalizationStateService.getInstance()!!
-        val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
-        val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
-        comment(IdeBundle.message("ide.restart.required.comment"))
+    panel.row(IdeBundle.message("combobox.language")) {
+      val locales = getAllAvailableLocales()
+      val initSelectionLocale = LocalizationUtil.getLocale(true)
+      val localizationService = LocalizationStateService.getInstance()!!
+      val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
+      val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
+      comment(IdeBundle.message("ide.restart.required.comment"))
 
-        if (propertyGraph != null && connection != null) {
-          val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale(true) }
+      if (propertyGraph != null && connection != null) {
+        val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale(true) }
 
-          property.afterChange(parentDisposable) {
-            val prevLocale = LocalizationUtil.getLocale(true)
-            if (it.toLanguageTag() == prevLocale.toLanguageTag() || it === ITEM_MORE_LANGUAGES) {
-              return@afterChange
-            }
-
-            localizationService.setSelectedLocale(it.toLanguageTag())
-
-            showRestartDialog()
+        property.afterChange(parentDisposable) {
+          val prevLocale = LocalizationUtil.getLocale(true)
+          if (it.toLanguageTag() == prevLocale.toLanguageTag() || it === ITEM_MORE_LANGUAGES) {
+            return@afterChange
           }
-          languageBox.bindItem(property)
 
-          connection.subscribe(LocalizationListener.UPDATE_TOPIC, object : LocalizationListener {
-            override fun localeChanged() {
-              model.selectedItem = LocalizationUtil.getLocale(true)
-            }
-          })
-        }
-        else {
-          languageBox.bindItem({ LocalizationUtil.getLocale(true) }, {
-            localizationService.setSelectedLocale((it ?: Locale.ENGLISH).toLanguageTag())
-          })
-        }
+          localizationService.setSelectedLocale(it.toLanguageTag())
 
-        val languageComponent = languageBox.component
-        languageComponent.isSwingPopup = false
-        languageComponent.renderer = createLanguageRenderer(locales)
-
-        var lastSelectedItem = languageComponent.selectedItem as Locale
-        languageComponent.whenItemSelectedFromUi {
-          if (it === ITEM_MORE_LANGUAGES) {
-            model.selectedItem = lastSelectedItem
-            statistics.moreLanguagesSelected()
-            showMoreLanguages(languageComponent)
-            return@whenItemSelectedFromUi
-          }
-          if (lastSelectedItem == it) return@whenItemSelectedFromUi
-          statistics.languageSelected(it, lastSelectedItem)
-          lastSelectedItem = it
+          showRestartDialog()
         }
-        languageComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
-          override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-            statistics.languageExpanded()
+        languageBox.bindItem(property)
+
+        connection.subscribe(LocalizationListener.UPDATE_TOPIC, object : LocalizationListener {
+          override fun localeChanged() {
+            model.selectedItem = LocalizationUtil.getLocale(true)
           }
         })
-
-        DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicBundle.LanguageBundleEP> {
-          override fun extensionAdded(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
-            updateComboModel()
-          }
-
-          override fun extensionRemoved(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
-            updateComboModel()
-          }
-
-          private fun updateComboModel() {
-            val newLocales = getAllAvailableLocales()
-            var selection = languageComponent.selectedItem as Locale
-            if (!newLocales.first.contains(selection)) {
-              selection = newLocales.first.first()
-            }
-            languageComponent.renderer = createLanguageRenderer(newLocales)
-            languageComponent.model = CollectionComboBoxModel(newLocales.first, selection)
-          }
-        }, parentDisposable)
-      }
-
-      panel.row(IdeBundle.message("combobox.region")) {
-        val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
-
-        val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
-        val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
-
-        if (propertyGraph != null && connection != null) {
-          val property = propertyGraph.lazyProperty { RegionSettings.getRegion() }
-
-          property.afterChange(parentDisposable) {
-            if (it == RegionSettings.getRegion()) {
-              return@afterChange
-            }
-
-            RegionSettings.setRegion(it)
-
-            showRestartDialog()
-          }
-          regionBox.bindItem(property)
-
-          connection.subscribe(RegionSettingsListener.UPDATE_TOPIC, RegionSettingsListener {
-            model.selectedItem = RegionSettings.getRegion()
-          })
-
-          regionBox.gap(RightGap.SMALL)
-          cell(ContextHelpLabel.createWithBrowserLink(null, IdeBundle.message("combobox.region.hint"),
-                                                      IdeBundle.message("combobox.region.hint.link"), URL(helpUrl)))
-        }
-        else {
-          regionBox.bindItem({ RegionSettings.getRegion() }, { RegionSettings.setRegion(it ?: Region.NOT_SET) })
-
-          regionBox.comment(IdeBundle.message("combobox.region.comment", helpUrl))
-
-          regionBox.comment?.addHyperlinkListener { e ->
-            if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-              statistics.hyperLinkActivated()
-            }
-          }
-        }
-
-        val regionComponent = regionBox.component
-        regionComponent.isSwingPopup = false
-        regionComponent.renderer = listCellRenderer {
-          if (value == Region.NOT_SET) {
-            separator {  }
-          }
-          text(value.displayName)
-        }
-
-        var lastSelectedItem = regionComponent.selectedItem as Region
-        regionComponent.whenItemSelectedFromUi {
-          if (lastSelectedItem == it) return@whenItemSelectedFromUi
-          statistics.regionSelected(it, lastSelectedItem)
-          lastSelectedItem = it
-        }
-        regionComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
-          override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-            statistics.regionExpanded()
-          }
-        })
-      }
-    }
-
-    fun showRestartDialog(runAlways: Boolean = true) {
-      DynamicPlugins.runAfter(runAlways) {
-        application.invokeLater {
-          application.service<RestartDialog>().showRestartRequired()
-        }
-      }
-    }
-
-    private fun getAllAvailableLocales(): Pair<List<Locale>, Map<Locale, String>> {
-      val availableLocales = LocalizationUtil.getAllAvailableLocales()
-      return buildList {
-        addAll(availableLocales.first)
-        add(ITEM_MORE_LANGUAGES)
-      } to availableLocales.second
-    }
-
-    private fun showMoreLanguages(comboBoxComponent: JComponent) {
-      val tag = "/tag:\"Language Pack\""
-      val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(comboBoxComponent))
-
-      if (settings == null) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject, PluginManagerConfigurable::class.java) {
-          it.enableSearch(tag)
-        }
       }
       else {
-        settings.select(settings.find("preferences.pluginManager"), tag)
+        languageBox.bindItem({ LocalizationUtil.getLocale(true) }, {
+          localizationService.setSelectedLocale((it ?: Locale.ENGLISH).toLanguageTag())
+        })
       }
+
+      val languageComponent = languageBox.component
+      languageComponent.isSwingPopup = false
+      languageComponent.renderer = createLanguageRenderer(locales)
+
+      var lastSelectedItem = languageComponent.selectedItem as Locale
+      languageComponent.whenItemSelectedFromUi {
+        if (it === ITEM_MORE_LANGUAGES) {
+          model.selectedItem = lastSelectedItem
+          statistics.moreLanguagesSelected()
+          showMoreLanguages(languageComponent)
+          return@whenItemSelectedFromUi
+        }
+        if (lastSelectedItem == it) return@whenItemSelectedFromUi
+        statistics.languageSelected(it, lastSelectedItem)
+        lastSelectedItem = it
+      }
+      languageComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
+        override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+          statistics.languageExpanded()
+        }
+      })
+
+      DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicBundle.LanguageBundleEP> {
+        override fun extensionAdded(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
+          updateComboModel()
+        }
+
+        override fun extensionRemoved(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
+          updateComboModel()
+        }
+
+        private fun updateComboModel() {
+          val newLocales = getAllAvailableLocales()
+          var selection = languageComponent.selectedItem as Locale
+          if (!newLocales.first.contains(selection)) {
+            selection = newLocales.first.first()
+          }
+          languageComponent.renderer = createLanguageRenderer(newLocales)
+          languageComponent.model = CollectionComboBoxModel(newLocales.first, selection)
+        }
+      }, parentDisposable)
     }
 
-    internal val ITEM_MORE_LANGUAGES = Locale("more languages")
+    panel.row(IdeBundle.message("combobox.region")) {
+      val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
+
+      val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
+      val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
+
+      if (propertyGraph != null && connection != null) {
+        val property = propertyGraph.lazyProperty { RegionSettings.getRegion() }
+
+        property.afterChange(parentDisposable) {
+          if (it == RegionSettings.getRegion()) {
+            return@afterChange
+          }
+
+          RegionSettings.setRegion(it)
+
+          showRestartDialog()
+        }
+        regionBox.bindItem(property)
+
+        connection.subscribe(RegionSettingsListener.UPDATE_TOPIC, RegionSettingsListener {
+          model.selectedItem = RegionSettings.getRegion()
+        })
+
+        regionBox.gap(RightGap.SMALL)
+        cell(ContextHelpLabel.createWithBrowserLink(null, IdeBundle.message("combobox.region.hint"),
+                                                    IdeBundle.message("combobox.region.hint.link"), URL(helpUrl)))
+      }
+      else {
+        regionBox.bindItem({ RegionSettings.getRegion() }, { RegionSettings.setRegion(it ?: Region.NOT_SET) })
+
+        regionBox.comment(IdeBundle.message("combobox.region.comment", helpUrl))
+
+        regionBox.comment?.addHyperlinkListener { e ->
+          if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+            statistics.hyperLinkActivated()
+          }
+        }
+      }
+
+      val regionComponent = regionBox.component
+      regionComponent.isSwingPopup = false
+      regionComponent.renderer = listCellRenderer {
+        if (value == Region.NOT_SET) {
+          separator { }
+        }
+        text(value.displayName)
+      }
+
+      var lastSelectedItem = regionComponent.selectedItem as Region
+      regionComponent.whenItemSelectedFromUi {
+        if (lastSelectedItem == it) return@whenItemSelectedFromUi
+        statistics.regionSelected(it, lastSelectedItem)
+        lastSelectedItem = it
+      }
+      regionComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
+        override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+          statistics.regionExpanded()
+        }
+      })
+    }
   }
+
+  fun showRestartDialog(runAlways: Boolean = true) {
+    DynamicPlugins.runAfter(runAlways) {
+      application.invokeLater {
+        application.service<RestartDialog>().showRestartRequired()
+      }
+    }
+  }
+
+  private fun getAllAvailableLocales(): Pair<List<Locale>, Map<Locale, String>> {
+    val availableLocales = LocalizationUtil.getAllAvailableLocales()
+    return buildList {
+      addAll(availableLocales.first)
+      add(ITEM_MORE_LANGUAGES)
+    } to availableLocales.second
+  }
+
+  private fun showMoreLanguages(comboBoxComponent: JComponent) {
+    val tag = "/tag:\"Language Pack\""
+    val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(comboBoxComponent))
+
+    if (settings == null) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject, PluginManagerConfigurable::class.java) {
+        it.enableSearch(tag)
+      }
+    }
+    else {
+      settings.select(settings.find("preferences.pluginManager"), tag)
+    }
+  }
+
+  internal val ITEM_MORE_LANGUAGES = Locale("more languages")
 }
 
 internal class LanguageAndRegionConfigurable :
