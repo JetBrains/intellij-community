@@ -18,7 +18,7 @@ interface TerminalPromptModel : Disposable {
 
   /** Values used to build the prompt string */
   @get:RequiresEdt
-  val promptState: TerminalPromptState
+  val promptState: TerminalPromptState?
 
   /** Text and highlightings of the prompt string. Command text is not included there. */
   @get:RequiresEdt

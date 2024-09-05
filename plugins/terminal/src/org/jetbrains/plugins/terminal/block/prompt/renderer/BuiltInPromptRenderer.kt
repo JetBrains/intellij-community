@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.prompt
+package org.jetbrains.plugins.terminal.block.prompt.renderer
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -7,6 +7,8 @@ import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 
 internal class BuiltInPromptRenderer(

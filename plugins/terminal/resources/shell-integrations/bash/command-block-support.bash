@@ -138,7 +138,6 @@ __jetbrains_intellij_command_terminated() {
     return 0
   fi
 
-  __jetbrains_intellij_report_prompt_state
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_fix_prompt_command_order
@@ -151,6 +150,7 @@ __jetbrains_intellij_command_terminated() {
     __jetbrains_intellij_debug_log "command_finished exit_code=$last_exit_code"
     builtin printf '\e]1341;command_finished;exit_code=%s\a' "$last_exit_code"
   fi
+  __jetbrains_intellij_report_prompt_state
 }
 
 __jetbrains_intellij_report_prompt_state() {

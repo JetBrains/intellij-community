@@ -26,6 +26,10 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
+import org.jetbrains.plugins.terminal.block.prompt.renderer.BuiltInPromptRenderer
+import org.jetbrains.plugins.terminal.block.prompt.renderer.PlaceholderPromptRenderer
+import org.jetbrains.plugins.terminal.block.prompt.renderer.ShellPromptRenderer
+import org.jetbrains.plugins.terminal.block.prompt.renderer.TerminalPromptRenderer
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 
@@ -37,10 +41,11 @@ internal class TerminalPromptModelImpl(
     get() = editor.document
 
   private var renderer: TerminalPromptRenderer = createPromptRenderer()
+  private var placeholderPromptRenderer: TerminalPromptRenderer = createPlaceholderPromptRenderer()
 
   private var rightPromptManager: RightPromptManager? = null
 
-  override var promptState: TerminalPromptState = TerminalPromptState(currentDirectory = "")
+  override var promptState: TerminalPromptState? = TerminalPromptState.EMPTY
     private set
 
   override var renderingInfo: TerminalPromptRenderingInfo = TerminalPromptRenderingInfo("", emptyList())
@@ -67,6 +72,9 @@ internal class TerminalPromptModelImpl(
       override fun promptStateUpdated(newState: TerminalPromptState) {
         updatePrompt(newState)
       }
+      override fun commandStarted(command: String) {
+        updatePrompt(null)
+      }
     })
 
     editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
@@ -74,6 +82,7 @@ internal class TerminalPromptModelImpl(
     })
     BlockTerminalOptions.getInstance().addListener(this) {
       renderer = createPromptRenderer()
+      placeholderPromptRenderer = createPlaceholderPromptRenderer()
       updatePrompt(promptState)
     }
   }
@@ -84,8 +93,13 @@ internal class TerminalPromptModelImpl(
     undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
   }
 
-  private fun updatePrompt(state: TerminalPromptState) {
-    val updatedInfo = renderer.calculateRenderingInfo(state)
+  private fun updatePrompt(state: TerminalPromptState?) {
+    val updatedInfo: TerminalPromptRenderingInfo = if (state == null) {
+      placeholderPromptRenderer.calculateRenderingInfo(TerminalPromptState.EMPTY)
+    }
+    else {
+      renderer.calculateRenderingInfo(state)
+    }
     runInEdt {
       doUpdatePrompt(updatedInfo)
       promptState = state
@@ -99,6 +113,13 @@ internal class TerminalPromptModelImpl(
       document.clearGuardedBlocks()
       document.replaceString(0, commandStartOffset, renderingInfo.text)
       document.createGuardedBlock(0, renderingInfo.text.length)
+      // We should move the caret to the same place of the command.
+      // PS1(previous)$ command t|yped          ->          PS1(new)$ command t|yped
+      // |_____________||_______| |__|          ->          |________||_______| |__|
+      //                ^-command start offset
+      //                         ^-caret model offset
+      //                                                    |         ^-renderingInfo text length
+      editor.caretModel.moveToOffset(editor.caretModel.offset - commandStartOffset + renderingInfo.text.length )
     }
     editor.markupModel.replaceHighlighters(renderingInfo.highlightings)
     val rightPrompt = renderingInfo.rightText
@@ -128,6 +149,14 @@ internal class TerminalPromptModelImpl(
         val sizeProvider = { session.model.withContentLock { TermSize(session.model.width, session.model.height) } }
         ShellPromptRenderer(session.colorPalette, session.settings, sizeProvider)
       }
+    }
+  }
+
+  private fun createPlaceholderPromptRenderer(): TerminalPromptRenderer {
+    return when (BlockTerminalOptions.getInstance().promptStyle) {
+      TerminalPromptStyle.SINGLE_LINE -> PlaceholderPromptRenderer(isSingleLine = true)
+      TerminalPromptStyle.DOUBLE_LINE -> PlaceholderPromptRenderer(isSingleLine = false)
+      TerminalPromptStyle.SHELL -> PlaceholderPromptRenderer(isSingleLine = true)
     }
   }
 

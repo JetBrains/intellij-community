@@ -15,4 +15,8 @@ data class TerminalPromptState(
   val originalPrompt: String? = null,
   val originalRightPrompt: String? = null,
   val shellName: String? = null
-)
+) {
+  companion object {
+    val EMPTY: TerminalPromptState = TerminalPromptState("")
+  }
+}

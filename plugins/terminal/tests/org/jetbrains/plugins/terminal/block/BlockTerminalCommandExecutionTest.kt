@@ -119,15 +119,15 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     session.terminalStarterFuture.get()!!.ttyConnector.waitFor()
 
     val expected = listOf(
-      "prompt_state_updated",
       "command_history",
       "initialized",
-      "command_started",
       "prompt_state_updated",
-      "command_finished",
       "command_started",
-      "prompt_state_updated",
       "command_finished",
+      "prompt_state_updated",
+      "command_started",
+      "command_finished",
+      "prompt_state_updated",
       "command_started",
     )
     assertListEquals(expected, actual, ignoreUnexpectedEntriesOf = listOf("prompt_shown"))

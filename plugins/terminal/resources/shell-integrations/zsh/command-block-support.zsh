@@ -98,9 +98,9 @@ __jetbrains_intellij_command_precmd() {
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
     return 0
   fi
-  __jetbrains_intellij_report_prompt_state
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
   builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+  __jetbrains_intellij_report_prompt_state
 }
 
 __jetbrains_intellij_report_prompt_state() {
@@ -202,8 +202,6 @@ add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
 
-__jetbrains_intellij_report_prompt_state
-
 # `HISTFILE` is already initialized at this point.
 # Get all commands from history from the first command
 builtin local hist="$(builtin history 1)"
@@ -213,3 +211,5 @@ builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
 # This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
 builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
 builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
+
+__jetbrains_intellij_report_prompt_state
