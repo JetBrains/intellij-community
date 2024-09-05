@@ -6,18 +6,16 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 #[allow(unused_imports)]
 use log::{debug, error, info};
 
 use crate::*;
 use crate::docker::is_running_in_docker;
 
-#[allow(dead_code)]
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
-    launcher_name: String,
-    ij_starter_command: String,
+    started_via_remote_dev_launcher: bool,
 }
 
 impl LaunchConfiguration for RemoteDevLaunchConfiguration {
@@ -65,12 +63,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
 impl RemoteDevLaunchConfiguration {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
+    pub fn new(exe_path: &Path, args: Vec<String>, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
         let (_, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
-        let configuration = Self::create(exe_path, default_cfg)?;
+        let configuration = Self::create(default_cfg, started_via_remote_dev_launcher)?;
         Ok(Box::new(configuration))
     }
 
@@ -164,17 +162,10 @@ impl RemoteDevLaunchConfiguration {
         Ok(project_path)
     }
 
-    fn create(exe_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
-        let ij_starter_command = default.args[0].to_string();
-
-        let launcher_name = exe_path.file_name()
-            .ok_or(anyhow!("Invalid executable path: {exe_path:?}"))?
-            .to_string_lossy().to_string();
-
+    fn create(default: DefaultLaunchConfiguration, started_via_remote_dev_launcher: bool) -> Result<Self> {
         let config = RemoteDevLaunchConfiguration {
             default,
-            launcher_name,
-            ij_starter_command,
+            started_via_remote_dev_launcher,
         };
 
         Ok(config)
@@ -206,6 +197,10 @@ impl RemoteDevLaunchConfiguration {
             // TODO: CWM-5782 figure out why posix_spawn / jspawnhelper does not work in tests
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
+
+        if self.started_via_remote_dev_launcher {
+            remote_dev_properties.push(("ide.started.from.remote.dev.launcher", "true"))
+        }
 
         match parse_bool_env_var_optional("REMOTE_DEV_JDK_DETECTION")? {
             Some(remote_dev_jdk_detection_value) => {

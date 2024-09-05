@@ -84,7 +84,7 @@ pub fn main_lib() {
         }
     }
 
-    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess) {
+    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess, remote_dev_launcher_used) {
         ui::show_error(!debug_mode, e);
         std::process::exit(1);
     }
@@ -102,7 +102,7 @@ fn attach_console() {
     }
 }
 
-fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subprocess: bool) -> Result<()> {
+fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subprocess: bool, started_via_remote_dev_launcher: bool) -> Result<()> {
     let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
@@ -135,7 +135,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
     }
 
     debug!("** Preparing launch configuration");
-    let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
+    let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?, started_via_remote_dev_launcher).context("Cannot detect a launch configuration")?;
 
     debug!("** Locating runtime");
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
@@ -270,12 +270,12 @@ pub trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)>;
 }
 
-fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn LaunchConfiguration>> {
+fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
     debug!("Args: {:?}", &cmd_args);
 
     if is_remote_dev {
-        RemoteDevLaunchConfiguration::new(exe_path, cmd_args)
+        RemoteDevLaunchConfiguration::new(exe_path, cmd_args, started_via_remote_dev_launcher)
     } else {
         let configuration = DefaultLaunchConfiguration::new(exe_path, cmd_args[1..].to_vec())?;
         Ok(Box::new(configuration))
