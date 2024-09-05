@@ -2,6 +2,7 @@
 package com.intellij.platform.project
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -26,6 +27,7 @@ abstract class ProjectEntitiesStorage {
    */
   suspend fun createEntity(project: Project): Unit = withKernel {
     val projectId = project.projectId()
+    LOG.info("Creating entity for project $projectId")
 
     change {
       val projectEntity = shared {
@@ -61,7 +63,10 @@ abstract class ProjectEntitiesStorage {
       }
     }
 
+    LOG.info("Entity for project $projectId created successfully")
+
     project.whenDisposed {
+      LOG.info("Project $projectId is disposed, removing entity")
       runBlockingMaybeCancellable {
         removeProjectEntity(project)
       }
@@ -76,6 +81,8 @@ abstract class ProjectEntitiesStorage {
   protected abstract suspend fun removeProjectEntity(project: Project)
 
   companion object {
+    private val LOG = logger<ProjectEntitiesStorage>()
+
     fun getInstance(): ProjectEntitiesStorage = service()
   }
 }
