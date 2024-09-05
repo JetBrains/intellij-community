@@ -27,7 +27,7 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
 
   init {
     if (Files.notExists(repositoryPath)) {
-      context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist")
+      context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist. If you run scripts from the IDE, please make sure that DevKit plugin is installed and enabled.")
     }
     rawRepositoryData = try {
       RuntimeModuleRepositorySerialization.loadFromJar(repositoryPath)
