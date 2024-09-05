@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -18,7 +19,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.sun.jdi.*
-import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -263,6 +264,16 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
                 override fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference {
                     return DebuggerUtilsEx.mirrorOfArray(arrayType, size, context.evaluationContext)
+                }
+
+                override fun isInstanceOf(value: Eval4JValue, targetType: Type): Boolean {
+                    val jdiValue = value.obj()
+                    if (jdiValue is Value) {
+                        return DebuggerUtils.instanceOf(jdiValue.type(), targetType.className)
+                    }
+                    else {
+                        return super.isInstanceOf(value, targetType)
+                    }
                 }
             }
             interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)
