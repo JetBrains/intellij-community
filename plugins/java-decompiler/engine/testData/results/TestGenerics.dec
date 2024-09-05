@@ -22,7 +22,7 @@ public class TestGenerics<A, B extends TestGenerics.Maps & List> {
    public void genericList() {
       List<B> testList = new ArrayList();// 38
       B b = (B)(testList.get(0));// 39
-      System.out.println("B:" + b);// 40
+      System.out.println("B:" + String.valueOf(b));// 40
    }// 41
 
    public void genericCast() {
@@ -67,10 +67,7 @@ class 'pkg/TestGenerics' {
       6      14
       7      14
       8      14
-      9      14
-      a      14
-      b      14
-      c      15
+      9      15
    }
 
    method 'genericInference ()V' {
@@ -97,16 +94,19 @@ class 'pkg/TestGenerics' {
       13      24
       14      24
       15      24
+      16      24
+      17      24
+      18      24
+      19      24
+      1a      24
+      1b      24
+      1c      24
       1d      24
       1e      24
-      22      24
-      26      24
-      27      24
-      28      24
-      29      24
-      2a      24
-      2b      24
-      2c      25
+      1f      24
+      20      24
+      21      24
+      22      25
    }
 
    method 'genericCast ()V' {

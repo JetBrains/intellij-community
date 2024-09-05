@@ -10,42 +10,40 @@ public class TestLVTComplex {
          ;
       }
 
-      for(int var23 : x) {
+      for(int var24 : x) {
          System.out.println("asdf");
       }
 
       ArrayList<Object> x1 = new ArrayList();
 
-      for(Object var18 : x1) {
+      for(Object var16 : x1) {
          ;
       }
 
       for(Object y : x1) {
          int[] x2 = new int[10];
 
-         for(int var24 : x2) {
+         for(int var25 : x2) {
             ;
          }
 
-         for(int var25 : x2) {
+         for(int var26 : x2) {
             System.out.println("asdf");
          }
 
          System.out.println("asdf");
       }
 
-      switch (TestLVTComplex.Bob.HI) {
-         case HI:
-            System.out.println("HI");
-            break;
-         case LO:
-            System.out.println("LO");
+      Bob hi = TestLVTComplex.Bob.HI;
+      switch (hi.ordinal()) {
+         case 0 -> System.out.println("HI");
+         case 1 -> System.out.println("LO");
       }
 
       if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
-         String var14 = "a";
+         String var18 = "a";
       } else {
-         String var15 = "b";
+         String var19 = "b";
       }
 
       String a2;

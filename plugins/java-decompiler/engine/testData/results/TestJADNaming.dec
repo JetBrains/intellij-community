@@ -2,21 +2,21 @@ package pkg;
 
 public class TestJADNaming {
    public void Func() {
-      short short1 = 1000;// 7
+      short short1 = 1000;
       short short2 = 2000;
       short short3 = 3000;
       short short4 = 4000;
-      if (short1 != short2 && short3 == short4) {// 8
+      if (short1 != short2 && short3 == short4) {
       }
 
-      boolean flag = true;// 9
+      boolean flag = true;
       boolean flag1 = false;
       boolean flag2 = true;
       boolean flag3 = false;
-      if (flag != flag1 && flag2 == flag3) {// 10
+      if (flag != flag1 && flag2 == flag3) {
       }
 
-   }// 11
+   }
 }
 
 class 'pkg/TestJADNaming' {
@@ -72,8 +72,3 @@ class 'pkg/TestJADNaming' {
 }
 
 Lines mapping:
-7 <-> 5
-8 <-> 9
-9 <-> 12
-10 <-> 16
-11 <-> 19
