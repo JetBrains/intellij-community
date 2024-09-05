@@ -43,9 +43,19 @@ public class ClassesProcessor {
     private String simpleName;
     private int type;
     private int accessFlags;
+    private String source;
 
     private static boolean equal(Inner o1, Inner o2) {
       return o1.type == o2.type && o1.accessFlags == o2.accessFlags && Objects.equals(o1.simpleName, o2.simpleName);
+    }
+
+    @Override
+    public String toString() {
+      return simpleName + " " + ClassWriter.getModifiers(accessFlags) + " " + getType() + " " + source;
+    }
+
+    private String getType() {
+        return type == ClassNode.CLASS_ANONYMOUS ? "ANONYMOUS" : type == ClassNode.CLASS_LAMBDA ? "LAMBDA" : type == ClassNode.CLASS_LOCAL ? "LOCAL" : type == ClassNode.CLASS_MEMBER ? "MEMBER" : type == ClassNode.CLASS_ROOT ? "ROOT" : "UNKNOWN(" + type +")";
     }
   }
 
@@ -89,6 +99,7 @@ public class ClassesProcessor {
               rec.simpleName = simpleName;
               rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
               rec.accessFlags = entry.accessFlags;
+              rec.source = cl.qualifiedName;
 
               // nested class type
               if (entry.innerName != null) {
@@ -133,6 +144,13 @@ public class ClassesProcessor {
                 else if (!Inner.equal(existingRec, rec)) {
                   String message = "Inconsistent inner class entries for " + innerName + "!";
                   DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+                  DecompilerContext.getLogger().writeMessage("  Old: " + existingRec.toString(), IFernflowerLogger.Severity.WARN);
+                  DecompilerContext.getLogger().writeMessage("  New: " + rec.toString(), IFernflowerLogger.Severity.WARN);
+                  int oldPriority = existingRec.source.equals(innerName) ? 1 : existingRec.source.equals(enclClassName) ? 2 : 3;
+                  int newPriority = rec.source.equals(innerName) ? 1 : rec.source.equals(enclClassName) ? 2 : 3;
+                  if (newPriority < oldPriority) {
+                      mapInnerClasses.put(innerName, rec);
+                  }
                 }
 
                 // reference to the nested class

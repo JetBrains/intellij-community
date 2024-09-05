@@ -1208,6 +1208,10 @@ public class ClassWriter {
     }
   }
 
+  public static String getModifiers(int flags) {
+    return MODIFIERS.entrySet().stream().filter(e -> (e.getKey() & flags) != 0).map(Map.Entry::getValue).collect(Collectors.joining(" "));
+  }
+
   public static void appendTypeParameters(
       TextBuffer buffer,
       List<String> parameters,
