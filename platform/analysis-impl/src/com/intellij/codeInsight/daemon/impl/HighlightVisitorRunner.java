@@ -214,10 +214,6 @@ class HighlightVisitorRunner {
             }
             //myErrorFound = true;
           }
-          // if this highlight info range is contained inside the current element range we are visiting
-          // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
-          // We also know that we can remove a syntax error element.
-          info.setVisitingTextRange(psiFile, psiFile.getFileDocument(), ranges.getLong(i));
           info.toolId = toolId;
           infos.add(info);
         }

@@ -23,12 +23,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorEventListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.fileEditor.FileEditorStateLevel
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.Companion.getInstanceExIfCreated
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -37,6 +32,7 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentlyChang
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -51,11 +47,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.io.EnumeratorLongDescriptor
-import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.IOUtil
-import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.StorageLockContext
+import com.intellij.util.io.*
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
@@ -64,14 +56,11 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.util.ArrayDeque
-import java.util.ArrayList
-import java.util.Deque
-import java.util.HashSet
+import java.util.*
 import java.util.function.Predicate
 
 private val LOG = Logger.getInstance(IdeDocumentHistoryImpl::class.java)
-
+private val CACHED_CARET_MARKER_KEY = Key.create<RangeMarker>("CACHED_CARET_MARKER_KEY")
 private val BACK_QUEUE_LIMIT = intValue("editor.navigation.history.stack.size")
 private val CHANGE_QUEUE_LIMIT = intValue("editor.navigation.history.stack.size")
 
@@ -582,10 +571,14 @@ open class IdeDocumentHistoryImpl(
     if (fileEditor !is TextEditor) {
       return null
     }
-
     val editor = fileEditor.getEditor()
     val offset = editor.getCaretModel().offset
-    return editor.getDocument().createRangeMarker(offset, offset)
+    var marker = fileEditor.getUserData(CACHED_CARET_MARKER_KEY)
+    if (marker == null || !marker.isValid || marker.startOffset != offset || marker.endOffset != offset) {
+      marker = editor.getDocument().createRangeMarker(offset, offset)
+      fileEditor.putUserData(CACHED_CARET_MARKER_KEY, marker)
+    }
+    return marker
   }
 
   private fun putLastOrMerge(next: PlaceInfo, limit: Int, isChanged: Boolean, groupId: Any?) {
