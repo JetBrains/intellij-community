@@ -159,7 +159,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     myDebugger = debuggerFactory.createDebugger(this);
 
-    List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
+    List<XBreakpointHandler<?>> breakpointHandlers = new ArrayList<>();
     breakpointHandlers.add(new PyLineBreakpointHandler(this));
     breakpointHandlers.add(new PyExceptionBreakpointHandler(this));
     for (PyBreakpointHandlerFactory factory : PyBreakpointHandlerFactory.EP_NAME.getExtensionList()) {
@@ -216,7 +216,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         if (currentFrame instanceof PyStackFrame) {
           currentFrameThreadId = ((PyStackFrame)currentFrame).getThreadId();
         }
-        final XExecutionStack activeStack = session.getSuspendContext().getActiveExecutionStack();
+        var suspendContext = session.getSuspendContext();
+        if (suspendContext == null) {
+          return;
+        }
+        XExecutionStack activeStack = suspendContext.getActiveExecutionStack();
         if ((activeStack == null) || (currentFrameThreadId == null)) {
           return;
         }
@@ -781,7 +785,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           String t = PyLineBreakpointType.ID;
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
-            for (XBreakpointType breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
+            for (XBreakpointType<?, ?> breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
               if (breakpointType instanceof PyBreakpointType &&
                   ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
                 t = breakpointType.getId();
@@ -1073,7 +1077,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return frame;
   }
 
-  private String getFunctionNameForBreakpoint(final XLineBreakpoint breakpoint) {
+  private String getFunctionNameForBreakpoint(final XLineBreakpoint<?> breakpoint) {
     XSourcePosition sourcePosition = breakpoint.getSourcePosition();
     return sourcePosition == null ? null : getFunctionName(sourcePosition);
   }
@@ -1100,7 +1104,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
-  public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {
+  public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint<?> breakpoint) {
     myRegisteredBreakpoints.put(position, breakpoint);
     if (isConnected()) {
       final String conditionExpression = breakpoint.getConditionExpression() == null
@@ -1122,7 +1126,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void removeBreakpoint(final PySourcePosition position) {
-    XLineBreakpoint breakpoint = myRegisteredBreakpoints.get(position);
+    XLineBreakpoint<?> breakpoint = myRegisteredBreakpoints.get(position);
     if (breakpoint != null) {
       myRegisteredBreakpoints.remove(position);
       if (isConnected()) {
@@ -1146,7 +1150,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
+  public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties<?>> breakpoint) {
     myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getExceptionBreakpointId());
     if (isConnected()) {
       myDebugger.removeExceptionBreakpoint(breakpoint.getProperties());
