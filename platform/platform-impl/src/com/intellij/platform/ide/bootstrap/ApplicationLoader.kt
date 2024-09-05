@@ -260,7 +260,7 @@ internal suspend fun loadApp(
 }
 
 private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
-  "com.jetbrains.rdserver.logs.BackendMessagePoolExporter\$MyAppListener",
+  "com.jetbrains.rdserver.unattendedHost.logs.BackendMessagePoolExporter\$MyAppListener",
   "com.intellij.settingsSync.SettingsSynchronizerApplicationInitializedListener",
   "com.intellij.pycharm.ds.jupyter.JupyterDSProjectLifecycleListener",
   "com.jetbrains.gateway.GatewayBuildDateExpirationListener",
