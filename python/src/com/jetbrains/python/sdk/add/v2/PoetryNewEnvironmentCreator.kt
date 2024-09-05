@@ -10,12 +10,16 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.poetry.PyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.poetry.poetryPath
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.flow.StateFlow
 
-class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : PythonNewEnvironmentCreator(model) {
 
   private lateinit var basePythonComboBox: PythonInterpreterComboBox
 
@@ -38,7 +42,22 @@ class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
   }
 
   override fun onShown() {
-    basePythonComboBox.setItems(model.baseInterpreters)
+    val moduleDir = when (moduleOrProject) {
+      is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.baseDir
+      is ModuleOrProject.ProjectOnly -> moduleOrProject.project.projectFile
+      null -> null
+    }
+
+    val validatedInterpreters =
+      if (moduleDir != null) {
+        PyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
+          as? StateFlow<List<PythonSelectableInterpreter>> ?: model.baseInterpreters
+      }
+      else {
+        model.baseInterpreters
+      }
+
+    basePythonComboBox.setItems(validatedInterpreters)
 
     //val savedPath = PropertiesComponent.getInstance().poetryPath
     //if (savedPath != null) {
@@ -72,7 +91,7 @@ class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
     SdkConfigurationUtil.addSdk(newSdk)
     return newSdk
   }
-  
+
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
     //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
     val statisticsTarget = target.toStatisticsField() // todo fix for wsl

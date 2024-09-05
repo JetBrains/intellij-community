@@ -249,9 +249,13 @@ public final class PySdkUtil {
   @NotNull
   public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      final PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(sdk);
       if (flavor != null) {
         return flavor.getLanguageLevel(sdk);
+      }
+      String versionString = sdk.getVersionString();
+      if (versionString != null) {
+        return LanguageLevel.fromPythonVersion(sdk.getVersionString());
       }
     }
     return LanguageLevel.getDefault();

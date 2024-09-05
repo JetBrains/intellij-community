@@ -12,11 +12,9 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.statistics.InterpreterCreationMode
-import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import java.io.File
 

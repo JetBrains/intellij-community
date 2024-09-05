@@ -89,6 +89,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                      implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
+    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlPostStartupActivity"/>
   </extensions>
 
 

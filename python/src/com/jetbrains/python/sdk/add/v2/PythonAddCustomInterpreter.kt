@@ -11,9 +11,10 @@ import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 
-class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel) {
+class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null) {
 
   private val propertyGraph = model.propertyGraph
   private val selectionMethod = propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
@@ -26,7 +27,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     VIRTUALENV to PythonNewVirtualenvCreator(model),
     CONDA to CondaNewEnvironmentCreator(model),
     PIPENV to PipEnvNewEnvironmentCreator(model),
-    POETRY to PoetryNewEnvironmentCreator(model),
+    POETRY to PoetryNewEnvironmentCreator(model, moduleOrProject),
   )
 
   private val existingInterpreterSelectors = mapOf(

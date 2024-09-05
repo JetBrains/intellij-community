@@ -560,7 +560,8 @@ public final class PythonSdkUpdater {
     return Pair.createNonNull(lib, source);
   }
 
-  private static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
+  @ApiStatus.Internal
+  public static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
     if (project != null) {
       final Set<VirtualFile> moduleRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();

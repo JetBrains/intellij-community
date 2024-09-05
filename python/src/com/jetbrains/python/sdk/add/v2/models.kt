@@ -126,9 +126,11 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
       val existingSdkPaths = existingSdks.mapNotNull { it.homePath }.mapNotNull { tryResolvePath(it) }.toSet()
 
-      val detected = PythonSdkFlavor.getApplicableFlavors(true).flatMap { it.suggestLocalHomePaths(null, null) }
-        .filterNot { it in existingSdkPaths }
-        .map { DetectedSelectableInterpreter(it.pathString) }
+      val detected = PythonSdkFlavor.getApplicableFlavors(true).flatMap { sdkFlavor ->
+        sdkFlavor.suggestLocalHomePaths(null, null)
+          .filterNot { it in existingSdkPaths }
+          .map { DetectedSelectableInterpreter(it.pathString, sdkFlavor.getLanguageLevel(it.pathString)) }
+      }
 
       withContext(uiContext) {
         installable = filteredInstallable
@@ -219,7 +221,8 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
   }
 
   override fun addInterpreter(path: String): PythonSelectableInterpreter {
-    val interpreter = ManuallyAddedSelectableInterpreter(path)
+    val languageLevel = PySdkUtil.getLanguageLevelForSdk(PythonSdkUtil.findSdkByKey(path))
+    val interpreter = ManuallyAddedSelectableInterpreter(path, languageLevel)
     manuallyAddedInterpreters.value += interpreter
     return interpreter
   }
@@ -230,28 +233,28 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
   }
 }
 
-
 // todo does it need target configuration
 abstract class PythonSelectableInterpreter {
   abstract val homePath: String
+  abstract val languageLevel: LanguageLevel
   override fun toString(): String =
     "PythonSelectableInterpreter(homePath='$homePath')"
 }
 
-class ExistingSelectableInterpreter(val sdk: Sdk, val languageLevel: LanguageLevel, val isSystemWide: Boolean) : PythonSelectableInterpreter() {
+class ExistingSelectableInterpreter(val sdk: Sdk, override val languageLevel: LanguageLevel, val isSystemWide: Boolean) : PythonSelectableInterpreter() {
   override val homePath = sdk.homePath!! // todo is it safe
 }
 
 
-class DetectedSelectableInterpreter(override val homePath: String) : PythonSelectableInterpreter()
+class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
 
-class ManuallyAddedSelectableInterpreter(override val homePath: String) : PythonSelectableInterpreter()
+class ManuallyAddedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
 class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
   override val homePath: String = ""
+  override val languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
 }
 
-
-class InterpreterSeparator(val text: String) : PythonSelectableInterpreter() {
+class InterpreterSeparator(val text: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter() {
   override val homePath: String = ""
 }
 

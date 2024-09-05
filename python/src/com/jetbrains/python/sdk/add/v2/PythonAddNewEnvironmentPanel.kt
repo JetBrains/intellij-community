@@ -9,6 +9,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.observable.util.or
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.ui.dsl.builder.AlignX
