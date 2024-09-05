@@ -141,6 +141,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
   }
 
   override fun dispose() {
+    Disposer.dispose(manager)
     Disposer.dispose(original)
   }
 

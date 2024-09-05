@@ -60,10 +60,10 @@ class CustomFoldingEditorCellViewComponent(
   }
 
   private fun disposeFolding() = cell.manager.update { ctx ->
-    if (!editor.isDisposed && foldingRegion?.isValid == true) {
-      foldingRegion?.let {
-        ctx.addFoldingOperation {
-          editor.foldingModel.removeFoldRegion(it)
+    foldingRegion?.let { region ->
+      ctx.addFoldingOperation {
+        if (region.isValid == true) {
+          editor.foldingModel.removeFoldRegion(region)
         }
       }
     }
@@ -123,13 +123,13 @@ class CustomFoldingEditorCellViewComponent(
       }
 
       override fun processMouseMotionEvent(e: MouseEvent) {
-        when(e.id) {
+        when (e.id) {
           MouseEvent.MOUSE_MOVED -> presentation.mouseMoved(e, e.point)
         }
       }
 
       override fun processMouseEvent(e: MouseEvent) {
-        when(e.id) {
+        when (e.id) {
           MouseEvent.MOUSE_EXITED -> presentation.mouseExited()
           MouseEvent.MOUSE_CLICKED -> presentation.mouseClicked(e, e.point)
           MouseEvent.MOUSE_PRESSED -> presentation.mousePressed(e, e.point)

@@ -47,7 +47,7 @@ class ControllerEditorCellViewComponent(
   }
 
   override fun updateCellFolding(updateContext: UpdateContext) {
-    updateContext.addFoldingOperation {
+    updateContext.addFoldingOperation { foldingModel ->
       val doc = editor.document
       val interval = cell.interval
 
@@ -56,7 +56,6 @@ class ControllerEditorCellViewComponent(
 
       //Configure folding
       val regionToFold = IntRange(cellContentStart, cellEnd)
-      val foldingModel = editor.foldingModel as FoldingModelEx
 
       if (foldedRegion != null) {
         disposeFolding()

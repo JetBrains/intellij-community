@@ -31,6 +31,7 @@ import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
+import com.intellij.openapi.editor.ex.FoldingModelEx
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
@@ -461,16 +462,17 @@ class NotebookCellInlayManager private constructor(
 
 class UpdateContext(val force: Boolean = false) {
 
-  private val foldingOperations = mutableListOf<() -> Unit>()
+  private val foldingOperations = mutableListOf<(FoldingModelEx) -> Unit>()
 
-  fun addFoldingOperation(block: () -> Unit) {
+  fun addFoldingOperation(block: (FoldingModelEx) -> Unit) {
     foldingOperations.add(block)
   }
 
   fun applyUpdates(editor: Editor) {
-    if (foldingOperations.isNotEmpty()) {
-      editor.foldingModel.runBatchFoldingOperation {
-        foldingOperations.forEach { it() }
+    if (!editor.isDisposed && foldingOperations.isNotEmpty()) {
+      val foldingModel = editor.foldingModel as FoldingModelEx
+      foldingModel.runBatchFoldingOperation {
+        foldingOperations.forEach { it(foldingModel) }
       }
     }
   }

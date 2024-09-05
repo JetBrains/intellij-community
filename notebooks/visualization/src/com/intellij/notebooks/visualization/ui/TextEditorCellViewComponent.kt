@@ -105,7 +105,7 @@ class TextEditorCellViewComponent(
     val foldingModel = editor.foldingModel
     val currentFoldingRegion = foldingModel.getFoldRegion(startOffset, endOffset)
     if (currentFoldingRegion == null) {
-      ctx.addFoldingOperation {
+      ctx.addFoldingOperation { foldingModel ->
         val text = editor.document.getText(TextRange(startOffset, endOffset))
         val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
         val placeholder = StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", 20, 0)
@@ -116,7 +116,7 @@ class TextEditorCellViewComponent(
       }
     }
     else {
-      ctx.addFoldingOperation {
+      ctx.addFoldingOperation { foldingModel ->
         if (currentFoldingRegion.isExpanded) {
           currentFoldingRegion.isExpanded = false
         }
