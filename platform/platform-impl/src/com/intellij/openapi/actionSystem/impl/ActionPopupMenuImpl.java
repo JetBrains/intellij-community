@@ -84,7 +84,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     myDataContextProvider = dataProvider;
   }
 
-  private final class MyMenu extends JBPopupMenu implements PlaceProvider, ActionUiKind.Popup {
+  private final class MyMenu extends JBPopupMenu implements PlaceProvider {
     private final @NotNull String myPlace;
     private final @NotNull ActionGroup myGroup;
     private DataContext myContext;
@@ -167,7 +167,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.INSTANCE.fillPopupMenu(this, myGroup, myPresentationFactory, myContext, myPlace, point);
+      Utils.INSTANCE.fillPopupMenu(new ActualActionUiKind.Menu(this, false), myGroup, myPresentationFactory, myContext, myPlace, point);
     }
 
     private void disposeMenu() {

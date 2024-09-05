@@ -1016,6 +1016,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/functionalArgument.kt");
         }
 
+        @TestMetadata("functionalType.kt")
+        public void testFunctionalType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/functionalType.kt");
+        }
+
         @TestMetadata("getWithSpread.kt")
         public void testGetWithSpread() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/getWithSpread.kt");
@@ -7624,6 +7629,90 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/hasPlatformType")
+        public static class HasPlatformType extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extensionOnDynamic.kt")
+            public void testExtensionOnDynamic() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/extensionOnDynamic.kt");
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/function.kt");
+            }
+
+            @TestMetadata("functionExclExcl.kt")
+            public void testFunctionExclExcl() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/functionExclExcl.kt");
+            }
+
+            @TestMetadata("localClassFunction.kt")
+            public void testLocalClassFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/localClassFunction.kt");
+            }
+
+            @TestMetadata("localClassProperty.kt")
+            public void testLocalClassProperty() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/localClassProperty.kt");
+            }
+
+            @TestMetadata("localFunction.kt")
+            public void testLocalFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/localFunction.kt");
+            }
+
+            @TestMetadata("localProperty.kt")
+            public void testLocalProperty() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/localProperty.kt");
+            }
+
+            @TestMetadata("privateFunction.kt")
+            public void testPrivateFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/privateFunction.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/property.kt");
+            }
+
+            @TestMetadata("property2.kt")
+            public void testProperty2() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/property2.kt");
+            }
+
+            @TestMetadata("propertyExclExcl.kt")
+            public void testPropertyExclExcl() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/propertyExclExcl.kt");
+            }
+
+            @TestMetadata("protectedFunction.kt")
+            public void testProtectedFunction() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/protectedFunction.kt");
+            }
+
+            @TestMetadata("recursiveGeneric.kt")
+            public void testRecursiveGeneric() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/recursiveGeneric.kt");
+            }
+
+            @TestMetadata("star.kt")
+            public void testStar() throws Exception {
+                runTest("testData/inspectionsLocal/hasPlatformType/star.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/kotlinOptionsToCompilerOptions")
         public static class KotlinOptionsToCompilerOptions extends AbstractK2LocalInspectionTest {
             @java.lang.Override
@@ -7649,6 +7738,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("dontMergeConvertedOptionsToAnotherCompilerOptions.gradle.kts")
             public void testDontMergeConvertedOptionsToAnotherCompilerOptions_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontMergeConvertedOptionsToAnotherCompilerOptions.gradle.kts");
+            }
+
+            @TestMetadata("dontReplaceIfOptionValueIsWrong.gradle.kts")
+            public void testDontReplaceIfOptionValueIsWrong_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceIfOptionValueIsWrong.gradle.kts");
             }
 
             @TestMetadata("dontReplaceInKtFile.kt")
@@ -7756,9 +7850,14 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/minusAssign.gradle.kts");
             }
 
-            @TestMetadata("replaceOnlyKotlinOptionsIfOptionValueIsWrong.gradle.kts")
-            public void testReplaceOnlyKotlinOptionsIfOptionValueIsWrong_gradle() throws Exception {
-                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/replaceOnlyKotlinOptionsIfOptionValueIsWrong.gradle.kts");
+            @TestMetadata("optionsBeforeDotInBiggerDotQualifiedExpression.gradle.kts")
+            public void testOptionsBeforeDotInBiggerDotQualifiedExpression_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/optionsBeforeDotInBiggerDotQualifiedExpression.gradle.kts");
+            }
+
+            @TestMetadata("optionsBeforeDot.gradle.kts")
+            public void testOptionsBeforeDot_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/optionsBeforeDot.gradle.kts");
             }
 
             @TestMetadata("subprojects.gradle.kts")

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -35,10 +34,9 @@ object KotlinFirLookupElementFactory {
         importStrategyDetector: ImportStrategyDetector,
     ): LookupElement = when (symbol) {
         is KaCallableSymbol -> createCallableLookupElement(
-            symbol.name,
-            symbol.asSignature(),
-            detectCallableOptions(symbol, importStrategyDetector),
-            expectedType = null,
+            name = symbol.name,
+            signature = symbol.asSignature(),
+            options = detectCallableOptions(symbol, importStrategyDetector),
         )
 
         is KaClassLikeSymbol -> ClassLookupElementFactory
@@ -54,11 +52,20 @@ object KotlinFirLookupElementFactory {
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
-    ): LookupElementBuilder {
-        return when (signature) {
-            is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
-            is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
-        }
+    ): LookupElement = when (signature) {
+        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
+        is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
+    }
+
+    context(KaSession)
+    @ApiStatus.Experimental
+    fun createCallableLookupElementWithTrailingLambda(
+        name: Name,
+        signature: KaCallableSignature<*>,
+        options: CallableInsertionOptions,
+    ): LookupElement? = when (signature) {
+        is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookupWithTrailingLambda(name, signature, options)
+        else -> null
     }
 
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
@@ -88,5 +95,3 @@ object KotlinFirLookupElementFactory {
         return ClassLookupElementFactory.createLookup(symbol, importingStrategy)
     }
 }
-
-

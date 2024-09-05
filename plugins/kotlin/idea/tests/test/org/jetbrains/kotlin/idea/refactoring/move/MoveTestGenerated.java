@@ -179,6 +179,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveFile/kotlin/keepImportAliasRefs/keepImportAliasRefs.test");
         }
 
+        @TestMetadata("kotlin/langInjection/langInjection.test")
+        public void testKotlin_langInjection_LangInjection() throws Exception {
+            runTest("testData/refactoring/moveFile/kotlin/langInjection/langInjection.test");
+        }
+
         @TestMetadata("kotlin/longName/longName.test")
         public void testKotlin_longName_LongName() throws Exception {
             runTest("testData/refactoring/moveFile/kotlin/longName/longName.test");
@@ -521,6 +526,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test")
         public void testKotlin_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
+        }
+
+        @TestMetadata("kotlin/moveCollectionLiteralUsage/moveCollectionLiteralUsage.test")
+        public void testKotlin_moveCollectionLiteralUsage_MoveCollectionLiteralUsage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveCollectionLiteralUsage/moveCollectionLiteralUsage.test");
         }
 
         @TestMetadata("kotlin/moveEscapedKeyword/moveEscapedKeyword.test")

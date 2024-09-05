@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.observable.util.addMouseHoverListener
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.JBColor
@@ -23,14 +22,17 @@ import javax.swing.ComboBoxEditor
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class PythonSdkComboBoxWithBrowseButtonEditor(val comboBox: ComboBox<PythonSelectableInterpreter?>,
-                                              val controller: PythonAddInterpreterModel,
-                                              onPathSelected: (String) -> Unit) : ComboBoxEditor {
+class PythonSdkComboBoxWithBrowseButtonEditor(
+  val comboBox: ComboBox<PythonSelectableInterpreter?>,
+  val controller: PythonAddInterpreterModel,
+  onPathSelected: (String) -> Unit,
+) : ComboBoxEditor {
   private val component = SimpleColoredComponent()
   private val panel: JComponent
   private lateinit var iconLabel: JLabel
   private var _item: Any? = null
-  private var isBusy = false
+  var isBusy = false
+    private set
 
   init {
     panel = panel {

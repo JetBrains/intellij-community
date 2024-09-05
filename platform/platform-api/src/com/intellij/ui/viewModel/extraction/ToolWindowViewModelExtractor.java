@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.viewModel.extraction;
 
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @see ToolWindowExtractorEP
  * @see ViewModelToolWindowFactory
  */
-@ApiStatus.Experimental
+@Internal
 public interface ToolWindowViewModelExtractor {
   ExtensionPointName<ToolWindowViewModelExtractor> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowExtractor");
 

@@ -2,11 +2,12 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.*
 
 /**
  * Given that there is some IJent process launched, this extension gets handles to stdin+stdout of the process and returns
- * an [IjentApi] instance for calling procedures on IJent side.
+ * an [com.intellij.platform.eel.IjentApi] instance for calling procedures on IJent side.
  */
 interface IjentSessionProvider {
   /**
@@ -14,7 +15,7 @@ interface IjentSessionProvider {
    */
   suspend fun connect(
     strategy: IjentConnectionStrategy,
-    platform: IjentPlatform,
+    platform: EelPlatform,
     mediator: IjentSessionMediator,
   ): IjentApi
 
@@ -39,7 +40,7 @@ sealed class IjentStartupError : RuntimeException {
 }
 
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun connect(strategy: IjentConnectionStrategy, platform: IjentPlatform, mediator: IjentSessionMediator): IjentApi {
+  override suspend fun connect(strategy: IjentConnectionStrategy, platform: EelPlatform, mediator: IjentSessionMediator): IjentApi {
     throw IjentStartupError.MissingImplPlugin()
   }
 }
@@ -51,7 +52,7 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  * [com.intellij.platform.ijent.bindToScope] may be useful for terminating the IJent process earlier.
  */
-suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: IjentPlatform, process: Process): IjentApi {
+suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: EelPlatform, process: Process): IjentApi {
   val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
   val ijentId = ijentSessionRegistry.register(ijentName, oneOff = true) { ijentId ->
     val mediator = IjentSessionMediator.create(process, ijentId)
@@ -62,9 +63,9 @@ suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionSt
 }
 
 /** A specialized overload of [connectToRunningIjent] */
-suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: IjentPlatform.Posix, process: Process): IjentPosixApi =
-  connectToRunningIjent(ijentName, strategy, platform as IjentPlatform, process) as IjentPosixApi
+suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: EelPlatform.Posix, process: Process): IjentPosixApi =
+  connectToRunningIjent(ijentName, strategy, platform as EelPlatform, process) as IjentPosixApi
 
 /** A specialized overload of [connectToRunningIjent] */
-suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: IjentPlatform.Windows, process: Process): IjentWindowsApi =
-  connectToRunningIjent(ijentName, strategy, platform as IjentPlatform, process) as IjentWindowsApi
+suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: EelPlatform.Windows, process: Process): IjentWindowsApi =
+  connectToRunningIjent(ijentName, strategy, platform as EelPlatform, process) as IjentWindowsApi

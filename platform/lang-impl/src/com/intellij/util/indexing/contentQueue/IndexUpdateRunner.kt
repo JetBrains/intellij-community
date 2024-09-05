@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
 import com.intellij.platform.diagnostic.telemetry.IJTracer
@@ -31,6 +32,7 @@ import com.intellij.util.indexing.contentQueue.dev.IndexWriter
 import com.intellij.util.indexing.contentQueue.dev.TOTAL_WRITERS_NUMBER
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.IndexingRequestToken
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
@@ -41,9 +43,12 @@ import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
+import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Throws
+import kotlin.time.Duration.Companion.nanoseconds
 
 @ApiStatus.Internal
 class IndexUpdateRunner(
@@ -155,8 +160,15 @@ class IndexUpdateRunner(
     fileSet: FileSet,
     processRequestTask: suspend (FileIndexingRequest) -> Unit,
   ) {
+    //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
+    //         index writing down the stack. But what if it is not?
+    val parallelWriter = IndexWriter.defaultParallelWriter()
 
-    TRACER.spanBuilder("doIndexFiles").setAttribute("files", fileSet.size().toLong()).useWithScope {
+    val totalTimeIndexersSleptBeforeNs = parallelWriter.totalTimeIndexersSlept(NANOSECONDS)
+    val startedAtNs = System.nanoTime()
+
+    val filesToIndexCount = fileSet.size()
+    TRACER.spanBuilder("doIndexFiles").setAttribute("files", filesToIndexCount.toLong()).useWithScope {
       withContext(Dispatchers.Default + CoroutineName("Indexing(${project.locationHash}")) {
         //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
         // of distributing the load across available CPUs.
@@ -196,10 +208,18 @@ class IndexUpdateRunner(
           }
         }
       }
-      //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
-      //         index writing down the stack. But what if it is not?
-      IndexWriter.defaultParallelWriter().waitCurrentIndexingToFinish()
+
+      parallelWriter.waitCurrentIndexingToFinish()
     }
+
+    val indexersSleptNs = parallelWriter.totalTimeIndexersSlept(NANOSECONDS) - totalTimeIndexersSleptBeforeNs
+    val totalTimeNs = System.nanoTime() - startedAtNs
+    IndexStatisticGroup.reportIndexingInternalStatistics(
+      totalFiles = filesToIndexCount,
+      indexersCount = INDEXING_PARALLELIZATION,
+      totalIndexingDuration = totalTimeNs.nanoseconds,
+      indexersSlept = indexersSleptNs.nanoseconds
+    )
   }
 
   @Throws(ProcessCanceledException::class)
@@ -255,9 +275,15 @@ class IndexUpdateRunner(
       contentLoader: CachedFileContentLoader,
       statistics: IndexingFileSetStatistics,
     ) {
+      val file = fileIndexingRequest.file
+      if( !fileIndexingRequest.isDeleteRequest && !file.isValid ){
+        //this is a bandage for the annoying 'Alien file...' errors in tests: in real life it shouldn't be possible to come
+        //  here with an invalid file, but in a (badly isolated) tests it could happen
+        LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
+        return
+      }
 
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-      val file = fileIndexingRequest.file
       val indexingStamp = indexingRequest.getFileIndexingStamp(file)
 
       val (applier, contentLoadingTime, length) = if (fileIndexingRequest.isDeleteRequest) {
@@ -291,10 +317,8 @@ class IndexUpdateRunner(
 
     private suspend fun getApplierForFileIndexDelete(
       indexingStamp: FileIndexingStamp,
-      file: VirtualFile
+      file: VirtualFile,
     ): FileIndexingResult? {
-      //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
-      //         the lifecycle?
       val fileIndexingResult = readAction {
         fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
       }
@@ -320,8 +344,6 @@ class IndexUpdateRunner(
       try {
         val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
         val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
-        //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
-        //         the lifecycle?
         val fileIndexingResult = readAction {
           indexingAttemptCount.incrementAndGet()
           val fileType = if (fileTypeChangeChecker.get()) type else null
@@ -358,13 +380,13 @@ class IndexUpdateRunner(
       return loadedFileContentLimiter.acquiringBytes(fileLength) {
         //TODO RC: withContext(Dispatchers.IO) ?
         //TODO RC: non-cancellable section is used just to avoid context-switch down the stack (DiskQueryRelay):
-        val fileContent = if(LOAD_CONTENT_IN_NON_CANCELLABLE_SECTION) {
+        val fileContent = if (LOAD_CONTENT_IN_NON_CANCELLABLE_SECTION) {
           //TODO RC: withContext(NonCancellable) {} don't work here (but should work: IJPL-157558)
           Cancellation.withNonCancelableSection().use {
             loader.loadContent(file)
           }
         }
-        else{
+        else {
           loader.loadContent(file)
         }
         ContentLoadingResult(fileContent, fileLength)

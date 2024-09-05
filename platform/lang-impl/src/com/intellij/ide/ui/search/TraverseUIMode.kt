@@ -20,7 +20,7 @@ class TraverseUIMode {
   /**
    * @return `true` iff the IDE was started in "build searchable options" mode
    */
-  fun isActive() = isActive
+  fun isActive(): Boolean = isActive
 
   companion object {
     @JvmStatic

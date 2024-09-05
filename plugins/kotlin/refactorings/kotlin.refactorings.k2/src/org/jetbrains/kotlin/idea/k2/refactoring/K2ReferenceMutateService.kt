@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
@@ -90,6 +91,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             val expression = simpleNameReference.expression
             if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
+
+                // if reference will be unresolvable, don't retarget
+                if (!simpleNameReference.element.resolveScope.contains(targetElement)) return expression
             } else {
                 // Here we assume that the passed fqName uniquely identifies the new target element
                 val oldTarget = simpleNameReference.resolve()

@@ -96,7 +96,6 @@ pc:com.intellij.execution.process.CapturingAnsiEscapesAwareProcessHandler$AnsiEs
 f:com.intellij.execution.process.ColoredOutputTypeRegistryImpl
 - <init>():V
 - s:getAnsiColorKey(I):com.intellij.openapi.editor.colors.TextAttributesKey
-- getOutputType(com.intellij.execution.process.AnsiTerminalEmulator,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 - getOutputType(java.lang.String,com.intellij.openapi.util.Key):com.intellij.execution.process.ProcessOutputType
 f:com.intellij.execution.process.ConsoleHighlighter
 - sf:BLACK:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -1905,6 +1904,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:ALLOW_PlAIN_LETTER_SHORTCUTS:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_GROUP:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_INLINE_ACTION:com.intellij.openapi.util.Key
+- sf:COMPONENT_PROVIDER:com.intellij.openapi.util.Key
 - sf:HIDE_DISABLED_CHILDREN:com.intellij.openapi.util.Key
 - sf:HIDE_DROPDOWN_ICON:com.intellij.openapi.util.Key
 - sf:INLINE_ACTIONS:com.intellij.openapi.util.Key
@@ -3685,7 +3685,6 @@ c:com.intellij.openapi.ui.ComboBoxWithWidePopup
 - setRenderer(javax.swing.ListCellRenderer):V
 c:com.intellij.openapi.ui.ComboBoxWithWidePopup$AdjustingListCellRenderer
 - javax.swing.ListCellRenderer
-- f:delegate:javax.swing.ListCellRenderer
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.openapi.ui.ComponentValidator
 - sf:CWBB_PROVIDER:java.util.function.Function
@@ -3813,7 +3812,6 @@ c:com.intellij.openapi.ui.DialogBuilder$CancelActionDescriptor
 - p:myText:java.lang.String
 - <init>():V
 - getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- p:getBuiltinAction(com.intellij.openapi.ui.DialogBuilder$MyDialogWrapper):javax.swing.Action
 - setText(java.lang.String):V
 c:com.intellij.openapi.ui.DialogBuilder$CloseDialogAction
 - com.intellij.openapi.ui.DialogBuilder$DialogActionDescriptor
@@ -3839,7 +3837,6 @@ c:com.intellij.openapi.ui.DialogBuilder$OkActionDescriptor
 - p:myText:java.lang.String
 - <init>():V
 - getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- p:getBuiltinAction(com.intellij.openapi.ui.DialogBuilder$MyDialogWrapper):javax.swing.Action
 - setText(java.lang.String):V
 f:com.intellij.openapi.ui.DialogEarthquakeShaker
 - s:shake(java.awt.Window):V
@@ -5617,6 +5614,36 @@ com.intellij.openapi.wm.InteractiveCourseFactory
 f:com.intellij.openapi.wm.InteractiveCourseFactory$Companion
 - f:getINTERACTIVE_COURSE_FACTORY_EP():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.wm.LightEditFrame
+f:com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:Companion:com.intellij.openapi.wm.RegisterToolWindowTask$Companion
+- <init>(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,javax.swing.JComponent,Z,Z,Z,Z,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,java.util.function.Supplier):V
+- b:<init>(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,javax.swing.JComponent,Z,Z,Z,Z,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,java.util.function.Supplier,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:closable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:closable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- sf:notClosable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+f:com.intellij.openapi.wm.RegisterToolWindowTask$Companion
+- f:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:closable(java.lang.String,java.util.function.Supplier,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:closable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:closable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:closable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,java.util.function.Supplier,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:closable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:lazyAndClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:lazyAndClosable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String,javax.swing.Icon):com.intellij.openapi.wm.RegisterToolWindowTask
+- f:notClosable(java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:notClosable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
+- bs:notClosable$default(com.intellij.openapi.wm.RegisterToolWindowTask$Companion,java.lang.String,javax.swing.Icon,com.intellij.openapi.wm.ToolWindowAnchor,I,java.lang.Object):com.intellij.openapi.wm.RegisterToolWindowTask
 f:com.intellij.openapi.wm.RegisterToolWindowTaskBuilder
 - anchor:com.intellij.openapi.wm.ToolWindowAnchor
 - canCloseContent:Z
@@ -7295,7 +7322,6 @@ a:com.intellij.ui.ReorderableListController$CustomActionDescription
 - setShowText(Z):V
 pc:com.intellij.ui.ReorderableListController$CustomActionDescription$BaseAction
 - com.intellij.openapi.project.DumbAwareAction
-- <init>(com.intellij.ui.ReorderableListController$CustomActionDescription,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.ui.ReorderableListController$ActionBehaviour):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -7913,6 +7939,7 @@ c:com.intellij.ui.components.DropDownLink
 - f:getSelectedItem():java.lang.Object
 - getSelectedObjects():java.lang.Object[]
 - p:itemToString(java.lang.Object):java.lang.String
+- p:performAction():V
 - p:popupPoint():java.awt.Point
 - f:setSelectedItem(java.lang.Object):V
 c:com.intellij.ui.components.FixedColumnsModel
@@ -8402,6 +8429,9 @@ c:com.intellij.ui.components.JBScrollPane$Layout
 - layoutContainer(java.awt.Container):V
 - preferredLayoutSize(java.awt.Container):java.awt.Dimension
 - syncWithScrollPane(javax.swing.JScrollPane):V
+c:com.intellij.ui.components.JBScrollPane$ViewportBorder
+- javax.swing.border.LineBorder
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 c:com.intellij.ui.components.JBSlider
 - javax.swing.JSlider
 - <init>():V
@@ -8546,10 +8576,6 @@ c:com.intellij.ui.components.ProgressBarLoadingDecorator
 - startLoading():V
 - startLoading(Z):V
 - stopLoading():V
-c:com.intellij.ui.components.SelectionAwareListCellRenderer
-- javax.swing.ListCellRenderer
-- <init>(com.intellij.util.NotNullFunction):V
-- getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.ui.components.TextComponentEmptyText
 - com.intellij.util.ui.StatusText
 - sf:STATUS_VISIBLE_FUNCTION:java.lang.String
@@ -9489,6 +9515,7 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - a:getValue():java.lang.Object
 - a:icon(javax.swing.Icon,kotlin.jvm.functions.Function1):V
 - bs:icon$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,javax.swing.Icon,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:separator(kotlin.jvm.functions.Function1):V
 - a:setBackground(java.awt.Color):V
 - a:setSelectionColor(java.awt.Color):V
 - a:text(java.lang.String,kotlin.jvm.functions.Function1):V
@@ -9500,6 +9527,9 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
 - s:values():com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap[]
+*:com.intellij.ui.dsl.listCellRenderer.LcrSeparator
+- a:getText():java.lang.String
+- a:setText(java.lang.String):V
 *f:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>(java.awt.Color):V
@@ -9514,14 +9544,6 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - f:setSpeedSearchHighlighting(Z):V
 f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
 - sf:stripHorizontalInsets(javax.swing.JComponent):V
-com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider
-- sf:Companion:com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider$Companion
-- s:getEP():com.intellij.openapi.extensions.ExtensionPointName
-- a:getRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
-- a:isApplicable():Z
-f:com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider$Companion
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
-- f:getRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 com.intellij.ui.dualView.CellWrapper
 - a:wrap(java.awt.Component,javax.swing.JTable,java.lang.Object,Z,Z,I,I,java.lang.Object):V
 com.intellij.ui.dualView.DualTreeElement
@@ -9626,257 +9648,6 @@ f:com.intellij.ui.hover.HoverUtilsKt
 - f:mouseExited(java.awt.Component):V
 - f:mouseMoved(java.awt.Component,I,I):V
 - a:onHover(javax.swing.JTree,I):V
-*:com.intellij.ui.jcef.CefOsrBrowserFactory
-- a:createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
-- s:getInstance():com.intellij.ui.jcef.CefOsrBrowserFactory
-f:com.intellij.ui.jcef.JBCefApp
-- createClient():com.intellij.ui.jcef.JBCefClient
-- createMessageRouter(org.cef.browser.CefMessageRouter$CefMessageRouterConfig):org.cef.browser.CefMessageRouter
-- getCefSettings():org.cef.CefSettings
-- s:getForceDeviceScaleFactor():D
-- s:getInstance():com.intellij.ui.jcef.JBCefApp
-- s:getNotificationGroup():com.intellij.notification.NotificationGroup
-- getRemoteDebuggingPort():java.lang.Integer
-- getRemoteDebuggingPort(java.util.function.Consumer):V
-- s:isOffScreenRenderingModeEnabled():Z
-- s:isStarted():Z
-- s:isSupported():Z
-- s:normalizeScaledSize(I):I
-com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
-- org.cef.callback.CefSchemeHandlerFactory
-- a:getDomainName():java.lang.String
-- a:getSchemeName():java.lang.String
-- a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
-*f:com.intellij.ui.jcef.JBCefAppArmorUtils
-- <init>():V
-- s:areUnprivilegedUserNamespacesRestricted():Z
-- s:createUnprivilegedUserNamespacesRestrictedBanner():com.intellij.ui.InlineBanner
-- s:getUnprivilegedUserNamespacesRestrictedStubPanel():javax.swing.JPanel
-- s:showUnprivilegedUserNamespacesRestrictedDialog(java.awt.Component):V
-com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
-- sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
-- a:getOptions():java.util.List
-- s:getProviders():java.util.List
-f:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
-- f:getProviders():java.util.List
-- f:setEP(com.intellij.openapi.extensions.ExtensionPointName):V
-f:com.intellij.ui.jcef.JBCefAppUtilsKt
-- sf:getRemoteDebugPortSuspendable(com.intellij.ui.jcef.JBCefApp,kotlin.coroutines.Continuation):java.lang.Object
-c:com.intellij.ui.jcef.JBCefBrowser
-- com.intellij.ui.jcef.JBCefBrowserBase
-- <init>():V
-- p:<init>(com.intellij.ui.jcef.JBCefBrowserBuilder):V
-- <init>(com.intellij.ui.jcef.JBCefClient,java.lang.String):V
-- <init>(java.lang.String):V
-- <init>(org.cef.browser.CefBrowser,com.intellij.ui.jcef.JBCefClient):V
-- s:addOnBrowserMoveResizeCallback(java.util.function.Consumer):V
-- s:create(com.intellij.ui.jcef.JBCefBrowserBuilder):com.intellij.ui.jcef.JBCefBrowser
-- s:createBuilder():com.intellij.ui.jcef.JBCefBrowserBuilder
-- dispose():V
-- p:getBackgroundColor():java.awt.Color
-- getComponent():javax.swing.JComponent
-- s:removeOnBrowserMoveResizeCallback(java.util.function.Consumer):V
-pc:com.intellij.ui.jcef.JBCefBrowser$DefaultCefContextMenuHandler
-- com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
-- <init>(com.intellij.ui.jcef.JBCefBrowser):V
-- <init>(com.intellij.ui.jcef.JBCefBrowser,Z):V
-c:com.intellij.ui.jcef.JBCefBrowser$MyPanel
-- javax.swing.JPanel
-- getJBCefBrowser():com.intellij.ui.jcef.JBCefBrowser
-- getPreferredSize():java.awt.Dimension
-- p:processFocusEvent(java.awt.event.FocusEvent):V
-- removeNotify():V
-- setBackground(java.awt.Color):V
-c:com.intellij.ui.jcef.JBCefBrowser$Properties
-- com.intellij.ui.jcef.JBCefBrowserBase$Properties
-- sf:FOCUS_ON_NAVIGATION:java.lang.String
-- sf:FOCUS_ON_SHOW:java.lang.String
-- <init>():V
-a:com.intellij.ui.jcef.JBCefBrowserBase
-- com.intellij.ui.jcef.JBCefDisposable
-- psf:BLANK_URI:java.lang.String
-- sf:JBCEFBROWSER_INSTANCE_PROP:java.lang.String
-- pf:myCefBrowser:org.cef.browser.CefBrowser
-- pf:myCefClient:com.intellij.ui.jcef.JBCefClient
-- p:<init>(com.intellij.ui.jcef.JBCefBrowserBuilder):V
-- p:createDefaultContextMenuHandler():com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
-- createImmediately():V
-- dispose():V
-- p:dispose(java.lang.Runnable):V
-- getBrowserComponent():java.awt.Component
-- f:getCefBrowser():org.cef.browser.CefBrowser
-- a:getComponent():javax.swing.JComponent
-- s:getFocusedBrowser():com.intellij.ui.jcef.JBCefBrowserBase
-- s:getGlobalJBCefCookieManager():com.intellij.ui.jcef.JBCefCookieManager
-- s:getJBCefBrowser(org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefBrowser
-- f:getJBCefClient():com.intellij.ui.jcef.JBCefClient
-- f:getJBCefCookieManager():com.intellij.ui.jcef.JBCefCookieManager
-- getProperty(java.lang.String):java.lang.Object
-- f:getZoomLevel():D
-- f:isDisposed():Z
-- isOffScreenRendering():Z
-- isProperty(java.lang.String):Z
-- f:loadHTML(java.lang.String):V
-- f:loadHTML(java.lang.String,java.lang.String):V
-- f:loadURL(java.lang.String):V
-- openDevtools():V
-- setErrorPage(com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage):V
-- f:setJBCefCookieManager(com.intellij.ui.jcef.JBCefCookieManager):V
-- setOpenLinksInExternalBrowser(Z):V
-- setPageBackgroundColor(java.lang.String):V
-- setProperty(java.lang.String,java.lang.Object):V
-- f:setZoomLevel(D):V
-pc:com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
-- org.cef.handler.CefContextMenuHandlerAdapter
-- psf:DEBUG_COMMAND_ID:I
-- <init>(com.intellij.ui.jcef.JBCefBrowserBase):V
-- <init>(com.intellij.ui.jcef.JBCefBrowserBase,Z):V
-- onBeforeContextMenu(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.callback.CefContextMenuParams,org.cef.callback.CefMenuModel):V
-- onContextMenuCommand(org.cef.browser.CefBrowser,org.cef.browser.CefFrame,org.cef.callback.CefContextMenuParams,I,I):Z
-com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
-- sf:DEFAULT:com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
-- a:create(org.cef.handler.CefLoadHandler$ErrorCode,java.lang.String,java.lang.String):java.lang.String
-c:com.intellij.ui.jcef.JBCefBrowserBase$Properties
-- sf:NO_CONTEXT_MENU:java.lang.String
-- sf:NO_DEFAULT_AUTH_CREDENTIALS:java.lang.String
-- <init>():V
-c:com.intellij.ui.jcef.JBCefBrowserBuilder
-- <init>():V
-- build():com.intellij.ui.jcef.JBCefBrowser
-- createBrowser():com.intellij.ui.jcef.JBCefBrowser
-- setCefBrowser(org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setClient(com.intellij.ui.jcef.JBCefClient):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setCreateImmediately(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setEnableOpenDevToolsMenuItem(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setMouseWheelEventEnable(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setOSRHandlerFactory(com.intellij.ui.jcef.JBCefOSRHandlerFactory):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setOffScreenRendering(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setUrl(java.lang.String):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setWindowlessFramerate(I):com.intellij.ui.jcef.JBCefBrowserBuilder
-c:com.intellij.ui.jcef.JBCefBrowserJsCall
-- sf:Companion:com.intellij.ui.jcef.JBCefBrowserJsCall$Companion
-- <init>(java.lang.String,com.intellij.ui.jcef.JBCefBrowser,I):V
-- f:await(kotlin.coroutines.Continuation):java.lang.Object
-- f:invoke():org.jetbrains.concurrency.Promise
-f:com.intellij.ui.jcef.JBCefBrowserJsCall$Companion
-f:com.intellij.ui.jcef.JBCefBrowserJsCallError
-- java.lang.IllegalStateException
-- <init>(java.lang.String):V
-f:com.intellij.ui.jcef.JBCefBrowserJsCallKt
-- sf:executeJavaScript(com.intellij.ui.jcef.JBCefBrowser,java.lang.String,I,kotlin.coroutines.Continuation):java.lang.Object
-- bs:executeJavaScript$default(com.intellij.ui.jcef.JBCefBrowser,java.lang.String,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:executeJavaScriptAsync(com.intellij.ui.jcef.JBCefBrowser,java.lang.String):org.jetbrains.concurrency.Promise
-f:com.intellij.ui.jcef.JBCefClient
-- com.intellij.ui.jcef.JBCefDisposable
-- addContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addDialogHandler(org.cef.handler.CefDialogHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addDisplayHandler(org.cef.handler.CefDisplayHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addDownloadHandler(org.cef.handler.CefDownloadHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addDragHandler(org.cef.handler.CefDragHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addFocusHandler(org.cef.handler.CefFocusHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addJSDialogHandler(org.cef.handler.CefJSDialogHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addKeyboardHandler(org.cef.handler.CefKeyboardHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addLifeSpanHandler(org.cef.handler.CefLifeSpanHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addLoadHandler(org.cef.handler.CefLoadHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addPermissionHandler(org.cef.handler.CefPermissionHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- addRequestHandler(org.cef.handler.CefRequestHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
-- dispose():V
-- getCefClient():org.cef.CefClient
-- getProperty(java.lang.String):java.lang.Object
-- isDisposed():Z
-- removeAllHandlers(org.cef.browser.CefBrowser):V
-- removeContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):V
-- removeDialogHandler(org.cef.handler.CefDialogHandler,org.cef.browser.CefBrowser):V
-- removeDisplayHandler(org.cef.handler.CefDisplayHandler,org.cef.browser.CefBrowser):V
-- removeDownloadHandle(org.cef.handler.CefDownloadHandler,org.cef.browser.CefBrowser):V
-- removeDragHandler(org.cef.handler.CefDragHandler,org.cef.browser.CefBrowser):V
-- removeFocusHandler(org.cef.handler.CefFocusHandler,org.cef.browser.CefBrowser):V
-- removeJSDialogHandler(org.cef.handler.CefJSDialogHandler,org.cef.browser.CefBrowser):V
-- removeKeyboardHandler(org.cef.handler.CefKeyboardHandler,org.cef.browser.CefBrowser):V
-- removeLifeSpanHandler(org.cef.handler.CefLifeSpanHandler,org.cef.browser.CefBrowser):V
-- removeLoadHandler(org.cef.handler.CefLoadHandler,org.cef.browser.CefBrowser):V
-- removeRequestHandler(org.cef.handler.CefRequestHandler,org.cef.browser.CefBrowser):V
-- setProperty(java.lang.String,java.lang.Object):V
-f:com.intellij.ui.jcef.JBCefClient$Properties
-- sf:JS_QUERY_POOL_SIZE:java.lang.String
-- <init>():V
-f:com.intellij.ui.jcef.JBCefCookie
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,Z):V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,Z,java.util.Date,java.util.Date,Z,java.util.Date):V
-- <init>(org.cef.network.CefCookie):V
-- equals(java.lang.Object):Z
-- getCefCookie():org.cef.network.CefCookie
-- getCreation():java.util.Date
-- getDomain():java.lang.String
-- getExpires():java.util.Date
-- getLastAccess():java.util.Date
-- getName():java.lang.String
-- getPath():java.lang.String
-- getValue():java.lang.String
-- hasExpires():Z
-- hashCode():I
-- isHttpOnly():Z
-- isSecure():Z
-f:com.intellij.ui.jcef.JBCefCookieManager
-- <init>():V
-- deleteCookies(java.lang.String,java.lang.String):java.util.concurrent.Future
-- deleteCookies(java.lang.String,Z):Z
-- deleteCookies(Z):Z
-- getCefCookieManager():org.cef.network.CefCookieManager
-- getCookies():java.util.List
-- getCookies(java.lang.String,java.lang.Boolean):java.util.concurrent.Future
-- setCookie(java.lang.String,com.intellij.ui.jcef.JBCefCookie):java.util.concurrent.Future
-- setCookie(java.lang.String,com.intellij.ui.jcef.JBCefCookie,Z):Z
-com.intellij.ui.jcef.JBCefDisposable
-- com.intellij.openapi.Disposable
-- a:isDisposed():Z
-f:com.intellij.ui.jcef.JBCefJSQuery
-- com.intellij.ui.jcef.JBCefDisposable
-- addHandler(java.util.function.Function):V
-- clearHandlers():V
-- s:create(com.intellij.ui.jcef.JBCefBrowser):com.intellij.ui.jcef.JBCefJSQuery
-- s:create(com.intellij.ui.jcef.JBCefBrowserBase):com.intellij.ui.jcef.JBCefJSQuery
-- dispose():V
-- getFuncName():java.lang.String
-- inject(java.lang.String):java.lang.String
-- inject(java.lang.String,java.lang.String,java.lang.String):java.lang.String
-- isDisposed():Z
-- removeHandler(java.util.function.Function):V
-c:com.intellij.ui.jcef.JBCefJSQuery$Response
-- sf:ERR_CODE_SUCCESS:I
-- <init>(java.lang.String):V
-- <init>(java.lang.String,I,java.lang.String):V
-- errCode():I
-- errMsg():java.lang.String
-- hasResponse():Z
-- isSuccess():Z
-- response():java.lang.String
-com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- a:createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
-- a:createComponent(Z):javax.swing.JComponent
-- s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
-a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
-- com.intellij.ui.jcef.JBCefBrowserBase
-- p:<init>(com.intellij.ui.jcef.JBCefClient,java.lang.String,org.cef.handler.CefRenderHandler,Z):V
-- s:create(java.lang.String,org.cef.handler.CefRenderHandler):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
-- s:create(java.lang.String,org.cef.handler.CefRenderHandler,com.intellij.ui.jcef.JBCefClient):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
-- s:create(java.lang.String,org.cef.handler.CefRenderHandler,com.intellij.ui.jcef.JBCefClient,Z):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
-- s:create(java.lang.String,org.cef.handler.CefRenderHandler,Z):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
-f:com.intellij.ui.jcef.JBCefPsiNavigationUtils
-- sf:INSTANCE:com.intellij.ui.jcef.JBCefPsiNavigationUtils
-- f:navigateTo(java.lang.String):Z
-- f:navigateTo(java.lang.String,com.intellij.openapi.util.text.LineColumn):Z
-f:com.intellij.ui.jcef.JBCefScrollbarsHelper
-- <init>():V
-- s:buildScrollbarsStyle():java.lang.String
-- s:getOverlayScrollbarStyle():java.lang.String
-- s:getOverlayScrollbarsSourceCSS():java.lang.String
-- s:getOverlayScrollbarsSourceJS():java.lang.String
-f:com.intellij.ui.jcef.JcefShortcutProvider
-- <init>():V
-- s:getActions():java.util.List
-- s:registerShortcuts(javax.swing.JComponent,com.intellij.ui.jcef.JBCefBrowser):V
 f:com.intellij.ui.layout.AdvancedSettingsPredicate
 - com.intellij.ui.layout.ComponentPredicate
 - <init>(java.lang.String,com.intellij.openapi.Disposable):V
@@ -9909,10 +9680,6 @@ f:com.intellij.ui.layout.ComponentPredicateKt
 - sf:or(com.intellij.ui.layout.ComponentPredicate,com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueIs(javax.swing.JComboBox,java.lang.Object):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueMatches(javax.swing.JComboBox,kotlin.jvm.functions.Function1):com.intellij.ui.layout.ComponentPredicate
-f:com.intellij.ui.list.LeftRightRenderer
-- javax.swing.ListCellRenderer
-- <init>(javax.swing.ListCellRenderer,javax.swing.ListCellRenderer):V
-- getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.ui.mac.screenmenu.Menu
 - com.intellij.ui.mac.screenmenu.MenuItem
 - <init>(java.lang.String):V
@@ -9997,7 +9764,6 @@ f:com.intellij.ui.messager.Callout
 - s:showText(javax.swing.JTree,javax.swing.tree.TreePath,I,java.lang.String):V
 - s:showTextBelow(javax.swing.JComponent,java.lang.String):V
 c:com.intellij.ui.messager.CalloutComponent
-- p:myPointerComponent:com.intellij.ui.messager.CalloutComponent$Pointer
 - p:myTargetComponent:javax.swing.JComponent
 - p:myTargetWindow:java.awt.Window
 - <init>(javax.swing.JComponent):V
@@ -10340,6 +10106,7 @@ a:com.intellij.ui.speedSearch.SpeedSearchSupply
 - a:matchingFragments(java.lang.String):java.lang.Iterable
 - a:refreshSelection():V
 - a:removeChangeListener(java.beans.PropertyChangeListener):V
+- selectTextRange(I,I):V
 - supportsNavigation():Z
 *:com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - a:getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle
@@ -11521,12 +11288,6 @@ c:com.intellij.ui.treeStructure.treetable.TreeTableTree
 - setTreeTableTreeBorder(javax.swing.border.Border):V
 - setVisibleRow(I):V
 - updateUI():V
-*:com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:FILE_VISIBLE_FOR_REMOTE_CLIENTS:com.intellij.openapi.util.Key
-- sf:SYNC_TAB_TO_REMOTE_CLIENTS:com.intellij.openapi.util.Key
-- a:isApplicable(com.intellij.ui.content.Content,com.intellij.openapi.client.ClientProjectSession):Z
-- a:syncContentToRemoteClient(com.intellij.ui.content.Content):Z
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String
@@ -11547,10 +11308,6 @@ c:com.intellij.ui.treeStructure.treetable.TreeTableTree
 - isUnsupported():Z
 - s:valueOf(java.lang.String):com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
 - s:values():com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode[]
-*:com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getMode():com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
-- a:isApplicable(java.lang.String,com.intellij.openapi.client.ClientProjectSession):Z
 com.intellij.ui.viewModel.extraction.ToolWindowViewModelListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:toolWindowChanged(java.lang.String):V
@@ -11726,7 +11483,6 @@ f:com.intellij.util.OpenSourceUtil
 - dispose():V
 - getName():java.lang.String
 - getPeriod():I
-- getStatistic():com.intellij.util.animation.JBAnimator$Statistic
 - getType():com.intellij.util.animation.JBAnimator$Type
 - ignorePowerSaveMode():com.intellij.util.animation.JBAnimator
 - isCyclic():Z

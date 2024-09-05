@@ -476,7 +476,11 @@ private class BlockHrSupportExtension : Extension {
     val attrs = element.attributes
     if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
         attrs.getAttribute(StyleConstants.NameAttribute) === HTML.Tag.HR) {
-      (element as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
+      if (element.attributes.getAttribute(HTML.Tag.HR) == null) {
+        (element.document as JBHtmlEditorKit.JBHtmlDocument).tryRunUnderWriteLock {
+          (element as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
+        }
+      }
       return HRViewEx(element, View.Y_AXIS)
     }
     else {

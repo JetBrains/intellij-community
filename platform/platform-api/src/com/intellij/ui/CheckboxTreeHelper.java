@@ -127,16 +127,25 @@ public class CheckboxTreeHelper {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (isToggleEvent(e, mainComponent)) {
+          TreePath[] selectionPaths = tree.getSelectionPaths();
+          if (selectionPaths == null || selectionPaths.length == 0) return;
+
           TreePath treePath = tree.getLeadSelectionPath();
           if (treePath == null) return;
+
+          int nodesToChange = selectionPaths.length - 1;
+          if (!tree.isPathSelected(treePath)) {
+            treePath = selectionPaths[nodesToChange];
+            nodesToChange--;
+          }
+
           final Object o = treePath.getLastPathComponent();
           if (!(o instanceof CheckedTreeNode firstNode)) return;
           if (!firstNode.isEnabled()) return;
           toggleNode(tree, firstNode);
           boolean checked = firstNode.isChecked();
 
-          TreePath[] selectionPaths = tree.getSelectionPaths();
-          for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
+          for (int i = 0; i <= nodesToChange; i++) {
             final TreePath selectionPath = selectionPaths[i];
             final Object o1 = selectionPath.getLastPathComponent();
             if (!(o1 instanceof CheckedTreeNode node)) continue;

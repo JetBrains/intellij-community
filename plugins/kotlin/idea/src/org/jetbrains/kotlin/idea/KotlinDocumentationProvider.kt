@@ -577,7 +577,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                         DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false)
                     }
                     HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+                        HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.ClassKotlin"),
                         HtmlChunk.nbsp(),
                         HtmlChunk.raw(link.toString()),
                         HtmlChunk.br()
@@ -593,7 +593,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
                 ?.let {  fileName: @NlsSafe String ->
                     HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                        HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.Kotlin_file"),
                         HtmlChunk.nbsp(),
                         HtmlChunk.text(fileName),
                         HtmlChunk.br()

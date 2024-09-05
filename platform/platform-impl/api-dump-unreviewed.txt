@@ -686,8 +686,6 @@ f:com.intellij.application.options.schemes.SchemeNameGenerator
 - s:getUniqueName(java.lang.String,java.util.function.Predicate):java.lang.String
 a:com.intellij.application.options.schemes.SchemesCombo
 - com.intellij.openapi.ui.ComboBox
-- sf:IDE_LEVEL:java.util.function.Supplier
-- sf:PROJECT_LEVEL:java.util.function.Supplier
 - <init>():V
 - p:getIndent(com.intellij.openapi.options.Scheme):I
 - pa:getSchemeAttributes(com.intellij.openapi.options.Scheme):com.intellij.ui.SimpleTextAttributes
@@ -3109,13 +3107,13 @@ f:com.intellij.diagnostic.logs.LogCategory
 - f:getCategory():java.lang.String
 - f:getLevel():com.intellij.diagnostic.logs.DebugLogLevel
 - hashCode():I
-f:com.intellij.diagnostic.logs.LogCategory$$serializer
+bc:com.intellij.diagnostic.logs.LogCategory$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.diagnostic.logs.LogCategory$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogCategory
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogCategory):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogCategory
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogCategory):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.diagnostic.logs.LogCategory$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -3142,13 +3140,13 @@ f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
 - bs:copy$default(com.intellij.diagnostic.logs.LogLevelConfigurationManager$State,java.util.List,I,java.lang.Object):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
+bc:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogLevelConfigurationManager$State):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogLevelConfigurationManager$State):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -9637,7 +9635,6 @@ com.intellij.ide.wizard.NewProjectWizardStep
 - sf:GENERATE_ONBOARDING_TIPS_NAME:java.lang.String
 - sf:GIT_PROPERTY_NAME:java.lang.String
 - sf:GROUP_ID_PROPERTY_NAME:java.lang.String
-- createModuleConfigurator():java.util.function.Consumer
 - a:getContext():com.intellij.ide.util.projectWizard.WizardContext
 - a:getData():com.intellij.openapi.util.UserDataHolder
 - a:getKeywords():com.intellij.ide.wizard.NewProjectWizardStep$Keywords
@@ -10078,10 +10075,6 @@ f:com.intellij.internal.validation.ValidTest
 f:com.intellij.internal.validation.ValidationTest
 - com.intellij.openapi.ui.DialogWrapper
 - getPreferredFocusedComponent():javax.swing.JComponent
-com.intellij.jdkEx.DisplayModeEx
-- a:isDefault(java.awt.DisplayMode):Z
-com.intellij.jdkEx.InputEventEx
-- a:getWhenNano(java.awt.event.InputEvent):J
 f:com.intellij.jps.impl.JpsIdePluginManagerImpl
 - <init>():V
 - getModificationStamp():I
@@ -10724,7 +10717,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 - unregisterAction(java.lang.String):V
 f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - com.intellij.ui.components.JBMenu
-- com.intellij.openapi.actionSystem.ActionUiKind$Popup
 - sf:ALWAYS_VISIBLE:com.intellij.openapi.util.Key
 - sf:Companion:com.intellij.openapi.actionSystem.impl.ActionMenu$Companion
 - sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key
@@ -10739,7 +10731,6 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - sf:isAligned():Z
 - sf:isAlignedInGroup():Z
 - f:isHeaderMenuItem():Z
-- isMainMenu():Z
 - f:isMainMenuPlace():Z
 - sf:isShowNoIcons():Z
 - sf:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction):Z
@@ -13193,7 +13184,6 @@ c:com.intellij.openapi.editor.textarea.TextComponentEditorImpl
 Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.Disposable$Default
 - com.intellij.openapi.actionSystem.ActionToolbar
-- com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - com.intellij.ui.switcher.QuickActionProvider
 - javax.swing.JPanel
@@ -14019,13 +14009,13 @@ f:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
 - bs:copy$default(com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState,java.util.Map,I,java.lang.Object):com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$$serializer
+bc:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerState$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -18901,7 +18891,6 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.OpenAlienProjectAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:projectOpened():V
-- scheduleUpdate(javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -19042,17 +19031,6 @@ a:com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction
 - pa:getTextForEmpty():java.lang.String
 - pa:isSilentlyChooseSingleOption():Z
 - p:showPopup(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.ui.popup.ListPopup,javax.swing.JComponent):V
-f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
-- <init>():V
-- s:collectAllActions(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.ActionGroup):V
-- s:splitAndWrapActions(com.intellij.openapi.actionSystem.ActionGroup,java.util.function.Function,I):com.intellij.openapi.util.Couple
-f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil$ToolbarTextButtonWrapper
-- com.intellij.openapi.actionSystem.AnActionWrapper
-- com.intellij.openapi.actionSystem.ex.CustomComponentAction
-- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
-- updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
-- s:wrapAsOptionButton(java.util.List):com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil$ToolbarTextButtonWrapper
-- s:wrapAsTextButton(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil$ToolbarTextButtonWrapper
 f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenColors
 f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory
 - <init>():V
@@ -20289,13 +20267,13 @@ f:com.intellij.toolWindow.ToolWindowDescriptor
 - f:setOrder(I):V
 - f:setVisible(Z):V
 - f:setWeight(F):V
-f:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
+bc:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowDescriptor$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowDescriptor
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowDescriptor):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowDescriptor
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowDescriptor):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowDescriptor$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20443,13 +20421,13 @@ f:com.intellij.toolWindow.ToolWindowLayoutDescriptor
 - f:getV2():java.util.List
 - hashCode():I
 - f:withUpdatedLayout(java.util.List,Z,java.util.Map):com.intellij.toolWindow.ToolWindowLayoutDescriptor
-f:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
+bc:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutDescriptor$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutDescriptor
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutDescriptor):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutDescriptor
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutDescriptor):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowLayoutDescriptor$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20476,13 +20454,13 @@ f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - f:withUpdatedLayout(java.lang.String,java.util.List,Z,java.util.Map):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - bs:withUpdatedLayout$default(com.intellij.toolWindow.ToolWindowLayoutStorageManagerState,java.lang.String,java.util.List,Z,java.util.Map,I,java.lang.Object):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
 - f:withoutLayout(java.lang.String):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
-f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
+bc:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerState):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerState
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerState):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerState$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -20499,13 +20477,13 @@ f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
 - f:getV1():java.util.List
 - f:getV2():java.util.List
 - hashCode():I
-f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
+bc:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.toolWindow.ToolWindowLayoutStorageManagerStateV1$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -22014,6 +21992,7 @@ a:com.intellij.ui.SpeedSearchBase
 - refreshSelection():V
 - removeChangeListener(java.beans.PropertyChangeListener):V
 - pa:selectElement(java.lang.Object,java.lang.String):V
+- selectTextRange(I,I):V
 - setClearSearchOnNavigateNoMatch(Z):V
 - setComparator(com.intellij.ui.SpeedSearchComparator):V
 - setupListeners():V
@@ -24337,48 +24316,6 @@ f:com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
 - f:getAttributeName():java.lang.String
 - f:getAttributeValue():java.lang.String
 - f:getStartPosition():I
-c:com.intellij.ui.jcef.CefBrowserFactoryImpl
-- com.intellij.ui.jcef.CefOsrBrowserFactory
-- <init>():V
-- createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
-*c:com.intellij.ui.jcef.HwFacadeHelper
-- sf:TRANSPARENT_COLOR:java.awt.Color
-- addNotify():V
-- s:create(javax.swing.JComponent):com.intellij.ui.jcef.HwFacadeHelper
-- hide():V
-- paint(java.awt.Graphics,java.util.function.Consumer):V
-- removeNotify():V
-- show():V
-c:com.intellij.ui.jcef.HwFacadeJPanel
-- javax.swing.JPanel
-- <init>():V
-- addNotify():V
-- hide():V
-- paint(java.awt.Graphics):V
-- removeNotify():V
-- show():V
-c:com.intellij.ui.jcef.HwFacadeNonOpaquePanel
-- com.intellij.ui.components.panels.NonOpaquePanel
-- <init>():V
-- addNotify():V
-- hide():V
-- paint(java.awt.Graphics):V
-- removeNotify():V
-- show():V
-c:com.intellij.ui.jcef.JBCefOSRHandlerFactoryImpl
-- com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- <init>():V
-- createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
-- createComponent(Z):javax.swing.JComponent
-c:com.intellij.ui.jcef.JCEFHtmlPanel
-- com.intellij.ui.jcef.JBCefBrowser
-- <init>(com.intellij.ui.jcef.JBCefClient,java.lang.String):V
-- <init>(java.lang.String):V
-- <init>(Z,com.intellij.ui.jcef.JBCefClient,java.lang.String):V
-- <init>(Z,java.lang.String):V
-- p:createDefaultContextMenuHandler():com.intellij.ui.jcef.JBCefBrowser$DefaultCefContextMenuHandler
-- p:prepareHtml(java.lang.String):java.lang.String
-- setHtml(java.lang.String):V
 com.intellij.ui.layout.BaseBuilder
 e:com.intellij.ui.layout.CCFlags
 - java.lang.Enum
@@ -26011,13 +25948,6 @@ f:com.intellij.util.ContentUtilEx
 - s:selectContent(com.intellij.ui.content.ContentManager,javax.swing.JComponent,Z):Z
 - s:setSplitMode(java.lang.String,Z):V
 - s:updateTabbedContentDisplayName(com.intellij.ui.content.ContentManager,javax.swing.JComponent):V
-f:com.intellij.util.FieldAccessor
-- <init>(java.lang.Class,java.lang.String):V
-- <init>(java.lang.Class,java.lang.String,java.lang.Class):V
-- b:<init>(java.lang.Class,java.lang.String,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:get(java.lang.Object):java.lang.Object
-- f:isAvailable():Z
-- f:set(java.lang.Object,java.lang.Object):V
 f:com.intellij.util.IJSwingUtilities
 - <init>():V
 - s:createHyperlinkEvent(java.lang.String,java.lang.Object):javax.swing.event.HyperlinkEvent

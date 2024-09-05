@@ -277,7 +277,7 @@ public class AnActionEvent implements PlaceProvider {
    * @see ActionUiKind#POPUP
    */
   public final boolean isFromContextMenu() {
-    return myUiKind instanceof ActionUiKind.Popup o && !o.isMainMenu();
+    return myUiKind instanceof ActionUiKind.Popup o && !o.isMainMenu() && !o.isSearchPopup();
   }
 
   /**
@@ -286,6 +286,14 @@ public class AnActionEvent implements PlaceProvider {
    */
   public final boolean isFromMainMenu() {
     return myUiKind instanceof ActionUiKind.Popup o && o.isMainMenu();
+  }
+
+  /**
+   * @see #getUiKind()
+   * @see ActionUiKind#POPUP
+   */
+  public final boolean isFromSearchPopup() {
+    return myUiKind instanceof ActionUiKind.Popup o && o.isSearchPopup();
   }
 
   /**

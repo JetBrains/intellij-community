@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.openapi.diagnostic.trace
@@ -30,19 +30,20 @@ internal class InstanceRegistrarImpl(
     val actions = actions()
     val existingHolder = existingKeys[keyClassName]
     if (existingHolder != null) {
-      throw InstanceAlreadyRegisteredException(
+      LOG.error(InstanceAlreadyRegisteredException(
         keyClassName,
         existingInstanceClassName = existingHolder.instanceClassName(),
         newInstanceClassName = initializer.instanceClassName,
-      )
+      ))
+      return
     }
     when (val existingAction = actions[keyClassName]) {
       null -> actions[keyClassName] = RegistrationAction.Register(initializer)
-      is RegistrationAction.Register -> throw InstanceAlreadyRegisteredException(
+      is RegistrationAction.Register -> LOG.error(InstanceAlreadyRegisteredException(
         keyClassName,
         existingInstanceClassName = existingAction.initializer.instanceClassName,
         newInstanceClassName = initializer.instanceClassName,
-      )
+      ))
       is RegistrationAction.Override -> error("must not happen unless keyClassName is in existingKeys which is false") // sanity check
       RegistrationAction.Remove -> error("must not happen unless keyClassName is in existingKeys which is false") // sanity check
     }
@@ -53,7 +54,8 @@ internal class InstanceRegistrarImpl(
     val newAction = when (val existing = actions[keyClassName]) {
       null -> {
         if (keyClassName !in existingKeys) {
-          throw InstanceNotRegisteredException("$keyClassName -> ${initializer?.instanceClassName ?: "<removed>"}")
+          LOG.error(InstanceNotRegisteredException("$keyClassName -> ${initializer?.instanceClassName ?: "<removed>"}"))
+          return
         }
         if (initializer == null) RegistrationAction.Remove else RegistrationAction.Override(initializer)
       }
@@ -81,7 +83,7 @@ internal class InstanceRegistrarImpl(
       }
       is RegistrationAction.Remove -> {
         check(keyClassName in existingKeys) // sanity check
-        // TODO throw InstanceNotRegisteredException("$keyClassName -> ${initializer?.instanceClassName ?: "<removed>"}")
+        // TODO LOG.error(InstanceNotRegisteredException("$keyClassName -> ${initializer?.instanceClassName ?: "<removed>"}"))
         LOG.trace {
           "$debugString : $keyClassName is removed and overridden again in the same scope " +
           "(<removed> -> ${initializer?.instanceClassName})"

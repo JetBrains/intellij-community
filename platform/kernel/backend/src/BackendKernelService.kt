@@ -10,8 +10,8 @@ import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
-import fleet.kernel.kernel
 import fleet.kernel.rebase.*
+import fleet.kernel.transactor
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +26,7 @@ private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope
     val kernelService = KernelService.instance
     val kernelCoroutineContext = kernelService.kernelCoroutineContext.await()
     return RemoteKernelImpl(
-      kernelCoroutineContext.kernel,
+      kernelCoroutineContext.transactor,
       coroutineScope.childScope("RemoteKernelScope", kernelCoroutineContext),
       CommonInstructionSet.decoder(),
       KernelRpcSerialization,
@@ -50,11 +50,11 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
 
   init {
     coroutineScope.launch {
-      withKernel(middleware = LeaderKernelMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
+      withKernel(middleware = LeaderTransactorMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
         change {
           initWorkspaceClock()
         }
-        handleEntityTypes()
+        handleEntityTypes(transactor(), this)
         kernelCoroutineContext.complete(currentCoroutineContext().kernelCoroutineContext())
         updateDbInTheEventDispatchThread()
       }

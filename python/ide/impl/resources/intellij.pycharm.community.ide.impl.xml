@@ -103,7 +103,7 @@
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject"
+      <group id="WelcomeScreen.CreateDirectoryProject"
               class="com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 

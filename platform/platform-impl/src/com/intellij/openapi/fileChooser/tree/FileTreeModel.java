@@ -196,7 +196,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     for (VirtualFile parent : parents) {
       for (Root root : roots) {
         Entry<Node> entry = root.tree.findEntry(parent);
-        if (entry != null) {
+        if (entry != null && !entry.isLoadingRequired()) {
           UpdateResult<Node> update = root.updateChildren(state, entry);
           //TODO:listeners.isEmpty
           boolean removed = !update.getRemoved().isEmpty();

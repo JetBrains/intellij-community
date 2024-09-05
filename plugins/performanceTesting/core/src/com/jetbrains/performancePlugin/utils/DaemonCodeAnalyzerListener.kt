@@ -70,6 +70,10 @@ internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBus
     }
   }
 
+  fun isDone(): Boolean {
+    return job.isDone
+  }
+
   fun suppressErrors() {
     suppressErrors = true
   }

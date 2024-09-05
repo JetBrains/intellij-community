@@ -305,7 +305,8 @@ public final class ConsentOptions implements ModificationTracker {
 
     for (Iterator<Map.Entry<String, Map<Locale, Consent>>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
       final Map.Entry<String, Map<Locale, Consent>> entry = it.next();
-      if (!filter.test(entry.getValue().get(getDefaultLocale()))) {
+      Consent consent = entry.getValue().get(getDefaultLocale());
+      if (consent != null && !filter.test(consent)) {
         it.remove();
       }
     }
@@ -319,6 +320,7 @@ public final class ConsentOptions implements ModificationTracker {
     for (Map.Entry<String, Map<Locale, Consent>> entry : allDefaults.entrySet()) {
       final Consent base = entry.getValue().get(getDefaultLocale());
       final Consent localized = entry.getValue().get(getCurrentLocale());
+      if (base == null) continue; 
       if (!base.isDeleted()) {
         final ConfirmedConsent confirmed = allConfirmed.get(base.getId());
         Consent consent = localized == null || base.getVersion().isNewer(localized.getVersion()) ? base : localized;
@@ -359,6 +361,7 @@ public final class ConsentOptions implements ModificationTracker {
     Map<String, Map<Locale, Consent>> defaultConsents = loadDefaultConsents();
     Map<Locale, Consent> consentMap = defaultConsents.get(consentId);
     Consent defaultConsent = consentMap.get(getDefaultLocale());
+    if (defaultConsent == null) return null;
     Consent localizedConsent = consentMap.get(getCurrentLocale());
     return localizedConsent == null || defaultConsent.getVersion().isNewer(localizedConsent.getVersion())
            ? defaultConsent
@@ -409,7 +412,7 @@ public final class ConsentOptions implements ModificationTracker {
   private boolean needReconfirm(Map<String, Map<Locale, Consent>> defaults, Map<String, ConfirmedConsent> confirmed) {
     for (Map<Locale, Consent> consents : defaults.values()) {
       Consent defConsent = consents.get(getDefaultLocale());
-      if (defConsent.isDeleted()) {
+      if (defConsent == null || defConsent.isDeleted()) {
         continue;
       }
       final ConfirmedConsent confirmedConsent = confirmed.get(defConsent.getId());

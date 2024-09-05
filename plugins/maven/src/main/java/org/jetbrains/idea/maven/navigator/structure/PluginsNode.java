@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.icons.AllIcons;
-import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.List;
@@ -29,9 +28,8 @@ class PluginsNode extends GroupNode {
   }
 
   public void updatePlugins(MavenProject mavenProject) {
-
-    List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
-    myMavenProjectsStructure.updatePluginsTree(this, plugins);
+    var pluginsInfos = mavenProject.getDeclaredPluginInfos();
+    myMavenProjectsStructure.updatePluginsTree(this, pluginsInfos);
   }
 
   public List<PluginNode> getPluginNodes() {

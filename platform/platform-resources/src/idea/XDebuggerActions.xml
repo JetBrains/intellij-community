@@ -1,0 +1,179 @@
+<idea-plugin>
+  <actions>
+    <group id="XDebugger.Actions">
+      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
+
+      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
+      </action>
+      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
+      <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
+      <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
+      <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
+      <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
+              use-shortcut-of="EditSource"/>
+      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
+
+      <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
+
+      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add"/>
+      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
+      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
+      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.General.Remove"
+              use-shortcut-of="$Delete"/>
+      <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MoveLineUp"/>
+      <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MoveLineDown"/>
+      <action id="XDebugger.SeparateWatches" class="com.intellij.xdebugger.impl.frame.actions.XSeparateWatchesAndVariables"
+              icon="AllIcons.Debugger.Watch"/>
+      <action id="XDebugger.ToggleEvaluateExpressionField" class="com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction"/>
+      <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
+      <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
+              icon="AllIcons.Debugger.MuteBreakpoints"/>
+      <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
+      <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
+      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
+      <action id="Debugger.FocusOnFinish" class="com.intellij.xdebugger.impl.actions.FocusOnFinishAction"/>
+      <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
+      <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
+      <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar">
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
+      <reference ref="StepOver"/>
+      <reference ref="StepInto"/>
+      <reference ref="StepOut"/>
+      <reference ref="RunToCursor"/>
+      <separator/>
+      <reference ref="EvaluateExpression" />
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3">
+      <reference ref="Rerun"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="Resume"/>
+      <reference ref="Pause"/>
+      <reference ref="StepOver"/>
+      <reference ref="StepInto"/>
+      <reference ref="StepOut"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+    </group>
+
+    <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
+      <reference ref="ForceStepOver"/>
+      <reference ref="ForceStepInto"/>
+      <reference ref="SmartStepInto"/>
+      <separator/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <separator/>
+      <reference ref="ShowExecutionPoint"/>
+      <separator/>
+      <reference ref="EvaluateExpression" />
+      <reference ref="Debugger.PopFrame" />
+    </group>
+
+    <group id="XDebugger.ToolWindow.LeftToolbar">
+      <separator/>
+      <reference ref="Resume"/>
+      <reference ref="Pause"/>
+      <reference ref="Stop"/>
+      <separator/>
+      <reference ref="ViewBreakpoints"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+    </group>
+
+    <group id="XDebugger.ValueGroup" popup="false">
+      <reference ref="XDebugger.Inspect"/>
+      <reference ref="Debugger.MarkObject"/>
+      <reference ref="XDebugger.SetValue"/>
+      <reference ref="XDebugger.CopyValue"/>
+      <reference ref="XDebugger.CompareValueWithClipboard"/>
+      <reference ref="XDebugger.CopyName"/>
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.ShowReferring"/>
+      <separator/>
+      <reference ref="XDebugger.JumpToSource"/>
+      <reference ref="XDebugger.JumpToTypeSource"/>
+      <separator/>
+    </group>
+
+    <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Frames.Tree.Popup">
+      <reference ref="Debugger.PopFrame" />
+      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
+    </group>
+
+    <group id="XDebugger.Frames.TopToolbar">
+      <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
+    </group>
+
+    <group id="XDebugger.Variables.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Variables.Tree.Toolbar">
+    </group>
+
+    <group id="XDebugger.Watches.Tree.Popup">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
+      <reference ref="XDebugger.RemoveAllWatches"/>
+      <reference ref="XDebugger.EditWatch"/>
+      <separator/>
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Watches.Tree.Toolbar">
+      <reference ref="XDebugger.NewWatch"/>
+      <reference ref="XDebugger.RemoveWatch"/>
+      <reference ref="XDebugger.MoveWatchUp"/>
+      <reference ref="XDebugger.MoveWatchDown"/>
+      <reference ref="XDebugger.CopyWatch"/>
+    </group>
+
+    <group id="XDebugger.Watches.Inline.Popup" popup="true">
+    </group>
+
+    <group id="XDebugger.Inspect.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
+    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup">
+      <reference ref="BasicEditorPopupMenu"/>
+      <reference ref="EditorToggleUseSoftWraps"/>
+    </group>
+
+    <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
+      <action id="XDebugger.PreviewTab" class="com.intellij.xdebugger.impl.actions.OpenFilesInPreviewTabAction"/>
+      <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
+      <separator/>
+      <reference ref="XDebugger.ToggleSortValues"/>
+      <separator/>
+      <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
+    </group>
+
+    <group id="XDebugger.Touchbar.Debug">
+      <separator text="type.small"/>
+      <reference ref="XDebugger.MuteBreakpoints"/>
+      <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Stop"/>
+    </group>
+
+    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.AddToWatch"/>
+    </group>
+  </actions>
+</idea-plugin>

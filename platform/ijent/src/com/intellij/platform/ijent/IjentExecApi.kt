@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-/**
- * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
- */
-interface IjentExecApi {
+import com.intellij.platform.eel.EelExecApi
+
   // TODO Extract into a separate interface, like IjentFileSystemApi.Arguments
   /**
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
@@ -20,48 +18,4 @@ interface IjentExecApi {
    * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
    * [ExecuteProcessBuilder.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
    */
-  fun executeProcessBuilder(exe: String): ExecuteProcessBuilder
-
-  /** Docs: [executeProcessBuilder] */
-  interface ExecuteProcessBuilder {
-    fun args(args: List<String>): ExecuteProcessBuilder
-    fun env(env: Map<String, String>): ExecuteProcessBuilder
-    fun pty(pty: Pty?): ExecuteProcessBuilder
-    fun workingDirectory(workingDirectory: String?): ExecuteProcessBuilder
-
-    /**
-     * Executes the process, returning either an [IjentChildProcess] or an error provided by the remote operating system.
-     *
-     * The instance of the [ExecuteProcessBuilder] _may_ become invalid after this call.
-     *
-     * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
-     */
-    suspend fun execute(): ExecuteProcessResult
-  }
-
-  /**
-   * Gets the same environment variables on the remote machine as the user would get if they run the shell.
-   */
-  @Throws(IjentUnavailableException::class)
-  suspend fun fetchLoginShellEnvVariables(): Map<String, String>
-
-  sealed interface ExecuteProcessResult {
-    class Success(val process: IjentChildProcess) : ExecuteProcessResult
-    data class Failure(val errno: Int, val message: String) : ExecuteProcessResult
-  }
-
-  /** [echo] must be true in general and must be false when the user is asked for a password. */
-  data class Pty(val columns: Int, val rows: Int, val echo: Boolean)
-}
-
-/** Docs: [IjentExecApi.executeProcessBuilder] */
-@Throws(IjentUnavailableException::class)
-suspend fun IjentExecApi.executeProcess(exe: String, vararg args: String): IjentExecApi.ExecuteProcessResult =
-  executeProcessBuilder(exe).args(listOf(*args)).execute()
-
-/** Docs: [IjentExecApi.executeProcessBuilder] */
-fun IjentExecApi.executeProcessBuilder(exe: String, arg1: String, vararg args: String): IjentExecApi.ExecuteProcessBuilder =
-  executeProcessBuilder(exe).args(listOf(arg1, *args))
-
-fun IjentExecApi.ExecuteProcessBuilder.args(first: String, vararg other: String): IjentExecApi.ExecuteProcessBuilder =
-  args(listOf(first, *other))
+interface IjentExecApi: EelExecApi

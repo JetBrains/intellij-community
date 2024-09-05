@@ -22,7 +22,7 @@ internal annotation class LcrDslMarker
  * Because of all described nuances, it is hard to write correct own render. So using Kotlin UI DSL is highly recommended
  */
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-  return UiDslRendererProvider.getRenderer(init)
+  return UiDslRendererProvider.getInstance().getLcrRenderer(init)
 }
 
 /**

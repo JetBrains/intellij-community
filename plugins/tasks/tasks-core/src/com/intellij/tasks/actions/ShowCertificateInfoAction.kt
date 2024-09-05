@@ -24,12 +24,12 @@ class ShowCertificateInfoAction : AnAction() {
         Messages.showInfoMessage(String.format("Key store '%s' is empty", manager.cacertsPath), "No Certificates Available")
       }
       else {
-        val certificate = certificates[110]
+        val certificate = certificates[0]
         val certHierarchy = mutableListOf<X509Certificate>(certificate)
         getRootCertificate(certificate, manager.customTrustManager, certHierarchy)
         val dialog = CertificateWarningDialogProvider.getInstance()?.createCertificateWarningDialog(certHierarchy, manager.customTrustManager, "test.com", "RSA", mutableSetOf<X509Certificate>())
         if (dialog == null) {
-          Messages.showInfoMessage("Dialog cannot be shown now", "Internal Error")
+          LOG.error("Dialog cannot be shown now, dialog provider returns null")
           return
         }
         LOG.debug("Accepted: " + dialog.showAndGet())

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
+class OrderRootsCacheBridge(project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
   private val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   private val myRootUrls = AtomicReference<ConcurrentMap<CacheKey, Array<String>>>()
   private val myRootVirtualFiles = AtomicReference<ConcurrentMap<CacheKey, Array<VirtualFile>>>()

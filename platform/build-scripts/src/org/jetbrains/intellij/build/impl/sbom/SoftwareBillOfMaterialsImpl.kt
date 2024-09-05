@@ -4,10 +4,8 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
-import com.intellij.util.io.DigestUtil.updateContentHash
 import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
@@ -19,6 +17,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
@@ -60,7 +59,8 @@ import kotlin.io.path.bufferedReader
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
-internal class SoftwareBillOfMaterialsImpl(
+@ApiStatus.Internal
+class SoftwareBillOfMaterialsImpl(
   private val context: BuildContext,
   private val distributions: List<DistributionForOsTaskResult>,
   private val distributionFiles: List<DistributionFileEntry>
@@ -186,7 +186,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }
   }
 
-  private class Checksums(@JvmField val path: Path) {
+  class Checksums(@JvmField val path: Path) {
     val sha1sum: String
     val sha256sum: String
 

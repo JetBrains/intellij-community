@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +30,7 @@ final class ActionStepBuilder {
   private @NlsContexts.Separator String         mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
+  private final ActionUiKind                    myUiKind;
   private int myMaxIconWidth  = -1;
   private int myMaxIconHeight = -1;
 
@@ -39,7 +39,8 @@ final class ActionStepBuilder {
                     boolean useAlphaAsNumbers,
                     boolean showDisabled,
                     boolean honorActionMnemonics,
-                    @Nullable String actionPlace,
+                    @NotNull String actionPlace,
+                    @NotNull ActionUiKind uiKind,
                     @Nullable PresentationFactory presentationFactory) {
     myUseAlphaAsNumbers = useAlphaAsNumbers;
     myPresentationFactory = presentationFactory == null ? new PresentationFactory() : presentationFactory;
@@ -51,7 +52,8 @@ final class ActionStepBuilder {
     myPrependWithSeparator = false;
     mySeparatorText = null;
     myHonorActionMnemonics = honorActionMnemonics;
-    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
+    myActionPlace = actionPlace;
+    myUiKind = uiKind;
   }
 
   public @NotNull List<PopupFactoryImpl.ActionItem> getItems() {
@@ -93,7 +95,7 @@ final class ActionStepBuilder {
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      actionGroup, myPresentationFactory, myDataContext, myActionPlace, ActionUiKind.POPUP);
+      actionGroup, myPresentationFactory, myDataContext, myActionPlace, myUiKind);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
       newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);

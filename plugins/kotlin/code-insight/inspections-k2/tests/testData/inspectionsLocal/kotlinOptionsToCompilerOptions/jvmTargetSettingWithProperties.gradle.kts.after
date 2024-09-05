@@ -1,4 +1,5 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -24,7 +25,7 @@ fun properties(key: String) = project.findProperty(key).toString()
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
-    jvmTarget = properties("javaVersion")
+    jvmTarget.set(JvmTarget.fromString(properties("javaVersion")))
 }
 val compileTestKotlin: KotlinCompile by tasks
 compileTestKotlin.kotlinOptions {

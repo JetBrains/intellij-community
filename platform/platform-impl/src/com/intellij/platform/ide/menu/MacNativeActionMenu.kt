@@ -32,7 +32,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
   }
   menuPeer.setOnOpen(frame) {
     try {
-      Utils.fillMenu(uiKind = MacFrameMenu(frame, menuPeer),
+      Utils.fillMenu(uiKind = FrameMenuUiKind(frame, menuPeer),
                      group = groupRef.getAction(),
                      enableMnemonics = isMnemonicEnabled,
                      presentationFactory = presentationFactory,
@@ -74,6 +74,6 @@ private fun getDataContext(frame: JFrame): DataContext {
   return context
 }
 
-internal class MacFrameMenu(val frame: JFrame, val peer: Menu) : ActionUiKind.Popup {
+internal class FrameMenuUiKind(val frame: JFrame, val peer: Menu) : ActionUiKind.Popup {
   override fun isMainMenu(): Boolean = true
 }

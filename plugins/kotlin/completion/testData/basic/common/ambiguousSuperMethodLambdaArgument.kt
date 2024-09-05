@@ -16,8 +16,10 @@ class C : A, B {
     }
 }
 
-// EXIST: { lookupString:"foo", tailText:" {...} (lambda: () -> Unit) for A" }
-// EXIST: { lookupString:"foo", tailText:" {...} (lambda: () -> Unit) for B" }
+// EXIST: { lookupString:"foo", tailText:" { lambda: () -> Unit } for A" }
+// EXIST: { lookupString:"foo", tailText:" { lambda: () -> Unit } for B" }
+// EXIST: { lookupString:"foo", tailText:"(lambda: () -> Unit) for A" }
+// EXIST: { lookupString:"foo", tailText:"(lambda: () -> Unit) for B" }
 // EXIST: { lookupString:"foo", tailText:"(lambda) for A" }
 // EXIST: { lookupString:"foo", tailText:"(lambda) for B" }
-// ABSENT: bar
+// NOTHING_ELSE

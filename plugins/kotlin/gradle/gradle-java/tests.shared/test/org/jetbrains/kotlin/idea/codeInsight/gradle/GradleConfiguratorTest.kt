@@ -910,6 +910,112 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
+    private fun changeLanguageVersion() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.7", null, false)
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
+    fun testAddLanguageVersionIfKotlinOptionsDslExistsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testAddLanguageVersionIfKotlinOptionsDslExistsKts() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testAddLanguageVersionIfCompilerOptionsDslExistsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testAddLanguageVersionIfCompilerOptionsDslExistsKts() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInCompilerOptionsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInCompilerOptionsKts() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInKotlinOptionsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInKotlinOptionsKts() {
+        changeLanguageVersion()
+    }
+
+    private fun addInlineClasses() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeFeatureConfiguration(
+                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                )
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInKotlinOptionsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInKotlinOptionsGroovy() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInCompilerOptionsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInCompilerOptionsGroovy() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInCompilerOptionsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInCompilerOptionsKts() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInKotlinOptionsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInKotlinOptionsKts() {
+        changeLanguageVersion()
+    }
+
     @Test
     fun testChangeLanguageVersion() {
         val files = importProjectFromTestData()
@@ -956,17 +1062,17 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     fun testChangeFeatureSupport() {
-        val files = importProjectFromTestData()
+        addInlineClasses()
+    }
 
-        runInEdtAndWait {
-            runWriteAction {
-                KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
-                )
-            }
+    @Test
+    fun testChangeFeatureSupportCompilerOptionsKts() {
+        addInlineClasses()
+    }
 
-            checkFiles(files)
-        }
+    @Test
+    fun testChangeFeatureSupportCompilerOptions() {
+        addInlineClasses()
     }
 
     @Test
@@ -1026,6 +1132,33 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             checkFiles(files)
         }
     }
+
+    @Test
+    fun testEnableFeatureSupportToExistentArgumentsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testEnableFeatureSupportToExistentArgumentsCompilerOptions() {
+        addInlineClasses()
+    }
+
+
+    @Test
+    fun testEnableFeatureSupportToExistentArgumentsCompilerOptionsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testChangeLanguageVersionInCompilerOptionsGroovy() {
+        changeLanguageVersion()
+    }
+
+    @Test
+    fun testChangeLanguageVersionInKotlinOptionsGroovy() {
+        changeLanguageVersion()
+    }
+
 
     @Test
     fun testEnableFeatureSupportGSKWithoutFoundKotlinVersion() {

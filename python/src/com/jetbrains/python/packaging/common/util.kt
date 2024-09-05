@@ -17,10 +17,11 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
@@ -75,10 +76,12 @@ class PythonRankingAwarePackageNameComparator : Comparator<String> {
 }
 
 
-suspend fun <T> runPackagingOperationOrShowErrorDialog(sdk: Sdk,
-                                                       @NlsContexts.DialogTitle title: String,
-                                                       packageName: String? = null,
-                                                       operation: suspend (() -> Result<T>)): Result<T> {
+suspend fun <T> runPackagingOperationOrShowErrorDialog(
+  sdk: Sdk,
+  @NlsContexts.DialogTitle title: String,
+  packageName: String? = null,
+  operation: suspend (() -> Result<T>),
+): Result<T> {
   try {
     return operation.invoke()
   }
@@ -87,8 +90,13 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(sdk: Sdk,
     if (!PythonPackageManagementServiceBridge.runningUnderOldUI) {
       // todo[akniazev] this check is used for legacy package management only, remove when it's not needed anymore
       withContext(Dispatchers.Main) {
-        if (packageName != null) PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
-        else PackagesNotificationPanel.showError(title, description!!)
+        if (packageName != null) {
+          PyPackagesUsageCollector.failInstallSingleEvent.log()
+          PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
+        }
+        else {
+          PackagesNotificationPanel.showError(title, description!!)
+        }
       }
     }
     return Result.failure(ex)

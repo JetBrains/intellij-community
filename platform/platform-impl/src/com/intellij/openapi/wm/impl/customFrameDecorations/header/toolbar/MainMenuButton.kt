@@ -189,7 +189,7 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
     }
   }
 
-  private inner class ShowSubMenuAction(actionMenu: ActionMenu) : AbstractAction() {
+  private inner class ShowSubMenuAction(private val actionMenu: ActionMenu) : AbstractAction() {
 
     private val actionToShow = actionMenu.anAction
     private val keyStroke = KeyStroke.getKeyStroke(actionMenu.mnemonic, KeyEvent.ALT_DOWN_MASK)
@@ -199,7 +199,7 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
         if (expandableMenu?.isEnabled() == true) {
-          expandableMenu!!.switchState(actionToShow)
+          expandableMenu!!.switchState(actionMenu)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)

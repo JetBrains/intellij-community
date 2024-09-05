@@ -13,10 +13,10 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
@@ -24,10 +24,12 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
 import java.util.*
@@ -45,21 +47,6 @@ class MavenProject(val file: VirtualFile) {
 
   @Volatile
   private var myState: MavenProjectState = MavenProjectState()
-
-  @Volatile
-  private var problemsCache: List<MavenProjectProblem>? = null
-
-  @Volatile
-  private var myUnresolvedDependenciesCache: List<MavenArtifact>? = null
-
-  @Volatile
-  private var myUnresolvedPluginsCache: List<MavenPlugin>? = null
-
-  @Volatile
-  private var myUnresolvedExtensionsCache: List<MavenArtifact>? = null
-
-  @Volatile
-  private var myUnresolvedAnnotationProcessors: List<MavenArtifact>? = null
 
   private val cache = ConcurrentHashMap<Key<*>, Any>()
 
@@ -80,19 +67,17 @@ class MavenProject(val file: VirtualFile) {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
     settings: MavenGeneralSettings,
     keepPreviousArtifacts: Boolean,
   ): MavenProjectChanges {
-    val newState: MavenProjectState = myState.clone()
+    val keepPreviousPlugins = keepPreviousArtifacts
 
-    newState.incLastReadStamp()
-
-    val keepPreviousPlugins: Boolean = keepPreviousArtifacts
-
-    newState.doUpdateState(
+    val newState = doUpdateState(
+      myState,
+      true,
       readerResult.mavenModel,
       readerResult.readingProblems,
       readerResult.activatedProfiles,
@@ -103,13 +88,14 @@ class MavenProject(val file: VirtualFile) {
       false,
       keepPreviousPlugins,
       directory,
-      file.extension
+      file.extension,
+      null
     )
 
     return setState(newState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateState(
     model: MavenModel,
     dependencyHash: String?,
@@ -121,13 +107,9 @@ class MavenProject(val file: VirtualFile) {
     keepPreviousArtifacts: Boolean,
     keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
-    val newState: MavenProjectState = myState.clone()
-
-    if (null != dependencyHash) {
-      newState.dependencyHash = dependencyHash
-    }
-
-    newState.doUpdateState(
+    val newState = doUpdateState(
+      myState,
+      false,
       model,
       readingProblems,
       activatedProfiles,
@@ -138,44 +120,40 @@ class MavenProject(val file: VirtualFile) {
       true,
       keepPreviousPlugins,
       directory,
-      file.extension
+      file.extension,
+      dependencyHash
     )
 
     return setState(newState)
   }
 
-  @ApiStatus.Internal
-  fun updateState(
-    dependencies: List<MavenArtifact>,
-    properties: Properties,
-    plugins: List<MavenPlugin>,
-  ): MavenProjectChanges {
-    val newState: MavenProjectState = myState.clone()
-
-    newState.doUpdateState(dependencies, properties, plugins)
-
+  @Internal
+  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginInfo>): MavenProjectChanges {
+    val newState = myState.copy(
+      dependencies = dependencies,
+      properties = properties,
+      pluginInfos = pluginInfos
+    )
     return setState(newState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun updateState(readingProblems: Collection<MavenProjectProblem>): MavenProjectChanges {
-    val newState: MavenProjectState = myState.clone()
-
-    newState.readingProblems = readingProblems
-
+    val newState= myState.copy(readingProblems = readingProblems)
     return setState(newState)
+  }
+
+  @Internal
+  fun updatePluginArtifacts(pluginIdsToArtifacts: Map<MavenId, MavenArtifact?>) {
+    val newPluginInfos = myState.pluginInfos.map { MavenPluginInfo(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
+    val newState = myState.copy(pluginInfos = newPluginInfos)
+    setState(newState)
   }
 
   private fun setState(newState: MavenProjectState): MavenProjectChanges {
     val changes: MavenProjectChanges = myState.getChanges(newState)
     doSetState(newState)
     return changes
-  }
-
-  private fun updateState(updater: Consumer<MavenProjectState>) {
-    val newState: MavenProjectState = myState.clone()
-    updater.consume(newState)
-    doSetState(newState)
   }
 
   private fun doSetState(state: MavenProjectState) {
@@ -196,10 +174,14 @@ class MavenProject(val file: VirtualFile) {
     return snapshot.getChanges(myState)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun setFolders(folders: MavenGoalExecutionResult.Folders): MavenProjectChanges {
-    val newState: MavenProjectState = myState.clone()
-    newState.doSetFolders(folders.sources, folders.testSources, folders.resources, folders.testResources)
+    val newState = myState.copy(
+      sources = folders.sources,
+      testSources = folders.testSources,
+      resources = folders.resources,
+      testResources = folders.testResources,
+    )
     return setState(newState)
   }
 
@@ -234,7 +216,7 @@ class MavenProject(val file: VirtualFile) {
       if (state.name.isNullOrBlank()) {
         return state.mavenId!!.artifactId ?: ""
       }
-      return state.name!!
+      return state.name
     }
 
   val modelMap: Map<String, String>
@@ -420,17 +402,16 @@ class MavenProject(val file: VirtualFile) {
 
   val filterPropertiesFiles: List<String>
     get() {
-      var res: List<String>? = getCachedValue<List<String>>(FILTERS_CACHE_KEY)
+      var res = getCachedValue(FILTERS_CACHE_KEY)
       if (res == null) {
-        val propCfg: Element? = getPluginGoalConfiguration("org.codehaus.mojo", "properties-maven-plugin",
-                                                           "read-project-properties")
+        val propCfg = getPluginGoalConfiguration("org.codehaus.mojo", "properties-maven-plugin", "read-project-properties")
         if (propCfg != null) {
-          val files: Element? = propCfg.getChild("files")
+          val files = propCfg.getChild("files")
           if (files != null) {
             res = ArrayList()
 
-            for (file: Element in files.getChildren("file")) {
-              var f: File = File(file.value)
+            for (file in files.getChildren("file")) {
+              var f = File(file.value)
               if (!f.isAbsolute) {
                 f = File(directory, file.value)
               }
@@ -448,7 +429,7 @@ class MavenProject(val file: VirtualFile) {
           res.addAll(filters)
         }
 
-        res = putCachedValue<List<String>>(FILTERS_CACHE_KEY, res)
+        res = putCachedValue(FILTERS_CACHE_KEY, res)
       }
 
       return res
@@ -459,17 +440,9 @@ class MavenProject(val file: VirtualFile) {
       .map { it.description }
       .firstOrNull()
 
-  fun resetCache() {
+  private fun resetCache() {
     // todo a bit hacky
-    synchronized(this) {
-      problemsCache = null
-      myUnresolvedDependenciesCache = null
-      myUnresolvedPluginsCache = null
-      myUnresolvedExtensionsCache = null
-      myUnresolvedAnnotationProcessors = null
-
-      cache.clear()
-    }
+    cache.clear()
   }
 
   fun hasUnresolvedArtifacts(): Boolean {
@@ -480,38 +453,37 @@ class MavenProject(val file: VirtualFile) {
   }
 
   private fun getUnresolvedDependencies(fileExistsPredicate: Predicate<File>?): List<MavenArtifact> {
-    synchronized(this) {
-      if (myUnresolvedDependenciesCache == null) {
-        val result: MutableList<MavenArtifact> = ArrayList()
-        for (each in dependencies) {
-          val resolved = each.isResolved(fileExistsPredicate)
-          each.isFileUnresolved = !resolved
-          if (!resolved) result.add(each)
-        }
-        myUnresolvedDependenciesCache = result
+    var myUnresolvedDependenciesCache = getCachedValue(UNRESOLVED_DEPENDENCIES_CACHE_KEY)
+    if (myUnresolvedDependenciesCache == null) {
+      val result: MutableList<MavenArtifact> = ArrayList()
+      for (each in dependencies) {
+        val resolved = each.isResolved(fileExistsPredicate)
+        each.isFileUnresolved = !resolved
+        if (!resolved) result.add(each)
       }
-      return myUnresolvedDependenciesCache!!
+      myUnresolvedDependenciesCache = result
+      putCachedValue(UNRESOLVED_DEPENDENCIES_CACHE_KEY, myUnresolvedDependenciesCache)
     }
+    return myUnresolvedDependenciesCache
   }
 
   private val unresolvedExtensions: List<MavenArtifact>
     get() {
-      synchronized(this) {
-        if (myUnresolvedExtensionsCache == null) {
-          val result: MutableList<MavenArtifact> = ArrayList()
-          for (each in myState.extensions) {
-            // Collect only extensions that were attempted to be resolved.
-            // It is because embedder does not even try to resolve extensions that
-            // are not necessary.
-            if (myState.unresolvedArtifactIds.contains(each.mavenId) && !pomFileExists(localRepository, each)
-            ) {
-              result.add(each)
-            }
+      var myUnresolvedExtensionsCache = getCachedValue(UNRESOLVED_EXTENSIONS_CACHE_KEY)
+      if (myUnresolvedExtensionsCache == null) {
+        val result: MutableList<MavenArtifact> = ArrayList()
+        for (each in myState.extensions) {
+          // Collect only extensions that were attempted to be resolved.
+          // It is because embedder does not even try to resolve extensions that
+          // are not necessary.
+          if (myState.unresolvedArtifactIds.contains(each.mavenId) && !pomFileExists(localRepository, each)) {
+            result.add(each)
           }
-          myUnresolvedExtensionsCache = result
         }
-        return myUnresolvedExtensionsCache!!
+        myUnresolvedExtensionsCache = result
+        putCachedValue(UNRESOLVED_EXTENSIONS_CACHE_KEY, myUnresolvedExtensionsCache)
       }
+      return myUnresolvedExtensionsCache
     }
 
   private fun pomFileExists(localRepository: File, artifact: MavenArtifact): Boolean {
@@ -520,32 +492,32 @@ class MavenProject(val file: VirtualFile) {
 
   private val unresolvedAnnotationProcessors: List<MavenArtifact>
     get() {
-      synchronized(this) {
-        if (myUnresolvedAnnotationProcessors == null) {
-          val result: MutableList<MavenArtifact> = ArrayList()
-          for (each in myState.annotationProcessors) {
-            if (!each.isResolved) result.add(each)
-          }
-          myUnresolvedAnnotationProcessors = result
+      var myUnresolvedAnnotationProcessors = getCachedValue(UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY)
+      if (myUnresolvedAnnotationProcessors == null) {
+        val result: MutableList<MavenArtifact> = ArrayList()
+        for (each in myState.annotationProcessors) {
+          if (!each.isResolved) result.add(each)
         }
-        return myUnresolvedAnnotationProcessors!!
+        myUnresolvedAnnotationProcessors = result
+        putCachedValue(UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY, myUnresolvedAnnotationProcessors)
       }
+      return myUnresolvedAnnotationProcessors
     }
 
-  val unresolvedPlugins: List<MavenPlugin>
+  private val unresolvedPlugins: List<MavenPlugin>
     get() {
-      synchronized(this) {
-        if (myUnresolvedPluginsCache == null) {
-          val result: MutableList<MavenPlugin> = ArrayList()
-          for (each in declaredPlugins) {
-            if (!hasArtifactFile(localRepository, each.mavenId)) {
-              result.add(each)
-            }
+      var myUnresolvedPluginsCache = getCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY)
+      if (myUnresolvedPluginsCache == null) {
+        val result: MutableList<MavenPlugin> = ArrayList()
+        for (each in declaredPluginInfos) {
+          if (each.artifact?.isResolved != true) {
+            result.add(each.plugin)
           }
-          myUnresolvedPluginsCache = result
         }
-        return myUnresolvedPluginsCache!!
+        myUnresolvedPluginsCache = result
+        putCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY, myUnresolvedPluginsCache)
       }
+      return myUnresolvedPluginsCache
     }
 
   val isAggregator: Boolean
@@ -555,38 +527,38 @@ class MavenProject(val file: VirtualFile) {
 
   val problems: List<MavenProjectProblem>
     get() {
-      val problems = problemsCache
-      if (null != problems) return problems
-
       return collectProblems(null)
     }
 
-  @ApiStatus.Internal
+  @Internal
   fun collectProblems(fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
-    synchronized(this) {
-      if (problemsCache == null) {
-        problemsCache = doCollectProblems(file, fileExistsPredicate)
-      }
-      return problemsCache!!
+    var problemsCache = getCachedValue(PROBLEMS_CACHE_KEY)
+    if (problemsCache == null) {
+      problemsCache = doCollectProblems(file, fileExistsPredicate)
+      putCachedValue(PROBLEMS_CACHE_KEY, problemsCache)
     }
+    return problemsCache
   }
 
   private fun doCollectProblems(file: VirtualFile, fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
     val result: MutableList<MavenProjectProblem> = ArrayList()
 
     validateParent(file, result)
-    result.addAll(myState.readingProblems)
+    val readingProblems = myState.readingProblems
+    result.addAll(readingProblems)
 
     for ((key, value) in modulesPathsAndNames) {
       if (LocalFileSystem.getInstance().findFileByPath(key) == null) {
-        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound",
-                                                                            value)))
+        result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.moduleNotFound", value)))
       }
     }
 
     validateDependencies(file, result, fileExistsPredicate)
     validateExtensions(file, result)
-    validatePlugins(file, result)
+
+    if (readingProblems.isEmpty()) {
+      validatePlugins(file, result)
+    }
 
     return result
   }
@@ -625,11 +597,6 @@ class MavenProject(val file: VirtualFile) {
       result.add(createDependencyProblem(file, MavenProjectBundle.message("maven.project.problem.unresolvedPlugin", each)))
     }
   }
-
-  val cacheProblems: List<MavenProjectProblem>
-    get() {
-      return problemsCache ?: emptyList()
-    }
 
   val existingModuleFiles: List<VirtualFile>
     get() {
@@ -722,11 +689,19 @@ class MavenProject(val file: VirtualFile) {
   }
 
   fun addDependencies(dependencies: Collection<MavenArtifact>) {
-    updateState { it.addDependencies(dependencies) }
+    val newDependencies = myState.dependencies + dependencies
+    val newState = myState.copy(
+      dependencies = newDependencies,
+    )
+    setState(newState)
   }
 
   fun addAnnotationProcessors(annotationProcessors: Collection<MavenArtifact>) {
-    updateState { it.addAnnotationProcessors(annotationProcessors) }
+    val newAnnotationProcessors = myState.annotationProcessors + annotationProcessors
+    val newState = myState.copy(
+      annotationProcessors = newAnnotationProcessors,
+    )
+    setState(newState)
   }
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
@@ -754,9 +729,21 @@ class MavenProject(val file: VirtualFile) {
       return myState.plugins
     }
 
+  @get:ApiStatus.Experimental
+  val pluginInfos: List<MavenPluginInfo>
+    get() {
+      return myState.pluginInfos
+    }
+
   val declaredPlugins: List<MavenPlugin>
     get() {
       return myState.declaredPlugins
+    }
+
+  @get:ApiStatus.Experimental
+  val declaredPluginInfos: List<MavenPluginInfo>
+    get() {
+      return myState.declaredPluginInfos
     }
 
   fun getPluginConfiguration(groupId: String?, artifactId: String?): Element? {
@@ -902,8 +889,7 @@ class MavenProject(val file: VirtualFile) {
   private fun getPropertiesFromConfig(kind: ConfigFileKind): Map<String, String> {
     var mavenConfig: Map<String, String>? = getCachedValue(kind.CACHE_KEY)
     if (mavenConfig == null) {
-      mavenConfig = readConfigFile(MavenUtil.getBaseDir(
-        directoryFile).toFile(), kind)
+      mavenConfig = readConfigFile(MavenUtil.getBaseDir(directoryFile).toFile(), kind)
       putCachedValue(kind.CACHE_KEY, mavenConfig)
     }
 
@@ -964,6 +950,11 @@ class MavenProject(val file: VirtualFile) {
   companion object {
     private val DEPENDENCIES_CACHE_KEY: Key<MavenArtifactIndex?> = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY")
     private val FILTERS_CACHE_KEY: Key<List<String>> = Key.create("MavenProject.FILTERS_CACHE_KEY")
+    private val PROBLEMS_CACHE_KEY: Key<List<MavenProjectProblem>> = Key.create("MavenProject.PROBLEMS_CACHE_KEY")
+    private val UNRESOLVED_DEPENDENCIES_CACHE_KEY: Key<List<MavenArtifact>> = Key.create("MavenProject.UNRESOLVED_DEPENDENCIES_CACHE_KEY")
+    private val UNRESOLVED_PLUGINS_CACHE_KEY: Key<List<MavenPlugin>> = Key.create("MavenProject.UNRESOLVED_PLUGINS_CACHE_KEY")
+    private val UNRESOLVED_EXTENSIONS_CACHE_KEY: Key<List<MavenArtifact>> = Key.create("MavenProject.UNRESOLVED_EXTENSIONS_CACHE_KEY")
+    private val UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY: Key<List<MavenArtifact>> = Key.create("MavenProject.UNRESOLVED_AP_CACHE_KEY")
 
     @Throws(IOException::class)
     fun read(`in`: DataInputStream): MavenProject? {
@@ -1068,7 +1059,7 @@ class MavenProject(val file: VirtualFile) {
     fun readConfigFile(baseDir: File?, kind: ConfigFileKind): Map<String, String> {
       val configFile = File(baseDir, FileUtil.toSystemDependentName(kind.myRelativeFilePath))
 
-      val parametersList: ParametersList = ParametersList()
+      val parametersList = ParametersList()
       if (configFile.isFile) {
         try {
           parametersList.addParametersString(FileUtil.loadFile(configFile, CharsetToolkit.UTF8))
@@ -1078,6 +1069,155 @@ class MavenProject(val file: VirtualFile) {
       }
       val config = parametersList.getProperties(kind.myValueIfMissing)
       return config.ifEmpty { emptyMap() }
+    }
+
+    private fun doUpdateState(
+      state: MavenProjectState,
+      incLastReadStamp: Boolean,
+      model: MavenModel,
+      readingProblems: Collection<MavenProjectProblem>,
+      activatedProfiles: MavenExplicitProfiles,
+      unresolvedArtifactIds: Set<MavenId>,
+      nativeModelMap: Map<String, String>,
+      settings: MavenGeneralSettings,
+      keepPreviousArtifacts: Boolean,
+      keepPreviousProfiles: Boolean,
+      keepPreviousPlugins: Boolean,
+      directory: String,
+      fileExtension: String?,
+      dependencyHash: String?,
+    ): MavenProjectState {
+      val build = model.build
+
+      val newUnresolvedArtifacts: MutableSet<MavenId> = HashSet()
+      val newRepositories = LinkedHashSet<MavenRemoteRepository>()
+      val newDependencies = LinkedHashSet<MavenArtifact>()
+      val newDependencyTree = LinkedHashSet<MavenArtifactNode>()
+      val newPluginInfos = LinkedHashSet<MavenPluginInfo>()
+      val newExtensions = LinkedHashSet<MavenArtifact>()
+      val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
+
+      if (keepPreviousArtifacts) {
+        newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
+        newRepositories.addAll(state.remoteRepositories)
+        newDependencies.addAll(state.dependencies)
+        newDependencyTree.addAll(state.dependencyTree)
+        newExtensions.addAll(state.extensions)
+        newAnnotationProcessors.addAll(state.annotationProcessors)
+      }
+
+      // either keep all previous plugins or only those that are present in the new list
+      if (keepPreviousPlugins) {
+        newPluginInfos.addAll(state.pluginInfos)
+        newPluginInfos.addAll(model.plugins.map { MavenPluginInfo(it, null) })
+      }
+      else {
+        model.plugins.forEach { newPlugin ->
+          newPluginInfos.add(state.pluginInfos.firstOrNull { it.plugin == newPlugin } ?: MavenPluginInfo(newPlugin, null))
+        }
+      }
+
+      newUnresolvedArtifacts.addAll(unresolvedArtifactIds)
+      newRepositories.addAll(model.remoteRepositories)
+      newDependencyTree.addAll(model.dependencyTree)
+      newDependencies.addAll(model.dependencies)
+      newExtensions.addAll(model.extensions)
+
+      val remoteRepositories = ArrayList(newRepositories)
+      val dependencies = ArrayList(newDependencies)
+      val dependencyTree = ArrayList(newDependencyTree)
+      val pluginInfos = ArrayList(newPluginInfos)
+      val extensions = ArrayList(newExtensions)
+      val annotationProcessors = ArrayList(newAnnotationProcessors)
+
+      val newDependencyHash = dependencyHash ?: state.dependencyHash
+      val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0
+
+      MavenModelPropertiesPatcher.patch(model.properties, pluginInfos.map { it.plugin })
+
+      return state.copy(
+        lastReadStamp = lastReadStamp,
+        readingProblems = readingProblems,
+        localRepository = settings.effectiveLocalRepository,
+        activatedProfilesIds = activatedProfiles,
+        mavenId = model.mavenId,
+        parentId = model.parent?.mavenId,
+        packaging = model.packaging,
+        name = model.name,
+        finalName = build.finalName,
+        defaultGoal = build.defaultGoal,
+        buildDirectory = build.directory,
+        outputDirectory = build.outputDirectory,
+        testOutputDirectory = build.testOutputDirectory,
+        filters = build.filters,
+        properties = model.properties,
+        modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension),
+        profilesIds = collectProfilesIds(model.profiles) + if (keepPreviousProfiles) state.profilesIds else emptySet(),
+        modelMap = nativeModelMap,
+        sources = build.sources,
+        testSources = build.testSources,
+        resources = build.resources,
+        testResources = build.testResources,
+        unresolvedArtifactIds = newUnresolvedArtifacts,
+        remoteRepositories = remoteRepositories,
+        dependencies = dependencies,
+        dependencyTree = dependencyTree,
+        pluginInfos = pluginInfos,
+        extensions = extensions,
+        annotationProcessors = annotationProcessors,
+        dependencyHash = newDependencyHash,
+      )
+    }
+
+    private fun collectModulePathsAndNames(mavenModel: MavenModel, baseDir: String, fileExtension: String?): Map<String, String> {
+      val basePath = "$baseDir/"
+      val result: MutableMap<String, String> = LinkedHashMap()
+      for ((key, value) in collectModulesRelativePathsAndNames(mavenModel, basePath, fileExtension)) {
+        result[MavenPathWrapper(basePath + key).path] = value
+      }
+      return result
+    }
+
+    private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: String, fileExtension: String?): Map<String, String> {
+      val extension = fileExtension ?: ""
+      val result = LinkedHashMap<String, String>()
+      for (module in mavenModel.modules) {
+        var name = module
+        name = name.trim { it <= ' ' }
+
+        if (name.isEmpty()) continue
+
+        val originalName = name
+
+        // module name can be relative and contain either / of \\ separators
+        name = FileUtil.toSystemIndependentName(name)
+
+        val finalName = name
+        val fullPathInModuleName = MavenConstants.POM_EXTENSIONS.any { finalName.endsWith(".$it") }
+        if (!fullPathInModuleName) {
+          if (!name.endsWith("/")) name += "/"
+          name += MavenConstants.POM_EXTENSION + '.' + extension
+        }
+        else {
+          val systemDependentName = FileUtil.toSystemDependentName(basePath + name)
+          if (File(systemDependentName).isDirectory) {
+            name += "/" + MavenConstants.POM_XML
+          }
+        }
+
+        result[name] = originalName
+      }
+      return result
+    }
+
+    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
+      if (profiles == null) return emptyList()
+
+      val result: MutableSet<String> = HashSet(profiles.size)
+      for (each in profiles) {
+        result.add(each.id)
+      }
+      return result
     }
   }
 }

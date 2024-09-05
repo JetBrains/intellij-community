@@ -114,6 +114,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+    checkValid();
     return mainPanel;
   }
 
@@ -330,6 +331,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener(IdeBundle.message("directory.project.location.title"),
                                             IdeBundle.message("directory.project.location.description"), null, descriptor);
+    checkValid();
     return LabeledComponent.create(myLocationField,
                                    BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")),
                                    BorderLayout.WEST);

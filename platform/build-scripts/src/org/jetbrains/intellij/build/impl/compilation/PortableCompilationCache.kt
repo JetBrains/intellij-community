@@ -2,9 +2,14 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
+import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
@@ -18,108 +23,134 @@ internal val IS_PORTABLE_COMPILATION_CACHE_ENABLED: Boolean
 
 private var isAlreadyUpdated = false
 
-class PortableCompilationCache(private val context: CompilationContext) {
-  private val git = Git(context.paths.projectHome)
-
-  /**
-   * Server which stores [PortableCompilationCache]
-   */
-  internal inner class RemoteCache {
-    val url by lazy { require(URL_PROPERTY, "Remote Cache url") }
-    val uploadUrl by lazy { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url") }
-    val authHeader by lazy {
-      val username = System.getProperty("jps.auth.spaceUsername")
-      val password = System.getProperty("jps.auth.spacePassword")
-      when {
-        password == null -> ""
-        username == null -> "Bearer $password"
-        else -> "Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray())
-      }
+internal object TestJpsCompilationCacheDownload {
+  @JvmStatic
+  fun main(args: Array<String>) = runBlocking(Dispatchers.Default) {
+    System.setProperty("jps.cache.test", "true")
+    System.setProperty("org.jetbrains.jps.portable.caches", "true")
+    if (System.getProperty(URL_PROPERTY) == null) {
+      System.setProperty(URL_PROPERTY, "https://127.0.0.1:1900")
     }
 
-    val shouldBeDownloaded: Boolean
-      get() = !forceRebuild && !isLocalCacheUsed()
-  }
-
-  private var forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY).toBoolean()
-  private val forceRebuild = context.options.forceRebuild
-  private val remoteCache = RemoteCache()
-  private val remoteGitUrl by lazy {
-    val result = require(GIT_REPOSITORY_URL_PROPERTY, "Repository url")
-    context.messages.info("Git remote url $result")
-    result
-  }
-
-  private val downloader by lazy {
-    PortableCompilationCacheDownloader(context = context, git = git, remoteCache = remoteCache, gitUrl = remoteGitUrl)
-  }
-
-  private val uploader by lazy {
-    val s3Folder = Path.of(require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder"))
-    val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit")
-    PortableCompilationCacheUploader(
-      context = context,
-      remoteCache = remoteCache,
-      remoteGitUrl = remoteGitUrl,
-      commitHash = commitHash,
-      s3Folder = s3Folder,
-      forcedUpload = forceRebuild,
+    val projectHome = ULTIMATE_HOME
+    val outputDir = projectHome.resolve("out/compilation")
+    val context = createCompilationContext(
+      projectHome = projectHome,
+      defaultOutputRoot = outputDir,
+      options = BuildOptions(
+        incrementalCompilation = true,
+        useCompiledClassesFromProjectOutput = true,
+      ),
     )
+    downloadCacheAndCompileProject(forceDownload = false, context = context)
   }
+}
 
-  /**
-   * Download the latest available [PortableCompilationCache],
-   * [resolveProjectDependencies]
-   * and perform incremental compilation if necessary.
-   *
-   * If rebuild is forced, an incremental compilation flag has to be set to false; otherwise backward-refs won't be created.
-   * During rebuild, JPS checks condition [org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex.exists] || [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isRebuildInAllJavaModules]
-   * and if incremental compilation is enabled, JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
-   * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
-   */
-  internal suspend fun downloadCacheAndCompileProject() {
-    spanBuilder("download JPS cache and compile")
-      .setAttribute("forceRebuild", forceRebuild)
-      .setAttribute("forceDownload", forceDownload)
-      .block { span ->
-        if (isAlreadyUpdated) {
-          span.addEvent("PortableCompilationCache is already updated")
-          return@block
-        }
+internal suspend fun downloadJpsCacheAndCompileProject(context: CompilationContext) {
+  downloadCacheAndCompileProject(forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY).toBoolean(), context = context)
+}
 
-        check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
-          "JPS Caches are expected to be enabled"
-        }
+/**
+ * Upload local [PortableCompilationCache] to [PortableJpsCacheRemoteCacheConfig]
+ */
+suspend fun uploadPortableCompilationCache(context: CompilationContext) {
+  createPortableCompilationCacheUploader(context).upload(context.messages)
+}
 
-        if (forceRebuild || forceDownload) {
-          cleanOutput(context = context, keepCompilationState = false)
-        }
+/**
+ * Publish already uploaded [PortableCompilationCache] to [PortableJpsCacheRemoteCacheConfig]
+ */
+suspend fun publishPortableCompilationCache(context: CompilationContext) {
+  createPortableCompilationCacheUploader(context).updateCommitHistory()
+}
 
-        val availableCommitDepth = if (remoteCache.shouldBeDownloaded) {
-          downloadCache(downloader)
-        }
-        else {
-          -1
-        }
+/**
+ * Publish already uploaded [PortableCompilationCache] to [PortableJpsCacheRemoteCacheConfig] overriding existing [CommitsHistory].
+ * Used in force rebuild and cleanup.
+ */
+suspend fun publishUploadedJpsCacheWithCommitHistoryOverride(forceRebuiltCommits: Set<String>, context: CompilationContext) {
+  createPortableCompilationCacheUploader(context).updateCommitHistory(overrideCommits = forceRebuiltCommits)
+}
 
-        context.options.incrementalCompilation = !forceRebuild
-        // compilation is executed unconditionally here even if the exact commit cache is downloaded
-        // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
-        doCompile(availableCommitDepth = availableCommitDepth, context = context)
-        isAlreadyUpdated = true
-        context.options.incrementalCompilation = true
+/**
+ * Download the latest available [PortableCompilationCache],
+ * [resolveProjectDependencies]
+ * and perform incremental compilation if necessary.
+ *
+ * If rebuild is forced, an incremental compilation flag has to be set to false; otherwise backward-refs won't be created.
+ * During rebuild,
+ * JPS checks condition [org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex.exists] || [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isRebuildInAllJavaModules]
+ * and if incremental compilation is enabled, JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
+ * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
+ */
+@Suppress("KDocUnresolvedReference")
+private suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, context: CompilationContext) {
+  val forceRebuild = context.options.forceRebuild
+  spanBuilder("download JPS cache and compile")
+    .setAttribute("forceRebuild", forceRebuild)
+    .setAttribute("forceDownload", forceDownload)
+    .block { span ->
+      if (isAlreadyUpdated) {
+        span.addEvent("PortableCompilationCache is already updated")
+        return@block
       }
-  }
 
-  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && isIncrementalCompilationDataAvailable(context)
+      check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+        "JPS Caches are expected to be enabled"
+      }
+
+      if (forceRebuild || forceDownload) {
+        cleanOutput(context = context, keepCompilationState = false)
+      }
+
+      val downloader = PortableCompilationCacheDownloader(
+        context = context,
+        git = Git(context.paths.projectHome),
+        remoteCache = PortableJpsCacheRemoteCacheConfig(),
+        gitUrl = computeRemoteGitUrl(),
+      )
+
+      val portableCompilationCache = PortableCompilationCache(forceDownload = forceDownload)
+      val availableCommitDepth = if (!forceRebuild && (forceDownload || !isIncrementalCompilationDataAvailable(context))) {
+        portableCompilationCache.downloadCache(downloader, context)
+      }
+      else {
+        -1
+      }
+
+      context.options.incrementalCompilation = !forceRebuild
+      // compilation is executed unconditionally here even if the exact commit cache is downloaded
+      // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
+      doCompile(
+        availableCommitDepth = availableCommitDepth,
+        context = context,
+        handleCompilationFailureBeforeRetry = { successMessage ->
+          portableCompilationCache.handleCompilationFailureBeforeRetry(
+            successMessage = successMessage,
+            portableCompilationCacheDownloader = downloader,
+            forceDownload = portableCompilationCache.forceDownload,
+            context = context,
+          )
+        },
+      )
+      isAlreadyUpdated = true
+      context.options.incrementalCompilation = true
+    }
+}
+
+private class PortableCompilationCache(forceDownload: Boolean) {
+  var forceDownload: Boolean = forceDownload
+    private set
 
   /**
    * @return updated [successMessage]
    */
-  internal suspend fun handleCompilationFailureBeforeRetry(successMessage: String): String {
-    check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
-      "JPS Caches are expected to be enabled"
-    }
+  suspend fun handleCompilationFailureBeforeRetry(
+    successMessage: String,
+    portableCompilationCacheDownloader: PortableCompilationCacheDownloader,
+    context: CompilationContext,
+    forceDownload: Boolean,
+  ): String {
     when {
       forceDownload -> {
         Span.current().addEvent("Incremental compilation using Remote Cache failed. Re-trying with clean build.")
@@ -131,39 +162,17 @@ class PortableCompilationCache(private val context: CompilationContext) {
         // If download isn't forced, then locally available cache will be used which may suffer from those issues.
         // Hence, compilation failure. Replacing local cache with remote one may help.
         Span.current().addEvent("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
-        val availableCommitDepth = downloadCache(downloader)
+        val availableCommitDepth = downloadCache(portableCompilationCacheDownloader, context)
         if (availableCommitDepth >= 0) {
-          return usageStatus(availableCommitDepth)
+          return portableJpsCacheUsageStatus(availableCommitDepth)
         }
       }
     }
     return successMessage
   }
 
-  /**
-   * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
-   */
-  suspend fun upload() {
-    uploader.upload(context.messages)
-  }
-
-  /**
-   * Publish already uploaded [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
-   */
-  suspend fun publish() {
-    uploader.updateCommitHistory()
-  }
-
-  /**
-   * Publish already uploaded [PortableCompilationCache] to [PortableCompilationCache.RemoteCache] overriding existing [CommitsHistory].
-   * Used in force rebuild and cleanup.
-   */
-  suspend fun overrideCommitHistory(forceRebuiltCommits: Set<String>) {
-    uploader.updateCommitHistory(commitHistory = CommitsHistory(mapOf(remoteGitUrl to forceRebuiltCommits)), overrideRemoteHistory = true)
-  }
-
-  private suspend fun downloadCache(downloader: PortableCompilationCacheDownloader): Int {
-    spanBuilder("downloading Portable Compilation Cache").use { span ->
+  suspend fun downloadCache(downloader: PortableCompilationCacheDownloader, context: CompilationContext): Int {
+    return spanBuilder("downloading Portable Compilation Cache").use { span ->
       try {
         downloader.download()
       }
@@ -178,17 +187,17 @@ class PortableCompilationCache(private val context: CompilationContext) {
         forceDownload = false
         context.options.incrementalCompilation = false
         cleanOutput(context = context, keepCompilationState = false)
+        -1
       }
     }
-    return downloader.getAvailableCommitDepth()
   }
+}
 
-  internal fun usageStatus(availableCommitDepth: Int): String {
-    return when (availableCommitDepth) {
-      0 -> "all classes reused from JPS remote cache"
-      1 -> "1 commit compiled using JPS remote cache"
-      else -> "$availableCommitDepth commits compiled using JPS remote cache"
-    }
+internal fun portableJpsCacheUsageStatus(availableCommitDepth: Int): String {
+  return when (availableCommitDepth) {
+    0 -> "all classes reused from JPS remote cache"
+    1 -> "1 commit compiled using JPS remote cache"
+    else -> "$availableCommitDepth commits compiled using JPS remote cache"
   }
 }
 
@@ -203,7 +212,7 @@ private const val UPLOAD_URL_PROPERTY = "intellij.jps.remote.cache.upload.url"
 private const val URL_PROPERTY = "intellij.jps.remote.cache.url"
 
 /**
- * If true then [PortableCompilationCache.RemoteCache] is configured to be used
+ * If true then [PortableJpsCacheRemoteCacheConfig] is configured to be used
  */
 private val IS_CONFIGURED = !System.getProperty(URL_PROPERTY).isNullOrBlank()
 
@@ -231,7 +240,7 @@ private const val COMMIT_HASH_PROPERTY = "build.vcs.number"
 private fun require(systemProperty: String, description: String): String {
   val value = System.getProperty(systemProperty)
   require(!value.isNullOrBlank()) {
-     "$description is not defined. Please set '$systemProperty' system property."
+    "$description is not defined. Please set '$systemProperty' system property."
   }
   return value
 }
@@ -246,3 +255,37 @@ internal class CompilationOutput(
   // local path to compilation output
   @JvmField val path: Path,
 )
+
+/**
+ * Server which stores [PortableCompilationCache]
+ */
+internal class PortableJpsCacheRemoteCacheConfig {
+  val url by lazy { require(URL_PROPERTY, "Remote Cache url") }
+  val uploadUrl by lazy { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url") }
+  val authHeader by lazy {
+    val username = System.getProperty("jps.auth.spaceUsername")
+    val password = System.getProperty("jps.auth.spacePassword")
+    when {
+      password == null -> ""
+      username == null -> "Bearer $password"
+      else -> "Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray())
+    }
+  }
+}
+
+internal fun createPortableCompilationCacheUploader(context: CompilationContext): PortableCompilationCacheUploader {
+  return PortableCompilationCacheUploader(
+    context = context,
+    remoteCache = PortableJpsCacheRemoteCacheConfig(),
+    remoteGitUrl = computeRemoteGitUrl(),
+    commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit"),
+    s3Folder = Path.of(require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder")),
+    forcedUpload = context.options.forceRebuild,
+  )
+}
+
+private fun computeRemoteGitUrl(): String {
+  val remoteGitUrl = require(GIT_REPOSITORY_URL_PROPERTY, "Repository url")
+  Span.current().addEvent("Git remote url $remoteGitUrl")
+  return remoteGitUrl
+}

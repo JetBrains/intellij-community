@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class DaemonCodeAnalyzerSettings {
   private boolean myNextErrorActionGoesToErrorsFirst = true;
-  private int myAutoReparseDelay = 100;
+  private int myAutoReparseDelay = 300;
   private int myErrorStripeMarkMinHeight = 2;
 
   private boolean mySuppressWarnings = true;

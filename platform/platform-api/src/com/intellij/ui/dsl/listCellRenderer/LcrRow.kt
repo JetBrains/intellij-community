@@ -33,7 +33,10 @@ interface LcrRow<T> {
   val value: T
 
   /**
-   * Index of the rendering item. `-1` if ComboBox is rendering the selected item in collapsed state
+   * Index of the rendering item. `-1` if ComboBox is rendering the selected item in the collapsed state
+   * or in some other technical states (for example getting separator info while filtering in ComboBox-es with `isSwingPopup = false`).
+   * This field can be useful for highlighting odd/even rows and similar cases,
+   * otherwise [value] should be used in renderers ([index] and [value] are not always matched because of possible filtering)
    */
   val index: Int
 
@@ -73,4 +76,8 @@ interface LcrRow<T> {
    */
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
+  /**
+   * Adds separator above the row
+   */
+  fun separator(init: (LcrSeparator.() -> Unit))
 }

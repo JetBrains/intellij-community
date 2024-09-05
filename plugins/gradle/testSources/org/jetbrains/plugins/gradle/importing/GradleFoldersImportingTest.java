@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExcludeBuildFilesDataService;
@@ -888,7 +886,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testSourceFoldersOutOfContentRootWithModuleResolving() throws Exception {
+  public void testSourceFoldersOutOfContentRoot() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("../outer1/src/main/java/A.java", "class A {}");
     createProjectSubFile("../outer1/src/main/kotlin/A.kt", "class A {}");
@@ -901,8 +899,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .withIdeaPlugin()
       .addPrefix(
         """
-          apply plugin: 'java'
-          apply plugin: 'idea'
           sourceSets {
             generated.java.srcDirs += "${buildDir}/generated"
             generated.java.srcDirs += '../outer4/generated'
@@ -929,81 +925,68 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProject();
 
     assertModules("project", "project.main", "project.test", "project.generated");
-    assertContentEntryExists("project", "");
-    assertContentEntryExists("project.main",
-                             "../outer1",
-                             "../outer2",
-                             "../outer3");
-    assertContentEntryExists("project.generated",
-                             "build/generated",
-                             "../outer4");
-    assertSourceExists("project.main",
-                       "src/main/java",
-                       "../outer1/src/main/java",
-                       "../outer1/src/main/kotlin",
-                       "../outer2/src/main/java",
-                       "../outer3");
-    assertSourceExists("project.generated",
-                       "build/generated",
-                       "../outer4/generated");
-  }
 
-  @Test
-  public void testSourceFoldersOutOfContentRootWithoutModuleResolving() throws Exception {
-    createProjectSubFile("src/main/java/A.java", "class A {}");
-    createProjectSubFile("../outer1/src/main/java/A.java", "class A {}");
-    createProjectSubFile("../outer1/src/main/kotlin/A.kt", "class A {}");
-    createProjectSubFile("../outer2/src/main/java/A.java", "class A {}");
-    createProjectSubFile("../outer3/A.java", "class A {}");
-    createProjectSubFile("build/generated/A.java", "class A {}");
-    createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    createProjectSubFile("build.gradle", script(it -> it
-      .withJavaPlugin()
-      .withIdeaPlugin()
-      .addPrefix(
-        """
-          sourceSets {
-            generated.java.srcDirs += "${buildDir}/generated"
-            generated.java.srcDirs += '../outer4/generated'
-            main.java.srcDirs += '../outer1/src/main/java'
-            main.java.srcDirs += '../outer1/src/main/kotlin'
-            main.java.srcDirs += '../outer2/src/main/java'
-            main.java.srcDirs += '../outer3'
-          }
-          """
-      ).addPrefix(
-        """
-          idea {
-            module {
-              inheritOutputDirs = true
-              generatedSourceDirs += file("${buildDir}/generated")
-              generatedSourceDirs += file('../outer4/generated')
-            }
-          }
-          """
+    assertContentRoots("project", getProjectPath());
+    assertNoSourceRoots("project");
+
+    assertContentRoots("project.main",
+                       path("src/main"),
+                       path("../outer1/src/main/java"),
+                       path("../outer1/src/main/kotlin"),
+                       path("../outer2/src/main/java"),
+                       path("../outer3")
+    );
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE,
+                   path("src/main/java"),
+                   path("../outer1/src/main/java"),
+                   path("../outer1/src/main/kotlin"),
+                   path("../outer2/src/main/java"),
+                   path("../outer3")
       )
-    ));
+    );
+
+    assertContentRoots("project.test", path("src/test"));
+    assertNoSourceRoots("project.test");
+
+    assertContentRoots("project.generated",
+                       path("src/generated"),
+                       path("build/generated"),
+                       path("../outer4/generated")
+    );
+    assertSourceRoots("project.generated", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED,
+                   path("build/generated"),
+                   path("../outer4/generated")
+      )
+    );
 
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
     importProject();
 
     assertModules("project");
-    assertContentEntryExists("project",
-                             "",
-                             "../outer1/src/main/java",
-                             "../outer1/src/main/kotlin",
-                             "../outer2",
-                             "../outer3",
-                             "build/generated",
-                             "../outer4");
-    assertSourceExists("project",
-                       "src/main/java",
-                       "../outer1/src/main/java",
-                       "../outer1/src/main/kotlin",
-                       "../outer2/src/main/java",
-                       "../outer3",
-                       "build/generated",
-                       "../outer4/generated");
+
+    assertContentRoots("project",
+                       getProjectPath(),
+                       path("../outer1/src/main/java"),
+                       path("../outer1/src/main/kotlin"),
+                       path("../outer2/src/main/java"),
+                       path("../outer3"),
+                       path("../outer4/generated")
+    );
+    assertSourceRoots("project", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE,
+                   path("src/main/java"),
+                   path("../outer1/src/main/java"),
+                   path("../outer1/src/main/kotlin"),
+                   path("../outer2/src/main/java"),
+                   path("../outer3")
+      )
+      .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED,
+                   path("build/generated"),
+                   path("../outer4/generated")
+      )
+    );
   }
 
   @Test
@@ -1017,9 +1000,14 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
       .withKotlinJvmPlugin()
       .withJavaLibraryPlugin()
     ));
+
     assertModules("project");
-    assertContentEntryExists("project");
-    assertSourceExists("project", "src/main/java", "src/main/kotlin");
+
+    assertContentRoots("project", getProjectPath());
+    assertSourceRoots("project", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"), path("src/main/kotlin"))
+    );
+
     assertModuleOutput("project", getProjectPath() + "/build/classes/java/main", getProjectPath() + "/build/classes/java/test");
   }
 
@@ -1350,34 +1338,6 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("src/test/java/A.java");
     createProjectSubFile("src/main/resources/resource.properties");
     createProjectSubFile("src/test/resources/test_resource.properties");
-  }
-
-  @Nullable
-  protected ContentEntry findContentEntry(@NotNull String moduleName, @NotNull String contentPath) {
-    ModuleRootManager moduleRootManager = getRootManager(moduleName);
-    Module module = moduleRootManager.getModule();
-    String rootPath = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));
-    String expectedContentPath = getAbsolutePath(rootPath + "/" + contentPath);
-    ContentEntry[] contentEntries = moduleRootManager.getContentEntries();
-    for (ContentEntry contentEntry : contentEntries) {
-      String actualContentPath = getAbsolutePath(contentEntry.getUrl());
-      if (actualContentPath.equals(expectedContentPath)) return contentEntry;
-    }
-    return null;
-  }
-
-  protected void assertContentEntryExists(@NotNull String moduleName, String @NotNull ... contentPaths) {
-    for (String contentPath : contentPaths) {
-      ContentEntry contentEntry = findContentEntry(moduleName, contentPath);
-      assertNotNull("Content entry " + contentPath + " not found in module " + moduleName, contentEntry);
-    }
-  }
-
-  protected void assertSourceExists(@NotNull String moduleName, String @NotNull ... sourcePaths) {
-    for (String sourcePath : sourcePaths) {
-      SourceFolder sourceFolder = findSource(moduleName, sourcePath);
-      assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
-    }
   }
 
   protected void waitForModulesUpdate() throws Exception {

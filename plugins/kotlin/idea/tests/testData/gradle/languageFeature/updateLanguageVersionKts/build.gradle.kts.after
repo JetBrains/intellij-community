@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -11,6 +12,6 @@ repositories {
     mavenCentral()
 }
 val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    languageVersion = "1.9"
+compileKotlin.compilerOptions {
+    languageVersion.set(KotlinVersion.KOTLIN_1_9)
 }

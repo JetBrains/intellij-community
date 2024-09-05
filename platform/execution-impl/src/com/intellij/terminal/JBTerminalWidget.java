@@ -184,21 +184,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   @Override
-  public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
-    super.setTtyConnector(ttyConnector);
-    myTerminalTitle.change(terminalTitleState -> {
-      if (terminalTitleState.getDefaultTitle() == null) {
-        terminalTitleState.setDefaultTitle(getDefaultSessionName(ttyConnector));
-      }
-      return null;
-    });
-  }
-
-  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
-    return connector.getName(); //NON-NLS
-  }
-
-  @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }

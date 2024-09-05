@@ -125,7 +125,7 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         forTests: Boolean
     ): PsiElement?
 
-    fun PsiElement.configureToolchainOrKotlinOptions(
+    fun PsiElement.configureToolchainOrKotlinCompilerOptions(
         jvmTarget: String?,
         kotlinVersion: IdeKotlinVersion,
         gradleVersion: GradleVersionInfo,

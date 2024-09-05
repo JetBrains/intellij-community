@@ -67,10 +67,14 @@ private class PyCollectImportsTask(
   override fun compute(indicator: ProgressIndicator): Set<String> {
     val imported = mutableSetOf<String>()
     ReadAction.run<Throwable> {
-      module.rootManager.fileIndex.iterateContent {
+      module.rootManager.fileIndex.iterateContent { virtualFile ->
         indicator.checkCanceled()
-        if (PythonFileType.INSTANCE == FileTypeRegistry.getInstance().getFileTypeByFileName(it.name)) {
-          addImports(psiManager.findFile(it) as PyFile, imported)
+        val fileName = FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.name)
+
+        if (PythonFileType.INSTANCE == fileName || fileName.defaultExtension == "ipynb") {
+          val findFile = psiManager.findFile(virtualFile)
+          val pyFile = findFile?.viewProvider?.allFiles?.firstOrNull { it is PyFile } as? PyFile ?: return@iterateContent true
+          addImports(pyFile, imported)
         }
         return@iterateContent true
       }

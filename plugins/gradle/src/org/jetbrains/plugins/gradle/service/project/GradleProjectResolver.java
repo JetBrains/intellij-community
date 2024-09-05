@@ -8,6 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGra
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
+import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -27,9 +28,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -76,8 +78,10 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil;
+import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -330,8 +334,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Span gradleCallSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleCall")
       .startSpan();
-    if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled()) {
-      GradleTracingContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan);
+    if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled(executionSettings)) {
+      GradleTracingContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan, executionSettings);
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
@@ -357,6 +361,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ExternalSystemSyncActionsCollector.logPhaseFinished(
         null, activityId, Phase.GRADLE_CALL, gradleCallTimeInMs, gradleCallErrorsCount);
       gradleCallSpan.end();
+      exportTelemetry(executionSettings, models.getTelemetry());
     }
 
     ProgressManager.checkCanceled();
@@ -510,7 +515,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     });
 
-    mergeSourceSetContentRoots(moduleMap, resolverContext);
+    mergeSourceSetContentRoots(resolverContext, moduleMap);
     if (resolverContext.isResolveModulePerSourceSet()) {
       mergeLibraryAndModuleDependencyData(resolverContext, projectDataNode, resolverContext.getGradleUserHome(), gradleHomeDir);
     }
@@ -788,131 +793,114 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static class Counter {
-    int count;
-
-    void increment() {
-      count++;
+  private static void mergeSourceSetContentRoots(
+    @NotNull ProjectResolverContext resolverContext,
+    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
+  ) {
+    if (resolverContext.isResolveModulePerSourceSet()) {
+      mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, moduleMap);
     }
-
-    @Override
-    public String toString() {
-      return String.valueOf(count);
+    else {
+      mergeSourceSetContentRootsInModulePerProjectMode(resolverContext, moduleMap);
     }
   }
 
-  private static void mergeSourceSetContentRoots(
-    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap,
-    @NotNull ProjectResolverContext resolverContext
+  /**
+   * Gradle source set haven't the content root term.
+   * Therefore, IDEA needs to deduct the best content roots for the specified source set directories.
+   * <p>
+   * For example, it creates content roots src/main for the source set directories src/main/java and src/main/resources.
+   * Same for src/test/java and src/test/resources, it creates src/test content root.
+   */
+  private static void mergeSourceSetContentRootsInModulePerSourceSetMode(
+    @NotNull ProjectResolverContext resolverContext,
+    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
   ) {
+    var contentRootIndex = new GradleContentRootIndex();
 
-    final Map<String, Counter> weightMap = new HashMap<>();
-    for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
-      final DataNode<ModuleData> moduleNode = pair.first;
-      for (DataNode<ContentRootData> contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
-        File file = new File(contentRootNode.getData().getRootPath());
-        while (file != null) {
-          weightMap.computeIfAbsent(file.getPath(), __ -> new Counter()).increment();
-          file = file.getParentFile();
-        }
-      }
+    for (var moduleEntry : moduleMap.values()) {
+      var moduleNode = moduleEntry.first;
 
-      for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
-        final Set<String> set = new HashSet<>();
-        for (DataNode<ContentRootData> contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
-          File file = new File(contentRootNode.getData().getRootPath());
-          while (file != null) {
-            set.add(file.getPath());
-            file = file.getParentFile();
-          }
-        }
-        for (String path : set) {
-          weightMap.computeIfAbsent(path, __ -> new Counter()).increment();
-        }
+      for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
+        contentRootIndex.addSourceRoots(sourceSetNode);
       }
     }
-    for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
-      final DataNode<ModuleData> moduleNode = pair.first;
-      final ExternalProject externalProject = resolverContext.getExtraProject(pair.second, ExternalProject.class);
+
+    for (var moduleEntry : moduleMap.values()) {
+      var moduleNode = moduleEntry.first;
+      var ideaModule = moduleEntry.second;
+
+      var externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
       if (externalProject == null) continue;
 
-      mergeModuleContentRoots(weightMap, externalProject, moduleNode);
-      for (DataNode<GradleSourceSetData> sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
-        mergeModuleContentRoots(weightMap, externalProject, sourceSetNode);
+      for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
+        var contentRootPaths = contentRootIndex.resolveContentRoots(externalProject, sourceSetNode);
+
+        var contentRootNodes = CanonicalPathPrefixTreeFactory.INSTANCE.<ContentRootData>createMap();
+        for (var contentRootPath : contentRootPaths) {
+          var contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
+          contentRootNodes.set(contentRootPath, contentRootData);
+        }
+
+        for (var contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
+          for (var source : contentRootNode.getData().getSourceRoots().entrySet()) {
+            var sourceRootType = source.getKey();
+            for (var sourceRoot : source.getValue()) {
+              var sourceRootPath = sourceRoot.getPath();
+              var packagePrefix = sourceRoot.getPackagePrefix();
+              var contentRootData = ContainerUtil.getLastItem(contentRootNodes.getAncestorValues(sourceRootPath));
+              contentRootData.storePath(sourceRootType, sourceRootPath, packagePrefix);
+            }
+          }
+          contentRootNode.clear(true);
+        }
+
+        for (var contentRootData : contentRootNodes.values()) {
+          sourceSetNode.createChild(ProjectKeys.CONTENT_ROOT, contentRootData);
+        }
       }
     }
   }
 
-  private static void mergeModuleContentRoots(@NotNull Map<String, Counter> weightMap,
-                                              @NotNull ExternalProject externalProject,
-                                              @NotNull DataNode<? extends ModuleData> moduleNode) {
-    final File buildDir = externalProject.getBuildDir();
-    final MultiMap<String, ContentRootData> sourceSetRoots = MultiMap.create();
-    Collection<DataNode<ContentRootData>> contentRootNodes = findAll(moduleNode, ProjectKeys.CONTENT_ROOT);
-    if (contentRootNodes.size() <= 1) return;
+  private static void mergeSourceSetContentRootsInModulePerProjectMode(
+    @NotNull ProjectResolverContext resolverContext,
+    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
+  ) {
+    for (var moduleEntry : moduleMap.values()) {
+      var moduleNode = moduleEntry.first;
+      var ideaModule = moduleEntry.second;
 
-    for (DataNode<ContentRootData> contentRootNode : contentRootNodes) {
-      File root = new File(contentRootNode.getData().getRootPath());
-      if (FileUtil.isAncestor(buildDir, root, true)) continue;
+      var externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
+      if (externalProject == null) continue;
 
-      while (weightMap.containsKey(root.getParent()) && weightMap.get(root.getParent()).count <= 1) {
-        root = root.getParentFile();
-      }
+      var projectRootPath = NioPathUtil.toCanonicalPath(externalProject.getProjectDir().toPath());
 
-      ContentRootData mergedContentRoot = null;
-      String rootPath = toCanonicalPath(root.getPath());
-      Set<String> paths = new HashSet<>(sourceSetRoots.keySet());
-      for (String path : paths) {
-        if (FileUtil.isAncestor(rootPath, path, true)) {
-          Collection<ContentRootData> values = sourceSetRoots.remove(path);
-          if (values != null) {
-            sourceSetRoots.putValues(rootPath, values);
-          }
-        }
-        else if (FileUtil.isAncestor(path, rootPath, false)) {
-          Collection<ContentRootData> contentRoots = sourceSetRoots.get(path);
-          for (ContentRootData rootData : contentRoots) {
-            if (StringUtil.equals(rootData.getRootPath(), path)) {
-              mergedContentRoot = rootData;
-              break;
+      var projectContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, projectRootPath);
+      var externalContentRootNodes = new ArrayList<ContentRootData>();
+
+      for (var contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
+        for (var source : contentRootNode.getData().getSourceRoots().entrySet()) {
+          var sourceRootType = source.getKey();
+          for (var sourceRoot : source.getValue()) {
+            var sourceRootPath = sourceRoot.getPath();
+            var packagePrefix = sourceRoot.getPackagePrefix();
+            if (FileUtil.isAncestor(projectRootPath, sourceRootPath, false)) {
+              projectContentRootData.storePath(sourceRootType, sourceRootPath, packagePrefix);
+            }
+            else {
+              var externalContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, sourceRootPath);
+              externalContentRootData.storePath(sourceRootType, sourceRootPath, packagePrefix);
+              externalContentRootNodes.add(externalContentRootData);
             }
           }
-          if (mergedContentRoot == null) {
-            mergedContentRoot = contentRoots.iterator().next();
-          }
-          break;
         }
-        if (sourceSetRoots.size() == 1) break;
+        contentRootNode.clear(true);
       }
 
-      if (mergedContentRoot == null) {
-        mergedContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getPath());
-        sourceSetRoots.putValue(mergedContentRoot.getRootPath(), mergedContentRoot);
+      moduleNode.createChild(ProjectKeys.CONTENT_ROOT, projectContentRootData);
+      for (var externalContentRootData : externalContentRootNodes) {
+        moduleNode.createChild(ProjectKeys.CONTENT_ROOT, externalContentRootData);
       }
-
-      for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
-        for (ContentRootData.SourceRoot sourceRoot : contentRootNode.getData().getPaths(sourceType)) {
-          mergedContentRoot.storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
-        }
-      }
-
-      contentRootNode.clear(true);
-    }
-
-    for (Map.Entry<String, Collection<ContentRootData>> entry : sourceSetRoots.entrySet()) {
-      final String rootPath = entry.getKey();
-      final ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootPath);
-
-      for (ContentRootData rootData : entry.getValue()) {
-        for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
-          Collection<ContentRootData.SourceRoot> roots = rootData.getPaths(sourceType);
-          for (ContentRootData.SourceRoot sourceRoot : roots) {
-            ideContentRoot.storePath(sourceType, sourceRoot.getPath(), sourceRoot.getPackagePrefix());
-          }
-        }
-      }
-
-      moduleNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
     }
   }
 
@@ -1029,13 +1017,24 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return chainWrapper;
   }
 
-  private static @NotNull GradleTracingContext getActionTelemetryContext(@NotNull Span span) {
+  private static @NotNull GradleTracingContext getActionTelemetryContext(@NotNull Span span, @NotNull GradleExecutionSettings settings) {
     GradleTracingContext context = new GradleTracingContext();
-    context.put(REQUESTED_FORMAT_KEY, GradleDaemonOpenTelemetryUtil.getTelemetryFormat().name());
+    context.put(REQUESTED_FORMAT_KEY, GradleDaemonOpenTelemetryUtil.getTelemetryFormat(settings).name());
     GlobalOpenTelemetry.get()
       .getPropagators()
       .getTextMapPropagator()
       .inject(Context.current().with(span), context, GradleTracingContext.SETTER);
     return context;
+  }
+
+  private static void exportTelemetry(
+    @NotNull GradleExecutionSettings settings,
+    @NotNull List<TelemetryHolder> holders
+  ) {
+    Path targetFolder = GradleDaemonOpenTelemetryUtil.getTargetFolder(settings);
+    URI targetEndpoint = GradleDaemonOpenTelemetryUtil.getTargetEndpoint(settings);
+    for (TelemetryHolder holder : holders) {
+      GradleOpenTelemetryTraceService.exportOpenTelemetry(holder, targetFolder, targetEndpoint);
+    }
   }
 }

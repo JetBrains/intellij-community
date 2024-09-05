@@ -256,6 +256,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return myInputMethodRequests;
   }
 
+  @Override
+  public void selectTextRange(int begin, int length) {
+    var field = getSearchField();
+    if (field != null) {
+      field.select(begin, begin + length);
+    }
+  }
+
   public @Nullable JTextField getSearchField() {
     if (mySearchPopup != null) {
       return mySearchPopup.mySearchField;

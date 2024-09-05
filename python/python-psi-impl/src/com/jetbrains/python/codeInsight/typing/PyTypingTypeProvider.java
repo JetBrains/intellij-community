@@ -1257,31 +1257,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       typeHintedWithName(function, context, NO_RETURN, NO_RETURN_EXT, NEVER, NEVER_EXT));
   }
 
-  public static TypeGuardKind getTypeGuardKind(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(function, context, p -> {
-                                                var typeHints = resolveTypeHintsToQualifiedNames(function, context);
-                                                if (typeHints.contains(TYPE_GUARD) || typeHints.contains(TYPE_GUARD_EXT)) return TypeGuardKind.TypeGuard;
-                                                if (typeHints.contains(TYPE_IS) || typeHints.contains(TYPE_IS_EXT)) return TypeGuardKind.TypeIs;
-                                                return TypeGuardKind.None;
-                                              });
-  }
-
-
-  @Nullable
-  public static PyType getTypeFromTypeGuardLikeType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    var returnType = getReturnTypeAnnotation(function, context);
-    if (returnType instanceof PyStringLiteralExpression stringLiteralExpression) {
-      returnType = PyUtil.createExpressionFromFragment(stringLiteralExpression.getStringValue(),
-                                                       function.getContainingFile());
-    }
-    if (returnType instanceof PySubscriptionExpression subscriptionExpression) {
-      var indexExpression = subscriptionExpression.getIndexExpression();
-      if (indexExpression != null) {
-        return Ref.deref(getType(indexExpression, context));
-      }
-    }
-    return null;
-  }
 
   private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context, String... names) {
     final var qualifiedNames = resolveToQualifiedNames(expression, context);
@@ -2163,11 +2138,5 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     public int hashCode() {
       return Objects.hash(myContext);
     }
-  }
-
-  public enum TypeGuardKind {
-    TypeGuard,
-    TypeIs,
-    None
   }
 }

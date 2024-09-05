@@ -32,12 +32,11 @@ import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Directory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsagesForCopyFile
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkAllUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createCopyTarget
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.copy.*
@@ -290,7 +289,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             }
 
             @Suppress("UNCHECKED_CAST")
-            retargetInternalUsages(oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
+            retargetUsages(emptyList(), oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
 
             newElements.singleOrNull()
         }
@@ -313,13 +312,9 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         if (elements.isEmpty()) return MultiMap.empty()
 
-        val (fakeTarget, _) = createCopyTarget(
-            elements, targetData.targetDirWrapper.baseDirectory, targetData.targetDirWrapper.pkgName, targetData.newName
-        )
-
         return MultiMap<PsiElement, String>().apply {
-            putAllValues(checkVisibilityConflictsForInternalUsages(elements, fakeTarget))
-            putAllValues(checkModuleDependencyConflictsForInternalUsages(elements, targetData.targetDirWrapper.baseDirectory)) // TODO pass old to new map
+            putAllValues(checkVisibilityConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.pkgName, targetData.targetDirWrapper.baseDirectory))
+            putAllValues(checkModuleDependencyConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.baseDirectory))
         }
     }
 

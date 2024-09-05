@@ -64,7 +64,7 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         // inspection disabled for long expressions because of performance issues on
         // relatively common large string expressions.
         Object value = computeConstant(expression);
-        if (value == null || value instanceof Enum<?>) return;
+        if (value == null) return;
         if (value instanceof PsiField && !(value instanceof PsiEnumConstant)) return;
         if (value instanceof PsiElement e && expression instanceof PsiReferenceExpression ref && ref.isReferenceTo(e)) return;
         String valueText = getValueText(value);

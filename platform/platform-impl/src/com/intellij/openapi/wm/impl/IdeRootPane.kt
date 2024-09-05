@@ -3,19 +3,26 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
-import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
-import com.intellij.ui.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.platform.jbr.JdkEx
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Component
+import java.awt.Container
+import java.awt.Dimension
+import java.awt.LayoutManager
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLayeredPane
+import javax.swing.JRootPane
 
 /**
  * A custom root pane that supports a custom frame title, macOS tabs and an additional toolbar below the menu bar

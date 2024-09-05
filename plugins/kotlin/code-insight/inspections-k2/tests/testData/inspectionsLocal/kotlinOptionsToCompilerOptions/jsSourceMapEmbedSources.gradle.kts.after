@@ -1,4 +1,3 @@
-// PROBLEM: Deprecated 'kotlinOptions' DSL should be replaced with 'compilerOptions'
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
 import org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile

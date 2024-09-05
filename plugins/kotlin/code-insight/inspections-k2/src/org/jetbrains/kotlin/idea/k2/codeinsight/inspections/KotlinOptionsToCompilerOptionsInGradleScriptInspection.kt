@@ -12,15 +12,18 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.AbstractKotlinGradleScriptInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.Replacement
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getReplacementForOldKotlinOptionIfNeeded
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -31,7 +34,12 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-private val dslsInWhichDontConvertKotlinOptions = listOf("android", "allprojects", "subprojects")
+private val kotlinCompileTasksNames = setOf(
+    "org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile",
+    "org.jetbrains.kotlin.gradle.tasks.KotlinCompile",
+    "org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile",
+    "org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile"
+)
 
 internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : AbstractKotlinGradleScriptInspection() {
 
@@ -41,9 +49,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 // Inspection tests don't treat tested build script files properly, and thus they ignore Kotlin versions used in scripts
                 return true
             } else {
-                val jpsVersion = KotlinJpsPluginSettings.jpsVersion(file.project)
-                val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion ?: return false
-                return parsedKotlinVersion >= KotlinVersion(2, 0, 0)
+                return kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file)
             }
         } else {
             return false
@@ -61,10 +67,29 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 if (isDescendantOfDslInWhichReplacementIsNotNeeded(expression)) return
 
                 val expressionParent = expression.parent
+
+                if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests on Gradle build scripts
+                    analyze(expression) {
+                        val jvmClassForKotlinCompileTask = (expression.resolveToCall()
+                            ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
+                            ?.containingDeclaration as? KaClassLikeSymbol)?.importableFqName?.toString()
+
+                            ?: expression.resolveExpression()?.containingSymbol?.importableFqName?.toString() ?: return
+                        if (!kotlinCompileTasksNames.contains(jvmClassForKotlinCompileTask)) {
+                            return
+                        }
+                    }
+                }
                 when (expressionParent) {
-                    is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources`
+                    is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources` OR kotlinOptions.options
                         val parentOfExpressionParent = expressionParent.parent
-                        if (parentOfExpressionParent !is KtBinaryExpression) return // like kotlinOptions.sourceMapEmbedSources = "inlining"
+
+                        if (parentOfExpressionParent !is KtBinaryExpression) { // like kotlinOptions.sourceMapEmbedSources = "inlining"
+                            // like kotlinOptions.options.jvmTarget = JvmTarget.JVM_11
+                            if (parentOfExpressionParent is KtDotQualifiedExpression &&
+                                parentOfExpressionParent.parent !is KtBinaryExpression)
+                                return
+                        }
                     }
 
                     is KtCallExpression -> {
@@ -77,6 +102,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                         }
                          */
                     }
+
                     else -> return
                 }
 
@@ -85,12 +111,6 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                     KotlinBundle.message("inspection.kotlin.options.to.compiler.options.display.name")
                 )
                     .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-                    .range(
-                        TextRange(
-                            expression.startOffset,
-                            expression.endOffset
-                        ).shiftRight(-expression.startOffset)
-                    )
                     .fix(
                         ReplaceKotlinOptionsWithCompilerOptionsFix()
                     ).register()
@@ -100,12 +120,10 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
     private fun isDescendantOfDslInWhichReplacementIsNotNeeded(ktExpression: KtExpression): Boolean {
         val scriptText = ktExpression.containingFile.text
-        for (dslElement in dslsInWhichDontConvertKotlinOptions) {
-            if (scriptText.contains(dslElement)) {
-                ktExpression.prevLeafs.forEach {
-                    if (dslElement == it.text) {
-                        return true
-                    }
+        if (scriptText.contains("android")) {
+            ktExpression.prevLeafs.forEach {
+                if ("android" == it.text) {
+                    return true
                 }
             }
         }
@@ -127,10 +145,18 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
         val expressionsToFix = mutableListOf<Replacement>()
         val expressionParent = element.parent
         when (expressionParent) {
-            is KtDotQualifiedExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources`
+            is KtDotQualifiedExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources` || `kotlinOptions.options.jvmTarget`
                 val parentOfExpressionParent = expressionParent.parent
-                if (parentOfExpressionParent is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
-                    getReplacementForOldKotlinOptionIfNeeded(parentOfExpressionParent)?.let { expressionsToFix.add(it) }
+                when (parentOfExpressionParent) {
+                    is KtBinaryExpression -> { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
+                        getReplacementForOldKotlinOptionIfNeeded(parentOfExpressionParent)?.let { expressionsToFix.add(it) }
+                    }
+                    is KtDotQualifiedExpression -> {
+                        val parent = parentOfExpressionParent.parent
+                        if (parent is KtBinaryExpression) { // like `kotlinOptions.options.jvmTarget = JvmTarget.JVM_11`
+                            getReplacementForOldKotlinOptionIfNeeded(parent)?.let { expressionsToFix.add(it) }
+                        }
+                    }
                 }
             }
 
@@ -169,10 +195,12 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
 
         expressionsToFix.forEach {
             val newExpression = KtPsiFactory(project).createExpression(it.replacement)
+
             val replacedElement = it.expressionToReplace.replaced(newExpression)
 
-            if (it.classToImport != null) {
-                (replacedElement.containingFile as? KtFile)?.addImport(it.classToImport)
+            val classToImport = it.classToImport
+            if (classToImport != null) {
+                (replacedElement.containingFile as? KtFile)?.addImport(classToImport)
             }
         }
     }

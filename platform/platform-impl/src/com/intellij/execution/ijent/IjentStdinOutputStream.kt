@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
+import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.util.coroutines.channel.ChannelOutputStream
 import kotlinx.coroutines.runBlocking
@@ -32,7 +33,7 @@ internal class IjentStdinOutputStream(
         ijentChildProcess.sendStdinWithConfirmation(byteArrayOf())
       })
     }
-    catch (err: IjentChildProcess.SendStdinError) {
+    catch (err: EelProcess.SendStdinError) {
       throw IOException("Failed to flush the output stream: ${err.message}", err)
     }
   }

@@ -279,6 +279,9 @@ public final class VariableAccessUtils {
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
     PsiFile file = variable.getContainingFile();
     if (file == null) return List.of();
+    if (!file.isPhysical()) {
+      return getVariableReferences(variable, variable instanceof PsiField ? file : PsiUtil.getVariableCodeBlock(variable, null));
+    }
     return LocalRefUseInfo.forFile(file).getVariableReferences(variable, null);
   }
 

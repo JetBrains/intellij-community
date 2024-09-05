@@ -717,6 +717,9 @@ object EventFields {
   @JvmField
   val StartTime = LongEventField(EventFieldIds.START_TIME_FIELD_ID)
 
+  @JvmField
+  val Dumb: BooleanEventField = Boolean("dumb")
+
   @JvmStatic
   @JvmOverloads
   fun createAdditionalDataField(groupId: String, eventId: String, @NonNls description: String? = null): ObjectEventField {

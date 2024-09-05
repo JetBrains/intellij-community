@@ -3,16 +3,12 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrArgPostfixTemplate
-import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -23,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import static com.intellij.psi.CommonClassNames.*
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContext
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContextOnce
-import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.forbidNestedContext
 
 @CompileStatic
 class TypeInferenceTest extends TypeInferenceTestBase {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.internal.statistic.collectors.fus.ui
@@ -17,11 +17,11 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.platform.jbr.JdkEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.NewUiValue

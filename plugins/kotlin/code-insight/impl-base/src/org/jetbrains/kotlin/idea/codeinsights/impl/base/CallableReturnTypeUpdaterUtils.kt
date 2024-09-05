@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -243,5 +245,21 @@ object CallableReturnTypeUpdaterUtils {
             val UNIT = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
             val ANY = Type(isUnit = false, isError = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
         }
+    }
+
+    @ApiStatus.Internal
+    class SpecifyExplicitTypeQuickFix(
+        target: KtCallableDeclaration,
+        private val typeInfo: TypeInfo,
+    ) : AbstractKotlinApplicableQuickFix<KtCallableDeclaration>(target) {
+        override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
+
+        override fun getActionName(element: KtCallableDeclaration): String = when (element) {
+            is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+            else -> KotlinBundle.message("specify.type.explicitly")
+        }
+
+        override fun apply(element: KtCallableDeclaration, project: Project, editor: Editor?, file: KtFile) =
+            updateType(element, typeInfo, project, editor)
     }
 }

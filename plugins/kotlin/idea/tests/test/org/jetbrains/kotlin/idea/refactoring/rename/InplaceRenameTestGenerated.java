@@ -185,6 +185,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/EraseCompanionName.kt");
     }
 
+    @TestMetadata("expressionsInRange.kt")
+    public void testExpressionsInRange() throws Exception {
+        runTest("testData/refactoring/rename/inplace/expressionsInRange.kt");
+    }
+
     @TestMetadata("ExtensionAndNoReceiver.kt")
     public void testExtensionAndNoReceiver() throws Exception {
         runTest("testData/refactoring/rename/inplace/ExtensionAndNoReceiver.kt");

@@ -6,7 +6,6 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionalTypeParameters
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
 
@@ -70,7 +68,7 @@ internal object TailTextProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun StringBuilder.renderReceiverType(receiverType: KaType) {
-        val renderedType = receiverType.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
+        val renderedType = receiverType.renderVerbose()
         append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
     }
 
@@ -94,23 +92,6 @@ internal object TailTextProvider {
 
     private fun FqName.asStringForTailText(): String =
         if (isRoot) "<root>" else asString()
-
-    context(KaSession)
-    fun insertLambdaBraces(
-        symbol: KaFunctionSignature<*>,
-        insertionStrategy: CallableInsertionStrategy,
-    ): Boolean = when (insertionStrategy) {
-        is CallableInsertionStrategy.AsIdentifier,
-        is CallableInsertionStrategy.WithCallArgs,
-        is CallableInsertionStrategy.AsIdentifierCustom -> false
-
-        else -> {
-            symbol.valueParameters
-                .singleOrNull()
-                ?.takeUnless { it.symbol.hasDefaultValue }
-                ?.returnType is KaFunctionType
-        }
-    }
 
     context(KaSession)
     fun insertLambdaBraces(symbol: KaFunctionType): Boolean {

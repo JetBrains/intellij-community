@@ -4,14 +4,11 @@ package org.jetbrains.intellij.build.impl.compilation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.closeQuietly
 import org.jetbrains.intellij.build.NoMoreRetriesException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resumeWithException
-
-internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
 internal suspend fun OkHttpClient.head(url: String, authHeader: String): Int {
   return newCall(Request.Builder().url(url).head().header("Authorization", authHeader).build()).executeAsync().use { response ->
@@ -43,6 +40,11 @@ internal val httpClient: OkHttpClient by lazy {
     .connectTimeout(timeout, unit)
     .writeTimeout(timeout, unit)
     .readTimeout(timeout, unit)
+    .dispatcher(Dispatcher().apply {
+      // we upload/download to the same host - increase `maxRequestsPerHost`
+      //maxRequestsPerHost = Runtime.getRuntime().availableProcessors().coerceIn(5, 16)
+      //... but in the same time it can increase the bill for ALB, so, leave it as is
+    })
     .addInterceptor { chain ->
       var request = chain.request()
       if (request.header("User-Agent").isNullOrBlank()) {
@@ -83,7 +85,7 @@ internal suspend fun Call.executeAsync(): Response {
     continuation.invokeOnCancellation {
       this.cancel()
     }
-    this.enqueue(object : Callback {
+    enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
         continuation.resumeWithException(e)
       }

@@ -29,7 +29,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         try {
             super.setUp()
             EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.add(ENTRY_POINT_ANNOTATION)
-            registerGradlPlugin()
+            registerGradlePlugin()
         } catch (e: Throwable) {
             TestLoggerFactory.logTestFailure(e)
             TestLoggerFactory.onTestFinished(false, Description.createTestDescription(javaClass, name))
@@ -37,7 +37,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
-    protected open fun registerGradlPlugin() {
+    protected open fun registerGradlePlugin() {
         runWriteAction { FileTypeManager.getInstance().associateExtension(GroovyFileType.GROOVY_FILE_TYPE, "gradle") }
     }
 

@@ -29,6 +29,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
   private final JPanel myMainPanel;
   private final SimpleToolWindowPanel myContentPanel = new SimpleToolWindowPanel(false);
   private final Splitter mySplitter;
+  private final JComponent myMasterPanelWrapper;
   private final JPanel myMasterPanel;
   private final JPanel myDetailsPanel;
   private final JPanel myContentComponentPanel;
@@ -53,9 +54,10 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     myContentPanel.setContent(mySplitter);
 
     myMasterPanel = new JPanel(new BorderLayout());
-    mySplitter.setFirstComponent(UiDataProvider.wrapComponent(myMasterPanel, sink -> {
+    myMasterPanelWrapper = UiDataProvider.wrapComponent(myMasterPanel, sink -> {
       sink.set(ServiceViewActionUtils.IS_FROM_TREE_KEY, true);
-    }));
+    });
+    mySplitter.setFirstComponent(myMasterPanelWrapper);
 
     myDetailsPanel = new JPanel(new BorderLayout());
     myContentComponentPanel = new JPanel(new BorderLayout());
@@ -68,7 +70,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
       myNavBarPanel.setVisible(false);
     }
     else {
-      myMasterPanel.setVisible(false);
+      myMasterPanelWrapper.setVisible(false);
     }
 
     ComponentUtil
@@ -140,7 +142,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setMasterComponentVisible(boolean visible) {
-    myMasterPanel.setVisible(visible);
+    myMasterPanelWrapper.setVisible(visible);
     if (myNavBarWrapper != null) {
       myNavBarWrapper.setVisible(!visible);
     }

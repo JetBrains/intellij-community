@@ -219,7 +219,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && !myPassword.isEmpty();
+    return super.isConfigured() && StringUtil.isNotEmpty(getPassword());
   }
 
   @NotNull

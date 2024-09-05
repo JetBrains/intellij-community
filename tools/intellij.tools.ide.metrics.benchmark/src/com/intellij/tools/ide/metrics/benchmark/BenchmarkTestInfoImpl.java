@@ -138,7 +138,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   public BenchmarkTestInfoImpl() {
     initOpenTelemetry();
     cleanupOutdatedMetrics();
-    this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
+    this.tracer = TelemetryManager.getInstance().getTracer(new Scope("benchmarkUnitTests", null));
   }
 
   @Override
@@ -239,7 +239,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
       callingTestMethod = tryToFindCallingTestMethodByNamePattern();
       if (callingTestMethod == null) {
         throw new AssertionError(
-          "Couldn't manage to detect the calling test method. Please use one of the overloads of com.intellij.testFramework.PerformanceTestInfo.start"
+          "Couldn't manage to detect the calling test method. Please use one of the overloads of com.intellij.tools.ide.metrics.benchmark.BenchmarkTestInfoImpl.start()"
         );
       }
     }
@@ -304,7 +304,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     this.uniqueTestName = uniqueTestName;
 
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-    System.out.printf("Starting performance test \"%s\" in mode: %s%n", uniqueTestName, iterationType);
+    System.out.printf("Starting benchmark test \"%s\" in mode: %s%n", uniqueTestName, iterationType);
 
     int maxIterationsNumber;
     if (iterationType.equals(IterationMode.WARMUP)) {
@@ -368,7 +368,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
         }
       }
       catch (Throwable t) {
-        System.err.println("Something unexpected happened during publishing performance metrics");
+        System.err.println("Something unexpected happened during publishing benchmark metrics");
         throw t;
       }
     }

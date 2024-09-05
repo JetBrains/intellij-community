@@ -8,11 +8,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
 import java.util.Objects;
 
 
-final class MultiRoutingFsPath implements Path {
+final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttributesHolder {
   private final Path myDelegate;
   private final MultiRoutingFileSystem myFileSystem;
 
@@ -195,6 +196,21 @@ final class MultiRoutingFsPath implements Path {
     }
     else {
       return new MultiRoutingFsPath(myFileSystem, path);
+    }
+  }
+
+  @Override
+  public BasicFileAttributes get() {
+    if (myDelegate instanceof sun.nio.fs.BasicFileAttributesHolder) {
+      return ((sun.nio.fs.BasicFileAttributesHolder)myDelegate).get();
+    }
+    return null;
+  }
+
+  @Override
+  public void invalidate() {
+    if (myDelegate instanceof sun.nio.fs.BasicFileAttributesHolder) {
+      ((sun.nio.fs.BasicFileAttributesHolder)myDelegate).invalidate();
     }
   }
 

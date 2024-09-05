@@ -876,26 +876,21 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val problems = root.problems
 
     forMaven3 {
-      UsefulTestCase.assertSize(2, problems)
+      UsefulTestCase.assertSize(1, problems)
 
       val description = if (mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved"
       else
         "Could not find artifact xxx:yyy:jar:1"
       assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
-      assertTrue(problems[1]!!.description, problems[1]!!.description!!.contains("Unresolved plugin: 'xxx:yyy:1'"))
     }
 
-
-
-
     forMaven4 {
-      UsefulTestCase.assertSize(2, problems)
+      UsefulTestCase.assertSize(1, problems)
       assertTrue(
         problems[0]!!.description!!.contains("Plugin xxx:yyy:1 or one of its dependencies could not be resolved")
         || problems[0]!!.description!!.contains("xxx:yyy:jar:1 was not found")
       )
-      assertTrue(problems[1]!!.description, problems[1]!!.description!!.contains("Unresolved plugin: 'xxx:yyy:1'"))
     }
   }
 

@@ -25,6 +25,7 @@ suspend fun <T> SpanBuilder.block(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   operation: suspend CoroutineScope.(Span) -> T,
 ): T {
+  TraceManager.scheduleExportPendingSpans()
   return startSpan().useWithoutActiveScope { span ->
     // see `use` below why `withContext` must be inner
     TeamCityBuildMessageLogger.withBlock(span) {

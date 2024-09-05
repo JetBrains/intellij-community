@@ -43,6 +43,7 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import kotlin.Throws
 
 private val LOG = logger<ActionUtil>()
 private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, true)
@@ -116,6 +117,9 @@ object ActionUtil {
 
   @JvmField
   val INLINE_ACTIONS: Key<List<AnAction>> = Key.create("INLINE_ACTIONS")
+
+  @JvmField
+  val COMPONENT_PROVIDER: Key<CustomComponentAction> = Key.create("COMPONENT_PROVIDER")
 
   // Internal keys
 

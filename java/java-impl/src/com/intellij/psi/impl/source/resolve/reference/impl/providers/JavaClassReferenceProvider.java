@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -50,7 +51,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     List<PsiPackage> psiPackages = root == null ? Collections.emptyList() :
                                    ContainerUtil.filter(root.getSubPackages(),
                                                         p -> nameHelper.isIdentifier(p.getName(), PsiUtil.getLanguageLevel(p)));
-    return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
+    return CachedValueProvider.Result.createSingleDependency(psiPackages, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   };
 
   private static final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> ourPackagesKey = Key.create("default packages");
@@ -127,7 +128,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return CachedValuesManager.getManager(project)
       .getCachedValue(project, 
                       () -> CachedValueProvider.Result.create(ContainerUtil.map2Set(getDefaultPackages(project), PsiPackage::getName), 
-                                                              PsiModificationTracker.MODIFICATION_COUNT));
+                                                              VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
   }
 
   @Override

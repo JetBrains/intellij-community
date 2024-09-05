@@ -1,15 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
-import kotlinx.coroutines.*
 import java.io.IOException
-import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.*
@@ -17,17 +13,14 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration.Companion.seconds
+import kotlin.Throws
 
 internal class IjentNioFileChannel private constructor(
   private val nioFs: IjentNioFileSystem,
   private val ijentOpenedFile: IjentOpenedFile,
   // we keep stacktrace of the cause of closing for troubleshooting
   @Volatile
-  private var closeOrigin: Throwable? = null
+  private var closeOrigin: Throwable? = null,
 ) : FileChannel() {
   companion object {
     @JvmStatic
@@ -37,18 +30,20 @@ internal class IjentNioFileChannel private constructor(
     @JvmStatic
     internal suspend fun createWriting(
       nioFs: IjentNioFileSystem,
-      options: IjentFileSystemApi.WriteOptions
+      options: IjentFileSystemApi.WriteOptions,
     ): IjentNioFileChannel =
       IjentNioFileChannel(nioFs, nioFs.ijentFs.openForWriting(options).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createReadingWriting(
       nioFs: IjentNioFileSystem,
-      options: IjentFileSystemApi.WriteOptions
+      options: IjentFileSystemApi.WriteOptions,
     ): IjentNioFileChannel {
       return IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReadingAndWriting(options).getOrThrowFileSystemException())
     }
   }
+
+  override fun toString(): String = "IjentNioFileChannel($ijentOpenedFile)"
 
   override fun read(dst: ByteBuffer): Int {
     return readFromPosition(dst, null)
@@ -163,7 +158,8 @@ internal class IjentNioFileChannel private constructor(
       if (size < currentSize) {
         try {
           file.truncate(size)
-        } catch (e : IjentOpenedFile.Writer.TruncateException) {
+        }
+        catch (e: IjentOpenedFile.Writer.TruncateException) {
           e.throwFileSystemException()
         }
       }
@@ -200,7 +196,8 @@ internal class IjentNioFileChannel private constructor(
         break
       }
       totalBytesWritten += bytesWritten
-    } while (true)
+    }
+    while (true)
     return totalBytesWritten.toLong()
   }
 
@@ -224,7 +221,8 @@ internal class IjentNioFileChannel private constructor(
         break
       }
       currentPosition += bytesWritten
-    } while (true)
+    }
+    while (true)
     return totalBytesRead.toLong()
   }
 
@@ -232,7 +230,7 @@ internal class IjentNioFileChannel private constructor(
     return readFromPosition(dst, position)
   }
 
-  private fun readFromPosition(dst: ByteBuffer, position: Long?) : Int {
+  private fun readFromPosition(dst: ByteBuffer, position: Long?): Int {
     checkClosed()
     when (ijentOpenedFile) {
       is IjentOpenedFile.Reader -> Unit
@@ -241,7 +239,8 @@ internal class IjentNioFileChannel private constructor(
     val readResult = fsBlocking {
       if (position == null) {
         ijentOpenedFile.read(dst)
-      } else {
+      }
+      else {
         ijentOpenedFile.read(dst, position)
       }
     }.getOrThrowFileSystemException()
@@ -266,21 +265,14 @@ internal class IjentNioFileChannel private constructor(
       fsBlocking {
         if (position != null) {
           ijentOpenedFile.write(src, position)
-        } else {
+        }
+        else {
           ijentOpenedFile.write(src)
         }
       }
-      .getOrThrowFileSystemException()
+        .getOrThrowFileSystemException()
     return bytesWritten
   }
-
-  /**
-   * Holds an already created file copy, suitable for opening more than one memory map for the same file.
-   *
-   * The first element of a pair is a path to a local copy of the remote file.
-   * The second element is a job that copies the file from the client to the server.
-   */
-  private var memoryMap: AtomicReference<Pair<Path, Job>?> = AtomicReference(null)
 
   /**
    * The current implementation is a huge compromise that tries to work but can never work reliably.
@@ -306,37 +298,33 @@ internal class IjentNioFileChannel private constructor(
 
     check(ijentOpenedFile is IjentOpenedFile.Reader) { "The file must be opened for reading" }
 
-    val mmapCopyRegistry = service<MmapCopyRegistry>()
-    return fsBlocking {
-      val pathCreatedHere = Files.createTempFile("ijent-memory-map-copy-", null)
-      var deletePathCreatedHere = true
+    if (ijentOpenedFile is IjentOpenedFile.Writer) {
+      thisLogger().error(
+        "The file ${this} is opened for writing, but an attempt to write anything to the file won't be reflected in the memory map"
+      )
+    }
 
-      try {
-        coroutineScope {
-          val fileCopyDeferredCreatedHere: Job = launch(start = CoroutineStart.LAZY) {
-            downloadWholeFile(pathCreatedHere)
-          }
-
-          val (fileCopyPath: Path, fileCopyDeferred: Job) = memoryMap.updateAndGet { actual ->
-            actual ?: (pathCreatedHere to fileCopyDeferredCreatedHere)
-          }!!
-
-          fileCopyDeferred.join()
-
-          val map = fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
-            localCopy.map(mode, position, size)
-          }
-          mmapCopyRegistry.holdMemoryMapReference(fileCopyPath, map)
-
-          deletePathCreatedHere = fileCopyDeferred != fileCopyDeferredCreatedHere
-
-          map
-        }
+    val fileCopyPath = Files.createTempFile("ijent-memory-map-copy-", null)
+    return try {
+      fsBlocking {
+        downloadWholeFile(fileCopyPath)
       }
-      finally {
-        if (deletePathCreatedHere) {
-          MmapCopyRegistry.tryDelete(pathCreatedHere)
-        }
+
+      fileCopyPath.fileSystem.provider().newFileChannel(fileCopyPath, fileCopyOpenOptions).use { localCopy ->
+        localCopy.map(mode, position, size)
+      }
+    }
+    finally {
+      // It's safe to delete the file copy as soon as the memory map is created. Even on Windows.
+      // https://stackoverflow.com/questions/11099295/file-flag-delete-on-close-and-memory-mapped-files/11099431#11099431
+      try {
+        Files.delete(fileCopyPath)
+      }
+      catch (err: IOException) {
+        logger<IjentNioFileSystem>().info(
+          "Failed to delete a file copy created for mmap. It does not break the IDE but leaves garbage on the disk. Path: $fileCopyPath",
+          err,
+        )
       }
     }
   }
@@ -358,72 +346,6 @@ internal class IjentNioFileChannel private constructor(
             buffer.clear()
           }
           is IjentOpenedFile.Reader.ReadResult.EOF -> break
-        }
-      }
-    }
-  }
-
-  /** A garbage collector for file copies. */
-  @Service
-  private class MmapCopyRegistry(coroutineScope: CoroutineScope) {
-    companion object {
-      fun tryDelete(path: Path) {
-        try {
-          Files.delete(path)
-        }
-        catch (err: IOException) {
-          logger<IjentNioFileSystem>().info(
-            "Failed to delete a file copy created for mmap. It does not break the IDE but leaves garbage on the disk. Path: $path",
-            err,
-          )
-        }
-      }
-    }
-
-    private val memoryMapReferences: Queue<Pair<Path, WeakReference<MappedByteBuffer>>> =
-      ConcurrentLinkedQueue<Pair<Path, WeakReference<MappedByteBuffer>>>()
-
-    fun holdMemoryMapReference(localFileCopyPath: Path, buffer: MappedByteBuffer) {
-      assert(localFileCopyPath !is IjentNioPath)
-      memoryMapReferences.add(localFileCopyPath to WeakReference(buffer))
-    }
-
-    init {
-      ShutDownTracker.getInstance().registerShutdownTask {
-        @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(Dispatchers.IO) {
-          while (true) {
-            val (path, _) = memoryMapReferences.poll() ?: break
-            launch {
-              tryDelete(path)
-            }
-          }
-        }
-      }
-
-      coroutineScope.launch {
-        while (isActive) {
-          delay(2.seconds)  // The timeout was taken at random.
-
-          val requeue = mutableListOf<Pair<Path, WeakReference<MappedByteBuffer>>>()
-          val deleteList = mutableListOf<Path>()
-          while (true) {
-            val pair = memoryMapReferences.poll() ?: break
-            if (pair.second.get() == null) {
-              deleteList.add(pair.first)
-            }
-            else {
-              requeue.add(pair)
-            }
-          }
-
-          memoryMapReferences.addAll(requeue)
-
-          for (path in deleteList) {
-            launch(Dispatchers.IO) {
-              tryDelete(path)
-            }
-          }
         }
       }
     }

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,8 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
@@ -40,10 +40,7 @@ import com.jetbrains.python.pyi.PyiFileType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -162,7 +159,17 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   private static void forEachPublicNameFromIndex(@NotNull GlobalSearchScope scope, @NotNull Processor<String> processor) {
     StubIndex stubIndex = StubIndex.getInstance();
     if (!RECURSIVE_INDEX_ACCESS_ALLOWED) {
-      for (String allKey : stubIndex.getAllKeys(PyExportedModuleAttributeIndex.KEY, Objects.requireNonNull(scope.getProject()))) {
+      Project project = Objects.requireNonNull(scope.getProject());
+      CachedValuesManager manager = CachedValuesManager.getManager(project);
+
+      var cachedAllNames = manager.getCachedValue(project, () -> {
+        StubIndex index = StubIndex.getInstance();
+        Collection<String> keys = index.getAllKeys(PyExportedModuleAttributeIndex.KEY, project);
+        ModificationTracker modificationTracker = index.getPerFileElementTypeModificationTracker(PyFileElementType.INSTANCE);
+        return CachedValueProvider.Result.create(keys, modificationTracker);
+      });
+
+      for (String allKey : cachedAllNames) {
         if (!processor.process(allKey)) {
           return;
         }

@@ -473,7 +473,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void trackClassRedefinitions() {
-    getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> InstrumentationTracker.track(this));
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    InstrumentationTracker.track(this);
   }
 
   private void createStackCapturingBreakpoints() {

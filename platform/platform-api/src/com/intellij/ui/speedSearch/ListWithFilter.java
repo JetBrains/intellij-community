@@ -234,6 +234,13 @@ public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataP
         }
       };
     }
+
+    @Override
+    public void selectTextRange(int begin, int length) {
+      if (searchFieldShown) {
+        mySearchField.getTextEditor().select(begin, begin + length);
+      }
+    }
   }
 
   private void onSpeedSearchPatternChanged() {

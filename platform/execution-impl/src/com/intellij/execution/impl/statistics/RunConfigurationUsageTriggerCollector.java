@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.EnvFilesOptions;
@@ -42,7 +42,6 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                                                            RunConfigurationExecutorUtilValidator.class);
   private static final BooleanEventField IS_RERUN = EventFields.Boolean("is_rerun");
   private static final BooleanEventField IS_RUNNING_CURRENT_FILE = EventFields.Boolean("is_running_current_file");
-  private static final BooleanEventField IS_DUMB_MODE = EventFields.Boolean("dumb");
   private static final BooleanEventField IS_SERVICE_VIEW = EventFields.Boolean("service_view");
 
   /**
@@ -70,7 +69,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       RunConfigurationTypeUsagesCollector.ID_FIELD,
       EventFields.PluginInfo,
       ENV_FILES_COUNT,
-      IS_DUMB_MODE,
+      EventFields.Dumb,
       IS_SERVICE_VIEW
     },
     new EventField<?>[]{FINISH_TYPE},
@@ -130,7 +129,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
     eventPairs.add(IS_RERUN.with(isRerun));
     eventPairs.add(IS_RUNNING_CURRENT_FILE.with(isRunningCurrentFile));
-    eventPairs.add(IS_DUMB_MODE.with(isDumb));
+    eventPairs.add(EventFields.Dumb.with(isDumb));
     eventPairs.add(IS_SERVICE_VIEW.with(isServiceView));
 
     if (runConfiguration instanceof FusAwareRunConfiguration) {

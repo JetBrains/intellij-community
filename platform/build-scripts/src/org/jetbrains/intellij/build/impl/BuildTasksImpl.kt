@@ -12,6 +12,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
@@ -222,7 +223,8 @@ internal suspend fun updateExecutablePermissions(destinationDir: Path, executabl
   }
 }
 
-internal class DistributionForOsTaskResult(
+@ApiStatus.Internal
+class DistributionForOsTaskResult(
   @JvmField val builder: OsSpecificDistributionBuilder,
   @JvmField val arch: JvmArchitecture,
   @JvmField val outDir: Path

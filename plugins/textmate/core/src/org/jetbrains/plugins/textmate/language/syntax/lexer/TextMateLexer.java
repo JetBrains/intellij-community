@@ -333,10 +333,12 @@ public final class TextMateLexer {
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position);
     }
-    int nested = myNestedScope.getInt(myNestedScope.size() - 1);
-    myNestedScope.removeInt(myNestedScope.size() - 1);
-    for (int i = 0; i < nested; i++) {
-      myCurrentScope = myCurrentScope.getParentOrSelf();
+    if (!myNestedScope.isEmpty()) {
+      int nested = myNestedScope.getInt(myNestedScope.size() - 1);
+      myNestedScope.removeInt(myNestedScope.size() - 1);
+      for (int i = 0; i < nested; i++) {
+        myCurrentScope = myCurrentScope.getParentOrSelf();
+      }
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
@@ -86,6 +87,7 @@ interface NewProjectWizardStep {
    */
   fun setupProject(project: Project) {}
 
+  @ApiStatus.Internal
   fun createModuleConfigurator(): Consumer<Module>? = null
 
   /**

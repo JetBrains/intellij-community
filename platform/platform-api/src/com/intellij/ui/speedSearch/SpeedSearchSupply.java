@@ -105,6 +105,8 @@ public abstract class SpeedSearchSupply {
     return null;
   }
 
+  public void selectTextRange(int begin, int length) {}
+
   @ApiStatus.Experimental
   @FunctionalInterface
   public interface SpeedSearchLocator {

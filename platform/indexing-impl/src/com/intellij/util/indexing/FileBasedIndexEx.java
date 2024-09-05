@@ -111,21 +111,45 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                              @Nullable VirtualFile restrictedFile);
 
   @Override
-  public @NotNull <K, V> List<V> getValues(final @NotNull ID<K, V> indexId, @NotNull K dataKey, final @NotNull GlobalSearchScope filter) {
-    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(filter);
+  public @NotNull <K, V> List<V> getValues(final @NotNull ID<K, V> indexId, @NotNull K dataKey, final @NotNull GlobalSearchScope scope) {
+    Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
 
-    final List<V> values = new SmartList<>();
-    ValueProcessor<V> processor = (file, value) -> {
-      values.add(value);
-      return true;
-    };
+    List<V> values = new SmartList<>();
     if (restrictToFileIt != null) {
+      ValueProcessor<V> processor = (file, value) -> {
+        values.add(value);
+        return true;
+      };
       VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
       if (restrictToFile == null) return Collections.emptyList();
-      processValuesInOneFile(indexId, dataKey, restrictToFile, filter, processor);
+      processValuesInOneFile(indexId, dataKey, restrictToFile, scope, processor);
     }
     else {
-      processValuesInScope(indexId, dataKey, true, filter, null, processor);
+      Project project = scope.getProject();
+      IdFilter filter = extractIdFilter(scope, project);
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+
+      processValueIterator(indexId, dataKey, null, scope, valueIt -> {
+        while (valueIt.hasNext()) {
+          V value = valueIt.next();
+          boolean isValueAccessible = false;
+          // to return a value, at least one file in there must be in scope
+          for (ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
+            int id = inputIdsIterator.next();
+            if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
+            VirtualFile file = findFileById(id);
+            if (file != null && scope.contains(file)) {
+              isValueAccessible = true;
+              break;
+            }
+            ProgressManager.checkCanceled();
+          }
+          if (isValueAccessible) {
+            values.add(value);
+          }
+        }
+        return true;
+      });
     }
     return values;
   }

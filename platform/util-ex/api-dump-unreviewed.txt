@@ -32,6 +32,13 @@ f:com.intellij.openapi.util.ExtensionsKt
 - sf:use(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.util.ErrorKt
 - sf:throwIfNotEmpty(java.util.List):V
+f:com.intellij.util.FieldAccessor
+- <init>(java.lang.Class,java.lang.String):V
+- <init>(java.lang.Class,java.lang.String,java.lang.Class):V
+- b:<init>(java.lang.Class,java.lang.String,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:get(java.lang.Object):java.lang.Object
+- f:isAvailable():Z
+- f:set(java.lang.Object,java.lang.Object):V
 f:com.intellij.util.JdomKt
 - sf:addOptionTag(org.jdom.Element,java.lang.String,java.lang.String):V
 - sf:addOptionTag(org.jdom.Element,java.lang.String,java.lang.String,java.lang.String):V

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -57,7 +58,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
-        return if (needsUpdate(psiFile)) {
+        return if (needsUpdate(psiFile) && ProjectFileIndex.getInstance(psiFile.project).isInSourceContent(newParent.virtualFile)) {
             markRequiresUpdate(psiFile)
             val newPkgName = newParent.getFqNameWithImplicitPrefix() ?: return emptyList()
             psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)

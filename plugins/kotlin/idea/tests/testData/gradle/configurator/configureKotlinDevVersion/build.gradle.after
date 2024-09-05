@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id 'org.jetbrains.kotlin.jvm'
 }
@@ -11,12 +13,12 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 compileKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = "1.8"
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }

@@ -19,8 +19,13 @@ import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.*
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.CompilerOption
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getCompilerOption
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -32,6 +37,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl
+import kotlin.Boolean
 
 internal class GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
     override fun createManipulator(file: PsiFile, preferNewSyntax: Boolean): GroovyBuildScriptManipulator? {
@@ -159,7 +166,7 @@ class GroovyBuildScriptManipulator(
             )
         }
 
-        scriptFile.configureToolchainOrKotlinOptions(jvmTarget, version, gradleVersion, changedFiles)
+        scriptFile.configureToolchainOrKotlinCompilerOptions(jvmTarget, version, gradleVersion, changedFiles)
 
     }
 
@@ -212,11 +219,12 @@ class GroovyBuildScriptManipulator(
         val versionExpression: ChainedMethodCallPart?,
         val applyExpression: ChainedMethodCallPart?
     )
+
     private fun GrClosableBlock.findPluginExpressions(pluginName: String): PluginExpression? {
         return getChildrenOfType<GrMethodCall>().firstNotNullOfOrNull { entireExpression ->
             val callParts = entireExpression.parsePluginCallChain() ?: return@firstNotNullOfOrNull null
             val firstPart = callParts.firstOrNull() ?: return@firstNotNullOfOrNull null
-            val firstArgument = firstPart.arguments.singleOrNull() ?: return@firstNotNullOfOrNull  null
+            val firstArgument = firstPart.arguments.singleOrNull() ?: return@firstNotNullOfOrNull null
             if (firstPart.methodName != "id" || firstArgument.text.extractTextFromQuotes() != pluginName) return@firstNotNullOfOrNull null
 
             val versionExpression = callParts.firstOrNull { it.methodName == "version" }
@@ -271,8 +279,14 @@ class GroovyBuildScriptManipulator(
             parameterName,
             "[\"$featureArgumentString\"]",
             forTests
-        ) { insideKotlinOptions ->
-            val prefix = if (insideKotlinOptions) "kotlinOptions." else ""
+        ) { insideKotlinOptions, /* precompiledReplacement = */ _, insideCompilerOptions ->
+            val prefix = if (insideKotlinOptions) {
+                "kotlinOptions."
+            } else if (insideCompilerOptions) {
+                "compilerOptions."
+            } else {
+                ""
+            }
             val newText = text.replaceLanguageFeature(
                 feature,
                 state,
@@ -401,14 +415,16 @@ class GroovyBuildScriptManipulator(
 
     private fun GrClosableBlock.addParameterAssignment(
         parameterName: String,
-        defaultValue: String,
-        replaceIt: GrStatement.(Boolean) -> GrStatement
+        parameterValue: String,
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement
     ) {
         statements.firstOrNull { stmt ->
             (stmt as? GrAssignmentExpression)?.lValue?.text == parameterName
-        }?.let { stmt ->
-            stmt.replaceIt(false)
-        } ?: addLastExpressionInBlockIfNeeded("$parameterName = $defaultValue")
+        }?.replaceIt(/* insideKotlinOptions = */ false, /* precompiledReplacement = */ null, /* insideCompilerOptions = */ false)
+            ?: addLastExpressionInBlockIfNeeded("$parameterName = $parameterValue")
     }
 
     private fun String.extractTextFromQuotes(): String {
@@ -423,9 +439,12 @@ class GroovyBuildScriptManipulator(
     private fun addOrReplaceLanguageSettingParameter(
         gradleFile: GroovyFile,
         parameterName: String,
-        defaultValue: String,
+        parameterValue: String,
         forTests: Boolean,
-        replaceIt: GrStatement.(Boolean) -> GrStatement
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement
     ): PsiElement? {
         return if (usesNewMultiplatform()) {
             // For multiplatform projects, we configure the language level for all sourceSets
@@ -434,21 +453,31 @@ class GroovyBuildScriptManipulator(
             val sourceSetsBlock = kotlinBlock.getBlockOrCreate("sourceSets")
             val allBlock = sourceSetsBlock.getBlockOrCreate("all")
             val languageSettingsBlock = allBlock.getBlockOrCreate("languageSettings")
-            languageSettingsBlock.addParameterAssignment(parameterName, defaultValue, replaceIt)
+            languageSettingsBlock.addParameterAssignment(parameterName, parameterValue, replaceIt)
             languageSettingsBlock
         } else {
-            addOrReplaceKotlinTaskParameter(gradleFile, parameterName, defaultValue, forTests, replaceIt)
+            addOrReplaceKotlinTaskParameter(gradleFile, parameterName, parameterValue, forTests, replaceIt)
         }
     }
 
+    /**
+     * Currently, this function is called to add or replace parameters:
+     * freeCompilerArgs
+     * languageVersion
+     * apiVersion
+     * jvmTarget
+     */
     private fun addOrReplaceKotlinTaskParameter(
         gradleFile: GroovyFile,
         parameterName: String,
-        defaultValue: String,
+        parameterValue: String,
         forTests: Boolean,
-        replaceIt: GrStatement.(Boolean) -> GrStatement
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement
     ): PsiElement? {
-        if (usesNewMultiplatform()) {
+        if (usesNewMultiplatform()) { // Probably, this branch is NOT used in IDEA nowadays
             val kotlinBlock = gradleFile.getKotlinBlock()
             val kotlinTargets = kotlinBlock.getBlockOrCreate("targets")
             val targetNames = mutableListOf<String>()
@@ -477,26 +506,173 @@ class GroovyBuildScriptManipulator(
             configureBlock.getStrictParentOfType<GrMethodCallExpression>()!!.argumentList.replaceWithArgumentList(argumentList)
 
             val kotlinOptions = configureBlock.getBlockOrCreate("tasks.getByName(compilations.main.compileKotlinTaskName).kotlinOptions")
-            kotlinOptions.addParameterAssignment(parameterName, defaultValue, replaceIt)
+            kotlinOptions.addParameterAssignment(parameterName, parameterValue, replaceIt)
             return kotlinOptions.parent.parent
         }
 
+        val hasAndroidModule = gradleFile.getBlockByName("android") != null
+
         val kotlinBlock: GrClosableBlock =
-            if (gradleFile.isAndroidModule() && gradleFile.getBlockByName("android") != null) {
-                gradleFile.getBlockOrCreate("tasks.withType(org.jetbrains.kotlin.gradle.tasks.${if (forTests) "KotlinTest" else "KotlinCompile"}).all")
+            if (gradleFile.isAndroidModule() && hasAndroidModule) {
+                gradleFile.getBlockOrCreate(
+                    "tasks.withType(org.jetbrains.kotlin.gradle.tasks.${if (forTests) "KotlinTest" else "KotlinCompile"}).all"
+                )
             } else {
                 gradleFile.getBlockOrCreate(if (forTests) "compileTestKotlin" else "compileKotlin")
             }
 
         for (stmt in kotlinBlock.statements) {
             if ((stmt as? GrAssignmentExpression)?.lValue?.text == "kotlinOptions.$parameterName") {
-                return stmt.replaceIt(true)
+                return stmt.replaceIt(/* insideKotlinOptions = */ true, /* precompiledReplacement = */ null,
+                                      /* insideCompilerOptions = */ false
+                )
             }
         }
 
-        kotlinBlock.getBlockOrCreate("kotlinOptions").addParameterAssignment(parameterName, defaultValue, replaceIt)
+        addKotlinOrCompilerOptionToBlock(kotlinBlock, parameterName, parameterValue, gradleFile, replaceIt, hasAndroidModule)
 
         return kotlinBlock.parent
+    }
+
+    private fun projectSupportsCompilerOptions(file: PsiFile): Boolean {
+        /*
+        Current test infrastructure uses either a fallback version of Kotlin –
+        org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.getFallbackVersionForOutdatedCompiler
+        or a currently bundled version. Not that one that is stated in build scripts
+        */
+        if (isUnitTestMode()) {
+            return true
+        }
+        return kotlinVersionIsEqualOrHigher(major = 1, minor = 8, patch = 0, file)
+    }
+
+    private fun addKotlinOrCompilerOptionToBlock(
+        outerDslBlock: GrClosableBlock,
+        parameterName: String,
+        parameterValue: String,
+        gradleFile: GroovyFile,
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement,
+        hasAndroidModule: Boolean
+    ) {
+        val kotlinOptionsBlock = if (hasAndroidModule || !projectSupportsCompilerOptions(gradleFile)) {
+            // no `compilerOptions` for android
+            outerDslBlock.getBlockOrCreate("kotlinOptions")
+        } else {
+            outerDslBlock.getBlockByName("kotlinOptions")
+        }
+
+        if (kotlinOptionsBlock != null) {
+            // We leave deprecated `kotlinOptions` untouched, it can be updated with `kotlinOptions` to `compilerOptions` inspection
+            kotlinOptionsBlock.addParameterAssignment(parameterName, parameterValue, replaceIt)
+        } else { // Work with `compilerOptions` block
+            addCompilerOption(parameterName, parameterValue, outerDslBlock, gradleFile, replaceIt)
+        }
+    }
+
+    private fun addCompilerOption(
+        parameterName: String,
+        parameterValue: String,
+        outerDslBlock: GrClosableBlock,
+        gradleFile: GroovyFile,
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement
+    ) {
+        val compilerOption = getCompilerOption(parameterName, parameterValue)
+        var replaced = outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
+        if (replaced != true) {
+            val compilerOptionsBlock = outerDslBlock.getBlockOrCreate("compilerOptions")
+            replaced = compilerOptionsBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
+
+            if (replaced != true) {
+                val added = compilerOptionsBlock.addLastExpressionInBlockIfNeeded(compilerOption.expression)
+                if (added == true) {
+                    compilerOption.classToImport?.let {
+                        addImportIfNeeded(it, gradleFile)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun GrClosableBlock.findAndReplaceCompilerOption(
+        parameterName: String,
+        parameterValue: String,
+        compilerOption: CompilerOption,
+        replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
+                                /* precompiledReplacement = */ String?,
+                                /* insideCompilerOptions = */ Boolean
+        ) -> GrStatement
+    ): Boolean? {
+        var insideCompilerOptions = false
+        val replaced = statements.firstOrNull { stmt ->
+            val statementLeftPartText =
+                (stmt as? GrAssignmentExpression)?.lValue?.text ?: (stmt as? GrMethodCallExpression)?.invokedExpression?.text
+            val statementContainsParameterName = if (statementLeftPartText?.contains(parameterName) == true) {
+                if (statementLeftPartText.contains("compilerOptions.$parameterName")) {
+                    insideCompilerOptions = true
+                }
+                true
+            } else {
+                false
+            }
+
+            if (statementContainsParameterName) {
+                if (statementContainsValue(stmt, parameterValue, compilerOption.compilerOptionValue)) {
+                    return@findAndReplaceCompilerOption true // Don't need to replace or update
+                } else {
+                    true
+                }
+            } else {
+                false
+            }
+        }?.replaceIt(/* insideKotlinOptions = */ false, /* precompiledReplacement = */ compilerOption.expression, insideCompilerOptions)
+        return replaced != null
+    }
+
+    private fun statementContainsValue(stmt: GrStatement, parameterValue: String, compilerOptionValue: String?): Boolean {
+        val statementText = (stmt as? GrMethodCallExpression)?.argumentList?.text
+        return statementText?.contains(parameterValue) == true || (compilerOptionValue != null && statementText?.contains(
+            compilerOptionValue
+        ) == true)
+    }
+
+    private fun addImportIfNeeded(classToImport: FqName, gradleFile: GroovyFile) {
+        val newImportStatement = gradleFile.psiFactory.createImportStatementFromText("import $classToImport")
+        val existingImportStatements = gradleFile.importStatements
+        for (existingImportStatement in existingImportStatements) {
+            if (newImportStatement.text == existingImportStatement.text) {
+                return
+            }
+        }
+        gradleFile.addImport(newImportStatement)
+    }
+
+    private val PsiElement.psiFactory: GroovyPsiElementFactory
+        get() = GroovyPsiElementFactoryImpl(project)
+
+    private fun GrStatement.replaceStatement(
+        parameterName: String,
+        parameterValue: String,
+        insideKotlinOptions: Boolean,
+        replacement: String?,
+        insideCompilerOptions: Boolean
+    ): GrStatement {
+        if (insideKotlinOptions) {
+            return replaceWithStatementFromText("kotlinOptions.$parameterName = \"$parameterValue\"")
+        } else if (insideCompilerOptions && !replacement.isNullOrEmpty()) {
+            return replaceWithStatementFromText("compilerOptions.$replacement")
+        } else {
+            if (replacement.isNullOrEmpty()) {
+                return replaceWithStatementFromText("$parameterName = \"$parameterValue\"")
+            } else {
+                return replaceWithStatementFromText(replacement)
+            }
+        }
     }
 
     override fun changeKotlinTaskParameter(
@@ -506,12 +682,8 @@ class GroovyBuildScriptManipulator(
     ): PsiElement? {
         return addOrReplaceKotlinTaskParameter(
             scriptFile, parameterName, "\"$parameterValue\"", forTests
-        ) { insideKotlinOptions ->
-            if (insideKotlinOptions) {
-                replaceWithStatementFromText("kotlinOptions.$parameterName = \"$parameterValue\"")
-            } else {
-                replaceWithStatementFromText("$parameterName = \"$parameterValue\"")
-            }
+        ) { insideKotlinOptions, /* precompiledReplacement = */ replacement, insideCompilerOptions ->
+            replaceStatement(parameterName, parameterValue, insideKotlinOptions, replacement, insideCompilerOptions)
         }
     }
 
@@ -522,12 +694,8 @@ class GroovyBuildScriptManipulator(
     ): PsiElement? {
         return addOrReplaceLanguageSettingParameter(
             scriptFile, parameterName, "\"$parameterValue\"", forTests
-        ) { insideKotlinOptions ->
-            if (insideKotlinOptions) {
-                replaceWithStatementFromText("kotlinOptions.$parameterName = \"$parameterValue\"")
-            } else {
-                replaceWithStatementFromText("$parameterName = \"$parameterValue\"")
-            }
+        ) { insideKotlinOptions, /* precompiledReplacement = */ replacement, insideCompilerOptions ->
+            replaceStatement(parameterName, parameterValue, insideKotlinOptions, replacement, insideCompilerOptions)
         }
     }
 

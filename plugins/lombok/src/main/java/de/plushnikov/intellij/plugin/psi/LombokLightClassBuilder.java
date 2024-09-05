@@ -40,7 +40,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     myIsAnnotationType = false;
     myQualifiedName = qualifiedName;
     myBaseIcon = LombokIcons.Nodes.LombokClass;
-    myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage());
+    myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage()).withParent(this);
   }
 
   @NotNull

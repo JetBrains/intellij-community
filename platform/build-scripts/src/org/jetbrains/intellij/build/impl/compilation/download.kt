@@ -1,29 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
-import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import kotlinx.coroutines.isActive
 import okio.IOException
+import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
+import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
+import org.jetbrains.intellij.build.http2Client.download
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
-import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.net.HttpURLConnection
-import java.nio.ByteBuffer
+import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
@@ -33,90 +28,99 @@ private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardO
 
 internal suspend fun downloadCompilationCache(
   serverUrl: String,
+  client: Http2ClientConnectionFactory,
   prefix: String,
-  toDownload: List<FetchAndUnpackItem>,
-  client: OkHttpClient,
-  bufferPool: DirectFixedSizeByteBufferPool,
+  toDownload: Collection<FetchAndUnpackItem>,
   downloadedBytes: AtomicLong,
   skipUnpack: Boolean,
   saveHash: Boolean,
-): List<Throwable> {
-  var urlWithPrefix = "$serverUrl/$prefix/"
+) {
+  var urlPathWithPrefix = "/$prefix/"
   // first let's check for initial redirect (mirror selection)
-  spanBuilder("mirror selection").use { span ->
-    client.newCall(Request.Builder().url(urlWithPrefix).head().build()).executeAsync().use { response ->
-      val statusCode = response.code
-      val locationHeader = response.header("location")
-      if (locationHeader != null && (statusCode == HttpURLConnection.HTTP_MOVED_TEMP ||
-                                     statusCode == HttpURLConnection.HTTP_MOVED_PERM ||
-                                     statusCode == 307 ||
-                                     statusCode == HttpURLConnection.HTTP_SEE_OTHER)) {
-        urlWithPrefix = locationHeader
-        span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlWithPrefix))
+  val initialServerUri = URI(serverUrl)
+  var effectiveServerUri = initialServerUri
+  var connection: Http2ClientConnection? = client.connect(effectiveServerUri.host, effectiveServerUri.port)
+  try {
+    spanBuilder("mirror selection").use { span ->
+      val newLocation = connection!!.getRedirectLocation(urlPathWithPrefix)
+      if (newLocation == null) {
+        span.addEvent("origin server will be used", Attributes.of(AttributeKey.stringKey("url"), urlPathWithPrefix))
       }
       else {
-        span.addEvent("origin server will be used", Attributes.of(AttributeKey.stringKey("url"), urlWithPrefix))
+        effectiveServerUri = URI(newLocation.toString())
+        urlPathWithPrefix = effectiveServerUri.path
+        span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlPathWithPrefix))
       }
     }
   }
+  finally {
+    if (initialServerUri != effectiveServerUri) {
+      connection?.close()
+      connection = null
+    }
+  }
 
-  return withContext(Dispatchers.IO) {
-    toDownload.mapConcurrent(downloadParallelism) { item ->
-      val url = "$urlWithPrefix${item.name}/${item.file.fileName}"
-      spanBuilder("download").setAttribute("name", item.name).setAttribute("url", url).use {
+  if (connection == null) {
+    connection = client.connect(effectiveServerUri.host, effectiveServerUri.port)
+  }
+  try {
+    val zstdDecompressContextPool = ZstdDecompressContextPool()
+    toDownload.forEachConcurrent(downloadParallelism) { item ->
+      val urlPath = "$urlPathWithPrefix${item.name}/${item.file.fileName}"
+      spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
         try {
           downloadedBytes.getAndAdd(
             download(
               item = item,
-              url = url,
-              bufferPool = bufferPool,
+              urlPath = urlPath,
               skipUnpack = skipUnpack,
               saveHash = saveHash,
-              client = client,
+              connection = connection,
+              zstdDecompressContextPool = zstdDecompressContextPool,
             )
           )
         }
         catch (e: CancellationException) {
-          throw e
+          if (coroutineContext.isActive) {
+            // well, we are not canceled, only child
+            throw IllegalStateException("Unexpected cancellation - action is cancelled itself", e)
+          }
         }
         catch (e: Throwable) {
-          return@use CompilePartDownloadFailedError(item, e)
+          span.recordException(e)
+          throw CompilePartDownloadFailedError(item, e)
         }
-        null
       }
     }
-  }.filterNotNull()
+  }
+  finally {
+    connection.close()
+  }
 }
 
 private suspend fun download(
   item: FetchAndUnpackItem,
-  url: String,
-  bufferPool: DirectFixedSizeByteBufferPool,
+  urlPath: String,
   skipUnpack: Boolean,
   saveHash: Boolean,
-  client: OkHttpClient,
+  connection: Http2ClientConnection,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
 ): Long {
-  val downloaded = retryWithExponentialBackOff(onException = ::onDownloadException) {
-    client.newCall(Request.Builder().url(url).build()).executeAsync().useSuccessful { response ->
-      val digest = sha256()
-      writeFile(file = item.file, response = response, bufferPool = bufferPool, url = url, digest = digest)
-      val computedHash = digestToString(digest)
-      if (computedHash != item.hash) {
-        throw HashMismatchException("hash mismatch") { span, attempt ->
-          span.addEvent(
-            "hash mismatch",
-            Attributes.of(
-              AttributeKey.longKey("attemptNumber"), attempt.toLong(),
-              AttributeKey.stringKey("name"), item.file.name,
-              AttributeKey.stringKey("expected"), item.hash,
-              AttributeKey.stringKey("computed"), computedHash,
-            )
-          )
-        }
-      }
-      response.body.contentLength()
-    }
+  val (downloaded, digest) = connection.download(path = urlPath, file = item.file, zstdDecompressContextPool = zstdDecompressContextPool, digestFactory = { sha256() })
+  val computedHash = digestToString(digest)
+  if (computedHash != item.hash) {
+    //println("actualHash  : ${computeHash(item.file)}")
+    //println("expectedHash: ${item.hash}")
+    //println("computedHash: $computedHash")
+
+    val spanAttributes = Attributes.of(
+      AttributeKey.stringKey("name"), item.file.name,
+      AttributeKey.stringKey("expected"), item.hash,
+      AttributeKey.stringKey("computed"), computedHash,
+    )
+    throw HashMismatchException("hash mismatch ($spanAttributes)")
   }
+
   if (!skipUnpack) {
     spanBuilder("unpack").setAttribute("name", item.name).use {
       unpackArchive(item, saveHash)
@@ -125,23 +129,11 @@ private suspend fun download(
   return downloaded
 }
 
-private suspend fun onDownloadException(attempt: Int, e: Exception) {
-  spanBuilder("Retrying download with exponential back off").use { span ->
-    if (e is HashMismatchException) {
-      e.eventLogger.invoke(span, attempt)
-    }
-    else {
-      span.addEvent("Attempt failed", Attributes.of(
-        AttributeKey.longKey("attemptNumber"), attempt.toLong(),
-        AttributeKey.stringKey("error"), e.toString()
-      ))
-    }
-  }
+internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause) {
+  override fun toString(): String = "item: $item, error: ${super.toString()}"
 }
 
-internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause)
-
-internal class HashMismatchException(message: String, @JvmField val eventLogger: (Span, Int) -> Unit) : IOException(message)
+internal class HashMismatchException(message: String) : IOException(message)
 
 internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
   HashMapZipFile.load(item.file).use { zipFile ->
@@ -169,67 +161,5 @@ internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
   if (saveHash) {
     // save actual hash
     Files.writeString(item.output.resolve(".hash"), item.hash)
-  }
-}
-
-private fun writeFile(file: Path, response: Response, bufferPool: DirectFixedSizeByteBufferPool, url: String, digest: MessageDigest) {
-  Files.createDirectories(file.parent)
-  FileChannel.open(file, OVERWRITE_OPERATION).use { channel ->
-    val source = response.body.source()
-    val sourceBuffer = bufferPool.allocate()
-    object : ZstdDirectBufferDecompressingStreamNoFinalizer(sourceBuffer) {
-      public override fun refill(toRefill: ByteBuffer): ByteBuffer {
-        toRefill.clear()
-        do {
-          if (source.read(toRefill) == -1) {
-            break
-          }
-        }
-        while (!source.exhausted() && toRefill.hasRemaining())
-        toRefill.flip()
-        return toRefill
-      }
-
-      override fun close() {
-        try {
-          super.close()
-        }
-        finally {
-          bufferPool.release(sourceBuffer)
-        }
-      }
-    }.use { decompressor ->
-      var offset = 0L
-      val targetBuffer = bufferPool.allocate()
-      try {
-        // refill is not called on start
-        decompressor.refill(sourceBuffer)
-        do {
-          do {
-            // decompressor can consume not the whole source buffer if target buffer size is not enough
-            decompressor.read(targetBuffer)
-            targetBuffer.flip()
-
-            targetBuffer.mark()
-            digest.update(targetBuffer)
-            targetBuffer.reset()
-
-            do {
-              offset += channel.write(targetBuffer, offset)
-            }
-            while (targetBuffer.hasRemaining())
-            targetBuffer.clear()
-          }
-          while (sourceBuffer.hasRemaining())
-        }
-        while (!source.exhausted())
-      }
-      catch (e: IOException) {
-        throw IOException("Cannot unpack $url", e)
-      }
-      finally {
-        bufferPool.release(targetBuffer)
-      }
-    }
   }
 }

@@ -1,5 +1,6 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -24,6 +25,6 @@ tasks.test {
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
     jvmTarget.set(JvmTarget.JVM_1_8)
-    languageVersion = libs.versions.kotlin.lang.get()
-    apiVersion = libs.versions.kotlin.lang.get()
+    languageVersion.set(KotlinVersion.fromVersion(libs.versions.kotlin.lang.get()))
+    apiVersion.set(KotlinVersion.fromVersion(libs.versions.kotlin.lang.get()))
 }

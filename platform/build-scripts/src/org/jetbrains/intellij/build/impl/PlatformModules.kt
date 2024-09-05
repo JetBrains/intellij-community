@@ -12,7 +12,6 @@ import kotlinx.coroutines.withContext
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
@@ -90,6 +89,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
   // do we need it?
   "intellij.platform.sqlite",
+  //"fleet.rpc.server",
 )
 
 @Suppress("RemoveRedundantQualifierName")
@@ -163,7 +163,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
   // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
   // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
-  layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", jarName = APP_JAR)
+  layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
 
   // https://jetbrains.team/p/ij/reviews/67104/timeline
   // https://youtrack.jetbrains.com/issue/IDEA-179784
@@ -265,6 +265,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   val productPluginContentModules = processAndGetProductPluginContentModules(
     context = context,
     layout = layout,
+
     includedPlatformModulesPartialList = (layout.includedModules.asSequence().map { it.moduleName } + computeImplicitRequiredModules(
       explicit = explicitModuleNames,
       layout = layout,
@@ -625,6 +626,9 @@ private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.rider", listOf(
     "intellij.platform.debugger.modulesView"
   ),
+  "intellij.platform.rpc.backend", listOf(
+    "fleet.rpc.server",
+  )
 )
 
 internal object ModuleIncludeReasons {

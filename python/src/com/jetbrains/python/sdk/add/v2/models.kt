@@ -36,7 +36,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
   open val state = AddInterpreterState(propertyGraph)
   open val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
 
-  val projectPath = params.projectPathProperty ?: propertyGraph.property("") // todo how to populate?
+  val projectPath = params.projectPathProperty ?: MutableStateFlow("") // todo how to populate?
   internal val scope = params.scope
   internal val uiContext = params.uiContext
 
@@ -95,6 +95,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
     }
   }
+
   suspend fun detectCondaEnvironments() {
     withContext(Dispatchers.IO) {
       val commandExecutor = targetEnvironmentConfiguration.toExecutor()
@@ -107,7 +108,6 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
       }
     }
   }
-
 
 
   suspend fun initInterpreterList() {
@@ -226,7 +226,7 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
 
   override fun suggestVenvPath(): String? {
     // todo should this be a coroutine?
-    return FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.get()))
+    return FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.value))
   }
 }
 

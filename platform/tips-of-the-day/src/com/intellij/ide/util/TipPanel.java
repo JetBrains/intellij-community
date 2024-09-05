@@ -54,7 +54,7 @@ import java.util.function.Supplier;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-public final class TipPanel extends JPanel implements DoNotAskOption {
+final class TipPanel extends JPanel implements DoNotAskOption {
   public static final Key<String> CURRENT_TIP_KEY = Key.create("CURRENT_TIP");
 
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
@@ -74,7 +74,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
-  public TipPanel(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
+  TipPanel(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
 

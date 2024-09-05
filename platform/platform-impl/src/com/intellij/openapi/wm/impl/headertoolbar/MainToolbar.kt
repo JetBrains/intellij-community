@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarPresentationFactory
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
@@ -400,6 +401,9 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
     comp.font = font
     if (comp is JComponent) {
       ClientProperty.put(comp, IdeBackgroundUtil.NO_BACKGROUND, true)
+    }
+    if (comp is ActionToolbarImpl) {
+      comp.layoutStrategy = ToolbarLayoutStrategy.COMPRESSING_STRATEGY
     }
   }
 

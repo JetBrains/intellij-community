@@ -1,0 +1,4 @@
+@org.junit.runners.Parameterized.Parameters
+fun data(): Collection<Array<Any>> {
+  ${BODY}
+}

@@ -11,8 +11,7 @@ import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.bugs.message.MessageFormatUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.format.MessageFormatUtil;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,14 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
-
 public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspectionTool {
-
-  private static final CallMatcher PATTERN_METHODS = anyOf(
-    staticCall("java.text.MessageFormat", "format").parameterCount(2)
-  );
 
   @NotNull
   @Override
@@ -64,7 +56,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
 
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (PATTERN_METHODS.test(call)) {
+        if (MessageFormatUtil.PATTERN_METHODS.test(call)) {
           List<MessageFormatUtil.MessageFormatPlaceholder> indexes =
             checkStringFormatAndGetIndexes(call.getArgumentList().getExpressions()[0]);
           if (indexes != null) {

@@ -8,7 +8,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.Nls
 
-open class PythonPackage(val name: String, val version: String) {
+open class PythonPackage(val name: String, val version: String, val isEditableMode: Boolean) {
   override fun toString(): String {
     return "PythonPackage(name='$name', version='$version')"
   }

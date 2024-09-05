@@ -321,13 +321,17 @@ e:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - java.lang.Enum
 - sf:AdoptOpenJdk_HS:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:AdoptOpenJdk_J9:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:BiSheng:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Corretto:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:Dragonwell:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:GraalVM:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:GraalVMCE:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Homebrew:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:IBM:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:JBR:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:Kona:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Liberica:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:Microsoft:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Oracle:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:SapMachine:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Semeru:org.jetbrains.jps.model.java.JdkVersionDetector$Variant

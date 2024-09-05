@@ -28,50 +28,51 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Completion FAQ:<p>
+ * <b>Completion FAQ</b><p>
  *
- * Q: How do I implement code completion?<br>
+ * <b>Q: How do I implement code completion?</b><br>
  * A: Define a {@code com.intellij.completion.contributor} extension of type {@link CompletionContributor}.
- * Or, if the place you want to complete in contains a {@link PsiReference}, just return the variants
+ * Or, if the place you want to complete in contains a {@link PsiReference}, return the variants
  * you want to suggest from its {@link PsiReference#getVariants()} method as {@link String}s,
  * {@link PsiElement}s, or better {@link LookupElement}s.<p>
  *
- * Q: OK, but what to do with CompletionContributor?<br>
+ * <b>Q: OK, but what to do with CompletionContributor?</b><br>
  * A: There are two ways. The easier and preferred one is to provide constructor in your contributor and register completion providers there:
  * {@link #extend(CompletionType, ElementPattern, CompletionProvider)}.<br>
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
- * and provide your own. It's easier to debug, but harder to write.<p>
+ * and provide your own.
+ * It's easier to debug but harder to write.<p>
  *
- * Q: How do I get an automatic lookup element filtering by prefix?<br>
+ * <b>Q: How do I get an automatic lookup element filtering by prefix?</b><br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
  * automatically, with prefix taken as the reference text from its start ({@link PsiReference#getRangeInElement()}) to
  * the caret position.
  * In {@link CompletionContributor} you will be given a {@link CompletionResultSet}
  * which will match {@link LookupElement}s against its prefix matcher {@link CompletionResultSet#getPrefixMatcher()}.
- * If the default prefix calculated by the IDE doesn't satisfy you, you can obtain another result set via
+ * If the default prefix calculated by the IDE doesn't satisfy you, you can get another result set via
  * {@link CompletionResultSet#withPrefixMatcher(PrefixMatcher)} and feed your lookup elements to the latter.
  * It's one of the item's lookup strings ({@link LookupElement#getAllLookupStrings()} that is matched against prefix matcher.<p>
  *
- * Q: How do I plug into those funny texts below the items in shown lookup?<br>
+ * <b>Q: How do I plug into those funny texts below the items in shown lookup?</b><br>
  * A: Use {@link CompletionResultSet#addLookupAdvertisement(String)}.<p>
  *
- * Q: How do I change the text that gets shown when there are no suitable variants at all? <br>
+ * <b>Q: How do I change the text that gets shown when there are no suitable variants at all?</b><br>
  * A: Use {@link CompletionContributor#handleEmptyLookup(CompletionParameters, Editor)}.
- * Don't forget to check whether you are in correct place (see {@link CompletionParameters}).<p>
+ * Remember to check whether you are in correct place (see {@link CompletionParameters}).<p>
  *
- * Q: How do I affect lookup element's appearance (icon, text attributes, etc.)?<br>
+ * <b>Q: How do I affect a lookup element's appearance (icon, text attributes, etc.)?</b><br>
  * A: See {@link LookupElement#renderElement(LookupElementPresentation)}.<p>
  *
- * Q: I'm not satisfied that completion just inserts the item's lookup string on item selection. How to make it write something else?<br>
+ * <b>Q: I'm not satisfied that completion just inserts the item's lookup string on item selection. How to make it write something else?</b><br>
  * A: See {@link LookupElement#handleInsert(InsertionContext)}.<p>
  *
- * Q: What if I select item with a TAB key?<br>
+ * <b>Q: What if I select an item with a TAB key?</b><br>
  * A: Semantics is that the identifier that you're standing inside gets removed completely, and then the lookup string is inserted. You can change
  * the deleting range end offset, do it in {@link CompletionContributor#beforeCompletion(CompletionInitializationContext)}
  * by putting new offset to {@link CompletionInitializationContext#getOffsetMap()} as {@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}.<p>
  *
- * Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests me in some places aren't all that relevant,
- * so I'd be happy to filter out 42 of them. How do I do this?<br>
+ * <b>Q: I know more about my environment than the IDE does, and I can swear that those 239 variants it suggests me in some places aren't all that relevant,
+ * so I'd be happy to filter out 42 of them. How do I do this?</b><br>
  * A: This is a bit harder than just adding variants. First, you should invoke
  * {@link CompletionResultSet#runRemainingContributors(CompletionParameters, Consumer)}.
  * The consumer you provide should pass all the lookup elements to the {@link CompletionResultSet}
@@ -81,14 +82,14 @@ import java.util.List;
  * Calling {@link CompletionResultSet#stopHere()} explicitly will stop other contributors (which happened to be loaded after yours)
  * from execution, and the user will never see their so useful and precious completion variants, so please be careful with this method.<p>
  *
- * Q: How are lookup elements sorted?<br>
+ * <b>Q: How are lookup elements sorted?</b><br>
  * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
  * Also, there are a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
  * items. To control lookup elements order you may implement {@link CompletionWeigher} or use {@link PrioritizedLookupElement}.<br>
  * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
  *
- * Q: Elements in the lookup are sorted in an unexpected way, the weights I provide are not honored, why?<br>
+ * <b>Q: Elements in the lookup are sorted unexpectedly, the weights I provide are not honored, why?</b><br>
  * A: To be more responsive, when first lookup elements are produced, the completion infrastructure waits for some short time
  * and then displays the lookup with whatever items are ready. After that, few of the most relevant displayed items
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
@@ -97,7 +98,7 @@ import java.util.List;
  * most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
  * that this batch is all sorted and displayed together.<p>
  *
- * Q: My completion is not working! How do I debug it?<br>
+ * <b>Q: My completion is not working! How do I debug it?</b><br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
  * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
  * your contributor, make it only call its super and put a breakpoint there.<br>
@@ -109,19 +110,19 @@ import java.util.List;
  * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, PrefixMatcher, Consumer)},
  * to the 'return' line.<p>
  *
- * Q: My completion contributor has to get its results from far away (e.g., blocking I/O or internet). How do I do that?<br>
+ * <b>Q: My completion contributor has to get its results from far away (e.g., blocking I/O or internet). How do I do that?</b><br>
  * A: To avoid UI freezes, your completion thread should be cancellable at all times.
  * So it's a bad idea to do blocking requests from it directly since it runs in a read action,
  * and if it can't do {@link ProgressManager#checkCanceled()} and therefore any attempt to type in a document will freeze the UI.
- * A common solution is to start another thread, without read action, for such blocking requests,
+ * A common solution is to start another thread, without read action, for such blocking requests
  * and wait for their results in the completion thread.
  * You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
  *
- * Q: How can I trigger showing completion popup programmatically?<br>
+ * <b>Q: How can I trigger showing completion popup programmatically?</b><br>
  * A: See {@link com.intellij.codeInsight.AutoPopupController}.<p>
  *
- * Q: The suggestion popup hides when I type some exotic character,
- * but I want completion to keep going, matching against the typed character.<br>
+ * <b>Q: The suggestion popup hides when I type some exotic character,
+ * but I want completion to keep going, matching against the typed character.</b><br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
  */
 public abstract class CompletionContributor implements PossiblyDumbAware {
@@ -146,7 +147,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
    * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
    * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
-   * can be cancelled smoothly when the user begins to type in the editor.
+   * can be canceled smoothly when the user begins to type in the editor.
    */
   public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
@@ -171,7 +172,8 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
   }
 
   /**
-   * Invoked before completion is started. It is used mainly for determining custom offsets in the editor, and to change default dummy identifier.
+   * Invoked before completion is started.
+   * It is used mainly for determining custom offsets in the editor and to change the default dummy identifier.
    */
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
   }

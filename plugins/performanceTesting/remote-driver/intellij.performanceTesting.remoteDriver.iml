@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.driver.client" exported="" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
   </component>
 </module>

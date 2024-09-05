@@ -4,10 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.ConstantEvaluationOverflowException;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,6 +93,10 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
 
   @Override
   public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+    if (PsiUtilCore.hasErrorElementChild(expression)) {
+      myResult = null;
+      return;
+    }
     PsiExpression[] operands = expression.getOperands();
     Object lValue = getStoredValue(operands[0]);
     if (lValue == null) {
@@ -537,25 +538,10 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
         myResult = null;
         return;
       }
-      qualifierExpression = ((PsiReferenceExpression) qualifierExpression).getQualifierExpression();
+      qualifierExpression = qualifier.getQualifierExpression();
     }
 
     PsiElement resolvedExpression = expression.resolve();
-    if (resolvedExpression instanceof PsiEnumConstant) {
-      String constant = ((PsiEnumConstant)resolvedExpression).getName();
-      PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
-      if (qualifier == null) return;
-      PsiElement element = qualifier.resolve();
-      if (!(element instanceof PsiClass)) return;
-      String name = ClassUtil.getJVMClassName((PsiClass)element);
-      try {
-        Class aClass = Class.forName(name);
-        //noinspection unchecked
-        myResult = Enum.valueOf(aClass, constant);
-      }
-      catch (Throwable ignore) { }
-      return;
-    }
     if (resolvedExpression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable) resolvedExpression;
       // avoid cycles
@@ -571,7 +557,9 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
 
       myVisitedVars.add(variable);
       try {
-        myResult = variable instanceof PsiVariableEx? ((PsiVariableEx) variable).computeConstantValue(myVisitedVars) : null;
+        myResult = variable instanceof PsiVariableEx && !(variable instanceof PsiEnumConstant) 
+                   ? ((PsiVariableEx) variable).computeConstantValue(myVisitedVars)
+                   : null;
         if (myResult == null && myAuxEvaluator != null) myResult = myAuxEvaluator.computeExpression(expression, this);
         return;
       }

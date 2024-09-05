@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -445,9 +442,6 @@ public final class AddImportHelper {
                                            @Nullable ImportPriority priority,
                                            @Nullable PsiElement anchor,
                                            final @Nullable PsiElement insertBefore) {
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      file = fragment.getImportContext();
-    }
     if (!(file instanceof PyFile)) {
       return false;
     }
@@ -467,6 +461,12 @@ public final class AddImportHelper {
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
     final PyImportStatement importNodeToInsert = generator.createImportStatement(languageLevel, name, asName);
+
+    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+      fragment.addImports(Collections.singletonList(importNodeToInsert));
+      return true;
+    }
+
     final PsiElement insertParent;
     if (insertBefore == null || insertBefore.getParent() == null) {
       final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
@@ -581,6 +581,10 @@ public final class AddImportHelper {
                                             @Nullable ImportPriority priority,
                                             @Nullable PsiElement anchor,
                                             @Nullable PsiElement insertBefore) {
+    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+      fragment.addImports(Collections.singletonList(newImport));
+      return;
+    }
     try {
       final PyImportStatementBase parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
       final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
@@ -798,9 +802,6 @@ public final class AddImportHelper {
    * @see #addOrUpdateFromImportStatement
    */
   public static void addImport(@NotNull PsiNamedElement target, @NotNull PsiFile file, @NotNull PyElement element) {
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      file = fragment.getImportContext();
-    }
     if (target instanceof PsiFileSystemItem) {
       addFileSystemItemImport((PsiFileSystemItem)target, file, element);
       return;

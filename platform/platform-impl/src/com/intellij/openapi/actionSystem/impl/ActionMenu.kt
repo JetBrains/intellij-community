@@ -63,7 +63,7 @@ class ActionMenu constructor(private val context: DataContext?,
                              private var isMnemonicEnabled: Boolean,
                              private val useDarkIcons: Boolean,
                              val isHeaderMenuItem: Boolean = false
-) : JBMenu(), ActionUiKind.Popup {
+) : JBMenu() {
   private val group = createActionRef(group)
   private val presentation = presentationFactory.getPresentation(group)
 
@@ -149,8 +149,6 @@ class ActionMenu constructor(private val context: DataContext?,
       frame?.getStatusBar()?.setInfo(if (isIncluded) description else null)
     }
   }
-
-  override fun isMainMenu(): Boolean = isMainMenuPlace
 
   override fun getPopupMenu(): JPopupMenu {
     var specialMenu = specialMenu
@@ -422,7 +420,7 @@ class ActionMenu constructor(private val context: DataContext?,
 
   fun fillMenu() {
     val context = getDataContext()
-    Utils.fillMenu(uiKind = this,
+    Utils.fillMenu(uiKind = ActualActionUiKind.Menu(this, isMainMenuPlace),
                    group = group.getAction(),
                    enableMnemonics = isMnemonicEnabled,
                    presentationFactory = presentationFactory,

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
@@ -288,14 +289,35 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
-    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1);
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, IntentionSource.CONTEXT_ACTIONS);
   }
 
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName,
+                                              @NotNull IntentionSource source) {
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1, source);
+  }
+
+  /**
+   * @deprecated Use overload with {@link IntentionSource}
+   */
+  @Deprecated
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                              @Nullable Editor hostEditor,
+                                              @NotNull IntentionAction action,
+                                              @NotNull @NlsContexts.Command String commandName,
                                               int fixOffset) {
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, fixOffset, IntentionSource.CONTEXT_ACTIONS);
+  }
+
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                              @Nullable Editor hostEditor,
+                                              @NotNull IntentionAction action,
+                                              @NotNull @NlsContexts.Command String commandName,
+                                              int fixOffset,
+                                              @NotNull IntentionSource source) {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
@@ -303,13 +325,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {
-        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, fixOffset);
+        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, fixOffset, source);
       }
       else {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
         CommandProcessor.getInstance().executeCommand(project, () ->
-          invokeIntention(action, pair.second, pair.first, fixOffset), commandName, null);
+          invokeIntention(action, pair.second, pair.first, fixOffset, source), commandName, null);
         checkPsiTextConsistency(hostFile);
       }
     }
@@ -319,13 +341,15 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static void invokeCommandAction(@NotNull PsiFile hostFile,
                                           @Nullable Editor hostEditor,
                                           @NotNull @NlsContexts.Command String commandName,
-                                          @NotNull ModCommandAction commandAction, int fixOffset) {
+                                          @NotNull ModCommandAction commandAction, int fixOffset,
+                                          @NotNull IntentionSource source) {
     ModCommandWithContext
       contextAndCommand = ModCommandService.getInstance().chooseFileAndPerform(hostFile, hostEditor, commandAction, fixOffset);
     if (contextAndCommand == null) return;
+
     ActionContext context = contextAndCommand.context();
     Project project = context.project();
-    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage(), hostEditor, fixOffset);
+    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage(), hostEditor, fixOffset, source);
     CommandProcessor.getInstance().executeCommand(project, () -> contextAndCommand.executeInteractively(hostEditor), commandName, null);
   }
 
@@ -338,8 +362,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file, int fixOffset) {
-    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage(), editor, fixOffset);
+  private static void invokeIntention(@NotNull IntentionAction action,
+                                      @Nullable Editor editor,
+                                      @NotNull PsiFile file,
+                                      int fixOffset,
+                                      @NotNull IntentionSource source) {
+    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage(), editor, fixOffset, source);
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
@@ -365,7 +393,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
     }
   }
-
 
   public static @Nullable Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
                                                                     @Nullable Editor hostEditor,

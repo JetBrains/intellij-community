@@ -8,6 +8,7 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -70,7 +71,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final ImmutableSet<String> myIgnoredIdentifiers;
   private final PyInspection myInspection;
   private volatile Boolean myIsEnabled = null;
-  protected final Set<String> myUnresolvedNames = Collections.synchronizedSet(new HashSet<>());
+  protected final List<PyPackageInstallAllProblemInfo> myUnresolvedRefs = Collections.synchronizedList(new ArrayList<>());
+
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
                                           List<String> ignoredIdentifiers,
                                           @NotNull PyInspection inspection,
@@ -390,8 +392,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     var installPackageQuickFixes = getInstallPackageQuickFixes(node, reference, refName);
     if (Iterables.size(installPackageQuickFixes) > 0) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes);
-      myUnresolvedNames.add(refName);
-      ContainerUtil.addAll(fixes, getInstallAllPackagesQuickFixes());
+      PyPackageInstallAllProblemInfo problemInfo = new PyPackageInstallAllProblemInfo(node, description, hl_type, refName);
+      myUnresolvedRefs.add(problemInfo);
     }
 
     if (reference instanceof PySubstitutionChunkReference) {
@@ -528,6 +530,23 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       .filter(Objects::nonNull)
       .findFirst()
       .orElse(null);
+  }
+
+  public void addInstallAllImports() {
+    List<String> refNames = myUnresolvedRefs.stream().map(it -> it.getRefName()).distinct().toList();
+    if (refNames.size() < 2) {
+      return;
+    }
+
+    var fixes = getInstallAllPackagesQuickFixes().iterator();
+    if (!fixes.hasNext()) {
+      return;
+    }
+    var fix = fixes.next();
+
+    for (PyPackageInstallAllProblemInfo unresolved : myUnresolvedRefs) {
+      registerProblem(unresolved.getPsiElement(), unresolved.getDescriptionTemplate(), unresolved.getHighlightType(), null, fix);
+    }
   }
 
   public void highlightUnusedImports() {

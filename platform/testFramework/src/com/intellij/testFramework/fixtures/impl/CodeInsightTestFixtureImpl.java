@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
@@ -282,7 +283,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     ProjectInspectionProfileManager.getInstance(project); // avoid "severities changed, restart" event
 
-    Exception exception = null;
+    Throwable exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
       int oldDelay = settings.getAutoReparseDelay();
@@ -312,16 +313,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
       catch (ProcessCanceledException e) {
         Throwable cause = e.getCause();
-        if (cause != null && cause.getClass() != Throwable.class) {
+        if (cause != null && cause != e && cause.getClass() != Throwable.class) {
           // canceled because of an exception, no need to repeat the same
-          throw e;
+          exception = cause;
+          break;
         }
-
+        exception = e;
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           UIUtil.dispatchAllInvocationEvents();
         });
-        exception = e;
       }
       catch (Exception e) {
         exception = e;
@@ -330,6 +331,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         settings.setAutoReparseDelay(oldDelay);
       }
     }
+    ExceptionUtil.rethrow(exception);
     throw new AssertionError("Unable to highlight after " + retries + " retries", exception);
   }
 
@@ -803,7 +805,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void launchAction(@NotNull String hint) {
     IntentionActionWithTextCaching action = findCachingAction(hint);
     if (action == null) throw new IllegalArgumentException();
-    ShowIntentionActionsHandler.chooseActionAndInvoke(getHostFile(), getHostEditor(), action.getAction(), action.getText(), action.getFixOffset());
+
+    ShowIntentionActionsHandler.chooseActionAndInvoke(getHostFile(), getHostEditor(), action.getAction(), action.getText(),
+                                                      action.getFixOffset(), IntentionSource.CONTEXT_ACTIONS);
   }
 
   @Nullable
@@ -2049,13 +2053,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     testFoldingRegions(verificationFileName, null, false);
   }
 
-  @Override
-  public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
-    String RB_PREFIF = "TEMP::RAINBOW_TEMP_";
+  public static void runWithRainbowEnabled(boolean isRainbowOn, @NotNull Runnable runnable) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     boolean isRainbowOnInScheme = RainbowHighlighter.isRainbowEnabled(globalScheme, null);
     try {
       RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOn);
+      runnable.run();
+    }
+    finally {
+      RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
+    }
+  }
+  @Override
+  public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
+    runWithRainbowEnabled(isRainbowOn, () -> {
+      String RB_PREFIF = "TEMP::RAINBOW_TEMP_";
       configureByText(fileName, text.replaceAll("<" + RAINBOW + "(\\scolor='[^']*')?>", "").replace("</" + RAINBOW + ">", ""));
 
       List<HighlightInfo> highlighting = ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT);
@@ -2082,10 +2094,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                             : Integer.toHexString(attributes.getForegroundColor().getRGB());
         return "color='" + color + "'";
       }));
-    }
-    finally {
-      RainbowHighlighter.setRainbowEnabled(globalScheme, null, isRainbowOnInScheme);
-    }
+    });
   }
 
   @Override

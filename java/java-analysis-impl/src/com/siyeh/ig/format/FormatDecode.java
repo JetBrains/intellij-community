@@ -38,6 +38,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+/**
+ * Utilities related to printf-like format string
+ */
 public final class FormatDecode {
 
   private static final Pattern fsPattern = Pattern.compile(
@@ -602,6 +605,27 @@ public final class FormatDecode {
       return null;
     }
   }
+
+  /**
+   * @param validators validators returned from {@link #decode(String, int)} or similar methods
+   * @return list of {@link FormatPlaceholder} objects
+   */
+  public static @NotNull List<@NotNull FormatPlaceholder> asPlaceholders(Validator @NotNull [] validators) {
+    List<FormatPlaceholder> result = new ArrayList<>();
+    for (int i = 0; i < validators.length; i++) {
+      FormatDecode.Validator metaValidator = validators[i];
+      if (metaValidator == null) continue;
+      Collection<FormatDecode.Validator> unpacked = metaValidator instanceof FormatDecode.MultiValidator multi ?
+                                                    multi.getValidators() : List.of(metaValidator);
+      for (FormatDecode.Validator validator : unpacked) {
+        TextRange stringRange = validator.getRange();
+        if (stringRange == null) continue;
+        record MyPlaceholder(int index, @NotNull TextRange range) implements FormatPlaceholder {}
+        result.add(new MyPlaceholder(i, stringRange));
+      }
+    }
+    return result;
+  } 
 
   public record Spec(@Nullable String posSpec ,
                      @Nullable String flags,

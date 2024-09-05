@@ -96,6 +96,10 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirStructureViewFactory"/>
 
+    <lang.logicalStructureTreeElementProvider
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.structureView.K2ClassLogicalStructureTreeElementProvider"
+            order="before javaPsiClassLogicalStructureTreeElementProvider"/>
+
     <codeInsight.gotoSuper
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
@@ -244,6 +248,15 @@
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">
+      <action id="KotlinGenerateTestMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$Test"/>
+      <action id="KotlinGenerateSetUpMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$SetUp"/>
+      <action id="KotlinGenerateTearDownMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$TearDown"/>
+      <action id="KotlinGenerateDataMethod"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateTestSupportActionBase$Data"/>
+      <separator />
       <action id="KotlinGenerateSecondaryConstructor"
               class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateSecondaryConstructorAction"/>
       <action id="KotlinGenerateEqualsAndHashCode"

@@ -961,8 +961,9 @@ c:com.intellij.mock.MockApplication
 - s:setUp(com.intellij.openapi.Disposable):com.intellij.mock.MockApplication
 - tryRunReadAction(java.lang.Runnable):Z
 c:com.intellij.mock.MockComponentManager
-- com.intellij.openapi.components.ComponentManager
 - com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.openapi.components.ComponentManager
+- com.intellij.util.messages.MessageBusOwner
 - addComponent(java.lang.Class,java.lang.Object):V
 - createError(java.lang.String,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
 - createError(java.lang.String,java.lang.Throwable,com.intellij.openapi.extensions.PluginId,java.util.Map):java.lang.RuntimeException

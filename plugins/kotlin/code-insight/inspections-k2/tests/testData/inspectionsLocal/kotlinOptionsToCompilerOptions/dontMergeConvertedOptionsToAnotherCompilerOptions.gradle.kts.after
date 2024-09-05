@@ -1,5 +1,7 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     kotlin("jvm") version "2.0.0"
@@ -27,7 +29,7 @@ tasks.withType<KotlinCompile>().configureEach {
 
     compilerOptions {
         if (overriddenLanguageVersion != null) {
-            languageVersion = overriddenLanguageVersion
+            languageVersion.set(KotlinVersion.fromVersion(overriddenLanguageVersion))
             // We replace statements even in children
             freeCompilerArgs.add("-Xsuppress-version-warnings")
         }

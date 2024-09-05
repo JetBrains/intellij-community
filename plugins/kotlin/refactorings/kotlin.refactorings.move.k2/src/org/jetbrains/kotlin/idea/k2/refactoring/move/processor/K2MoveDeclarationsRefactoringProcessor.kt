@@ -47,11 +47,10 @@ class K2MoveDeclarationsRefactoringProcessor(
                 operationDescriptor.moveDescriptors.forEach { moveDescriptor ->
                     putAllValues(
                         findAllMoveConflicts(
-                            declarationsToCheck = moveDescriptor.source.elements,
+                            topLevelDeclarationsToMove = moveDescriptor.source.elements,
                             allDeclarationsToMove = operationDescriptor.sourceElements,
                             targetDir = moveDescriptor.target.baseDirectory,
                             targetPkg = moveDescriptor.target.pkgName,
-                            targetFileName = moveDescriptor.target.fileName,
                             usages = usages
                                 .filterIsInstance<MoveRenameUsageInfo>()
                                 .filter { it.referencedElement in moveDescriptor.source.elements },

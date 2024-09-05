@@ -145,7 +145,7 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                             @NotNull PsiAnnotation psiAnnotation,
                                                             @NotNull PsiClassType psiTypeBaseWithGenerics) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
-    if (builderMethodName.isEmpty() || hasMethod(containingClass, builderMethodName)) {
+    if (builderMethodName.isEmpty() || hasStaticMethod(containingClass, builderMethodName)) {
       return Optional.empty();
     }
 
@@ -170,7 +170,7 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                                      @NotNull PsiClass builderImplClass,
                                                                      @NotNull PsiAnnotation psiAnnotation,
                                                                      @NotNull PsiClassType psiTypeBaseWithGenerics) {
-    if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
+    if (!shouldGenerateToBuilderMethods(psiAnnotation) || hasMethod(containingClass, TO_BUILDER_METHOD_NAME, 0)) {
       return Optional.empty();
     }
 

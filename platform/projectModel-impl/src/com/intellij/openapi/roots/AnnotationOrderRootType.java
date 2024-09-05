@@ -33,29 +33,18 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   public static VirtualFile @NotNull [] getFiles(@NotNull OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<>();
-    RootPolicy<List<VirtualFile>> policy = new RootPolicy<>() {
-      @Override
-      public List<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
-        return value;
+    if (entry instanceof LibraryOrderEntry orderEntry) {
+      Collections.addAll(result, orderEntry.getRootFiles(getInstance()));
+    }
+    else if (entry instanceof JdkOrderEntry orderEntry) {
+      Collections.addAll(result, orderEntry.getRootFiles(getInstance()));
+    }
+    else if (entry instanceof ModuleSourceOrderEntry orderEntry) {
+      JavaModuleExternalPaths moduleExtension = orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class);
+      if (moduleExtension != null) {
+        Collections.addAll(result, moduleExtension.getExternalAnnotationsRoots());
       }
-
-      @Override
-      public List<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry orderEntry, final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
-        return value;
-      }
-
-      @Override
-      public List<VirtualFile> visitModuleSourceOrderEntry(@NotNull ModuleSourceOrderEntry orderEntry, List<VirtualFile> value) {
-        JavaModuleExternalPaths moduleExtension = orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class);
-        if (moduleExtension != null) {
-          Collections.addAll(value, moduleExtension.getExternalAnnotationsRoots());
-        }
-        return value;
-      }
-    };
-    entry.accept(policy, result);
+    }
     return VfsUtilCore.toVirtualFileArray(result);
   }
 

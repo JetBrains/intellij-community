@@ -99,8 +99,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
-    <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
-              topic="com.intellij.platform.ModuleAttachListener"/>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
@@ -863,6 +861,13 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">
+    <group id="PyPackageToolbarAdditional" icon="AllIcons.General.GearPlain" popup="true" compact="false">
+      <action id="PyInstallFromDiskPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallFromDiskPackageAction"/>
+      <action id="InstallFromVcsPackageAction" class="com.jetbrains.python.packaging.toolwindow.actions.InstallFromVcsPackageAction"/>
+      <separator/>
+      <action id="PyManageReposAction" class="com.jetbrains.python.packaging.toolwindow.actions.PyManageReposAction"/>
+    </group>
+
     <group id="PyPackageToolwindowContext">
       <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
       <action id="PyInstallWithOptionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction"/>

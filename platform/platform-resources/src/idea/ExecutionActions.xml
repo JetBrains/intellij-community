@@ -1,0 +1,227 @@
+<idea-plugin>
+  <actions>
+    <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
+    <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+
+    <group id="RunConfiguration.Group">
+      <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.SaveTemporaryRunConfigurationAction"/>
+      <action id="DeleteRunConfiguration" class="com.intellij.execution.actions.DeleteRunConfigurationAction"/>
+    </group>
+
+    <group id="RunContextGroup" popup="false">
+      <group id="RunContextGroupInner">
+        <!-- A dynamic group filled with executor actions -->
+        <group id="RunContextExecutorsGroup"/>
+        <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
+          <reference ref="CreateRunConfiguration"/>
+          <separator/>
+          <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
+        </group>
+      </group>
+      <separator/>
+    </group>
+
+    <group id="RunContextPopupGroup" popup="false">
+      <reference ref="RunContextGroup"/>
+    </group>
+
+    <group id="ProjectViewPopupMenuRunGroup">
+      <reference ref="RunContextPopupGroup"/>
+    </group>
+
+    <group id="RunLineMarkerExtraActions">
+      <reference ref="CreateRunConfiguration"/>
+    </group>
+
+    <!--region Run Main Menu-->
+    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction">
+      <add-to-group group-id="RunTab.TopToolbar"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old"/>
+    </action>
+    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
+
+    <group id="RunMenu" popup="true">
+      <group id="RunnerActions"/>
+      <separator/>
+      <reference ref="ChooseRunConfiguration"/>
+      <reference ref="ChooseDebugConfiguration"/>
+      <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
+      <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
+      <separator/>
+      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend">
+        <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Rerun"/>
+        <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Rerun"/>
+      </action>
+      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
+      <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
+    </group>
+    <!--endregion-->
+
+    <!--region Build Main Menu-->
+    <group id="BuildMenu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
+    </group>
+    <!--endregion-->
+
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
+      <add-to-group group-id="MainToolbarRight" anchor="first"/>
+    </action>
+
+    <group id="RunToolbarMainActionGroup">
+      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+      <group id="compositeResumeGroup" searchable="false" popup="false"/>
+      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" popup="false"/>
+      <reference ref="Stop"/>
+      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
+      <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
+    </group>
+
+    <action id="AllRunConfigurationsToggle" class="com.intellij.execution.ui.AllRunConfigurationsToggle"/>
+    <group id="RunConfigurationsActionGroup" class="com.intellij.execution.ui.RunConfigurationsActionGroup"/>
+
+    <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
+      <reference id="ExecutionTargets"/>
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
+    </group>
+
+    <!--region Main Toolbar -->
+    <group id="ToolbarRunGroup">
+      <reference ref="RunConfiguration"/>
+      <reference ref="RunnerActions"/>
+      <reference ref="Stop"/>
+      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
+    </group>
+    <!--endregion-->
+
+    <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
+    <group id="DebugMainMenu">
+      <separator/>
+      <group id="DebuggingActionsGroup" popup="true">
+        <group id="DebugReloadGroup"/>
+        <separator/>
+        <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="AllIcons.Actions.TraceOver"/>
+        <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.ForceStepOver"/>
+        <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
+        <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.ForceStepInto"/>
+        <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Debugger.SmartStepInto"/>
+        <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
+        <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
+        <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.ForceRunToCursor"/>
+        <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
+        <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
+        <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
+        <separator/>
+        <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="AllIcons.Debugger.EvaluateExpression"/>
+        <action id="QuickEvaluateExpression" class="com.intellij.xdebugger.impl.actions.QuickEvaluateAction"/>
+        <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
+                icon="AllIcons.Debugger.ShowCurrentFrame"/>
+        <separator/>
+      </group>
+      <group id="BreakpointActionsGroup" popup="true">
+        <action id="Debugger.RestoreBreakpoint" class="com.intellij.xdebugger.impl.actions.RestoreBreakpointAction"/>
+        <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction">
+          <override-text place="MainMenu"/>
+        </action>
+        <action id="ToggleTemporaryLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleTemporaryLineBreakpointAction">
+          <override-text place="MainMenu"/>
+        </action>
+        <action id="ToggleBreakpointEnabled" class="com.intellij.xdebugger.impl.actions.ToggleBreakpointEnabledAction"/>
+      </group>
+      <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
+      <separator/>
+
+      <add-to-group group-id="RunMenu" anchor="last"/>
+    </group>
+
+    <group id="RunnerLayoutActions">
+      <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
+      <group id="Runner.Layout">
+        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
+                icon="AllIcons.Debugger.RestoreLayout"/>
+      </group>
+      <group id="Runner.View.Close.Group" popup="false">
+        <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
+        <action id="Runner.CloseOtherViews" class="com.intellij.execution.ui.layout.actions.CloseOtherViewsAction" icon="AllIcons.Actions.Close"/>
+        <action id="Runner.CloseAllViews" class="com.intellij.execution.ui.layout.actions.CloseAllViewsAction" icon="AllIcons.Actions.Close"/>
+        <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
+      </group>
+      <group id="Runner.View.Popup">
+        <reference ref="Runner.View.Close.Group"/>
+        <separator/>
+        <group id="Runner.Focus">
+          <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.actions.FocusOnStartAction"/>
+        </group>
+      </group>
+
+
+      <group id="Runner.View.Toolbar">
+        <reference ref="Runner.CloseView"/>
+      </group>
+    </group>
+
+    <group id="TestTreePopupMenu">
+      <!--suppress PluginXmlCapitalization -->
+      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
+      <separator/>
+      <reference ref="RunContextGroup"/>
+      <reference ref="EditSource"/>
+    </group>
+
+    <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
+
+    <group id="RunTestGroup">
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
+    </group>
+
+    <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+
+    <!--region TouchBar -->
+    <group id="TouchBarDebug">
+      <reference ref="Rerun"/>
+      <reference ref="Resume"/>
+      <reference ref="Pause"/>
+      <reference ref="Stop"/>
+      <separator text="type.flexible"/>
+      <group id="TouchBarDebug.StepButtons" compact="true">
+        <reference ref="StepOver"/>
+        <reference ref="StepInto"/>
+        <reference ref="StepOut"/>
+      </group>
+      <separator text="type.small"/>
+      <group id="TouchBarDebug_alt">
+        <reference ref="ViewBreakpoints"/>
+        <separator text="type.flexible"/>
+        <group id="TouchBarDebug.ForceStepButtons" compact="true">
+          <reference ref="RunToCursor"/>
+          <reference ref="ForceStepOver"/>
+          <reference ref="ForceStepInto"/>
+          <reference ref="SmartStepInto"/>
+        </group>
+        <separator text="type.small"/>
+      </group>
+
+      <add-to-group group-id="TouchBar" anchor="last"/>
+    </group>
+
+    <group id="TouchBarDefaultExecution">
+      <reference ref="RunConfiguration"/>
+      <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
+      <reference ref="Stop"/>
+      <separator text="type.small"/>
+      <separator text="type.large"/>
+
+      <add-to-group group-id="TouchBarDefault" anchor="first"/>
+    </group>
+
+    <reference id="ToggleLineBreakpoint">
+      <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
+    </reference>
+    <!--endregion-->
+  </actions>
+</idea-plugin>

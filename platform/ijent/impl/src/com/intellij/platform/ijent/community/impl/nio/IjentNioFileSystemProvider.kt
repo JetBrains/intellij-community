@@ -23,7 +23,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
-import java.nio.file.spi.FileSystemProvider.installedProviders
 import java.util.concurrent.ExecutorService
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -236,7 +235,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     fsBlocking {
       try {
-        path.nioFs.ijentFs.delete(path.ijentPath as IjentPath.Absolute,false, false)
+        path.nioFs.ijentFs.delete(path.ijentPath as IjentPath.Absolute, false, false)
       }
       catch (e: IjentFileSystemApi.DeleteException) {
         e.throwFileSystemException()
@@ -275,7 +274,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     fsBlocking {
       try {
         fs.copy(copyOptions)
-      } catch (e : IjentFileSystemApi.CopyException) {
+      }
+      catch (e: IjentFileSystemApi.CopyException) {
         e.throwFileSystemException()
       }
     }
@@ -297,7 +297,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           // In NIO, `move` does not follow links regardless of NOFOLLOW_LINKS in CopyOptions
           // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
           followLinks = false)
-      } catch (e : IjentFileSystemApi.MoveException) {
+      }
+      catch (e: IjentFileSystemApi.MoveException) {
         e.throwFileSystemException()
       }
     }

@@ -312,7 +312,7 @@ private fun generateProperty(
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun <T> KaSession.generateUnsupportedOrSuperCall(
+fun <T> KaSession.generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
 ): String where T : KaNamedSymbol, T : KaCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {

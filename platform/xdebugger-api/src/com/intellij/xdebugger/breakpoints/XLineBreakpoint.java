@@ -17,15 +17,23 @@ public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreak
   @NlsSafe
   String getFileUrl();
 
+  /**
+   * Short path describing the breakpoint's file location (e.g., just a file name).
+   * Should not be used to locate the actual file.
+   */
+  @NlsSafe
+  String getShortFilePath();
+
+  /**
+   * Some kind of path or URL to the breakpoint's file location for showing in UI.
+   * Might be shortened for better UX, should not be used to locate the actual file.
+   */
   @NlsSafe
   String getPresentableFilePath();
 
   @Override
   @NotNull
   XLineBreakpointType<P> getType();
-
-  @NlsSafe
-  String getShortFilePath();
 
   boolean isTemporary();
 

@@ -70,7 +70,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
 
   public boolean ignoreSuperClass = false;
   public boolean ignoreNonPublicClasses = false;
-  public boolean warnOnlyFinalFieldAssignment = true;
+  public boolean ignoreNotFinalField = true;
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
@@ -87,8 +87,8 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
       checkbox("ignoreSuperClass", InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option")),
       checkbox("ignoreNonPublicClasses",
                InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option")),
-      checkbox("warnOnlyFinalFieldAssignment",
-               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.warn.only.final.field.assignment.option"))
+      checkbox("ignoreNotFinalField",
+               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.not.final.field"))
     );
   }
 
@@ -138,7 +138,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
         if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) return false;
         if ("ignoreSuperClass".equals(factoryName) && !ignoreSuperClass) return false;
         if ("ignoreNonPublicClasses".equals(factoryName) && !ignoreNonPublicClasses) return false;
-        if ("warnOnlyFinalFieldAssignment".equals(factoryName) && warnOnlyFinalFieldAssignment) return false;
+        if ("ignoreNotFinalField".equals(factoryName) && ignoreNotFinalField) return false;
         return true;
       }
     });
@@ -247,7 +247,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
         return;
       }
 
-      if (warnOnlyFinalFieldAssignment) {
+      if (ignoreNotFinalField) {
         PsiField field = PsiTreeUtil.getParentOfType(methodCallExpression, PsiField.class);
         if (field == null) return;
         if (!field.hasModifierProperty(PsiModifier.FINAL)) return;

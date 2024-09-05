@@ -47,6 +47,7 @@ internal class WeighingContext private constructor(
     val importableFqNameClassifier: ImportableFqNameClassifier,
     private val mySymbolsToSkip: Set<KaSymbol>,
 ) : KaLifetimeOwner {
+
     /**
      * Cache for contextual symbols, i.e. symbols which are overridden by callables containing current position.
      */

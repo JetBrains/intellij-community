@@ -7,27 +7,28 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
-import com.intellij.util.applyIf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
+import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.build
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameter
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -38,36 +39,116 @@ internal object FunctionLookupElementFactory {
 
     context(KaSession)
     fun createLookup(
-        name: Name,
+        shortName: Name,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
-    ): LookupElementBuilder {
+    ): LookupElement {
         val valueParameters = signature.valueParameters
-        val renderedDeclaration = valueParameters.joinToString(
-            prefix = "(",
-            postfix = ")",
-        ) { renderFunctionParameter(it) }
-
-        val insertLambdaBraces = insertLambdaBraces(signature, options.insertionStrategy)
 
         val lookupObject = FunctionCallLookupObject(
-            shortName = name,
+            shortName = shortName,
             options = options,
-            renderedDeclaration = renderedDeclaration,
+            renderedDeclaration = CompletionShortNamesRenderer.renderFunctionParameters(valueParameters),
             inputValueArgumentsAreRequired = valueParameters.isNotEmpty(),
-            inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(signature.symbol, expectedType),
-            insertEmptyLambda = insertLambdaBraces,
+            inputTypeArgumentsAreRequired = !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(
+                symbol = signature.symbol,
+                expectedType = expectedType
+            ),
         )
 
-        val builder = LookupElementBuilder.create(lookupObject, name.asString())
-            .applyIf(insertLambdaBraces) { appendTailText(" {...} ", true) }
-            .appendTailText(renderedDeclaration, true)
-            .appendTailText(TailTextProvider.getTailText(signature), true)
-            .let { withCallableSignatureInfo(signature, it) }
-            .also { it.acceptOpeningBrace = true }
-        return updateLookupElementBuilder(options, builder)
+        return createLookupElement(signature, lookupObject)
     }
+
+    context(KaSession)
+    @ApiStatus.Experimental
+    @OptIn(KaExperimentalApi::class)
+    fun createLookupWithTrailingLambda(
+        shortName: Name,
+        signature: KaFunctionSignature<*>,
+        options: CallableInsertionOptions,
+    ): LookupElement? {
+        val valueParameters = signature.valueParameters
+
+        val trailingFunctionSignature = valueParameters.lastOrNull()
+            ?.takeUnless { it.symbol.hasDefaultValue }
+            ?: return null
+
+        val trailingFunctionDescriptor = when (val type = trailingFunctionSignature.returnType.lowerBoundIfFlexible()) {
+            is KaFunctionType -> TrailingFunctionDescriptor(type)
+            is KaUsualClassType -> {
+                val functionClassSymbol = type.symbol as? KaNamedClassSymbol
+                    ?: return null
+
+                val samConstructor = functionClassSymbol.samConstructor
+                    ?: return null
+
+                val samConstructorType = samConstructor.valueParameters
+                    .singleOrNull()
+                    ?.returnType
+                    ?.let { it as? KaFunctionType }
+                    ?: return null
+
+                // TODO this is a workaround
+                // FIX pass KaCallableMemberCall.typeArgumentsMapping from the resolve result
+                val functionType = type.typeArguments
+                    .mapNotNull { it.type }
+                    .zip(samConstructor.typeParameters)
+                    .associate { (parameterSymbol, typeProjection) ->
+                        typeProjection to parameterSymbol
+                    }
+                    .let { createSubstitutor(it) }
+                    .substitute(samConstructorType) as? KaFunctionType
+                    ?: return null
+
+                val samSymbol = functionClassSymbol.samSymbol
+                    ?: return null
+
+                TrailingFunctionDescriptor(
+                    functionType = functionType,
+                    suggestedParameterNames = samSymbol.valueParameters.map { it.name },
+                )
+            }
+
+            else -> return null
+        }
+
+        val trailingFunctionTemplate = TemplateManager.getInstance(useSiteModule.project)
+            .createTemplate("", "")
+            .build(
+                parametersCount = valueParameters.size - 1,
+                trailingFunctionType = trailingFunctionDescriptor.functionType,
+                suggestedParameterNames = trailingFunctionDescriptor.suggestedParameterNames,
+            )
+
+        val lookupObject = FunctionCallLookupObject(
+            shortName = shortName,
+            options = options,
+            renderedDeclaration = CompletionShortNamesRenderer.renderFunctionParameters(
+                parameters = valueParameters,
+                trailingFunctionType = trailingFunctionDescriptor.functionType,
+            ),
+            trailingLambdaTemplate = trailingFunctionTemplate,
+        )
+
+        return createLookupElement(signature, lookupObject)
+    }
+
+    context(KaSession)
+    private fun createLookupElement(
+        signature: KaFunctionSignature<*>,
+        lookupObject: FunctionCallLookupObject,
+    ): LookupElement = LookupElementBuilder.create(
+        /* lookupObject = */ lookupObject,
+        /* lookupString = */ lookupObject.shortName.asString()
+    ).appendTailText(lookupObject.renderedDeclaration, true)
+        .appendTailText(TailTextProvider.getTailText(signature), true)
+        .let { withCallableSignatureInfo(signature, it) }
+        .also { it.acceptOpeningBrace = true }
+        .let { builder ->
+            val options = lookupObject.options
+            updateLookupElementBuilder(options, builder, options.insertionStrategy)
+        }
 
     private fun updateLookupElementBuilder(
         options: CallableInsertionOptions,
@@ -181,9 +262,9 @@ internal data class FunctionCallLookupObject(
     override val shortName: Name,
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
-    val inputValueArgumentsAreRequired: Boolean,
-    val inputTypeArgumentsAreRequired: Boolean,
-    val insertEmptyLambda: Boolean,
+    val inputValueArgumentsAreRequired: Boolean = false,
+    val inputTypeArgumentsAreRequired: Boolean = false,
+    val trailingLambdaTemplate: Template? = null,
 ) : KotlinCallableLookupObject()
 
 
@@ -208,7 +289,8 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 (isNormalCompletion || isReplaceCompletion || isSmartEnterCompletion)
 
         val preferParentheses = completionChar == '(' || isReplaceCompletion && chars.isCharAt(offset, '(')
-        val insertLambda = !preferParentheses && lookupObject.insertEmptyLambda
+        val trailingLambdaTemplate = lookupObject.trailingLambdaTemplate
+        val insertLambda = !preferParentheses && trailingLambdaTemplate != null
         val (openingBracket, closingBracket) = if (insertLambda) '{' to '}' else '(' to ')'
 
         if (isReplaceCompletion) {
@@ -228,9 +310,10 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
             }
         }
 
+        val caretModel = editor.caretModel
         if (insertTypeArguments) {
             document.insertString(offset, "<>")
-            editor.caretModel.moveToOffset(offset + 1)
+            caretModel.moveToOffset(offset + 1)
             offset += 2
         }
 
@@ -244,12 +327,14 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                     context.setAddCompletionChar(false)
                 }
 
-                if (isInsertSpacesInOneLineFunctionEnabled(context.file)) {
-                    document.insertString(offset, " {  }")
-                    inBracketsShift = 1
-                } else {
-                    document.insertString(offset, " {}")
-                }
+                TemplateManager.getInstance(project)
+                    .startTemplate(
+                        /* editor = */ editor,
+                        /* template = */ trailingLambdaTemplate!!,
+                        /* inSeparateCommand = */ false,
+                        /* predefinedVarValues = */ null,
+                        /* listener = */ null,
+                    )
             } else {
                 if (isSmartEnterCompletion) {
                     document.insertString(offset, "(")
@@ -259,16 +344,23 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
             }
             context.commitDocument()
 
-            openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
-            closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
+            if (!insertLambda) {
+                openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
+                closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
+            }
         }
 
         if (!insertTypeArguments) {
             if (shouldPlaceCaretInBrackets(completionChar, lookupObject) || closeBracketOffset == null) {
-                editor.caretModel.moveToOffset(openingBracketOffset + 1 + inBracketsShift)
-                AutoPopupController.getInstance(project)?.autoPopupParameterInfo(editor, offsetElement)
+                if (!insertLambda) {
+                    caretModel.moveToOffset(openingBracketOffset!! + 1)
+                } else {
+                    // do nothing, everything is handled by the template itself
+                }
+
+                AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, offsetElement)
             } else {
-                editor.caretModel.moveToOffset(closeBracketOffset + 1)
+                caretModel.moveToOffset(closeBracketOffset + 1)
             }
         }
     }
@@ -276,11 +368,9 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
     private fun shouldPlaceCaretInBrackets(completionChar: Char, lookupObject: FunctionCallLookupObject): Boolean {
         if (completionChar == ',' || completionChar == '.' || completionChar == '=') return false
         if (completionChar == '(') return true
-        return lookupObject.inputValueArgumentsAreRequired || lookupObject.insertEmptyLambda
+        return lookupObject.inputValueArgumentsAreRequired
+                || lookupObject.trailingLambdaTemplate != null
     }
-
-    // FIXME Should be fetched from language settings (INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD), but we do not have them right now
-    private fun isInsertSpacesInOneLineFunctionEnabled(file: PsiElement) = true
 
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return
@@ -314,3 +404,29 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
         }
     }
 }
+
+private data class TrailingFunctionDescriptor(
+    val functionType: KaFunctionType,
+    val suggestedParameterNames: List<Name?> = functionType.parameterTypes.map { it.extractParameterName() },
+)
+
+context(KaSession)
+private val KaNamedClassSymbol.samSymbol: KaNamedFunctionSymbol?
+    get() = declaredMemberScope.callables
+        .filterIsInstance<KaNamedFunctionSymbol>()
+        .filter { it.modality == KaSymbolModality.ABSTRACT }
+        .singleOrNull()
+
+/**
+ * @see org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature.getValueFromParameterNameAnnotation
+ */
+private fun KaType.extractParameterName(): Name? =
+    annotations.find { it.classId?.asSingleFqName() == StandardNames.FqNames.parameterName }
+        ?.arguments
+        ?.singleOrNull()
+        ?.expression
+        ?.let { it as? KaAnnotationValue.ConstantValue }
+        ?.value
+        ?.let { it as? KaConstantValue.StringValue }
+        ?.value
+        ?.let { Name.identifierIfValid(it) }

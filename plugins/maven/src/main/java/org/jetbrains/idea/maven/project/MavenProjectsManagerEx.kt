@@ -103,7 +103,7 @@ interface MavenAsyncProjectsManager {
                                           syncProject: Boolean): List<Module>
 
   fun projectFileExists(file: File): Boolean {
-    return Files.exists(file.toPath());
+    return Files.exists(file.toPath())
   }
 }
 
@@ -302,7 +302,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private suspend fun <T> updateMavenProjectsUnderLock(update: suspend () -> List<T>): List<T> {
-    val time = System.currentTimeMillis();
+    val time = System.currentTimeMillis()
     if (MavenLog.LOG.isDebugEnabled) {
       MavenLog.LOG.debug("Update maven requested in $time. Coroutines dump: ${dumpCoroutines()}")
     }
@@ -423,8 +423,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                   pluginResolver.resolvePlugins(mavenProjects.value,
                                                 embeddersManager,
                                                 reporter,
-                                                syncConsole,
-                                                true)
+                                                syncConsole)
                 }
                 catch (e: Exception) {
                   MavenLog.LOG.warn("Plugin resolution error", e)

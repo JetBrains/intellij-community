@@ -235,6 +235,7 @@
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
+      <reference ref="RevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
 

@@ -31,18 +31,23 @@ public abstract class JdkVersionDetector {
   public enum Variant {
     AdoptOpenJdk_HS("adopt", "AdoptOpenJDK (HotSpot)"),
     AdoptOpenJdk_J9("adopt-j9", "AdoptOpenJDK (OpenJ9)"),
-    Temurin("temurin", "Eclipse Temurin"),
-    Semeru("semeru", "IBM Semeru"),
+    BiSheng("bisheng", "BiSheng JDK"),
     Corretto("corretto", "Amazon Corretto"),
-    GraalVMCE("graalvm-ce", "GraalVM CE"),
+    Dragonwell("dragonwell", "Alibaba Dragonwell"),
     GraalVM("graalvm", "GraalVM"),
+    GraalVMCE("graalvm-ce", "GraalVM CE"),
+    Homebrew("homebrew", "Homebrew OpenJDK"),
     IBM("ibm", "IBM JDK"),
     JBR("jbr", "JetBrains Runtime"),
+    Kona("kona", "Tencent Kona"),
     Liberica("liberica", "BellSoft Liberica"),
+    Microsoft("ms", "Microsoft OpenJDK"),
     Oracle(null, "Oracle OpenJDK"),
     SapMachine("sap", "SAP SapMachine"),
+    Semeru("semeru", "IBM Semeru"),
+    Temurin("temurin", "Eclipse Temurin"),
     Zulu("zulu", "Azul Zulu"),
-    Homebrew("homebrew", "Homebrew OpenJDK"),
+
     Unknown(null, "Unknown");
 
     public final @Nullable String prefix;

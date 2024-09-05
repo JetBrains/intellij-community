@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ public class GotoFileAction extends SearchEverywhereBaseAction implements DumbAw
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    e = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
     String tabID = FileSearchEverywhereContributor.class.getSimpleName();
     showInSearchEverywherePopup(tabID, e, true, true);
   }

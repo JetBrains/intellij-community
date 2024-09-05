@@ -17,7 +17,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.*
 
 class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
-  private val group = EventLogGroup("java.language", 5)
+  private val group = EventLogGroup("java.language", 6)
 
   private val feature = EventFields.Int("feature")
   private val minor = EventFields.Int("minor")

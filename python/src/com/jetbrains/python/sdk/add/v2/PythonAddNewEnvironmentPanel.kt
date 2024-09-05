@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
-import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
@@ -16,6 +15,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
+import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
@@ -23,6 +23,8 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
@@ -30,7 +32,7 @@ import java.nio.file.Path
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null) {
+class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null) {
 
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
@@ -50,7 +52,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
 
   private fun updateVenvLocationHint() {
     val get = selectedMode.get()
-    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.get() + File.separator))
+    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.value + File.separator))
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
@@ -96,7 +98,13 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
       }.visibleIf(_baseConda)
 
       row("") {
-        comment("").bindText(venvHint)
+        comment("").bindText(venvHint).apply {
+          component.showingScope("Update hint") {
+            projectPath.collect {
+              updateVenvLocationHint()
+            }
+          }
+        }
       }.visibleIf(_projectVenv or (_baseConda and model.state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE)))
 
       rowsRange {
@@ -104,7 +112,6 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
       }.visibleIf(_custom)
     }
 
-    projectPath.afterChange { updateVenvLocationHint() }
     selectedMode.afterChange { updateVenvLocationHint() }
   }
 
@@ -128,7 +135,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
-        val projectPath = Path.of(projectPath.get())
+        val projectPath = Path.of(projectPath.value)
         model.setupVirtualenv(projectPath.resolve(".venv"), // todo just keep venv path, all the rest is in the model
                               projectPath,
           //pythonBaseVersion.get()!!)

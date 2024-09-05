@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.assertTrue
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.command.WriteCommandAction
@@ -15,12 +16,13 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
-  
+
   private var myShortcutsManager: MavenShortcutsManager? = null
 
 
   override fun setUp() {
     super.setUp()
+    needFixForMaven4()
     myShortcutsManager = MavenShortcutsManager.getInstance(project)
     myShortcutsManager!!.doInit(project)
     initProjectsManager(true)
@@ -61,6 +63,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRefreshingOnProjectRead() = runBlocking {
+
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -80,6 +83,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                         <plugin>
                           <groupId>org.apache.maven.plugins</groupId>
                           <artifactId>maven-surefire-plugin</artifactId>
+                          <version>2.4.3</version>
                         </plugin>
                       </plugins>
                     </build>

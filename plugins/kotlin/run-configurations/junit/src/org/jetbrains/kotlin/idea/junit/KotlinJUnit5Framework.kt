@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit5Framework
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
@@ -48,7 +49,7 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 
             return CachedValuesManager.getCachedValue(ktClassOrObject) {
                 CachedValueProvider.Result.create(
-                    checkJUnit5PotentialTestClass(ktClassOrObject) == YES,
+                    checkJUnit5PotentialTestClass(ktClassOrObject) != NO,
                     OuterModelsModificationTrackerManager.getTracker(ktClassOrObject.project)
                 )
             }
@@ -64,24 +65,26 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             if (!isFrameworkAvailable(declaration)) {
                 NO
             } else {
-                checkIsJUnit5LikeTestClass(declaration)
+                checkIsJUnit5LikeTestClass(declaration, false)
             }
 
         private fun checkJUnit5PotentialTestClass(declaration: KtClassOrObject): ThreeState =
             if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
                 NO
             } else {
-                checkIsJUnit5LikeTestClass(declaration)
+                checkIsJUnit5LikeTestClass(declaration, true)
             }
 
-        private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject): ThreeState =
-            if (!isFrameworkAvailable(declaration)) {
+        private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject, isPotential: Boolean): ThreeState =
+            if (isPotential && isUnderTestSources(declaration)) {
+                UNSURE
+            } else if (!isFrameworkAvailable(declaration)) {
                 NO
             } else if (declaration is KtClass && declaration.isInner()) {
                 if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
                 YES
-            } else if (findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null) {
+            } else if (findAnnotatedFunction(declaration, testableAnnotations) != null) {
                 YES
             } else {
                 UNSURE
@@ -148,6 +151,18 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
+
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit5 SetUp Function.kt")
+    }
+
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
+        return FileTemplateDescriptor("Kotlin JUnit5 TearDown Function.kt")
+    }
+
+    override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
+        return FileTemplateDescriptor("Kotlin JUnit5 Test Function.kt")
+    }
 }
 
 private val METHOD_ANNOTATION_FQN = setOf(
@@ -161,4 +176,5 @@ private val METHOD_ANNOTATION_FQN = setOf(
 
 private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
 private val tearDownAnnotations = setOf(JUnitUtil.AFTER_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
+private val testableAnnotations = METHOD_ANNOTATION_FQN + setUpAnnotations + tearDownAnnotations
 

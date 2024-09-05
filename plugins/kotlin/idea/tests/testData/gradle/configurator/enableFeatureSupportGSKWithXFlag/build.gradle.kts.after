@@ -12,6 +12,6 @@ buildscript {
 
 apply(plugin  ="kotlin")
 val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    freeCompilerArgs = listOf("-Xinline-classes")
+compileKotlin.compilerOptions {
+    freeCompilerArgs.set(listOf("-Xinline-classes"))
 }

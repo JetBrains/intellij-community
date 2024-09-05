@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinBinariesCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinSourceCheckerTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
+import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
 import org.jetbrains.kotlin.idea.k2.copyPaste.AbstractK2InsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateSecondaryConstructorActionTest
+import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
@@ -161,6 +163,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractFirGenerateSecondaryConstructorActionTest> {
             model("../../../idea/tests/testData/codeInsight/generate/secondaryConstructors")
+        }
+
+        testClass<AbstractFirGenerateTestSupportMethodActionTest> {
+            model("../../../idea/tests/testData/codeInsight/generate/testFrameworkSupport")
         }
 
         testClass<AbstractKotlinFirJoinLinesTest> {

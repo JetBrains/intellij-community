@@ -181,9 +181,16 @@ public class JDParser {
             }
           }
         } else {
-          String newLine = StringUtil.trimStart(line, "/// ");
-          if (Strings.areSameInstance(newLine, line)) {
-            newLine = StringUtil.trimStart(line, "///");
+          // Note: Markdown comments are not trimmed like html ones, except for javadoc tags
+          String newLine;
+          int tagStart = CharArrayUtil.shiftForward(line, 3, " \t");
+          if (tagStart != line.length()) {
+            newLine = line.substring(tagStart);
+          } else {
+            newLine = StringUtil.trimStart(line, "/// ");
+            if (Strings.areSameInstance(newLine, line)) {
+              newLine = StringUtil.trimStart(line, "///");
+            }
           }
           line = newLine;
         }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -48,6 +49,8 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
 
   public void testJavadocComments() { doTest(); }
 
+  public void testJavadocMarkdownComments() { doTest(); }
+
   public void testEditingImports() {
     configure("""
                 import java.util.List;
@@ -93,6 +96,26 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
     myFixture.performEditorAction("CollapseBlock");
     myFixture.performEditorAction("CollapseBlock");
     assertEquals(text.indexOf("}", text.indexOf("i++")), myFixture.getEditor().getCaretModel().getOffset());
+  }
+
+  public void testExpandCollapseRegionTogglesFold() {
+    String text = """
+      class Test {
+          void test(int i) {
+              if (i > 1) {
+                  <caret>i++;
+              }
+          }
+      }
+      """;
+    configure(text);
+    assertEquals(2, getExpandedFoldRegionsCount());
+
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_COLLAPSE_TOGGLE_REGION);
+    assertEquals(1, getExpandedFoldRegionsCount());
+
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_COLLAPSE_TOGGLE_REGION);
+    assertEquals(2, getExpandedFoldRegionsCount());
   }
 
   public void testFoldGroup() {

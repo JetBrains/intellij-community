@@ -13,6 +13,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.executeProcess
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
@@ -20,7 +22,6 @@ import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.deploy
-import com.intellij.platform.ijent.executeProcess
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
@@ -76,8 +77,8 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
 
                   launch {
                     val process = when (val p = ijent.exec.executeProcess("uname", "-a")) {
-                      is IjentExecApi.ExecuteProcessResult.Failure -> error(p)
-                      is IjentExecApi.ExecuteProcessResult.Success -> p.process
+                      is EelExecApi.ExecuteProcessResult.Failure -> error(p)
+                      is EelExecApi.ExecuteProcessResult.Success -> p.process
                     }
                     val stdout = ByteArrayOutputStream()
                     process.stdout.consumeEach(stdout::write)

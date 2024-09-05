@@ -67,7 +67,7 @@ class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
     val newSdk = setupPoetrySdkUnderProgress(null,
                                              null,
                                              model.baseSdks,
-                                             model.projectPath.get(),
+                                             model.projectPath.value,
                                              homePath, false)!!
     SdkConfigurationUtil.addSdk(newSdk)
     return newSdk

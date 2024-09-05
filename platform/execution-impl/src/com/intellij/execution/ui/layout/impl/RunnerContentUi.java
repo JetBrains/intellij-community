@@ -321,9 +321,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     tabs.addTabMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
-        if (!UIUtil.isCloseClick(e) || !e.isConsumed()) {
-          return;
-        }
+        if (e.isConsumed()) return;
+        if (!UIUtil.isCloseClick(e)) return;
         TabInfo tabInfo = tabs.findInfo(e);
         GridImpl grid = tabInfo == null ? null : getGridFor(tabInfo);
         Content[] contents = grid != null ? grid.getContents().toArray(new Content[0]) : null;
@@ -1968,7 +1967,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
       JComponent component = info.getComponent();
-      Content[] data = CONTENT_KEY.getData((DataProvider)component);
+      DataContext dataContext = DataManager.getInstance().getDataContext(component);
+      Content[] data = CONTENT_KEY.getData(dataContext);
       assert data != null;
       storeDefaultIndices(data);
 

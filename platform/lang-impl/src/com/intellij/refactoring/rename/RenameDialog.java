@@ -14,7 +14,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -63,7 +62,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
   private final Editor myEditor;
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private final Map<AutomaticRenamerFactory, JCheckBox> myAutoRenamerFactories = new HashMap<>();
-  private String myOldName;
 
   private ScopeChooserCombo myScopeCombo;
   private final LinkedHashSet<String> myPredefinedSuggestedNames = new LinkedHashSet<>();
@@ -140,7 +138,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   protected void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
-    myOldName = UsageViewUtil.getShortName(myPsiElement);
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean forceCombobox() {
@@ -388,7 +385,6 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   @Override
   protected void canRun() throws ConfigurationException {
-    if (Comparing.strEqual(getNewName(), myOldName)) throw new ConfigurationException(null);
     if (!areButtonsValid()) {
       throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
     }

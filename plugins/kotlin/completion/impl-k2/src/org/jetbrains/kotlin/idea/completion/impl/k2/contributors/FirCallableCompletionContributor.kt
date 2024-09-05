@@ -9,12 +9,7 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
-import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
-import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -54,6 +49,7 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int = 0,
+    private val withTrailingLambda: Boolean = false, // TODO find a better solution
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
 
     context(KaSession)
@@ -153,12 +149,13 @@ internal open class FirCallableCompletionContributor(
 
         for (callableWithMetadata in callablesWithMetadata) {
             addCallableSymbolToCompletion(
-                weighingContext,
-                callableWithMetadata.signature,
-                callableWithMetadata.options,
-                callableWithMetadata.symbolOrigin,
+                context = weighingContext,
+                signature = callableWithMetadata.signature,
+                options = callableWithMetadata.options,
+                symbolOrigin = callableWithMetadata.symbolOrigin,
                 priority = null,
-                callableWithMetadata.explicitReceiverTypeHint
+                explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint,
+                withTrailingLambda = withTrailingLambda,
             )
         }
     }

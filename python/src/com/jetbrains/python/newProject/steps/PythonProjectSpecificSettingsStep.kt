@@ -37,19 +37,23 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JPanel
 
-class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerator: DirectoryProjectGenerator<T>,
-                                           callback: AbstractNewProjectStep.AbstractCallback<T>)
+class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
+  projectGenerator: DirectoryProjectGenerator<T>,
+  callback: AbstractNewProjectStep.AbstractCallback<T>,
+)
   : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
 
   private val propertyGraph = PropertyGraph()
   private val projectName = propertyGraph.property("")
   private val projectLocation = propertyGraph.property("")
+  private val projectLocationFlow = MutableStateFlow(projectLocation.get())
   private val locationHint = propertyGraph.property("").apply {
     dependsOn(projectName, ::updateHint)
     dependsOn(projectLocation, ::updateHint)
@@ -58,6 +62,12 @@ class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerato
     .bindBooleanStorage("PyCharm.NewProject.Git")
   private val createScript = propertyGraph.property(false)
     .bindBooleanStorage("PyCharm.NewProject.Welcome")
+
+  init {
+    projectLocation.afterChange {
+      projectLocationFlow.value = projectLocation.get()
+    }
+  }
 
   private lateinit var projectNameFiled: JBTextField
   lateinit var mainPanel: DialogPanel
@@ -69,7 +79,7 @@ class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerato
   }
 
   @RequiresEdt
-  override fun createWelcomeScript(): Boolean  = createScript.get()
+  override fun createWelcomeScript(): Boolean = createScript.get()
 
   /**
    * Returns the project location that is either:
@@ -106,7 +116,7 @@ class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerato
 
     // Instead of setting this type as default, we limit types to it
     val onlyAllowedInterpreterTypes = projectGenerator.preferredEnvironmentType?.let { setOf(it) }
-    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName), onlyAllowedInterpreterTypes).also { interpreterPanel = it }
+    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocationFlow, onlyAllowedInterpreterTypes).also { interpreterPanel = it }
 
     mainPanel = panel {
       row(message("new.project.name")) {
@@ -127,7 +137,7 @@ class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerato
       row("") {
         comment("", maxLineLength = 60).bindText(locationHint)
       }
-     val uiCustomizer =  projectGenerator.mainPartUiCustomizer
+      val uiCustomizer = projectGenerator.mainPartUiCustomizer
       row("") {
         checkBox(message("new.project.git")).bindSelected(createRepository)
         if (projectGenerator.supportsWelcomeScript()) {
@@ -137,7 +147,7 @@ class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerato
       }
 
       uiCustomizer?.let {
-          uiCustomizer.underCheckBoxSection(this)
+        uiCustomizer.underCheckBoxSection(this)
       }
 
       panel {

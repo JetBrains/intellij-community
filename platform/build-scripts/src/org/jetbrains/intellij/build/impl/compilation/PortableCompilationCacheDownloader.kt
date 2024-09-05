@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -12,6 +11,7 @@ import kotlinx.coroutines.*
 import okhttp3.Request
 import okio.sink
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
 import org.jetbrains.intellij.build.impl.compilation.cache.parseSourcesStateFile
@@ -31,7 +31,7 @@ private const val COMMITS_COUNT = 1_000
 internal class PortableCompilationCacheDownloader(
   private val context: CompilationContext,
   private val git: Git,
-  private val remoteCache: PortableCompilationCache.RemoteCache,
+  private val remoteCache: PortableJpsCacheRemoteCacheConfig,
   private val gitUrl: String,
 ) {
   private val remoteCacheUrl = remoteCache.url.trimEnd('/')
@@ -88,16 +88,6 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  @OptIn(DelicateCoroutinesApi::class)
-  private val availableCommitDepthLazyTask = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
-    val availableCachesKeys = availableCachesKeysLazyTask.await()
-    lastCommits.indexOfFirst {
-      availableCachesKeys.contains(it)
-    }
-  }
-
-  suspend fun getAvailableCommitDepth(): Int = availableCommitDepthLazyTask.await()
-
   private suspend fun isExist(path: String): Boolean {
     return spanBuilder("head").setAttribute("url", remoteCacheUrl).use {
       retryWithExponentialBackOff {
@@ -106,11 +96,15 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  suspend fun download() {
-    val availableCommitDepth = getAvailableCommitDepth()
+  suspend fun download(): Int {
+    val availableCachesKeys = availableCachesKeysLazyTask.await()
+    val availableCommitDepth = lastCommits.indexOfFirst {
+      availableCachesKeys.contains(it)
+    }
+
     if (availableCommitDepth !in 0 until lastCommits.count()) {
       Span.current().addEvent("Unable to find cache for any of last ${lastCommits.count()} commits.")
-      return
+      return -1
     }
 
     val lastCachedCommit = lastCommits.get(availableCommitDepth)
@@ -148,6 +142,8 @@ internal class PortableCompilationCacheDownloader(
     reportStatisticValue("jps-cache:downloaded:bytes", totalDownloadedBytes.sum().toString())
     reportStatisticValue("jps-cache:downloaded:count", total.toString())
     reportStatisticValue("jps-cache:notFound:count", notFound.sum().toString())
+
+    return availableCommitDepth
   }
 
   private suspend fun downloadAndUnpackJpsCache(commitHash: String, notFound: LongAdder, totalBytes: LongAdder) {

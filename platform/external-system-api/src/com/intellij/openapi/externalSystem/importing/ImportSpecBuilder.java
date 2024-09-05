@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ public class ImportSpecBuilder {
   @Nullable private String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
   @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
+  @Nullable private UserDataHolderBase myUserData;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -107,6 +109,11 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder withUserData(@Nullable UserDataHolderBase userData) {
+    myUserData = userData;
+    return this;
+  }
+
   public ImportSpec build() {
     ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
@@ -118,6 +125,7 @@ public class ImportSpecBuilder {
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
+    mySpec.setUserData(myUserData);
     ExternalProjectRefreshCallback callback;
     if (myCallback != null) {
       callback = myCallback;
@@ -141,6 +149,7 @@ public class ImportSpecBuilder {
     isActivateBuildToolWindowOnFailure = spec.isActivateBuildToolWindowOnFailure();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
+    myUserData = spec.getUserData();
   }
 
   @ApiStatus.Internal

@@ -40,7 +40,7 @@ internal object Completions {
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 FirNamedArgumentCompletionContributor(basicContext)
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirCallableCompletionContributor(basicContext)
+                FirCallableCompletionContributor(basicContext, withTrailingLambda = true)
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 FirClassifierCompletionContributor(basicContext)
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)

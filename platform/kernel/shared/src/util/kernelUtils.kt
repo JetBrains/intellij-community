@@ -15,49 +15,45 @@ import fleet.kernel.rebase.*
 import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
 import fleet.rpc.core.Serialization
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
 import kotlin.coroutines.CoroutineContext
 
-suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend CoroutineScope.() -> T) {
-  val entityClasses = listOf(Kernel::class.java.classLoader).flatMap {
+suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
+  val entityClasses = listOf(Transactor::class.java.classLoader).flatMap {
     collectEntityClasses(it, PluginUtil.getPluginId(it).idString)
   }
-  fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
+  withTransactor(entityClasses, middleware = middleware) { _ ->
     withRete {
       body()
     }
   }
 }
 
-fun CoroutineScope.handleEntityTypes() {
-  launch {
-    change {
-      for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+fun handleEntityTypes(transactor: Transactor, coroutineScope: CoroutineScope) {
+  transactor.changeAsync {
+    for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+      for (entityType in extension.entityTypes()) {
+        register(entityType)
+      }
+    }
+  }
+  EntityTypeProvider.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<EntityTypeProvider> {
+    override fun extensionAdded(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
+      transactor.changeAsync {
         for (entityType in extension.entityTypes()) {
           register(entityType)
         }
       }
     }
-  }
-  EntityTypeProvider.EP_NAME.addExtensionPointListener(this, object : ExtensionPointListener<EntityTypeProvider> {
-
-    override fun extensionAdded(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
-      launch {
-        change {
-          for (entityType in extension.entityTypes()) {
-            register(entityType)
-          }
-        }
-      }
-    }
 
     override fun extensionRemoved(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
-      launch {
-        change {
-          for (entityType in extension.entityTypes()) {
-            entityType.delete()
-          }
+      transactor.changeAsync {
+        for (entityType in extension.entityTypes()) {
+          entityType.delete()
         }
       }
     }
@@ -65,7 +61,7 @@ fun CoroutineScope.handleEntityTypes() {
 }
 
 fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
-  return kernel + this[Rete]!! + this[DbSource.ContextElement]!!
+  return transactor + this[Rete]!! + this[DbSource.ContextElement]!!
 }
 
 val CommonInstructionSet: InstructionSet =
@@ -89,7 +85,7 @@ val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
 suspend fun updateDbInTheEventDispatchThread(): Nothing {
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     try {
-      kernel().log.collect { event ->
+      transactor().log.collect { event ->
         DbContext.threadLocal.set(DbContext<DB>(event.db, null))
       }
       awaitCancellation()

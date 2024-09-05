@@ -16,10 +16,14 @@ class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val 
         ConfigLibraryUtil.addLibrary(model, STDLIB_LIB_NAME) {
             //first we should search in platform specific libraries and if failed, in common part
             addRoot(TestKotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
-            addRoot(TestKotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+            if (withSources) {
+                addRoot(TestKotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+            }
 
             addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
-            addRoot(TestKotlinArtifacts.kotlinStdlibCommonSources, OrderRootType.SOURCES)
+            if (withSources) {
+                addRoot(TestKotlinArtifacts.kotlinStdlibCommonSources, OrderRootType.SOURCES)
+            }
         }
     }
 

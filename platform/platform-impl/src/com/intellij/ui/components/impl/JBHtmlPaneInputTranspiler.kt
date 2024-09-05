@@ -4,7 +4,7 @@ package com.intellij.ui.components.impl
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.impl.JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock
+import com.intellij.ui.components.impl.JBHtmlPaneStyleSheetRulesProvider.Companion.buildCodeBlock
 import com.intellij.util.SmartList
 import com.intellij.util.asSafely
 import com.intellij.util.containers.CollectionFactory
@@ -26,7 +26,6 @@ internal object JBHtmlPaneInputTranspiler {
   /**
    * Transpiler pane input to fit to limited AWT HTML toolkit support.
    */
-  @Suppress("HardCodedStringLiteral")
   fun transpileHtmlPaneInput(text: @Nls String): @Nls String {
     val document = Jsoup.parse(text)
     document.traverse(NodeVisitor { node, _ ->
@@ -65,6 +64,7 @@ internal object JBHtmlPaneInputTranspiler {
   /**
    * Expand `<shortcut raw|actionId="*"/>` tag into a sequence of `<kbd>` tags
    */
+  @Suppress("HardCodedStringLiteral")
   private fun transpileShortcut(node: Element) {
     val actionId = node.attributes().getIgnoreCase("actionid")
       .takeIf { it.isNotEmpty() }

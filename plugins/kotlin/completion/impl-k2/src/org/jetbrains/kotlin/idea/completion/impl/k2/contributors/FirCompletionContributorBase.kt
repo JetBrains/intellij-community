@@ -85,6 +85,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         symbolOrigin: CompletionSymbolOrigin,
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KaType? = null,
+        withTrailingLambda: Boolean = false, // TODO find a better solution
     ) {
         val namedSymbol = when (val symbol = signature.symbol) {
             is KaNamedSymbol -> symbol
@@ -92,15 +93,30 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             else -> null
         } ?: return
 
-        val lookup = KotlinFirLookupElementFactory.createCallableLookupElement(
-            name = namedSymbol.name,
-            signature = signature,
-            options = options,
-            expectedType = context.expectedType,
-        ).apply { this.priority = priority }
+        val shortName = namedSymbol.name
 
-        Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
-        sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
+        val lookups = sequence {
+            KotlinFirLookupElementFactory.createCallableLookupElement(
+                name = shortName,
+                signature = signature,
+                options = options,
+                expectedType = context.expectedType,
+            ).let { yield(it) }
+
+            if (withTrailingLambda) {
+                KotlinFirLookupElementFactory.createCallableLookupElementWithTrailingLambda(
+                    name = shortName,
+                    signature = signature,
+                    options = options,
+                )?.let { yield(it) }
+            }
+        }
+
+        for (lookup in lookups) {
+            lookup.priority = priority
+            Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
+            sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
+        }
     }
 
     private fun LookupElement.adaptToReceiver(weigherContext: WeighingContext, explicitReceiverTypeHint: String?): LookupElement {

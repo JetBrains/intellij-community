@@ -46,6 +46,7 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
@@ -324,7 +325,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   protected @NotNull ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
-    result.add(new ShowLogicalStructureAction());
     List<AnAction> sorters = getSortActions();
     if (!sorters.isEmpty()) {
       result.addAll(sorters);
@@ -358,7 +358,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public final DefaultActionGroup getViewActions() {
     DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
     result.setPopup(true);
-    result.add(new ShowLogicalStructureAction());
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
@@ -944,6 +943,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final class MyTree extends DnDAwareTree implements PlaceProvider {
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
+      ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_ALLOWED, false);
       HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 

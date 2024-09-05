@@ -609,8 +609,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             TimeoutUtil.sleep(10);
           }
           EDT.dispatchAllInvocationEvents();
-          Throwable savedException = PassExecutorService.getSavedException((DaemonProgressIndicator)progress);
-          if (savedException != null) throw savedException;
+          progress.checkCanceled();
           return progress.isRunning();
         });
         if (progress.isRunning() && !progress.isCanceled()) {
@@ -631,10 +630,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       catch (Throwable e) {
         Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
         LOG.debug("doRunPasses() thrown " + ExceptionUtil.getThrowableText(unwrapped));
+        if (unwrapped instanceof ProcessCanceledException) {
+          Throwable savedException = ((DaemonProgressIndicator)progress).getCancellationTrace();
+          if (savedException != null) {
+            if (DaemonProgressIndicator.CANCEL_WAS_CALLED_REASON.equals(savedException.getMessage())) {
+              throw (ProcessCanceledException)unwrapped;
+            }
+            unwrapped = savedException;
+          }
+        }
         if (progress.isCanceled() && progress.isRunning()) {
           unwrapped.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
+          ExceptionUtil.rethrow(unwrapped);
         }
-        ExceptionUtil.rethrow(unwrapped);
+        if (!progress.isCanceled()) {
+          ExceptionUtil.rethrow(unwrapped);
+        }
       }
       finally {
         if (!progress.isCanceled()) {
@@ -721,9 +732,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public void settingsChanged() {
-    if (mySettings.isCodeHighlightingChanged(myLastSettings)) {
-      restart();
-    }
+    restart();
     myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)mySettings).clone();
   }
 
@@ -898,8 +907,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
-  synchronized void stopMyProcess(@NotNull DaemonProgressIndicator indicator, boolean toRestartAlarm, @NotNull @NonNls String reason) {
-    cancelIndicator(indicator, toRestartAlarm, reason);
+  synchronized void stopMyProcess(@NotNull DaemonProgressIndicator indicator, boolean toRestartAlarm, @Nullable Throwable cause, @NotNull @NonNls String reason) {
+    cancelIndicator(indicator, toRestartAlarm, cause, reason);
     boolean restart = toRestartAlarm && !myDisposed;
     if (restart) {
       scheduleIfNotRunning();
@@ -928,16 +937,21 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   synchronized void cancelAllUpdateProgresses(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) return;
     for (DaemonProgressIndicator updateProgress : myUpdateProgress.values()) {
-      cancelIndicator(updateProgress, toRestartAlarm, reason);
+      cancelIndicator(updateProgress, toRestartAlarm, null, reason);
     }
     myPassExecutorService.cancelAll(false, reason);
     daemonCancelEventCount.incrementAndGet();
   }
 
-  private static void cancelIndicator(@NotNull DaemonProgressIndicator indicator, boolean toRestartAlarm, @NonNls @NotNull String reason) {
+  private static void cancelIndicator(@NotNull DaemonProgressIndicator indicator, boolean toRestartAlarm, @Nullable Throwable cause, @NonNls @NotNull String reason) {
     if (!indicator.isCanceled()) {
       PassExecutorService.log(indicator, null, "Cancel:", reason, toRestartAlarm);
-      indicator.cancel(reason);
+      if (cause == null) {
+        indicator.cancel(reason);
+      }
+      else {
+        indicator.cancel(cause, reason);
+      }
     }
   }
 
@@ -1281,7 +1295,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (PassExecutorService.LOG.isDebugEnabled()) {
         PassExecutorService.log(progress, null, reason);
       }
-      stopMyProcess(progress, true, reason);
+      stopMyProcess(progress, true, null, reason);
       return null;
     }
     EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
@@ -1339,12 +1353,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               + (fileEditor.isValid() ? "" : " file editor "+fileEditor+" is invalid")
               + (psiFile.isValid() ? "" : " psiFile "+psiFile+" is invalid")
               ;
-            stopMyProcess(progress, true, reason);
+            stopMyProcess(progress, true, null, reason);
             return HighlightingPass.EMPTY_ARRAY;
           }
           if (session.isCanceled()) {
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
-            stopMyProcess(progress, true, session + " is canceled");
+            stopMyProcess(progress, true, null, session + " is canceled");
             throw new ProcessCanceledException();
           }
           session.additionalSetupFromBackground(psiFile);
@@ -1366,7 +1380,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         boolean hasPasses = passes.length != 0;
         if (!hasPasses) {
           // will be re-scheduled by HeavyLatch or some other listener in DaemonListeners
-          stopMyProcess(progress, true, " no passes created");
+          stopMyProcess(progress, true, null, " no passes created");
           return;
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
@@ -1378,14 +1392,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     catch (ProcessCanceledException e) {
       String reason = LOG.isDebugEnabled() ? ExceptionUtil.getThrowableText(e) : "PCE";
-      stopMyProcess(progress, true, reason);
+      stopMyProcess(progress, true, e.getCause(), reason);
       LOG.debug(e);
     }
     catch (Throwable e) {
-      String reason = LOG.isDebugEnabled() ? ExceptionUtil.getThrowableText(e) : "PCE";
-      stopMyProcess(progress, true, reason);
       // make it manifestable in tests
-      PassExecutorService.saveException(e, progress);
+      String reason = LOG.isDebugEnabled() ? ExceptionUtil.getThrowableText(e) : "PCE";
+      stopMyProcess(progress, true, e, reason);
       throw e;
     }
   }

@@ -39,6 +39,11 @@ public final class ContentRootData extends AbstractExternalEntityData {
     return result == null ? Collections.emptyList() : result;
   }
 
+  @NotNull
+  public Map<ExternalSystemSourceType, Collection<SourceRoot>> getSourceRoots() {
+    return data;
+  }
+
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path) throws IllegalArgumentException {
     storePath(type, path, null);
   }

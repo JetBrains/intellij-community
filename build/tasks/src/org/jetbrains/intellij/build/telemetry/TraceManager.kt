@@ -17,16 +17,22 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("SSBasedInspection")
 var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
-  val batchSpanProcessor = BatchSpanProcessor(coroutineScope = CoroutineScope(Job()), spanExporters = JaegerJsonSpanExporterManager.spanExporterProvider)
+  val batchSpanProcessor = BatchSpanProcessor(
+    scheduleDelay = 10.seconds,
+    coroutineScope = CoroutineScope(Job()),
+    spanExporters = JaegerJsonSpanExporterManager.spanExporterProvider,
+  )
   val tracerProvider = SdkTracerProvider.builder()
     .addSpanProcessor(batchSpanProcessor)
     .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
@@ -64,9 +70,9 @@ object TraceManager {
     batchSpanProcessor.forceShutdown()
   }
 
-  suspend fun exportPendingSpans() {
+  suspend fun scheduleExportPendingSpans() {
     if (isEnabled) {
-      batchSpanProcessor.doFlush(exportOnly = true)
+      batchSpanProcessor.scheduleFlush()
     }
   }
 }
@@ -103,7 +109,7 @@ object JaegerJsonSpanExporterManager {
     if (addShutDownHook && shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(
         Thread({
-                 runBlocking {
+                 runBlocking(Dispatchers.IO) {
                    TraceManager.shutdown()
                  }
                }, "close tracer"))

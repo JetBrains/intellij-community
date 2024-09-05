@@ -4,6 +4,9 @@ package com.intellij.ide.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSnapshotProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +21,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EDT;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +98,21 @@ public abstract class DataValidators {
     return true;
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Validator<Object> uiOnlyDataKeyValidator() {
+    return (data, dataId, source) -> {
+      Object provider = unwrap(source);
+      if (provider instanceof UiDataProvider || provider instanceof DataSnapshotProvider) return true;
+      if (!EDT.isCurrentThreadEdt() && (provider instanceof DataProvider || provider instanceof Function0)) {
+        Class<?> aClass = provider.getClass();
+        LOG.error(PluginException.createByClass(
+          "A data for UI-only DataKey(\"" + dataId + "\") is provided on BGT by " + aClass.getName() + ". " +
+          "Use a UI data provider to provide such data", null, aClass));
+      }
+      return true;
+    };
+  }
+
   private static boolean isPsiElementProvided(@Nullable Object data) {
     if (data instanceof PsiElement && !(data instanceof FakePsiElement)) return true;
     if (data instanceof Object[] array) return isPsiElementProvided(ArrayUtil.getFirstElement(array));
@@ -104,15 +123,15 @@ public abstract class DataValidators {
   private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
     Class<?> aClass = unwrap(source).getClass();
     LOG.error(PluginException.createByClass(
-      "PSI element is provided on EDT by " + aClass.getName() + ".getData(\"" + dataId + "\"). " +
-      "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER", null, aClass));
+      "PSI element for DataKey(\"" + dataId + "\") is provided on EDT by " + aClass.getName() + ". " +
+      "Use `DataSink.lazy` to provide such data", null, aClass));
   }
 
   private static void reportObjectOfIncorrectType(@NotNull String dataId, @NotNull Object source, @NotNull ClassCastException ex) {
     Class<?> aClass = unwrap(source).getClass();
     LOG.error(PluginException.createByClass(
-      "Object of incorrect type provided by " + aClass.getName() +
-      ".getData(\"" + dataId + "\")", ex, aClass));
+      "Object of incorrect type for DataKey(\"" + dataId + "\") is provided by " + aClass.getName() + ".",
+      ex, aClass));
   }
 
   private static @NotNull Object unwrap(@NotNull Object source) {

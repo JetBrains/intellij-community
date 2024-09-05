@@ -1,7 +1,9 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.should
+import com.intellij.driver.sdk.ui.ui
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
 
@@ -14,7 +16,8 @@ class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
 
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
     keyboard {
-      enterText(text)
+      backspace()
+      driver.ui.pasteText(text)
       resultsList.should(timeout = 15.seconds) {
         if (exactMatch) hasText(text) else hasSubtext(text)
       }

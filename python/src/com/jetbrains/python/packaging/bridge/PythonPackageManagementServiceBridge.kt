@@ -59,7 +59,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
               .filter { it.isNotBlank() }
               .map {
                 val line = it.split("\t")
-                PythonPackage(line[0], line[1])
+                PythonPackage(line[0], line[1], isEditableMode = false)
               }
               .sortedWith(compareBy(PythonPackage::name))
               .toList()

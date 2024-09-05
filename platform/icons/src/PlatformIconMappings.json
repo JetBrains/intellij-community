@@ -583,6 +583,10 @@
       "webService.svg": "javaee/WebService.svg",
       "webServiceClient.svg": "javaee/WebServiceClient.svg"
     },
+    "json": {
+      "object.svg": "json/object.svg",
+      "array.svg": "json/array.svg"
+    },
     "language": {
       "php.svg": "language/php.svg",
       "scala.svg": "language/scala.svg"
@@ -676,6 +680,7 @@
         "nodes/propertyWriteStatic.svg"
       ],
       "record.svg": "nodes/record.svg",
+      "related.svg": "nodes/related.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
       "resourceBundle.svg": "nodes/resourceBundle.svg",
       "servlet.svg": "nodes/servlet.svg",

@@ -1279,8 +1279,8 @@ public class MavenUtil {
     Set<String> goals = new HashSet<>(MavenConstants.PHASES);
 
     for (MavenProject mavenProject : manager.getProjects()) {
-      for (MavenPlugin plugin : mavenProject.getPlugins()) {
-        MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
+      for (var mavenProjectPluginInfo : mavenProject.getPluginInfos()) {
+        MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(mavenProjectPluginInfo.getArtifact());
         if (pluginInfo != null) {
           for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
             goals.add(mojo.getDisplayName());

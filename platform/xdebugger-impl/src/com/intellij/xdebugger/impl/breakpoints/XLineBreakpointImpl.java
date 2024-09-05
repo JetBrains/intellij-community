@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -217,17 +218,24 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   public String getPresentableFilePath() {
     String url = getFileUrl();
-    if (url != null && LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
-      return FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url));
+    if (LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
+      String path = VfsUtilCore.urlToPath(url);
+
+      // Try to get the path relative to the project directory to make the result easier to read.
+      VirtualFile project = ProjectUtil.guessProjectDir(getProject());
+      String relativePath = project != null
+                            ? FileUtil.getRelativePath(project.getPath(), path, '/')
+                            : null;
+
+      String presentablePath = relativePath != null ? relativePath : path;
+      return FileUtil.toSystemDependentName(presentablePath);
     }
-    return url != null ? url : "";
+    return url;
   }
 
   @Override
   public String getShortFilePath() {
-    final String path = getPresentableFilePath();
-    if (path.isEmpty()) return "";
-    return new File(path).getName();
+    return new File(VfsUtilCore.urlToPath(getFileUrl())).getName();
   }
 
   @Nullable

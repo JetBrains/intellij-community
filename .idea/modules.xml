@@ -2,6 +2,15 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" filepath="$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" filepath="$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" filepath="$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" filepath="$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/rpc/fleet.rpc.iml" filepath="$PROJECT_DIR$/fleet/rpc/fleet.rpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/rpc.server/fleet.rpc.server.iml" filepath="$PROJECT_DIR$/fleet/rpc.server/fleet.rpc.server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/core/fleet.util.core.iml" filepath="$PROJECT_DIR$/fleet/util/core/fleet.util.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" filepath="$PROJECT_DIR$/fleet/util/logging/api/fleet.util.logging.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/util/os/fleet.util.os.iml" filepath="$PROJECT_DIR$/fleet/util/os/fleet.util.os.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" />
@@ -619,6 +628,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/durability/intellij.platform.durability.iml" filepath="$PROJECT_DIR$/platform/platform-tests/durability/intellij.platform.durability.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/intellij.platform.editor.ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/intellij.platform.editor.ex.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" filepath="$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" filepath="$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution.dashboard/intellij.platform.execution.dashboard.iml" filepath="$PROJECT_DIR$/platform/execution.dashboard/intellij.platform.execution.dashboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.impl.iml" filepath="$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.impl.iml" />
@@ -661,6 +671,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/inspect/intellij.platform.inspect.iml" filepath="$PROJECT_DIR$/platform/inspect/intellij.platform.inspect.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" filepath="$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" filepath="$PROJECT_DIR$/jps/jps-builders/intellij.platform.jps.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" filepath="$PROJECT_DIR$/jps/jps-builders-6/intellij.platform.jps.build.javac.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" filepath="$PROJECT_DIR$/jps/jps-launcher/intellij.platform.jps.build.launcher.iml" />
@@ -754,6 +765,7 @@
       <module fileurl="file://$PROJECT_DIR$/uast/uast-common-ide/intellij.platform.uast.ide.iml" filepath="$PROJECT_DIR$/uast/uast-common-ide/intellij.platform.uast.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/uast/testFramework/intellij.platform.uast.testFramework.iml" filepath="$PROJECT_DIR$/uast/testFramework/intellij.platform.uast.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/uast/uast-tests/intellij.platform.uast.tests.iml" filepath="$PROJECT_DIR$/uast/uast-tests/intellij.platform.uast.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/ui.jcef/intellij.platform.ui.jcef.iml" filepath="$PROJECT_DIR$/platform/ui.jcef/intellij.platform.ui.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/intellij.platform.usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/intellij.platform.usageView.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView-impl/intellij.platform.usageView.impl.iml" filepath="$PROJECT_DIR$/platform/usageView-impl/intellij.platform.usageView.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/intellij.platform.util.iml" filepath="$PROJECT_DIR$/platform/util/intellij.platform.util.iml" />

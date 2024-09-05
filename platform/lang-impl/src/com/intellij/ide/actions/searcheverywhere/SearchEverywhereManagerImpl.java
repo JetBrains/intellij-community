@@ -4,8 +4,10 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.OpenInRightSplitAction;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.internal.statistic.utils.StartMoment;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +43,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collector;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
-import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
@@ -83,7 +85,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance(project);
-    mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector);
+    mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector, SearchFieldStatisticsCollector.getStartMoment(initEvent));
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
 
@@ -269,11 +271,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
-                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
+                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
+                                        @Nullable StartMoment startMoment) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector, startMoment);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {

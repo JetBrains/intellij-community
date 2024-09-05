@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -62,6 +63,10 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     myVmOptions = importSpec.getVmOptions();
     myArguments = importSpec.getArguments();
     myResolverPolicy = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getProjectResolverPolicy() : null;
+    UserDataHolderBase userData = importSpec.getUserData();
+    if (userData != null) {
+      userData.copyUserDataTo(this);
+    }
   }
 
   @Override
@@ -83,6 +88,8 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     if (StringUtil.isNotEmpty(myArguments)) {
       settings.withArguments(ParametersListUtil.parse(myArguments));
     }
+
+    putUserDataTo(settings);
 
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
     for (var executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {

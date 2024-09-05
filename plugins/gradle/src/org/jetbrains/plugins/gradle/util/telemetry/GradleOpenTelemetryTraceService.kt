@@ -8,46 +8,44 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
-import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.URI
+import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.io.path.*
+import kotlin.io.path.createDirectory
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.writeBytes
 
 @Service(Service.Level.APP)
 class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope) {
 
-  private fun exportTraces(holder: TelemetryHolder) {
+  private fun exportTraces(holder: TelemetryHolder, path: Path?, url: URI?) {
     if (holder.traces.isEmpty()) {
       return
     }
-    sendTelemetryToOtlp(holder)
-    dumpTelemetryToFile(holder)
+    url?.apply { sendTelemetryToOtlp(holder, this) }
+    path?.apply { dumpTelemetryToFile(holder, this) }
   }
 
-  private fun sendTelemetryToOtlp(holder: TelemetryHolder) {
-    val telemetryHost = getOtlpEndPoint() ?: return
+  private fun sendTelemetryToOtlp(holder: TelemetryHolder, telemetryHost: URI) {
     coroutineScope.launch(Dispatchers.IO) {
       when (holder.format) {
-        GradleTelemetryFormat.PROTOBUF -> OpenTelemetryRawTraceExporter.sendProtobuf(URI.create(telemetryHost), holder.traces)
-        GradleTelemetryFormat.JSON -> OpenTelemetryRawTraceExporter.sendJson(URI.create(telemetryHost), holder.traces)
+        GradleTelemetryFormat.PROTOBUF -> OpenTelemetryRawTraceExporter.sendProtobuf(telemetryHost, holder.traces)
+        GradleTelemetryFormat.JSON -> OpenTelemetryRawTraceExporter.sendJson(telemetryHost, holder.traces)
       }
     }
   }
 
-  private fun dumpTelemetryToFile(holder: TelemetryHolder) {
-    if (holder.format == GradleTelemetryFormat.PROTOBUF) {
-      return
-    }
-    val targetFolder = GradleDaemonOpenTelemetryUtil.getTargetFolder() ?: return
+  private fun dumpTelemetryToFile(holder: TelemetryHolder, targetFolder: Path) {
     coroutineScope.launch(Dispatchers.IO) {
       try {
         if (!targetFolder.exists()) {
           targetFolder.createDirectory()
         }
-        val targetFile = targetFolder.resolve("gradle-ot-${System.currentTimeMillis()}.json")
+        val targetFile = targetFolder.resolve("gradle-telemetry-${System.currentTimeMillis()}.json")
           .createFile()
         targetFile.writeBytes(holder.traces, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
       }
@@ -61,8 +59,8 @@ class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope
     private val LOG: Logger = logger<GradleOpenTelemetryTraceService>()
 
     @JvmStatic
-    fun exportOpenTelemetry(holder: TelemetryHolder) {
-      service<GradleOpenTelemetryTraceService>().exportTraces(holder)
+    fun exportOpenTelemetry(holder: TelemetryHolder, path: Path?, url: URI?) {
+      service<GradleOpenTelemetryTraceService>().exportTraces(holder, path, url)
     }
   }
 }

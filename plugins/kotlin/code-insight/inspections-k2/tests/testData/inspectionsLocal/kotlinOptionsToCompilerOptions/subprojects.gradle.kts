@@ -1,4 +1,4 @@
-// PROBLEM: none
+// FIX: Replace 'kotlinOptions' with 'compilerOptions'
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {

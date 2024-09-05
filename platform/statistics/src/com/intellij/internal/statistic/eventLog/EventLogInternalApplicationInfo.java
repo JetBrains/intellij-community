@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
@@ -16,7 +16,7 @@ import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProvide
 public class EventLogInternalApplicationInfo implements EventLogApplicationInfo {
   private static final DataCollectorDebugLogger LOG =
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
-  private static final String EVENT_LOG_SETTINGS_URL_TEMPLATE = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
+  public static final String EVENT_LOG_SETTINGS_URL_TEMPLATE = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
 
   private final boolean myIsTestSendEndpoint;
   private final boolean myIsTestConfig;
@@ -40,7 +40,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getTemplateUrl() {
-    return EVENT_LOG_SETTINGS_URL_TEMPLATE;
+    final String regionUrl = StatisticsRegionUrlMapperService.Companion.getInstance().getRegionUrl();
+    return regionUrl == null ? EVENT_LOG_SETTINGS_URL_TEMPLATE : regionUrl;
   }
 
   @NotNull

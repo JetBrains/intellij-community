@@ -485,7 +485,23 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
         if (rExpr != null) return rExpr;
       }
     }
-    return local.getInitializer();
+    PsiExpression initializer = local.getInitializer();
+    if (initializer != null) {
+      return initializer;
+    }
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, block);
+    Set<PsiExpression> allDefs = new HashSet<>();
+    for (PsiReferenceExpression ref : refs) {
+      if (PsiUtil.isAccessedForWriting(ref)) {
+        if (PsiUtil.isAccessedForReading(ref)) return null;
+        continue;
+      }
+      PsiExpression def = getDefToInline(local, ref, block, rethrow);
+      if (def == null) return null;
+      allDefs.add(def);
+      if (allDefs.size() != 1) return null;
+    }
+    return ContainerUtil.getOnlyItem(allDefs);
   }
 
   @NotNull

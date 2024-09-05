@@ -318,6 +318,8 @@
     </group>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
+    <action internal="true" id="Gradle.SyncWithDaemonTelemetry"
+            class="org.jetbrains.plugins.gradle.internal.daemon.GradleSyncWithDaemonTelemetry"/>
 
     <action id="Gradle.ImportExternalProject" class="org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction" icon="GradleIcons.Gradle">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>

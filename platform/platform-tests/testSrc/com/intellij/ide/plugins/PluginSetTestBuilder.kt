@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.runBlocking
@@ -50,7 +51,7 @@ class PluginSetTestBuilder(private val path: Path) {
       loadingContext.use {
         runBlocking {
           result!!.addAll(
-            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext) },
+            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext, ZipFilePoolImpl()) },
             overrideUseIfCompatible = false,
             productBuildNumber = loadingContext.productBuildNumber(),
           )

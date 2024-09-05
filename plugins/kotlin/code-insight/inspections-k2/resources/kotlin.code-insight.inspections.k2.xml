@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
   <dependencies>
     <module name="kotlin.base.external-build-system"/>
+    <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.code-insight.intentions.k2"/>
     <module name="kotlin.code-insight.inspections.shared"/>
     <module name="kotlin.searching.k2"/>
@@ -443,6 +444,14 @@
                      level="WARNING"
                      language="kotlin" editorAttributes="DEPRECATED_ATTRIBUTES"
                      key="inspection.kotlin.options.to.compiler.options.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.HasPlatformTypeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.has.platform.type.display.name" bundle="messages.KotlinBundle"/>
 
   </extensions>
 </idea-plugin>

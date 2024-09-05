@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCommandResult
@@ -17,12 +18,17 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.ShellCommandManager.Companion.debug
+import org.jetbrains.plugins.terminal.block.util.ActionCoordinator
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
+import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Prevents sending shell generator concurrently with other generator or other shell command.
@@ -69,6 +75,9 @@ internal class ShellCommandExecutionManagerImpl(
    */
   private var isCommandSent: Boolean = false
 
+  private val metricCommandSubmitToVisuallyStarted = createCommandMetric(session.shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED)
+  private val metricCommandSubmitToActuallyStarted = createCommandMetric(session.shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED)
+
   init {
     commandManager.addListener(object : ShellCommandListener {
       override fun initialized() {
@@ -79,6 +88,7 @@ internal class ShellCommandExecutionManagerImpl(
       }
 
       override fun commandStarted(command: String) {
+        metricCommandSubmitToActuallyStarted.finished(command)
         lock.withLock {
           if (isCommandRunning) {
             LOG.warn("Received command_started event, but previous command wasn't finished")
@@ -149,6 +159,8 @@ internal class ShellCommandExecutionManagerImpl(
    * If the command could not be executed right now, then we add it to the queue.
    */
   override fun sendCommandToExecute(shellCommand: String) {
+    metricCommandSubmitToVisuallyStarted.started(shellCommand, TimeSource.Monotonic.markNow())
+    metricCommandSubmitToActuallyStarted.started(shellCommand, TimeSource.Monotonic.markNow())
     lock.withLock {
       if (isCommandSent || isCommandRunning) {
         LOG.info("Command '$shellCommand' is postponed until currently running command is finished")
@@ -281,6 +293,7 @@ internal class ShellCommandExecutionManagerImpl(
       fireGeneratorCommandSent(shellCommand)
     }
     else {
+      metricCommandSubmitToVisuallyStarted.finished(shellCommand)
       fireUserCommandSent(shellCommand)
     }
   }
@@ -409,6 +422,28 @@ internal class ShellCommandExecutionManagerImpl(
     private fun bracketed(command: String): String {
       return "\u001b[200~$command\u001b[201~"
     }
+
+    private fun createCommandMetric(shellType: ShellType, type: TimeSpanType): ActionCoordinator<String, TimeMark> = ActionCoordinator<String, TimeMark>(
+      onActionComplete = { command, startTime ->
+        TerminalUsageTriggerCollector.logBlockTerminalTimeSpanFinished(
+          null,
+          shellType,
+          type,
+          startTime.elapsedNow()
+        )
+      },
+      onActionDiscarded = { command, startTime ->
+        TerminalUsageTriggerCollector.logBlockTerminalTimeSpanFinished(
+          null,
+          shellType,
+          type,
+          kotlin.time.Duration.INFINITE
+        )
+      },
+      onActionUnknown = { command ->
+        thisLogger().warn("Mismatched command $command")
+      }
+    )
   }
 }
 

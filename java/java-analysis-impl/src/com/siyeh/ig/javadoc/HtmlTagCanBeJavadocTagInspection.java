@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
@@ -104,7 +108,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
     public void visitDocToken(@NotNull PsiDocToken token) {
       super.visitDocToken(token);
       final IElementType tokenType = token.getTokenType();
-      if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType)) {
+      if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType) || !JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(token)) {
         return;
       }
       @NonNls final String text = token.getText();

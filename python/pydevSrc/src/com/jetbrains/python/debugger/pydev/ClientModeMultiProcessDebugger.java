@@ -48,6 +48,18 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   private final @NotNull ExecutorService myExecutor;
 
+  private class ConnectToDebuggerTask implements Runnable {
+    @Override
+    public void run() {
+      try {
+        tryToConnectRemoteDebugger();
+      }
+      catch (Exception e) {
+        LOG.info(e);
+      }
+    }
+  }
+
   public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
     myDebugProcess = debugProcess;
@@ -58,16 +70,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
     myExecutor = ConcurrencyUtil.newSingleThreadExecutor(connectionThreadsName);
 
-    Runnable task = () -> {
-      try {
-        tryToConnectRemoteDebugger();
-      }
-      catch (Exception e) {
-        LOG.info(e);
-      }
-    };
-
-    myExecutor.execute(task);
+    myExecutor.execute(new ConnectToDebuggerTask());
   }
 
   /**
@@ -87,14 +90,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
         try {
           ProcessCreatedMsgReceivedCommand command = new ProcessCreatedMsgReceivedCommand(this, commandSequence);
           command.execute();
-          myExecutor.execute(() -> {
-            try {
-              tryToConnectRemoteDebugger();
-            }
-            catch (Exception e) {
-              LOG.info(e);
-            }
-          });
+          myExecutor.execute(new ConnectToDebuggerTask());
         }
         catch (PyDebuggerException e) {
           LOG.info(e);

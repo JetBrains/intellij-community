@@ -112,6 +112,16 @@ private constructor(private val model: CodeReviewEditorGutterControlsModel,
     // do not paint if there's not enough space
     if (yShift > 0 && lineData.yRangeWithInlays.last - lineData.yRangeWithInlays.first < yShift + editor.lineHeight) return
 
+    val hasCommentsInFoldedRegion = lineData.foldedRegion?.let { fRegion ->
+      val linesWithComments = state?.linesWithComments ?: return@let false
+      val (frStart, frEnd) = with(editor.document) {
+        getLineNumber(fRegion.startOffset) to getLineNumber(fRegion.endOffset)
+      }
+
+      (frStart..frEnd).any { line -> line in linesWithComments }
+    } ?: false
+    if (hasCommentsInFoldedRegion) return
+
     val rawIcon = if (lineData.columnHovered) AllIcons.General.InlineAddHover else AllIcons.General.InlineAdd
     val icon = EditorUIUtil.scaleIcon(rawIcon, editor)
     val y = lineData.yRangeWithInlays.first + yShift + (editor.lineHeight - icon.iconHeight) / 2

@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeDependentAction;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -15,6 +14,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.platform.jbr.JdkEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;

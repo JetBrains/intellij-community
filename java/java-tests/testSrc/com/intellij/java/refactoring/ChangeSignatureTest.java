@@ -707,5 +707,217 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  /* Markdown javadoc variant */
+  public void testParamJavadocMarkdown2() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("z").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testRecordHeaderDeleteRenameMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("yyy").withType(PsiTypes.longType())
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorReorderMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+      };
+    }, false);
+  }
+
+  public void testJavadocMarkdownOfDeleted() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("role").withType(PsiTypes.intType()),
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameterMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(-1).withName("i").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testJavadocMarkdownNoNewLineInserted() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("newArgs").withType(PsiTypes.doubleType()),
+    }, false);
+  }
+
+  public void testMultilineJavadocMarkdownWithoutFormatting() { // IDEA-281568
+    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown1() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("z").withType(PsiTypes.booleanType())
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown0() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
+    }, false);
+  }
+
+  public void testReturnJavadocMarkdownAdded() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+
+  public void testRecordCanonicalConstructorRenameMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(2).withName("x").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameterMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(-1).withName("y").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown4() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("a").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testSCRMarkdown40895() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.booleanType())
+    }, false);
+  }
+
+  public void testReturnJavadocMarkdownUnchanged() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+
+  public void testRecordComponentWithImportToBeAddedMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
+      };
+    }, false);
+  }
+
+  public void testMethodParametersAlignmentAfterMethodReturnTypeChangeMarkdown() {
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testParamJavadocMarkdown3() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testRecordHeaderDeleteRenameMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("p2").withType(pointType)
+      };
+    }, false);
+  }
+
+  public void testParamJavadocMarkdownRenamedReordered() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.create(1).withName("b1").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testJavadocMarkdownGenericsLink() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorReorderMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("y").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(2).withName("z").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testMultilineJavadocMarkdown() { // IDEA-281568
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
+  public void testNoGapsInParameterTagsMarkdown() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(1).withType(PsiTypes.longType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.booleanType()).withName("c"),
+      ParameterInfoImpl.createNew().withType(PsiTypes.shortType()).withName("d"),
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorRenameMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testJavadocMarkdownNotBrokenAfterDelete() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("i1")
+    }, false);
+  }
+
   /* workers */
 }

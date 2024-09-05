@@ -335,6 +335,7 @@ com.intellij.openapi.externalSystem.importing.ImportSpec
 - a:getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 - a:getProject():com.intellij.openapi.project.Project
+- a:getUserData():com.intellij.openapi.util.UserDataHolderBase
 - a:getVmOptions():java.lang.String
 - a:isActivateBuildToolWindowOnFailure():Z
 - a:isActivateBuildToolWindowOnStart():Z
@@ -356,6 +357,7 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - use(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - usePreviewMode():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withArguments(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withVmOptions(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 *:com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 - java.io.Serializable
@@ -544,6 +546,7 @@ f:com.intellij.openapi.externalSystem.model.project.ContentRootData
 - <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V
 - getPaths(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType):java.util.Collection
 - getRootPath():java.lang.String
+- getSourceRoots():java.util.Map
 - storePath(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType,java.lang.String):V
 - storePath(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType,java.lang.String,java.lang.String):V
 c:com.intellij.openapi.externalSystem.model.project.ContentRootData$SourceRoot

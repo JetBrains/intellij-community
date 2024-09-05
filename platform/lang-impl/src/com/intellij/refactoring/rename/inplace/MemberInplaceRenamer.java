@@ -163,6 +163,12 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (currentFile == null) return true;
+
+    //MultiViewFileProviders should be the same
+    if (currentFile.getViewProvider().getPsi(containingFile.getLanguage()) == containingFile) {
+      return false;
+    }
+
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     return manager.getTopLevelFile(containingFile) != manager.getTopLevelFile(currentFile);
   }

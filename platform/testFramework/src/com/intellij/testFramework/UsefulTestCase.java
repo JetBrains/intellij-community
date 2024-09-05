@@ -1118,7 +1118,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
       }
 
       if (expectedErrorMsgPart != null) {
-        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", cause.getMessage().contains(expectedErrorMsgPart));
+        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", ObjectUtils.notNull(cause.getMessage(), "").contains(expectedErrorMsgPart));
       }
     }
     finally {

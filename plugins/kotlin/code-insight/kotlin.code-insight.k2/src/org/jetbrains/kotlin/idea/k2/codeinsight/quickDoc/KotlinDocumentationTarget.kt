@@ -162,7 +162,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
 
         DocumentationManagerUtil.createHyperlink(link, it, highlighted, false)
         HtmlChunk.fragment(
-            HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+            HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.ClassKotlin"),
             HtmlChunk.nbsp(),
             HtmlChunk.raw(link.toString()),
             HtmlChunk.br()
@@ -174,7 +174,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
         ?.takeIf { ktDeclaration.isTopLevelKtOrJavaMember() }
         ?.let {
             HtmlChunk.fragment(
-                HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.Kotlin_file"),
                 HtmlChunk.nbsp(),
                 HtmlChunk.text(it),
                 HtmlChunk.br()

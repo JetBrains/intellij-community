@@ -1,11 +1,6 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
+<idea-plugin>
   <actions>
     <action id="QuickActionPopup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
-    <action id="RunConfigurationTemplatesForNewProjects"
-            class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction">
-      <override-text place="MainMenu"/>
-    </action>
 
     <group id="Other.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Others -->
     <group id="Vcs.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
@@ -487,7 +482,6 @@
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-          <reference ref="RunConfigurationTemplatesForNewProjects"/>
           <group id="FileSettingsGroup"/>
         </group>
         <separator/>
@@ -570,7 +564,6 @@
           <reference ref="EditorReverseLines"/>
           <reference ref="EditorTranspose"/>
           <separator/>
-          <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
           <group id="ConvertIndentsGroup" popup="true">
             <action id="ConvertIndentsToSpaces" class="com.intellij.openapi.editor.actions.ConvertIndentsToSpacesAction"/>
@@ -593,6 +586,11 @@
       </group>
 
       <!-- View -->
+      <group id="RevealGroup" popup="true" class="com.intellij.ide.actions.RevealGroup">
+        <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
+        <action id="OpenInAssociatedApplication" class="com.intellij.ide.actions.OpenInAssociatedApplicationAction"/>
+      </group>
+
       <group id="ViewMenu" popup="true" compact="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
         <group id="ViewAppearanceGroup" popup="true">
@@ -643,7 +641,9 @@
         </group>
 
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
-        <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically" />
+        <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically">
+          <add-to-group group-id="RevealGroup" anchor="first"/>
+        </action>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
         <group id="ViewRecentActions">
@@ -803,7 +803,9 @@
             <synonym key="action.SplitHorizontally.synonym"/>
           </action>
           <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
-          <action id="SplitChooser" class="com.intellij.ide.actions.InteractiveSplitAction"/>
+          <action id="SplitChooser" class="com.intellij.ide.actions.InteractiveSplitAction">
+            <add-to-group group-id="RevealGroup" anchor="after" relative-to-action="OpenInRightSplit"/>
+          </action>
           <group id="SplitChooser.Actions" searchable="false" compact="true" popup="true">
             <action id="SplitChooser.NextWindow" class="com.intellij.ide.actions.InteractiveSplitAction$Key$NextWindow"/>
             <action id="SplitChooser.PreviousWindow" class="com.intellij.ide.actions.InteractiveSplitAction$Key$PreviousWindow"/>
@@ -927,6 +929,10 @@
 
     <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
+    <!-- VCS -->
+    <!--Should be moved to VCS module, but lang depends on this-->
+    <group id="VersionControlsGroup"/>
+
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>
@@ -1026,6 +1032,33 @@
       <reference ref="ReopenClosedTab"/>
     </group>
 
+    <group id="TouchBar" searchable="false">
+      <group id="TouchBarDefault">
+        <group id="TouchBarDefaultOptionalGroup" />
+        <group id="TouchBarDefault_ctrl">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_alt">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_cmd">
+          <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
+          <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
+          <reference ref="Back"/>
+          <reference ref="Forward"/>
+          <separator text="type.large"/>
+        </group>
+        <group id="TouchBarDefault_cmd.alt">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_shift">
+          <separator/>
+        </group>
+      </group>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <group id="WelcomeScreen.QuickStart.EmptyState">
     </group>
 
@@ -1033,6 +1066,7 @@
     </group>
 
     <group id="WelcomeScreen.QuickStart">
+      <group id="WelcomeScreen.QuickStart.Platform"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.ProjectsState"/>
     </group>
@@ -1051,7 +1085,6 @@
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction">
         <synonym key="action.WelcomeScreen.Plugins.Extensions.text"/>
       </action>
-      <reference ref="RunConfigurationTemplatesForNewProjects"/>
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Import"/>
@@ -1071,6 +1104,7 @@
     <group id="WelcomeScreen.Options">
       <reference ref="About"/>
       <separator/>
+      <reference ref="WelcomeScreen.Settings"/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
       <reference ref="CreateDesktopEntry"/>
@@ -1444,12 +1478,6 @@
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
     </group>
 
-    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction">
-      <add-to-group group-id="RunTab.TopToolbar"/>
-      <add-to-group group-id="RunTab.TopToolbar.Old"/>
-    </action>
-    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
-
     <action id="IncrementWindowWidth" class="com.intellij.ide.actions.WindowAction$IncrementWidth" use-shortcut-of="ResizeToolWindowRight"/>
     <action id="DecrementWindowWidth" class="com.intellij.ide.actions.WindowAction$DecrementWidth" use-shortcut-of="ResizeToolWindowLeft"/>
     <action id="IncrementWindowHeight" class="com.intellij.ide.actions.WindowAction$IncrementHeight"
@@ -1672,5 +1700,26 @@
     <action id="plugins.autoupdate.repository.view" class="com.intellij.openapi.application.PluginsAutoUpdateRepositoryViewAction" internal="true"/>
 
     <action id="ToolWindowShowNamesAction" class="com.intellij.ide.actions.ToolWindowShowNamesAction"/>
+
+    <group id="Internal.VFS" popup="true" internal="true">
+      <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
+      <separator/>
+      <action id="CheckVfsSanityInMenu" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
+      <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
+      <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
+      <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
+      <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
+      <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
+      <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
+      <separator/>
+      <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
+      <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
+      <separator/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+    <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
+
+    <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
+    <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
   </actions>
 </idea-plugin>

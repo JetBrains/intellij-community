@@ -10,7 +10,6 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
-import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
@@ -24,7 +23,6 @@ import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -204,15 +202,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
     asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
-  }
-
-  @Override
-  public @Nls @Nullable String getDefaultSessionName(@NotNull TtyConnector connector) {
-    if (getProcessTtyConnector(connector) instanceof PtyProcessTtyConnector) {
-      // use name from settings for local terminal
-      return TerminalOptionsProvider.getInstance().getTabName();
-    }
-    return super.getDefaultSessionName(connector);
   }
 
   public boolean hasRunningCommands() throws IllegalStateException {

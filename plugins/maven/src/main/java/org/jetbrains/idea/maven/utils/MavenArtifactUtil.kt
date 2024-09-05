@@ -26,9 +26,20 @@ object MavenArtifactUtil {
   private val ourPluginInfoCache: MutableMap<Path, MavenPluginInfo?> = Collections.synchronizedMap(HashMap())
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun readPluginInfo(localRepository: File, mavenId: MavenId): MavenPluginInfo? {
     val file = getArtifactNioPath(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar")
+    return readPluginInfo(file)
+  }
 
+  @JvmStatic
+  fun readPluginInfo(mavenArtifact: MavenArtifact?): MavenPluginInfo? {
+    val file = mavenArtifact?.file?.toPath() ?: return null
+    return readPluginInfo(file)
+  }
+
+  @JvmStatic
+  fun readPluginInfo(file: Path): MavenPluginInfo? {
     var result = ourPluginInfoCache[file]
     if (result == null) {
       result = createPluginDocument(file)
@@ -39,16 +50,19 @@ object MavenArtifactUtil {
 
   @JvmStatic
   @JvmOverloads
-  fun hasArtifactFile(localRepository: File, id: MavenId, type: String = "jar"): Boolean {
+  @Deprecated("this method does not support split repositories")
+  internal fun hasArtifactFile(localRepository: File, id: MavenId, type: String = "jar"): Boolean {
     return Files.exists(getArtifactFile(localRepository, id, type))
   }
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun getArtifactFile(localRepository: File, id: MavenId, type: String): Path {
     return getArtifactNioPath(localRepository, id.groupId, id.artifactId, id.version, type)
   }
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun getArtifactFile(localRepository: File, id: MavenId): Path {
     return getArtifactNioPath(localRepository, id.groupId, id.artifactId, id.version, "pom")
   }
@@ -83,6 +97,7 @@ object MavenArtifactUtil {
   }
 
   @JvmStatic
+  @Deprecated("this method does not support split repositories")
   fun getArtifactNioPath(localRepository: File, groupId: String?, artifactId: String?, version: String?, type: String): Path {
     var groupId = groupId
     var artifactId = artifactId

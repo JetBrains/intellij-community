@@ -83,7 +83,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KOTLIN_GRADLE_MODEL_KEY")
         val isAndroidPluginRequestingKotlinGradleModel =
             isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null
-        return AndroidAwareGradleModelProvider(KotlinGradleModel::class.java, isAndroidPluginRequestingKotlinGradleModel)
+        return AndroidAwareGradleModelProvider(isAndroidPluginRequestingKotlinGradleModel)
     }
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {

@@ -2380,6 +2380,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nested2.kt");
             }
 
+            @TestMetadata("nestedLambdas.kt")
+            public void testNestedLambdas() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nestedLambdas.kt");
+            }
+
             @TestMetadata("nestedOperatorExpression.kt")
             public void testNestedOperatorExpression() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/nestedOperatorExpression.kt");

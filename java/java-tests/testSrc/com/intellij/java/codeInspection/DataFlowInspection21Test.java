@@ -133,4 +133,6 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testArrayAddedIntoCollection() { doTest(); }
   
   public void testInstanceOfPatternAffectNullity() { doTest(); }
+  
+  public void testNullabilityInEnumSwitch() { doTest(); }
 }

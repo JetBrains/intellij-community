@@ -39,7 +39,6 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
@@ -49,6 +48,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.scale.JBUIScale.getFontScale
@@ -492,8 +492,22 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     LafReference(it.name, it.id)
   }
 
-  override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> =
-    LafCellRenderer(lafComboBoxModel.value, component)
+  override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> {
+    return listCellRenderer {
+      text(value.name)
+      if (value.themeId.isEmpty()) {
+        separator { }
+      }
+      else {
+        val groupWithSameFirstItem = lafComboBoxModel.value.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }
+        if (groupWithSameFirstItem != null) {
+          separator {
+            text = groupWithSameFirstItem.title
+          }
+        }
+      }
+    }
+  }
 
   override fun createSettingsToolbar(): JComponent {
     val group = DefaultActionGroup(PreferredLafAndSchemeAction())
@@ -1025,23 +1039,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         detectAndSyncLaf(false)
       }
     }
-  }
-}
-
-private class LafCellRenderer(private val model: LafComboBoxModel, component: JComponent) : GroupedComboBoxRenderer<LafReference>(component) {
-  override fun getText(item: LafReference): String {
-    return item.name
-  }
-
-  override fun separatorFor(value: LafReference): ListSeparator? {
-    if (value.themeId.isEmpty()) return ListSeparator()
-
-    val groupWithSameFirstItem = model.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }
-    if (groupWithSameFirstItem != null) {
-      return ListSeparator(groupWithSameFirstItem.title)
-    }
-
-    return null
   }
 }
 

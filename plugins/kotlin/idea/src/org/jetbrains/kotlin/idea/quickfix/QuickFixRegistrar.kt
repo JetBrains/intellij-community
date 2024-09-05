@@ -504,7 +504,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MISSING_CONSTRUCTOR_BRACKETS.registerFactory(MissingConstructorBracketsFixFactory)
 
-        ANONYMOUS_FUNCTION_WITH_NAME.registerFactory(RemoveNameFromFunctionExpressionFix)
+        ANONYMOUS_FUNCTION_WITH_NAME.registerFactory(RemoveNameFromFunctionExpressionFixFactory)
 
         UNRESOLVED_REFERENCE.registerFactory(ReplaceObsoleteLabelSyntaxFix)
 

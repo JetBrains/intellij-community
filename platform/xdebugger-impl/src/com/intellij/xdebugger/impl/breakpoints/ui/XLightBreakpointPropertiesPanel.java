@@ -319,7 +319,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       return description;
     }
 
-    // Try to take both of them for better result.
+    // Try to take both of them for a better result.
     return XDebuggerBundle.message("xbreakpoints.dialog.double.breakpoint.title", itemTitleText, description);
   }
 

@@ -8,7 +8,14 @@
   <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
-  <xi:include href="/idea/PlatformLangActionManager.xml"/>
+  <xi:include href="/idea/PriorityEditorLangActions.xml"/>
+  <xi:include href="/idea/PlatformActions.xml"/>
+  <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
+  <xi:include href="/idea/ExecutionActions.xml"/>
+  <xi:include href="/idea/XDebuggerActions.xml"/>
+  <xi:include href="/idea/LangActions.xml"/>
+  <xi:include href="/idea/UsageViewActions.xml"/>
+  <xi:include href="/idea/ProblemsViewActions.xml"/>
 
   <xi:include href="/META-INF/Core.xml"/>
   <xi:include href="/META-INF/CoreImpl.xml"/>
@@ -64,9 +71,6 @@
 
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
-
-    <applicationService serviceInterface="com.intellij.ide.ui.customization.UIThemeCustomizer"
-                        serviceImplementation="com.intellij.ide.ui.customization.UIThemeCustomizerImpl" />
     <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
 
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>

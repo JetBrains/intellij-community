@@ -2,17 +2,12 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.services.ServiceViewContributor;
-import com.intellij.execution.services.ServiceViewDescriptor;
-import com.intellij.execution.services.ServiceViewDnDDescriptor;
+import com.intellij.execution.services.*;
 import com.intellij.execution.services.ServiceViewDnDDescriptor.Position;
-import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -147,7 +142,7 @@ final class ServiceViewDragHelper {
     return content;
   }
 
-  static final class ServiceViewDragBean implements DataProvider {
+  static final class ServiceViewDragBean implements ServiceViewDragBeanBase {
     private final ServiceView myServiceView;
     private final List<ServiceViewItem> myItems;
     private final ServiceViewContributor myContributor;
@@ -182,17 +177,10 @@ final class ServiceViewDragHelper {
       return myContributor;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-        return ContainerUtil.map2Array(myItems, ServiceViewItem::getValue);
-      }
-      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-        ServiceViewItem item = ContainerUtil.getOnlyItem(myItems);
-        return item != null ? item.getValue() : null;
-      }
-      return null;
+    @NotNull
+    public List<Object> getSelectedItems() {
+      return ContainerUtil.map(myItems, ServiceViewItem::getValue);
     }
   }
 

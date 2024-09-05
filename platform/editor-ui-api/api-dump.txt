@@ -1252,6 +1252,7 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - f:isFromActionToolbar():Z
 - f:isFromContextMenu():Z
 - f:isFromMainMenu():Z
+- f:isFromSearchPopup():Z
 - f:isInInjectedContext():Z
 - f:setInjectedContext(Z):V
 - f:setUpdateSession(com.intellij.openapi.actionSystem.UpdateSession):V
@@ -1265,10 +1266,6 @@ c:com.intellij.openapi.actionSystem.AnActionEventVisitor
 f:com.intellij.openapi.actionSystem.AnActionResult
 - isIgnored():Z
 - isPerformed():Z
-com.intellij.openapi.actionSystem.BackgroundableDataProvider
-- com.intellij.openapi.actionSystem.DataProvider
-- a:createBackgroundDataProvider():com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
 c:com.intellij.openapi.actionSystem.CommonDataKeys
 - sf:CARET:com.intellij.openapi.actionSystem.DataKey
 - sf:EDITOR:com.intellij.openapi.actionSystem.DataKey

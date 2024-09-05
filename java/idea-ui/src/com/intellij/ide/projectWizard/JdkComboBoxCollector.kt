@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 internal object JdkComboBoxCollector: CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 4)
+  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 5)
 
   private val JDK_REGISTERED: EventId2<String, Int> = GROUP.registerEvent("jdk.registered",
                                                                           EventFields.String("vendor", JdkVersionDetector.VENDORS),

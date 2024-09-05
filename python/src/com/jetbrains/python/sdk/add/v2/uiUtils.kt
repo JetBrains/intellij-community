@@ -12,6 +12,7 @@ import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
@@ -208,6 +209,11 @@ internal fun Row.pythonInterpreterComboBox(
     .applyToComponent {
       preferredHeight = 30
       isEditable = true
+    }.validationOnApply {
+      if (comboBox.isBusy) {
+        ValidationInfo(message("python.add.sdk.panel.wait"))
+      }
+      else null
     }
 
   model.scope.launch(model.uiContext, start = CoroutineStart.UNDISPATCHED) {
@@ -287,9 +293,13 @@ class PythonInterpreterComboBox(
     }
   }
 
+  // Both these methods are abstraction leakage and should be rewritten
+
   fun setBusy(busy: Boolean) {
     (editor as PythonSdkComboBoxWithBrowseButtonEditor).setBusy(busy)
   }
+
+  val isBusy: Boolean get() = (editor as PythonSdkComboBoxWithBrowseButtonEditor).isBusy
 }
 
 /**

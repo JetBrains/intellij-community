@@ -22,12 +22,13 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 23)
+  private val GROUP = EventLogGroup(GROUP_ID, 25)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
-  private val SHELL_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
+  private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
+  private val SHELL_TYPE_FIELD = EventFields.Enum<ShellType>("shell")
   private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
@@ -41,13 +42,13 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                RUN_ANYTHING_PROVIDER_FIELD)
   private val localExecEvent = GROUP.registerEvent("local.exec",
                                                    OS_VERSION_FIELD,
-                                                   SHELL_FIELD,
+                                                   SHELL_STR_FIELD,
                                                    BLOCK_TERMINAL_FIELD)
 
   /** New Terminal only event with additional information about shell version and plugins */
   private val shellStartedEvent = GROUP.registerVarargEvent("local.shell.started",
                                                             OS_VERSION_FIELD,
-                                                            SHELL_FIELD,
+                                                            SHELL_STR_FIELD,
                                                             TerminalShellInfoStatistics.shellVersionField,
                                                             TerminalShellInfoStatistics.promptThemeField,
                                                             TerminalShellInfoStatistics.isOhMyZshField,
@@ -67,11 +68,11 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                         "Fired each time when command is started")
 
 
-  private val stepDurationEvent = GROUP.registerEvent("terminal.step.duration",
-                                                      EventFields.Enum<ShellType>("shell"),
-                                                      EventFields.Enum<DurationType>("duration_type"),
-                                                      EventFields.DurationMs,
-                                                      "Logs performance/responsiveness metrics")
+  private val timespanFinishedEvent = GROUP.registerEvent("terminal.timespan.finished",
+                                                          SHELL_TYPE_FIELD,
+                                                          EventFields.Enum<TimeSpanType>("time_span_type"),
+                                                          EventFields.DurationMs,
+                                                          "Logs performance/responsiveness metrics")
 
   private val commandFinishedEvent = GROUP.registerVarargEvent("terminal.command.finished",
                                                                "Fired each time when command is finished. New Terminal only.",
@@ -104,8 +105,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  internal fun logBlockTerminalStepDuration(project: Project, shellType: ShellType, durationType: DurationType, duration: Duration) {
-    stepDurationEvent.log(project, shellType, durationType, duration.inWholeMilliseconds)
+  internal fun logBlockTerminalTimeSpanFinished(project: Project?, shellType: ShellType, timeSpanType: TimeSpanType, duration: Duration) {
+    timespanFinishedEvent.log(project, shellType, timeSpanType, duration.inWholeMilliseconds)
   }
 
   fun triggerCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
@@ -157,7 +158,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     val osVersion = Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown"
     shellStartedEvent.log(project,
                           OS_VERSION_FIELD with osVersion,
-                          SHELL_FIELD with shellName.lowercase(),
+                          SHELL_STR_FIELD with shellName.lowercase(),
                           TerminalShellInfoStatistics.shellVersionField with shellInfo.shellVersion,
                           TerminalShellInfoStatistics.promptThemeField with shellInfo.promptTheme,
                           TerminalShellInfoStatistics.isOhMyZshField with shellInfo.isOhMyZsh,
@@ -228,9 +229,11 @@ enum class TerminalCommandGenerationEvent {
   MODE_ENABLED, MODE_DISABLED, GENERATION_FINISHED, GENERATION_INTERRUPTED, GENERATION_FAILED
 }
 
-internal enum class DurationType(val description: String) {
+internal enum class TimeSpanType(val description: String) {
   FROM_STARTUP_TO_SHOWN_CURSOR("time from startup to terminal cursor shown in initialization block"),
-  FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input")
+  FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input"),
+  FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED("time from command submitted by user to command visually started"),
+  FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED("time from command submitted by user to command actually started in shell"),
 }
 
 private const val GROUP_ID = "terminalShell"

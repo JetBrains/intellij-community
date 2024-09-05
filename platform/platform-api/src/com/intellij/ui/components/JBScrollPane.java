@@ -415,7 +415,7 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class ViewportBorder extends LineBorder {
+  public static class ViewportBorder extends LineBorder {
     ViewportBorder(int thickness) {
       super(null, thickness);
     }

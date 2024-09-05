@@ -7,6 +7,8 @@ package com.intellij.ui.icons
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.colorPatcherDigestShim
@@ -21,20 +23,19 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Image
+import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.net.URL
 import java.nio.file.Path
-import java.util.Objects
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.ImageIcon
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 val EMPTY_ICON: ImageIcon by lazy {
   object : ImageIcon(BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
@@ -113,12 +114,30 @@ open class CachedImageIcon private constructor(
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
+
+    val graphicsScale = computeGraphicsScale(g, gc)
+    val scaleContext = this.scaleContext.applyGraphicsScaleToObjectScale(graphicsScale)
     if (scaleContext != null) {
-      resolveActualIcon(scaleContext).paintIcon(c, g, x, y)
+      // We must use the icon's object scale, but not its sys scale,
+      // as it might be different from the one of the provided component / graphics.
+      val actualIcon = resolveActualIcon(scaleContext.copyWithScale(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(gc))))
+      // If the graphics is scaled, we need to un-scale it, as our painting doesn't support such kind of scaling for images,
+      // instead we account for it by modifying OBJ_SCALE above in applyGraphicsScale.
+      val sg = if (graphicsScale == null) g else (g.create() as Graphics2D).apply { scale(1.0 / graphicsScale, 1.0 / graphicsScale) }
+      val sx = graphicsScale?.times(x)?.roundToInt() ?: x
+      val sy = graphicsScale?.times(y)?.roundToInt() ?: y
+      try {
+        actualIcon.paintIcon(c, sg, sx, sy)
+      }
+      finally {
+        if (sg !== g) {
+          sg.dispose()
+        }
+      }
       return
     }
 
-    val gc = c?.graphicsConfiguration ?: (g as? Graphics2D)?.deviceConfiguration
     synchronized(iconCache) {
       checkPathTransform()
       iconCache.getCachedIcon(host = this, gc = gc, attributes = getEffectiveAttributes())
@@ -433,4 +452,40 @@ private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.Sv
 fun decodeCachedImageIconFromByteArray(byteArray: ByteArray): Icon? {
   val descriptor = ProtoBuf.decodeFromByteArray<ImageDataLoaderDescriptor>(byteArray)
   return CachedImageIcon(descriptor.createIcon() ?: return null)
+}
+
+/**
+ * Combines the existing object scale, if any, with the current transform scale, if any.
+ *
+ * @param graphicsScale computed by [computeGraphicsScale]
+ * @return One of:
+ * (A) `null` if `this` is `null` and `g` has no scale;
+ * (B) unchanged `this` if it's not null, but `g` has no scale;
+ * (C) a new scale context with the object scale equal to the transform scale of `g`, if `this` is null;
+ * (D) a copy of `this` with the object scale multiplied by the `g` transform scale.
+ */
+private fun ScaleContext?.applyGraphicsScaleToObjectScale(graphicsScale: Double?): ScaleContext? {
+  if (graphicsScale == null) return this
+  if (this == null) return ScaleContext.create(ScaleType.OBJ_SCALE.of(graphicsScale))
+  return copyWithScale(ScaleType.OBJ_SCALE.of(getScale(ScaleType.OBJ_SCALE) * graphicsScale))
+}
+
+/**
+ * Computes the scaling factor of the graphics relative to the default scaling for this device.
+ *
+ * The graphics is considered to have no local custom scaling if its current transform scale
+ * is equal to the JRE-side system scaling factor.
+ * If that's the case, then image scaling is handled by [JBHiDPIScaledImage],
+ * unless JRE-side scaling is disabled or has the scaling factor of 1.0.
+ * However, if someone called `scale()` on the graphics, then additional scaling
+ * is needed, and the scaling factor required will be returned by this function.
+ *
+ * @return `null` if the current scaling is the same as the default one,
+ * the ratio of the current scaling factor to the default one otherwise
+ */
+private fun computeGraphicsScale(g: Graphics, gc: GraphicsConfiguration?): Double? {
+  val defaultScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) gc?.defaultTransform?.scaleX ?: 1.0 else 1.0
+  val graphicsScale = (g as? Graphics2D)?.transform?.scaleX?.div(defaultScale) ?: return null
+  if (abs(graphicsScale - 1.0) < 0.001) return null
+  return graphicsScale
 }
