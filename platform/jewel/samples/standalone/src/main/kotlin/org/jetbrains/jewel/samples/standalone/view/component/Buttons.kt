@@ -15,10 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ui.component.ActionButton
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.PlatformIcon
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
@@ -71,19 +71,19 @@ private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
 
         Text("Focusable:")
 
-        IconButton(onClick = {}) { PlatformIcon(AllIconsKeys.Actions.Close, contentDescription = "IconButton") }
+        IconButton(onClick = {}) { Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton") }
 
         Text("Not focusable:")
 
         IconButton(onClick = {}, focusable = false) {
-            PlatformIcon(AllIconsKeys.Actions.Close, contentDescription = "IconButton")
+            Icon(key = AllIconsKeys.Actions.Close, contentDescription = "IconButton")
         }
 
         Text("Selectable:")
 
         SelectableIconButton(onClick = onSelectableClick, selected = selected) { state ->
             val tint by LocalIconButtonStyle.current.colors.selectableForegroundFor(state)
-            PlatformIcon(
+            Icon(
                 key = AllIconsKeys.Actions.MatchCase,
                 contentDescription = "SelectableIconButton",
                 hints = arrayOf(Selected(selected), Stroke(tint)),
@@ -95,7 +95,7 @@ private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
         var checked by remember { mutableStateOf(false) }
         ToggleableIconButton(onValueChange = { checked = !checked }, value = checked) { state ->
             val tint by LocalIconButtonStyle.current.colors.toggleableForegroundFor(state)
-            PlatformIcon(
+            Icon(
                 key = AllIconsKeys.Actions.MatchCase,
                 contentDescription = "ToggleableIconButton",
                 hints = arrayOf(Selected(checked), Stroke(tint)),

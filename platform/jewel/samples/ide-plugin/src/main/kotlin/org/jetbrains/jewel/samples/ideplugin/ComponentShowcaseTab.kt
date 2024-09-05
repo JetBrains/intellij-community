@@ -55,7 +55,6 @@ import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.PlatformIcon
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
@@ -202,46 +201,50 @@ private fun IconsShowcase() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup")
+            Icon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup")
         }
 
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Badge(Color.Red, DotBadgeShape.Default))
+            Icon(
+                key = AllIconsKeys.Nodes.ConfigFolder,
+                contentDescription = "taskGroup",
+                hint = Badge(Color.Red, DotBadgeShape.Default),
+            )
         }
 
         Box(
             Modifier.size(24.dp).background(iconBackgroundColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Stroke(Color.White))
+            Icon(key = AllIconsKeys.Nodes.ConfigFolder, contentDescription = "taskGroup", hint = Stroke(Color.White))
         }
 
         Box(
             Modifier.size(24.dp).background(iconBackgroundColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            PlatformIcon(
-                AllIconsKeys.Nodes.ConfigFolder,
-                "taskGroup",
+            Icon(
+                key = AllIconsKeys.Nodes.ConfigFolder,
+                contentDescription = "taskGroup",
                 hints = arrayOf(Stroke(Color.White), Badge(Color.Red, DotBadgeShape.Default)),
             )
         }
 
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Size(20))
+            Icon(key = AllIconsKeys.Nodes.ConfigFolder, contentDescription = "taskGroup", hint = Size(20))
         }
 
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            PlatformIcon(
-                AllIconsKeys.Actions.Close,
-                "An icon",
+            Icon(
+                key = AllIconsKeys.Actions.Close,
+                contentDescription = "An icon",
                 modifier = Modifier.border(1.dp, Color.Magenta),
                 hint = Size(20),
             )
         }
 
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Size(20))
+            Icon(key = AllIconsKeys.Nodes.ConfigFolder, contentDescription = "taskGroup", hint = Size(20))
         }
 
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
@@ -253,7 +256,9 @@ private fun IconsShowcase() {
             )
         }
 
-        IconButton(onClick = {}, Modifier.size(24.dp)) { PlatformIcon(AllIconsKeys.Actions.Close, "Close") }
+        IconButton(onClick = {}, Modifier.size(24.dp)) {
+            Icon(key = AllIconsKeys.Actions.Close, contentDescription = "Close")
+        }
 
         IconActionButton(
             AllIconsKeys.Actions.AddList,

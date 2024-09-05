@@ -20,6 +20,7 @@ public fun PlatformIcon(
     tint: Color = Color.Unspecified,
     hint: PainterHint,
 ) {
+    @Suppress("DEPRECATION") // Everything is deprecated here anyway
     PlatformIcon(key, contentDescription, modifier, tint, *arrayOf(hint))
 }
 
