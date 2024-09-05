@@ -59,6 +59,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
             model("${idea}/inspectionsLocal/redundantUnitReturnType")
             model("${idea}/inspectionsLocal/suspiciousCollectionReassignment")
+            model("${idea}/inspectionsLocal/suspiciousVarProperty")
             model("${idea}/inspectionsLocal/canBeParameter")
             model("${idea}/inspectionsLocal/arrayInDataClass")
             model("${idea}/inspectionsLocal/collections/simplifiableCallChain")
