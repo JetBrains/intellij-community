@@ -59,7 +59,7 @@ private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingSta
 
 internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
-    if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
+    if (!AppMode.isLightEdit() && !isRealRemoteDevHost(args) && CommandLineArgs.isSplashNeeded(args)) {
       lockSystemDirsJob.join()
       try {
         showSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
@@ -73,6 +73,8 @@ internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, i
     }
   }
 }
+
+private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != AppMode.SPLIT_MODE_COMMAND
 
 private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
