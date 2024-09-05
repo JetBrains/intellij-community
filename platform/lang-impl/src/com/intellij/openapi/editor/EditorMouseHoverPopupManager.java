@@ -12,10 +12,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -48,6 +45,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +165,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     myAlarm.addRequest(() -> {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         // errors are stored in the top level editor markup model, not the injected one
-        Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+        @NotNull Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
 
         EditorHoverInfo info = context.calcInfo(topLevelEditor);
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -189,12 +187,20 @@ public class EditorMouseHoverPopupManager implements Disposable {
             closeHint();
           }
           else {
+            Project project = editor.getProject();
             if (updateExistingPopup && isHintShown()) {
+              AbstractPopup hint = getCurrentHint();
               updateHint(component, popupBridge);
+              if (project != null && hint != null) {
+                project.getMessageBus().syncPublisher(Listener.TOPIC).popupUpdated(editor, hint, context.getHighlightInfo());
+              }
             }
             else {
-              AbstractPopup hint = createHint(component, popupBridge, requestFocus);
+              @NotNull AbstractPopup hint = createHint(component, popupBridge, requestFocus);
               showHintInEditor(hint, topLevelEditor, position);
+              if (project != null) {
+                project.getMessageBus().syncPublisher(Listener.TOPIC).popupShown(editor, hint, context.getHighlightInfo());
+              }
               CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
               if (floatingToolbar != null) floatingToolbar.hideOnPopupConflict(hint);
               myPopupReference = new WeakReference<>(hint);
@@ -251,7 +257,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return result;
   }
 
-  private void showHintInEditor(AbstractPopup hint, Editor editor, @NotNull VisualPosition position) {
+  private void showHintInEditor(AbstractPopup hint, @NotNull Editor editor, @NotNull VisualPosition position) {
     closeHint();
     myMouseMovementTracker.reset();
     myKeepPopupOnMouseMove = false;
@@ -282,9 +288,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
            (potentialChild instanceof Component) && isParentWindow(parent, ((Component)potentialChild).getParent());
   }
 
-  protected static AbstractPopup createHint(JComponent component, PopupBridge popupBridge, boolean requestFocus) {
+  protected static @NotNull AbstractPopup createHint(JComponent component, PopupBridge popupBridge, boolean requestFocus) {
     WrapperPanel wrapper = new WrapperPanel(component);
-    AbstractPopup popup = (AbstractPopup)JBPopupFactory.getInstance()
+    @NotNull AbstractPopup popup = (AbstractPopup)JBPopupFactory.getInstance()
       .createComponentPopupBuilder(wrapper, component)
       .setResizable(true)
       .setFocusable(requestFocus)
@@ -611,5 +617,14 @@ public class EditorMouseHoverPopupManager implements Disposable {
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       getInstance().cancelProcessingAndCloseHint();
     }
+  }
+
+  @ApiStatus.Internal
+  public interface Listener {
+    default void popupShown(@NotNull Editor editor, @NotNull AbstractPopup popup, @Nullable HighlightInfo info) {}
+    default void popupUpdated(@NotNull Editor editor, @NotNull AbstractPopup popup, @Nullable HighlightInfo info) {}
+
+    @Topic.ProjectLevel
+    Topic<Listener> TOPIC = new Topic<>(Listener.class);
   }
 }
