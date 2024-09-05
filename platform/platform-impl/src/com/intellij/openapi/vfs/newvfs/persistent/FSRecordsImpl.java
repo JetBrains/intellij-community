@@ -472,7 +472,7 @@ public final class FSRecordsImpl implements Closeable {
 
   //========== modifications counters: ========================================
 
-  long getInvertedNameIndexModCount() {
+  public long getInvertedNameIndexModCount() {
     return invertedNameIndexModCount.get();
   }
 
@@ -659,7 +659,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int @NotNull [] listIds(int fileId) {
+  public int @NotNull [] listIds(int fileId) {
     try {
       return treeAccessor.listIds(fileId);
     }
@@ -680,9 +680,9 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  @NotNull
+
   @Unmodifiable
-  List<CharSequence> listNames(int parentId) {
+  public @NotNull List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, ChildInfo::getName);
   }
 
@@ -899,7 +899,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  boolean isDeleted(int fileId) {
+  public boolean isDeleted(int fileId) {
     checkNotClosed();
     try {
       return recordAccessor.isDeleted(fileId);

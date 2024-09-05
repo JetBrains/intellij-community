@@ -2150,8 +2150,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     assert parent instanceof VirtualDirectoryImpl : parent;
     VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
     int nameId = vfsPeer.getNameId(name);
-    VirtualFileSystemEntry child = dir.createChild(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory
-    );
+    VirtualFileSystemEntry child = dir.createChild(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory);
     if (isEmptyDirectory) {
       // When creating an empty directory, we need to make sure every file created inside will fire a "file-created" event,
       // in order to `VirtualFilePointerManager` get those events to update its pointers properly
@@ -2174,7 +2173,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int nameId = writeRecordFields(childId, parentId, name, attributes);
 
     if (attributes.isDirectory()) {
-      FSRecords.loadDirectoryData(childId, parentFile, name, fs);
+      vfsPeer.loadDirectoryData(childId, parentFile, name, fs);
     }
     return new ChildInfoImpl(childId, nameId, attributes, children, childData.second);
   }

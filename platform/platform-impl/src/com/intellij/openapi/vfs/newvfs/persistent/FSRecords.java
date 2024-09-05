@@ -5,21 +5,17 @@ import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Set;
 import java.util.function.IntPredicate;
 
@@ -153,21 +149,10 @@ public final class FSRecords {
 
   //========== modifications counters: ========================================
 
+  /** @deprecated use {@code FSRecords.getInstance().getInvertedNameIndexModCount()} instead */
+  @Deprecated(forRemoval = true)
   public static long getNamesIndexModCount() {
     return implOrFail().getInvertedNameIndexModCount();
-  }
-
-
-  //========== FS records persistence: ========================================
-
-  @TestOnly
-  static void force() {
-    implOrFail().force();
-  }
-
-  @TestOnly
-  static boolean isDirty() {
-    return implOrFail().isDirty();
   }
 
   //========== record allocation/deletion: ====================================
@@ -196,23 +181,6 @@ public final class FSRecords {
   }
 
 
-  //========== directory/children manipulation: =============================
-
-  static void loadDirectoryData(int id,
-                                @NotNull VirtualFile parent,
-                                @NotNull CharSequence path,
-                                @NotNull NewVirtualFileSystem fs) {
-    implOrFail().loadDirectoryData(id, parent, path, fs);
-  }
-
-  public static int @NotNull [] listIds(int fileId) {
-    return implOrFail().listIds(fileId);
-  }
-
-  public static @NotNull @Unmodifiable List<CharSequence> listNames(int parentId) {
-    return implOrFail().listNames(parentId);
-  }
-
   //========== file name iterations: ========================================
 
   public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
@@ -233,7 +201,8 @@ public final class FSRecords {
     return implOrFail().getParent(fileId);
   }
 
-  @ApiStatus.Internal
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   public static boolean isDeleted(int fileId) {
     return implOrFail().isDeleted(fileId);
   }
@@ -288,13 +257,6 @@ public final class FSRecords {
                                                          @NotNull FileAttribute attribute,
                                                          ByteBufferReader<R> reader) {
     return implOrFail().readAttributeRaw(fileId, attribute, reader);
-  }
-
-  @ApiStatus.Internal
-  public static void writeAttributeRaw(int fileId,
-                                       FileAttribute attribute,
-                                       ByteBufferWriter writer) {
-    implOrFail().writeAttributeRaw(fileId, attribute, writer);
   }
 
   //========== aux: ========================================================
