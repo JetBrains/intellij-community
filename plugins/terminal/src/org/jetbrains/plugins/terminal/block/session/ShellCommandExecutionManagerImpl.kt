@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.session.ShellCommandManager.Companio
 import org.jetbrains.plugins.terminal.block.util.ActionCoordinator
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import org.jetbrains.plugins.terminal.fus.TimeSpanType
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -36,6 +37,8 @@ import kotlin.time.TimeSource
 internal class ShellCommandExecutionManagerImpl(
   private val session: BlockTerminalSession,
   commandManager: ShellCommandManager,
+  private val shellIntegration: ShellIntegration,
+  private val parentDisposable: Disposable
 ) : ShellCommandExecutionManager {
 
   private val listeners: EventDispatcher<ShellCommandSentListener>  = EventDispatcher.create(ShellCommandSentListener::class.java)
@@ -75,8 +78,8 @@ internal class ShellCommandExecutionManagerImpl(
    */
   private var isCommandSent: Boolean = false
 
-  private val metricCommandSubmitToVisuallyStarted = createCommandMetric(session.shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED)
-  private val metricCommandSubmitToActuallyStarted = createCommandMetric(session.shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED)
+  private val metricCommandSubmitToVisuallyStarted = createCommandMetric(shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED)
+  private val metricCommandSubmitToActuallyStarted = createCommandMetric(shellIntegration.shellType, TimeSpanType.FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED)
 
   init {
     commandManager.addListener(object : ShellCommandListener {
@@ -132,7 +135,7 @@ internal class ShellCommandExecutionManagerImpl(
         }
         processQueueIfReady()
       }
-    }, session)
+    }, parentDisposable)
   }
 
   private fun cancelGenerators(registrar: Lock.AfterLockActionRegistrar, incompatibleCondition: String) {
@@ -229,7 +232,7 @@ internal class ShellCommandExecutionManagerImpl(
           keyBindings.forEach { keyBinding ->
             terminalStarter.sendBytes(keyBinding.bytes, false)
           }
-          if (session.shellIntegration.shellType == ShellType.BASH ) { // reset prompt state to trigger all shell events.
+          if (shellIntegration.shellType == ShellType.BASH ) { // reset prompt state to trigger all shell events.
             val clearPrompt: String = createClearPromptShortcut(terminalStarter.terminal)
             val enterCode = String(terminalStarter.terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
             terminalStarter.sendString(clearPrompt + enterCode, false)
@@ -299,7 +302,7 @@ internal class ShellCommandExecutionManagerImpl(
   }
 
   override fun addListener(listener: ShellCommandSentListener) {
-    listeners.addListener(listener, session)
+    listeners.addListener(listener, parentDisposable)
   }
 
   override fun addListener(listener: ShellCommandSentListener, parentDisposable: Disposable) {
@@ -317,7 +320,7 @@ internal class ShellCommandExecutionManagerImpl(
   }
 
   private fun createClearPromptShortcut(terminal: Terminal): String {
-    return  when (session.shellIntegration.shellType) {
+    return  when (shellIntegration.shellType) {
       ShellType.POWERSHELL -> {
         // TODO SystemInfo will not work for SSH and WSL sessions.
         when {
@@ -349,7 +352,7 @@ internal class ShellCommandExecutionManagerImpl(
     val deferred: CompletableDeferred<ShellCommandResult> = CompletableDeferred()
 
     fun shellCommand(): String {
-      val escapedCommand = when (session.shellIntegration.shellType) {
+      val escapedCommand = when (shellIntegration.shellType) {
         ShellType.POWERSHELL -> StringUtil.wrapWithDoubleQuote(escapePowerShellParameter(shellCommand))
         else -> ParametersListUtil.escape(shellCommand)
       }

@@ -54,7 +54,7 @@ internal class BlockTerminalSession(
     controller = JediTerminal(ModelUpdatingTerminalDisplay(alarmManager, model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(this)
-    commandExecutionManager = ShellCommandExecutionManagerImpl(this, commandManager)
+    commandExecutionManager = ShellCommandExecutionManagerImpl(this, commandManager, shellIntegration, this as Disposable)
     // Add AlarmManager listener now, because we can't add it in its constructor.
     // Because AlarmManager need to be created before ShellCommandManager
     commandManager.addListener(alarmManager, this)
