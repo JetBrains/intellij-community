@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsForSnippetsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetDTO
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
@@ -26,12 +26,13 @@ private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<Strin
  * Provides a flow for underlying queries to the GitLab GQL API that lookup the projects
  * the user is a member of and can create snippets on.
  */
+@SinceGitLab("13.0")
 internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(): Flow<List<GitLabProjectCoordinates>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters()
-    val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_PROJECTS, parameters)
-    withErrorStats(GitLabGQLQuery.GET_MEMBER_PROJECTS) {
-      loadResponse<GitLabProjectsDTO>(request, "projects").body()
+    val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS, parameters)
+    withErrorStats(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS) {
+      loadResponse<GitLabProjectsForSnippetsDTO>(request, "projects").body()
     }
   }.map {
     it.nodes

@@ -5,7 +5,7 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDetailedDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.awt.Image
@@ -21,10 +21,10 @@ suspend fun GitLabApi.Rest.getCurrentUser(): HttpResponse<out GitLabUserRestDTO>
 }
 
 @SinceGitLab("12.5", note = "No exact version")
-suspend fun GitLabApi.GraphQL.getCurrentUser(): GitLabUserDetailedDTO {
+suspend fun GitLabApi.GraphQL.getCurrentUser(): GitLabUserDTO {
   val request = gitLabQuery(GitLabGQLQuery.GET_CURRENT_USER)
   return withErrorStats(GitLabGQLQuery.GET_CURRENT_USER) {
-    loadResponse<GitLabUserDetailedDTO>(request, "currentUser").body()
+    loadResponse<GitLabUserDTO>(request, "currentUser").body()
     ?: throw IllegalStateException("Unable to load current user")
   }
 }

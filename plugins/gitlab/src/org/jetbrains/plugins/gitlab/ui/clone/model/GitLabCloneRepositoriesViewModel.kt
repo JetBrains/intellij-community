@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
@@ -20,15 +19,13 @@ import git4idea.ui.GitShallowCloneViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
-import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupMemberDTO
-import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
+import org.jetbrains.plugins.gitlab.api.request.getCloneableProjects
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
-import org.jetbrains.plugins.gitlab.ui.clone.presentation
 import java.net.ConnectException
 import java.net.MalformedURLException
 import java.net.URL
@@ -67,14 +64,14 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager,
-  private val switchToLoginAction: (GitLabAccount) -> Unit
+  private val switchToLoginAction: (GitLabAccount) -> Unit,
 ) : GitLabCloneRepositoriesViewModel {
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
   private val vcsNotifier: VcsNotifier = VcsNotifier.getInstance(project)
 
-  private val cs: CoroutineScope = parentCs.childScope()
+  private val cs: CoroutineScope = parentCs.childScope("GitLabCloneRepositoriesViewModel")
 
-  private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs)
+  private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs.childScope("TaskLauncher", context = Dispatchers.IO))
   override val isLoading: Flow<Boolean> = taskLauncher.busy
 
   private val reloadRepositoriesRequest: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1)
@@ -97,10 +94,14 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   override val items: SharedFlow<List<GitLabCloneListItem>> = combine(reloadRepositoriesRequest, accountsUpdatedRequest, ::Pair)
     .transformLatest { (_, accounts) ->
       taskLauncher.launch {
-        val repositories = accounts.flatMap { account ->
+        val repositories = mutableListOf<GitLabCloneListItem>()
+        accounts.forEach { account ->
           collectRepositoriesByAccount(account)
+            .collect {
+              repositories.addAll(it)
+              emit(repositories)
+            }
         }
-        emit(repositories)
       }
     }.modelFlow(cs, thisLogger())
 
@@ -187,37 +188,29 @@ internal class GitLabCloneRepositoriesViewModelImpl(
     )
   }
 
-  private suspend fun collectRepositoriesByAccount(account: GitLabAccount): List<GitLabCloneListItem> {
-    return withContext(Dispatchers.IO) {
+  private fun collectRepositoriesByAccount(account: GitLabAccount): Flow<List<GitLabCloneListItem>> =
+    flow {
       try {
-        val token = accountManager.findCredentials(account) ?: return@withContext listOf(
-          GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })
-        )
+        val token = accountManager.findCredentials(account) ?: run {
+          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })))
+          return@flow
+        }
         val apiClient = apiManager.getClient(account.server) { token }
-        val currentUser = runCatchingUser { apiClient.graphQL.getCurrentUser() }.getOrElse {
-          return@withContext listOf(
-            GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
-          )
-        }
-        with(currentUser) {
-          (projectMemberships.mapNotNull { it.project } + groupMemberships.flatMap(GitLabGroupMemberDTO::projectMemberships))
-            .map { project -> GitLabCloneListItem.Repository(account, project) }
-            .distinctBy { repository -> repository.project.fullPath }
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
-        }
+        apiClient.graphQL.getCloneableProjects()
+          .map { l -> l.map { GitLabCloneListItem.Repository(account, it) } }
+          .collect { emit(it) }
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (_: ConnectException) {
-        listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(::reload)))
+        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(::reload))))
       }
       catch (e: Throwable) {
         val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
-        listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(errorMessage, ::reload)))
+        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(errorMessage, ::reload))))
       }
     }
-  }
 
   private fun notifyCreateDirectoryFailed(message: String) {
     thisLogger().error(CollaborationToolsBundle.message("clone.dialog.error.unable.to.create.destination.directory"), message)

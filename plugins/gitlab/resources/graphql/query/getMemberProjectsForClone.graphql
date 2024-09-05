@@ -4,7 +4,7 @@ query($pageSize: Int = 100, $cursor: String) {
       ...pageInfo
     }
     nodes {
-      ...project
+      ...projectForClone
     }
   }
 }

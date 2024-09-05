@@ -8,6 +8,7 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -63,6 +64,16 @@ suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitL
     loadJsonList(request)
   }
 }
+
+@SinceGitLab("13.0")
+internal fun GitLabApi.GraphQL.getCloneableProjects(): Flow<List<GitLabProjectForCloneDTO>> =
+  ApiPageUtil.createGQLPagesFlow { page ->
+    val parameters = page.asParameters()
+    val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE, parameters)
+    withErrorStats(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE) {
+      loadResponse<GitLabProjectsForCloneDTO>(request, "projects").body()
+    }
+  }.map { it.nodes }.collectBatches()
 
 @SinceGitLab("10.3")
 suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpResponse<out GitLabNamespaceRestDTO> {

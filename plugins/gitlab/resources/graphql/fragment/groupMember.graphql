@@ -6,7 +6,7 @@ fragment groupMember on GroupMember {
       }
 
       nodes {
-        ...project
+        ...projectShort
       }
     }
   }

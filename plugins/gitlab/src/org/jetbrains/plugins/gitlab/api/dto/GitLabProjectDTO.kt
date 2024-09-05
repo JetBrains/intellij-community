@@ -22,17 +22,9 @@ data class GitLabProjectDTO(
   @SinceGitLab("13.1") val allowMergeOnSkippedPipeline: Boolean,
   @SinceGitLab("16.8") val allowsMultipleMergeRequestAssignees: Boolean?,
   @SinceGitLab("16.8") val allowsMultipleMergeRequestReviewers: Boolean?,
-  val userPermissions: ProjectUserPermissions,
   val repository: Repository?
 ) {
   val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
-
-  /**
-   * Corresponds to what GL calls ProjectPermissions. These are the permissions a *user* has while accessing a GL *project*.
-   */
-  data class ProjectUserPermissions(
-    @SinceGitLab("12.6") val createSnippet: Boolean
-  )
 
   data class Repository(
     val rootRef: String?

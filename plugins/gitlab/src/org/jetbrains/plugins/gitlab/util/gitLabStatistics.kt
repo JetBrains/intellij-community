@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName.*
 
 @PublishedApi
 internal object GitLabStatistics {
@@ -38,7 +39,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-   private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 22)
+   private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 23)
 
   /**
    * Server metadata was fetched
@@ -294,7 +295,8 @@ enum class GitLabApiRequestName {
   GQL_GET_PROJECT_LABELS,
   GQL_GET_PROJECT_REPOSITORY,
   GQL_GET_PROJECT_WORK_ITEMS,
-  GQL_GET_MEMBER_PROJECTS,
+  GQL_GET_MEMBER_PROJECTS_FOR_CLONE,
+  GQL_GET_MEMBER_PROJECTS_FOR_SNIPPETS,
   GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE,
   GQL_AWARD_EMOJI_TOGGLE,
   GQL_CREATE_NOTE,
@@ -322,7 +324,8 @@ enum class GitLabApiRequestName {
       GitLabGQLQuery.GET_PROJECT -> GQL_GET_PROJECT
       GitLabGQLQuery.GET_PROJECT_LABELS -> GQL_GET_PROJECT_LABELS
       GitLabGQLQuery.GET_PROJECT_WORK_ITEMS -> GQL_GET_PROJECT_WORK_ITEMS
-      GitLabGQLQuery.GET_MEMBER_PROJECTS -> GQL_GET_MEMBER_PROJECTS
+      GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE -> GQL_GET_MEMBER_PROJECTS_FOR_CLONE
+      GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_SNIPPETS -> GQL_GET_MEMBER_PROJECTS_FOR_SNIPPETS
       GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE -> GQL_TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE
       GitLabGQLQuery.AWARD_EMOJI_TOGGLE -> GQL_AWARD_EMOJI_TOGGLE
       GitLabGQLQuery.CREATE_NOTE -> GQL_CREATE_NOTE
