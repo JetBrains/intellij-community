@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ProblemImpl implements Problem {
+@ApiStatus.Internal
+public final class ProblemImpl implements Problem {
   private final VirtualFile virtualFile;
   private final HighlightInfo highlightInfo;
   private final boolean isSyntax;

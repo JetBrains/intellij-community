@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ModCommandServiceImpl implements ModCommandService {
+@ApiStatus.Internal
+public final class ModCommandServiceImpl implements ModCommandService {
   @Override
   public @NotNull IntentionAction wrap(@NotNull ModCommandAction action) {
     return new ModCommandActionWrapper(action, null);

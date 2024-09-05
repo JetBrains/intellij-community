@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -33,7 +33,7 @@ import java.util.Map;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 
-public final class ResolveScopeManagerImpl extends ResolveScopeManager implements Disposable {
+final class ResolveScopeManagerImpl extends ResolveScopeManager implements Disposable {
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
@@ -41,7 +41,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
-  public ResolveScopeManagerImpl(Project project) {
+  ResolveScopeManagerImpl(Project project) {
     myProject = project;
     myProjectRootManager = ProjectRootManager.getInstance(project);
     myManager = PsiManager.getInstance(project);

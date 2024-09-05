@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
@@ -46,6 +46,7 @@ import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class HighlightingSessionImpl implements HighlightingSession {
   private static final Logger LOG = Logger.getInstance(HighlightingSessionImpl.class);
   private final @NotNull PsiFile myPsiFile;
