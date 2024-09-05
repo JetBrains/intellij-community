@@ -45,6 +45,7 @@ public interface IFernflowerPreferences {
   String RENAME_ENTITIES = "ren";
   String USER_RENAMER_CLASS = "urc";
   String NEW_LINE_SEPARATOR = "nls";
+  String CHECK_CLOSABLE_INTERFACE = "cci";
   String INDENT_STRING = "ind";
   String BANNER = "ban";
 
@@ -96,6 +97,7 @@ public interface IFernflowerPreferences {
 
     defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "0");
     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
+    defaults.put(CHECK_CLOSABLE_INTERFACE, "0"); //less accurate, but it will work for not full environment
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");

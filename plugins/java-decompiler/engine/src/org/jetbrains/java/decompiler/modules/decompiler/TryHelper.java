@@ -5,19 +5,23 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class TryHelper
+public final class TryHelper
 {
   public static boolean enhanceTryStats(RootStatement root, StructMethod mt) {
-    boolean ret = makeTryWithResourceRec(root, mt, root.getDummyExit(), new Stack<>());
+    boolean ret = makeTryWithResourceRec(root, mt, root.getDummyExit(), new ArrayList<>());
     if (ret) {
       SequenceHelper.condenseSequences(root);
       if (collapseTryRec(root, mt)) {
@@ -27,7 +31,7 @@ public class TryHelper
     return ret;
   }
 
-  private static boolean makeTryWithResourceRec(Statement stat, StructMethod mt, DummyExitStatement exit, Stack<TryStatementJ11> stack) {
+  private static boolean makeTryWithResourceRec(Statement stat, StructMethod mt, DummyExitStatement exit, List<TryStatementJ11> stack) {
     boolean ret = false;
     if (stat.type == Statement.StatementType.CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
       if (makeTryWithResource((CatchAllStatement)stat)) {
@@ -36,7 +40,7 @@ public class TryHelper
     }
 
     if (mt.getBytecodeVersion() >= CodeConstants.BYTECODE_JAVA_11 && stat.type == Statement.StatementType.TRY_CATCH) {
-      ret |= addTryWithResourceJ11((CatchStatement) stat, exit, stack);
+      ret |= addTryWithResourceJ11((CatchStatement) stat, stack);
     }
 
     for (int i = 0; i < stat.getStats().size(); i++) {
@@ -44,7 +48,7 @@ public class TryHelper
       ret |= makeTryWithResourceRec(st, mt, exit, stack);
     }
 
-    if (!stack.empty() && stack.peek().tryStatement() == stat) {
+    if (!stack.isEmpty() && stack.get(0).tryStatement() == stat) {
       makeTryStatementJ11(stack, exit);
     }
 
@@ -148,7 +152,10 @@ public class TryHelper
           }
 
           child.setTryType(CatchStatement.RESORCES);
-          initBlock.getExprents().remove(ass);
+          List<Exprent> exprents = initBlock.getExprents();
+          if (exprents != null) {
+            exprents.remove(ass);
+          }
           child.getResources().add(0, resourceDef);
 
           if (!finallyStat.getVarDefinitions().isEmpty()) {
@@ -167,7 +174,7 @@ public class TryHelper
 
   // Make try with resources with the new style bytecode (J11+)
   // It doesn't use finally blocks, and is just a try catch
-  public static boolean addTryWithResourceJ11(CatchStatement tryStatement, DummyExitStatement exit, Stack<TryStatementJ11> stack) {
+  public static boolean addTryWithResourceJ11(CatchStatement tryStatement, List<TryStatementJ11> stack) {
     // Doesn't have a catch block, probably already processed
     if (tryStatement.getStats().size() < 2) {
       return false;
@@ -196,7 +203,7 @@ public class TryHelper
         Statement inTry = inner.getStats().get(0);
 
         // Catch block contains a basic block inside which has the closeable invocation
-        if (inTry instanceof BasicBlockStatement && !inTry.getExprents().isEmpty()) {
+        if (inTry instanceof BasicBlockStatement && inTry.getExprents()!=null && !inTry.getExprents().isEmpty()) {
           Exprent first = inTry.getExprents().get(0);
 
           if (isCloseable(first)) {
@@ -234,7 +241,7 @@ public class TryHelper
             if (inner instanceof CatchStatement && !inner.getStats().isEmpty()) {
               Statement inTry = inner.getStats().get(0);
 
-              if (inTry instanceof BasicBlockStatement && !inTry.getExprents().isEmpty()) {
+              if (inTry instanceof BasicBlockStatement && inTry.getExprents()!=null && !inTry.getExprents().isEmpty()) {
                 Exprent first = inTry.getExprents().get(0);
 
                 // Check for closable invocation
@@ -289,15 +296,16 @@ public class TryHelper
         }
       }
 
-      stack.push(new TryStatementJ11(destinations, closeable, nullable, assignment, edge, tryStatement));
+      stack.add(new TryStatementJ11(destinations, closeable, nullable, assignment, edge, tryStatement));
       return true;
     }
 
     return false;
   }
 
-  private static void makeTryStatementJ11(Stack<TryStatementJ11> tryStatements, DummyExitStatement exit) {
-    TryStatementJ11 tryStatementRecord = tryStatements.peek();
+  private static void makeTryStatementJ11(List<TryStatementJ11> tryStatements, DummyExitStatement exit) {
+    if(tryStatements.isEmpty()) return;
+    TryStatementJ11 tryStatementRecord = tryStatements.get(0);
     Set<Statement> destinations = tryStatementRecord.destinations();
     boolean nullable = tryStatementRecord.nullable();
     AssignmentExprent assignment = tryStatementRecord.assignment();
@@ -305,14 +313,17 @@ public class TryHelper
     CatchStatement tryStatement = tryStatementRecord.tryStatement();
 
     for (Statement destination : destinations) {
-      removeTempAssignments(destination, nullable, tryStatements, exit);
+      removeTempAssignments(destination, tryStatements, exit);
     }
 
     for (Statement destination : destinations) {
       removeClose(destination, nullable, exit);
     }
 
-    edge.getSource().getExprents().remove(assignment);
+    List<Exprent> exprents = edge.getSource().getExprents();
+    if (exprents != null) {
+      exprents.remove(assignment);
+    }
 
     // Add resource assignment to try
     tryStatement.getResources().add(0, assignment);
@@ -327,14 +338,13 @@ public class TryHelper
     tryStatement.getStats().remove(1);
 
     tryStatement.setTryType(CatchStatement.RESORCES);
-    tryStatements.pop();
+    tryStatements.remove(0);
   }
 
   private static boolean isValid(Statement stat, VarExprent closeable, boolean nullable) {
     if (nullable) {
       // Check for if statement that contains a null check and a close()
-      if (stat instanceof IfStatement) {
-        IfStatement ifStat = (IfStatement) stat;
+      if (stat instanceof IfStatement ifStat) {
         Exprent condition = ifStat.getHeadexprent().getCondition();
 
         if (condition instanceof FunctionExprent) {
@@ -369,7 +379,7 @@ public class TryHelper
     return false;
   }
 
-  private static void removeTempAssignments(Statement statement, boolean nullable, Stack<TryStatementJ11> stack, DummyExitStatement exitStat) {
+  private static void removeTempAssignments(Statement statement, List<TryStatementJ11> stack, DummyExitStatement exitStat) {
     Statement stat = statement;
     int exprentIndex = 0;
     boolean previousNonNullable = false;
@@ -469,8 +479,10 @@ public class TryHelper
         }
       }
     } else {
-      statement.getExprents().remove(0);
-      if (statement.getExprents().isEmpty() && statement.getNeighboursSet(StatEdge.EdgeType.ALL, StatEdge.EdgeDirection.FORWARD).contains(exit)) {
+      List<Exprent> exprents = statement.getExprents();
+      if(exprents==null) return;
+      exprents.remove(0);
+      if (exprents.isEmpty() && statement.getNeighboursSet(StatEdge.EdgeType.ALL, StatEdge.EdgeDirection.FORWARD).contains(exit)) {
         addEnd(statement, exit);
       }
     }
@@ -550,7 +562,7 @@ public class TryHelper
     }
 
     boolean ret = false;
-    boolean merged = false;
+    boolean merged;
     do {
       merged = false;
       // Get the statement inside of the current try
@@ -604,7 +616,9 @@ public class TryHelper
   }
 
   private static AssignmentExprent findResourceDef(VarExprent var, Statement prevStatement) {
-    for (Exprent exp : prevStatement.getExprents()) {
+    List<Exprent> exprents = prevStatement.getExprents();
+    if (exprents == null) return null;
+    for (Exprent exp : exprents) {
       if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
         AssignmentExprent ass = (AssignmentExprent)exp;
         if (ass.getLeft().type == Exprent.EXPRENT_VAR) { // cannot use equals as var's varType may be unknown and not match
@@ -624,6 +638,7 @@ public class TryHelper
       InvocationExprent invocExp = (InvocationExprent)exp;
       if (invocExp.getName().equals("close") && invocExp.getStringDescriptor().equals("()V")) {
         if (invocExp.getInstance() != null && invocExp.getInstance().type == Exprent.EXPRENT_VAR) {
+          if (!DecompilerContext.getOption(IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE)) return true;
           return DecompilerContext.getStructContext().instanceOf(invocExp.getClassName(), "java/lang/AutoCloseable");
         }
       }
@@ -647,7 +662,7 @@ public class TryHelper
     }
   }
 
-  private static boolean removeRedundantThrow(BasicBlockStatement initBlock, CatchStatement catchStat) {
+  private static void removeRedundantThrow(BasicBlockStatement initBlock, CatchStatement catchStat) {
     if (catchStat.getStats().size() > 1) {
       boolean removed = false;
       Statement temp = null;
@@ -684,19 +699,20 @@ public class TryHelper
       if (removed && temp.getExprents().get(temp.getExprents().size() - 2).type == Exprent.EXPRENT_ASSIGNMENT) {
         AssignmentExprent assignmentExp = (AssignmentExprent)temp.getExprents().get(temp.getExprents().size() - 2);
         if (assignmentExp.getLeft().getExprType().getValue().equals("java/lang/Throwable")) {
-          for (Exprent exprent : initBlock.getExprents()) {
+          List<Exprent> exprents = initBlock.getExprents();
+          if (exprents == null) return;
+          for (Exprent exprent : exprents) {
             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
               AssignmentExprent toRemove = (AssignmentExprent)exprent;
               if (toRemove.getLeft().equals(assignmentExp.getLeft())) {
                 initBlock.getExprents().remove(toRemove);
-                return true;
+                return;
               }
             }
           }
         }
       }
     }
-    return false;
   }
   
   private static void addEnd(Statement stat, DummyExitStatement exit) {
@@ -714,7 +730,7 @@ public class TryHelper
     stat.getParent().getStats().removeWithKey(stat.id);
   }
   
-  private static record TryStatementJ11(Set<Statement> destinations, VarExprent closeable, boolean nullable, AssignmentExprent assignment, StatEdge pred, CatchStatement tryStatement) {
+  public record TryStatementJ11(Set<Statement> destinations, VarExprent closeable, boolean nullable, AssignmentExprent assignment, StatEdge pred, CatchStatement tryStatement) {
     
   }
 }
