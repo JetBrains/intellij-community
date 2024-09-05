@@ -15,6 +15,9 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.4/vavr-match-0.10.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.4/vavr-0.10.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.4/vavr-match-0.10.4-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
