@@ -108,10 +108,10 @@ private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
 }
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
-  val WAS_SHOWN = register(EventFields.Boolean("was_shown"))
+  val WAS_SHOWN = register(EventFields.Boolean("was_shown", "Indicates whether completion or some part of it was shown during the session or not"))
   val TIME_TO_START_SHOWING = register(EventFields.Long("time_to_start_showing", "Time from the completion request to start showing at least one element"))
-  val FINISH_TYPE = register(EventFields.Enum("finish_type", InlineCompletionUsageTracker.ShownEvents.FinishType::class.java))
-  val INVALIDATION_EVENT = register(EventFields.Class("invalidation_event", "Which event invalidated the completion"))
+  val FINISH_TYPE = register(EventFields.Enum("finish_type", InlineCompletionUsageTracker.ShownEvents.FinishType::class.java, "Indicates how completion session was finished"))
+  val INVALIDATION_EVENT = register(EventFields.Class("invalidation_event", "In case of finish type 'invalidated'  which exactly event invalidated the completion"))
   val FULL_INSERT_ACTIONS = register(EventFields.Int("full_insert_actions", "Number of full inline completion inserts"))
   val NEXT_WORD_ACTIONS = register(EventFields.Int("next_word_actions", "Number of next word inline completion inserts"))
   val NEXT_LINE_ACTIONS = register(EventFields.Int("next_line_actions", "Number of next line inline completion inserts"))
