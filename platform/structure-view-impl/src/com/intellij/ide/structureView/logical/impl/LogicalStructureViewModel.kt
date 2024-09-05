@@ -50,6 +50,7 @@ private fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledM
 }
 
 private fun getChildrenNodes(assembledModel: LogicalStructureAssembledModel<*>, parentKey: String): Collection<StructureViewTreeElement> {
+  if (hasSameModelParent(assembledModel)) return emptyList()
   val childrenGrouped = assembledModel.getChildrenGrouped()
   if (childrenGrouped.isEmpty()) {
     return assembledModel.getChildren().map { createViewTreeElement(it, parentKey) }
@@ -85,6 +86,20 @@ private fun getPsiElement(model: Any?): PsiElement? {
     model is PsiTarget && model.isValid() -> model.navigationElement
     else -> null
   }
+}
+
+private fun hasSameModelParent(assembledModel: LogicalStructureAssembledModel<*>): Boolean {
+  var parentTmp = assembledModel.parent
+  while (parentTmp != null) {
+    val first = parentTmp.model
+    val second = assembledModel.model
+    if (first == second) return true
+    if (first is PsiTarget && second is PsiTarget) {
+      if (first.isValid && second.isValid && first.navigationElement == second.navigationElement) return true
+    }
+    parentTmp = parentTmp.parent
+  }
+  return false
 }
 
 private interface LogicalStructureViewTreeElement<T>: StructureViewTreeElement {

@@ -12,12 +12,13 @@ import com.intellij.openapi.project.Project
  */
 class LogicalStructureAssembledModel<T> private constructor(
   val project: Project,
-  val model: T
+  val model: T,
+  val parent: LogicalStructureAssembledModel<*>?
 ) {
 
   companion object {
     fun <T> getInstance(project: Project, root: T): LogicalStructureAssembledModel<T> {
-      return LogicalStructureAssembledModel(project, root)
+      return LogicalStructureAssembledModel(project, root, null)
     }
   }
 
@@ -26,7 +27,7 @@ class LogicalStructureAssembledModel<T> private constructor(
       .filter { it !is ConvertElementsProvider }
       .flatMap { it.getElements(model) }
       //.flatMap { ConvertElementsProvider.convert(it) }
-      .map { LogicalStructureAssembledModel(project, it) }
+      .map { LogicalStructureAssembledModel(project, it, this) }
       .toList()
   }
 
@@ -38,7 +39,7 @@ class LogicalStructureAssembledModel<T> private constructor(
       .mapNotNull { provider ->
         if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) return@mapNotNull null
         val children = provider.getElements(model)
-          .map { getInstance(project, it) }
+          .map { LogicalStructureAssembledModel(project, it, this) }
         Pair(provider, children)
       }
       .toList()

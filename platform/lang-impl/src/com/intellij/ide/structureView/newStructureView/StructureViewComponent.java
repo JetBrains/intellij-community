@@ -70,6 +70,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -943,7 +944,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final class MyTree extends DnDAwareTree implements PlaceProvider {
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
-      ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_ALLOWED, false);
+      ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> !isSmartExpand(node));
       HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 
@@ -965,6 +966,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         accessibleContext.setAccessibleName(IdeBundle.message("structure.view.tree.accessible.name"));
       }
       return accessibleContext;
+    }
+
+    public boolean isSmartExpand(Object node) {
+      if (node instanceof DefaultMutableTreeNode treeNode) {
+        if (treeNode.getUserObject() instanceof MyNodeWrapper cachingNode) {
+          return cachingNode.isAutoExpandAllowed();
+        }
+      }
+      return true;
     }
   }
 
