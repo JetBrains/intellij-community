@@ -235,6 +235,51 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  public void testNullableStuffWithDifferentTypeUse() {
+    myFixture.addClass("""
+                          package org.jetbrains.annotations;
+                          import java.lang.annotation.ElementType;
+                          import java.lang.annotation.Target;
+                          
+                          @Target(ElementType.TYPE_USE)
+                          public @interface NotNull {}""");
+    myFixture.addClass("""
+                          package org.jetbrains.annotations;
+                          import java.lang.annotation.ElementType;
+                          import java.lang.annotation.Target;
+                          
+                          @Target(ElementType.TYPE_USE)
+                          public @interface Size {}""");
+    myFixture.configureByText("a.java", """
+      class Foo {
+          @org.jetbrains.annotations.NotNull
+          @org.jetbrains.annotations.Size
+          private String myName;
+
+          <caret>
+      }
+      """);
+    generateGetter();
+    generateSetter();
+    myFixture.checkResult("""
+                            import org.jetbrains.annotations.NotNull;
+
+                            class Foo {
+                                @org.jetbrains.annotations.NotNull
+                                @org.jetbrains.annotations.Size
+                                private String myName;
+
+                                public void setMyName(@NotNull String myName) {
+                                    this.myName = myName;
+                                }
+
+                                public @NotNull String getMyName() {
+                                    return myName;
+                                }
+                            }
+                            """);
+  }
+
   public void testLombokGeneratedFieldsWithoutContainingFile() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME,
                                            new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
