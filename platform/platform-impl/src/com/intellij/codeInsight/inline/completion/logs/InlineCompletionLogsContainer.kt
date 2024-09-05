@@ -18,10 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.absoluteValue
 
 @ApiStatus.Internal
-class InlineCompletionLogsContainer(private val requestId: Long) {
+class InlineCompletionLogsContainer(private val requestId: Long = 0) {
 
+  // ratio of requests that should be fully logged (otherwise, only basic fields)
   private val fullLogsShare = 0.01f
 
+  // indicates that the filter model decision was [RANDOM_PASS]
   var randomPass = AtomicBoolean(false)
 
   /**
@@ -64,7 +66,7 @@ class InlineCompletionLogsContainer(private val requestId: Long) {
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
    */
   fun add(value: EventPair<*>) {
-    val phase = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToPhase[value.field.name]) {
+    val phase = requireNotNull(InlineCompletionLogs.Session.eventFieldProperties[value.field.name]?.phase) {
       "Cannot find phase for ${value.field.name}"
     }
     logs[phase]!!.add(value)
@@ -121,7 +123,7 @@ class InlineCompletionLogsContainer(private val requestId: Long) {
     /**
      * Create, store in editor and get log container
      */
-    fun create(editor: Editor, requestId: Long): InlineCompletionLogsContainer {
+    fun create(editor: Editor, requestId: Long = 0): InlineCompletionLogsContainer {
       val container = InlineCompletionLogsContainer(requestId)
       editor.putUserData(KEY, container)
       return container

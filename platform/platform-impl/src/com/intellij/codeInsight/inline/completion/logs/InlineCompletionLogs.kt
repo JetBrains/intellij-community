@@ -3,7 +3,6 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
@@ -24,17 +23,17 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   }
 
   object Session {
-    private val phaseToFieldList: List<Pair<Phase, InlineLogs<*>>> = run {
+    private val phaseToFieldList: List<Pair<Phase, EventFieldExt<*>>> = run {
       val fields = Cancellation.withNonCancelableSection().use {
         // Non-cancellable section, because this function is often used in
         // static initializer code of `object`, and any exception (namely, CancellationException)
         // breaks the object with ExceptionInInitializerError, and subsequent NoClassDefFoundError
         InlineCompletionSessionLogsEP.EP_NAME.extensionsIfPointIsRegistered
       }.flatMap { it.logGroups }.flatMap { phasedLogs ->
-        phasedLogs.fields.map { field -> phasedLogs.phase to field}
+        phasedLogs.registeredFields.map { field -> phasedLogs.phase to field}
       }
 
-      fields.groupingBy { it.second.first }.eachCount().filter { it.value > 1 }.forEach {
+      fields.groupingBy { it.second.field }.eachCount().filter { it.value > 1 }.forEach {
         thisLogger().error("Log ${it.key} is registered multiple times: ${it.value}")
       }
       fields
@@ -42,14 +41,17 @@ object InlineCompletionLogs : CounterUsagesCollector() {
 
     // group logs to the phase so that each phase has its own object field
     val phases: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
-      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second.first }.toTypedArray())
+      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second.field }.toTypedArray())
     }
 
-    val eventFieldNameToPhase: Map<String, Phase> = phaseToFieldList.associate { it.second.first.name to it.first }
+    val eventFieldProperties: Map<String, EventFieldProperty> = phaseToFieldList.associate {
+      it.second.field.name to EventFieldProperty(it.first, it.second.isBasic)
+    }
 
-    val eventFieldNameToBasic: Map<String, Boolean> = phaseToFieldList.associate { it.second.first.name to it.second.second }
-
-    fun isBasic(eventPair: EventPair<*>): Boolean = eventFieldNameToBasic[eventPair.field.name] == true
+    fun isBasic(eventPair: EventPair<*>): Boolean {
+      // all fields are unique and must be initialized before
+      return requireNotNull(eventFieldProperties[eventPair.field.name]?.isBasic)
+    }
 
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
@@ -58,4 +60,8 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     )
   }
 
+  data class EventFieldProperty(
+    val phase: Phase,
+    val isBasic: Boolean,
+  )
 }

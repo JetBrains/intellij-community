@@ -13,22 +13,27 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 abstract class PhasedLogs(val phase: Phase) {
-  private val _fields = mutableListOf<InlineLogs<*>>()
+  private val fields = mutableListOf<EventFieldExt<*>>()
 
-  val fields: List<InlineLogs<*>>
-    get() = _fields
+  val registeredFields: List<EventFieldExt<*>>
+    get() = fields
 
   /**
    * Associate the given [field] with the [phase]
    */
   protected fun<T> register(field: EventField<T>, basic: Boolean = false): EventField<T> {
-    _fields.add(field to basic)
+    fields.add(EventFieldExt(field, basic))
     return field
   }
 }
 
-// event field + `isBasic` property
-typealias InlineLogs<T> = Pair<EventField<T>, Boolean>
+/**
+ * Wrapper around the [EventField] with an additional property
+ */
+data class EventFieldExt<T>(
+  val field: EventField<T>,
+  val isBasic: Boolean = false,
+)
 
 @ApiStatus.Internal
 interface InlineCompletionSessionLogsEP {
