@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
@@ -376,7 +377,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption?): V {
-    TODO("Not yet implemented")
+    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.READ_ATTRIBUTES")
   }
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
@@ -403,11 +404,12 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun readAttributes(path: Path, attributes: String, vararg options: LinkOption): MutableMap<String, Any> {
-    TODO("Not yet implemented")
+    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.READ_ATTRIBUTES")
   }
 
   override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
-    TODO("Not yet implemented")
+    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.READ_ATTRIBUTES " +
+         "com.intellij.platform.ijent.functional.fs.TodoOperation.UNIX_ATTRIBUTES")
   }
 
   override fun newAsynchronousFileChannel(
@@ -416,7 +418,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     executor: ExecutorService?,
     vararg attrs: FileAttribute<*>?,
   ): AsynchronousFileChannel {
-    TODO("Not yet implemented")
+    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.ASYNC_FILE_CHANNEL")
   }
 
   override fun createSymbolicLink(link: Path, target: Path, vararg attrs: FileAttribute<*>?) {
@@ -445,7 +447,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun createLink(link: Path?, existing: Path?) {
-    TODO("Not yet implemented")
+    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.HARD_LINK")
   }
 
   override fun readSymbolicLink(link: Path): Path {
