@@ -68,6 +68,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +82,7 @@ import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
 
+@ApiStatus.Internal
 public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   private static final Key<List<RangeHighlighter>> HIGHLIGHTERS_ON_NAVIGATED_ELEMENTS = Key.create("mod.command.existing.highlighters");
   

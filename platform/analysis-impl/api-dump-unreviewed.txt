@@ -1,6 +1,3 @@
-f:com.intellij.application.options.colors.ScopeAttributesUtil
-- <init>():V
-- s:getScopeTextAttributeKey(java.lang.String):com.intellij.openapi.editor.colors.TextAttributesKey
 f:com.intellij.codeHighlighting.ColorGenerator
 - <init>():V
 - s:generateLinearColorSequence(java.util.List,I):java.util.List
@@ -3311,40 +3308,6 @@ com.intellij.lang.PerFileMappingsEx
 - a:getDefaultMapping(com.intellij.openapi.vfs.VirtualFile):java.lang.Object
 - a:getMappings():java.util.Map
 - a:setMappings(java.util.Map):V
-c:com.intellij.lang.impl.modcommand.ModCommandActionQuickFixUberWrapper
-- com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-- com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
-- com.intellij.codeInsight.intention.PriorityAction
-- com.intellij.openapi.diagnostic.ReportingClassSubstitutor
-- com.intellij.openapi.util.Iconable
-- <init>(com.intellij.modcommand.ModCommandAction,com.intellij.psi.PsiElement):V
-- asModCommandAction():com.intellij.modcommand.ModCommandAction
-- belongsToMyFamily(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):Z
-- generatePreview(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- getFamilyName():java.lang.String
-- getFixAllText():java.lang.String
-- getIcon(I):javax.swing.Icon
-- getOptions():java.util.List
-- getPriority():com.intellij.codeInsight.intention.PriorityAction$Priority
-- getSubstitutedClass():java.lang.Class
-- getText():java.lang.String
-- invoke(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
-- isAvailable(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
-c:com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl
-- com.intellij.modcommand.ModCommandExecutor
-- <init>():V
-- ps:actualize(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
-- p:calculateRanges(com.intellij.modcommand.ModUpdateFileText):java.util.List
-- ps:ensureWritable(com.intellij.openapi.project.Project,com.intellij.modcommand.ModCommand):Z
-- p:executeCreate(com.intellij.openapi.project.Project,com.intellij.modcommand.ModCreateFile):java.lang.String
-- p:executeDelete(com.intellij.modcommand.ModDeleteFile):java.lang.String
-- executeForFileCopy(com.intellij.modcommand.ModCommand,com.intellij.psi.PsiFile):V
-- executeInBatch(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommandExecutor$BatchExecutionResult
-- executeInteractively(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand,com.intellij.openapi.editor.Editor):V
-- p:executeUpdate(com.intellij.openapi.project.Project,com.intellij.modcommand.ModUpdateFileText):Z
-- p:getFileNamePresentation(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 c:com.intellij.lang.parser.GeneratedParserUtilBase
 - sf:COMPLETION_STATE_KEY:com.intellij.openapi.util.Key
 - sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
@@ -3462,19 +3425,6 @@ com.intellij.lang.parser.GeneratedParserUtilBase$Hook
 - a:run(com.intellij.lang.PsiBuilder,com.intellij.lang.PsiBuilder$Marker,java.lang.Object):com.intellij.lang.PsiBuilder$Marker
 com.intellij.lang.parser.GeneratedParserUtilBase$Parser
 - a:parse(com.intellij.lang.PsiBuilder,I):Z
-f:com.intellij.openapi.editor.ConvertIndentsUtil
-- <init>():V
-- s:convertIndentsToSpaces(com.intellij.openapi.editor.Document,I,com.intellij.openapi.util.TextRange):I
-- s:convertIndentsToTabs(com.intellij.openapi.editor.Document,I,com.intellij.openapi.util.TextRange):I
-com.intellij.openapi.editor.impl.SweepProcessor
-- a:process(I,java.lang.Object,Z,java.util.Collection):Z
-- s:sweep(com.intellij.openapi.editor.impl.SweepProcessor$Generator,com.intellij.openapi.editor.impl.SweepProcessor):Z
-com.intellij.openapi.editor.impl.SweepProcessor$Generator
-- a:processAllInStartOffsetOrder(com.intellij.util.Processor):Z
-c:com.intellij.openapi.fileEditor.impl.InconsistentLineSeparatorsInspection
-- com.intellij.codeInspection.LocalInspectionTool
-- <init>():V
-- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z):com.intellij.psi.PsiElementVisitor
 c:com.intellij.openapi.module.impl.scopes.JdkScope
 - com.intellij.openapi.module.impl.scopes.LibraryScopeBase
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.roots.JdkOrderEntry):V
@@ -4033,9 +3983,6 @@ a:com.intellij.psi.search.SpecificNameItemProcessor
 - p:<init>(java.lang.String):V
 - acceptItem(java.lang.String,Z):Z
 - getName():java.lang.String
-f:com.intellij.psi.search.scope.impl.CustomScopesAggregator
-- <init>():V
-- s:getAllCustomScopes(com.intellij.openapi.project.Project):java.util.List
 c:com.intellij.psi.templateLanguages.DefaultOuterLanguagePatcher
 - com.intellij.psi.templateLanguages.TemplateDataElementType$OuterLanguageRangePatcher
 - sf:OUTER_EXPRESSION_PLACEHOLDER:java.lang.String

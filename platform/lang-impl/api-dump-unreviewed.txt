@@ -19082,12 +19082,6 @@ f:com.intellij.lang.folding.CustomFoldingSurroundDescriptor
 - getElementsToSurround(com.intellij.psi.PsiFile,I,I):com.intellij.psi.PsiElement[]
 - getSurrounders():com.intellij.lang.surroundWith.Surrounder[]
 - isExclusive():Z
-c:com.intellij.lang.impl.modcommand.ModCommandExecutorImpl
-- com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl
-- <init>():V
-- p:calculateRanges(com.intellij.modcommand.ModUpdateFileText):java.util.List
-- executeInteractively(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand,com.intellij.openapi.editor.Editor):V
-- p:getFileNamePresentation(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 a:com.intellij.lang.javascript.boilerplate.AbstractGithubTagDownloadedProjectGenerator
 - com.intellij.ide.util.projectWizard.WebProjectTemplate
 - <init>():V
