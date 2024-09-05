@@ -24,7 +24,7 @@ abstract class ProjectEntitiesStorage {
    *
    * @param project The project for which the entity is to be created.
    */
-  suspend fun createEntity(project: Project) = withKernel {
+  suspend fun createEntity(project: Project): Unit = withKernel {
     val projectId = project.projectId()
 
     change {
