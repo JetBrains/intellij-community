@@ -60,7 +60,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void process(FilePath path, Status status) throws SvnBindException {
+  public void process(@NotNull FilePath path, Status status) throws SvnBindException {
     if (status != null) {
       processStatusFirstPass(path, status);
     }
@@ -77,11 +77,11 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void processCopyRoot(VirtualFile file, Url url, WorkingCopyFormat format, Url rootURL) {
+  public void processCopyRoot(@NotNull VirtualFile file, Url url, @NotNull WorkingCopyFormat format, Url rootURL) {
   }
 
   @Override
-  public void bewareRoot(VirtualFile vf, Url url) {
+  public void bewareRoot(@NotNull VirtualFile vf, Url url) {
   }
 
   @Override
