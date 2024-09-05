@@ -112,7 +112,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
             var configured = false
             try {
                 val autoConfigurator = readAction {
-                    KotlinProjectConfigurator.EP_NAME.extensions
+                    KotlinProjectConfigurator.EP_NAME.extensionList
                         .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
                 } ?: return@launch
 
@@ -134,9 +134,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
                 if (!configured) {
                     // Immediately refresh editor notifications to show Kotlin not-configured notification, if necessary
                     refreshEditorNotifications()
-                    readAction {
-                        showConfigureKotlinNotificationIfNeeded(module)
-                    }
+                    showConfigureKotlinNotificationIfNeeded(module)
                 }
             }
         }

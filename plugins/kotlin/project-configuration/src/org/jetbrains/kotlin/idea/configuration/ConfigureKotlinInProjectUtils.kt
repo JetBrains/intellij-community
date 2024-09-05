@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
@@ -196,19 +195,17 @@ fun getConfigurableModulesWithKotlinFiles(project: Project): List<ModuleSourceRo
     return ModuleSourceRootMap(project).groupByBaseModules(modules)
 }
 
-fun showConfigureKotlinNotificationIfNeeded(module: Module) {
-    val action: () -> Unit = {
+suspend fun showConfigureKotlinNotificationIfNeeded(module: Module) {
+    val project = module.project
+    val needNotify = smartReadAction(project) {
+        if (module.isDisposed) return@smartReadAction false
+
         val moduleGroup = module.toModuleGroup()
-        if (isNotConfiguredNotificationRequired(moduleGroup)) {
-            ConfigureKotlinNotificationManager.notify(module.project)
-        }
+        isNotConfiguredNotificationRequired(moduleGroup)
     }
 
-    val dumbService = DumbService.getInstance(module.project)
-    if (dumbService.isDumb) {
-        dumbService.smartInvokeLater { action() }
-    } else {
-        action()
+    if (needNotify) {
+        ConfigureKotlinNotificationManager.notify(project)
     }
 }
 
