@@ -18,10 +18,8 @@ com/intellij/codeInspection/ex/VisibleTreeStateComponent
 com/intellij/conversion/impl/CachedConversionResult
 com/intellij/facet/frameworks/beans/Artifact
 com/intellij/facet/frameworks/beans/ArtifactItem
-com/intellij/ide/actions/searcheverywhere/SearchEverywhereMlService
 com/intellij/ide/actions/searcheverywhere/SearchEverywhereSpellingCorrector
 com/intellij/ide/actions/searcheverywhere/SearchListModel
-com/intellij/ide/actions/searcheverywhere/statistics/SearchPerformanceTracker
 com/intellij/ide/plugins/ContainerDescriptor
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/ide/projectView/impl/AsyncProjectViewSupport
@@ -40,9 +38,7 @@ com/intellij/internal/statistic/eventLog/events/EventId1
 com/intellij/internal/statistic/eventLog/events/EventId2
 com/intellij/internal/statistic/eventLog/events/EventId3
 com/intellij/internal/statistic/eventLog/events/IntEventField
-com/intellij/internal/statistic/eventLog/events/LongEventField
 com/intellij/internal/statistic/eventLog/events/ObjectEventField
-com/intellij/internal/statistic/eventLog/events/StringEventField
 com/intellij/internal/statistic/eventLog/events/VarargEventId
 com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/largeFilesEditor/editor/AbsoluteSymbolPosition

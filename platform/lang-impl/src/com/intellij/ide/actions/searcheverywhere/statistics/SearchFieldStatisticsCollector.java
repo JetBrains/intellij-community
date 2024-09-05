@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.utils.StartMoment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.time.Duration;
 
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
 
+@ApiStatus.Internal
 public final class SearchFieldStatisticsCollector implements Disposable {
 
   private final Project myProject;

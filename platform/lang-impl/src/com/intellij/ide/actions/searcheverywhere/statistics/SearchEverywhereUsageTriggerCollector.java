@@ -8,11 +8,13 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
   private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 18);
