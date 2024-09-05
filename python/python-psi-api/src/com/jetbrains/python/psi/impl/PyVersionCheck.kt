@@ -6,8 +6,11 @@ import com.google.common.collect.Range
 import com.intellij.openapi.util.Version
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.ast.*
-import com.jetbrains.python.ast.impl.PyPsiUtilsCore
+import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyNumericLiteralExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTupleExpression
 import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
 
@@ -19,8 +22,8 @@ object PyVersionCheck {
    * @see <a href="https://peps.python.org/pep-0484/#version-and-platform-checking">Version and Platform Checks</a>
    */
   @JvmStatic
-  fun convertToVersionRanges(expression: PyAstExpression): ImmutableRangeSet<Version>? {
-    val binaryExpr = PyPsiUtilsCore.flattenParens(expression) as? PyAstBinaryExpression ?: return null
+  fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<Version>? {
+    val binaryExpr = PyPsiUtils.flattenParens(expression) as? PyBinaryExpression ?: return null
     when (val operator = binaryExpr.operator) {
       PyTokenTypes.AND_KEYWORD, PyTokenTypes.OR_KEYWORD -> {
         val rhs = binaryExpr.rightExpression ?: return null
@@ -33,10 +36,10 @@ object PyVersionCheck {
       }
 
       PyTokenTypes.LT, PyTokenTypes.GT, PyTokenTypes.LE, PyTokenTypes.GE -> {
-        val refExpr = PyPsiUtilsCore.flattenParens(binaryExpr.leftExpression) as? PyAstReferenceExpression ?: return null
+        val refExpr = PyPsiUtils.flattenParens(binaryExpr.leftExpression) as? PyReferenceExpression ?: return null
         if (SYS_VERSION_INFO_QUALIFIED_NAME != refExpr.asQualifiedName()) return null
 
-        val tuple = PyPsiUtilsCore.flattenParens(binaryExpr.rightExpression) as? PyAstTupleExpression<*> ?: return null
+        val tuple = PyPsiUtils.flattenParens(binaryExpr.rightExpression) as? PyTupleExpression ?: return null
         val version = evaluateVersion(tuple) ?: return null
 
         val range = when (operator) {
@@ -55,7 +58,7 @@ object PyVersionCheck {
 
   private val SYS_VERSION_INFO_QUALIFIED_NAME = QualifiedName.fromDottedString("sys.version_info")
 
-  private fun evaluateVersion(versionTuple: PyAstTupleExpression<*>): Version? {
+  private fun evaluateVersion(versionTuple: PyTupleExpression): Version? {
     val elements = versionTuple.elements
     if (elements.size != 1 && elements.size != 2) {
       return null
@@ -78,8 +81,8 @@ object PyVersionCheck {
     return Version(major, minor, 0)
   }
 
-  private fun evaluateNumber(expression: PyAstExpression?): Int? {
-    if (expression !is PyAstNumericLiteralExpression) return null
+  private fun evaluateNumber(expression: PyExpression?): Int? {
+    if (expression !is PyNumericLiteralExpression) return null
     if (!expression.isIntegerLiteral) return null
     val value = expression.bigIntegerValue
     val intValue = value.toInt()
