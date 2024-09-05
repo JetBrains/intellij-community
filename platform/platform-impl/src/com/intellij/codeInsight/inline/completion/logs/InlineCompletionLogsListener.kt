@@ -180,5 +180,5 @@ private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
 }
 
 internal class InlineCompletionListenerSessionLogs : InlineCompletionSessionLogsEP {
-  override val fields = listOf(StartingLogs, FinishingLogs)
+  override val logGroups = listOf(StartingLogs, FinishingLogs)
 }

@@ -301,6 +301,6 @@ internal object InlineCompletionContextLogs {
   }
 
   internal class CollectorExtension : InlineCompletionSessionLogsEP {
-    override val fields: List<PhasedLogs> = listOf(Logs)
+    override val logGroups: List<PhasedLogs> = listOf(Logs)
   }
 }
