@@ -34,36 +34,49 @@ import java.util.function.Function;
  * Thread-safe.
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
-  private static final boolean READY = init();
+  private static volatile Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS;
+  private static volatile boolean READY;
 
   SpellCheckingEditorCustomization(boolean enabled) {
     super(enabled);
   }
 
-  @SuppressWarnings("unchecked")
-  private static boolean init() {
-    // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
-    // Please perform corresponding settings tuning if that assumption is broken in the future.
-
-    Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
-    for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
-      try {
-        LocalInspectionTool tool = inspectionClass.newInstance();
-        SPELL_CHECK_TOOLS.put(tool.getShortName(), new LocalInspectionToolWrapper(tool));
+  @NotNull
+  private static Map<String, LocalInspectionToolWrapper> getSpellCheckTools() {
+    Map<String, LocalInspectionToolWrapper> tools = SPELL_CHECK_TOOLS;
+    if (tools == null) {
+      tools = new HashMap<>();
+      // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
+      // Please perform corresponding settings tuning if that assumption is broken in the future.
+      Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
+      for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
+        try {
+          LocalInspectionTool tool = inspectionClass.newInstance();
+          tools.put(tool.getShortName(), new LocalInspectionToolWrapper(tool));
+        }
+        catch (Throwable e) {
+          READY = false;
+          return Map.of();
+        }
       }
-      catch (Throwable e) {
-        return false;
-      }
+      SPELL_CHECK_TOOLS = tools;
+      READY = true;
     }
-    return true;
+    return tools;
+  }
+
+  private static boolean isReady() {
+    if (SPELL_CHECK_TOOLS == null) {
+      getSpellCheckTools();
+    }
+    return READY;
   }
 
   @Override
   public void customize(@NotNull EditorEx editor) {
     boolean apply = isEnabled();
 
-    if (!READY) {
+    if (!isReady()) {
       return;
     }
 
@@ -106,8 +119,8 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     return strategy instanceof MyInspectionProfileStrategy && !((MyInspectionProfileStrategy)strategy).myUseSpellCheck;
   }
 
-  public static Set<String> getSpellCheckingToolNames() {
-    return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
+  static Set<String> getSpellCheckingToolNames() {
+    return Collections.unmodifiableSet(getSpellCheckTools().keySet());
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
@@ -117,7 +130,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public @NotNull InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
-      if (!READY) {
+      if (!isReady()) {
         return new InspectionProfileWrapper((InspectionProfileImpl)profile);
       }
       MyInspectionProfileWrapper wrapper = myWrappers.get(profile);
@@ -141,7 +154,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-      return (key != null && SPELL_CHECK_TOOLS.containsKey(key.getShortName()) ? myUseSpellCheck : super.isToolEnabled(key, element));
+      return (key != null && getSpellCheckTools().containsKey(key.getShortName()) ? myUseSpellCheck : super.isToolEnabled(key, element));
     }
   }
 }

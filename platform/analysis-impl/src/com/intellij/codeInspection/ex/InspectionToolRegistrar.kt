@@ -15,8 +15,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 private val LOG = logger<InspectionToolRegistrar>()
 private val EP_NAME = ExtensionPointName<InspectionToolProvider>("com.intellij.inspectionToolProvider")
@@ -49,10 +53,12 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }
   }
 
-  private fun <T : InspectionEP> registerInspections(factories: MutableMap<Any, MutableList<InspectionFactory>>,
-                                                     app: Application,
-                                                     shortNames: MutableMap<String, InspectionEP>,
-                                                     extensionPointName: ExtensionPointName<T>) {
+  private fun <T : InspectionEP> registerInspections(
+    factories: MutableMap<Any, MutableList<InspectionFactory>>,
+    app: Application,
+    shortNames: MutableMap<String, InspectionEP>,
+    extensionPointName: ExtensionPointName<T>,
+  ) {
     val isInternal = app.isInternal
     for (extension in extensionPointName.extensionList) {
       registerInspection(extension, shortNames, isInternal, factories)
@@ -94,6 +100,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     for (listener in listeners) {
       listener.toolAdded(inspectionToolWrapper)
     }
+    inconsistentInspectionNameCache.clear()
   }
 
   private fun fireToolRemoved(factory: InspectionFactory) {
@@ -101,6 +108,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     for (listener in listeners) {
       listener.toolRemoved(inspectionToolWrapper)
     }
+    inconsistentInspectionNameCache.remove(inspectionToolWrapper.myTool?.javaClass ?: Int::class.java)
   }
 
   override fun createTools(): List<InspectionToolWrapper<*, *>> {
@@ -117,12 +125,37 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }
     return tools
   }
+
+  /**
+   * cache of inspection tool class -> inspection EP for which LocalInspectionEP.LOCAL_INSPECTION.getByKey does not work,
+   * because sometimes tool.getShortName() is inconsistent with `shortName="xxx"` in plugin.xml. For example: CheckDtdReferencesInspection
+   *
+   * @see com.intellij.codeInspection.ex.LocalInspectionToolWrapper.findInspectionEP
+   */
+  private val inconsistentInspectionNameCache: ConcurrentMap<Class<*>, LocalInspectionEP> = ConcurrentHashMap()
+  private val NULL_EP: LocalInspectionEP = LocalInspectionEP() // means find was unsuccessful, null result is cached
+  @ApiStatus.Internal
+  fun findInspectionEP(tool: LocalInspectionTool): LocalInspectionEP? {
+    val byKey = LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.shortName, LocalInspectionToolWrapper::class.java) { it.getShortName() }
+    if (byKey != null) {
+      return byKey
+    }
+    val toolClass: Class<*> = tool.javaClass
+    var ep = inconsistentInspectionNameCache[toolClass]
+    if (ep == null) {
+      ep = LocalInspectionEP.LOCAL_INSPECTION.findFirstSafe { toolClass.name == it.implementationClass }
+      ep = ConcurrencyUtil.cacheOrGet(inconsistentInspectionNameCache, toolClass, ep?:NULL_EP)
+    }
+    return if (ep === NULL_EP) null else ep
+  }
 }
 
-private fun <T : InspectionEP> registerInspection(inspection: T,
-                                                  shortNames: MutableMap<String, InspectionEP>,
-                                                  isInternal: Boolean,
-                                                  factories: MutableMap<Any, MutableList<InspectionFactory>>): (InspectionFactory)? {
+private fun registerInspection(
+  inspection: InspectionEP,
+  shortNames: MutableMap<String, InspectionEP>,
+  isInternal: Boolean,
+  factories: MutableMap<Any, MutableList<InspectionFactory>>,
+): (InspectionFactory)? {
   checkForDuplicateShortName(inspection, shortNames)
   if (!isInternal && inspection.isInternal) {
     return null
@@ -135,10 +168,12 @@ private fun <T : InspectionEP> registerInspection(inspection: T,
   return factory
 }
 
-private fun registerToolProvider(provider: InspectionToolProvider,
-                                 pluginDescriptor: PluginDescriptor,
-                                 keyToFactories: MutableMap<Any, MutableList<InspectionFactory>>,
-                                 added: MutableList<InspectionFactory>?) {
+private fun registerToolProvider(
+  provider: InspectionToolProvider,
+  pluginDescriptor: PluginDescriptor,
+  keyToFactories: MutableMap<Any, MutableList<InspectionFactory>>,
+  added: MutableList<InspectionFactory>?,
+) {
   val factories = keyToFactories.computeIfAbsent(provider) { ArrayList() }
   for (aClass in provider.inspectionClasses) {
     val supplier = {
