@@ -44,7 +44,7 @@ final class HighlighterRecycler {
 
   // null means no highlighter found in the cache
   @Nullable
-  synchronized public RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<HighlightInfo> collection = incinerator.get(range);
     if (collection != null) {
@@ -67,11 +67,12 @@ final class HighlighterRecycler {
   }
   //
   @NotNull
-  synchronized Collection<? extends HighlightInfo> forAllInGarbageBin() {
+  private synchronized Collection<? extends HighlightInfo> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 
-  public @Nullable RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength) {
+  @Nullable
+  RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength) {
     return pickupHighlighterFromGarbageBin(0, fileTextLength, DaemonCodeAnalyzerEx.ANY_GROUP);
   }
 
@@ -84,8 +85,7 @@ final class HighlighterRecycler {
     HighlighterRecycler recycler = new HighlighterRecycler();
     consumer.accept(recycler);
     for (HighlightInfo info : recycler.forAllInGarbageBin()) {
-      RangeHighlighterEx highlighter = info.highlighter;
-      UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, session);
+      UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
     }
   }
   synchronized boolean isEmpty() {

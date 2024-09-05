@@ -100,43 +100,6 @@ public class HighlightInfo implements Segment {
   @Deprecated
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  /**
-   * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
-   * and return that value, or null if the quickfix was not found.
-   */
-  public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
-    Set<IntentionActionDescriptor> processed = new HashSet<>();
-    List<Pair<IntentionActionDescriptor, RangeMarker>> markers;
-    List<Pair<IntentionActionDescriptor, TextRange>> ranges;
-    synchronized (this) {
-      markers = quickFixActionMarkers;
-      ranges = quickFixActionRanges;
-    }
-    // prefer range markers as having more actual offsets
-    T result = find(markers, processed, predicate);
-    if (result != null) return result;
-    return find(ranges, processed, predicate);
-  }
-
-  private static @Nullable <T> T find(@Nullable List<? extends Pair<IntentionActionDescriptor, ? extends Segment>> markers,
-                                      @NotNull Set<? super IntentionActionDescriptor> processed,
-                                      @NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends T> predicate) {
-    if (markers != null) {
-      for (Pair<IntentionActionDescriptor, ? extends Segment> pair : markers) {
-        Segment segment = pair.second;
-        TextRange range = segment instanceof RangeMarker ? ((RangeMarker)segment).isValid() ? ((RangeMarker)segment).getTextRange() : null : (TextRange)segment;
-        if (range == null) continue;
-        IntentionActionDescriptor descriptor = pair.first;
-        if (!processed.add(descriptor)) continue;
-        T result = predicate.apply(descriptor, range);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    return null;
-  }
-
   private final @DetailedDescription String description;
   private final @Tooltip String toolTip;
   private final @NotNull HighlightSeverity severity;
@@ -211,6 +174,43 @@ public class HighlightInfo implements Segment {
     this.toolId = toolId;
     this.group = group;
     this.unresolvedReference = unresolvedReference;
+  }
+
+  /**
+   * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
+   * and return that value, or null if the quickfix was not found.
+   */
+  public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
+    Set<IntentionActionDescriptor> processed = new HashSet<>();
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers;
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges;
+    synchronized (this) {
+      markers = quickFixActionMarkers;
+      ranges = quickFixActionRanges;
+    }
+    // prefer range markers as having more actual offsets
+    T result = find(markers, processed, predicate);
+    if (result != null) return result;
+    return find(ranges, processed, predicate);
+  }
+
+  private static @Nullable <T> T find(@Nullable List<? extends Pair<IntentionActionDescriptor, ? extends Segment>> markers,
+                                      @NotNull Set<? super IntentionActionDescriptor> processed,
+                                      @NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends T> predicate) {
+    if (markers != null) {
+      for (Pair<IntentionActionDescriptor, ? extends Segment> pair : markers) {
+        Segment segment = pair.second;
+        TextRange range = segment instanceof RangeMarker ? ((RangeMarker)segment).isValid() ? ((RangeMarker)segment).getTextRange() : null : (TextRange)segment;
+        if (range == null) continue;
+        IntentionActionDescriptor descriptor = pair.first;
+        if (!processed.add(descriptor)) continue;
+        T result = predicate.apply(descriptor, range);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -705,12 +705,12 @@ public class HighlightInfo implements Segment {
 
   public int getActualStartOffset() {
     RangeHighlighterEx h = highlighter;
-    return h == null || !h.isValid() ? startOffset : h.getStartOffset();
+    return h == null || !h.isValid() || isFileLevelAnnotation() ? startOffset : h.getStartOffset();
   }
 
   public int getActualEndOffset() {
     RangeHighlighterEx h = highlighter;
-    return h == null || !h.isValid() ? endOffset : h.getEndOffset();
+    return h == null || !h.isValid()  || isFileLevelAnnotation() ? endOffset : h.getEndOffset();
   }
 
   public static class IntentionActionDescriptor {
