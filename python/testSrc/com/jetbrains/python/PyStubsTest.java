@@ -153,8 +153,9 @@ public class PyStubsTest extends PyTestCase {
             element(PyTargetExpressionStub.class, ImmutableRangeSet.of())
           ),
         element(PyTargetExpressionStub.class,
-                ImmutableRangeSet.unionOf(List.of(Range.openClosed(Version.parseVersion("2.1"), Version.parseVersion("2.2")),
-                                                  Range.greaterThan(Version.parseVersion("3.0"))))),
+                ImmutableRangeSet.of(Range.greaterThan(Version.parseVersion("2.1")))
+                  .intersection(ImmutableRangeSet.unionOf(
+                    List.of(Range.atMost(Version.parseVersion("2.2")), Range.greaterThan(Version.parseVersion("3.0")))))),
         element(PyImportStatementStub.class, versionAtMost("2.1")),
         element(PyImportStatementStub.class, versionAtMost("2.1")),
         element(PyFromImportStatementStub.class, versionAtMost("2.1")),
