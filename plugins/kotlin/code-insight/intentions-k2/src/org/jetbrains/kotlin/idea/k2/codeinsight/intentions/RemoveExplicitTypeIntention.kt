@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeUtils.removeTypeReference
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.returnTypeOfCallDependsOnTypeParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeReferencesTypeParameter
 import org.jetbrains.kotlin.psi.*
@@ -197,15 +198,5 @@ internal class RemoveExplicitTypeIntention :
       updater: ModPsiUpdater,
     ) {
         element.removeTypeReference()
-    }
-
-    private fun KtDeclaration.removeTypeReference() {
-        if (this is KtCallableDeclaration) {
-            typeReference = null
-        } else if (this is KtPropertyAccessor) {
-            val first = rightParenthesis?.nextSibling ?: return
-            val last = returnTypeReference ?: return
-            deleteChildRange(first, last)
-        }
     }
 }

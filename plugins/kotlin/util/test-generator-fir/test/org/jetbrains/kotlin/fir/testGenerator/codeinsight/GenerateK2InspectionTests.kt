@@ -48,6 +48,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/moveLambdaOutsideParentheses")
             model("${idea}/inspectionsLocal/foldInitializerAndIfToElvis")
             model("${idea}/inspectionsLocal/redundantElseInIf")
+            model("${idea}/inspectionsLocal/redundantExplicitType")
             model("${idea}/inspectionsLocal/joinDeclarationAndAssignment")
             model("${idea}/inspectionsLocal/replaceArrayOfWithLiteral")
             model("${idea}/inspectionsLocal/selfAssignment")

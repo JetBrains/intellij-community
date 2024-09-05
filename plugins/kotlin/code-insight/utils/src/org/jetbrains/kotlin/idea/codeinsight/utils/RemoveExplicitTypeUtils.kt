@@ -1,0 +1,18 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeinsight.utils
+
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+
+object RemoveExplicitTypeUtils {
+    fun KtDeclaration.removeTypeReference() {
+        if (this is KtCallableDeclaration) {
+            typeReference = null
+        } else if (this is KtPropertyAccessor) {
+            val first = rightParenthesis?.nextSibling ?: return
+            val last = returnTypeReference ?: return
+            deleteChildRange(first, last)
+        }
+    }
+}
