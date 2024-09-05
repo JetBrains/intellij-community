@@ -95,9 +95,10 @@ internal open class ImmutableEntityStorageImpl(
     }
 
     val newData = newInstance()
-    entityCache.put(entityId, newData)
+    val inserted = entityCache.putIfAbsent(entityId, newData) ?: newData
 
-    return newData
+    @Suppress("UNCHECKED_CAST")
+    return inserted as T
   }
 
   companion object {
