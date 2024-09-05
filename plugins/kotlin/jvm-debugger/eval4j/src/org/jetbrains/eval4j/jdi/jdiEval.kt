@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi
 
@@ -40,7 +40,7 @@ open class JDIEval(
     }
 
     private fun loadClass(classType: Type, classLoader: ClassLoaderReference?): Value {
-        val loadedClasses = vm.classesByName(classType.jdiName)
+        val loadedClasses = vm.classesByName(classType.className)
         if (loadedClasses.isNotEmpty()) {
             for (loadedClass in loadedClasses) {
                 if (loadedClass.isPrepared && (classType.descriptor in BOOTSTRAP_CLASS_DESCRIPTORS || loadedClass.classLoader() == classLoader)) {
