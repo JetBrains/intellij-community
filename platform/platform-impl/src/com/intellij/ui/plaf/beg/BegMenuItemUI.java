@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
@@ -579,7 +579,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     @Override
     public void menuDragMouseReleased(MenuDragMouseEvent e){
-      if (!Registry.is("menu.drag.enabled", true)) return;
+      if (!AdvancedSettings.getBoolean("ide.trigger.menu.actions.on.rmb.release")) return;
       MenuSelectionManager manager=e.getMenuSelectionManager();
       Point p=e.getPoint();
       if(p.x>=0&&p.x<menuItem.getWidth()&&
