@@ -79,6 +79,4 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
    */
   @ApiStatus.Experimental
   public static final DataKey<PopupLocator> CONTEXT_MENU_LOCATOR = DataKey.create("contextMenuLocator");
-
-  public static final DataKey<Boolean> EDITOR_CLICK_OVER_TEXT = DataKey.create("editor.over.text");
 }

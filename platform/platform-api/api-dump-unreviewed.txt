@@ -1798,7 +1798,6 @@ c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - sf:CUT_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:DELETE_ELEMENT_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:DOMINANT_HINT_AREA_RECTANGLE:com.intellij.openapi.actionSystem.DataKey
-- sf:EDITOR_CLICK_OVER_TEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:EXPORTER_TO_TEXT_FILE:com.intellij.openapi.actionSystem.DataKey
 - sf:LAST_ACTIVE_FILE_EDITOR:com.intellij.openapi.actionSystem.DataKey
 - sf:LAST_ACTIVE_TOOL_WINDOWS:com.intellij.openapi.actionSystem.DataKey

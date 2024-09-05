@@ -177,10 +177,6 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         location = editor.getCaretModel().getLogicalPosition();
     }
     sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(editor, location));
-    Point point = editor.myLastMousePressedPoint;
-    if (point != null) {
-      sink.set(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT, EditorUtil.isPointOverText(editor, point));
-    }
   }
 
   @DirtyUI
