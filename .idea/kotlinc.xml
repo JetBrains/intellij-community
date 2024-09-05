@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="Kotlin2JsCompilerArguments">
+    <option name="moduleKind" value="plain" />
+  </component>
   <component name="Kotlin2JvmCompilerArguments">
     <option name="jvmTarget" value="17" />
   </component>
@@ -11,6 +14,6 @@
     <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaNonPublicApi" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="2.0.0" />
+    <option name="version" value="2.0.20" />
   </component>
 </project>
