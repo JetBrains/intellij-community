@@ -26,11 +26,11 @@ import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.Java11Shim
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ConcurrentLongObjectMap
 import io.opentelemetry.api.metrics.Meter
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -74,9 +74,7 @@ internal open class ImmutableEntityStorageImpl(
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
-  //
-  // ConcurrentLongObjectHashMap can be used here, but it's not accessible from this module
-  private val entityCache: Long2ObjectMap<WorkspaceEntity> = Long2ObjectOpenHashMap() // guarded by entityCache
+  private val entityCache: ConcurrentLongObjectMap<WorkspaceEntity> = Java11Shim.INSTANCE.createConcurrentLongObjectMap()
 
   override fun <T> cached(query: StorageQuery<T>): T {
     return snapshotCache.cached(query, this, null).value
@@ -88,16 +86,17 @@ internal open class ImmutableEntityStorageImpl(
     return if (entity !== NULL_ENTITY) entity as E else null
   }
 
-  override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T {
-    val found = synchronized(entityCache) { entityCache[entityId] }
+  override fun <T : WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T {
+    val found = entityCache[entityId]
+
     if (found != null) {
       @Suppress("UNCHECKED_CAST")
       return found as T
     }
+
     val newData = newInstance()
-    synchronized(entityCache) {
-      entityCache.put(entityId, newData)
-    }
+    entityCache.put(entityId, newData)
+
     return newData
   }
 
