@@ -9,6 +9,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FULL_INSERT
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.INVALIDATION_EVENT
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.NEXT_LINE_ACTIONS
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.NEXT_WORD_ACTIONS
+import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.SHOWING_TIME
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TIME_TO_START_SHOWING
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSERTED_LENGTH
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSERTED_LINES
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionEventAdapter {
   private val lastInvocationTimestamp = AtomicLong()
+  private val showStartTime = AtomicLong()
   private val wasShown = AtomicBoolean()
   private val fullInsertActions = AtomicInteger()
   private val nextWordActions = AtomicInteger()
@@ -35,9 +37,11 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   private val totalInsertedLength = AtomicInteger()
   private val totalInsertedLines = AtomicInteger()
 
+
   override fun onRequest(event: InlineCompletionEventType.Request) {
     lastInvocationTimestamp.set(event.lastInvocation)
     wasShown.set(false)
+    showStartTime.set(0)
     nextWordActions.set(0)
     nextLineActions.set(0)
     fullInsertActions.set(0)
@@ -59,6 +63,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     if (wasShown.getAndSet(true)) return
     val container = InlineCompletionLogsContainer.get(editor) ?: return
     container.add(TIME_TO_START_SHOWING with (System.currentTimeMillis() - lastInvocationTimestamp.get()))
+    showStartTime.set(System.currentTimeMillis())
   }
 
   override fun onInsert(event: InlineCompletionEventType.Insert) {
@@ -90,6 +95,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   override fun onHide(event: InlineCompletionEventType.Hide) {
     val container = InlineCompletionLogsContainer.remove(editor) ?: return
     container.add(WAS_SHOWN with wasShown.get())
+    container.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime.get()))
     container.add(FINISH_TYPE with event.finishType)
     container.add(FULL_INSERT_ACTIONS with fullInsertActions.get())
     container.add(NEXT_WORD_ACTIONS with nextWordActions.get())
@@ -110,6 +116,7 @@ private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
   val WAS_SHOWN = register(EventFields.Boolean("was_shown", "Indicates whether completion or some part of it was shown during the session or not"))
   val TIME_TO_START_SHOWING = register(EventFields.Long("time_to_start_showing", "Time from the completion request to start showing at least one element"))
+  val SHOWING_TIME = register(EventFields.Long("showing_time", "Duration from the beginning of the show to its end (for any reason)"))
   val FINISH_TYPE = register(EventFields.Enum("finish_type", InlineCompletionUsageTracker.ShownEvents.FinishType::class.java, "Indicates how completion session was finished"))
   val INVALIDATION_EVENT = register(EventFields.Class("invalidation_event", "In case of finish type 'invalidated'  which exactly event invalidated the completion"))
   val FULL_INSERT_ACTIONS = register(EventFields.Int("full_insert_actions", "Number of full inline completion inserts"))
