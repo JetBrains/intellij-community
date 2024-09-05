@@ -5,12 +5,13 @@ import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RecentProjectsWelcomeScreenActionBase.Companion.getSelectedItems
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import java.nio.file.Path
 
-class RevealProjectDirAction : DumbAwareAction(RevealFileAction.getActionName()), LightEditCompatible {
+class RevealProjectDirAction : DumbAwareAction(RevealFileAction.getActionName()), LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   override fun update(e: AnActionEvent) {
     val items = getSelectedItems(e)
     e.presentation.isEnabledAndVisible = items?.any { it is RecentProjectItem } == true
