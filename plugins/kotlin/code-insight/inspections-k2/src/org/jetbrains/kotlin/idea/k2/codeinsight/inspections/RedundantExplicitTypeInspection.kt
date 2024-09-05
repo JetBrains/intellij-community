@@ -1,32 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeUtils.removeTypeReference
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeTypeReference
 import org.jetbrains.kotlin.psi.*
 
-class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
-
+internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.Simple<KtProperty, Unit>() {
     private fun KaSession.isCompanionObject(type: KaType): Boolean {
         val symbol = type.symbol as? KaClassSymbol ?: return false
         return symbol.classKind == KaClassKind.COMPANION_OBJECT
     }
-
 
     private fun KaSession.hasRedundantType(property: KtProperty): Boolean {
         if (!property.isLocal) return false
@@ -65,31 +60,37 @@ class RedundantExplicitTypeInspection : AbstractKotlinInspection() {
         return true
     }
 
-    private class RemoveRedundantTypeFix(element: KtProperty) : AbstractKotlinApplicableQuickFix<KtProperty>(element) {
-        override fun getFamilyName(): @IntentionFamilyName String =
+    private class RemoveRedundantTypeFix() : KotlinModCommandQuickFix<KtProperty>() {
+        override fun getFamilyName(): String =
             KotlinBundle.message("remove.explicit.type.specification")
 
-        override fun apply(
-            element: KtProperty,
+        override fun applyFix(
             project: Project,
-            editor: Editor?,
-            file: KtFile
+            element: KtProperty,
+            updater: ModPsiUpdater
         ) {
             element.removeTypeReference()
         }
     }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-        propertyVisitor(fun(property) {
-            val typeReference = property.typeReference ?: return
-            analyze(property) {
-                if (hasRedundantType(property)) {
-                    holder.registerProblem(
-                        typeReference,
-                        KotlinBundle.message("explicitly.given.type.is.redundant.here"),
-                        IntentionWrapper(RemoveRedundantTypeFix(property).asIntention())
-                    )
-                }
-            }
-        })
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = propertyVisitor(fun(property) {
+        visitTargetElement(property, holder, isOnTheFly)
+    })
+
+    override fun getProblemDescription(element: KtProperty, context: Unit) =
+        KotlinBundle.message("explicitly.given.type.is.redundant.here")
+
+    override fun createQuickFix(
+        element: KtProperty,
+        context: Unit
+    ): KotlinModCommandQuickFix<KtProperty> = RemoveRedundantTypeFix()
+
+    override fun isApplicableByPsi(element: KtProperty): Boolean {
+        return element.typeReference != null
+    }
+
+    context(KaSession)
+    override fun prepareContext(element: KtProperty): Unit? {
+        return Unit.takeIf { hasRedundantType(element) }
+    }
 }

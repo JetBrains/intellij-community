@@ -5,14 +5,12 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
-object RemoveExplicitTypeUtils {
-    fun KtDeclaration.removeTypeReference() {
-        if (this is KtCallableDeclaration) {
-            typeReference = null
-        } else if (this is KtPropertyAccessor) {
-            val first = rightParenthesis?.nextSibling ?: return
-            val last = returnTypeReference ?: return
-            deleteChildRange(first, last)
-        }
+fun KtDeclaration.removeTypeReference() {
+    if (this is KtCallableDeclaration) {
+        typeReference = null
+    } else if (this is KtPropertyAccessor) {
+        val first = rightParenthesis?.nextSibling ?: return
+        val last = returnTypeReference ?: return
+        deleteChildRange(first, last)
     }
 }
