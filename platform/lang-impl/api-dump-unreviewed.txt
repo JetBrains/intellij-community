@@ -17167,6 +17167,7 @@ com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - a:setActionActive(java.lang.String,Z):V
 f:com.intellij.ide.structureView.newStructureView.TreeModelWrapper
 - com.intellij.ide.structureView.StructureViewModel
+- com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
 - com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel
 - <init>(com.intellij.ide.structureView.StructureViewModel,com.intellij.ide.structureView.newStructureView.TreeActionsOwner):V
 - addEditorPositionListener(com.intellij.ide.structureView.FileEditorPositionListener):V
@@ -17181,7 +17182,9 @@ f:com.intellij.ide.structureView.newStructureView.TreeModelWrapper
 - getRoot():com.intellij.ide.structureView.StructureViewTreeElement
 - getSorters():com.intellij.ide.util.treeView.smartTree.Sorter[]
 - s:isActive(com.intellij.ide.util.treeView.smartTree.TreeAction,com.intellij.ide.structureView.newStructureView.TreeActionsOwner):Z
+- isAutoExpand(com.intellij.ide.structureView.StructureViewTreeElement):Z
 - isEnabled(com.intellij.ide.util.treeView.smartTree.NodeProvider):Z
+- isSmartExpand():Z
 - removeEditorPositionListener(com.intellij.ide.structureView.FileEditorPositionListener):V
 - removeModelListener(com.intellij.ide.structureView.ModelListener):V
 - shouldEnterElement(java.lang.Object):Z

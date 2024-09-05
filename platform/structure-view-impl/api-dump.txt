@@ -81,6 +81,7 @@ f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - f:getChildren():java.util.List
 - f:getChildrenGrouped():java.util.List
 - f:getModel():java.lang.Object
+- f:getParent():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
 - f:getInstance(com.intellij.openapi.project.Project,java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
@@ -114,6 +115,7 @@ a:com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode
 - p:filterChildren(com.intellij.ide.util.treeView.smartTree.Filter[]):V
 - getChildren():java.util.Collection
 - pa:initChildren():V
+- isAutoExpandAllowed():Z
 - navigate(Z):V
 - pa:performTreeActions():V
 - p:resetChildren():V
