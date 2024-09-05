@@ -147,8 +147,13 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
     // Otherwise, it's possible to have EDT being terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
     // [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
     // and thus will effectively disable auto shutdown behavior for this application.
-    @Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-    sun.awt.AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
+    try {
+      @Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+      sun.awt.AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
+    }
+    catch (e: IllegalAccessError) {
+      throw RuntimeException("Required '--add-opens' option wasn't added to JVM arguments. If you're running the IDE from sources, most probably it means that 'DevKit' plugin isn't enabled", e)
+    }
   }
 
   // required for both UI scale computation and base LaF
