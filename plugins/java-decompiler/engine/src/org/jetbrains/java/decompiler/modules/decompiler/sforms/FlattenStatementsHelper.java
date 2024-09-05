@@ -128,6 +128,13 @@ public class FlattenStatementsHelper {
           case CATCH_ALL, TRY_CATCH -> {
             DirectNode firstnd = new DirectNode(DirectNodeType.TRY, stat, stat.id + "_try");
 
+            if (stat.type == Statement.StatementType.TRY_CATCH) {
+              CatchStatement catchStat = (CatchStatement)stat;
+              if (catchStat.getTryType() == CatchStatement.RESORCES) {
+                firstnd.exprents = catchStat.getResources();
+              }
+            }
+
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
             graph.nodes.putWithKey(firstnd, firstnd.id);
 

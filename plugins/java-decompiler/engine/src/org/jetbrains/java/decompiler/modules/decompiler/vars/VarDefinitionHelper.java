@@ -99,7 +99,11 @@ public class VarDefinitionHelper {
         lstVars = ((CatchAllStatement)st).getVars();
       }
       else if (st.type == StatementType.TRY_CATCH) {
-        lstVars = ((CatchStatement)st).getVars();
+        lstVars = new ArrayList<>(((CatchStatement)st).getVars());
+        // resource vars must also be included
+        for (Exprent exp : ((CatchStatement)st).getResources()) {
+          lstVars.add((VarExprent)((AssignmentExprent)exp).getLeft());
+        }
       }
 
       if (lstVars != null) {
