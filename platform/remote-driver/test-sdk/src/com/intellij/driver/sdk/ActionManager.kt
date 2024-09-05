@@ -25,7 +25,7 @@ interface AnAction
 @Remote(value = "com.intellij.openapi.util.ActionCallback")
 interface ActionCallback
 
-fun Driver.invokeAction(actionId: String, now: Boolean = true, rdTarget: RdTarget? = null) {
+fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, rdTarget: RdTarget? = null) {
   withContext(OnDispatcher.EDT) {
     val target = rdTarget ?: if (isRemoteIdeMode) RdTarget.FRONTEND else RdTarget.DEFAULT
     val actionManager = service<ActionManager>(target)
@@ -34,7 +34,7 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, rdTarget: RdTarge
       throw IllegalStateException("Action $actionId was not found")
     }
     else {
-      actionManager.tryToExecute(action, null, null, null, now)
+      actionManager.tryToExecute(action, null, component, null, now)
     }
   }
 }
