@@ -19351,8 +19351,8 @@ f:com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjec
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RevealProjectDirAction
-- com.intellij.openapi.project.DumbAwareAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
