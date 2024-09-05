@@ -430,7 +430,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           }
           case "Exception" -> {
             String exceptionClassName = Objects.requireNonNull(comment.readKindValue());
-            breakpoint = breakpointManager.addExceptionBreakpoint(exceptionClassName, "");
+            breakpoint = breakpointManager.addExceptionBreakpoint(exceptionClassName);
             if (breakpoint == null) break;
             systemPrintln("ExceptionBreakpoint created at " + breakpointLocation);
             String catchClassFiltersStr = comment.readValue("Catch class filters");

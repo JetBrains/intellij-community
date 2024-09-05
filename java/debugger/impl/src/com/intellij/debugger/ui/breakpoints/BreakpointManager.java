@@ -247,21 +247,29 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
+  public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName) {
     ThreadingAssertions.assertEventDispatchThread();
     final JavaExceptionBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(JavaExceptionBreakpointType.class);
     return WriteAction.compute(() -> {
       XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
-        .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
+        .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName));
       if (getJavaBreakpoint(xBreakpoint) instanceof ExceptionBreakpoint exceptionBreakpoint) {
-        exceptionBreakpoint.setQualifiedName(exceptionClassName);
-        exceptionBreakpoint.setPackageName(packageName);
+        LOG.assertTrue(exceptionClassName.equals(exceptionBreakpoint.getProperties().myQualifiedName));
         addBreakpoint(exceptionBreakpoint);
         LOG.debug("ExceptionBreakpoint Added");
         return exceptionBreakpoint;
       }
       return null;
     });
+  }
+
+  /**
+   * @deprecated use {@link #addExceptionBreakpoint(String)}
+   */
+  @Deprecated
+  @Nullable
+  public ExceptionBreakpoint addExceptionBreakpoint(@NotNull final String exceptionClassName, final String packageName) {
+    return addExceptionBreakpoint(exceptionClassName);
   }
 
   @Nullable

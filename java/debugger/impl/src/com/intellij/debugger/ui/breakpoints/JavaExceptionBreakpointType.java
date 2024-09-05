@@ -115,7 +115,7 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
 
     if (qName != null && !qName.isEmpty()) {
       return XDebuggerManager.getInstance(project).getBreakpointManager()
-        .addBreakpoint(this, new JavaExceptionBreakpointProperties(qName, ((PsiClassOwner)selectedClass.getContainingFile()).getPackageName()));
+        .addBreakpoint(this, new JavaExceptionBreakpointProperties(qName));
     }
     return null;
   }
