@@ -16752,13 +16752,6 @@ f:com.intellij.openapi.project.DefaultProjectFactoryImpl
 - com.intellij.openapi.project.DefaultProjectFactory
 - <init>():V
 - getDefaultProject():com.intellij.openapi.project.Project
-f:com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
-- sf:INSTANCE:com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- f:logActionBlocked(com.intellij.openapi.project.Project,java.lang.String):V
-- f:logActionsBlocked(com.intellij.openapi.project.Project,java.util.List,Z):V
-- f:logFunctionalityBlocked(com.intellij.openapi.project.Project,com.intellij.openapi.project.DumbModeBlockedFunctionality):V
-- f:logFunctionalityBlockedWithCoalescing(com.intellij.openapi.project.Project,com.intellij.openapi.project.DumbModeBlockedFunctionality,java.lang.Object):V
 *f:com.intellij.openapi.project.DumbModeProgressTitle
 - <init>(com.intellij.openapi.project.Project):V
 - attachDumbModeProgress(com.intellij.openapi.progress.ProgressIndicator):V
