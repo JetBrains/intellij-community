@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
@@ -13,6 +14,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.absoluteValue
 
 @ApiStatus.Internal
@@ -20,7 +22,7 @@ class InlineCompletionLogsContainer(private val requestId: Long) {
 
   private val fullLogsShare = 0.01f
 
-  private var randomPass = false
+  var randomPass = AtomicBoolean(false)
 
   /**
    * Describes phase of the Inline completion session.
@@ -85,7 +87,10 @@ class InlineCompletionLogsContainer(private val requestId: Long) {
    */
   fun logCurrent() {
     cancelAsyncAdds()
-    val sendFullLogs = randomPass || requestId.absoluteValue % 100 < fullLogsShare * 100
+
+    // for release, log only basic fields for most of the requests and very rarely log everything.
+    // since we skip filtering in the random pass scenario, we want the full logs in such cases too.
+    val sendFullLogs = ApplicationManager.getApplication().isEAP || randomPass.get() || requestId.absoluteValue % 100 < fullLogsShare * 100
 
     InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
       logs.filter { it.value.isNotEmpty() }
