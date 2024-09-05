@@ -51,9 +51,6 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
       return;
     }
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
-    if (debugManager == null) {
-      return;
-    }
     final BreakpointManager manager = debugManager.getBreakpointManager();
     final PlaceInDocument place = getPlace(e);
     if (place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
