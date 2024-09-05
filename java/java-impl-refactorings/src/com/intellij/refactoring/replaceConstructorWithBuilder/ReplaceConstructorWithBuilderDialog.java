@@ -74,7 +74,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private static final String SETTER_PREFIX_KEY = "ConstructorWithBuilder.SetterPrefix";
 
   protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
-    super(project, false);
+    super(project, false, true);
     myConstructors = constructors;
     myParametersMap = new LinkedHashMap<>();
     mySetterPrefix = PropertiesComponent.getInstance(project).getValue(SETTER_PREFIX_KEY, "set");
@@ -130,7 +130,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     MoveDestination destination =
       ((DestinationFolderComboBox)myDestinationCb).selectDirectory(new PackageWrapper(myConstructors[0].getManager(), packageName), false);
     invokeRefactoring(new ReplaceConstructorWithBuilderProcessor(getProject(), myConstructors, myParametersMap, className, packageName,
-                                                                 destination, createNewBuilder));
+                                                                 destination, createNewBuilder, isOpenInEditor()));
   }
 
   private void showErrorDialog(@NlsContexts.DialogMessage String message) {

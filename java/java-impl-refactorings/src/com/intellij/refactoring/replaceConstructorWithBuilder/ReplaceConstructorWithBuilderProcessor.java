@@ -2,6 +2,7 @@
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.module.Module;
@@ -52,23 +53,25 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   private final boolean myCreateNewBuilderClass;
   private final PsiElementFactory myElementFactory;
   private final MoveDestination myMoveDestination;
-
+  private final boolean myOpenInEditor;
 
   public ReplaceConstructorWithBuilderProcessor(Project project,
                                                 PsiMethod[] constructors,
                                                 Map<String, ParameterData> parametersMap,
                                                 @NotNull String className,
                                                 String packageName,
-                                                MoveDestination moveDestination, boolean createNewBuilderClass) {
+                                                MoveDestination moveDestination, 
+                                                boolean createNewBuilderClass,
+                                                boolean openInEditor) {
     super(project);
-    myMoveDestination = moveDestination;
     myElementFactory = JavaPsiFacade.getElementFactory(myProject);
     myConstructors = constructors;
     myParametersMap = parametersMap;
-
     myClassName = className;
     myPackageName = packageName;
+    myMoveDestination = moveDestination;
     myCreateNewBuilderClass = createNewBuilderClass;
+    myOpenInEditor = openInEditor;
   }
 
   @Override
@@ -153,6 +156,10 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     while (containingClass != null) {
       VisibilityUtil.escalateVisibility(containingClass, builderClass);
       containingClass = containingClass.getContainingClass();
+    }
+    
+    if (myOpenInEditor) {
+      EditorHelper.openInEditor(builderClass);
     }
   }
 

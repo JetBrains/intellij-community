@@ -68,22 +68,19 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
     doTest(true);
   }
 
-  private void doTest(final boolean createNewBuilderClass) {
+  private void doTest(boolean createNewBuilderClass) {
     doTest(createNewBuilderClass, null);
   }
 
-  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults) {
+  private void doTest(boolean createNewBuilderClass, Map<String, String> expectedDefaults) {
     doTest(createNewBuilderClass, expectedDefaults, null);
   }
 
-  private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults, final String conflicts) {
+  private void doTest(boolean createNewBuilderClass, Map<String, String> expectedDefaults, String conflicts) {
     doTest(createNewBuilderClass, expectedDefaults, conflicts, "");
   }
 
-  private void doTest(final boolean createNewBuilderClass,
-                      final Map<String, String> expectedDefaults,
-                      final String conflicts,
-                      final String packageName) {
+  private void doTest(boolean createNew, Map<String, String> expectedDefaults, String conflicts, String packageName) {
     doTest(() -> {
       final PsiClass aClass = myFixture.findClass("Test");
 
@@ -100,7 +97,9 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
         }
       }
       try {
-        new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, null, createNewBuilderClass).run();
+        final ReplaceConstructorWithBuilderProcessor processor =
+          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, null, createNew, false);
+        processor.run();
         if (conflicts != null) {
           fail("Conflicts were not detected: " + conflicts);
         }
