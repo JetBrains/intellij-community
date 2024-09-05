@@ -275,6 +275,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         return super.isInstanceOf(value, targetType)
                     }
                 }
+
+                override fun loadType(classType: Type, classLoader: ClassLoaderReference?): ReferenceType {
+                    return context.debugProcess.findClass(context.evaluationContext, classType.className, classLoader)
+                }
             }
             interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)
         }

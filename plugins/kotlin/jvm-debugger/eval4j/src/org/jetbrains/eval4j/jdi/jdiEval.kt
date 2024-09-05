@@ -36,15 +36,15 @@ open class JDIEval(
     private val isJava8OrLater = StringUtil.compareVersionNumbers(vm.version(), "1.8") >= 0
 
     override fun loadClass(classType: Type): Value {
-        return loadClass(classType, defaultClassLoader)
+        return loadType(classType, defaultClassLoader).classObject().asValue()
     }
 
-    private fun loadClass(classType: Type, classLoader: ClassLoaderReference?): Value {
+    open fun loadType(classType: Type, classLoader: ClassLoaderReference?): ReferenceType {
         val loadedClasses = vm.classesByName(classType.className)
         if (loadedClasses.isNotEmpty()) {
             for (loadedClass in loadedClasses) {
                 if (loadedClass.isPrepared && (classType.descriptor in BOOTSTRAP_CLASS_DESCRIPTORS || loadedClass.classLoader() == classLoader)) {
-                    return loadedClass.classObject().asValue()
+                    return loadedClass
                 }
             }
         }
@@ -57,7 +57,7 @@ open class JDIEval(
                     true
                 ),
                 listOf(loadString(classType.jdiName))
-            )
+            ).jdiClass!!.reflectedType()
         } else {
             return invokeStaticMethod(
                 MethodDescription(
@@ -71,9 +71,10 @@ open class JDIEval(
                     boolean(true),
                     classLoader.asValue()
                 )
-            )
+            ).jdiClass!!.reflectedType()
         }
     }
+
 
     private fun loadClassByName(name: String, classLoader: ClassLoaderReference): jdi_Type {
         val dimensions = name.count { it == '[' }
@@ -114,7 +115,7 @@ open class JDIEval(
     }
 
     private fun Type.asReferenceType(classLoader: ClassLoaderReference? = this@JDIEval.defaultClassLoader): ReferenceType =
-        loadClass(this, classLoader).jdiClass!!.reflectedType()
+        loadType(this, classLoader)
 
     private fun Type.asArrayType(classLoader: ClassLoaderReference? = this@JDIEval.defaultClassLoader): ArrayType =
         asReferenceType(classLoader) as ArrayType
