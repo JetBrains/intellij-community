@@ -23,30 +23,31 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionContex
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionEventAdapter {
-  private val lastInvocationTimestamp = AtomicLong()
-  private val showStartTime = AtomicLong()
-  private val wasShown = AtomicBoolean()
-  private val fullInsertActions = AtomicInteger()
-  private val nextWordActions = AtomicInteger()
-  private val nextLineActions = AtomicInteger()
-  private val totalInsertedLength = AtomicInteger()
-  private val totalInsertedLines = AtomicInteger()
+  /**
+   * This field is not thread-safe, please access it only on EDT.
+   */
+  private var holder = Holder()
+
+  /**
+   * Fields inside [Holder] are not thread-safe, please access them only on EDT.
+   */
+  private class Holder() {
+    var lastInvocationTimestamp: Long = 0
+    var showStartTime: Long = 0
+    var wasShown: Boolean = false
+    var fullInsertActions: Int = 0
+    var nextWordActions: Int = 0
+    var nextLineActions: Int = 0
+    var totalInsertedLength: Int = 0
+    var totalInsertedLines: Int = 0
+  }
 
 
   override fun onRequest(event: InlineCompletionEventType.Request) {
-    lastInvocationTimestamp.set(event.lastInvocation)
-    wasShown.set(false)
-    showStartTime.set(0)
-    nextWordActions.set(0)
-    nextLineActions.set(0)
-    fullInsertActions.set(0)
-    totalInsertedLength.set(0)
-    totalInsertedLines.set(0)
+    holder = Holder()
+
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.add(REQUEST_ID with event.request.requestId)
     container.add(REQUEST_EVENT with event.request.event.javaClass)
@@ -60,29 +61,30 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   }
 
   override fun onShow(event: InlineCompletionEventType.Show) {
-    if (wasShown.getAndSet(true)) return
+    if (holder.wasShown) return
+    holder.wasShown = true
     val container = InlineCompletionLogsContainer.get(editor) ?: return
-    container.add(TIME_TO_START_SHOWING with (System.currentTimeMillis() - lastInvocationTimestamp.get()))
-    showStartTime.set(System.currentTimeMillis())
+    container.add(TIME_TO_START_SHOWING with (System.currentTimeMillis() - holder.lastInvocationTimestamp))
+    holder.showStartTime = System.currentTimeMillis()
   }
 
   override fun onInsert(event: InlineCompletionEventType.Insert) {
     val textToInsert = InlineCompletionContext.getOrNull(editor)?.textToInsert() ?: return
-    totalInsertedLength.addAndGet(textToInsert.length)
-    totalInsertedLines.addAndGet(textToInsert.lines().size)
-    fullInsertActions.incrementAndGet()
+    holder.totalInsertedLength += textToInsert.length
+    holder.totalInsertedLines += textToInsert.lines().size
+    holder.fullInsertActions++
   }
 
   override fun onChange(event: InlineCompletionEventType.Change) {
     when (event.event) {
       is InlineCompletionEvent.InsertNextWord -> {
-        totalInsertedLength.addAndGet(event.lengthChange)
-        nextWordActions.incrementAndGet()
+        holder.totalInsertedLength += event.lengthChange
+        holder.nextWordActions++
       }
       is InlineCompletionEvent.InsertNextLine -> {
-        totalInsertedLength.addAndGet(event.lengthChange)
-        totalInsertedLines.incrementAndGet()
-        nextLineActions.incrementAndGet()
+        holder.totalInsertedLength += event.lengthChange
+        holder.totalInsertedLines++
+        holder.nextLineActions++
       }
     }
   }
@@ -94,14 +96,16 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 
   override fun onHide(event: InlineCompletionEventType.Hide) {
     val container = InlineCompletionLogsContainer.remove(editor) ?: return
-    container.add(WAS_SHOWN with wasShown.get())
-    container.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime.get()))
-    container.add(FINISH_TYPE with event.finishType)
-    container.add(FULL_INSERT_ACTIONS with fullInsertActions.get())
-    container.add(NEXT_WORD_ACTIONS with nextWordActions.get())
-    container.add(NEXT_LINE_ACTIONS with nextLineActions.get())
-    container.add(TOTAL_INSERTED_LENGTH with totalInsertedLength.get())
-    container.add(TOTAL_INSERTED_LINES with totalInsertedLines.get())
+    with(holder) {
+      container.add(WAS_SHOWN with wasShown)
+      container.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
+      container.add(FINISH_TYPE with event.finishType)
+      container.add(FULL_INSERT_ACTIONS with fullInsertActions)
+      container.add(NEXT_WORD_ACTIONS with nextWordActions)
+      container.add(NEXT_LINE_ACTIONS with nextLineActions)
+      container.add(TOTAL_INSERTED_LENGTH with totalInsertedLength)
+      container.add(TOTAL_INSERTED_LINES with totalInsertedLines)
+    }
     container.logCurrent() // see doc of this function, it's very fast, and we should wait for its completion
   }
 }
