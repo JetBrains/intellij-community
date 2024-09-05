@@ -369,14 +369,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val pluginNode = it.toPluginNode()
 
         if (it.externalUpdateId != null) return@mapNotNull pluginNode
-        if (it.nearestUpdate == null) return@mapNotNull null
-        if (it.nearestUpdate.compatible) return@mapNotNull pluginNode
+        val nearestUpdate = it.nearestUpdate
+        if (nearestUpdate == null) return@mapNotNull null
+        if (nearestUpdate.compatible) return@mapNotNull pluginNode
 
         // filter out plugins which version is not compatible with the current IDE version,
         // but they have versions compatible with Community
         if (includeIncompatible
-            && !it.nearestUpdate.supports(activeProductCode)
-            && it.nearestUpdate.supports(suggestedIdeCode)) {
+            && !nearestUpdate.supports(activeProductCode)
+            && nearestUpdate.supports(suggestedIdeCode)) {
 
           pluginNode.suggestedCommercialIde = suggestedIdeCode
           pluginNode.tags = getTagsForUi(pluginNode).distinct()
