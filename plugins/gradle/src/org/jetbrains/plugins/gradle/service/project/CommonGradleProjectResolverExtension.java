@@ -792,15 +792,17 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   }
 
   @Override
-  public void enhanceTaskProcessing(@Nullable Project project,
-                                    @NotNull List<String> taskNames,
-                                    @NotNull Consumer<String> initScriptConsumer,
-                                    @NotNull Map<String, String> parameters) {
+  public @NotNull Map<String, String> enhanceTaskProcessing(
+    @Nullable Project project,
+    @NotNull List<String> taskNames,
+    @NotNull Consumer<String> initScriptConsumer,
+    @NotNull Map<String, String> parameters
+  ) {
     initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
 
     String dispatchPort = parameters.get(DEBUG_DISPATCH_PORT_KEY);
     if (dispatchPort == null) {
-      return;
+      return Collections.emptyMap();
     }
 
     String debugOptions = parameters.get(DEBUG_OPTIONS_KEY);
@@ -820,6 +822,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
     final String script = join(lines, System.lineSeparator());
     initScriptConsumer.consume(script);
+    return Collections.emptyMap();
   }
 
   /**

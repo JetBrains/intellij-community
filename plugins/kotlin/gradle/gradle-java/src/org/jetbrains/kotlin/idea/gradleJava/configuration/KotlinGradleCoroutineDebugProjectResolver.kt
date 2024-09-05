@@ -19,10 +19,12 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
         private const val MIN_SUPPORTED_GRADLE_VERSION = "4.6" // CommandLineArgumentProvider is available only since Gradle 4.6
     }
 
-    override fun enhanceTaskProcessing(project: Project?,
-                                       taskNames: MutableList<String>,
-                                       initScriptConsumer: Consumer<String>,
-                                       parameters: Map<String, String>) {
+    override fun enhanceTaskProcessing(
+        project: Project?,
+        taskNames: MutableList<String>,
+        initScriptConsumer: Consumer<String>,
+        parameters: Map<String, String>
+    ): Map<String, String> {
         try {
             val allowCoroutineAgent = KotlinJvmDebuggerFacade.instance?.isCoroutineAgentAllowedInDebug ?: false
             val gradleVersion = parameters[GradleProjectResolverExtension.GRADLE_VERSION]?.let { GradleVersion.version(it) }
@@ -32,6 +34,7 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
         } catch (e: Exception) {
             log.error("Gradle: not possible to attach a coroutine debugger agent.", e)
         }
+        return emptyMap()
     }
 
     private fun setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer: Consumer<String>, shouldCheckGradleVersion: Boolean) {
