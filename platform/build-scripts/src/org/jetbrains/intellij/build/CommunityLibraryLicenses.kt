@@ -296,12 +296,6 @@ object CommunityLibraryLicenses {
     ).apache()
       .suppliedByOrganizations(Suppliers.GOOGLE),
     LibraryLicense(
-      name = "Compose Multiplatform", libraryName = "jetbrains.compose.foundation.desktop",
-      url = "https://github.com/JetBrains/compose-multiplatform"
-    )
-      .apache("https://github.com/JetBrains/compose-multiplatform/blob/master/LICENSE.txt")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(
       name = "Compose Multiplatform Compiler", libraryName = "jetbrains.compose.compiler.hosted",
       url = "https://github.com/JetBrains/compose-multiplatform"
     )
