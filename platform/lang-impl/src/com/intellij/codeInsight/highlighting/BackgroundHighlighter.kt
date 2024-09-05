@@ -278,11 +278,11 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
     .coalesceBy(HighlightSelectionKey::class.java, editor)
     .expireWhen { document.modificationStamp != stamp || editor.isDisposed }
     .finishOnUiThread(ModalityState.nonModal()) { results ->
+      removeSelectionHighlights(editor)
       if (document.modificationStamp != stamp || results.isEmpty()) {
         return@finishOnUiThread
       }
 
-      removeSelectionHighlights(editor)
       val highlighters = ArrayList<RangeHighlighter>()
       val markupModel = editor.markupModel
       for (result in results) {
