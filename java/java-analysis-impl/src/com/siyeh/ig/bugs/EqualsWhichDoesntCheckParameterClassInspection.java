@@ -29,6 +29,9 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspection {
@@ -205,6 +208,32 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
       if (isParameterReference(expression.getOperand())) {
         makeChecked();
       }
+    }
+
+    @Override
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+      super.visitSwitchExpression(expression);
+      if (isParameterReference(expression.getExpression()) && checksTypeOfExpression(expression)) {
+        makeChecked();
+      }
+    }
+
+    @Override
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      if (isParameterReference(statement.getExpression()) && checksTypeOfExpression(statement)) {
+        makeChecked();
+      }
+    }
+
+    private static boolean checksTypeOfExpression(@NotNull PsiSwitchBlock switchBlock) {
+      PsiCodeBlock body = switchBlock.getBody();
+      return body != null && PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)
+        .stream()
+        .map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
+        .filter(Objects::nonNull)
+        .flatMap(list -> Arrays.stream(list.getElements()))
+        .anyMatch(element -> element instanceof PsiTypeTestPattern);
     }
 
     @Override
