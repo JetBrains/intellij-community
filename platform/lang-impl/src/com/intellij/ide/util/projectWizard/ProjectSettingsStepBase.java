@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,11 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
   private AbstractNewProjectStep<T> myProjectStep;
+  /**
+   * If {@link ProjectGeneratorPeer#getComponent()} is Kotlin DSL UI, we store it here and use for validation
+   */
+  @Nullable
+  private DialogPanelWrapper myDialogPanelWrapper;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
                                  AbstractNewProjectStep.AbstractCallback<T> callback) {
@@ -140,7 +146,17 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       @Override
       public void actionPerformed(ActionEvent e) {
         boolean isValid = checkValid();
-        if (isValid && myCallback != null) {
+        if (!isValid) return;
+
+        var dialogPanel = myDialogPanelWrapper;
+        if (dialogPanel != null) {
+          var applyError = dialogPanel.applyOrGetError();
+          setErrorText(applyError != null ? applyError.message : null);
+          if (applyError != null) {
+            return;
+          }
+        }
+        if (myCallback != null) {
           final DialogWrapper dialog = DialogWrapper.findInstance(myCreateButton);
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
@@ -238,12 +254,15 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       }
 
       ValidationInfo peerValidationResult = getPeer().validate();
+      if (peerValidationResult == null) {
+        var dialogWrapper = myDialogPanelWrapper;
+        peerValidationResult = (dialogWrapper != null) ? dialogWrapper.getInputValidationError() : null;
+      }
       if (peerValidationResult != null) {
         setErrorText(peerValidationResult.message);
         return false;
       }
     }
-
     setErrorText(null);
     return true;
   }
@@ -301,7 +320,19 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   protected @Nullable JPanel createAdvancedSettings() {
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-    jPanel.add(getPeer().getComponent());
+    var component = getPeer().getComponent();
+    // If a component is a DialogPanel, created with Kotlin DSL UI,
+    // it may have validation which must be obeyed as is done for DialogWrapper
+    if (component instanceof DialogPanel dialogPanel) {
+      var dialogPanelWrapper = new DialogPanelWrapper(dialogPanel);
+      myDialogPanelWrapper = dialogPanelWrapper;
+      dialogPanel.registerValidators(this, map -> {
+        dialogPanelWrapper.setInputValidationError(map.values());
+        checkValid();
+        return Unit.INSTANCE;
+      });
+    }
+    jPanel.add(component);
     return jPanel;
   }
 
