@@ -53,7 +53,11 @@ abstract class JetBrainsProductProperties : ProductProperties() {
           pluginId == "com.intellij.python.frontend" ||
           // FIXME AE-121
           pluginId == "com.jetbrains.personalization"
-        ) && it.message.contains("Plugin has no dependencies")
+        ) && it.message.contains("Plugin has no dependencies") ||
+        (
+          // FIXME RIDER-116978
+          pluginId == "com.jetbrains.rider.android"
+        ) && it.message.contains("The plugin file size exceeds the maximum limit of 1 GB")
       }
       addAll(problems)
       if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
