@@ -16,10 +16,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 
 class HasPlatformTypeInspection(
     @JvmField var publicAPIOnly: Boolean = true,
@@ -82,7 +80,7 @@ class HasPlatformTypeInspection(
 
         if (dangerousFlexibleType.canBeNull) {
             val nonNullableType = dangerousFlexibleType.withNullability(KaTypeNullability.NON_NULLABLE)
-            val expression = element.node.findChildByType(KtTokens.EQ)?.psi?.getNextSiblingIgnoringWhitespaceAndComments()
+            val expression = (element as? KtDeclarationWithInitializer)?.initializer
 
             // Only add this fix if it can actually fully resolve the problem
             if (expression != null && (!reportPlatformArguments || !isFlexibleRecursive(nonNullableType))) {
