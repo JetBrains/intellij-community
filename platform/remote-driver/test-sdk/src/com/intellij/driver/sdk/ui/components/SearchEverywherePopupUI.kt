@@ -20,7 +20,7 @@ class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
     keyboard {
       backspace()
-      driver.ui.pasteText(text)
+      keyboard { enterText(text) }
       resultsList.should(timeout = 15.seconds) {
         if (exactMatch) hasText(text) else hasSubtext(text)
       }
