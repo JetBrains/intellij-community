@@ -54,10 +54,10 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM
  * {@link AbstractNewProjectStep}
  */
 public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
-  protected DirectoryProjectGenerator<T> myProjectGenerator;
+  protected final DirectoryProjectGenerator<T> myProjectGenerator;
   protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
-  protected NotNullLazyValue<File> myProjectDirectory;
+  protected final NotNullLazyValue<File> myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;

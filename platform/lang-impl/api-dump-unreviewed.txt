@@ -18541,8 +18541,8 @@ c:com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 - p:myErrorLabel:javax.swing.JLabel
 - p:myLazyGeneratorPeer:com.intellij.openapi.util.NotNullLazyValue
 - p:myLocationField:com.intellij.openapi.ui.TextFieldWithBrowseButton
-- p:myProjectDirectory:com.intellij.openapi.util.NotNullLazyValue
-- p:myProjectGenerator:com.intellij.platform.DirectoryProjectGenerator
+- pf:myProjectDirectory:com.intellij.openapi.util.NotNullLazyValue
+- pf:myProjectGenerator:com.intellij.platform.DirectoryProjectGenerator
 - <init>(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - checkValid():Z
