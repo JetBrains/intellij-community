@@ -345,40 +345,6 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  private static class LocalChangesListView extends ChangesListView {
-    private LocalChangesListView(@NotNull Project project) {
-      super(project, false);
-      putClientProperty(LOG_COMMIT_SESSION_EVENTS, true);
-
-      setTreeExpander(new MyTreeExpander(this));
-
-      new HoverChangesTree(this) {
-        @Override
-        public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
-          return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
-        }
-      }.install();
-    }
-
-    @Override
-    protected @NotNull ChangesGroupingSupport installGroupingSupport() {
-      // can't install support here - 'rebuildTree' is not defined
-      return new ChangesGroupingSupport(myProject, this, true);
-    }
-
-    private static class MyTreeExpander extends DefaultTreeExpander {
-      private MyTreeExpander(@NotNull JTree tree) {
-        super(tree);
-      }
-
-      @Override
-      protected void collapseAll(@NotNull JTree tree, int keepSelectionLevel) {
-        super.collapseAll(tree, 2);
-        TreeUtil.expand(tree, 1);
-      }
-    }
-  }
-
   public boolean isDiffPreviewAvailable() {
     if (myToolWindowPanel == null) return false;
 
