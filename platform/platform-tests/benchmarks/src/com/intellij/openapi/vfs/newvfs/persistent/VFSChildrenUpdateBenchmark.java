@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.mock.MockVirtualFile;
@@ -44,7 +44,6 @@ public class VFSChildrenUpdateBenchmark {
 
     public int rootFolderId;
 
-    @SuppressWarnings("SSBasedInspection")
     private final IntArrayList foldersIds = new IntArrayList();
 
     @Setup
@@ -126,7 +125,6 @@ public class VFSChildrenUpdateBenchmark {
       ListResult children = vfs.list(folderId);
       ListResult modifiedChildren = children;
 
-      //TODO RC: why we update symlinks here, under the lock?
       vfs.updateSymlinksForNewChildren(FAKE_PARENT_FILE, children, modifiedChildren);
 
       vfs.treeAccessor().doSaveChildren(folderId, modifiedChildren);
@@ -136,13 +134,15 @@ public class VFSChildrenUpdateBenchmark {
     @Benchmark
     public ListResult updateChildren_ReturnSame(FSRecordsContext vfsContext) throws IOException {
       int folderId = tossFolderId();
-      return vfsContext.vfs().update(FAKE_PARENT_FILE, folderId, children -> children);
+      FSRecordsImpl vfs = vfsContext.vfs();
+      return vfs.update(FAKE_PARENT_FILE, folderId, children -> children);
     }
 
     @Benchmark
     public ListResult updateChildren_ModifyingModCount(FSRecordsContext vfsContext) throws IOException {
       int folderId = tossFolderId();
-      return vfsContext.vfs().update(FAKE_PARENT_FILE, folderId, children -> {
+      FSRecordsImpl vfs = vfsContext.vfs();
+      return vfs.update(FAKE_PARENT_FILE, folderId, children -> {
         return new ListResult(1, children.children, folderId);
       });
     }

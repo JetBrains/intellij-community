@@ -298,7 +298,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public boolean areChildrenLoaded(@NotNull VirtualFile dir) {
-    return areChildrenLoaded(getFileId(dir));
+    return areChildrenCached(getFileId(dir));
   }
 
   @Override
@@ -344,20 +344,32 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return names;
   }
 
+
+  @Override
+  @ApiStatus.Internal
+  public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
+    int id = getFileId(file);
+    return areChildrenCached(id)
+           ? vfsPeer.list(id).children
+           : persistAllChildren(file, id);
+  }
+
   // return actual children
   private @NotNull List<? extends ChildInfo> persistAllChildren(VirtualFile dir, int dirId) {
     NewVirtualFileSystem fs = getFileSystem(dir);
 
-    //FIXME RC: this method is not thread-safe: it creates new file records from children names outside
-    //          of lock, hence it is possible >1 child to be created for the same name, and only
-    //          last children list remains written, while children created during invocations that
-    //          lost the race are remains orphan
     try {
       String[] fsNames = VfsUtil.filterNames(
         fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)
       );
 
       Map<String, ChildInfo> justCreated = new HashMap<>();
+      //TODO RC: there are few places in this class .update() is used to update a hierarchy, but there is no consistency
+      //         in how those updates are organised: in some cases real FS queries and makeChildRecord() calls are made
+      //         _inside_ the .update(), i.e. inside the .update()'s lock -- as it is done here. But in other cases FS
+      //         requests and corresponding makeChildRecord() calls are done outside the .update() and it's lock. This
+      //         is quite misleading, it makes unclear that is the consistency model of that hierarchy update.
+      //         (See also an overall VFS thread-safety rant in FSRecordsImpl)
       ListResult saved = vfsPeer.update(dir, dirId, current -> {
         List<? extends ChildInfo> currentChildren = current.children;
         if (fsNames.length == 0 && !currentChildren.isEmpty()) {
@@ -366,6 +378,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         // preserve current children which match fsNames (to have stable id)
         // (on case-insensitive systems, replace those from current with case-changes ones from fsNames preserving the id)
         // add those from fsNames which are absent from current
+        //TODO RC: this could be done outside the lock:
         boolean caseSensitive = dir.isCaseSensitive();
         Set<String> toAddNames = CollectionFactory.createFilePathSet(fsNames, caseSensitive);
         for (ChildInfo currentChild : currentChildren) {
@@ -399,6 +412,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return current.merge(vfsPeer, toAddChildren, caseSensitive);
       });
 
+      //TODO RC: why it is not done under the lock above?
       setChildrenCached(dirId);
 
       return saved.children;
@@ -410,24 +424,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void setChildrenCached(int id) {
+  private void setChildrenCached(int dirId) {
     vfsPeer.updateRecordFields(
-      id,
+      dirId,
       record -> record.addFlags(Flags.CHILDREN_CACHED)
     );
   }
 
-  @Override
-  @ApiStatus.Internal
-  public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
-    int id = getFileId(file);
-    return areChildrenLoaded(id)
-           ? vfsPeer.list(id).children
-           : persistAllChildren(file, id);
-  }
-
-  private boolean areChildrenLoaded(int parentId) {
-    return BitUtil.isSet(vfsPeer.getFlags(parentId), Flags.CHILDREN_CACHED);
+  private boolean areChildrenCached(int dirId) {
+    return BitUtil.isSet(vfsPeer.getFlags(dirId), Flags.CHILDREN_CACHED);
   }
 
   @Override
@@ -502,7 +507,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     else {
-      if (areChildrenLoaded(rootId)) {
+      if (areChildrenCached(rootId)) {
         return -1; // TODO: hack
       }
     }
@@ -1520,9 +1525,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                             @NotNull Collection<? extends VFileCreateEvent> createEvents) {
     int parentId = getFileId(parent);
     NewVirtualFile vf = findFileById(parentId);
-    if (!(vf instanceof VirtualDirectoryImpl)) return;
-    parent =
-      (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
+    if (!(vf instanceof VirtualDirectoryImpl)) {
+      return;
+    }
+    parent = (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
     NewVirtualFileSystem fs = getFileSystem(parent);
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
@@ -1539,8 +1545,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
     vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive));
-    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {
-    });
+    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> { });
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
@@ -1573,6 +1578,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
           added.sort(ChildInfo.BY_ID);
           vfsPeer.update(directory, directoryId, oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive));
+          //TODO RC: why it is not done under the lock above?
           setChildrenCached(directoryId);
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt
@@ -2155,6 +2161,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // When creating an empty directory, we need to make sure every file created inside will fire a "file-created" event,
       // in order to `VirtualFilePointerManager` get those events to update its pointers properly
       // (because currently it ignores empty directory creation events for performance reasons).
+      //TODO RC: why it is not done under the lock above?
       setChildrenCached(childId);
     }
     dir.addChild(child);
@@ -2355,6 +2362,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     VirtualFileSystemEntry virtualFileSystemEntry = (VirtualFileSystemEntry)file;
 
+    //TODO RC: there is significant difference between moveChildren() and this method -- moveChildren() seems like
+    //         more better protected from concurrent updates than this method, there the update is split into few (3)
+    //         independent updates
     removeIdFromChildren(oldParent, oldParentId, fileId);
     vfsPeer.setParent(fileId, newParentId);
     ChildInfo newChild = new ChildInfoImpl(fileId, virtualFileSystemEntry.getNameId(), null, null, null);

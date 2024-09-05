@@ -306,13 +306,39 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  private final com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock fileRecordLock =
-    new com.intellij.openapi.vfs.newvfs.persistent.dev.FileRecordLock();
+  //TODO RC: Thread-safety is organized in a tricky way in PersistentFSImpl/FSRecordsImpl. Historically, all VFS modifications
+  //         are done in WriteAction, and all reads in ReadAction (same as for other 'model' accesses in IJ platform) -- which
+  //         means WA/RA locks protects VFS, and there is no need for additional locks.
+  //         The issue is: because VFS is basically a cache on top of real FSes, read-access to VFS could require modification
+  //         of VFS internal data structures, if it is a cache-miss, and new chunk of data must be cached as a result. So the
+  //         read-lock provided by RA is not enough, and all cache modifications should be protected by exclusive lock.
+  //         Historically, though, the issues with concurrent modifications during RA were most visible for _hierarchy_ updates
+  //         -- i.e. changing of parent-children relationship. Children lists processing is much longer than individual file-record
+  //         fields update, hence a window for concurrent modifications is much larger. So the exclusive lock was introduced only
+  //         for hierarchy updates: .update() method protected by fileHierarchyLock -- while updates of individual file record
+  //         files (flags, nameId, timestamp, etc) are volatile, but not lock-protected, and attributes update was protected by
+  //         its own lock.
+  //         This schema is not 100% bulletproof, and it generates _some_ % of errors in VFS -- but not too much, so it was used
+  //         for quite a while.
+  //
+  //         Now, as we're moving forward, we'd like to get rid of those errors altogether. Also, we're in the process of
+  //         reconsidering WA/RA for VFS access (IJPL-418), and probably will decide to move VFS accesses out of WA/RA.
+  //         Both goals require accurate in-VFS thread-safety. For that fileRecordLock was introduced, and all the logical
+  //         modifications of >1 fields are now done via .updateRecordFields() method, which is fileRecordLock-protected.
+  //
+  //         Ideally, we'd like to merge fileHierarchyLock and fileRecordLock, and use a single unified locking scheme across
+  //         VFS. Unfortunately, there are multiple issues with that:
+  //         - Hierarchy updates often quite complicated and heavy, include IO, so could keep lock for a long time. File-record
+  //           fields updates are very short, so low-overhead lock is desirable (StampedLock segmented by fileId is used now).
+  //         - Hierarchy updates often include creating new VFS records, or updating existing in the process -- so they require
+  //           to lock >1 record, which (in case of segmented record lock) is deadlock-prone, and requires re-entrancy (which
+  //           StampedLock doesn't provide)
+  //         So far I see no good solution to these issues, so we go with (obviously not bulletproof) schema with separate locks
+  //         for per-record and hierarchy updates.
 
-  //TODO RC: better join this with fileRecordLock, and use one unified way to lock.
-  //         Currently we invoke a lambda under the updateLock, and the lambda sometimes does quite a lot of other stuff, and
-  //         it is hard to limit the lambda to be non-recursive
-  private final FileRecordLock updateLock = new FileRecordLock();
+  /** Lock to protect individual file-records updates */
+  private final FileRecordLock fileRecordLock = new FileRecordLock();
+  private final PerFileIdLock fileHierarchyLock = new PerFileIdLock();
 
   //TODO RC: why to have it both here, and also in PersistentFSConnection? Mb one place is enough?
   private volatile boolean closed = false;
@@ -696,7 +722,7 @@ public final class FSRecordsImpl implements Closeable {
 
     checkNotClosed();
 
-    updateLock.lock(parentId);
+    fileHierarchyLock.lock(parentId);
     try {
       ListResult children = list(parentId);
       ListResult modifiedChildren = childrenConvertor.apply(children);
@@ -719,7 +745,7 @@ public final class FSRecordsImpl implements Closeable {
       throw handleError(e);
     }
     finally {
-      updateLock.unlock(parentId);
+      fileHierarchyLock.unlock(parentId);
     }
   }
 
@@ -736,9 +762,9 @@ public final class FSRecordsImpl implements Closeable {
 
     int minId = Math.min(fromParentId, toParentId);
     int maxId = Math.max(fromParentId, toParentId);
-    updateLock.lock(minId);
+    fileHierarchyLock.lock(minId);
     try {
-      updateLock.lock(maxId);
+      fileHierarchyLock.lock(maxId);
       try {
         try {
           ListResult childrenToMove = list(fromParentId);
@@ -765,11 +791,11 @@ public final class FSRecordsImpl implements Closeable {
         }
       }
       finally {
-        updateLock.unlock(maxId);
+        fileHierarchyLock.unlock(maxId);
       }
     }
     finally {
-      updateLock.unlock(minId);
+      fileHierarchyLock.unlock(minId);
     }
   }
 
@@ -935,6 +961,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
   void setParent(int fileId,
                  int parentId) {
@@ -1021,6 +1048,7 @@ public final class FSRecordsImpl implements Closeable {
     });
   }
 
+  /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
   void setFlags(int fileId,
                 @PersistentFS.Attributes int flags) {
@@ -1043,6 +1071,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
   void setLength(int fileId,
                  long len) {
@@ -1065,6 +1094,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Consider {@link #updateRecordFields(int, RecordUpdater)} for everything except for (probably) single-field updates */
   @ApiStatus.Obsolete
   void setTimestamp(int fileId,
                     long value) {
@@ -1143,15 +1173,13 @@ public final class FSRecordsImpl implements Closeable {
     long lockStamp = fileRecordLock.lockForWrite(fileId);
     try {
       return fileRecords.updateRecord(fileId, updater);
-      //TODO RC: it would be better to get 'modified' flag here, and call connection.markDirty() if modified=true. But updateRecords()
-      // doesn't provide the 'modified' property -- because it returns recordId instead.
+      //TODO RC: it would be better to get 'modified' flag here, but updateRecords() doesn't provide the 'modified' property
+      // -- because it returns recordId instead.
       // Now, the only reason for returning recordId is to cover the cases with new record inserted. But this is not so much needed:
       // we could insert new record with .allocateRecords(), and then update its fields with .updateRecordFields() -- there is no
       // concurrency issue with it, because newly allocated id is not yet published, so no one else could access it (except for iterating
       // through VFS with for(fileId in 0..maxId) -- which is a very low-level access anyway). So, maybe change the fileRecords.updateRecord()
       // semantics so that it returns 'modified' property instead of newRecordId?
-      // ...on th other hand, do we need .markDirty() at all? Seems like fileRecords storage tracks its modified state by itself, and
-      // we don't need connection.dirty at all!
     }
     catch (IOException ex) {
       throw handleError(ex);
