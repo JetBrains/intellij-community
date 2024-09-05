@@ -58,8 +58,8 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
         try {
           withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
             coroutineScope {
-              val (title, deployingStrategy) = deployingStrategy()
-              deployingStrategy.deploy("IjentVerificationAction").ijentApi.use { ijent ->
+              val (title, deployingStrategy) = deployingStrategy(this)
+              deployingStrategy.deploy().ijentApi.use { ijent ->
                 coroutineScope {
                   launch {
                     val info = ijent.ijentProcessInfo
@@ -115,7 +115,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
     }
   }
 
-  protected abstract suspend fun deployingStrategy(): Pair<String, IjentDeployingStrategy>
+  protected abstract suspend fun deployingStrategy(ijentProcessScope: CoroutineScope): Pair<String, IjentDeployingStrategy>
 
   companion object {
     protected val LOG = logger<AbstractIjentVerificationAction>()

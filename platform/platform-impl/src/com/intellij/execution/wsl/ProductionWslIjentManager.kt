@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSessionRegistry
-import com.intellij.platform.ijent.bindToScope
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -37,9 +36,17 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
     val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
     val ijentId = myCache.computeIfAbsent("""wsl:${wslDistribution.id}${if (rootUser) ":root" else ""}""") { ijentName ->
-      val ijentId = ijentSessionRegistry.register(ijentName, oneOff = false) {
-        val ijent = deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
-        ijent.bindToScope(scope)
+      val ijentId = ijentSessionRegistry.register(ijentName) { ijentId ->
+        val ijent = deployAndLaunchIjent(
+          scope,
+          project,
+          ijentId.toString(),
+          wslDistribution,
+          wslCommandLineOptionsModifier = { it.setSudo(rootUser) },
+        )
+        scope.coroutineContext.job.invokeOnCompletion {
+          ijent.close()
+        }
         ijent
       }
       scope.coroutineContext.job.invokeOnCompletion {
@@ -49,6 +56,12 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       ijentId
     }
     return ijentSessionRegistry.get(ijentId) as IjentPosixApi
+  }
+
+  init {
+    scope.coroutineContext.job.invokeOnCompletion {
+      dropCache()
+    }
   }
 
   @VisibleForTesting

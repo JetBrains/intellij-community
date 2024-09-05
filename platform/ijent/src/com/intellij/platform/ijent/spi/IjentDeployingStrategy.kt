@@ -48,7 +48,7 @@ interface IjentDeployingStrategy {
    * @param binaryPath path to ijent binary on target environment
    * @return process that will be used for communication
    */
-  suspend fun createProcess(binaryPath: String): Process
+  suspend fun createProcess(binaryPath: String): IjentSessionMediator
 
   /**
    * Copy files to the target environment. Typically used to transfer the ijent binary to the target machine.

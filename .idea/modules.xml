@@ -685,6 +685,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/ijent/intellij.platform.ijent.iml" filepath="$PROJECT_DIR$/platform/ijent/intellij.platform.ijent.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ijent/buildConstants/intellij.platform.ijent.community.buildConstants.iml" filepath="$PROJECT_DIR$/platform/ijent/buildConstants/intellij.platform.ijent.community.buildConstants.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ijent/impl/intellij.platform.ijent.community.impl.iml" filepath="$PROJECT_DIR$/platform/ijent/impl/intellij.platform.ijent.community.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/ijent/testFramework/intellij.platform.ijent.community.testFramework.iml" filepath="$PROJECT_DIR$/platform/ijent/testFramework/intellij.platform.ijent.community.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/intellij.platform.images.iml" filepath="$PROJECT_DIR$/images/intellij.platform.images.iml" />
       <module fileurl="file://$PROJECT_DIR$/images/backend.svg/intellij.platform.images.backend.svg.iml" filepath="$PROJECT_DIR$/images/backend.svg/intellij.platform.images.backend.svg.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" filepath="$PROJECT_DIR$/platform/build-scripts/icons/intellij.platform.images.build.iml" />

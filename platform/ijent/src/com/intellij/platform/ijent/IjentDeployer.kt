@@ -5,21 +5,18 @@ package com.intellij.platform.ijent
 import com.intellij.platform.ijent.spi.DeployedIjent
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import com.intellij.platform.ijent.spi.connectToRunningIjent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
 
 /**
  * Starts IJent on some machine, defined by [com.intellij.platform.ijent.spi.IjentDeployingStrategy].
  *
- * [ijentName] is a label used for logging, debugging, thread names, etc.
- *
- * By default, the IJent executable exits when the IDE exits.
- * [com.intellij.platform.eel.IjentApi.close] and [com.intellij.platform.ijent.bindToScope] may be used to terminate IJent earlier.
+ * By default, the IJent executable exits when
+ * the coroutine scope of [IjentProcessMediator] from [IjentDeployingStrategy.createProcess] exits.
+ * [com.intellij.platform.ijent.IjentApi.close] may be used to terminate IJent earlier.
  *
  * TODO Either define thrown exceptions or return something like Result.
  */
-suspend fun IjentDeployingStrategy.deploy(ijentName: String): DeployedIjent {
-  val (remotePathToBinary, ijentApi) = doDeploy(ijentName)
+suspend fun IjentDeployingStrategy.deploy(): DeployedIjent {
+  val (remotePathToBinary, ijentApi) = doDeploy()
   return object : DeployedIjent {
     override val ijentApi: IjentApi = ijentApi
     override val remotePathToBinary: String = remotePathToBinary
@@ -27,8 +24,8 @@ suspend fun IjentDeployingStrategy.deploy(ijentName: String): DeployedIjent {
 }
 
 /** A specialized version of [com.intellij.platform.ijent.deploy] */
-suspend fun IjentDeployingStrategy.Posix.deploy(ijentName: String): DeployedIjent.Posix {
-  val (remotePathToBinary, ijentApi) = doDeploy(ijentName)
+suspend fun IjentDeployingStrategy.Posix.deploy(): DeployedIjent.Posix {
+  val (remotePathToBinary, ijentApi) = doDeploy()
   ijentApi as IjentPosixApi
   return object : DeployedIjent.Posix {
     override val ijentApi: IjentPosixApi = ijentApi
@@ -37,8 +34,8 @@ suspend fun IjentDeployingStrategy.Posix.deploy(ijentName: String): DeployedIjen
 }
 
 /** A specialized version of [com.intellij.platform.ijent.deploy] */
-suspend fun IjentDeployingStrategy.Windows.deploy(ijentName: String): DeployedIjent.Windows {
-  val (remotePathToBinary, ijentApi) = doDeploy(ijentName)
+suspend fun IjentDeployingStrategy.Windows.deploy(): DeployedIjent.Windows {
+  val (remotePathToBinary, ijentApi) = doDeploy()
   ijentApi as IjentWindowsApi
   return object : DeployedIjent.Windows {
     override val ijentApi: IjentWindowsApi = ijentApi
@@ -46,20 +43,13 @@ suspend fun IjentDeployingStrategy.Windows.deploy(ijentName: String): DeployedIj
   }
 }
 
-/** A shortcut for terminating an [IjentApi] when the [coroutineScope] completes. */
-fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
-  coroutineScope.coroutineContext.job.invokeOnCompletion {
-    this@bindToScope.close()
-  }
-}
-
-private suspend fun IjentDeployingStrategy.doDeploy(ijentName: String): Pair<String, IjentApi> =
+private suspend fun IjentDeployingStrategy.doDeploy(): Pair<String, IjentApi> =
   try {
     val targetPlatform = getTargetPlatform()
     val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
-    val process = createProcess(remotePathToBinary)
+    val mediator = createProcess(remotePathToBinary)
 
-    val ijentApi = connectToRunningIjent(ijentName, getConnectionStrategy(), targetPlatform, process)
+    val ijentApi = connectToRunningIjent(getConnectionStrategy(), targetPlatform, mediator)
     remotePathToBinary to ijentApi
   }
   finally {

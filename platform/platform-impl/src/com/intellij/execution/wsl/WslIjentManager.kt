@@ -12,7 +12,6 @@ import com.intellij.platform.ijent.deploy
 import com.intellij.platform.ijent.spi.DeployedIjent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -51,24 +50,28 @@ interface WslIjentManager {
   }
 }
 
-suspend fun deployAndLaunchIjent(
+internal suspend fun deployAndLaunchIjent(
+  parentScope: CoroutineScope,
   project: Project?,
+  ijentLabel: String,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): IjentPosixApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).ijentApi
+): IjentPosixApi =
+  deployAndLaunchIjentGettingPath(parentScope, project, ijentLabel, wslDistribution, wslCommandLineOptionsModifier).ijentApi
 
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
+  parentScope: CoroutineScope,
   project: Project?,
+  ijentLabel: String,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
 ): DeployedIjent.Posix {
-  return coroutineScope {
-    WslIjentDeployingStrategy(
-      scope = this,
-      distribution = wslDistribution,
-      project = project,
-      wslCommandLineOptionsModifier = wslCommandLineOptionsModifier
-    ).deploy("WSL-${wslDistribution.id}")
-  }
+  return WslIjentDeployingStrategy(
+    scope = parentScope,
+    ijentLabel = ijentLabel,
+    distribution = wslDistribution,
+    project = project,
+    wslCommandLineOptionsModifier = wslCommandLineOptionsModifier
+  ).deploy()
 }

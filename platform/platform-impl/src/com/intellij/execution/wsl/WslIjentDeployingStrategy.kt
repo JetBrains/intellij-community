@@ -16,6 +16,7 @@ import java.nio.file.Path
 @ApiStatus.Internal
 class WslIjentDeployingStrategy(
   scope: CoroutineScope,
+  override val ijentLabel: String,
   private val distribution: WSLDistribution,
   private val project: Project?,
   private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {}
@@ -24,7 +25,7 @@ class WslIjentDeployingStrategy(
     distribution.getWslPath(path)
 
   @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
-  override suspend fun createShellProcess(): ShellProcessWrapper {
+  override suspend fun createShellProcess(): Process {
     // IJent can start an interactive shell by itself whenever it needs.
     // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
     // with possible user extensions in ~/.profile
@@ -38,7 +39,7 @@ class WslIjentDeployingStrategy(
     val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine("/bin/sh"))
     distribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
-    return ShellProcessWrapper(computeDetached { commandLine.createProcess() })
+    return computeDetached { commandLine.createProcess() }
   }
 
   override suspend fun getConnectionStrategy(): IjentConnectionStrategy {

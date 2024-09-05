@@ -50,22 +50,24 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
  * [ijentName] is used for debugging utilities like logs and thread names.
  *
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
- * [com.intellij.platform.ijent.bindToScope] may be useful for terminating the IJent process earlier.
  */
-suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: EelPlatform, process: Process): IjentApi {
-  val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
-  val ijentId = ijentSessionRegistry.register(ijentName, oneOff = true) { ijentId ->
-    val mediator = IjentSessionMediator.create(process, ijentId)
-    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
-    IjentSessionProvider.instanceAsync().connect(strategy, platform, mediator)
-  }
-  return ijentSessionRegistry.get(ijentId)
+suspend fun connectToRunningIjent(strategy: IjentConnectionStrategy, platform: EelPlatform, mediator: IjentSessionMediator): IjentApi {
+  mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
+  return IjentSessionProvider.instanceAsync().connect(strategy, platform, mediator)
 }
 
 /** A specialized overload of [connectToRunningIjent] */
-suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: EelPlatform.Posix, process: Process): IjentPosixApi =
-  connectToRunningIjent(ijentName, strategy, platform as EelPlatform, process) as IjentPosixApi
+suspend fun connectToRunningIjent(
+  strategy: IjentConnectionStrategy,
+  platform: EelPlatform.Posix,
+  mediator: IjentSessionMediator,
+): IjentPosixApi =
+  connectToRunningIjent(strategy, platform as EelPlatform, mediator) as IjentPosixApi
 
 /** A specialized overload of [connectToRunningIjent] */
-suspend fun connectToRunningIjent(ijentName: String, strategy: IjentConnectionStrategy, platform: EelPlatform.Windows, process: Process): IjentWindowsApi =
-  connectToRunningIjent(ijentName, strategy, platform as EelPlatform, process) as IjentWindowsApi
+suspend fun connectToRunningIjent(
+  strategy: IjentConnectionStrategy,
+  platform: EelPlatform.Windows,
+  mediator: IjentSessionMediator,
+): IjentWindowsApi =
+  connectToRunningIjent(strategy, platform as EelPlatform, mediator) as IjentWindowsApi

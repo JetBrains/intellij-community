@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * This service MUST know about all running IJents.
+ * This service MUST know about a running IJent if it's going to be used through [java.nio.file.spi.FileSystemProvider].
  * It also MAY know about delegates and wrappers over interfaces, if they are registered with [register].
  */
 @Service(Service.Level.APP)
@@ -28,21 +28,15 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
   /**
    * [ijentName] is used for debugging utilities like logs and thread names.
    *
-   * When [oneOff] is true, [launcher] may be called at most once, and if something wrong happens with the returned IJent,
-   * [get] still keeps returning that broken instance of [IjentApi].
-   *
-   * When [oneOff] is false, [get] checks if an already created [IjentApi] is functional, and if there's a problem, [get] calls
-   * [launcher] again and remembers the new instance.
-   *
-   * [launcher] should use the provided coroutine scope for launching various jobs, passing to the implementation of [IjentApi], etc.
+   * If something happens with IJent, and it starts throwing [IjentUnavailableException],
+   * [launch] is called again to make a new instance of [IjentApi].
    */
   fun register(
     ijentName: String,
-    oneOff: Boolean,
     launcher: suspend (ijentId: IjentId) -> IjentApi,
   ): IjentId {
     val ijentId = IjentId("ijent-${counter.getAndIncrement()}-${ijentName.replace(Regex("[^A-Za-z0-9-]"), "-")}")
-    ijents[ijentId] = IjentBundle(launcher, null, oneOff)
+    ijents[ijentId] = IjentBundle(launcher, null, oneOff = false)
     return ijentId
   }
 
@@ -100,7 +94,12 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
         oneOff = oldBundle.oneOff,
       )
     })!!
-    return bundle.deferred!!.await()
+    try {
+      return bundle.deferred!!.await()
+    }
+    catch (err: Throwable) {
+      throw IjentUnavailableException.unwrapFromCancellationExceptions(err)
+    }
   }
 
   companion object {
