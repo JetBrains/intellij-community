@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.containNoNewLine
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.containsMultiDollarStringOperands
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isFirstStringPlusExpressionWithoutNewLineInOperands
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -44,7 +45,7 @@ internal class ConvertToStringTemplateIntention :
      */
     context(KaSession)
     override fun prepareContext(element: KtBinaryExpression): Context? =
-        if (isFirstStringPlusExpressionWithoutNewLineInOperands(element))
+        if (isFirstStringPlusExpressionWithoutNewLineInOperands(element) && !element.containsMultiDollarStringOperands())
             Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
         else
             null

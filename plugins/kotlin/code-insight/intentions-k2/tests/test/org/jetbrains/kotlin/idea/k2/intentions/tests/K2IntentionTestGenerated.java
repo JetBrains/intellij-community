@@ -3203,6 +3203,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/kt11295.kt");
         }
 
+        @TestMetadata("ktij30491.kt")
+        public void testKtij30491() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/ktij30491.kt");
+        }
+
         @TestMetadata("lambdaInParentheses.kt")
         public void testLambdaInParentheses() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/lambdaInParentheses.kt");
@@ -3221,6 +3226,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("longTemplatePlusStringLiteral.kt")
         public void testLongTemplatePlusStringLiteral() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/longTemplatePlusStringLiteral.kt");
+        }
+
+        @TestMetadata("manyPlusesWithMultiDollarBeginning.kt")
+        public void testManyPlusesWithMultiDollarBeginning() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/manyPlusesWithMultiDollarBeginning.kt");
+        }
+
+        @TestMetadata("manyPlusesWithMultiDollarEnd.kt")
+        public void testManyPlusesWithMultiDollarEnd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/manyPlusesWithMultiDollarEnd.kt");
         }
 
         @TestMetadata("multilineString.kt")
@@ -5166,6 +5181,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("consecutiveBreaks.kt")
         public void testConsecutiveBreaks() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
+        }
+
+        @TestMetadata("multiDollar.kt")
+        public void testMultiDollar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollar.kt");
         }
 
         @TestMetadata("octalEscape.kt")

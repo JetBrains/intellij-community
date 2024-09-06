@@ -9333,6 +9333,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
         }
 
+        @TestMetadata("multiDollar.kt")
+        public void testMultiDollar() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/multiDollar.kt");
+        }
+
         @TestMetadata("octalEscape.kt")
         public void testOctalEscape() throws Exception {
             runTest("testData/intentions/convertToRawStringTemplate/octalEscape.kt");
@@ -10087,6 +10092,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToStringTemplate/kt11295.kt");
         }
 
+        @TestMetadata("ktij30491.kt")
+        public void testKtij30491() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/ktij30491.kt");
+        }
+
         @TestMetadata("lambdaInParentheses.kt")
         public void testLambdaInParentheses() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/lambdaInParentheses.kt");
@@ -10105,6 +10115,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("longTemplatePlusStringLiteral.kt")
         public void testLongTemplatePlusStringLiteral() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/longTemplatePlusStringLiteral.kt");
+        }
+
+        @TestMetadata("manyPlusesWithMultiDollarBeginning.kt")
+        public void testManyPlusesWithMultiDollarBeginning() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/manyPlusesWithMultiDollarBeginning.kt");
+        }
+
+        @TestMetadata("manyPlusesWithMultiDollarEnd.kt")
+        public void testManyPlusesWithMultiDollarEnd() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/manyPlusesWithMultiDollarEnd.kt");
         }
 
         @TestMetadata("multilineString.kt")

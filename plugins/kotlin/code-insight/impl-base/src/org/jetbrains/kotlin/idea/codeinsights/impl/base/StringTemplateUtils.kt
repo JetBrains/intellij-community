@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.ConstantValueKind
 
 private const val TRIPLE_DOUBLE_QUOTE = "\"\"\""
 
@@ -187,6 +186,7 @@ fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpression): KtSt
 context(KaSession)
 fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
     if (expression.textContains('\n')) return false
+    if (expression.containsMultiDollarStringOperands()) return false
 
     val entries = buildStringTemplateForBinaryExpression(expression).entries
     return entries.none { it is KtBlockStringTemplateEntry }
@@ -239,4 +239,25 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
 fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {
     val text = convertContent(this)
     return replaced(KtPsiFactory(project).createExpression("\"\"\"" + text + "\"\"\""))
+}
+
+private fun KtExpression?.isMultiDollarString(): Boolean =
+    this is KtStringTemplateExpression && interpolationPrefix?.textLength?.let { it > 1 } == true
+
+fun KtBinaryExpression?.containsMultiDollarStringOperands(): Boolean {
+    var containsMultiDollarString = false
+    this?.accept(object : KtVisitorVoid() {
+        override fun visitStringTemplateExpression(expression: KtStringTemplateExpression) {
+            if (expression.isMultiDollarString()) {
+                containsMultiDollarString = true
+            }
+        }
+
+        override fun visitBinaryExpression(expression: KtBinaryExpression) {
+            expression.left?.accept(this)
+            expression.right?.accept(this)
+        }
+    })
+
+    return containsMultiDollarString
 }
