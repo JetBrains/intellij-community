@@ -26,6 +26,9 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         getent = "getent",
         head = "head",
         mktemp = "mktemp",
+        rm = "rm",
+        sed = "sed",
+        tail = "tail",
         uname = "uname",
         whoami = "whoami",
       ))
@@ -45,6 +48,9 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         getent = "getent",
         head = "head",
         mktemp = "mktemp",
+        rm = "rm",
+        sed = "sed",
+        tail = "tail",
         uname = "uname",
         whoami = "whoami",
       ))
@@ -64,6 +70,9 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         getent = "getent",
         head = "head",
         mktemp = "mktemp",
+        rm = "rm",
+        sed = "sed",
+        tail = "tail",
         uname = "uname",
         whoami = "whoami",
       ))
@@ -83,6 +92,9 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
         getent = "busybox getent",
         head = "busybox head",
         mktemp = "busybox mktemp",
+        rm = "busybox rm",
+        sed = "busybox sed",
+        tail = "busybox tail",
         uname = "busybox uname",
         whoami = "busybox whoami",
       ))
