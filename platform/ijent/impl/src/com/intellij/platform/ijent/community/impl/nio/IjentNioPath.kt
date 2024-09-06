@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.ijent.fs.*
+import java.lang.ref.WeakReference
 import java.net.URI
 import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 /**
  * Such paths are supposed to be created via the corresponding nio FileSystem. [Path.of] does NOT return instances of this class.
@@ -17,12 +20,17 @@ import java.nio.file.*
 class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   internal val nioFs: IjentNioFileSystem,
-) : Path {
+  cachedAttributes: BasicFileAttributes?,
+) : Path, BasicFileAttributesHolder2.Impl() {
   private val isWindows
     get() = when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> false
       is IjentFileSystemWindowsApi -> true
     }
+
+  init {
+    myCachedAttributes = WeakReference(cachedAttributes)
+  }
 
   override fun getFileSystem(): IjentNioFileSystem = nioFs
 
@@ -150,6 +158,7 @@ class IjentNioPath internal constructor(
     IjentNioPath(
       ijentPath = this,  // Don't confuse with the parent "this".
       nioFs = nioFs,
+      cachedAttributes = null,
     )
 
   /**

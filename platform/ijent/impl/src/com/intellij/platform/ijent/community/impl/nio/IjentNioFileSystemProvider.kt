@@ -180,12 +180,18 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = dir.nioFs
 
     return fsBlocking {
-      // TODO listDirectoryWithAttrs+sun.nio.fs.BasicFileAttributesHolder
-      val childrenNames = nioFs.ijentFs.listDirectory(ensurePathIsAbsolute(dir.ijentPath)).getOrThrowFileSystemException()
+      val children = nioFs.ijentFs
+        .listDirectoryWithAttrs(ensurePathIsAbsolute(dir.ijentPath), IjentFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
+        .getOrThrowFileSystemException()
 
-      val nioPathList = childrenNames.asSequence()
-        .map { childName ->
-          IjentNioPath(dir.ijentPath.getChild(childName).getOrThrow(), nioFs)
+      val nioPathList = children.asSequence()
+        .map { (childName, childStat) ->
+          val childIjentPath = dir.ijentPath.getChild(childName).getOrThrow()
+          val childAttrs = when (childStat) {
+            is IjentPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
+            is IjentWindowsFileInfo -> TODO()
+          }
+          IjentNioPath(childIjentPath, nioFs, childAttrs)
         }
         .filter { nioPath ->
           pathFilter?.accept(nioPath) != false
@@ -456,7 +462,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath, IjentFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrThrowFileSystemException().type) {
-          is Symlink.Resolved -> IjentNioPath(type.result, link.nioFs)
+          is Symlink.Resolved -> IjentNioPath(type.result, link.nioFs, null)
           is Directory, is Regular, is Other -> throw NotLinkException(link.toString())
           is Symlink.Unresolved -> error("Impossible, the link should be resolved")
         }

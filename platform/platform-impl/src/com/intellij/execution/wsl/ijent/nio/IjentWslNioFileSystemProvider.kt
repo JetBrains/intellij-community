@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
+import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
 import com.intellij.util.io.createDirectories
@@ -145,12 +146,14 @@ class IjentWslNioFileSystemProvider(
     IjentWslNioPath(
       getFileSystem(wslIdFromPath(link)),
       ijentFsProvider.readSymbolicLink(link.toIjentPath()),
+      null,
     )
 
   override fun getPath(uri: URI): Path =
     IjentWslNioPath(
       getFileSystem(wslIdFromPath(originalFsProvider.getPath(uri))),
       originalFsProvider.getPath(uri),
+      null,
     )
 
   override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
@@ -170,9 +173,21 @@ class IjentWslNioFileSystemProvider(
 
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
-            val ijentPath = delegateIterator.next()
+            val ijentPath = delegateIterator.next().toIjentPath()
+
             val originalPath = ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
-            return IjentWslNioPath(getFileSystem(wslId), originalPath)
+
+            val cachedAttrs = ijentPath.get() as IjentNioPosixFileAttributes?
+            val dosAttributes =
+              if (cachedAttrs != null)
+                IjentNioPosixFileAttributesWithDosAdapter(
+                  ijentPath.fileSystem.ijentFs.user as IjentPosixInfo.User,
+                  cachedAttrs,
+                  nameStartsWithDot = ijentPath.ijentPath.fileName.startsWith("."),
+                )
+              else null
+
+            return IjentWslNioPath(getFileSystem(wslId), originalPath, dosAttributes)
           }
 
           override fun remove() {

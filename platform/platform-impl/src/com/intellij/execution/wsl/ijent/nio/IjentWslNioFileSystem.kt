@@ -44,7 +44,7 @@ class IjentWslNioFileSystem(
     }
 
   override fun getPath(first: String, vararg more: String): Path =
-    IjentWslNioPath(this, originalFs.getPath(first, *more))
+    IjentWslNioPath(this, originalFs.getPath(first, *more), null)
 
   override fun getPathMatcher(syntaxAndPattern: String?): PathMatcher =
     originalFs.getPathMatcher(syntaxAndPattern)

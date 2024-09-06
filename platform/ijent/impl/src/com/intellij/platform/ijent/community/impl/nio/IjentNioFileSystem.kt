@@ -86,5 +86,6 @@ class IjentNioFileSystem internal constructor(
     IjentNioPath(
       ijentPath = this,
       nioFs = this@IjentNioFileSystem,
+      cachedAttributes = null,
     )
 }

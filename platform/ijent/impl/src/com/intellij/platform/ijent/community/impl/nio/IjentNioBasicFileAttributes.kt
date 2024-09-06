@@ -1,14 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.ijent.fs.IjentFileInfo
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import com.intellij.platform.ijent.fs.IjentWindowsFileInfo
-import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.time.Instant
@@ -67,7 +66,6 @@ internal class IjentNioBasicFileAttributes(private val fileInfo: IjentFileInfo) 
 /** Similar to `sun.nio.fs.UnixFileKey` */
 internal data class IjentUnixFileKey(val dev: Long, val ino: Long)
 
-@VisibleForTesting
 class IjentNioPosixFileAttributes(
   private val fileInfo: IjentPosixFileInfo,
 ) : CaseSensitivityAttribute, PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import java.lang.ref.WeakReference
 import java.net.URI
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -8,7 +10,15 @@ import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import java.nio.file.WatchService
 
-class IjentWslNioPath(private val fileSystem: IjentWslNioFileSystem, val delegate: Path) : Path {
+class IjentWslNioPath(
+  private val fileSystem: IjentWslNioFileSystem,
+  val delegate: Path,
+  cachedAttributes: IjentNioPosixFileAttributesWithDosAdapter?,
+) : Path, BasicFileAttributesHolder2.Impl() {
+  init {
+    myCachedAttributes = WeakReference(cachedAttributes)
+  }
+
   override fun getFileSystem(): IjentWslNioFileSystem = fileSystem
 
   override fun isAbsolute(): Boolean = delegate.isAbsolute
@@ -47,7 +57,7 @@ class IjentWslNioPath(private val fileSystem: IjentWslNioFileSystem, val delegat
   override fun compareTo(other: Path): Int = delegate.compareTo(other.toOriginalPath())
 
   private fun Path.toIjentWslPath(): IjentWslNioPath =
-    IjentWslNioPath(this@IjentWslNioPath.fileSystem, this)
+    IjentWslNioPath(this@IjentWslNioPath.fileSystem, this, null)
 
   private fun Path.toOriginalPath(): Path =
     if (this is IjentWslNioPath) this.delegate
