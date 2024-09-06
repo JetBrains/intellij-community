@@ -2,6 +2,7 @@
 
 package org.jetbrains.eval4j.jdi
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.openapi.util.text.StringUtil
 import com.sun.jdi.*
 import org.jetbrains.eval4j.*
@@ -218,31 +219,13 @@ open class JDIEval(
     }
 
     private fun findMethodOrNull(methodDesc: MethodDescription, clazz: ReferenceType): Method? {
-        val methodName = methodDesc.name
-
-        var method: Method?
-        when (clazz) {
-            is ClassType -> {
-                method = clazz.concreteMethodByName(methodName, methodDesc.desc)
-            }
-            is ArrayType -> { // Copied from com.intellij.debugger.engine.DebuggerUtils.findMethod
-                val objectType = OBJECT.asReferenceType()
-                method = findMethodOrNull(methodDesc, objectType)
-                if (method == null && methodDesc.name == "clone" && methodDesc.desc == "()[Ljava/lang/Object;") {
-                    method = findMethodOrNull(MethodDescription(OBJECT.internalName, "clone", "()[Ljava/lang/Object;", false), objectType)
-                }
-            }
-            else -> {
-                method = clazz.methodsByName(methodName, methodDesc.desc).firstOrNull()
-            }
-        }
-
+        val method = DebuggerUtils.findMethod(clazz, methodDesc.name, methodDesc.desc)
         if (method != null) {
             return method
         }
 
         // Module name can be different for internal functions during evaluation and compilation
-        val internalNameWithoutSuffix = internalNameWithoutModuleSuffix(methodName)
+        val internalNameWithoutSuffix = internalNameWithoutModuleSuffix(methodDesc.name)
         if (internalNameWithoutSuffix != null) {
             val internalMethods = clazz.visibleMethods().filter {
                 val name = it.name()
