@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class SceneBuilderUtil {
@@ -61,7 +60,7 @@ final class SceneBuilderUtil {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
       boolean isDevMode = Files.isDirectory(javaFxJar);
       final Path sceneBuilder = getSceneBuilder11Path();
-      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "rt/sceneBuilderBridge.jar", javaFxJar);
+      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "../rt/sceneBuilderBridge.jar", javaFxJar);
 
       try {
         Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);
