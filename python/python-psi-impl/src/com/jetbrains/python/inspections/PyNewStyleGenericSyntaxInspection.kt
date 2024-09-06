@@ -43,6 +43,21 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
       }
     }
 
+    override fun visitPyTypeParameterList(node: PyTypeParameterList) {
+      val typeParameters = node.typeParameters
+      var lastIsDefault = false
+      for (typeParameter in typeParameters) {
+        if (typeParameter.defaultExpressionText != null) {
+          lastIsDefault = true
+        }
+        else if (lastIsDefault) {
+          registerProblem(typeParameter,
+                          PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+      }
+    }
+
     override fun visitPyTypeAliasStatement(node: PyTypeAliasStatement) {
       val typeExpression = node.typeExpression
       if (typeExpression != null) {
