@@ -297,7 +297,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private EditorDropHandler myDropHandler;
 
-  private Predicate<? super RangeHighlighter> myHighlightingFilter;
+  private final HighlighterFilter myHighlightingFilter = new HighlighterFilter();
 
   private final @NotNull IndentsModel myIndentsModel;
 
@@ -3840,14 +3840,53 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
+  /**
+   * @deprecated Use {@link #addHighlightingPredicate(Key, Predicate)} instead and provide an explicit equality object
+   */
+  @Deprecated
   public void setHighlightingPredicate(@Nullable Predicate<? super RangeHighlighter> filter) {
-    if (myHighlightingFilter == filter) return;
-    Predicate<? super RangeHighlighter> oldFilter = myHighlightingFilter;
-    myHighlightingFilter = filter;
+    var wrapper = filter == null ? null : new PredicateWrapper(filter);
+    addHighlightingPredicate(PredicateWrapper.myKey, wrapper);
+  }
+
+  private static class PredicateWrapper implements EditorHighlightingPredicate {
+    private static final Key<PredicateWrapper> myKey = Key.create("default-highlighting-predicate");
+
+    private final @NotNull Predicate<? super RangeHighlighter> filter;
+
+    private PredicateWrapper(@NotNull Predicate<? super RangeHighlighter> filter) { this.filter = filter; }
+
+    @Override
+    public boolean test(@NotNull RangeHighlighter highlighter) {
+      return filter.test(highlighter);
+    }
+  }
+
+  /**
+   * Adds a highlighting predicate to the editor markup model (or removes the existing one if null is passed).
+   * It is applied to this editor only, other editors are not affected.
+   * <p/>
+   * The editor keeps the last added predicate with a given key. This means several predicates can co-exist at the same time.
+   * A range highlighter is shown only if all predicates accept it.
+   * <p/>
+   *
+   * @param key only the last added predicate with a given key is preserved
+   * @param predicate predicate that checks if the editor should show a range highlighter or not. If null is passed, the previous predicate associated with key gets erased
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  public <T extends EditorHighlightingPredicate> void addHighlightingPredicate(
+    @NotNull Key<T> key,
+    @Nullable T predicate
+  ) {
+    HighlighterFilter oldFilter = myHighlightingFilter.addPredicate(key, predicate);
+    if (oldFilter == null) { // nothing changed
+      return;
+    }
 
     for (RangeHighlighter highlighter : myDocumentMarkupModel.getDelegate().getAllHighlighters()) {
-      boolean oldAvailable = oldFilter == null || oldFilter.test(highlighter);
-      boolean newAvailable = filter == null || filter.test(highlighter);
+      boolean oldAvailable = oldFilter.test(highlighter);
+      boolean newAvailable = myHighlightingFilter.test(highlighter);
       if (oldAvailable != newAvailable) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
@@ -3859,8 +3898,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isHighlighterAvailable(@NotNull RangeHighlighter highlighter) {
-    Predicate<? super RangeHighlighter> filter = myHighlightingFilter;
-    return filter == null || filter.test(highlighter);
+    return myHighlightingFilter.test(highlighter);
   }
 
   private boolean hasBlockInlay(@NotNull Point point) {
@@ -5942,3 +5980,4 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 }
+

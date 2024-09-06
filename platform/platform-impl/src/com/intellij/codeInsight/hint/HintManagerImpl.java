@@ -642,7 +642,8 @@ public class HintManagerImpl extends HintManager {
     showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
   }
 
-  private static void showQuestionHint(final @NotNull Editor editor,
+  @ApiStatus.Internal
+  public static void showQuestionHint(final @NotNull Editor editor,
                                        final @NotNull Point p,
                                        final int offset1,
                                        final int offset2,

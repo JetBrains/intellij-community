@@ -360,6 +360,9 @@ public final class UpdateHighlightersUtil {
     if (hardCodedLayer > 0) {
       return hardCodedLayer;
     }
+    if (info.isLayerOverriden()) {
+      return info.getLayerOverride();
+    }
     HighlightSeverity severity = info.getSeverity();
     int layer;
     if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {

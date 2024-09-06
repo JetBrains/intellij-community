@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.InlineCompletion.INLINE_COMPLETION_SUPPRESSED_KEY
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingTracker
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
@@ -187,6 +188,12 @@ class InlineCompletionHandler(
     }
   }
 
+  private fun isCompletionSuppressed(
+    editor: Editor
+  ): Boolean {
+    return editor.getUserData(INLINE_COMPLETION_SUPPRESSED_KEY) != null
+  }
+
   private suspend fun invokeRequest(request: InlineCompletionRequest, session: InlineCompletionSession) {
     currentCoroutineContext().ensureActive()
 
@@ -272,6 +279,8 @@ class InlineCompletionHandler(
   internal fun onDocumentEvent(documentEvent: DocumentEvent, editor: Editor) {
     val event = typingTracker.getDocumentChangeEvent(documentEvent, editor)
     if (event != null) {
+      if (isCompletionSuppressed(editor)) return
+
       invokeEvent(event)
     }
     else if (!completionState.ignoreDocumentChanges) {
