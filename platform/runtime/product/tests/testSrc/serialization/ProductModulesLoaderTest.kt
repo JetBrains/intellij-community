@@ -57,9 +57,9 @@ class ProductModulesLoaderTest {
       xml(FILE_NAME, """
         <product-modules>
           <main-root-modules>
-            <module importance="functional">root</module>
-            <module importance="optional">optional</module>
-            <module importance="optional">unknown-optional</module>
+            <module loading="required">root</module>
+            <module loading="optional">optional</module>
+            <module loading="optional">unknown-optional</module>
           </main-root-modules>
         </product-modules>
       """.trimIndent())
@@ -148,7 +148,7 @@ class ProductModulesLoaderTest {
               <from-module>root</from-module>
             </include>
             <main-root-modules>
-              <module importance="functional">additional</module>
+              <module loading="required">additional</module>
             </main-root-modules>
             <bundled-plugins>
               <module>plugin</module>
@@ -217,7 +217,7 @@ class ProductModulesLoaderTest {
             <product-modules>
               <main-root-modules>
                ${mainModules.joinToString("\n") { 
-                  "<module importance=\"functional\">$it</module>"
+                  "<module loading=\"required\">$it</module>"
                }}
               </main-root-modules>
               <bundled-plugins>

@@ -41,14 +41,14 @@ public final class ProductModulesXmlSerializer {
           if (tagName.equals("module")) {
             if (reader.getAttributeCount() > 0) {
               String attributeName = reader.getAttributeLocalName(0);
-              if (!"importance".equals(attributeName)) {
+              if (!"loading".equals(attributeName)) {
                 throw new XMLStreamException("Unexpected attribute '" + attributeName + "'");
               }
               String loadingRuleString = reader.getAttributeValue(0);
               switch (loadingRuleString) {
                 case "optional": loadingRule = RuntimeModuleLoadingRule.OPTIONAL; break;
-                case "functional": loadingRule = RuntimeModuleLoadingRule.REQUIRED; break;
-                case "service": loadingRule = RuntimeModuleLoadingRule.ON_DEMAND; break;
+                case "required": loadingRule = RuntimeModuleLoadingRule.REQUIRED; break;
+                case "on-demand": loadingRule = RuntimeModuleLoadingRule.ON_DEMAND; break;
                 default: throw new XMLStreamException("Unknown loading rule '" + loadingRuleString + "'");
               }
             }
