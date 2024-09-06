@@ -15,7 +15,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.lang.JavaVersion
@@ -23,13 +26,12 @@ import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDe
 import org.junit.Ignore
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.extension
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.writeLines
+import kotlin.io.path.*
 
 /**
  * Generator which is used to generate required api files for [com.intellij.codeInspection.JavaApiUsageInspection].
+ * To generate new API lists for next release, you will need to set [JDK_HOME], [LANGUAGE_LEVEL], [SINCE_VERSION] and then run
+ * [testCollectSinceApiUsages].
  */
 @Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
@@ -43,10 +45,12 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
 
   /**
    * Generates removed entries. This can be useful when re-generating API lists for whatever reason. When using a modern JDK to generate the
-   * API lists it will lose tagged API that got removed. This script can be used to compare new and old API lists and find removed API.
+   * API lists, it will lose the tagged API that got removed. This script can be used to compare new and old API lists and find removed API.
    */
   fun testGenerateRemovedEntries() {
-    removedEntries(Path.of(NEW_API_DIR), Path.of(OLD_API_DIR))
+    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+      removedEntries(Path.of(TEMP_API_DIR), Path.of(API_DIR))
+    }
   }
 
   private fun removedEntries(current: Path, previous: Path) {
@@ -78,7 +82,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     if (argListFirst.size != argListSecond.size) return false
     argListFirst.forEachIndexed { i, firstArg ->
       val secondArg = argListSecond[i]
-      if (firstArg != secondArg) { // check simple name if both don't match, one could be qualified and the other could be simple
+      if (firstArg != secondArg) { // check simple name if both don't match, one could be qualified, and the other could be simple
         val simpleNameFirst = firstArg.substringAfterLast(".")
         val simpleNameSecond = secondArg.substringAfterLast(".")
         if (simpleNameFirst != simpleNameSecond) return false
@@ -87,8 +91,66 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     return true
   }
 
+  private fun PsiMember.isPublicApi(): Boolean {
+    if (modifierList?.hasModifierProperty(PsiModifier.PRIVATE) == true) return false
+    val parentMember = parentOfType<PsiMember>() ?: return true
+    return parentMember.isPublicApi()
+  }
+
+  fun testRemoveNonPublicApi() {
+    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+      filterSignatures(Path.of(API_DIR)) { isPublicApi() }
+    }
+  }
+
+  /**
+   * Can be used to filter out API lists from the [path] according to the provided [filter].
+   */
+  private fun filterSignatures(path: Path, filter: PsiMember.() -> Boolean) {
+    path.listDirectoryEntries().filter { it.name.startsWith("api") && it.extension == "txt" }.forEach { currentEntry ->
+      val apiFile = path.resolve(currentEntry.name)
+      val validSignatures = mutableListOf<String>()
+      apiFile.readLines().forEach { signature ->
+        val member = findMember(signature)
+        if (member == null) {
+          validSignatures.add(signature) // we still add it to signatures because it might just not be present in the current working JDK
+          println("Could not find member for $signature")
+          return@forEach
+        }
+        if (member.filter()) {
+          validSignatures.add(signature)
+        }
+      }
+      apiFile.writeLines(validSignatures)
+    }
+  }
+
+  private fun findMember(signature: String): PsiMember? {
+    val clazz = JavaPsiFacade.getInstance(project).findClass(signature.substringBefore("#"), GlobalSearchScope.allScope(project))
+    if (clazz == null) return null
+    return if (signature.contains("#")) {
+      if (signature.contains("(")) {
+        val methods = clazz.findMethodsByName(signature.substringAfter("#").substringBefore("("), true)
+        if (methods.isEmpty()) return null
+        val paramFqns = signature.substringAfter("(").substringBefore(")").split(";").dropLast(1)
+        val method = methods.firstOrNull { method ->
+          if (method.parameterList.parametersCount != paramFqns.size) return@firstOrNull false
+          method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes().zip(paramFqns).all { (paramType, sigTypeCanonicalText) ->
+            paramType.canonicalText == sigTypeCanonicalText
+          }
+        }
+        method
+      } else {
+        val field = clazz.findFieldByName(signature.substringAfter("#"), true)
+        field
+      }
+    } else clazz
+  }
+
   fun testCollectSinceApiUsages() {
-    doCollectSinceApiUsages()
+    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+      doCollectSinceApiUsages()
+    }
   }
 
   /**
@@ -128,7 +190,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
       file?.accept(object : JavaRecursiveElementVisitor() {
         override fun visitElement(element: PsiElement) {
           super.visitElement(element)
-          if (element is PsiMember) {
+          if (element is PsiMember && element.isPublicApi()) {
             val signature = LanguageLevelUtil.getSignature(element) ?: return
             if (isDocumentedSinceApi(element) && !previews.contains(signature)) {
               println(signature)
@@ -136,7 +198,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
               val sinceSuperVersions = element.findDeepestSuperMethods().map { superMethod ->
                 val text = (superMethod.navigationElement as PsiMethod).docComment
                   ?.tags?.find { tag -> tag.name == "since" }?.valueElement?.text
-                if (text != null) try { JavaVersion.parse(text)} catch (e: IllegalArgumentException) { null } else null
+                if (text != null) try { JavaVersion.parse(text)} catch (_: IllegalArgumentException) { null } else null
               }
               val sinceVersion = sinceSuperVersions.filterNotNull().minOrNull()
               if (sinceVersion == LANGUAGE_LEVEL.toJavaVersion()) {
@@ -146,9 +208,9 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
           }
         }
 
-        fun isDocumentedSinceApi(element: PsiElement): Boolean = (element as? PsiDocCommentOwner)?.docComment?.tags?.any {
-          tag -> tag.name == "since" && tag.valueElement?.text == SINCE_VERSION
-        } ?: false
+        fun isDocumentedSinceApi(element: PsiElement): Boolean = (element as? PsiDocCommentOwner)?.docComment?.tags?.any { tag ->
+          tag.name == "since" && tag.valueElement?.text == SINCE_VERSION
+        } == true
       })
       true
     }
@@ -157,8 +219,12 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   }
 
   companion object {
-    private const val NEW_API_DIR = "REPLACE_ME"
-    private const val OLD_API_DIR = "REPLACE_ME"
+    private const val TEMP_API_DIR = "REPLACE_ME"
+
+    /**
+     * Dir to API lists
+     */
+    private const val API_DIR = "REPLACE_ME"
 
     private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-20"
 

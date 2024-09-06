@@ -6,7 +6,6 @@ jdk.jfr.consumer.RecordedThread#isVirtual()
 jdk.xml.internal.JdkConstants#CONFIG_FILE
 jdk.xml.internal.JdkConstants#CONFIG_FILE_PROPNAME
 jdk.internal.util.FormatConcatItem
-java.lang.invoke.StringConcatFactory#MAX_INDY_CONCAT_ARG_SLOTS
 java.lang.invoke.StringConcatFactory#makeConcatWithTemplate(List<String>;List<Class<?>>;)
 java.lang.invoke.StringConcatFactory#makeConcatWithTemplateCluster(List<String>;List<Class<?>>;int;)
 java.lang.invoke.StringConcatFactory#makeConcatWithTemplateGetters(List<String>;List<MethodHandle>;int;)
@@ -173,8 +172,6 @@ jdk.jshell.JShell.Builder#console(jdk.jshell.JShellConsole;)
 jdk.jshell.JShell.ExecutionEnvImpl#console()
 jdk.jshell.JShellConsole
 com.sun.source.tree.Tree.Kind#ANY_PATTERN
-jdk.internal.shellsupport.doc.JavadocFormatter.FormatJavadocScanner#visitEscape(com.sun.source.doctree.EscapeTree;java.lang.Object;)
-jdk.javadoc.internal.doclets.formats.html.HtmlDocletWriter.InlineVisitor#visitEscape(com.sun.source.doctree.EscapeTree;jdk.javadoc.internal.doclets.formats.html.Content;)
 jdk.javadoc.internal.doclint.Checker#visitEscape(com.sun.source.doctree.EscapeTree;java.lang.Void;)
 com.sun.tools.javac.tree.JCTree.JCCase#getLabels()
 com.sun.tools.javac.tree.JCTree.JCCase#getGuard()

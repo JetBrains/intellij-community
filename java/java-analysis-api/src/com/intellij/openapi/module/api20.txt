@@ -29,8 +29,6 @@ java.lang.Character.UnicodeBlock#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_H
 java.lang.Character.UnicodeScript#KAWI
 java.lang.Character.UnicodeScript#NAG_MUNDARI
 java.lang.ModuleLayer.Controller#enableNativeAccess(Module;)
-java.util.regex.Matcher.ImmutableMatchResult#namedGroups()
-java.util.regex.Matcher.ImmutableMatchResult#hasMatch()
 java.util.regex.Matcher#namedGroups()
 java.util.regex.Matcher#hasMatch()
 java.util.regex.Pattern#namedGroups()

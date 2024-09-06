@@ -41,7 +41,6 @@ java.lang.StrictMath#absExact(long;)
 java.lang.CharSequence#isEmpty()
 java.text.DecimalFormatSymbols#getMonetaryGroupingSeparator()
 java.text.DecimalFormatSymbols#setMonetaryGroupingSeparator(char;)
-java.text.DecimalFormatSymbols#monetaryGroupingSeparator
 java.util.NoSuchElementException#NoSuchElementException(java.lang.String;java.lang.Throwable;)
 java.util.NoSuchElementException#NoSuchElementException(java.lang.Throwable;)
 java.security.spec.EdECPoint

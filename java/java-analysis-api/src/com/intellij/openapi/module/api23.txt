@@ -89,8 +89,6 @@ java.text.NumberFormat#isStrict()
 java.text.NumberFormat#setStrict(boolean;)
 java.text.DecimalFormat#isStrict()
 java.text.DecimalFormat#setStrict(boolean;)
-java.text.DecimalFormat#parseStrict
-java.text.CompactNumberFormat#parseStrict
 java.text.CompactNumberFormat#isStrict()
 java.text.CompactNumberFormat#setStrict(boolean;)
 java.time.Instant#until(java.time.Instant;)

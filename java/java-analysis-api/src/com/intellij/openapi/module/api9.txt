@@ -170,11 +170,6 @@ sun.nio.ch.DatagramSocketAdaptor#getOption(java.net.SocketOption<T>;)
 sun.nio.ch.DatagramSocketAdaptor#supportedOptions()
 sun.text.spi.JavaTimeDateTimePatternProvider#getJavaTimeDateTimePattern(int;int;java.lang.String;java.util.Locale;)
 sun.util.locale.provider.JavaTimeDateTimePatternImpl#getJavaTimeDateTimePattern(int;int;java.lang.String;java.util.Locale;)
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getAnnotatedOwnerType()
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedArrayTypeImpl#getAnnotatedOwnerType()
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeVariableImpl#getAnnotatedOwnerType()
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedParameterizedTypeImpl#getAnnotatedOwnerType()
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedWildcardTypeImpl#getAnnotatedOwnerType()
 sun.security.ssl.SSLEngineImpl#getApplicationProtocol()
 sun.security.ssl.SSLEngineImpl#getHandshakeApplicationProtocol()
 sun.security.ssl.SSLEngineImpl#setHandshakeApplicationProtocolSelector(java.util.function.BiFunction<javax.net.ssl.SSLEngine,java.util.List<java.lang.String>,java.lang.String>;)
@@ -218,8 +213,6 @@ java.net.Socket#supportedOptions()
 java.net.SocketImpl#setOption(java.net.SocketOption<T>;T;)
 java.net.SocketImpl#getOption(java.net.SocketOption<T>;)
 java.net.SocketImpl#supportedOptions()
-java.net.InetAddress.PlatformResolver
-java.net.InetAddress.HostsFileResolver
 java.net.ServerSocket#setOption(java.net.SocketOption<T>;T;)
 java.net.ServerSocket#getOption(java.net.SocketOption<T>;)
 java.net.ServerSocket#supportedOptions()
@@ -700,7 +693,6 @@ java.util.spi.ToolProvider
 java.util.spi.ResourceBundleProvider
 java.util.spi.AbstractResourceBundleProvider
 java.util.zip.CRC32C
-java.util.zip.ZipFile.ZipEntryIterator#asIterator()
 java.util.zip.Checksum#update(byte[];)
 java.util.zip.Checksum#update(java.nio.ByteBuffer;)
 java.util.zip.ZipEntry#setTimeLocal(java.time.LocalDateTime;)
@@ -962,7 +954,6 @@ java.util.Currency#getNumericCodeAsString()
 java.util.Optional#ifPresentOrElse(java.util.function.Consumer<? super T>;java.lang.Runnable;)
 java.util.Optional#or(java.util.function.Supplier<? extends java.util.Optional<? extends T>>;)
 java.util.Optional#stream()
-java.util.Collections.EmptyEnumeration#asIterator()
 java.util.Enumeration#asIterator()
 java.util.OptionalInt#ifPresentOrElse(java.util.function.IntConsumer;java.lang.Runnable;)
 java.util.OptionalInt#stream()
@@ -977,11 +968,6 @@ java.util.OptionalDouble#ifPresentOrElse(java.util.function.DoubleConsumer;java.
 java.util.OptionalDouble#stream()
 java.util.ResourceBundle#getBundle(java.lang.String;java.lang.Module;)
 java.util.ResourceBundle#getBundle(java.lang.String;java.util.Locale;java.lang.Module;)
-java.util.CollSer#tag
-java.util.CollSer#array
-java.util.CollSer#readObject(java.io.ObjectInputStream;)
-java.util.CollSer#writeObject(java.io.ObjectOutputStream;)
-java.util.CollSer#readResolve()
 java.util.CollSer
 java.security.cert.URICertStoreParameters
 java.security.spec.EncodedKeySpec#EncodedKeySpec(byte[];java.lang.String;)
@@ -997,7 +983,6 @@ java.security.Provider#isConfigured()
 java.security.Provider#getVersionStr()
 java.security.KeyStoreSpi#engineProbe(java.io.InputStream;)
 java.security.AuthProvider#AuthProvider(java.lang.String;java.lang.String;java.lang.String;)
-java.security.SecureRandom#threadSafe
 java.security.SecureRandom#getInstance(java.lang.String;java.security.SecureRandomParameters;)
 java.security.SecureRandom#getInstance(java.lang.String;java.security.SecureRandomParameters;java.lang.String;)
 java.security.SecureRandom#getInstance(java.lang.String;java.security.SecureRandomParameters;java.security.Provider;)
@@ -1077,8 +1062,6 @@ jdk.jshell.PersistentSnippet
 jdk.jshell.DeclarationSnippet
 jdk.jshell.SourceCodeAnalysis
 jdk.jshell.UnresolvedReferenceException
-jdk.internal.shellsupport.doc.JavadocHelper.OnDemandJavadocHelper.PatchModuleFileManager#getLocationForModule(javax.tools.JavaFileManager.Location;javax.tools.JavaFileObject;)
-jdk.internal.shellsupport.doc.JavadocHelper.OnDemandJavadocHelper.PatchModuleFileManager#inferModuleName(javax.tools.JavaFileManager.Location;)
 sun.security.provider.certpath.ldap.JdkLDAP
 sun.security.provider.certpath.ldap.LDAPCertStoreImpl
 com.sun.jarsigner.ContentSignerParameters#getTSADigestAlg()
@@ -1093,10 +1076,7 @@ jdk.javadoc.doclet.StandardDoclet
 jdk.javadoc.doclet.DocletEnvironment
 jdk.javadoc.internal.api.JavadocTool#name()
 jdk.javadoc.internal.api.JavadocTaskImpl#addModules(java.lang.Iterable<java.lang.String>;)
-jdk.javadoc.internal.tool.ElementsTable.IncludedVisitor#visitModule(javax.lang.model.element.ModuleElement;java.lang.Void;)
 jdk.javadoc.internal.tool.JavadocToolProvider
-jdk.javadoc.internal.doclets.toolkit.util.CommentHelper.ReferenceDocTreeVisitor#visitProvides(com.sun.source.doctree.ProvidesTree;java.lang.Void;)
-jdk.javadoc.internal.doclets.toolkit.util.CommentHelper.ReferenceDocTreeVisitor#visitUses(com.sun.source.doctree.UsesTree;java.lang.Void;)
 jdk.javadoc.internal.doclint.Checker#visitIndex(com.sun.source.doctree.IndexTree;java.lang.Void;)
 jdk.javadoc.internal.doclint.Checker#visitProvides(com.sun.source.doctree.ProvidesTree;java.lang.Void;)
 jdk.javadoc.internal.doclint.Checker#visitUses(com.sun.source.doctree.UsesTree;java.lang.Void;)
@@ -1125,7 +1105,6 @@ sun.swing.LightweightContent#imageBufferReset(int[];int;int;int;int;int;double;d
 java.awt.font.NumericShaper.Range#SINHALA
 java.awt.font.NumericShaper.Range#MYANMAR_TAI_LAING
 java.awt.event.FocusEvent.Cause
-java.awt.event.FocusEvent#cause
 java.awt.event.FocusEvent#FocusEvent(java.awt.Component;int;boolean;java.awt.Component;java.awt.event.FocusEvent.Cause;)
 java.awt.event.FocusEvent#getCause()
 java.awt.event.FocusEvent#readResolve()
@@ -1268,7 +1247,6 @@ javax.swing.JViewport.BackingStoreMultiResolutionImage#getResolutionVariant(doub
 javax.swing.JViewport.BackingStoreMultiResolutionImage#getResolutionVariants()
 javax.swing.UIManager#createLookAndFeel(java.lang.String;)
 javax.swing.JComponent#getUI()
-javax.swing.UIDefaults#addInternalBundle(java.lang.String;)
 javax.swing.InputVerifier#verifyTarget(javax.swing.JComponent;)
 javax.swing.InputVerifier#shouldYieldFocus(javax.swing.JComponent;javax.swing.JComponent;)
 javax.swing.JToggleButton#requestFocus(java.awt.event.FocusEvent.Cause;)
@@ -1290,7 +1268,6 @@ javax.imageio.plugins.tiff.ExifInteroperabilityTagSet
 javax.accessibility.AccessibilityProvider
 java.util.logging.Logger#logrb(java.util.logging.Level;java.util.ResourceBundle;java.lang.String;java.lang.Object[];)
 java.util.logging.Logger#logrb(java.util.logging.Level;java.util.ResourceBundle;java.lang.String;java.lang.Throwable;)
-java.util.logging.LogRecord#instant
 java.util.logging.LogRecord#getInstant()
 java.util.logging.LogRecord#setInstant(java.time.Instant;)
 java.util.logging.LogManager#updateConfiguration(java.util.function.Function<java.lang.String,java.util.function.BiFunction<java.lang.String,java.lang.String,java.lang.String>>;)
@@ -1342,13 +1319,6 @@ com.sun.tools.javac.main.DelegatingJavaFileManager#getServiceLoader(javax.tools.
 com.sun.tools.javac.main.DelegatingJavaFileManager#inferModuleName(javax.tools.JavaFileManager.Location;)
 com.sun.tools.javac.main.DelegatingJavaFileManager#listLocationsForModules(javax.tools.JavaFileManager.Location;)
 com.sun.tools.javac.main.DelegatingJavaFileManager#contains(javax.tools.JavaFileManager.Location;javax.tools.FileObject;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#getJavaFileObjectsFromPaths(java.lang.Iterable<? extends java.nio.file.Path>;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#getJavaFileObjects(java.nio.file.Path[];)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#setLocationFromPaths(javax.tools.JavaFileManager.Location;java.util.Collection<? extends java.nio.file.Path>;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#setLocationForModule(javax.tools.JavaFileManager.Location;java.lang.String;java.util.Collection<? extends java.nio.file.Path>;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#getLocationAsPaths(javax.tools.JavaFileManager.Location;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#asPath(javax.tools.FileObject;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#setPathFactory(javax.tools.StandardJavaFileManager.PathFactory;)
 com.sun.tools.javac.tree.DCTree.DCDocComment#getFullBody()
 com.sun.tools.javac.tree.JCTree.JCCompilationUnit#getPackage()
 com.sun.tools.javac.tree.DocPretty#visitHidden(com.sun.source.doctree.HiddenTree;java.lang.Void;)
@@ -1368,8 +1338,6 @@ com.sun.tools.javac.launcher.MemoryClassLoader#findResource(java.lang.String;jav
 com.sun.tools.javac.launcher.MemoryFileManager#contains(javax.tools.JavaFileManager.Location;javax.tools.FileObject;)
 com.sun.tools.javac.processing.PrintingProcessor.PrintingElementVisitor#visitModule(javax.lang.model.element.ModuleElement;java.lang.Boolean;)
 com.sun.tools.javac.processing.JavacRoundEnvironment#getElementsAnnotatedWithAny(javax.lang.model.element.TypeElement[];)
-com.sun.tools.javac.processing.JavacRoundEnvironment.AnnotationSetScanner#visitModule(javax.lang.model.element.ModuleElement;javax.lang.model.element.TypeElement;)
-com.sun.tools.javac.processing.JavacRoundEnvironment.AnnotationSetMultiScanner#visitModule(javax.lang.model.element.ModuleElement;java.util.Set<javax.lang.model.element.TypeElement>;)
 com.sun.tools.javac.processing.JavacRoundEnvironment#getElementsAnnotatedWithAny(java.util.Set<java.lang.Class<? extends java.lang.annotation.Annotation>>;)
 com.sun.source.tree.Tree.Kind#PACKAGE
 com.sun.source.tree.UsesTree
@@ -1407,8 +1375,6 @@ com.sun.source.doctree.DocTreeVisitor#visitHidden(com.sun.source.doctree.HiddenT
 com.sun.source.doctree.DocTreeVisitor#visitIndex(com.sun.source.doctree.IndexTree;P;)
 com.sun.source.doctree.DocTreeVisitor#visitProvides(com.sun.source.doctree.ProvidesTree;P;)
 com.sun.source.doctree.DocTreeVisitor#visitUses(com.sun.source.doctree.UsesTree;P;)
-jdk.internal.shellsupport.doc.JavadocHelper.OnDemandJavadocHelper.PatchModuleFileManager#getLocationForModule(javax.tools.JavaFileManager.Location;javax.tools.JavaFileObject;)
-jdk.internal.shellsupport.doc.JavadocHelper.OnDemandJavadocHelper.PatchModuleFileManager#inferModuleName(javax.tools.JavaFileManager.Location;)
 jdk.dynalink.beans.BeansLinker
 jdk.dynalink.beans.StaticClass
 jdk.dynalink.beans.MissingMemberHandlerFactory
@@ -1556,7 +1522,6 @@ jdk.management.jfr.FlightRecorderMXBean
 jdk.management.jfr.SettingDescriptorInfo
 sun.security.pkcs11.SunPKCS11#configure(java.lang.String;)
 sun.security.pkcs11.SunPKCS11#isConfigured()
-jdk.swing.interop.LightweightContentWrapper.LightweightContentProxy#imageBufferReset(int[];int;int;int;int;int;double;double;)
 jdk.internal.util.jar.VersionedStream#stream(java.util.jar.JarFile;)
 jdk.internal.HotSpotIntrinsicCandidate
 java.net.InetAddress.NameService

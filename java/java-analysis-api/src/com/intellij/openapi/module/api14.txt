@@ -16,7 +16,6 @@ java.lang.StrictMath#decrementExact(int;)
 java.lang.StrictMath#decrementExact(long;)
 java.lang.StrictMath#negateExact(int;)
 java.lang.StrictMath#negateExact(long;)
-java.text.CompactNumberFormat#pluralRules
 java.text.CompactNumberFormat#CompactNumberFormat(java.lang.String;java.text.DecimalFormatSymbols;java.lang.String[];java.lang.String;)
 java.util.concurrent.locks.LockSupport#setCurrentBlocker(java.lang.Object;)
 jdk.jshell.Snippet.SubKind#RECORD_SUBKIND
