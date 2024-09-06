@@ -15,6 +15,7 @@ import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
@@ -24,9 +25,10 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
@@ -37,7 +39,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtVariableDescri
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import kotlin.collections.get
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class K2DfaAssistProvider : DfaAssistProvider {
@@ -81,6 +82,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
         if (anchor !is KtElement) return null
         val qualifier = dfaVar.qualifier
         val descriptor = dfaVar.descriptor
+        val inlined = (anchor.parentOfType<KtFunction>() as? KtNamedFunction)?.hasInlineModifier() == true
         if (qualifier == null) {
             if (descriptor is KtThisDescriptor) {
                 val pointer = descriptor.classDef.pointer
@@ -89,16 +91,26 @@ class K2DfaAssistProvider : DfaAssistProvider {
                     if (symbol is KaNamedClassSymbol) {
                         val nameString = symbol.classId?.asSingleFqName()
                         if (nameString != null) {
-                            JavaToKotlinClassMap.mapKotlinToJava(nameString.toUnsafe())
-                            val thisObject = proxy.thisObject()
-                            if (thisObject != null) {
-                                val signature = AsmType.getType(thisObject.type().signature()).className
-                                val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
-                                if (signature == jvmName) return thisObject
+                            if (inlined) {
+                                val thisName = KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                                val thisVar = proxy.visibleVariableByName(thisName)
+                                if (thisVar != null) {
+                                    return postprocess(proxy.getVariableValue(thisVar))
+                                }
+                            } else {
+                                val thisObject = proxy.thisObject()
+                                if (thisObject != null) {
+                                    val signature = AsmType.getType(thisObject.type().signature()).className
+                                    val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
+                                    if (signature == jvmName) return thisObject
+                                }
                             }
                             val contextName = descriptor.contextName
                             if (contextName != null) {
-                                val thisName = "\$this\$${contextName}"
+                                var thisName = "\$this\$${contextName}"
+                                if (inlined) {
+                                    thisName += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                                }
                                 val thisVar = proxy.visibleVariableByName(thisName)
                                 if (thisVar != null) {
                                     return postprocess(proxy.getVariableValue(thisVar))
@@ -113,7 +125,11 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 analyze(anchor) {
                     val symbol = pointer.restoreSymbol()
                     if (symbol is KaVariableSymbol) {
-                        val variable = proxy.visibleVariableByName(symbol.name.asString())
+                        var name = symbol.name.asString()
+                        if (inlined) {
+                            name += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                        }
+                        val variable = proxy.visibleVariableByName(name)
                         if (variable != null) {
                             return postprocess(proxy.getVariableValue(variable))
                         }

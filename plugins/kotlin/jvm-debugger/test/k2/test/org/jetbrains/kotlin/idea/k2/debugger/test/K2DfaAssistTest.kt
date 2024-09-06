@@ -11,6 +11,7 @@ import com.intellij.debugger.mockJDI.values.MockObjectReference
 import com.intellij.debugger.mockJDI.values.MockValue
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
@@ -346,6 +347,74 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
                 }"""
         doTest(text) { vm, frame ->
             frame.addVariable("t", MockValue.createValue(ElementType.METHOD, ElementType::class.java, vm))
+        }
+    }
+    
+    fun testInlineFunction() {
+        val text = """
+            fun main() {
+                f1(12)
+            }
+            
+            inline fun f1(x: Any) {
+                <caret>when (x) {
+                    is String/*FALSE*/ -> /*unreachable_start*/"String"/*unreachable_end*/
+                    is Int/*TRUE*/ -> {
+                        println("Int")
+                        if (x > 0/*TRUE*/) println("positive")
+                    }
+                    else -> /*unreachable_start*/{
+                        val xb = x as Boolean
+                        println("Boolean")
+                    }/*unreachable_end*/
+                }
+            }          
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("x${KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX}", 
+                              MockValue.createValue(12, Integer::class.java, vm))
+        }
+    }
+    
+    fun testInlineFunctionThis() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            
+            fun main() {
+                K2DfaAssistTest.Nested(-1).a()
+            }
+            
+            class K2DfaAssistTest {
+               class Nested(val x:Int) {
+                  inline fun a() {
+                    <caret>if (x > 0/*FALSE*/) /*unreachable_start*/{
+            
+                    }/*unreachable_end*/
+                  }
+               }
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable(
+                KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
+                MockValue.createValue(Nested(-1), vm))
+        }
+    }
+    
+    fun testInlineFunctionReceiverThis() {
+        val text = """
+            fun main() {
+                "hello world".isLong()
+            }
+            
+            inline fun String.isLong(): Boolean {
+                <caret>return this.length > 5/*TRUE*/
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable(
+                "\$this\$isLong${KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX}",
+                MockValue.createValue("hello world", vm))
         }
     }
 
