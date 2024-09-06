@@ -18,15 +18,13 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypedDictType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +58,12 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         .ofNullable(PyEvaluator.evaluate(indexExpression, String.class))
         .map(typedDictType::getElementType)
         .orElse(null);
+    }
+    if (type instanceof PyClassType classType) {
+        PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, this, false, context);
+        if (parameterizedType instanceof PyCollectionType collectionType) {
+          return collectionType.toClass();
+        }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);
   }
