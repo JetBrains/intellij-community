@@ -248,5 +248,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
 
   @Test public void testPreserveAssignmentToRecord() { doTest("pkg/PreserveAssignmentToRecord"); }
   @Test public void testPreserveAssignmentToRecord2() { doTest("pkg/PreserveAssignmentToRecord2"); }
+  @Test public void testLambda() { doTest("pkg/TestLambda"); }
 
 }
