@@ -266,6 +266,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     return DebuggerUtilsEx.mirrorOfArray(arrayType, size, context.evaluationContext)
                 }
 
+                override fun shouldInvokeMethodWithReflection(method: Method, args: List<Value?>): Boolean {
+                    // invokeMethod in ExecutionContext already handles everything
+                    return false
+                }
+
                 override fun isInstanceOf(value: Eval4JValue, targetType: Type): Boolean {
                     val jdiValue = value.obj()
                     if (jdiValue is Value) {

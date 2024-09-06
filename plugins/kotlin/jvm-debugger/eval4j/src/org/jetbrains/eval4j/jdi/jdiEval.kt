@@ -376,7 +376,7 @@ open class JDIEval(
         }
     }
 
-    private fun shouldInvokeMethodWithReflection(method: Method, args: List<com.sun.jdi.Value?>): Boolean {
+    open fun shouldInvokeMethodWithReflection(method: Method, args: List<com.sun.jdi.Value?>): Boolean {
         if (method.isVarArgs) {
             return false
         }
