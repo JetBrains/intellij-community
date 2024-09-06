@@ -138,7 +138,7 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(context: Sma
         return this
     }
     if (DexDebugFacility.isDex(debugProcess)) {
-        return DexBytecodeInspector.EP.extensions.firstOrNull()?.filterAlreadyExecutedTargets(this, context)
+        return DexBytecodeInspector.EP.extensionList.firstOrNull()?.filterAlreadyExecutedTargets(this, context)
             ?: this
     }
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy

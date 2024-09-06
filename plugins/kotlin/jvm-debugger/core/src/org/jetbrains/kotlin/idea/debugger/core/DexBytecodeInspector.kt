@@ -23,8 +23,7 @@ interface DexBytecodeInspector {
     }
 
     companion object {
-        @JvmStatic
-        val EP: ExtensionPointName<DexBytecodeInspector> =
+        internal val EP: ExtensionPointName<DexBytecodeInspector> =
             ExtensionPointName.create("com.intellij.debugger.dexBytecodeInspector")
     }
 }

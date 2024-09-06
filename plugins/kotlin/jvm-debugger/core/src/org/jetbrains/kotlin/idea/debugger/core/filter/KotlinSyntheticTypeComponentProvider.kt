@@ -98,8 +98,7 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
 
     private fun hasOnlyInvokeStatic(m: Method): Boolean {
         if (DexDebugFacility.isDex(m.virtualMachine())) {
-            return DexBytecodeInspector.EP.extensions.firstOrNull()?.hasOnlyInvokeStatic(m)
-                ?: false
+            return DexBytecodeInspector.EP.extensionList.firstOrNull()?.hasOnlyInvokeStatic(m) == true
         }
         return hasOnlyInvokeStaticJVM(m)
     }
