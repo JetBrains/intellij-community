@@ -6,12 +6,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PlatformUtils
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
-import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.FastThreadLocalThread
 import io.netty.util.concurrent.GenericFutureListener
 import io.netty.util.internal.logging.InternalLoggerFactory
 import kotlinx.coroutines.CompletableDeferred
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.net.InetAddress
@@ -21,6 +22,7 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
+@Internal
 class BuiltInServer private constructor(
   val eventLoopGroup: EventLoopGroup,
   val childEventLoopGroup: EventLoopGroup,
@@ -55,7 +57,7 @@ class BuiltInServer private constructor(
     suspend fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)? = null): BuiltInServer {
       val provider = selectorProvider ?: SelectorProvider.provider()
       val factory = BuiltInServerThreadFactory()
-      val eventLoopGroup = NioEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, factory, provider)
+      val eventLoopGroup = MultiThreadIoEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, factory, NioIoHandler.newFactory(provider))
       val channelRegistrar = ChannelRegistrar()
       val bootstrap = createServerBootstrap(eventLoopGroup, eventLoopGroup)
       configureChildHandler(bootstrap, channelRegistrar, handler)

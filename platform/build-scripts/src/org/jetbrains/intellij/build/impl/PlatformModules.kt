@@ -199,6 +199,8 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
         "eclipse.lsp4j.jsonrpc.debug",
       )
     )
+
+    layout.withProjectLibrary("rhino")
   }
 
   // used by intellij.database.jdbcConsole - put to a small util module

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io
 
 import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
@@ -16,7 +16,8 @@ private val PREV_HANDLER = AttributeKey.valueOf<WeakReference<HttpRequestHandler
 internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase() {
   override fun process(context: ChannelHandlerContext,
                        request: FullHttpRequest,
-                       urlDecoder: QueryStringDecoder): Boolean {
+                       urlDecoder: QueryStringDecoder
+  ): Boolean {
     fun HttpRequestHandler.checkAndProcess(): Boolean {
       return isSupported(request) && !request.isWriteFromBrowserWithoutOrigin() && isAccessible(request) && process(urlDecoder, request, context)
     }

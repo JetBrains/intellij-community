@@ -51,7 +51,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
-    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" scope="RUNTIME" />
     <orderEntry type="library" name="imgscalr" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
@@ -92,14 +91,11 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="library" name="classgraph" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
-    <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.feedback" scope="RUNTIME" />

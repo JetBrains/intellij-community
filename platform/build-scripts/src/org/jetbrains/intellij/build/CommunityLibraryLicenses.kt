@@ -1180,6 +1180,7 @@ object CommunityLibraryLicenses {
 
     netty("netty"),
     netty("netty-buffer"),
+    netty("netty-codec-compression"),
     netty("netty-codec-http"),
     netty("netty-codec-protobuf"),
     netty("netty-handler-proxy"),

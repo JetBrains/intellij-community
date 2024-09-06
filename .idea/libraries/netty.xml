@@ -1,60 +1,60 @@
 <component name="libraryTable">
   <library name="netty" type="repository">
-    <properties maven-id="io.netty:netty-all:4.2.0.Alpha3">
+    <properties maven-id="io.netty:netty-all:4.2.0.Alpha4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-all/4.2.0.Alpha3/netty-all-4.2.0.Alpha3.jar">
-          <sha256sum>92836a17468c54ba07fee5f3325f0f148d175a1c6098e9c4fe5228fad2b2fae1</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-all/4.2.0.Alpha4/netty-all-4.2.0.Alpha4.jar">
+          <sha256sum>7fbc74c4d6c764ff5ab3c6ba7083b3871abe7142409c4bfc9014697b8b31a6d1</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.Alpha3/netty-buffer-4.2.0.Alpha3.jar">
-          <sha256sum>f8a9afa625134827f93c4b86c2698b99290d5c3e8c532da9d7747cfb92e3d01d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.Alpha4/netty-buffer-4.2.0.Alpha4.jar">
+          <sha256sum>c5d5181c50da3eb08b028cec426564a7ef4a2b25a6d496edcacb4cd733484a7e</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.Alpha3/netty-codec-4.2.0.Alpha3.jar">
-          <sha256sum>ede4b23ebe57b7f99f03aeb51771387b6b89b3a1cd05bd3c5f37c37fec5e77f7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.Alpha4/netty-codec-4.2.0.Alpha4.jar">
+          <sha256sum>da0b6b9596649c5d86c369f678088530a26c930fccf6bdd3bdd4956243955f85</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.Alpha3/netty-codec-http-4.2.0.Alpha3.jar">
-          <sha256sum>baf8b8aaa85b3b0701451ad9ef5ab4169832d04bd19f6828b2ff9354d06b293b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.Alpha4/netty-codec-http-4.2.0.Alpha4.jar">
+          <sha256sum>ca2f2cd15eee29887be13d365c202dd00f1311ba08850e6ee5fa67a7945656c1</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.Alpha3/netty-codec-http2-4.2.0.Alpha3.jar">
-          <sha256sum>fc82eb46c5ff23f26c81948fbdd270d79eee95386a409e07b3941dc8ac841ef0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.Alpha4/netty-codec-http2-4.2.0.Alpha4.jar">
+          <sha256sum>36a279030958ad573cdcfb2495a1be2e61a2ffada3505b98b0c408fab2dc1d58</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.Alpha3/netty-common-4.2.0.Alpha3.jar">
-          <sha256sum>ae7b0324a91d896f035f00f3b6cb929dccdd3fbebcee5b35282ce75fd09de985</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.Alpha4/netty-common-4.2.0.Alpha4.jar">
+          <sha256sum>ac67b0cf3ced3918cdf7a73814003bfa223311e3c6816448a1bea01624203a3b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.Alpha3/netty-handler-4.2.0.Alpha3.jar">
-          <sha256sum>93ddb37b386a15fce6e2fb533289709885db77818c93a3ceefd2e9ec249dae1c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.Alpha4/netty-handler-4.2.0.Alpha4.jar">
+          <sha256sum>0782fa2592152a40fde6d076a98e67ff557d4e4c450917a49c4825477e883927</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.Alpha3/netty-transport-native-unix-common-4.2.0.Alpha3.jar">
-          <sha256sum>b8ec622fc97a50b5ff0afc46f661f0c278fdb2c9744d2ce53a5173ed5b33b204</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.Alpha4/netty-transport-native-unix-common-4.2.0.Alpha4.jar">
+          <sha256sum>19eb779e9d078308eb39a6a1073391fd5339f4be2dbd8682240ae5788fbd5d59</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.Alpha3/netty-handler-ssl-ocsp-4.2.0.Alpha3.jar">
-          <sha256sum>1d63bd25dd301730b23556aba2f13294e89d68ed6903702306a78d807b5f228f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.Alpha4/netty-handler-ssl-ocsp-4.2.0.Alpha4.jar">
+          <sha256sum>184306b9b920864c24a36c690c7a894e5845b521b0c72bd09d06d0c733ab7977</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.Alpha3/netty-resolver-4.2.0.Alpha3.jar">
-          <sha256sum>2649883b71d6a7372b9f421aab0b7d1933e45df38b91079e8244b76fc399949f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.Alpha4/netty-resolver-4.2.0.Alpha4.jar">
+          <sha256sum>a30b0aa009af7226cd3d4abfddc26dcaf89414f3dfb566324503e5fe5e5fffe3</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.Alpha3/netty-transport-4.2.0.Alpha3.jar">
-          <sha256sum>6ca2870309fe9c8f762995a27618153a3163ad6282e8ace6d4c53102b530360b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.Alpha4/netty-transport-4.2.0.Alpha4.jar">
+          <sha256sum>c02ea3e9a2a3604ff7bb3ef8c06b0e5286977de2d503d62efdbe98add4509766</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.Alpha3/netty-transport-classes-epoll-4.2.0.Alpha3.jar">
-          <sha256sum>e540dcb34f348c4894b223f6af18a3d27f77932c85d355ab95c77159b71881af</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.Alpha4/netty-transport-classes-epoll-4.2.0.Alpha4.jar">
+          <sha256sum>f5d696ea58ad5745d088c552bb09274736efe46f85a5b30e2c5fbd9bebd15908</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.Alpha3/netty-transport-classes-kqueue-4.2.0.Alpha3.jar">
-          <sha256sum>4185c2ec260672dbd0a60d65b808a5065d3195b1f60924ae6af920bcaa75e703</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.Alpha4/netty-transport-classes-kqueue-4.2.0.Alpha4.jar">
+          <sha256sum>5b4b25e0f85bdce105c5a59a97f3853ed58554ad2d8647a156331243f59987d8</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-linux-x86_64.jar">
-          <sha256sum>47d20282148e7164e74d0a601b18b77ec86df4e4bf3c35245c97488b47f4f547</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-linux-x86_64.jar">
+          <sha256sum>135297f41ec3a71a70484933998b45282d0d458d1bc50bc8071c3d044285b062</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-linux-aarch_64.jar">
-          <sha256sum>a56cfbaaa8156b8dd3c4b6efda389ee08e321732a0c2888d669375bc11c736b8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-linux-aarch_64.jar">
+          <sha256sum>e218c98436c2d443335d35c753665c10a68da8d3c5a0ed3db982f9da6081a95b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-linux-riscv64.jar">
-          <sha256sum>c6d684065f8c5ad1f5eaf87a7a6f1650934f5d0fec36fb61e2726a39f0eb5c37</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-linux-riscv64.jar">
+          <sha256sum>aaa6c7650b7bb650de930cf38f3de9e3728325ee817d3c5b61dec8880b43c7cb</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha3/netty-transport-native-kqueue-4.2.0.Alpha3-osx-x86_64.jar">
-          <sha256sum>9441736ca20c82ebff3ec24b62837e7e944d86d0de679359600f75417f6b581a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha4/netty-transport-native-kqueue-4.2.0.Alpha4-osx-x86_64.jar">
+          <sha256sum>725547387e40d2c2b96c86a03ba9e9484fed9c293d4399d6da2f6127575668b3</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha3/netty-transport-native-kqueue-4.2.0.Alpha3-osx-aarch_64.jar">
-          <sha256sum>f9b9107a7d2b4e8816e5da8a6d5fbe229bfa18048572a010e1399a03c5b063f8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha4/netty-transport-native-kqueue-4.2.0.Alpha4-osx-aarch_64.jar">
+          <sha256sum>1077692c053ae15c8912ca194b8ca07627848b3d707b1e4047e59b813135bd83</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -79,48 +79,50 @@
         <dependency maven-id="io.netty:netty-transport-sctp" />
         <dependency maven-id="io.netty:netty-transport-udt" />
         <dependency maven-id="io.netty:netty-resolver-dns-classes-macos" />
+        <dependency maven-id="io.netty:netty-transport-classes-io_uring" />
+        <dependency maven-id="io.netty:netty-transport-native-io_uring" />
         <dependency maven-id="io.netty:netty-resolver-dns-native-macos" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.2.0.Alpha3/netty-all-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.Alpha3/netty-buffer-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.Alpha3/netty-codec-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.Alpha3/netty-codec-http-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.Alpha3/netty-codec-http2-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.Alpha3/netty-common-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.Alpha3/netty-handler-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.Alpha3/netty-transport-native-unix-common-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.Alpha3/netty-handler-ssl-ocsp-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.Alpha3/netty-resolver-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.Alpha3/netty-transport-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.Alpha3/netty-transport-classes-epoll-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.Alpha3/netty-transport-classes-kqueue-4.2.0.Alpha3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-linux-x86_64.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-linux-aarch_64.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-linux-riscv64.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha3/netty-transport-native-kqueue-4.2.0.Alpha3-osx-x86_64.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha3/netty-transport-native-kqueue-4.2.0.Alpha3-osx-aarch_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.2.0.Alpha4/netty-all-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.Alpha4/netty-buffer-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.Alpha4/netty-codec-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.Alpha4/netty-codec-http-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.Alpha4/netty-codec-http2-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.Alpha4/netty-common-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.Alpha4/netty-handler-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.Alpha4/netty-transport-native-unix-common-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.Alpha4/netty-handler-ssl-ocsp-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.Alpha4/netty-resolver-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.Alpha4/netty-transport-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.Alpha4/netty-transport-classes-epoll-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.Alpha4/netty-transport-classes-kqueue-4.2.0.Alpha4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-linux-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-linux-aarch_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-linux-riscv64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha4/netty-transport-native-kqueue-4.2.0.Alpha4-osx-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha4/netty-transport-native-kqueue-4.2.0.Alpha4-osx-aarch_64.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.Alpha3/netty-buffer-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.Alpha3/netty-codec-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.Alpha3/netty-codec-http-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.Alpha3/netty-codec-http2-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.Alpha3/netty-common-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.Alpha3/netty-handler-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.Alpha3/netty-transport-native-unix-common-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.Alpha3/netty-handler-ssl-ocsp-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.Alpha3/netty-resolver-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.Alpha3/netty-transport-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.Alpha3/netty-transport-classes-epoll-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.Alpha3/netty-transport-classes-kqueue-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha3/netty-transport-native-epoll-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha3/netty-transport-native-kqueue-4.2.0.Alpha3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha3/netty-transport-native-kqueue-4.2.0.Alpha3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.Alpha4/netty-buffer-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.2.0.Alpha4/netty-codec-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.2.0.Alpha4/netty-codec-http-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http2/4.2.0.Alpha4/netty-codec-http2-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.Alpha4/netty-common-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.2.0.Alpha4/netty-handler-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-unix-common/4.2.0.Alpha4/netty-transport-native-unix-common-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-ssl-ocsp/4.2.0.Alpha4/netty-handler-ssl-ocsp-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.2.0.Alpha4/netty-resolver-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.2.0.Alpha4/netty-transport-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-epoll/4.2.0.Alpha4/netty-transport-classes-epoll-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-classes-kqueue/4.2.0.Alpha4/netty-transport-classes-kqueue-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.Alpha4/netty-transport-native-epoll-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha4/netty-transport-native-kqueue-4.2.0.Alpha4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.Alpha4/netty-transport-native-kqueue-4.2.0.Alpha4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

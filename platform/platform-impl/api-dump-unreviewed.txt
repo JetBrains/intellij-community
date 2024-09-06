@@ -9752,8 +9752,6 @@ f:com.intellij.idea.LoggerFactory
 - flushHandlers():V
 - s:getLogFilePath():java.nio.file.Path
 - getLoggerInstance(java.lang.String):com.intellij.openapi.diagnostic.Logger
-f:com.intellij.idea.StartupUtil
-- sf:getServer():org.jetbrains.io.BuiltInServer
 f:com.intellij.internal.DebugAttachDetector
 - <init>():V
 - s:isAttached():Z

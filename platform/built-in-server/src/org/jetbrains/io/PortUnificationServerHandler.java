@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -80,7 +80,7 @@ final class PortUnificationServerHandler extends Decoder {
 
   private void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) {
     ChannelPipeline pipeline = context.pipeline();
-    if (detectSsl && SslHandler.isEncrypted(buffer)) {
+    if (detectSsl && SslHandler.isEncrypted(buffer, false)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.get().newEngine(context.alloc());
       engine.setUseClientMode(false);
       pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler(),
@@ -122,8 +122,8 @@ final class PortUnificationServerHandler extends Decoder {
     // must be after new channels handlers addition (netty bug?)
     pipeline.remove(this);
     // Buffer will be automatically released after messageReceived, but we pass it to next handler, and next handler will also release, so, we must retain.
-    // We can introduce Decoder.isAutoRelease, but in this case, if error will be thrown while we are executing, buffer will not be released.
-    // So, it is robust solution just always release (Decoder does) and just retain (we - client) if autorelease behavior is not suitable.
+    // We can introduce Decoder.isAutoRelease, but in this case, if an error is thrown while we are executing, buffer will not be released.
+    // So, it is a robust solution just always release (Decoder does) and just retain (we - client) if autorelease behavior is not suitable.
     buffer.retain();
     // we must fire channel read - new added handler must read buffer
     context.fireChannelRead(buffer);

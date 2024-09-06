@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io
 
 import com.intellij.openapi.diagnostic.debug
@@ -19,7 +19,8 @@ abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAda
 
   protected abstract fun process(context: ChannelHandlerContext,
                                  request: FullHttpRequest,
-                                 urlDecoder: QueryStringDecoder): Boolean
+                                 urlDecoder: QueryStringDecoder
+  ): Boolean
 
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     NettyUtil.logAndClose(cause, logger<BuiltInServer>(), context.channel())
