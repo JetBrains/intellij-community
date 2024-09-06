@@ -29,7 +29,6 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,15 +51,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       @Override
       protected @NotNull JBPopup createPopup(Runnable onDispose) {
         return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        var result = super.getMinimumSize();
-        var font = getFont();
-        if (font == null) return result;
-        result.width = UIUtil.computeTextComponentMinimumSize(result.width, getText(), getFontMetrics(font), 4);
-        return result;
       }
     };
   }
