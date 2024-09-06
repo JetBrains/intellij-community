@@ -542,12 +542,13 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0; // [tav] todo: this can be thread race prone
 
     // Temporary use reflection to avoid jcef-version increment
-    // TODO: use isNativeBrowserCreated directly
+    // TODO: use CefClient.isNativeBrowserCreated directly
     try {
-      Method m = cefBrowser.getClass().getMethod("isNativeBrowserCreated");
-      return (boolean)m.invoke(cefBrowser);
+      Class cefClientClass = Class.forName("org.cef.CefClient");
+      Method m = cefClientClass.getMethod("isNativeBrowserCreated", CefBrowser.class);
+      return (boolean)m.invoke(cefClientClass, cefBrowser);
     }
-    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
+    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | ClassNotFoundException ignored) {
     }
     return false;
   }
@@ -556,10 +557,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     // Temporary use reflection to avoid jcef-version increment
     // TODO: use isNativeBrowserCreationStarted directly
     try {
-      Method m = browser.getClass().getMethod("isNativeBrowserCreationStarted");
-      return (boolean)m.invoke(browser);
+      Class cefClientClass = Class.forName("org.cef.CefClient");
+      Method m = cefClientClass.getMethod("isNativeBrowserCreationStarted", CefBrowser.class);
+      return (boolean)m.invoke(cefClientClass, browser);
     }
-    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException  ignored) {
     }
 
     // Fallback to old logic (incorrect in general, since creation is always started before native ref obtained)
