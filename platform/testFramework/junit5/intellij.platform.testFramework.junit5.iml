@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
     <orderEntry type="library" name="opentest4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
   </component>
 </module>

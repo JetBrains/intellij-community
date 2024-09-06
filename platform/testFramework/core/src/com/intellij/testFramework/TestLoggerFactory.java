@@ -296,7 +296,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static void logTestFailure(@NotNull Throwable t) {
+  public static void logTestFailure(@Nullable Throwable t) {
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       String comparisonFailures = dumpComparisonFailures(t);
