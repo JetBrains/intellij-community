@@ -597,7 +597,8 @@ public class InvocationExprent extends Exprent {
       if (md.params.length == parameters.size()) {
         boolean exact = true;
         for (int i = 0; i < md.params.length; i++) {
-          if (!md.params[i].equals(parameters.get(i).getExprType())) {
+          Exprent exp = parameters.get(i);
+          if (!md.params[i].equals(exp.getExprType()) || (exp.type == EXPRENT_NEW && ((NewExprent)exp).isLambda() && !((NewExprent)exp).isMethodReference())) {
             exact = false;
             break;
           }
@@ -614,7 +615,10 @@ public class InvocationExprent extends Exprent {
 
         GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
         if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
-          break;
+          Exprent exp = parameters.get(i);
+          if (exp.type != EXPRENT_NEW || !((NewExprent)exp).isLambda() || ((NewExprent)exp).isMethodReference()) {
+            break;
+          }
         }
 
         MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());

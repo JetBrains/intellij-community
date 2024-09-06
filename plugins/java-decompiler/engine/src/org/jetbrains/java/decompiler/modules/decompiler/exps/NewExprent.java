@@ -12,8 +12,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -28,6 +30,7 @@ public class NewExprent extends Exprent {
   private boolean isVarArgParam;
   private boolean anonymous;
   private boolean lambda;
+  private boolean methodReference = false;
   private boolean enumConst;
   private List<VarType> genericArgs = new ArrayList<>();
 
@@ -48,6 +51,7 @@ public class NewExprent extends Exprent {
         anonymous = true;
         if (node.type == ClassNode.CLASS_LAMBDA) {
           lambda = true;
+          methodReference = node.lambdaInformation.is_method_reference;
         }
       }
     }
@@ -509,5 +513,18 @@ public class NewExprent extends Exprent {
 
   public void setEnumConst(boolean enumConst) {
     this.enumConst = enumConst;
+  }
+
+  public boolean isMethodReference() {
+    return methodReference;
+  }
+
+  public String getLambdaMethodKey() {
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue());
+    if (node != null && constructor != null) {
+      String descriptor = ((PrimitiveConstant)constructor.getBootstrapArguments().get(0)).getString();
+      return InterpreterUtil.makeUniqueKey(node.lambdaInformation.method_name, descriptor);
+    }
+    return "";
   }
 }
