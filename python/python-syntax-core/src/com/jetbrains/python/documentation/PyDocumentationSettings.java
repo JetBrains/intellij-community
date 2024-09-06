@@ -96,7 +96,7 @@ public abstract class PyDocumentationSettings
   }
 
   @Nullable
-  private static PyAstTargetExpression getDocFormatAttribute(@NotNull List<StubElement<?>> stubs) {
+  private static PyAstTargetExpression getDocFormatAttribute(@NotNull List<StubElement> stubs) {
     for (StubElement<?> stub : stubs) {
       PsiElement psi = stub.getPsi();
       if (psi instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
