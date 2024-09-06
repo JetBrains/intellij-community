@@ -111,6 +111,11 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
         runTest("../../idea/tests/testData/navigation/implementations/ImplementsInInlineClass.kt");
     }
 
+    @TestMetadata("ImplementsInInlineClassOnRef.kt")
+    public void testImplementsInInlineClassOnRef() throws Exception {
+        runTest("../../idea/tests/testData/navigation/implementations/ImplementsInInlineClassOnRef.kt");
+    }
+
     @TestMetadata("InterfaceImplementorsWithDeclaration.kt")
     public void testInterfaceImplementorsWithDeclaration() throws Exception {
         runTest("../../idea/tests/testData/navigation/implementations/InterfaceImplementorsWithDeclaration.kt");
