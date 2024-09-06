@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   private final List<FixInfo> fixes = new ArrayList<>();
   private boolean created;
   private PsiReference unresolvedReference;
+  private @Nullable Integer layerOverride;
 
   HighlightInfoB(@NotNull HighlightInfoType type) {
     this.type = type;
@@ -241,6 +243,14 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   }
 
   @Override
+  @ApiStatus.Internal
+  public HighlightInfo.@NotNull Builder overrideLayer(int layer) {
+    assertNotCreated();
+    layerOverride = layer;
+    return this;
+  }
+
+  @Override
   public @Nullable HighlightInfo create() {
     HighlightInfo info = createUnconditionally();
     LOG.assertTrue(psiElement != null ||
@@ -261,7 +271,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                            escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
                                            navigationShift,
-                                           problemGroup, toolId, gutterIconRenderer, group, unresolvedReference);
+                                           problemGroup, toolId, gutterIconRenderer, group, unresolvedReference, layerOverride);
     for (FixInfo fix : fixes) {
       info.registerFix(fix.action(), fix.options(), fix.displayName(), fix.fixRange(), fix.key());
     }
