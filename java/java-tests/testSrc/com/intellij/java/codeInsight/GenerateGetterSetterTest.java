@@ -237,25 +237,28 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
 
   public void testNullableStuffWithDifferentTypeUse() {
     myFixture.addClass("""
-                          package org.jetbrains.annotations;
-                          import java.lang.annotation.ElementType;
-                          import java.lang.annotation.Target;
-                          
-                          @Target(ElementType.TYPE_USE)
-                          public @interface NotNull {}""");
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target(ElementType.TYPE_USE)
+                         public @interface NotNull {}""");
     myFixture.addClass("""
-                          package org.jetbrains.annotations;
-                          import java.lang.annotation.ElementType;
-                          import java.lang.annotation.Target;
-                          
-                          @Target(ElementType.TYPE_USE)
-                          public @interface Size {}""");
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target(ElementType.TYPE_USE)
+                         public @interface Size {}""");
     myFixture.configureByText("a.java", """
+      import java.util.List;
+      
       class Foo {
           @org.jetbrains.annotations.NotNull
           @org.jetbrains.annotations.Size
           private String myName;
-
+      
+          private List<@org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String> parents;
           <caret>
       }
       """);
@@ -263,18 +266,30 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     generateSetter();
     myFixture.checkResult("""
                             import org.jetbrains.annotations.NotNull;
-
+                            
+                            import java.util.List;
+                            
                             class Foo {
                                 @org.jetbrains.annotations.NotNull
                                 @org.jetbrains.annotations.Size
                                 private String myName;
-
+                            
+                                private List<@org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String> parents;
+                            
                                 public void setMyName(@NotNull String myName) {
                                     this.myName = myName;
                                 }
-
+                            
+                                public void setParents(List<@NotNull String> parents) {
+                                    this.parents = parents;
+                                }
+                            
                                 public @NotNull String getMyName() {
                                     return myName;
+                                }
+                            
+                                public List<@NotNull String> getParents() {
+                                    return parents;
                                 }
                             }
                             """);
