@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.test
 
@@ -273,11 +273,8 @@ object REFLECTION_EVAL : Eval {
         return objectToValue(result, methodDesc.returnType)
     }
 
-    private fun mapArguments(arguments: List<Value>, expecetedTypes: List<Type>): List<Any?> {
-        return arguments.zip(expecetedTypes).map {
-            val (arg, expectedType) = it
-            arg.obj(expectedType)
-        }
+    private fun mapArguments(arguments: List<Value>, expectedTypes: List<Type>): List<Any?> {
+        return arguments.zip(expectedTypes).map { (arg, expectedType) -> arg.obj(expectedType) }
     }
 }
 

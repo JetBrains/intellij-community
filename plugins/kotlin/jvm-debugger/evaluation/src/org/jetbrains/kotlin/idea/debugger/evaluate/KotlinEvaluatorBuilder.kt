@@ -405,11 +405,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
 
             val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue) else null
-            return sharedVar?.value ?: jdiValue.asJdiValue(context.vm.virtualMachine, jdiValue.asmType)
+            return sharedVar?.value ?: jdiValue.asJdiValue(context.vm.virtualMachine) { jdiValue.asmType }
         }
 
         private fun getValueIfSharedVar(value: Eval4JValue): VariableFinder.Result? {
-            val obj = value.obj(value.asmType) as? ObjectReference ?: return null
+            val obj = value.obj { value.asmType } as? ObjectReference ?: return null
             return VariableFinder.Result(EvaluatorValueConverter.unref(obj))
         }
     }

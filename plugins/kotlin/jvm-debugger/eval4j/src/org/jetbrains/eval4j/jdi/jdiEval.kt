@@ -168,7 +168,7 @@ open class JDIEval(
 
     override fun setArrayElement(array: Value, index: Value, newValue: Value) {
         try {
-            return array.array().setValue(index.int, newValue.asJdiValue(vm, array.asmType.arrayElementType))
+            return array.array().setValue(index.int, newValue.asJdiValue(vm) { array.asmType.arrayElementType })
         } catch (e: IndexOutOfBoundsException) {
             throwInterpretingException(ArrayIndexOutOfBoundsException(e.message))
         } catch (e: InvalidTypeException) {
@@ -206,7 +206,7 @@ open class JDIEval(
         val clazz = field.declaringType() as? ClassType
             ?: throwBrokenCodeException(NoSuchFieldError("Can't a field in a non-class: $field"))
 
-        val jdiValue = newValue.asJdiValue(vm, field.type().asType())
+        val jdiValue = newValue.asJdiValue(vm) { field.type().asType() }
         mayThrow { clazz.setValue(field, jdiValue) }.ifFail(field)
     }
 
@@ -313,7 +313,7 @@ open class JDIEval(
         val receiver = instance.jdiObj.checkNull()
         val field = findField(fieldDesc, receiver.referenceType())
 
-        val jdiValue = newValue.asJdiValue(vm, field.type().asType())
+        val jdiValue = newValue.asJdiValue(vm) { field.type().asType() }
         mayThrow { receiver.setValue(field, jdiValue) }
     }
 
@@ -387,7 +387,7 @@ open class JDIEval(
             return false
         }
 
-        return args.zip(argumentTypes).any { isArrayOfInterfaces(it.first?.type(), it.second) }
+        return args.zip(argumentTypes).any { (arg, type) -> isArrayOfInterfaces(arg?.type(), type) }
     }
 
     private fun isArrayOfInterfaces(valueType: jdi_Type?, expectedType: jdi_Type?): Boolean {
@@ -458,9 +458,8 @@ open class JDIEval(
 
 
     private fun mapArguments(arguments: List<Value>, expectedTypes: List<jdi_Type>): List<jdi_Value?> {
-        return arguments.zip(expectedTypes).map {
-            val (arg, expectedType) = it
-            arg.asJdiValue(vm, expectedType.asType())
+        return arguments.zip(expectedTypes).map { (arg, expectedType) ->
+            arg.asJdiValue(vm) { expectedType.asType() }
         }
     }
 

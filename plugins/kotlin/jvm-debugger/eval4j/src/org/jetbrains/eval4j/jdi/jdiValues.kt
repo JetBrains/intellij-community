@@ -7,6 +7,7 @@ import com.sun.jdi.VirtualMachine
 import org.jetbrains.eval4j.*
 import org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC
 import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter.OBJECT_TYPE
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
 import com.sun.jdi.BooleanValue as jdi_BooleanValue
@@ -55,7 +56,10 @@ fun jdi_ObjectReference?.asValue(): ObjectValue {
     return when (this) {
         null -> NULL_VALUE
         is jdi_StringReference -> ObjectValue(this, STRING_TYPE)
-        else -> ObjectValue(this, type().asType())
+        else -> object: ObjectValue(this, OBJECT_TYPE) {
+            override val asmType: Type
+                get() = (value as jdi_ObjectReference).type().asType()
+        }
     }
 }
 
@@ -84,11 +88,11 @@ val Value.jdiObj: jdi_ObjectReference?
 val Value.jdiClass: ClassObjectReference?
     get() = this.jdiObj as ClassObjectReference?
 
-fun Value.asJdiValue(vm: VirtualMachine, expectedType: Type): jdi_Value? {
+fun Value.asJdiValue(vm: VirtualMachine, expectedType: () -> Type): jdi_Value? {
     return when (this) {
         NULL_VALUE -> null
         VOID_VALUE -> vm.mirrorOfVoid()
-        is IntValue -> when (expectedType) {
+        is IntValue -> when (expectedType.invoke()) {
             Type.BOOLEAN_TYPE -> vm.mirrorOf(boolean)
             Type.BYTE_TYPE -> vm.mirrorOf(int.toByte())
             Type.SHORT_TYPE -> vm.mirrorOf(int.toShort())
