@@ -122,7 +122,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new),
       Map.entry(MoveFilesCommand.PREFIX, MoveFilesCommand::new),
       Map.entry(GCCommand.PREFIX, GCCommand::new),
-      Map.entry(InlineCompletionCommand.PREFIX, InlineCompletionCommand::new),
+      Map.entry(SetupInlineCompletionListenerCommand.PREFIX, SetupInlineCompletionListenerCommand::new),
       Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new)
     );
   }

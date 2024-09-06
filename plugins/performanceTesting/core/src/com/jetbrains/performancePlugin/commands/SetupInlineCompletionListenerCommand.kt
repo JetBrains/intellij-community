@@ -2,7 +2,6 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
-import com.intellij.codeInsight.inline.completion.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NonNls
  *
  * Example: %setupInlineCompletionListener
  */
-class InlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "setupInlineCompletionListener"
     const val SPAN_NAME: @NonNls String = "inlineCompletion"
