@@ -144,29 +144,26 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
     doTest(new JavaWithCastSurrounder());
   }
 
-  public void testSurroundWithNotNullCheck() {
-    doTest(new JavaWithNullCheckSurrounder());
-  }
-
-  public void testSurroundExpressionWithIf() {
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithIfForBoxedBooleans() {
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithNotForBoxedBooleans() {
-    doTest(new JavaWithNotSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIf() {
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIfElse() {
-    doTest(new JavaWithIfElseExpressionSurrounder());
-  }
+  public void testSurroundWithNotNullCheck() { doTest(new JavaWithNullCheckSurrounder()); }
+  public void testSurroundExpressionWithIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithIfForBoxedBooleans() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithNotForBoxedBooleans() { doTest(new JavaWithNotSurrounder()); }
+  public void testSurroundExpressionWithElseIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithElseIfElse() { doTest(new JavaWithIfElseExpressionSurrounder()); }
+  public void testCaseBlockWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithSynchronized() { doTest(new JavaWithSynchronizedSurrounder()); }
+  public void testCaseThrowWithBlock() { doTest(new JavaWithBlockSurrounder()); }
+  public void testCaseThrowWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseThrowWithTryCatch() { doTest(new JavaWithTryCatchSurrounder()); }
+  public void testCatchBlockWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testCatchResultWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testDefaultBlockWithDoWhile() { doTest(new JavaWithDoWhileSurrounder()); }
+  public void testDefaultBlockWithTryFinally() { doTest(new JavaWithTryFinallySurrounder()); }
+  public void testDefaultResultWithRunnable() { doTest(new JavaWithRunnableSurrounder()); }
+  public void testDefaultResultWithTryCatchFinally() { doTest(new JavaWithTryCatchFinallySurrounder()); }
+  public void testDefaultResultWithWhile() { doTest(new JavaWithWhileSurrounder()); }
+  public void testDefaultThrowWithIfElse() { doTest(new JavaWithIfElseSurrounder()); }
 
   public void testSurroundWithTryFinallyUsingIndents() {
     CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
