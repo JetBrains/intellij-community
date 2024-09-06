@@ -13,7 +13,6 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
-import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
@@ -65,17 +64,11 @@ internal class WindowsDistributionBuilder(
 
       writeVmOptions(distBinDir)
 
-      buildWinLauncher(winDistPath = targetPath, arch = arch, additionalNonCustomizableJvmArgs = emptyList(), context = context)
+      buildWinLauncher(targetPath, arch, context, copyLicense = true)
 
       createJetBrainsClientContextForLaunchers(context)?.let { clientContext ->
         writeWindowsVmOptions(distBinDir, clientContext)
-        buildWinLauncher(
-          winDistPath = targetPath,
-          arch = arch,
-          additionalNonCustomizableJvmArgs = ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
-          context = clientContext,
-          copyLicense = false,
-        )
+        buildWinLauncher(targetPath, arch, clientContext, copyLicense = false)
       }
 
       customizer.copyAdditionalFiles(context, targetPath, arch)
@@ -302,13 +295,7 @@ internal class WindowsDistributionBuilder(
 
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(customizer.zipArchiveWithoutBundledJreSuffix)
 
-  private suspend fun buildWinLauncher(
-    winDistPath: Path,
-    arch: JvmArchitecture,
-    additionalNonCustomizableJvmArgs: List<String>,
-    context: BuildContext,
-    copyLicense: Boolean = true
-  ) {
+  private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, context: BuildContext, copyLicense: Boolean) {
     spanBuilder("build Windows executable").use {
       val communityHome = context.paths.communityHomeDir
       val appInfo = context.applicationInfo
@@ -317,56 +304,28 @@ internal class WindowsDistributionBuilder(
       val icoFile = computeIcoPath(context)
 
       val productVersion = context.buildNumber.replace(".SNAPSHOT", ".0") + ".0".repeat(3 - context.buildNumber.count { it == '.' })
-      val launcherProperties = mutableListOf(
+      val launcherProperties = listOf(
         "CompanyName" to appInfo.companyName,
         "LegalCopyright" to "Copyright 2000-${LocalDate.now().year} ${appInfo.companyName}",
         "FileDescription" to appInfo.productNameWithEdition,
         "ProductName" to appInfo.productNameWithEdition,
         "ProductVersion" to "$productVersion-${appInfo.productCode}", // "242.1234.56.0-IU"
       )
-      if (!customizer.useXPlatLauncher) {
-        val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + additionalNonCustomizableJvmArgs + listOf("-Dide.native.launcher=true")
-        val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
-        val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
-        val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(appInfo)
-        @Suppress("SpellCheckingInspection")
-        launcherProperties += listOf(
-          "IDS_JDK_ONLY" to "${context.productProperties.toolsJarRequired}",
-          "IDS_JDK_ENV_VAR" to "${envVarBaseName}_JDK",
-          "IDS_VM_OPTIONS_PATH" to "%APPDATA%\\\\\\\\${appInfo.shortCompanyName}\\\\\\\\${context.systemSelector}",
-          "IDS_VM_OPTION_ERRORFILE" to "-XX:ErrorFile=%USERPROFILE%\\\\\\\\java_error_in_${executableBaseName}_%p.log",
-          "IDS_VM_OPTION_HEAPDUMPPATH" to "-XX:HeapDumpPath=%USERPROFILE%\\\\\\\\java_error_in_${executableBaseName}.hprof",
-          "IDS_PROPS_ENV_VAR" to "${envVarBaseName}_PROPERTIES",
-          "IDS_VM_OPTIONS_ENV_VAR" to "${envVarBaseName}_VM_OPTIONS",
-          "IDS_ERROR_LAUNCHING_APP" to "Error launching ${appInfo.shortProductName}",
-          "IDS_VM_OPTIONS" to vmOptions.joinToString(separator = " "),
-          "IDS_CLASSPATH_LIBS" to classPath,
-          "IDS_BOOTCLASSPATH_LIBS" to bootClassPath,
-          "IDS_INSTANCE_ACTIVATION" to "${context.productProperties.fastInstanceActivation}",
-          "IDS_MAIN_CLASS" to context.ideMainClassName.replace('.', '/')
-        )
-      }
       Files.writeString(launcherPropertiesPath, launcherProperties.joinToString(separator = System.lineSeparator()) { (k, v) -> "${k}=${v}" })
 
-      val inputPath = if (customizer.useXPlatLauncher) {
-        val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.WINDOWS, arch)
-        if (copyLicense) {
-          copyFile(licensePath, winDistPath.resolve("license/launcher-third-party-libraries.html"))
-        }
-        execPath
-      }
-      else {
-        communityHome.resolve("platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe")
-      }
-
+      val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.WINDOWS, arch)
       val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
+
+      if (copyLicense) {
+        copyFile(licensePath, winDistPath.resolve("license/launcher-third-party-libraries.html"))
+      }
 
       val generatorModule = context.findRequiredModule("intellij.tools.launcherGenerator")
       runJava(
         mainClass = "com.pme.launcher.LauncherGeneratorMain",
         args = listOf(
-          inputPath.absolutePathString(),
-          "${communityHome}/native/${if (customizer.useXPlatLauncher) "XPlatLauncher/resources/windows" else "WinLauncher"}/resource.h",
+          execPath.absolutePathString(),
+          "${communityHome}/native/XPlatLauncher/resources/windows/resource.h",
           launcherPropertiesPath.absolutePathString(),
           icoFile.absolutePathString(),
           outputPath.absolutePathString(),
