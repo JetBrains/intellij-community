@@ -639,4 +639,8 @@ public class FunctionExprent extends Exprent {
     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
     return type == null || this.funcType == type;
   }
+
+  public boolean doesCast() {
+    return needsCast;
+  }
 }

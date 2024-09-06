@@ -5,48 +5,42 @@ import java.util.function.Function;
 public class TestLambdaParams {
    public static void toCollection(Object var0) {
       Object var1 = null;// 23
-      Function var2 = (var1x) -> {// 24
-         return var0;
-      };
-      Function var3 = (var1x) -> {// 25
-         return var1;
-      };
-      Function var4 = (var0x) -> {// 26
-         return var0x;
-      };
+      Function var2 = (var1x) -> var0;// 24
+      Function var3 = (var1x) -> var1;// 25
+      Function var4 = (var0x) -> var0x;// 26
    }// 27
 }
 
 class 'pkg/TestLambdaParams' {
    method 'lambda$toCollection$0 (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      7
+      1      7
+   }
+
+   method 'lambda$toCollection$1 (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;' {
       0      8
       1      8
    }
 
-   method 'lambda$toCollection$1 (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;' {
-      0      11
-      1      11
-   }
-
    method 'lambda$toCollection$2 (Ljava/lang/Object;)Ljava/lang/Object;' {
-      0      14
-      1      14
+      0      9
+      1      9
    }
 
    method 'toCollection (Ljava/lang/Object;)V' {
       0      6
       1      6
       8      7
-      f      10
-      15      13
-      16      13
-      17      16
+      f      8
+      15      9
+      16      9
+      17      10
    }
 }
 
 Lines mapping:
 23 <-> 7
 24 <-> 8
-25 <-> 11
-26 <-> 14
-27 <-> 17
+25 <-> 9
+26 <-> 10
+27 <-> 11

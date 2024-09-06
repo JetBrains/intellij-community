@@ -6,61 +6,96 @@ import java.util.function.Consumer;
 
 public interface TestLambda {
    static void main(String[] args) {
-      Consumer<String> a = (b) -> {// 7
-         System.out.println(b);
-      };
-      PrintStream var10000 = System.out;// 8
+      Consumer<String> a = (b) -> System.out.println(b);// 7
+      Consumer<String> a1 = (b) -> {// 8
+         System.out.println(b);// 9
+         System.out.println(b);// 10
+         System.out.println(b);// 11
+      };// 12
+      PrintStream var10000 = System.out;// 13
       Objects.requireNonNull(var10000);
       Consumer<String> a2 = var10000::println;
-      Consumer<String> a3 = TestLambda::test;// 9
-   }// 10
+      Consumer<String> a3 = TestLambda::test;// 14
+   }// 15
 
    static void test(String a) {
-      System.out.println(a);// 14
-   }// 15
+      System.out.println(a);// 19
+   }// 20
 }
 
 class 'pkg/TestLambda' {
    method 'lambda$main$0 (Ljava/lang/String;)V' {
-      0      9
-      1      9
-      2      9
-      3      9
-      4      9
-      5      9
-      6      9
-      7      10
+      0      8
+      1      8
+      2      8
+      3      8
+      4      8
+      5      8
+      6      8
+      7      8
+   }
+
+   method 'lambda$main$1 (Ljava/lang/String;)V' {
+      0      10
+      1      10
+      2      10
+      3      10
+      4      10
+      5      10
+      6      10
+      7      11
+      8      11
+      9      11
+      a      11
+      b      11
+      c      11
+      d      11
+      e      12
+      f      12
+      10      12
+      11      12
+      12      12
+      13      12
+      14      12
+      15      13
    }
 
    method 'main ([Ljava/lang/String;)V' {
       5      8
-      6      11
-      7      11
-      8      11
-      a      12
-      b      12
-      c      12
-      13      13
-      19      14
-      1a      15
+      b      9
+      c      14
+      d      14
+      e      14
+      10      15
+      11      15
+      12      15
+      19      16
+      1f      17
+      20      17
+      21      18
    }
 
    method 'test (Ljava/lang/String;)V' {
-      0      18
-      1      18
-      2      18
-      3      18
-      4      18
-      5      18
-      6      18
-      7      19
+      0      21
+      1      21
+      2      21
+      3      21
+      4      21
+      5      21
+      6      21
+      7      22
    }
 }
 
 Lines mapping:
 7 <-> 9
-8 <-> 12
-9 <-> 15
-10 <-> 16
-14 <-> 19
-15 <-> 20
+8 <-> 10
+9 <-> 11
+10 <-> 12
+11 <-> 13
+12 <-> 14
+13 <-> 15
+14 <-> 18
+15 <-> 19
+19 <-> 22
+20 <-> 23

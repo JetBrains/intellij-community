@@ -22,18 +22,12 @@ public class TestClassLambda {
 
    public void testLambda1() {
       int var1 = (int)Math.random();// 39
-      Runnable var2 = () -> {// 40
-         System.out.println("hello1" + var1);
-      };
-      Runnable var3 = () -> {// 41
-         System.out.println("hello2" + var1);
-      };
+      Runnable var2 = () -> System.out.println("hello1" + var1);// 40
+      Runnable var3 = () -> System.out.println("hello2" + var1);// 41
    }// 42
 
    public void testLambda2() {
-      reduce((var0, var1) -> {// 45
-         return Math.max(var0, var1);
-      });
+      reduce((var0, var1) -> Math.max(var0, var1));// 45
    }// 46
 
    public void testLambda3() {
@@ -53,9 +47,7 @@ public class TestClassLambda {
       ArrayList var1 = new ArrayList();// 62
       int var2 = var1.size() * 2;// 63
       int var3 = var1.size() * 5;// 64
-      var1.removeIf((var2x) -> {// 65
-         return var2 >= var2x.length() && var2x.length() <= var3;
-      });
+      var1.removeIf((var2x) -> var2 >= var2x.length() && var2x.length() <= var3);// 65
    }// 66
 
    public static void testLambda7(Annotation[] var0) {
@@ -77,9 +69,7 @@ public class TestClassLambda {
    public void nestedLambdas() {
       byte var1 = 5;// 85
       Runnable var2 = () -> {// 86
-         Runnable var1x = () -> {// 87
-            System.out.println("hello2" + var1);
-         };
+         Runnable var1x = () -> System.out.println("hello2" + var1);// 87
          System.out.println("hello1" + var1);// 88
       };// 89
    }// 90
@@ -161,6 +151,22 @@ class 'pkg/TestClassLambda' {
    }
 
    method 'lambda$testLambda1$1 (I)V' {
+      0      24
+      1      24
+      2      24
+      a      24
+      b      24
+      f      24
+      13      24
+      14      24
+      15      24
+      16      24
+      17      24
+      18      24
+      19      24
+   }
+
+   method 'lambda$testLambda1$2 (I)V' {
       0      25
       1      25
       2      25
@@ -173,23 +179,7 @@ class 'pkg/TestClassLambda' {
       16      25
       17      25
       18      25
-      19      26
-   }
-
-   method 'lambda$testLambda1$2 (I)V' {
-      0      28
-      1      28
-      2      28
-      a      28
-      b      28
-      f      28
-      13      28
-      14      28
-      15      28
-      16      28
-      17      28
-      18      28
-      19      29
+      19      25
    }
 
    method 'testLambda1 ()V' {
@@ -199,169 +189,169 @@ class 'pkg/TestClassLambda' {
       3      23
       4      23
       b      24
-      12      27
-      13      30
+      12      25
+      13      26
    }
 
    method 'lambda$testLambda2$3 (II)I' {
-      0      34
-      1      34
-      2      34
-      3      34
-      4      34
-      5      34
+      0      29
+      1      29
+      2      29
+      3      29
+      4      29
+      5      29
    }
 
    method 'testLambda2 ()V' {
-      5      33
-      6      33
-      7      33
-      9      36
+      5      29
+      6      29
+      7      29
+      9      30
    }
 
    method 'testLambda3 ()V' {
-      5      39
-      6      39
-      7      39
-      9      40
+      5      33
+      6      33
+      7      33
+      9      34
    }
 
    method 'testLambda4 ()V' {
-      5      43
-      6      43
-      7      43
-      9      44
+      5      37
+      6      37
+      7      37
+      9      38
    }
 
    method 'testLambda5 ()V' {
-      0      47
-      1      47
-      2      47
-      e      48
-      f      48
-      10      48
-      12      49
+      0      41
+      1      41
+      2      41
+      e      42
+      f      42
+      10      42
+      12      43
    }
 
    method 'lambda$testLambda6$4 (IILjava/lang/String;)Z' {
-      0      56
-      1      56
-      2      56
-      3      56
-      4      56
-      5      56
-      8      56
-      9      56
-      a      56
-      b      56
-      c      56
-      d      56
-      15      56
+      0      49
+      1      49
+      2      49
+      3      49
+      4      49
+      5      49
+      8      49
+      9      49
+      a      49
+      b      49
+      c      49
+      d      49
+      15      49
    }
 
    method 'testLambda6 ()V' {
-      7      52
-      8      53
+      7      46
+      8      47
+      9      47
+      a      47
+      b      47
+      c      47
+      d      47
+      e      47
+      f      47
+      10      47
+      11      48
+      12      48
+      13      48
+      14      48
+      15      48
+      16      48
+      17      48
+      18      48
+      19      48
+      1a      49
+      22      49
+      23      49
+      24      49
+      25      49
+      26      49
+      28      50
+   }
+
+   method 'testLambda7 ([Ljava/lang/annotation/Annotation;)V' {
+      0      53
+      1      53
+      2      53
+      3      53
       9      53
       a      53
       b      53
       c      53
       d      53
-      e      53
-      f      53
-      10      53
-      11      54
-      12      54
-      13      54
-      14      54
-      15      54
-      16      54
-      17      54
-      18      54
-      19      54
-      1a      55
-      22      55
-      23      55
-      24      55
-      25      55
-      26      55
-      28      58
+      f      54
    }
 
-   method 'testLambda7 ([Ljava/lang/annotation/Annotation;)V' {
+   method 'reduce (Ljava/util/function/IntBinaryOperator;)Ljava/util/OptionalInt;' {
+      0      57
+      1      57
+   }
+
+   method 'function (Ljava/util/function/Supplier;)Ljava/lang/String;' {
       0      61
       1      61
       2      61
       3      61
+      4      61
+      5      61
+      6      61
+      7      61
+      8      61
       9      61
-      a      61
-      b      61
-      c      61
-      d      61
-      f      62
    }
 
-   method 'reduce (Ljava/util/function/IntBinaryOperator;)Ljava/util/OptionalInt;' {
+   method 'localMax (II)I' {
       0      65
       1      65
    }
 
-   method 'function (Ljava/util/function/Supplier;)Ljava/lang/String;' {
-      0      69
-      1      69
-      2      69
-      3      69
-      4      69
-      5      69
-      6      69
-      7      69
-      8      69
-      9      69
-   }
-
-   method 'localMax (II)I' {
-      0      73
-      1      73
-   }
-
    method 'lambda$null$5 (I)V' {
-      0      80
-      1      80
-      2      80
-      a      80
-      b      80
-      f      80
-      13      80
-      14      80
-      15      80
-      16      80
-      17      80
-      18      80
-      19      81
+      0      71
+      1      71
+      2      71
+      a      71
+      b      71
+      f      71
+      13      71
+      14      71
+      15      71
+      16      71
+      17      71
+      18      71
+      19      71
    }
 
    method 'lambda$nestedLambdas$6 (I)V' {
-      6      79
-      7      82
-      8      82
-      9      82
-      11      82
-      12      82
-      16      82
-      1a      82
-      1b      82
-      1c      82
-      1d      82
-      1e      82
-      1f      82
-      20      83
+      6      71
+      7      72
+      8      72
+      9      72
+      11      72
+      12      72
+      16      72
+      1a      72
+      1b      72
+      1c      72
+      1d      72
+      1e      72
+      1f      72
+      20      73
    }
 
    method 'nestedLambdas ()V' {
-      0      77
-      1      77
-      8      78
-      9      84
+      0      69
+      1      69
+      8      70
+      9      74
    }
 }
 
@@ -375,30 +365,30 @@ Lines mapping:
 36 <-> 21
 39 <-> 24
 40 <-> 25
-41 <-> 28
-42 <-> 31
-45 <-> 34
-46 <-> 37
-49 <-> 40
-50 <-> 41
-53 <-> 44
-54 <-> 45
-57 <-> 48
-58 <-> 49
-59 <-> 50
-62 <-> 53
-63 <-> 54
-64 <-> 55
-65 <-> 56
-66 <-> 59
-69 <-> 62
-70 <-> 63
-73 <-> 66
-77 <-> 70
-81 <-> 74
-85 <-> 78
-86 <-> 79
-87 <-> 80
-88 <-> 83
-89 <-> 84
-90 <-> 85
+41 <-> 26
+42 <-> 27
+45 <-> 30
+46 <-> 31
+49 <-> 34
+50 <-> 35
+53 <-> 38
+54 <-> 39
+57 <-> 42
+58 <-> 43
+59 <-> 44
+62 <-> 47
+63 <-> 48
+64 <-> 49
+65 <-> 50
+66 <-> 51
+69 <-> 54
+70 <-> 55
+73 <-> 58
+77 <-> 62
+81 <-> 66
+85 <-> 70
+86 <-> 71
+87 <-> 72
+88 <-> 73
+89 <-> 74
+90 <-> 75
