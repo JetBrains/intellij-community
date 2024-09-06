@@ -13,7 +13,6 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.Throws
 
 internal class IjentNioFileChannel private constructor(
   private val nioFs: IjentNioFileSystem,
@@ -171,7 +170,7 @@ internal class IjentNioFileChannel private constructor(
 
   override fun force(metaData: Boolean) {
     checkClosed()
-    TODO("Not yet implemented")
+    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.FILE_FORCE")
   }
 
   // todo the following two methods can recognize that they are working on the same IJent instance,
