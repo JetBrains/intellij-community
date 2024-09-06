@@ -117,6 +117,21 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     assertEquals(10, set.size)
   }
 
+  @Test
+  fun `test process on small CVSet`() {
+    doTestProcess(smallSetSize)
+  }
+
+  @Test
+  fun `test process on reasonable CVSet`() {
+    doTestProcess(reasonableSetSize)
+  }
+
+  @Test
+  fun `test process on big CVSet`() {
+    doTestProcess(bigSetSize)
+  }
+
   private fun doTestRetainAll(set: Set<VirtualFile>) {
     val target = generateCVFSet(10)
     target.addAll(set)
@@ -196,6 +211,18 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     for (virtualFile in set) {
       assertTrue(fileList.contains(virtualFile))
     }
+  }
+
+  private fun doTestProcess(size: Int) {
+    val set = (0 until 10).map { createFile() }.toHashSet()
+    val source = VfsUtilCore.createCompactVirtualFileSet(set)
+    assertEquals(set, source.toHashSet())
+    val target = CompactVirtualFileSet()
+    source.process {
+      target.add(it)
+      true
+    }
+    assertEquals(set.toHashSet(), target.toHashSet())
   }
 
   private val counter = AtomicInteger()
