@@ -4521,6 +4521,1003 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-71002
+  public void testTypeVarDefaultsClassReference() {
+    doTest("Type[slice[int, int, int | None]]", """
+      from typing import TypeVar, Generic
+      StartT = TypeVar("StartT", default=int)
+      StopT = TypeVar("StopT", default=StartT)
+      StepT = TypeVar("StepT", default=int | None)
+      class slice(Generic[StartT, StopT, StepT]): ...
+      expr = slice
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassReferenceNewSyntax() {
+    doTest("Type[slice[int, int, int | None]]", """
+      class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
+      expr = slice
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassCall() {
+    doTest("slice[int, int, int | None]", """
+      from typing import TypeVar, Generic
+      StartT = TypeVar("StartT", default=int)
+      StopT = TypeVar("StopT", default=StartT)
+      StepT = TypeVar("StepT", default=int | None)
+      class slice(Generic[StartT, StopT, StepT]): ...
+      expr = slice()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassCallNewSyntax() {
+    doTest("slice[int, int, int | None]", """
+      class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
+      expr = slice()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassCallParameterizedWithOneType() {
+    doTest("slice[str, str, int | None]", """
+      from typing import TypeVar, Generic
+      StartT = TypeVar("StartT", default=int)
+      StopT = TypeVar("StopT", default=StartT)
+      StepT = TypeVar("StepT", default=int | None)
+      class slice(Generic[StartT, StopT, StepT]): ...
+      expr = slice[str]()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassCallParameterizedWithOneTypeNewSyntax() {
+    doTest("slice[str, str, int | None]", """
+      class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
+      expr = slice[str]()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassCallFullyParameterized() {
+    doTest("slice[str, bool, complex]", """
+      from typing import TypeVar, Generic
+      StartT = TypeVar("StartT", default=int)
+      StopT = TypeVar("StopT", default=StartT)
+      StepT = TypeVar("StepT", default=int | None)
+      class slice(Generic[StartT, StopT, StepT]): ...
+      expr = slice[str, bool, complex]()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassCallFullyParameterizedNewSyntax() {
+    doTest("slice[str, bool, complex]", """
+      class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
+      expr = slice[str, bool, complex]()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsListDefault() {
+    doTest("Type[Bar[int, list[int]]]", """
+      from typing import TypeVar, Generic
+      
+      T = TypeVar("T")
+      ListDefaultT = TypeVar("ListDefaultT", default=list[T])
+      
+      class Bar(Generic[T, ListDefaultT]):
+          def __init__(self, x: T, y: ListDefaultT): ...
+      
+      expr = Bar[int]
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassWithInitMethodReference() {
+    doTest("Type[Bar[Any, list]]", """
+      from typing import TypeVar, Generic
+      Z1 = TypeVar("Z1")
+      ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
+      class Bar(Generic[Z1, ListDefaultT]):
+          def __init__(self, x: Z1, y: ListDefaultT): ...
+      expr = Bar
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassWithInitMethodReferenceNewSyntax() {
+    doTest("Type[Bar[Any, list]]", """
+      from typing import TypeVar, Generic
+      class Bar[Z1, ListDefaultT = list[Z1]]:
+          def __init__(self, x: Z1, y: ListDefaultT): ...
+      expr = Bar
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassWithInitMethodReferenceParameterizedWithOneType() {
+    doTest("Type[Bar[int, list[int]]]", """
+      from typing import TypeVar, Generic
+      Z1 = TypeVar("Z1")
+      ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
+      class Bar(Generic[Z1, ListDefaultT]):
+          def __init__(self, x: Z1, y: ListDefaultT): ...
+      expr = Bar[int]
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassWithInitMethodCallParameterizedWithOneTypeAndConstructorArguments() {
+    doTest("Bar[int, list[int]]", """
+      from typing import TypeVar, Generic
+      Z1 = TypeVar("Z1")
+      ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
+      class Bar(Generic[Z1, ListDefaultT]):
+          def __init__(self, x: Z1, y: ListDefaultT): ...
+      expr = Bar[int](0, [])
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassWithInitMethodCallParameterizedWithTwoTypesAndConstructorArguments() {
+    doTest("Bar[int, list[str]]", """
+      from typing import TypeVar, Generic
+      Z1 = TypeVar("Z1")
+      ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
+      class Bar(Generic[Z1, ListDefaultT]):
+          def __init__(self, x: Z1, y: ListDefaultT): ...
+      expr = Bar[int, list[str]](0, [])
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsClassWithInitMethodCallParameterizedWithTwoTypesAndConstructorArgumentsChangingDefaultType() {
+    doTest("Bar[int, str]", """
+      from typing import TypeVar, Generic
+      Z1 = TypeVar("Z1")
+      ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
+      class Bar(Generic[Z1, ListDefaultT]):
+          def __init__(self, x: Z1, y: ListDefaultT): ...
+      expr = Bar[int, str](0, "")
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsSubclassedClassReference() {
+    doTest("Type[Bar[str]]", """
+      from typing import TypeVar, Generic, TypeAlias
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      class SubclassMe(Generic[T1, DefaultStrT]):
+          x: DefaultStrT
+      class Bar(SubclassMe[int, DefaultStrT]): ...
+      expr = Bar
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsSubclassedClassInstance() {
+    doTest("Bar[str]", """
+      from typing import TypeVar, Generic, TypeAlias
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      class SubclassMe(Generic[T1, DefaultStrT]):
+          x: DefaultStrT
+      class Bar(SubclassMe[int, DefaultStrT]): ...
+      expr = Bar()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsSubclassedParameterizedClassInstance() {
+    doTest("Bar[bool]", """
+      from typing import TypeVar, Generic, TypeAlias
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      class SubclassMe(Generic[T1, DefaultStrT]):
+          x: DefaultStrT
+      class Bar(SubclassMe[int, DefaultStrT]): ...
+      expr = Bar[bool]()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsSubclassedWithClassAttribute() {
+    doTest("str", """
+      from typing import TypeVar, Generic, TypeAlias
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      class SubclassMe(Generic[T1, DefaultStrT]):
+          x: DefaultStrT
+      class Foo(SubclassMe[float]): ...
+      expr = Foo().x
+      """);
+  }
+
+  // PY-71002
+  public void testReferenceToTypeVarTupleWithDefaultIsParameterizedType() {
+    doTest("Type[Foo[str, int]]", """
+      from typing import Generic, TypeVarTuple, Unpack
+      DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
+      class Foo(Generic[*DefaultTs]): ...
+      expr = Foo
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarTupleWithDefault() {
+    doTest("Foo[str, int]", """
+      from typing import Generic, TypeVarTuple, Unpack
+      DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
+      class Foo(Generic[*DefaultTs]): ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarTupleWithDefaultsClassInstanceNewSyntax() {
+    doTest("Foo[str, int]", """
+      from typing import Unpack
+      class Foo[*DefaultTs = Unpack[tuple[str, int]]]: ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarTupleWithDefaultOverridenByExplicit() {
+    doTest("Foo[bool, float]", """
+      from typing import Generic, TypeVarTuple, Unpack
+      DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
+      class Foo(Generic[*DefaultTs]): ...
+      expr = Foo[bool, float]()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarTupleWithDefaultParameterizedWithAnotherGeneric() {
+    doTest("Foo[list, list, int]", """
+      from typing import Generic, TypeVarTuple, Unpack, TypeVar
+      T = TypeVar("T", default=list)
+      DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[T, int]])
+      class Foo(Generic[T, *DefaultTs]): ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsClassReference() {
+    doTest("Type[Foo[[str, int]]]", """
+      from typing import ParamSpec, Generic
+      DefaultP = ParamSpec("DefaultP", default=[str, int])
+      class Foo(Generic[DefaultP]): ...
+      expr = Foo
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsClassReferencesNewSyntax() {
+    doTest("Type[Foo[[str, int]]]", """
+      class Foo[**P = [str, int]]: ...
+      expr = Foo
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsClassInstance() {
+    doTest("Foo[[str, int]]", """
+      from typing import ParamSpec, Generic
+      DefaultP = ParamSpec("DefaultP", default=[str, int])
+      class Foo(Generic[DefaultP]): ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithEmptyDefaultsClassInstance() {
+    doTest("Foo[[]]", """
+      from typing import ParamSpec, Generic
+      DefaultP = ParamSpec("DefaultP", default=[])
+      class Foo(Generic[DefaultP]): ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsClassInstanceNewSyntax() {
+    doTest("Foo[[str, int]]", """
+      class Foo[**P = [str, int]]: ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithEmptyDefaultsClassInstanceNewSyntax() {
+    doTest("Foo[[]]", """
+      class Foo[**P = []]: ...
+      expr = Foo()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsParameterizedClassInstance() {
+    doTest("Foo[[int, bool]]", """
+      from typing import ParamSpec, Generic
+      DefaultP = ParamSpec("DefaultP", default=[str, int])
+      class Foo(Generic[DefaultP]): ...
+      expr = Foo[[int, bool]]()
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleGenericFunctionWithDefault() {
+    doTest("int", """
+      def foo[T = int](x: T = None) -> T: ...
+      expr = foo()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsEmptyConstructorCall() {
+    doTest("Box[int, str, bool]", """
+      from typing import TypeVar, Generic
+      T = TypeVar("T", default=int)
+      T1 = TypeVar("T1", default=str)
+      T2 = TypeVar("T2", default=bool)
+      class Box(Generic[T, T1, T2]):
+          def __init__(self, a: T = None, b: T1 = None, c: T2 = None):
+              self.value = a
+              self.value1 = b
+              self.value2 = c
+      expr = Box()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsDefaultOverridenByExplicitConstructorArgument() {
+    doTest("Box[str, str, bool]", """
+      from typing import TypeVar, Generic
+      T = TypeVar("T", default=int)
+      T1 = TypeVar("T1", default=str)
+      T2 = TypeVar("T2", default=bool)
+      class Box(Generic[T, T1, T2]):
+          def __init__(self, a: T = None, b: T1 = None, c: T2 = None):
+              self.value = a
+              self.value1 = b
+              self.value2 = c
+      expr = Box("str")
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultsMethodReturnType() {
+    doTest("int", """
+      from typing import TypeVar, Generic
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Test(Generic[DefaultIntT]):
+          def foo(self) -> DefaultIntT: ...
+      expr = Test().foo()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsExtendedCase() {
+    doTest("(float, bool) -> int | None", """
+      from typing import Callable, TypeVar, Optional, ParamSpec
+      T = TypeVar('T', default=int)
+      P = ParamSpec('P', default=[float, bool])
+      def catch_exception(function: Callable[P, T]) -> Callable[P, Optional[T]]:
+          def decorator(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:...
+          return decorator
+      expr = catch_exception()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithEmptyDefaultsExtendedCase() {
+    doTest("() -> int | None", """
+      from typing import Callable, TypeVar, Optional, ParamSpec
+      T = TypeVar('T', default=int)
+      P = ParamSpec('P', default=[])
+      def catch_exception(function: Callable[P, T]) -> Callable[P, Optional[T]]:
+          def decorator(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:...
+          return decorator
+      expr = catch_exception()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsExtendedCaseDefaultsOverridden() {
+    doTest("(a: str, b: int, c: list[float]) -> float | None", """
+      from typing import Callable, TypeVar, Optional
+      from typing_extensions import ParamSpec  # or `typing` for `python>=3.10`
+      T = TypeVar('T', default=int)
+      P = ParamSpec('P', default=[float, bool])
+      def catch_exception(function: Callable[P, T]) -> Callable[P, Optional[T]]:
+          def decorator(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:...
+          return decorator
+      def some_func(a: str, b: int, c: list[float]) -> float: ...
+      expr = catch_exception(some_func)
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultsClassVariable() {
+    doTest("int", """
+      from typing import TypeVar, Generic
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Test(Generic[DefaultIntT]):
+          x: DefaultIntT
+      expr = Test().x
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultsClassVariableOverriden() {
+    doTest("str", """
+      from typing import TypeVar, Generic
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Test(Generic[DefaultIntT]):
+          x: DefaultIntT
+      expr = Test[str]().x
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultsClassVariableNewSyntax() {
+    doTest("int", """
+      class Test[DefaultIntT = int]:
+          x: DefaultIntT
+      expr = Test().x
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultClassVariableTypeDefinedViaAnotherTypeVarWithNewSyntax() {
+    doTest("int", """
+      class Test[T = int, U = T]:
+          x: U
+      
+      expr = Test().x
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultsClassVariableOverridenNewSyntax() {
+    doTest("str", """
+      class Test[DefaultIntT = int]:
+          x: DefaultIntT
+      expr = Test[str]().x
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultsClassVariableAccessViaReference() {
+    doTest("int", """
+      from typing import TypeVar, Generic
+      DefaultIntT = TypeVar('DefaultIntT', default=int)
+      class Test(Generic[DefaultIntT]):
+          x: DefaultIntT
+      expr = Test.x
+      """);
+  }
+
+  // PY-71002
+  public void testMixedTypeVarsWithDefaultsAndNonDefaults() {
+    doTest("AllTheDefaults[int, complex, str, int, bool]", """
+      from typing import TypeVar, Generic
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      DefaultIntT = TypeVar("DefaultIntT", default=int)
+      DefaultBoolT = TypeVar("DefaultBoolT", default=bool)
+      class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
+      expr = AllTheDefaults[int, complex]()
+      """);
+  }
+
+  // PY-71002
+  public void testMixedTypeVarsWithDefaultsAndNonDefaultsReferenceType() {
+    doTest("Type[AllTheDefaults[int, complex, str, int, bool]]", """
+      from typing import TypeVar, Generic
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      DefaultIntT = TypeVar("DefaultIntT", default=int)
+      DefaultBoolT = TypeVar("DefaultBoolT", default=bool)
+      class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
+      expr = AllTheDefaults[int, complex]
+      """);
+  }
+
+  // PY-71002
+  public void testMixedTypeVarsWithDefaultsAndNonDefaultsOneTypeParamMissing() {
+    doTest("AllTheDefaults[int, Any, str, int, bool]", """
+      from typing import TypeVar, Generic
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      DefaultIntT = TypeVar("DefaultIntT", default=int)
+      DefaultBoolT = TypeVar("DefaultBoolT", default=bool)
+      class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
+      expr = AllTheDefaults[int]()
+      """);
+  }
+
+  // PY-71002
+  public void testMixedTypeVarsWithDefaultsAndNonDefaultsTwoTypeParamsMissing() {
+    doTest("AllTheDefaults[Any, Any, str, int, bool]", """
+      from typing import TypeVar, Generic
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      DefaultIntT = TypeVar("DefaultIntT", default=int)
+      DefaultBoolT = TypeVar("DefaultBoolT", default=bool)
+      class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
+      expr = AllTheDefaults()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsLongTypeVarToTypeVarChain() {
+    doTest("str", """
+      from typing import TypeVar, Generic
+      
+      T = TypeVar("T", default=str)
+      T1 = TypeVar("T1", default=T)
+      T2 = TypeVar("T2", default=T1)
+      T3 = TypeVar("T3", default=T2)
+      T4 = TypeVar("T4", default=T3)
+      T5 = TypeVar("T5", default=T4)
+      T6 = TypeVar("T6", default=T5)
+      T7 = TypeVar("T7", default=T6)
+      T8 = TypeVar("T8", default=T7)
+      
+      class Box(Generic[T, T1, T2, T3, T4, T5, T6, T7, T8]):
+          value: T8
+      expr = Box().value
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsLongTypeVarToTypeVarChainWithFirstOverriden() {
+    doTest("list", """
+      from typing import TypeVar, Generic
+      
+      T = TypeVar("T", default=str)
+      T1 = TypeVar("T1", default=T)
+      T2 = TypeVar("T2", default=T1)
+      T3 = TypeVar("T3", default=T2)
+      T4 = TypeVar("T4", default=T3)
+      T5 = TypeVar("T5", default=T4)
+      T6 = TypeVar("T6", default=T5)
+      T7 = TypeVar("T7", default=T6)
+      T8 = TypeVar("T8", default=T7)
+      
+      class Box(Generic[T, T1, T2, T3, T4, T5, T6, T7, T8]):
+          value: T8
+      expr = Box[list]().value
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsLongTypeVarToTypeVarChainWithFirstAndSecondOverriden() {
+    doTest("int", """
+      from typing import TypeVar, Generic
+      
+      T = TypeVar("T", default=str)
+      T1 = TypeVar("T1", default=T)
+      T2 = TypeVar("T2", default=T1)
+      T3 = TypeVar("T3", default=T2)
+      T4 = TypeVar("T4", default=T3)
+      T5 = TypeVar("T5", default=T4)
+      T6 = TypeVar("T6", default=T5)
+      T7 = TypeVar("T7", default=T6)
+      T8 = TypeVar("T8", default=T7)
+      
+      class Box(Generic[T, T1, T2, T3, T4, T5, T6, T7, T8]):
+          value: T8
+      expr = Box[list, int]().value
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarDefaultsLongTypeVarToTypeVarChainWithMultipleDefaults() {
+    doTest("str | bool | float", """
+      from typing import TypeVar, Generic
+      
+      T = TypeVar("T", default=str)
+      T1 = TypeVar("T1", default=T)
+      T2 = TypeVar("T2", default=float)
+      T3 = TypeVar("T3", default=T2)
+      T4 = TypeVar("T4", default=bool)
+      T5 = TypeVar("T5", default=T4)
+      T6 = TypeVar("T6", default=T5)
+      T7 = TypeVar("T7", default=T6)
+      T8 = TypeVar("T8", default=T7)
+      
+      class Box(Generic[T, T1, T2, T3, T4, T5, T6, T7, T8]):
+          value: T | T8 | T3 = None
+      
+      expr = Box().value
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaults() {
+    doTest("dict[int, str]", """
+      type Alias[T = int, U = str] = dict[T, U]
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsOneOverriden() {
+    doTest("dict[bool, str]", """
+      type Alias[T = int, U = str] = dict[T, U]
+      expr: Alias[bool]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsTwoOverriden() {
+    doTest("dict[bool, list[int]]", """
+      type Alias[T = int, U = str] = dict[T, list[U]]
+      x: Alias[bool, int]
+      expr = x
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsNested() {
+    doTest("dict[int, list[str]]", """
+      type Alias[T = int, U = str] = dict[T, list[U]]
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsNestedOneOverriden() {
+    doTest("dict[bool, list[str]]", """
+      type Alias[T = int, U = str] = dict[T, list[U]]
+      expr: Alias[bool]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsNestedTwoOverriden() {
+    doTest("dict[bool, list[bool]]", """
+      type Alias[T = int, U = str] = dict[T, list[U]]
+      expr: Alias[bool, bool]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithTypeVarOnly() {
+    doTest("int", """
+      type Alias[T = int] = T
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithTypeVarOnlyOverriden() {
+    doTest("bool", """
+      type Alias[T = int] = T
+      expr: Alias[bool]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsUnion() {
+    doTest("int | str", """
+      type Alias[T = int, U = str] = T | U
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsOneTypeOfUnionOverriden() {
+    doTest("bool | str", """
+      type Alias[T = int, U = str] = T | U
+      expr: Alias[bool]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsUnionOverriden() {
+    doTest("bool | float", """
+      type Alias[T = int, U = str] = T | U
+      expr: Alias[bool, float]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasUnionChangedOrder() {
+    doTest("str | list[int]", """
+      type Alias[T = int, U = str] = U | list[T]
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasUnionChangedOrderDefaultsOverriden() {
+    doTest("bool | list[float]", """
+      type Alias[T = int, U = str] = U | list[T]
+      expr: Alias[float, bool]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasOneWithoutDefault() {
+    doTest("dict[T, str] | list[float]", """
+      type Alias[T, U = str, B = float] = dict[T, U] | list[B]
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasOneWithoutDefaultParameterized() {
+    doTest("dict[int, str] | list[float] | int", """
+      type Alias[T, U = str, B = float] = dict[T, U] | list[B] | T
+      expr: Alias[int]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasOneWithoutDefaultAllOverriden() {
+    doTest("dict[int, int] | list[int] | int", """
+      type Alias[T, U = str, B = float] = dict[T, U] | list[B] | T
+      expr: Alias[int, int, int]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsPrevTypeVarAsDefault() {
+    doTest("str | list[str]", """
+      type Alias[T, U = T] = T | list[U]
+      expr: Alias[str]
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithDefaultsTypeVarChain() {
+    doTest("str", """
+      type Alias[T = str, T1 = T, T2 = T1, T3 = T2, T4 = T3] = T4
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsDefinedInTypeAlias() {
+    doTest("(func: (str, int) -> str) -> None", """
+      from typing import ParamSpec, Generic, Callable
+      type PAlias[T = str, **P = [str, int]] = Callable[P, T]
+      def wrapper(func: PAlias) -> None:
+          pass
+      expr = wrapper
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultsDefinedInTypeAliasOverriden() {
+    doTest("(func: (str, str) -> bool) -> None", """
+      from typing import ParamSpec, Generic, Callable
+      type PAlias[T = str, **P = [str, int]] = Callable[P, T]
+      def wrapper(func: PAlias[bool, [str, str]]) -> None:
+          pass
+      expr = wrapper
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAllDefaultTypes() {
+    doTest("(str, int, str, str) -> float", """
+      from typing import Generic, TypeVarTuple, Unpack, ParamSpec, Callable, Any, Concatenate
+      type ReturnTupleAlias[T = float, **P = [str, str], *Ts = Unpack[tuple[str, int]]] = Callable[Concatenate[*Ts, P], T]
+      def f() -> ReturnTupleAlias: ...
+      expr = f()
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAllDefaultTypesReturnTypeOverriden() {
+    doTest("(str, int, str, str) -> list[str]", """
+      from typing import Generic, TypeVarTuple, Unpack, ParamSpec, Callable, Any, Concatenate
+      type ReturnTupleAlias[T = float, **P = [str, str], *Ts = Unpack[tuple[str, int]]] = Callable[Concatenate[*Ts, P], T]
+      def f() -> ReturnTupleAlias[list[str]]: ...
+      expr = f()
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAllDefaultTypesReturnAndParamSpecTypeOverriden() {
+    doTest("(str, int, float, float) -> list[str]", """
+      from typing import Generic, TypeVarTuple, Unpack, ParamSpec, Callable, Any, Concatenate
+      type ReturnTupleAlias[T = float, **P = [str, str], *Ts = Unpack[tuple[str, int]]] = Callable[Concatenate[*Ts, P], T]
+      def f() -> ReturnTupleAlias[list[str], [float, float]]: ...
+      expr = f()
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAllDefaultTypesAllOverridden() {
+    doTest("(str, float, bool, list[bool], float, float) -> list[str]", """
+      from typing import Generic, TypeVarTuple, Unpack, ParamSpec, Callable, Any, Concatenate
+      type ReturnTupleAlias[T = float, **P = [str, str], *Ts = Unpack[tuple[str, int]]] = Callable[Concatenate[*Ts, P], T]
+      def f() -> ReturnTupleAlias[list[str], [float, float], str, float, bool, list[bool]]: ...
+      expr = f()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeVarWithDefaultClassMethodTypeDefinedViaAnotherTypeVarWithNewSyntax() {
+    doTest("int", """
+      class Test[T = int, U = T]:
+          def foo(self) -> U: ...
+      expr = Test().foo()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaults() {
+    doTest("SomethingWithNoDefaults[int, str]", """
+      from typing import Generic, TypeAlias, TypeVar
+      T = TypeVar('T')
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      class SomethingWithNoDefaults(Generic[T, T2]): ...
+      MyAlias: TypeAlias = SomethingWithNoDefaults[int, DefaultStrT]
+      expr: MyAlias
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithParameterizedInstance() {
+    doTest("SomethingWithNoDefaults[int, bool]", """
+      from typing import Generic, TypeAlias, TypeVar
+      T = TypeVar('T')
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      class SomethingWithNoDefaults(Generic[T, T2]): ...
+      MyAlias: TypeAlias = SomethingWithNoDefaults[int, DefaultStrT]
+      expr: MyAlias[bool]
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaultsTuple() {
+    doTest("int | str", """
+      from typing import Generic, TypeAlias, TypeVar
+      T = TypeVar('T', default=int)
+      U = TypeVar('U', default=str)
+      MyAlias: TypeAlias = T | U
+      expr: MyAlias
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaultsDict() {
+    doTest("dict[int, str]", """
+      from typing import Generic, TypeAlias, TypeVar
+      T = TypeVar('T', default=int)
+      U = TypeVar('U', default=str)
+      MyAlias: TypeAlias = dict[T, U]
+      expr: MyAlias
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaultsDictOneDefaultOverriden() {
+    doTest("dict[str, str]", """
+      from typing import Generic, TypeAlias, TypeVar
+      T = TypeVar('T', default=int)
+      U = TypeVar('U', default=str)
+      MyAlias: TypeAlias = dict[T, U]
+      expr: MyAlias[str]
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaultsDictTwoDefaultsOverriden() {
+    doTest("dict[str, float]", """
+      from typing import Generic, TypeAlias, TypeVar
+      T = TypeVar('T', default=int)
+      U = TypeVar('U', default=str)
+      MyAlias: TypeAlias = dict[T, U]
+      expr: MyAlias[str, float]
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithAllDefaultTypes() {
+    doTest("(str, int, str, str) -> float", """
+      from typing import Generic, TypeVarTuple, Unpack, ParamSpec, Callable, Any, Concatenate, TypeAlias, TypeVar
+      T = TypeVar('T', default = float)
+      P = ParamSpec('P', default=[str ,str])
+      Ts = TypeVarTuple('Ts', default=Unpack[tuple[str, int]])
+      ReturnTupleAlias: TypeAlias = Callable[Concatenate[*Ts, P], T]
+      def g() -> ReturnTupleAlias: ...
+      expr = g()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithParameterizedNonDefaultInDeclaration() {
+    doTest("dict[str, int] | str", """
+      from typing import TypeVar, Generic, TypeAlias
+      T = TypeVar('T')
+      T1 = TypeVar("T1")
+      T2 = TypeVar("T2")
+      DefaultStrT = TypeVar("DefaultStrT", default=str)
+      DefaultIntT = TypeVar("DefaultIntT", default=int)
+      DefaultBoolT = TypeVar("DefaultBoolT", default=bool)
+      class Triple(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]):
+          val: dict[T1, T2] | DefaultStrT
+      Alias: TypeAlias = Triple[str, int]
+      e: Alias = None
+      expr = e.val
+      """);
+  }
+
+  // PY-71002
+  public void testClassWithDefaultGenericsDefinedInAnotherFile() {
+    doMultiFileStubAwareTest("int", """
+      from mod import StackOfIntsByDefault
+      stack = StackOfIntsByDefault()
+      expr = stack.pop()
+      """);
+  }
+
+  // PY-71002
+  public void testClassWithDefaultGenericsDefinedInAnotherFileDefaultOverriden() {
+    doMultiFileStubAwareTest("str", """
+      from mod import StackOfIntsByDefault
+      stack = StackOfIntsByDefault[str]()
+      expr = stack.pop()
+      """);
+  }
+
+  // PY-71002
+  public void testClassWithDefaultGenericsDefinedInAnotherFileAttributeAccess() {
+    doMultiFileStubAwareTest("int | str", """
+      from mod import Box
+      expr = Box.val
+      """);
+  }
+
+  // PY-71002
+  public void testClassWithNewStyleDefaultGenericsDefinedInAnotherFile() {
+    doMultiFileStubAwareTest("int", """
+      from mod import StackOfIntsByDefault
+      stack = StackOfIntsByDefault()
+      expr = stack.pop()
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaultsDefinedInAnotherFile() {
+    doMultiFileStubAwareTest("dict[int, str]", """
+      from mod import StrIntDict
+      expr: StrIntDict
+      """);
+  }
+
+  // PY-71002
+  public void testTypeAliasWithDefaultsDefinedInAnotherFileAliasingGenericClass() {
+    doMultiFileStubAwareTest("SomethingWithNoDefaults[int, bool]", """
+      from mod import MyAlias
+      expr = MyAlias[bool]()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
