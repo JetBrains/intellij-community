@@ -179,7 +179,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    FindUsagesInFileAction.updateFindUsagesAction(e);
+    FindUsagesAction.updateFindUsagesAction(e);
 
     if (e.getPresentation().isEnabled()) {
       UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
