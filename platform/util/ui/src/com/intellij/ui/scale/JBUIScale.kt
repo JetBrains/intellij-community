@@ -475,7 +475,7 @@ private fun getScreenScale(): Float {
  * See javadoc [AffineTransform.getScaleX], it will return an arbitrary number (inc. negative ones)
  * after [AffineTransform.rotate] or `AffineTransform.scale(-1, 1)` transforms.
  */
-private fun getTransformScaleX(transform: AffineTransform): Float {
+internal fun getTransformScaleX(transform: AffineTransform): Float {
   val p = Point2D.Double(1.0, 0.0)
   transform.deltaTransform(p, p)
   return p.distance(0.0, 0.0).toFloat()

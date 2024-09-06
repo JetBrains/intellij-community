@@ -11,6 +11,7 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.getTransformScaleX
 import com.intellij.ui.svg.colorPatcherDigestShim
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
@@ -480,12 +481,16 @@ private fun ScaleContext?.applyGraphicsScaleToObjectScale(graphicsScale: Double?
  * However, if someone called `scale()` on the graphics, then additional scaling
  * is needed, and the scaling factor required will be returned by this function.
  *
+ * Doesn't work if the current transform has rotations.
+ * Client-side icon scaling isn't supported for such transforms.
+ *
  * @return `null` if the current scaling is the same as the default one,
  * the ratio of the current scaling factor to the default one otherwise
  */
 private fun computeGraphicsScale(g: Graphics, gc: GraphicsConfiguration?): Double? {
+  val transform = (g as? Graphics2D)?.transform ?: return null
   val defaultScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) gc?.defaultTransform?.scaleX ?: 1.0 else 1.0
-  val graphicsScale = (g as? Graphics2D)?.transform?.scaleX?.div(defaultScale) ?: return null
+  val graphicsScale = getTransformScaleX(transform) / defaultScale
   if (abs(graphicsScale - 1.0) < 0.001) return null
   return graphicsScale
 }
