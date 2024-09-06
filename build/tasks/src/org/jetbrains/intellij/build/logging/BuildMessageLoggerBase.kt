@@ -24,9 +24,7 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
       LogMessage.Kind.COMPILATION_ERRORS -> {
         // reported as span event
       }
-      LogMessage.Kind.BUILD_CANCEL, LogMessage.Kind.BUILD_PROBLEM -> {
-        throw BuildScriptsLoggedError(message.text)
-      }
+      LogMessage.Kind.BUILD_CANCEL -> throw BuildScriptsLoggedError(message.text)
       else -> {
         if (shouldBePrinted(message.kind)) {
           Span.current().addEvent(message.text)
