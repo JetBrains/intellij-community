@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.icons.AllIcons
@@ -13,7 +13,6 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -142,15 +141,15 @@ private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(
     title = IdeBundle.message("title.open.file.or.project")
   }
 
-  override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean {
-    return if (file.isDirectory) super.isFileVisible(file, showHiddenFiles) else myStandardDescriptor.isFileVisible(file, showHiddenFiles)
+  override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean = when {
+    file.isDirectory -> super.isFileVisible(file, showHiddenFiles)
+    else -> myStandardDescriptor.isFileVisible(file, showHiddenFiles)
   }
 
-  override fun isFileSelectable(file: VirtualFile?): Boolean {
-    if (file == null) {
-      return false
-    }
-    return if (file.isDirectory) super.isFileSelectable(file) else myStandardDescriptor.isFileSelectable(file)
+  override fun isFileSelectable(file: VirtualFile?): Boolean = when {
+    file == null -> false
+    file.isDirectory -> super.isFileSelectable(file)
+    else -> myStandardDescriptor.isFileSelectable(file)
   }
 
   override fun isChooseMultiple() = true

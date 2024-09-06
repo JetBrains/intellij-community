@@ -106,8 +106,7 @@ class RepositoryBrowserPanel(
         return FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence).icon
       }
     }
-    fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
-    }
+    fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) { }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles
       for (file in files) {
@@ -160,13 +159,9 @@ class RepositoryBrowserPanel(
 }
 
 internal class DiffRepoWithLocalAction : AnActionExtensionProvider {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isActive(e: AnActionEvent): Boolean {
-    return e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
-  }
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
 
   override fun update(e: AnActionEvent) {
     val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
@@ -182,19 +177,15 @@ internal class DiffRepoWithLocalAction : AnActionExtensionProvider {
 }
 
 class VcsVirtualFileContentRevision(private val vcsVirtualFile: VcsVirtualFile) : ContentRevision, ByteBackedContentRevision {
-  override fun getContent(): String? {
-    return contentAsBytes?.let { LoadTextUtil.getTextByBinaryPresentation(it, vcsVirtualFile).toString() }
-  }
+  override fun getContent(): String? =
+    contentAsBytes?.let { LoadTextUtil.getTextByBinaryPresentation(it, vcsVirtualFile).toString() }
 
-  override fun getContentAsBytes(): ByteArray? {
-    return vcsVirtualFile.fileRevision?.loadContent()
-  }
+  override fun getContentAsBytes(): ByteArray? =
+    vcsVirtualFile.fileRevision?.loadContent()
 
-  override fun getFile(): FilePath {
-    return RemoteFilePath(vcsVirtualFile.path, vcsVirtualFile.isDirectory)
-  }
+  override fun getFile(): FilePath =
+    RemoteFilePath(vcsVirtualFile.path, vcsVirtualFile.isDirectory)
 
-  override fun getRevisionNumber(): VcsRevisionNumber {
-    return vcsVirtualFile.fileRevision?.revisionNumber ?: VcsRevisionNumber.NULL
-  }
+  override fun getRevisionNumber(): VcsRevisionNumber =
+    vcsVirtualFile.fileRevision?.revisionNumber ?: VcsRevisionNumber.NULL
 }
