@@ -984,6 +984,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/lessAndGreaterInCallArgs.kt");
             }
 
+            @TestMetadata("localImports.kt")
+            public void testLocalImports() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/localImports.kt");
+            }
+
             @TestMetadata("localVariableOnDeclaration.kt")
             public void testLocalVariableOnDeclaration() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/localVariableOnDeclaration.kt");

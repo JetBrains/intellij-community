@@ -233,11 +233,14 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         }
 
         val targetParent = target?.parent
-        if (targetParent is KtFile ||
-            (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
-            target != null && isImportable(target)
+        val isLocalInline =
+            originalDeclaration is KtProperty && originalDeclaration.isLocal || originalDeclaration is KtFunction && originalDeclaration.isLocal
+        if (!isLocalInline && (targetParent is KtFile ||
+                    (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
+                    target != null && isImportable(target))
         ) {
-            val importableFqName = (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
+            val importableFqName =
+                (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
             val shortName = importableFqName.shortName()
             val ktFile = expression.containingKtFile
             val aliasName = if (shortName.asString() != expression.getReferencedName())
