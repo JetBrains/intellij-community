@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.impl.IpProtocolPreferenceImpl
 import kotlinx.coroutines.CoroutineScope
@@ -393,7 +392,7 @@ sealed interface EelNetworkResult<out T, out E : EelNetworkError> {
  * An error that can happen during the creation of a connection to a remote server
  */
 interface EelConnectionError : EelNetworkError {
-  val message: @NlsSafe String
+  val message: String
 
   /**
    * Returned when the remote host cannot create an object of a socket.

@@ -6,12 +6,16 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -22,9 +26,11 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
+import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
+import kotlin.io.path.isSameFileAs
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -33,10 +39,25 @@ class IjentWslNioFsToggleStrategy(
   private val coroutineScope: CoroutineScope,
 ) {
   private val ownFileSystems = OwnFileSystems(multiRoutingFileSystemProvider)
+  private val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
 
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       unregisterAll()
+      enabledInDistros.clear()
+    }
+  }
+
+  // TODO Move to ijent.impl?
+  internal class WslEelProvider : EelProvider {
+    override suspend fun getEelApi(path: Path): EelApi? {
+      val service = serviceAsync<IjentWslNioFsToggleStrategy>()
+      for (distro in service.enabledInDistros) {
+        if (distro.uncRootPath.isSameFileAs(path.root)) {
+          return WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
+        }
+      }
+      return null
     }
   }
 
@@ -69,10 +90,12 @@ class IjentWslNioFsToggleStrategy(
   }
 
   private suspend fun handleWslDistributionAddition(distro: WSLDistribution) {
+    enabledInDistros += distro
     switchToIjentFs(distro)
   }
 
   private fun handleWslDistributionDeletion(distro: WSLDistribution) {
+    enabledInDistros -= distro
     ownFileSystems.compute(distro) { _, ownFs, actualFs ->
       if (ownFs == actualFs) {
         LOG.info("Unregistering a custom filesystem $actualFs from a removed WSL distribution $distro")
