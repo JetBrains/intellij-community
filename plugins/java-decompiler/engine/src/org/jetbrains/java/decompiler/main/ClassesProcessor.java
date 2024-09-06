@@ -38,6 +38,7 @@ public class ClassesProcessor {
 
   private final StructContext context;
   private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
+  private final Set<String> whitelist = new HashSet<>();
 
   private static class Inner {
     private String simpleName;
@@ -61,6 +62,22 @@ public class ClassesProcessor {
 
   public ClassesProcessor(StructContext context) {
     this.context = context;
+  }
+
+  public void addWhitelist(String prefix) {
+    this.whitelist.add(prefix);
+  }
+
+  public boolean isWhitelisted(String cls) {
+    if (this.whitelist.isEmpty())
+      return true;
+
+    for (String prefix : this.whitelist) {
+      if (cls.startsWith(prefix))
+        return true;
+    }
+
+    return false;
   }
 
   public void loadClasses(IIdentifierRenamer renamer) {
@@ -162,9 +179,11 @@ public class ClassesProcessor {
           }
         }
 
-        ClassNode node = new ClassNode(ClassNode.CLASS_ROOT, cl);
-        node.access = cl.getAccessFlags();
-        mapRootClasses.put(cl.qualifiedName, node);
+        if (isWhitelisted(cl.qualifiedName)) {
+          ClassNode node = new ClassNode(ClassNode.CLASS_ROOT, cl);
+          node.access = cl.getAccessFlags();
+          mapRootClasses.put(cl.qualifiedName, node);
+        }
       }
       linkEnclosingMethods(cl);
     }

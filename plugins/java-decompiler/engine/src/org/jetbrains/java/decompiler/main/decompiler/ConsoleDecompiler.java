@@ -32,6 +32,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     Map<String, Object> mapOptions = new HashMap<>();
     List<File> sources = new ArrayList<>();
     List<File> libraries = new ArrayList<>();
+    Set<String> whitelist = new HashSet<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -53,6 +54,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
         if (arg.startsWith("-e=")) {
           addPath(libraries, arg.substring(3));
+        }
+        else if (arg.startsWith("-only=")) {
+          whitelist.add(arg.substring(6));
         }
         else {
           addPath(sources, arg);
@@ -79,6 +83,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
     for (File source : sources) {
       decompiler.addSource(source);
+    }
+    for (String prefix : whitelist) {
+      decompiler.addWhitelist(prefix);
     }
 
     decompiler.decompileContext();
@@ -120,6 +127,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   public void addLibrary(File library) {
     engine.addLibrary(library);
+  }
+
+  public void addWhitelist(String prefix) {
+    engine.addWhitelist(prefix);
   }
 
   public void decompileContext() {

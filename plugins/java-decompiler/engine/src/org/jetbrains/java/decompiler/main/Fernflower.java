@@ -126,6 +126,10 @@ public class Fernflower implements IDecompiledData {
     structContext.saveContext();
   }
 
+  public void addWhitelist(String prefix) {
+    classProcessor.addWhitelist(prefix);
+  }
+
   public void clearContext() {
     DecompilerContext.setCurrentContext(null);
   }
@@ -133,7 +137,7 @@ public class Fernflower implements IDecompiledData {
   @Override
   public String getClassEntryName(StructClass cl, String entryName) {
     ClassNode node = classProcessor.getMapRootClasses().get(cl.qualifiedName);
-    if (node.type != ClassNode.CLASS_ROOT) {
+    if (node == null || node.type != ClassNode.CLASS_ROOT) {
       return null;
     }
     else if (converter != null) {
