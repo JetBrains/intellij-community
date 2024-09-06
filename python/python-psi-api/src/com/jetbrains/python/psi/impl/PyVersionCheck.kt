@@ -84,7 +84,7 @@ object PyVersionCheck {
   private fun evaluateNumber(expression: PyExpression?): Int? {
     if (expression !is PyNumericLiteralExpression) return null
     if (!expression.isIntegerLiteral) return null
-    val value = expression.bigIntegerValue
+    val value = expression.bigIntegerValue ?: return null
     val intValue = value.toInt()
     return if (BigInteger.valueOf(intValue.toLong()) == value) intValue else null
   }

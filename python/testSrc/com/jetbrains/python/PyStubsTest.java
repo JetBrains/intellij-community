@@ -1313,7 +1313,7 @@ public class PyStubsTest extends PyTestCase {
     default @NotNull StubElementValidator withChildren(StubElementValidator @NotNull ... children) {
       return stub -> {
         test(stub);
-        List<StubElement<?>> childrenStubs = stub.getChildrenStubs();
+        List<StubElement> childrenStubs = stub.getChildrenStubs();
         assertSize(children.length, childrenStubs);
         for (int i = 0; i != children.length; i++) {
           children[i].test(childrenStubs.get(i));

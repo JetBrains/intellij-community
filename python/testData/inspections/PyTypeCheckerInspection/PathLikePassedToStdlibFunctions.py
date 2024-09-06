@@ -33,7 +33,7 @@ os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(str)(bytes)(Pa
 os.fsencode(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead">b</warning>)
 os.fsdecode(<warning descr="Expected type 'str | bytes | PathLike[str] | PathLike[bytes]', got 'B' instead">b</warning>)
 
-Path(<warning descr="Unexpected type(s):(B)Possible type(s):(str | PathLike[str])(str | PathLike[str])">b</warning>)
+Path(<warning descr="Expected type 'str | PathLike[str]', got 'B' instead">b</warning>)
 PurePath(<warning descr="Expected type 'str | PathLike[str]', got 'B' instead">b</warning>)
 
 os.path.abspath(<warning descr="Expected type 'PathLike[AnyStr ≤: str | bytes] | AnyStr ≤: str | bytes', got 'B' instead">b</warning>)
