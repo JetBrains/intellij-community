@@ -221,14 +221,13 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (fieldParams != null && !fieldParams.initValue) return Triple(fieldName, false, null)
       if (fieldParams == null && field.annotationValue == null) return null // skip fields that are not annotated
 
-      // TODO add support for name aliases
-      val parameterName =
-        fieldName.let {
-          if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && PyUtil.getInitialUnderscores(it) == 1) {
-            it.substring(1)
-          }
-          else it
-        }
+      val parameterName = when (dataclassParameters.type.asPredefinedType) {
+        // Fields starting with more than one underscore will be mangled into ClassName__field_name, but we don't support that
+        PyDataclassParameters.PredefinedType.ATTRS -> fieldParams?.alias ?: fieldName.removePrefix("_")
+        PyDataclassParameters.PredefinedType.DATACLASS_TRANSFORM -> fieldParams?.alias ?: fieldName
+        PyDataclassParameters.PredefinedType.STD -> fieldName
+        else -> fieldName
+      }
 
       val parameter = PyCallableParameterImpl.nonPsi(
         parameterName,

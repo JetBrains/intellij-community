@@ -853,6 +853,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-59198
+  public void testInitializingAttrsFieldAlias() {
+    runWithAdditionalClassEntryInSdkRoots(
+      "packages",
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(2);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("foo, bar, baz", new String[]{"foo, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("foo, bar, baz", new String[]{"foo, "});
+      }
+    );
+  }
+
   // PY-28957
   public void testDataclassesReplace() {
     final Map<String, PsiElement> marks = loadMultiFileTest(4);
@@ -1246,6 +1259,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     final Map<String, PsiElement> marks = loadTest(1);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("super_attr: str, sub_attr: int", new String[]{"super_attr: str, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformFieldAlias() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("foo: int, bar: int", new String[]{"foo: int, "});
   }
 
   // PY-49946
