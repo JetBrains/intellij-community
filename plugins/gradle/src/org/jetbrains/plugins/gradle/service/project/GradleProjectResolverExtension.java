@@ -160,6 +160,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   // for Gradle version specific init scripts
   String GRADLE_VERSION = "GRADLE_VERSION";
 
+  // debug flag that will always be passed at runtime if debugging is enabled
+  String DEBUGGER_ENABLED = "DEBUGGER_ENABLED";
+
   /**
    * Allows an extension to contribute an init script that would be passed into the Gradle execution
    *

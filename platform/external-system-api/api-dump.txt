@@ -188,8 +188,10 @@ com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:RUNTIME_MODULE_DIR_KEY:com.intellij.openapi.util.Key
 - a:debugConfigurationSettings(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.execution.RunnerAndConfigurationSettings
+- executionEnvironmentVariables(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.util.Map
 - a:id():java.lang.String
 - initializationCode(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):java.util.List
+- isAlwaysAttached():Z
 - splitParameters(java.lang.String):java.util.HashMap
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
 - com.intellij.openapi.util.UserDataHolderBase

@@ -31,7 +31,7 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     return runSettings
   }
 
-  override fun initializationCode(project: Project?, dispatchPort: String, parameters: String): List<String> {
+  override fun initializationCode(project: Project?, dispatchPort: String?, parameters: String): List<String> {
     val javaParameters = JavaParameters()
     RemoteConnectionBuilder.addDebuggerAgent(javaParameters, project, false)
     val jvmArgs = javaParameters.vmParametersList.list.filterNot { it.startsWith("-agentlib:jdwp=") }
