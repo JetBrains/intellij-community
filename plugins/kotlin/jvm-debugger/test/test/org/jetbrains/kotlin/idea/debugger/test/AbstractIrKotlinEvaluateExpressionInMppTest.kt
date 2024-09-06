@@ -12,9 +12,9 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
@@ -155,6 +155,8 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
             is DebuggerTestModule.Common -> createAndConfigureCommonModule(context, module, platformName, dependsOnModuleNames)
             is DebuggerTestModule.Jvm -> configureLeafJvmModule(context, module, platformName, dependsOnModuleNames)
         }
+
+        configureLanguageFeatures(module, files, context)
     }
 
     private fun createAndConfigureCommonModule(
@@ -191,8 +193,28 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
 
         context.workspaceModuleMap[module] = myModule
         val jvmSrcPath = listOf(testAppPath, ExecutionTestCase.SOURCES_DIRECTORY_NAME).joinToString(File.separator)
+
         doWriteAction {
             myModule.createMultiplatformFacetM3(JvmPlatforms.jvm8, false, dependsOnModuleNames, listOf(jvmSrcPath))
+        }
+    }
+
+    /**
+     * Handles the 'ENABLED_LANGUAGE_FEATURE' directive for KMP modules.
+     * Requires the corresponding IntelliJ module for the given [module] to be present.
+     * @param files: The files corresponding to the current [module]
+     */
+    private fun configureLanguageFeatures(module: DebuggerTestModule, files: List<TestFileWithModule>, context: ConfigurationContext) {
+        val facet = (KotlinFacetSettingsProvider.getInstance(project) ?: error("Missing 'KotlinFacetSettingsProvider'"))
+            .getSettings(context.workspaceModuleMap[module] ?: error("Missing 'module': ${module.name}")) ?: error("Missing facet")
+
+        files.forEach { testFile ->
+            testFile.directives.listValues(DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE.name).orEmpty()
+                .map { languageFeatureString -> LanguageFeature.fromString(languageFeatureString) }
+                .forEach { languageFeature ->
+                    (facet.compilerSettings ?: error("Missing compiler settings"))
+                        .additionalArguments += " -XXLanguage:+$languageFeature"
+                }
         }
     }
 
@@ -219,8 +241,8 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
         val dependsOnModuleNames = module.dependenciesSymbols
 
         dependsOnModuleNames.forEach { name ->
-            val dependsOnModule = context.filesByModules.keys.find { it.name == name } ?:
-            error("Unknown module in depends on list. Known modules: $allModuleNames; found: $name for module ${module.name}")
+            val dependsOnModule = context.filesByModules.keys.find { it.name == name }
+                ?: error("Unknown module in depends on list. Known modules: $allModuleNames; found: $name for module ${module.name}")
             context.dependsOnEdges.putValue(module, dependsOnModule)
         }
 
@@ -273,7 +295,7 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
         val filesByModules: Map<DebuggerTestModule, List<TestFileWithModule>>,
         val dependsOnEdges: MultiMap<DebuggerTestModule, DebuggerTestModule>,
         val workspaceModuleMap: MutableMap<DebuggerTestModule, Module>,
-        val librariesByModule: MutableMap<DebuggerTestModule, String>
+        val librariesByModule: MutableMap<DebuggerTestModule, String>,
     )
 
     companion object {
