@@ -259,6 +259,8 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
           private String myName;
       
           private List<@org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String> parents;
+          private List<? extends @org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String> extParents;
+          private @org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String[] children;
           <caret>
       }
       """);
@@ -275,6 +277,8 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                 private String myName;
                             
                                 private List<@org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String> parents;
+                                private List<? extends @org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String> extParents;
+                                private @org.jetbrains.annotations.NotNull @org.jetbrains.annotations.Size String[] children;
                             
                                 public void setMyName(@NotNull String myName) {
                                     this.myName = myName;
@@ -284,12 +288,28 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                     this.parents = parents;
                                 }
                             
+                                public void setExtParents(List<? extends @NotNull String> extParents) {
+                                    this.extParents = extParents;
+                                }
+                            
+                                public void setChildren(@NotNull String[] children) {
+                                    this.children = children;
+                                }
+                            
                                 public @NotNull String getMyName() {
                                     return myName;
                                 }
                             
                                 public List<@NotNull String> getParents() {
                                     return parents;
+                                }
+                            
+                                public List<? extends @NotNull String> getExtParents() {
+                                    return extParents;
+                                }
+                            
+                                public @NotNull String[] getChildren() {
+                                    return children;
                                 }
                             }
                             """);
