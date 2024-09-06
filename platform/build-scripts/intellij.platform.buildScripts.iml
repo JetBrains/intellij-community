@@ -170,6 +170,9 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="intellij-plugin-structure" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
