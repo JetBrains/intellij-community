@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -473,7 +473,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
 
     final BuildRootIndex buildRootIndex = pd.getBuildRootIndex();
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
+    final StampsStorage<? extends StampsStorage.Stamp> stampStorage = pd.getProjectStamps().getStampStorage();
     for (String deleted : event.getDeletedPathsList()) {
       final File file = new File(deleted);
       Collection<BuildRootDescriptor> descriptor = buildRootIndex.findAllParentDescriptors(file, null, null);
@@ -482,7 +482,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
-          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, stampsStorage);
+          pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, stampStorage);
         }
       }
       else {
@@ -502,9 +502,9 @@ final class BuildSession implements Runnable, CanceledStatus {
           LOG.debug("Applying dirty path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor descriptor : descriptors) {
-          StampsStorage.Stamp stamp = stampsStorage.getPreviousStamp(file, descriptor.getTarget());
-          if (stampsStorage.isDirtyStamp(stamp, file)) {
-            pd.fsState.markDirty(null, file, descriptor, stampsStorage, saveEventStamp);
+          StampsStorage.Stamp stamp = stampStorage.getPreviousStamp(file, descriptor.getTarget());
+          if (stamp == null || stampStorage.isDirtyStamp(stamp, file)) {
+            pd.fsState.markDirty(null, file, descriptor, stampStorage, saveEventStamp);
           }
           else {
             if (LOG.isDebugEnabled()) {

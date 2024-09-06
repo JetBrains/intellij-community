@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
@@ -10,7 +10,6 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,29 +18,29 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
-  private PersistentHashMap<Key, T> myMap;
-  private final File myBaseFile;
-  private final KeyDescriptor<Key> myKeyDescriptor;
-  private final DataExternalizer<T> myStateExternalizer;
-  protected final Object myDataLock = new Object();
+  protected final Object dataLock = new Object();
+  private final File baseFile;
+  private final KeyDescriptor<Key> keyDescriptor;
+  private final DataExternalizer<T> stateExternalizer;
+  private PersistentHashMap<Key, T> map;
 
   public AbstractStateStorage(File storePath, KeyDescriptor<Key> keyDescriptor, DataExternalizer<T> stateExternalizer) throws IOException {
-    myBaseFile = storePath;
-    myKeyDescriptor = keyDescriptor;
-    myStateExternalizer = stateExternalizer;
-    myMap = createMap(storePath);
+    baseFile = storePath;
+    this.keyDescriptor = keyDescriptor;
+    this.stateExternalizer = stateExternalizer;
+    map = createMap(storePath);
   }
 
   public void force() {
-    synchronized (myDataLock) {
-      myMap.force();
+    synchronized (dataLock) {
+      map.force();
     }
   }
 
   @Override
   public void close() throws IOException {
-    synchronized (myDataLock) {
-      myMap.close();
+    synchronized (dataLock) {
+      map.close();
     }
   }
 
@@ -51,13 +50,14 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   }
 
   public boolean wipe() {
-    synchronized (myDataLock) {
+    synchronized (dataLock) {
       try {
-        myMap.closeAndClean();
-      } catch (IOException ignored) {
+        map.closeAndClean();
+      }
+      catch (IOException ignored) {
       }
       try {
-        myMap = createMap(myBaseFile);
+        map = createMap(baseFile);
       }
       catch (IOException ignored) {
         return false;
@@ -68,8 +68,8 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public void update(Key key, @Nullable T state) throws IOException {
     if (state != null) {
-      synchronized (myDataLock) {
-        myMap.put(key, state);
+      synchronized (dataLock) {
+        map.put(key, state);
       }
     }
     else {
@@ -78,47 +78,42 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   }
 
   public void appendData(final Key key, final T data) throws IOException {
-    synchronized (myDataLock) {
-      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
-        @Override
-        public void append(@NotNull DataOutput out) throws IOException {
-          myStateExternalizer.save(out, data);
-        }
-      });
+    synchronized (dataLock) {
+      map.appendData(key, (AppendablePersistentMap.ValueDataAppender)out -> stateExternalizer.save(out, data));
     }
   }
 
   public void remove(Key key) throws IOException {
-    synchronized (myDataLock) {
-      myMap.remove(key);
+    synchronized (dataLock) {
+      map.remove(key);
     }
   }
 
   public @Nullable T getState(Key key) throws IOException {
-    synchronized (myDataLock) {
-      return myMap.get(key);
+    synchronized (dataLock) {
+      return map.get(key);
     }
   }
 
   public Collection<Key> getKeys() throws IOException {
-    synchronized (myDataLock) {
+    synchronized (dataLock) {
       List<Key> result = new ArrayList<>();
-      myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      map.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
       return result;
     }
   }
 
   public Iterator<Key> getKeysIterator() throws IOException {
-    synchronized (myDataLock) {
+    synchronized (dataLock) {
       List<Key> result = new ArrayList<>();
-      myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      map.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
       return result.iterator();
     }
   }
 
-  private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
-    FileUtil.createIfDoesntExist(file); //todo assert
-    return new PersistentHashMap<>(file, myKeyDescriptor, myStateExternalizer);
+  private PersistentHashMap<Key, T> createMap(@NotNull File file) throws IOException {
+    FileUtilRt.createIfNotExists(file); //todo assert
+    return new PersistentHashMap<>(file, keyDescriptor, stateExternalizer);
   }
 
   @Override

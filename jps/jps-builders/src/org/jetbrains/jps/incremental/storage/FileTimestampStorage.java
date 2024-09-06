@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.FSOperations;
 
@@ -51,6 +52,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   }
 
   @Override
+  @NotNull
   public FileTimestamp getCurrentStamp(Path file) {
     return FileTimestamp.fromLong(FSOperations.lastModified(file));
   }
@@ -62,7 +64,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   }
 
   @Override
-  public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
+  public boolean isDirtyStamp(@Nullable Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
     if (!(stamp instanceof FileTimestamp)) return true;
     FileTimestamp timestamp = (FileTimestamp) stamp;
     // for symlinks, the attr structure reflects the symlink's timestamp and not symlink's target timestamp
@@ -70,7 +72,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   }
 
   @Override
-  public void saveStamp(File file, BuildTarget<?> buildTarget, FileTimestamp stamp) throws IOException {
+  public void saveStamp(File file, BuildTarget<?> buildTarget, @NotNull FileTimestamp stamp) throws IOException {
     int targetId = myTargetsState.getBuildTargetId(buildTarget);
     update(file, updateTimestamp(getState(file), targetId, stamp.asLong()));
   }
@@ -155,7 +157,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
       return myTimestamp;
     }
 
-    static FileTimestamp fromLong(long l) {
+    static @NotNull FileTimestamp fromLong(long l) {
       return new FileTimestamp(l);
     }
 

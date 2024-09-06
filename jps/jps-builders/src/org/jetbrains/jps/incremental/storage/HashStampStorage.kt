@@ -1,241 +1,174 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.incremental.storage;
+package org.jetbrains.jps.incremental.storage
 
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.incremental.FileHashUtil;
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.util.ArrayUtil
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.EnumeratorStringDescriptor
+import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.incremental.FileHashUtil
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp
+import java.io.DataInput
+import java.io.DataOutput
+import java.io.File
+import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
+internal class HashStampStorage(
+  dataStorageRoot: Path,
+  private val relativizer: PathRelativizerService,
+  targetsState: BuildTargetsState,
+) : AbstractStateStorage<String?, Array<HashStampPerTarget>>(
+  calcStorageRoot(dataStorageRoot).resolve("data").toFile(),
+  JpsCachePathStringDescriptor,
+  StateExternalizer,
+), StampsStorage<HashStamp?> {
+  private val timestampStorage = FileTimestampStorage(dataStorageRoot, targetsState)
+  private val targetState = targetsState
+  private val fileStampRoot = calcStorageRoot(dataStorageRoot)
 
-import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
-import static org.jetbrains.jps.incremental.storage.HashStampStorage.HashStampPerTarget;
-
-final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<HashStampStorage.HashStamp> {
-  private final FileTimestampStorage timestampStorage;
-  private final PathRelativizerService myRelativizer;
-  private final BuildTargetsState myTargetsState;
-  private final Path fileStampRoot;
-
-  HashStampStorage(Path dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
-    super(calcStorageRoot(dataStorageRoot).resolve("data").toFile(), PathStringDescriptor.INSTANCE, new StateExternalizer());
-    timestampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
-    fileStampRoot = calcStorageRoot(dataStorageRoot);
-    myRelativizer = relativizer;
-    myTargetsState = targetsState;
+  private fun relativePath(file: File): String {
+    return relativizer.toRelative(file.absolutePath)
   }
 
-  private @NotNull String relativePath(@NotNull File file) {
-    return myRelativizer.toRelative(file.getAbsolutePath());
+  override fun getStorageRoot(): Path = fileStampRoot
+
+  override fun saveStamp(file: File, buildTarget: BuildTarget<*>, stamp: HashStamp) {
+    timestampStorage.saveStamp(file, buildTarget, FileTimestamp.fromLong(stamp.timestamp))
+    val targetId = targetState.getBuildTargetId(buildTarget)
+    val path = relativePath(file)
+    update(path, updateFilesStamp(oldState = getState(path), targetId = targetId, stamp = stamp))
   }
 
-  private static @NotNull Path calcStorageRoot(Path dataStorageRoot) {
-    return dataStorageRoot.resolve("hashes");
-  }
-
-  @Override
-  public Path getStorageRoot() {
-    return fileStampRoot;
-  }
-
-  @Override
-  public void saveStamp(File file, BuildTarget<?> buildTarget, HashStamp stamp) throws IOException {
-    timestampStorage.saveStamp(file, buildTarget, FileTimestamp.fromLong(stamp.myTimestamp));
-    int targetId = myTargetsState.getBuildTargetId(buildTarget);
-    String path = relativePath(file);
-    update(path, updateFilesStamp(getState(path), targetId, stamp));
-  }
-
-  private static HashStampPerTarget @NotNull [] updateFilesStamp(HashStampPerTarget[] oldState, final int targetId, HashStamp stamp) {
-    final HashStampPerTarget newItem = new HashStampPerTarget(targetId, stamp.myHash);
-    if (oldState == null) {
-      return new HashStampPerTarget[]{newItem};
-    }
-    for (int i = 0, length = oldState.length; i < length; i++) {
-      if (oldState[i].targetId == targetId) {
-        oldState[i] = newItem;
-        return oldState;
-      }
-    }
-    return ArrayUtil.append(oldState, newItem);
-  }
-
-  @Override
-  public void removeStamp(File file, BuildTarget<?> buildTarget) throws IOException {
-    timestampStorage.removeStamp(file, buildTarget);
-    String path = relativePath(file);
-    HashStampPerTarget[] state = getState(path);
-    if (state != null) {
-      int targetId = myTargetsState.getBuildTargetId(buildTarget);
-      for (int i = 0; i < state.length; i++) {
-        if (state[i].targetId == targetId) {
-          if (state.length == 1) {
-            remove(path);
-          }
-          else {
-            HashStampPerTarget[] newState = ArrayUtil.remove(state, i);
-            update(path, newState);
-            break;
-          }
+  override fun removeStamp(file: File, buildTarget: BuildTarget<*>) {
+    timestampStorage.removeStamp(file, buildTarget)
+    val path = relativePath(file)
+    val state = getState(path) ?: return
+    val targetId = targetState.getBuildTargetId(buildTarget)
+    for (i in state.indices) {
+      if (state[i].targetId == targetId) {
+        if (state.size == 1) {
+          remove(path)
+        }
+        else {
+          val newState = ArrayUtil.remove(state, i)
+          update(path, newState)
+          break
         }
       }
     }
   }
 
-  @Override
-  public HashStamp getPreviousStamp(File file, BuildTarget<?> target) throws IOException {
-    FileTimestamp previousTimestamp = timestampStorage.getPreviousStamp(file, target);
-    HashStampPerTarget[] state = getState(relativePath(file));
-    if (state != null) {
-      int targetId = myTargetsState.getBuildTargetId(target);
-      for (HashStampPerTarget filesStampPerTarget : state) {
-        if (filesStampPerTarget.targetId == targetId) {
-          return new HashStamp(filesStampPerTarget.hash, previousTimestamp.asLong());
-        }
-      }
-    }
-    return HashStamp.EMPTY;
+  override fun getPreviousStamp(file: File, target: BuildTarget<*>): HashStamp? {
+    val previousTimestamp = timestampStorage.getPreviousStamp(file, target) ?: return null
+    val state = getState(relativePath(file)) ?: return null
+    val targetId = targetState.getBuildTargetId(target)
+    return state
+      .firstOrNull { it.targetId == targetId }
+      ?.let { HashStamp(it.hash, previousTimestamp.asLong()) }
   }
 
-  public Long getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
-    HashStampPerTarget[] state = getState(relativePath(file));
-    if (state == null) {
-      return null;
-    }
-
-    int targetId = myTargetsState.getBuildTargetId(target);
-    for (HashStampPerTarget filesStampPerTarget : state) {
-      if (filesStampPerTarget.targetId == targetId) {
-        return filesStampPerTarget.hash;
-      }
-    }
-    return null;
+  fun getStoredFileHash(file: File, target: BuildTarget<*>): Long? {
+    val state = getState(relativePath(file)) ?: return null
+    val targetId = targetState.getBuildTargetId(target)
+    return state.firstOrNull { it.targetId == targetId }?.hash
   }
 
-  @Override
-  public HashStamp getCurrentStamp(Path file) throws IOException {
-    FileTimestamp currentTimestamp = timestampStorage.getCurrentStamp(file);
-    return new HashStamp(FileHashUtil.getFileHash(file), currentTimestamp.asLong());
+  override fun getCurrentStamp(file: Path): HashStamp {
+    val currentTimestamp = timestampStorage.getCurrentStamp(file)
+    return HashStamp(FileHashUtil.getFileHash(file), currentTimestamp.asLong())
   }
 
-  @Override
-  public boolean isDirtyStamp(@NotNull Stamp stamp, File file) throws IOException {
-    if (!(stamp instanceof HashStamp)) {
-      return true;
+  override fun isDirtyStamp(stamp: StampsStorage.Stamp, file: File): Boolean {
+    if (stamp !is HashStamp) {
+      return true
     }
 
-    HashStamp filesStamp = (HashStamp)stamp;
-    if (!timestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file)) {
-      return false;
+    if (!timestampStorage.isDirtyStamp(FileTimestamp.fromLong(stamp.timestamp), file)) {
+      return false
     }
 
-    Long hash = filesStamp.myHash;
-    if (hash == null) {
-      return true;
+    return stamp.hash != FileHashUtil.getFileHash(file.toPath())
+  }
+
+  override fun isDirtyStamp(stamp: StampsStorage.Stamp?, file: File, attrs: BasicFileAttributes): Boolean {
+    if (stamp !is HashStamp) {
+      return true
     }
 
-    return hash != FileHashUtil.getFileHash(file.toPath());
-  }
-
-  @Override
-  public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) throws IOException {
-    if (!(stamp instanceof HashStamp)) {
-      return true;
+    if (!timestampStorage.isDirtyStamp(FileTimestamp.fromLong(stamp.timestamp), file, attrs)) {
+      return false
     }
 
-    HashStamp filesStamp = (HashStamp)stamp;
-    if (!timestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file, attrs)) {
-      return false;
+    return stamp.hash != FileHashUtil.getFileHash(file.toPath())
+  }
+
+  override fun force() {
+    super.force()
+    timestampStorage.force()
+  }
+
+  override fun clean() {
+    super.clean()
+    timestampStorage.clean()
+  }
+
+  override fun wipe(): Boolean {
+    return super.wipe() && timestampStorage.wipe()
+  }
+
+  override fun close() {
+    super.close()
+    timestampStorage.close()
+  }
+}
+
+internal class HashStampPerTarget(@JvmField val targetId: Int, @JvmField val hash: Long)
+
+internal data class HashStamp(@JvmField val hash: Long, @JvmField val  timestamp: Long) : StampsStorage.Stamp
+
+private fun calcStorageRoot(dataStorageRoot: Path): Path = dataStorageRoot.resolve("hashes")
+
+private fun updateFilesStamp(oldState: Array<HashStampPerTarget>?, targetId: Int, stamp: HashStamp): Array<HashStampPerTarget> {
+  val newItem = HashStampPerTarget(targetId = targetId, hash = stamp.hash)
+  if (oldState == null) {
+    return arrayOf(newItem)
+  }
+
+  var i = 0
+  val length = oldState.size
+  while (i < length) {
+    if (oldState[i].targetId == targetId) {
+      oldState[i] = newItem
+      return oldState
     }
-
-    Long hash = filesStamp.myHash;
-    if (hash == null) {
-      return true;
-    }
-
-    return hash != FileHashUtil.getFileHash(file.toPath());
+    i++
   }
+  return oldState + newItem
+}
 
-  @Override
-  public void force() {
-    super.force();
-    timestampStorage.force();
-  }
-
-  @Override
-  public void clean() throws IOException {
-    super.clean();
-    timestampStorage.clean();
-  }
-
-  @Override
-  public boolean wipe() {
-    return super.wipe() && timestampStorage.wipe();
-  }
-
-  @Override
-  public void close() throws IOException {
-    super.close();
-    timestampStorage.close();
-  }
-
-  static final class HashStampPerTarget {
-    public final int targetId;
-    public final long hash;
-
-    private HashStampPerTarget(int targetId, long hash) {
-      this.targetId = targetId;
-      this.hash = hash;
+private object StateExternalizer : DataExternalizer<Array<HashStampPerTarget>> {
+  override fun save(out: DataOutput, value: Array<HashStampPerTarget>) {
+    out.writeInt(value.size)
+    for (target in value) {
+      out.writeInt(target.targetId)
+      out.writeLong(target.hash)
     }
   }
 
-  static final class HashStamp implements StampsStorage.Stamp {
-    static HashStamp EMPTY = new HashStamp(null, -1L);
-
-    private final Long myHash;
-    private final long myTimestamp;
-
-    private HashStamp(Long hash, long timestamp) {
-      myHash = hash;
-      myTimestamp = timestamp;
-    }
-
-    @Override
-    public String toString() {
-      return "HashStamp{" +
-             "myHash=" + myHash +
-             ", myTimestamp=" + myTimestamp +
-             '}';
+  override fun read(`in`: DataInput): Array<HashStampPerTarget> {
+    val size = `in`.readInt()
+    return Array(size) {
+      val id = `in`.readInt()
+      val hash = `in`.readLong()
+      HashStampPerTarget(targetId = id, hash = hash)
     }
   }
+}
 
-  private static final class StateExternalizer implements DataExternalizer<HashStampPerTarget[]> {
-    @Override
-    public void save(@NotNull DataOutput out, HashStampPerTarget[] value) throws IOException {
-      out.writeInt(value.length);
-      for (HashStampPerTarget target : value) {
-        out.writeInt(target.targetId);
-        out.writeLong(target.hash);
-      }
-    }
+private object JpsCachePathStringDescriptor : EnumeratorStringDescriptor() {
+  override fun getHashCode(value: String): Int = Hashing.komihash5_0().hashCharsToInt(value)
 
-    @Override
-    public HashStampPerTarget[] read(@NotNull DataInput in) throws IOException {
-      int size = in.readInt();
-      HashStampPerTarget[] targets = new HashStampPerTarget[size];
-      for (int i = 0; i < size; i++) {
-        int id = in.readInt();
-        long hash = in.readLong();
-        targets[i] = new HashStampPerTarget(id, hash);
-      }
-      return targets;
-    }
-  }
+  override fun isEqual(val1: String, val2: String) = val1 == val2
 }

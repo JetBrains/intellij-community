@@ -66,7 +66,7 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     }
     for (String outputPath : outputPaths) {
       final int key = pathHashCode(outputPath);
-      synchronized (myDataLock) {
+      synchronized (dataLock) {
         final IntSet state = getState(key);
         if (state != null) {
           final boolean removed = state.remove(buildTargetId);
@@ -91,7 +91,7 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     final Collection<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
       final int key = pathHashCode(outputPath);
-      synchronized (myDataLock) {
+      synchronized (dataLock) {
         final IntSet associatedTargets = getState(key);
         if (associatedTargets == null || associatedTargets.size() != 1) {
           continue;
