@@ -12,9 +12,10 @@ import java.lang.reflect.AccessibleObject
 import com.sun.jdi.Type as jdi_Type
 import com.sun.jdi.Value as jdi_Value
 
-private val CLASS = Type.getType(Class::class.java)
-private val OBJECT = Type.getType(Any::class.java)
-private val BOOTSTRAP_CLASS_DESCRIPTORS = setOf("Ljava/lang/String;", "Ljava/lang/ClassLoader;", "Ljava/lang/Class;")
+private val CLASS_TYPE: Type = Type.getType(Class::class.java)
+private val OBJECT_TYPE: Type = Type.getType(Any::class.java)
+internal val STRING_TYPE: Type = Type.getType(String::class.java)
+private val BOOTSTRAP_CLASS_DESCRIPTORS = setOf(STRING_TYPE.descriptor, Type.getDescriptor(ClassLoader::class.java), CLASS_TYPE.descriptor)
 
 open class JDIEval(
     private val vm: VirtualMachine,
@@ -52,7 +53,7 @@ open class JDIEval(
         if (classLoader == null) {
             return invokeStaticMethod(
                 MethodDescription(
-                    CLASS.internalName,
+                    CLASS_TYPE.internalName,
                     "forName",
                     "(Ljava/lang/String;)Ljava/lang/Class;",
                     true
@@ -62,7 +63,7 @@ open class JDIEval(
         } else {
             return invokeStaticMethod(
                 MethodDescription(
-                    CLASS.internalName,
+                    CLASS_TYPE.internalName,
                     "forName",
                     "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;",
                     true
@@ -106,7 +107,7 @@ open class JDIEval(
         return invokeMethod(
             clazz,
             MethodDescription(
-                CLASS.internalName,
+                CLASS_TYPE.internalName,
                 "isInstance",
                 "(Ljava/lang/Object;)Z",
                 false
@@ -390,16 +391,16 @@ open class JDIEval(
     }
 
     private fun isArrayOfInterfaces(valueType: jdi_Type?, expectedType: jdi_Type?): Boolean {
-        return (valueType as? ArrayType)?.componentType() is InterfaceType && (expectedType as? ArrayType)?.componentType() == OBJECT.asReferenceType()
+        return (valueType as? ArrayType)?.componentType() is InterfaceType && (expectedType as? ArrayType)?.componentType() == OBJECT_TYPE.asReferenceType()
     }
 
     private fun invokeMethodWithReflection(ownerType: Type, instance: Value, args: List<jdi_Value?>, methodDesc: MethodDescription): Value {
         val methodToInvoke = invokeMethod(
             loadClass(ownerType),
             MethodDescription(
-                CLASS.internalName,
+                CLASS_TYPE.internalName,
                 "getDeclaredMethod",
-                "(Ljava/lang/String;[L${CLASS.internalName};)Ljava/lang/reflect/Method;",
+                "(Ljava/lang/String;[L${CLASS_TYPE.internalName};)Ljava/lang/reflect/Method;",
                 true
             ),
             listOf(loadString(methodDesc.name), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
@@ -421,7 +422,7 @@ open class JDIEval(
             MethodDescription(
                 methodToInvoke.asmType.internalName,
                 "invoke",
-                "(L${OBJECT.internalName};[L${OBJECT.internalName};)L${OBJECT.internalName};",
+                "(L${OBJECT_TYPE.internalName};[L${OBJECT_TYPE.internalName};)L${OBJECT_TYPE.internalName};",
                 true
             ),
             listOf(instance, mirrorOfArgs(args))
@@ -437,7 +438,7 @@ open class JDIEval(
     }
 
     private fun mirrorOfArgs(args: List<jdi_Value?>): Value {
-        val arrayObject = newArray(Type.getType("[" + OBJECT.descriptor), args.size)
+        val arrayObject = newArray(Type.getType("[" + OBJECT_TYPE.descriptor), args.size)
 
         args.forEachIndexed { index, value ->
             val indexValue = vm.mirrorOf(index).asValue()

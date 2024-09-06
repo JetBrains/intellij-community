@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi
 
@@ -17,6 +17,7 @@ import com.sun.jdi.FloatValue as jdi_FloatValue
 import com.sun.jdi.IntegerValue as jdi_IntegerValue
 import com.sun.jdi.LongValue as jdi_LongValue
 import com.sun.jdi.ObjectReference as jdi_ObjectReference
+import com.sun.jdi.StringReference as jdi_StringReference
 import com.sun.jdi.ShortValue as jdi_ShortValue
 import com.sun.jdi.Type as jdi_Type
 import com.sun.jdi.Value as jdi_Value
@@ -53,6 +54,7 @@ class JDIFailureException(message: String?, cause: Throwable? = null) : RuntimeE
 fun jdi_ObjectReference?.asValue(): ObjectValue {
     return when (this) {
         null -> NULL_VALUE
+        is jdi_StringReference -> ObjectValue(this, STRING_TYPE)
         else -> ObjectValue(this, type().asType())
     }
 }
