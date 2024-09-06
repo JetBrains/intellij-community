@@ -1101,8 +1101,14 @@ com.intellij.openapi.util.UserDataHolderEx
 - a:putUserDataIfAbsent(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object
 - a:replace(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Object):Z
 f:com.intellij.openapi.util.UserDataHolderExKt
+- sf:getAndUpdateUserData(com.intellij.openapi.util.UserDataHolderEx,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getOrCreateUserData(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:getOrCreateUserData(com.intellij.openapi.util.UserDataHolderEx,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:getOrCreateUserDataUnsafe(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:getOrMaybeCreateUserData(com.intellij.openapi.util.UserDataHolderEx,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:nullableLazyValue(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:nullableLazyValueUnsafe(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:updateUserData(com.intellij.openapi.util.UserDataHolderEx,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function1):java.lang.Object
 com.intellij.openapi.util.ValueKey
 - sf:Companion:com.intellij.openapi.util.ValueKey$Companion
 - a:getName():java.lang.String
