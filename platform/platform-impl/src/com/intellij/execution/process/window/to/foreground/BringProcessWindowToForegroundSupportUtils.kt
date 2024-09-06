@@ -38,10 +38,10 @@ private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHol
   // on windows WindowsTerminal.exe process is not a parent of the debuggee, so we have to find the terminal windows associated with the debuggee first
     return (this as WinBringProcessWindowToForegroundSupport).tryBringWindowsTerminalInForeground(dataHolder, pid)
   else
-    when (val terminalPid = dataHolder.getOrCreateUserData(terminalPIDKey) {
+    when (val terminalPid = dataHolder.getOrMaybeCreateUserData(terminalPIDKey) {
       (tryFindParentProcess(pid, listOf("MacOS/Terminal", "gnome-terminal")) ?: run {
         logger.trace { "Could find neither main window of $pid process, nor parent cmd process. Exiting" };
-        return@getOrCreateUserData null
+        return@getOrMaybeCreateUserData null
       }
       ).pid().toUInt()
     }) {
@@ -79,7 +79,7 @@ private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInFo
   }
 
   // On windows only 1 instance of terminal can be launched
-  val windowsTerminalPid = dataHolder.getOrCreateUserData(terminalPIDKey) {
+  val windowsTerminalPid = dataHolder.getOrCreateUserDataUnsafe(terminalPIDKey) {
     ProcessHandle.allProcesses()
       .filter {
         val command = it.info().command().getOrNull() ?: return@filter false

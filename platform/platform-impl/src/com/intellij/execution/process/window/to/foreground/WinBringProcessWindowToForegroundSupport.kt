@@ -4,6 +4,7 @@ package com.intellij.execution.process.window.to.foreground
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.util.User32Ex
 import com.intellij.util.findMainWindow
 import com.intellij.util.findWindowsWithText
@@ -25,8 +26,8 @@ internal class WinBringProcessWindowToForegroundSupport : BringProcessWindowToFo
   }
 
   private val windowsHandleKey = Key<MutableMap<UInt, WinDef.HWND>>("WindowsHandleKey")
-  fun bringWindowWithName(pid: UInt, dataHolder : UserDataHolder, name : String) : Boolean {
-    val cacheMap = dataHolder.getOrCreateUserData(windowsHandleKey) { mutableMapOf() }
+  fun bringWindowWithName(pid: UInt, dataHolder: UserDataHolder, name: String): Boolean {
+    val cacheMap = dataHolder.getOrCreateUserDataUnsafe(windowsHandleKey) { mutableMapOf() }
 
     val winHandle = dataHolder.getUserData(windowsHandleKey)?.get(pid) ?: run {
       val windows = User32Ex.INSTANCE.findWindowsWithText(pid, name)
