@@ -145,38 +145,31 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSurroundWithNotNullCheck() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithNullCheckSurrounder());
   }
 
   public void testSurroundExpressionWithIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithIfExpressionSurrounder());
   }
 
   public void testSurroundExpressionWithIfForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithIfExpressionSurrounder());
   }
 
   public void testSurroundExpressionWithNotForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithNotSurrounder());
   }
 
   public void testSurroundExpressionWithElseIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithIfExpressionSurrounder());
   }
 
   public void testSurroundExpressionWithElseIfElse() {
-    //TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     doTest(new JavaWithIfElseExpressionSurrounder());
   }
 
   public void testSurroundWithTryFinallyUsingIndents() {
     CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
-    boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     indentOptions.USE_TAB_CHARACTER = true;
     doTest(new JavaWithTryFinallySurrounder());
   }
