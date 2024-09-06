@@ -3,6 +3,7 @@ package com.intellij.ui.popup;
 
 import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
@@ -1426,7 +1427,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     if (myRequestFocus) {
       if (myPreferredFocusedComponent != null) {
-        myPreferredFocusedComponent.requestFocus();
+        // `resetThreadContext` here is needed because `setVisible` runs eventloop
+        // IJPL-161712
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myPreferredFocusedComponent.requestFocus();
+        }
       }
       else {
         _requestFocus();
