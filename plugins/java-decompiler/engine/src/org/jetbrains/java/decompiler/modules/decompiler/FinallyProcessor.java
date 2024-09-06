@@ -794,12 +794,16 @@ public class FinallyProcessor {
         int secondOp = second.operand(i);
         if (firstOp != secondOp) {
           // a-load/store instructions
-          if (first.opcode == CodeConstants.opc_aload || first.opcode == CodeConstants.opc_astore) {
+          if (first.opcode == CodeConstants.opc_aload) {
             for (int[] arr : lstStoreVars) {
               if (arr[0] == firstOp && arr[1] == secondOp) {
                 return true;
               }
             }
+          }
+          else if (first.opcode == CodeConstants.opc_astore) {
+            lstStoreVars.add(new int[]{firstOp, secondOp});
+            return true;
           }
 
           return false;
