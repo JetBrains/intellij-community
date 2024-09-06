@@ -41,7 +41,7 @@ def _get_df_variable_repr(data_frame):
     data_preview = []
     column_row = 0
     shape_rows, shape_cols = data_frame.shape
-    if shape_cols > 1000 or shape_rows > 10_000:
+    if shape_cols > 1000 or shape_rows > 10000:
         head_number = 1
     else:
         head_number = 3
