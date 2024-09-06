@@ -39,6 +39,7 @@ public interface IFernflowerPreferences {
 
   String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
   String INCLUDE_ENTIRE_CLASSPATH = "iec";
+  String INLINE_SIMPLE_LAMBDAS = "isl";
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
@@ -98,6 +99,7 @@ public interface IFernflowerPreferences {
     defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "0");
     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
     defaults.put(CHECK_CLOSABLE_INTERFACE, "0"); //less accurate, but it will work for not full environment
+    defaults.put(INLINE_SIMPLE_LAMBDAS, "1");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");
