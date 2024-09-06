@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.0.20-ij242-31">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.0.20-ij242-38">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.20-ij242-31/kotlin-scripting-jvm-2.0.20-ij242-31.jar">
-          <sha256sum>e5ba56f77f4b88250e29a234f17dd554fb0956226fc58305ea1b6e341b341905</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.20-ij242-38/kotlin-scripting-jvm-2.0.20-ij242-38.jar">
+          <sha256sum>ebadafb5171f7e8d8845255bae7a73b0d97b4359f221f119b438d7e53608d5f0</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.20-ij242-31/kotlin-scripting-jvm-2.0.20-ij242-31.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.20-ij242-38/kotlin-scripting-jvm-2.0.20-ij242-38.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.20-ij242-31/kotlin-scripting-jvm-2.0.20-ij242-31-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.20-ij242-38/kotlin-scripting-jvm-2.0.20-ij242-38-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
