@@ -16,8 +16,11 @@ import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
 object InlineCompletion {
+  @ApiStatus.Internal
+  val INLINE_COMPLETION_SUPPRESSED_KEY = Key.create<Unit>("inline.completion.suppressed")
 
   private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 

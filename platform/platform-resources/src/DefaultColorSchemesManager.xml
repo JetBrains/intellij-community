@@ -1469,6 +1469,11 @@
             <option name="EFFECT_TYPE" value="0"/>
           </value>
         </option>
+        <option name="INLINE_PROMPT">
+          <value>
+            <option name="FOREGROUND" value="7444D4"/>
+          </value>
+        </option>
       <option name="XPATH.KEYWORD">
         <value>
           <option name="FOREGROUND" value="0000FF" />
@@ -2911,6 +2916,11 @@
         <value>
           <option name="EFFECT_COLOR" value="999999"/>
           <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT">
+        <value>
+          <option name="FOREGROUND" value="B589EC"/>
         </value>
       </option>
     </attributes>
