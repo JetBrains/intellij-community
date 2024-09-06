@@ -184,7 +184,7 @@ final class AnnotatorRunner {
       HighlightInfo patched = new HighlightInfo(injectedInfo.forcedTextAttributes, injectedInfo.forcedTextAttributesKey, injectedInfo.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), injectedInfo.getGroup(), injectedInfo.unresolvedReference);
+                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), injectedInfo.getGroup(), injectedInfo.unresolvedReference, null);
       patched.setHint(injectedInfo.hasHint());
 
       injectedInfo.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
