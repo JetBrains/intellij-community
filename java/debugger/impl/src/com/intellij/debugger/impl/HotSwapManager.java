@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,6 +183,8 @@ public final class HotSwapManager {
                                            @NotNull HotSwapProgress reloadClassesProgress) {
     MultiProcessCommand reloadClassesCommand = new MultiProcessCommand();
     reloadClassesProgress.setCancelWorker(() -> reloadClassesCommand.cancel());
+    int totalClasses = modifiedClasses.values().stream().mapToInt(e -> e.size()).sum();
+    HotSwapStatistics.logClassesReloaded(reloadClassesProgress.getProject(), totalClasses);
     for (DebuggerSession debuggerSession : modifiedClasses.keySet()) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
         @Override

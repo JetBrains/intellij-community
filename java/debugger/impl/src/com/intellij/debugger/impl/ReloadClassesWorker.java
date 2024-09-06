@@ -19,6 +19,9 @@ import com.intellij.unscramble.ThreadState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.hotswap.HotSwapFailureReason;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
+import com.jetbrains.jdi.VirtualMachineImpl;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +31,7 @@ import org.jetbrains.annotations.Range;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 
 class ReloadClassesWorker {
@@ -50,21 +50,65 @@ class ReloadClassesWorker {
       return;
     }
 
-    String message =
-      e instanceof UnsupportedOperationException
-      ? JavaDebuggerBundle.message("error.operation.not.supported.by.vm", e.getLocalizedMessage())
-      : e instanceof NoClassDefFoundError
-        ? JavaDebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage())
-        : e instanceof VerifyError
-          ? JavaDebuggerBundle.message("error.verification.error", e.getLocalizedMessage())
-          : e instanceof UnsupportedClassVersionError
-            ? JavaDebuggerBundle.message("error.unsupported.class.version", e.getLocalizedMessage())
-            : e instanceof ClassFormatError
-              ? JavaDebuggerBundle.message("error.class.format.error", e.getLocalizedMessage())
-              : e instanceof ClassCircularityError
-                ? JavaDebuggerBundle.message("error.class.circularity.error", e.getLocalizedMessage())
-                : JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), e.getLocalizedMessage());
+    String message;
+    String reason = e.getLocalizedMessage();
+    if (e instanceof UnsupportedOperationException) {
+      message = JavaDebuggerBundle.message("error.operation.not.supported.by.vm", reason);
+      HotSwapFailureReason failureReason = getFailureReason(reason);
+      HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason);
+    }
+    else if (e instanceof NoClassDefFoundError) {
+      message = JavaDebuggerBundle.message("error.class.def.not.found", reason);
+    }
+    else if (e instanceof VerifyError) {
+      message = JavaDebuggerBundle.message("error.verification.error", reason);
+    }
+    else if (e instanceof UnsupportedClassVersionError) {
+      message = JavaDebuggerBundle.message("error.unsupported.class.version", reason);
+    }
+    else if (e instanceof ClassFormatError) {
+      message = JavaDebuggerBundle.message("error.class.format.error", reason);
+    }
+    else if (e instanceof ClassCircularityError) {
+      message = JavaDebuggerBundle.message("error.class.circularity.error", reason);
+    }
+    else {
+      message = JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), reason);
+    }
+
     myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, message);
+  }
+
+  /**
+   * @see VirtualMachineImpl#redefineClasses(Map)
+   */
+  private static @NotNull HotSwapFailureReason getFailureReason(String reason) {
+    switch (reason) {
+      case "add method not implemented" -> {
+        return HotSwapFailureReason.METHOD_ADDED;
+      }
+      case "delete method not implemented" -> {
+        return HotSwapFailureReason.METHOD_REMOVED;
+      }
+      case "schema change not implemented" -> {
+        return HotSwapFailureReason.SIGNATURE_MODIFIED;
+      }
+      case "hierarchy change not implemented" -> {
+        return HotSwapFailureReason.STRUCTURE_MODIFIED;
+      }
+      case "changes to class modifiers not implemented" -> {
+        return HotSwapFailureReason.CLASS_MODIFIERS_CHANGED;
+      }
+      case "changes to method modifiers not implemented" -> {
+        return HotSwapFailureReason.METHOD_MODIFIERS_CHANGED;
+      }
+      case "changes to class attribute not implemented" -> {
+        return HotSwapFailureReason.CLASS_ATTRIBUTES_CHANGED;
+      }
+      default -> {
+        return HotSwapFailureReason.OTHER;
+      }
+    }
   }
 
   public void reloadClasses(@NotNull Map<@NotNull String, @NotNull HotSwapFile> modifiedClasses) {

@@ -46,7 +46,9 @@ private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAva
 
 internal class HotSwapModifiedFilesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val session = findSessionIfReady(e.project) ?: return
+    val project = e.project ?: return
+    val session = findSessionIfReady(project) ?: return
+    HotSwapStatistics.logHotSwapCalled(project, HotSwapStatistics.HotSwapSource.RELOAD_MODIFIED_ACTION)
     HotSwapWithRebuildAction.performHotSwap(e.dataContext, session)
   }
 
@@ -76,6 +78,7 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val session = HotSwapSessionManager.getInstance(project).currentSession ?: return
+    HotSwapStatistics.logHotSwapCalled(project, HotSwapStatistics.HotSwapSource.RELOAD_MODIFIED_BUTTON)
     performHotSwap(e.dataContext, session)
   }
 

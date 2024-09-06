@@ -31,6 +31,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,6 +150,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         Notification notification = HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
         HotSwapStatusNotificationManager.getInstance(myProject).trackNotification(notification);
         notification.notify(myProject);
+        HotSwapStatistics.logHotSwapStatus(myProject, HotSwapStatistics.HotSwapStatus.NO_CHANGES);
         statusListener.onNothingToReload(sessions);
         return;
       }
@@ -163,6 +165,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
             statusListener.onCancel(sessions);
             return;
           }
+          HotSwapStatistics.logHotSwapCalled(myProject, HotSwapStatistics.HotSwapSource.ON_REBUILD_ASK);
           Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
           for (DebuggerSession session : modifiedClasses.keySet()) {
             if (!toReload.contains(session)) {
@@ -208,9 +211,11 @@ public final class HotSwapUIImpl extends HotSwapUI {
       @Override
       public void onFinish() {
         if (!progress.hasErrors()) {
+          HotSwapStatistics.logHotSwapStatus(progress.getProject(), HotSwapStatistics.HotSwapStatus.SUCCESS);
           statusListener.onSuccess(sessions);
         }
         else {
+          HotSwapStatistics.logHotSwapStatus(progress.getProject(), HotSwapStatistics.HotSwapStatus.HOT_SWAP_FAILURE);
           statusListener.onFailure(sessions);
         }
       }
@@ -379,12 +384,18 @@ public final class HotSwapUIImpl extends HotSwapUI {
     private void ensureListenerIsInstalled(@NotNull ProjectTaskContext context) {
       HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
       if (callback != null) return;
+      HotSwapUIImpl instance = (HotSwapUIImpl)getInstance(myProject);
+      boolean alwaysDoHotSwapOnRebuild =
+        instance.myAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE);
       List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
       HotSwapDebugSessionManager manager = HotSwapDebugSessionManager.getInstance(myProject);
       for (DebuggerSession session : sessions) {
         HotSwapStatusListener listener = manager.createSessionListenerOrNull(session);
         if (listener == null) continue;
         context.putUserData(HOT_SWAP_CALLBACK_KEY, listener);
+        if (alwaysDoHotSwapOnRebuild) {
+          HotSwapStatistics.logHotSwapCalled(myProject, HotSwapStatistics.HotSwapSource.ON_REBUILD_AUTO);
+        }
         return;
       }
     }
@@ -400,6 +411,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
       if (result.hasErrors()) {
         if (callback != null) {
+          HotSwapStatistics.logHotSwapStatus(myProject, HotSwapStatistics.HotSwapStatus.COMPILATION_FAILURE);
           callback.onFailure(sessions);
         }
         return;
