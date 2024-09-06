@@ -3,16 +3,21 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
-import com.intellij.diagnostic.*
-import com.intellij.ide.*
-import com.intellij.ide.bootstrap.*
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.CliResult
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.*
+import com.intellij.idea.AppExitCodes
+import com.intellij.idea.AppMode
+import com.intellij.idea.LoggerFactory
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.*
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -25,7 +30,8 @@ import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
-import com.intellij.util.*
+import com.intellij.util.EnvironmentUtil
+import com.intellij.util.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
@@ -39,28 +45,15 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.format.DateTimeFormatter
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
-import java.util.function.BiFunction
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
-
-/**
- * A name of an environment variable that will be set by the Windows launcher and will contain the working directory the
- * IDE was started with.
- *
- * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
- * properly; see the details in WindowsLauncher.cpp.
- */
-const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR: String = "IDEA_INITIAL_DIRECTORY"
-
-@JvmField
-internal var EXTERNAL_LISTENER: BiFunction<String, Array<String>, Int> = BiFunction { _, _ -> AppExitCodes.ACTIVATE_NOT_INITIALIZED }
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
 private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
@@ -367,10 +360,6 @@ private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
   }
 }
 
-fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<String>): Int {
-  return EXTERNAL_LISTENER.apply(currentDirectory, args)
-}
-
 @get:Internal
 val isImplicitReadOnEDTDisabled: Boolean
   get() = "false" != System.getProperty(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
@@ -496,7 +485,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
   }
 
   try {
-    val currentDir = Path.of(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR) ?: "").toAbsolutePath().normalize()
+    val currentDir = Path.of("").toAbsolutePath().normalize()
     val result = withContext(Dispatchers.IO) { directoryLock.lockOrActivate(currentDir, args) }
     if (result == null) {
       ShutDownTracker.getInstance().registerShutdownTask {

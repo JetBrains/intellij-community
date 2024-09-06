@@ -66,7 +66,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
-import java.util.function.BiFunction
 import kotlin.coroutines.jvm.internal.CoroutineDumpState
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.minutes
@@ -531,27 +530,11 @@ private fun addActivateAndWindowsCliListeners() {
     }
   }
 
-  EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
-    LOG.info("External Windows command received")
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(Dispatchers.Default) {
-      val result = handleExternalCommand(args.asList(), currentDirectory)
-      try {
-        result.future.await().exitCode
-      }
-      catch (t: Throwable) {
-        LOG.error(t)
-        AppExitCodes.ACTIVATE_ERROR
-      }
-    }
-  }
-
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
       addExternalInstanceListener {
         CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")))
       }
-      EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
 }

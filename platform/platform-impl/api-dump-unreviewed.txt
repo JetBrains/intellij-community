@@ -19503,9 +19503,7 @@ f:com.intellij.platform.ide.bootstrap.SplashManagerKt
 - sf:hideSplash():V
 - sf:hideSplashBeforeShow(java.awt.Window):V
 f:com.intellij.platform.ide.bootstrap.StartupUtil
-- sf:LAUNCHER_INITIAL_DIRECTORY_ENV_VAR:java.lang.String
 - sf:logEssentialInfoAboutIde(com.intellij.openapi.diagnostic.Logger,com.intellij.openapi.application.ApplicationInfo,java.util.List):V
-- sf:processWindowsLauncherCommandLine(java.lang.String,java.lang.String[]):I
 - sf:startApplication(kotlinx.coroutines.CoroutineScope,java.util.List,kotlinx.coroutines.Deferred,java.nio.file.Path,kotlinx.coroutines.Deferred,kotlinx.coroutines.Deferred,kotlinx.coroutines.CoroutineScope,java.lang.Thread):V
 e:com.intellij.platform.ide.bootstrap.StartupWizardStage
 - java.lang.Enum
