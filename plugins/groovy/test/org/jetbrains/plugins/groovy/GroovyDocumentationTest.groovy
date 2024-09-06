@@ -170,7 +170,7 @@ new Gr<caret>oovyDocTest<Integer>()""", """\
 def foo() {}
 fo<caret>o()
 """, "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://_\"><code><span style=\"color:#000000;\">_</span></code></a></div><div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n" +
-     "   <code><span style=\"\">aaa</span><span style=\"\">&#32;bbb</span><span style=\"\">&#32;ccc</span></code>\n" +
+     "   <code><span style=\"\">aaa&#32;bbb&#32;ccc</span></code>\n" +
      " </div><table class='sections'></table>"
   }
 

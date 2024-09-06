@@ -62,7 +62,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -1859,7 +1858,7 @@ public class JavaDocInfoGenerator {
       }
       else if (element instanceof PsiMarkdownCodeBlock markdownCodeBlock) {
         if (markdownCodeBlock.isInline()) {
-          appendWrappedWithInlineCodeTag(subBuffer, markdownCodeBlock.getCodeText());
+          appendStyledInlineCode(subBuffer, element.getProject(), markdownCodeBlock.getLanguage(), markdownCodeBlock.getCodeText());
         } else {
           appendStyledCodeBlock(subBuffer, element.getProject(), markdownCodeBlock.getCodeLanguage(), markdownCodeBlock.getCodeText());
         }
@@ -1927,7 +1926,9 @@ public class JavaDocInfoGenerator {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         doHighlightCodeBlocks(), buffer, myProject, JavaLanguage.INSTANCE,
         StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(htmlCodeBlockContents.toString()))
-          .replace("&nbsp;", " "));
+          .replace("&nbsp;", " ")
+          .replace("&#64;", "@")
+      );
       buffer.append(CODE_BLOCK_SUFFIX);
       appendPlainText(buffer, text.substring(suffixIndex + delimiters.second.length()));
       return null;
@@ -2241,25 +2242,14 @@ public class JavaDocInfoGenerator {
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
     if (!CODE_TAG.equals(tag.getName())) return false;
-
-    ASTNode prevNode = tag.getNode().getTreePrev();
-    while (prevNode != null) {
-      String text = prevNode.getText();
-      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
-        if (StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
-          return true;
-        }
-        if (StringUtil.startsWithIgnoreCase(StringUtil.trim(text), "</pre>")) {
-          return false;
-        }
-      }
-      prevNode = prevNode.getTreePrev();
-    }
-    return false;
+    return isInPre(tag);
   }
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
     boolean isCodeBlock = isCodeBlock(tag);
+
+    StringBuilder codeSnippetBuilder = new StringBuilder();
+    generateLiteralValue(codeSnippetBuilder, tag, false);
 
     if (isCodeBlock) {
       // remove excess whitespaces between tags e.g. in `<pre>  {@code`
@@ -2268,37 +2258,11 @@ public class JavaDocInfoGenerator {
       buffer.setLength(lastNonWhite + 1);
       // Remove preceding <pre> fragment
       StringUtil.trimEnd(buffer, "<pre>");
+      appendStyledCodeBlock(buffer, tag.getProject(), tag.getLanguage(), codeSnippetBuilder.toString());
+    } else {
+      String codeSnippet = codeSnippetBuilder.toString().replace("\n", "").trim();
+      appendStyledInlineCode(buffer, tag.getProject(), tag.getLanguage(), codeSnippet);
     }
-
-    buffer.append(isCodeBlock ? CODE_BLOCK_PREFIX : INLINE_CODE_PREFIX);
-    int pos = buffer.length();
-
-    StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag, false);
-    String codeSnippet = codeSnippetBuilder.toString();
-    if (isCodeBlock) {
-      codeSnippet = StringsKt.trimIndent(codeSnippet);
-    }
-
-    if (isCodeBlock && doHighlightCodeBlocks()
-        || !isCodeBlock && getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING) {
-      // highlights code by lexer
-      codeSnippetBuilder.setLength(0);
-      appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(true, codeSnippetBuilder, tag.getProject(), tag.getLanguage(), codeSnippet);
-      codeSnippet = codeSnippetBuilder.toString();
-    }
-    else {
-      codeSnippet = XmlStringUtil.escapeString(codeSnippet);
-    }
-
-    if (!isCodeBlock) {
-      // we are in inline @code block, we should remove all new lines
-      codeSnippet = codeSnippet.replace(BR_TAG, "");
-    }
-
-    buffer.append(codeSnippet);
-    buffer.append(isCodeBlock ? CODE_BLOCK_SUFFIX : INLINE_CODE_SUFFIX);
-    if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {
@@ -2322,8 +2286,8 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static boolean isInPre(PsiDocTag tag) {
-    PsiElement sibling = tag.getPrevSibling();
+  private static boolean isInPre(PsiElement element) {
+    PsiElement sibling = element.getPrevSibling();
     while (sibling != null) {
       if (sibling instanceof PsiDocToken) {
         String text = StringUtil.toLowerCase(sibling.getText());

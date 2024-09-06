@@ -1871,7 +1871,7 @@ public class Test {
       ///     Purposefully misaaligned stuff
       public class Main {}
     """.trimIndent(), """
-      /// Purposefully misaaligned stuff
+      ///     Purposefully misaaligned stuff
       public class Main {
       }
     """.trimIndent())
@@ -1945,6 +1945,90 @@ public class Test {
           void test(char[] foo) {
           }
       }
+    """.trimIndent())
+  }
+
+  fun testListItemIndentBeingPreserved() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /// This method is
+    /// supported for the benefit of hash tables such as those provided by
+    /// [java.util.HashMap].
+    ///
+    /// The general contract of `hashCode` is:
+    ///
+    ///   - Whenever it is invoked on the same object more than once during
+    ///     an execution of a Java application, the `hashCode` method abusively long line that will force the line feed to be cut nonetheless, what will you do in the situation
+    ///     This integer need not remain consistent from one execution of an
+    ///     application to another execution of the same application.
+    ///   + If two objects are equal according to the
+    ///     [equals][#equals(Object)] method
+    ///   * It is _not_ required that if two objects are unequal
+    ///     according to the [equals][#equals(Object)] method
+    ///
+    ///      @param toto As a tag, it should be brought back to the left
+    class C {}
+    """.trimIndent(), """
+    /// This method is supported for the benefit of hash tables such as those provided by [java.util.HashMap].
+    ///
+    /// The general contract of `hashCode` is:
+    ///
+    ///   - Whenever it is invoked on the same object more than once during an execution of a Java application, the
+    /// `hashCode` method abusively long line that will force the line feed to be cut nonetheless, what will you do in the
+    /// situation This integer need not remain consistent from one execution of an application to another execution of the
+    /// same application.
+    ///   + If two objects are equal according to the [equals][#equals(Object)] method
+    ///   * It is _not_ required that if two objects are unequal according to the [equals][#equals(Object)] method
+    ///
+    /// @param toto As a tag, it should be brought back to the left
+    class C {
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownConstructsImmuneToWrapping() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    ///         | Latin | Greek |
+    ///         |-------|-------|
+    ///         | a     | alpha |
+    ///         | b     | beta  |
+    ///         | c     | gamma |
+    /// 
+    /// > Nice blockquote
+    /// - Single list item
+    ///    + Sub element
+    ///    * Another sub element
+    /// ---
+    ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    /// 
+    """.trimIndent(), """
+    ///         | Latin | Greek |
+    ///         |-------|-------|
+    ///         | a     | alpha |
+    ///         | b     | beta  |
+    ///         | c     | gamma |
+    ///
+    /// > Nice blockquote
+    /// - Single list item
+    ///    + Sub element
+    ///    * Another sub element
+    /// ---
+    ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
     """.trimIndent())
   }
 }

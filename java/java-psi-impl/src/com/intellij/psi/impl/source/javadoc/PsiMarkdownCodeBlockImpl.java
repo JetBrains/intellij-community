@@ -65,7 +65,7 @@ public class PsiMarkdownCodeBlockImpl extends CompositePsiElement implements Psi
 
   @Override
   public boolean isInline() {
-    return getFirstChildNode().getTokenType() == JavaDocTokenType.DOC_INLINE_CODE_FENCE;
+    return getFirstChildNode().getElementType() == JavaDocTokenType.DOC_INLINE_CODE_FENCE;
   }
 
   private @Nullable String getLanguageInfo() {
