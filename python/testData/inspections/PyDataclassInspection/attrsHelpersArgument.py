@@ -25,8 +25,8 @@ attrs.fields(<warning descr="'attr.fields' method should be called on attrs type
 attrs.fields_dict(<warning descr="'attr.fields_dict' method should be called on attrs types">A</warning>)
 attrs.fields_dict(<warning descr="'attr.fields_dict' method should be called on attrs types">A()</warning>)
 
-attrs.asdict(<warning descr="'attrs.asdict' method should be called on attrs instances">A()</warning>)
-attrs.astuple(<warning descr="'attrs.astuple' method should be called on attrs instances">A()</warning>)
+attrs.asdict(<warning descr="'attr.asdict' method should be called on attrs instances">A()</warning>)
+attrs.astuple(<warning descr="'attr.astuple' method should be called on attrs instances">A()</warning>)
 attrs.assoc(<warning descr="'attr.assoc' method should be called on attrs instances">A()</warning>)
 attrs.evolve(<warning descr="'attr.evolve' method should be called on attrs instances">A()</warning>)
 
@@ -69,8 +69,8 @@ attrs.astuple(B2())
 attrs.assoc(B2())
 attrs.evolve(B2())
 
-attrs.asdict(<warning descr="'attrs.asdict' method should be called on attrs instances">B2</warning>)
-attrs.astuple(<warning descr="'attrs.astuple' method should be called on attrs instances">B2</warning>)
+attrs.asdict(<warning descr="'attr.asdict' method should be called on attrs instances">B2</warning>)
+attrs.astuple(<warning descr="'attr.astuple' method should be called on attrs instances">B2</warning>)
 attrs.assoc(<warning descr="'attr.assoc' method should be called on attrs instances">B2</warning>)
 attrs.evolve(<warning descr="'attr.evolve' method should be called on attrs instances">B2</warning>)
 
