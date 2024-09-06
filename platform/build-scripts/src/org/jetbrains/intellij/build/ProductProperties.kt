@@ -85,13 +85,6 @@ abstract class ProductProperties {
   var inspectCommandName: String = "inspect"
 
   /**
-   * `true` if tools.jar from JDK must be added to the IDE classpath.
-   */
-  var toolsJarRequired: Boolean = false
-
-  var isAntRequired: Boolean = false
-
-  /**
    * Whether to use splash for application start-up.
    */
   var useSplash: Boolean = false
@@ -103,7 +96,6 @@ abstract class ProductProperties {
    * it unifies class-loading logic of an application and allows to avoid double-loading of bootstrap classes.
    */
   var classLoader: String? = "com.intellij.util.lang.PathClassLoader"
-
 
   /**
    * If `true`, the Class Data Sharing (CDS) feature will be enabled for the JVM and system.class.loader will be disabled.

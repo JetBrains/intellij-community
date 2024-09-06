@@ -44,7 +44,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.customization"
     additionalIDEPropertiesFilePaths = persistentListOf(communityHomeDir.resolve("build/conf/ideaCE.properties"))
-    toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
     buildCrossPlatformDistribution = true
