@@ -1069,6 +1069,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/propertyReference2.kt");
             }
 
+            @TestMetadata("PropertyReference3.kt")
+            public void testPropertyReference3() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/PropertyReference3.kt");
+            }
+
+            @TestMetadata("PropertyReference3WithQualifiedThis.kt")
+            public void testPropertyReference3WithQualifiedThis() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/PropertyReference3WithQualifiedThis.kt");
+            }
+
             @TestMetadata("semicolon.kt")
             public void testSemicolon() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/semicolon.kt");

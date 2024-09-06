@@ -6,4 +6,3 @@ private class Foo {
     val bar<caret> get() = baz
     val baz get() = true
 }
-// IGNORE_K2

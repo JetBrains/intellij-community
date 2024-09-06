@@ -268,7 +268,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
                 val value =
                     (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
-                val originalSymbol = originalDeclaration.symbol as? KaCallableSymbol
+                val originalSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
                 val originalSymbolReceiverType = originalSymbol?.receiverType
                 val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
                 if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
