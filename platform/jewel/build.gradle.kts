@@ -31,8 +31,6 @@ tasks {
 //    register("check") { dependsOn(mergeSarifReports) }
 
     register("tagRelease") {
-        dependsOn("check")
-
         description = "Tags main branch and releases branches with provided tag name"
         group = "release"
 
