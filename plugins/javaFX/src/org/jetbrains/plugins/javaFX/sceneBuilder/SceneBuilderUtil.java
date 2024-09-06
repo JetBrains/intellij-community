@@ -26,7 +26,7 @@ final class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
   static final String SCENE_BUILDER_VERSION = "11.0.6";
-  static final String JAVAFX_VERSION = "17.0.2";
+  static final String JAVAFX_VERSION = "17.0.12";
   static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
 
   public static final String[] JAVAFX_ARTIFACTS = {
