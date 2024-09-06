@@ -81,6 +81,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
@@ -507,95 +508,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return ThreeState.UNSURE;
   }
 
-  private static class SigReader {
-    final String buffer;
-    int pos = 0;
-
-    SigReader(String s) {
-      buffer = s;
-    }
-
-    int get() {
-      return buffer.charAt(pos++);
-    }
-
-    int peek() {
-      return buffer.charAt(pos);
-    }
-
-    boolean eof() {
-      return buffer.length() <= pos;
-    }
-
-    @NonNls
-    String getSignature() {
-      if (eof()) return "";
-
-      switch (get()) {
-        case 'Z' -> {
-          return "boolean";
-        }
-        case 'B' -> {
-          return "byte";
-        }
-        case 'C' -> {
-          return "char";
-        }
-        case 'S' -> {
-          return "short";
-        }
-        case 'I' -> {
-          return "int";
-        }
-        case 'J' -> {
-          return "long";
-        }
-        case 'F' -> {
-          return "float";
-        }
-        case 'D' -> {
-          return "double";
-        }
-        case 'V' -> {
-          return "void";
-        }
-        case 'L' -> {
-          int start = pos;
-          pos = buffer.indexOf(';', start) + 1;
-          LOG.assertTrue(pos > 0);
-          return buffer.substring(start, pos - 1).replace('/', '.');
-        }
-        case '[' -> {
-          return getSignature() + "[]";
-        }
-        case '(' -> {
-          StringBuilder result = new StringBuilder("(");
-          String separator = "";
-          while (peek() != ')') {
-            result.append(separator);
-            result.append(getSignature());
-            separator = ", ";
-          }
-          get();
-          result.append(")");
-          return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
-        }
-        default -> {
-          //          LOG.assertTrue(false, "unknown signature " + buffer);
-          return null;
-        }
-      }
-    }
-
-    String getMethodName() {
-      return "";
-    }
-
-    String getClassName() {
-      return "";
-    }
-  }
-
   public static String methodKey(Method m) {
     return m.declaringType().name() + '.' + m.name() + m.signature();
   }
@@ -613,29 +525,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodName(final String className, final String methodName, final String signature) {
-    try {
-      return new SigReader(signature) {
-        @Override
-        String getMethodName() {
-          return methodName;
-        }
-
-        @Override
-        String getClassName() {
-          return className;
-        }
-      }.getSignature();
-    }
-    catch (Exception ignored) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Internal error : unknown signature" + signature);
-      }
-      return className + "." + methodName;
-    }
+    var type = org.jetbrains.org.objectweb.asm.Type.getMethodType(signature);
+    var params = Arrays.stream(type.getArgumentTypes())
+      .map(org.jetbrains.org.objectweb.asm.Type::getClassName)
+      .collect(Collectors.joining(", "));
+    return className + "." + methodName + "(" + params + ")";
   }
 
   public static String signatureToName(String s) {
-    return new SigReader(s).getSignature();
+    return org.jetbrains.org.objectweb.asm.Type.getType(s).getClassName();
   }
 
   public static String typeNameToSignature(String name) {
