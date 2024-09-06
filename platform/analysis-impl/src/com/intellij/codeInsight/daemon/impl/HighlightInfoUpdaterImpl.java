@@ -13,7 +13,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -55,12 +54,12 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-@Service(Service.Level.PROJECT)
 final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Disposable {
   private static final Logger LOG = Logger.getInstance(HighlightInfoUpdaterImpl.class);
   static boolean ASSERT_INVARIANTS; // true if some complex internal invariants must be checked on every operation
@@ -671,7 +670,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                                  @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, invalidPsiRecycler -> {
       recycleInvalidPsiElements(session.getPsiFile(), this, session, invalidPsiRecycler, toolIdPredicate);
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
         // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
         ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
           // do not incinerate when the session is canceled because even though all RHs here need to be disposed eventually, the new restarted session might have used them to reduce flicker
@@ -680,12 +679,18 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           }
           else {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("runWithInvalidPsiRecycler: recycler(" +toolIdPredicate+") abandoned because the session was canceled: "+invalidPsiRecycler);
+              LOG.debug("runWithInvalidPsiRecycler: recycler(" + toolIdPredicate +
+                        ") abandoned because the session was canceled: " + invalidPsiRecycler);
             }
           }
         });
       }, Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
-      invalidPsiRecyclerConsumer.accept(invalidPsiRecycler);
+      try {
+        invalidPsiRecyclerConsumer.accept(invalidPsiRecycler);
+      }
+      finally {
+        future.cancel(false);
+      }
     });
   }
   /**
