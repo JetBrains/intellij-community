@@ -1465,7 +1465,26 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                     """);
   }
 
-
+  // PY-71002
+  public void testNonDefaultTypeVarsFollowingOnesWithDefaults() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   DefaultT = TypeVar("DefaultT", default = str)
+                   DefaultT1 = TypeVar("DefaultT1", default = int)
+                   NoDefaultT2 = TypeVar("NoDefaultT2")
+                   NoDefaultT3 = TypeVar("NoDefaultT3")
+                   
+                   class Clazz(Generic[DefaultT, DefaultT1, <error descr="Non-default TypeVars cannot follow ones with defaults">NoDefaultT2</error>]):
+                       ...
+                   class ClazzA(Generic[DefaultT1, <error descr="Non-default TypeVars cannot follow ones with defaults">NoDefaultT2</error>]):
+                       ...
+                   class ClazzB(Generic[DefaultT, <error descr="Non-default TypeVars cannot follow ones with defaults">NoDefaultT2</error>, DefaultT1]):
+                       ...
+                   class ClazzC(Generic[NoDefaultT2, NoDefaultT3]):
+                       ...
+                   """);
+  }
 
   @NotNull
   @Override

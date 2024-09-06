@@ -128,6 +128,20 @@ public class PyNewStyleGenericSyntaxInspectionTest extends PyInspectionTestCase 
                                               """));
   }
 
+  // PY-71002
+  public void testNonDefaultTypeVarsFollowingOnesWithDefaults() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+                         () -> doTestByText("""
+                                              type Alias[DefaultT = int, <error descr="Non-default TypeVars cannot follow ones with defaults">T</error>] = tuple[DefaultT, T]
+                                              def generic_func[DefaultT = int, <error descr="Non-default TypeVars cannot follow ones with defaults">T</error>](x: DefaultT, y: T) -> None: ...
+                                              class GenericClass[DefaultT = int, <error descr="Non-default TypeVars cannot follow ones with defaults">T</error>]: ...
+                                              class GenericClassTwo[T]: ...
+                                              class GenericClassThree[T = int]: ...
+                                              class GenericClassThree[T, T1, T2 = int]: ...
+                                              """));
+  }
+
+
   @Override
   protected @NotNull Class<? extends PyInspection> getInspectionClass() {
     return PyNewStyleGenericSyntaxInspection.class;
