@@ -366,7 +366,7 @@ val isImplicitReadOnEDTDisabled: Boolean
 
 @Internal
 // called by the app after startup
-fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
+fun setActivationListener(processor: (List<String>) -> Deferred<CliResult>) {
   commandProcessor.set(processor)
 }
 

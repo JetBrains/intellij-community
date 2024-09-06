@@ -236,7 +236,7 @@ internal suspend fun loadApp(
         checkThirdPartyPluginsAllowed()
       }
 
-      addActivateAndWindowsCliListeners()
+      setActivationListeners()
 
       // doesn't block app start-up
       span("post app init tasks") {
@@ -308,7 +308,7 @@ private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob:
     }
 
     launch(CoroutineName("actionConfigurationCustomizer preloading")) {
-      @Suppress("ControlFlowWithEmptyBody")
+      @Suppress("ControlFlowWithEmptyBody", "unused")
       for (ignored in ActionConfigurationCustomizer.EP.lazySequence()) {
         // just preload
       }
@@ -521,8 +521,8 @@ internal fun createAppLocatorFile() {
   }
 }
 
-private fun addActivateAndWindowsCliListeners() {
-  addExternalInstanceListener { rawArgs ->
+private fun setActivationListeners() {
+  setActivationListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
     service<CoreUiCoroutineScopeHolder>().coroutineScope.async {
@@ -532,7 +532,7 @@ private fun addActivateAndWindowsCliListeners() {
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener {
+      setActivationListener {
         CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")))
       }
     }

@@ -25,10 +25,10 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   companion object {
     @JvmStatic
     protected fun saveIfNeeded(file: VirtualFile?) {
-      if (file == null) {
-        return
+      if (file != null) {
+        val documentManager = FileDocumentManager.getInstance()
+        documentManager.getCachedDocument(file)?.let(documentManager::saveDocument)
       }
-      FileDocumentManager.getInstance().getCachedDocument(file)?.let(FileDocumentManager.getInstance()::saveDocument)
     }
   }
 
@@ -47,9 +47,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     try {
       return executeCommand(args, currentDirectory)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
     catch (e: Exception) {
       e.printStackTrace() // The dialog may sometimes not be shown, e.g., in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
@@ -61,9 +59,8 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     }
   }
 
-  protected open fun checkArguments(args: List<String>): Boolean {
-    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
-  }
+  protected open fun checkArguments(args: List<String>): Boolean =
+    Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult
 
@@ -91,9 +88,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       }
       exitProcess(exitCode)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
     catch (e: Exception) {
       e.printStackTrace()
       exitProcess(1)
