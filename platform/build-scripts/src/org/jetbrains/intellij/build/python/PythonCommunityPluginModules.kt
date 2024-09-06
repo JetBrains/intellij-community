@@ -29,7 +29,6 @@ object PythonCommunityPluginModules {
     "intellij.python.psi",
     "intellij.python.psi.impl",
     "intellij.python.pydev",
-    "intellij.python.reStructuredText",
     "intellij.python.sdk",
     "intellij.python.terminal",
   )

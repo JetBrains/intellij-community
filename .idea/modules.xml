@@ -828,7 +828,6 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-psi-api/intellij.python.psi.iml" filepath="$PROJECT_DIR$/python/python-psi-api/intellij.python.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-psi-impl/intellij.python.psi.impl.iml" filepath="$PROJECT_DIR$/python/python-psi-impl/intellij.python.psi.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.pydev.iml" filepath="$PROJECT_DIR$/python/intellij.python.pydev.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-rest/intellij.python.reStructuredText.iml" filepath="$PROJECT_DIR$/python/python-rest/intellij.python.reStructuredText.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.iml" filepath="$PROJECT_DIR$/python/python-sdk/intellij.python.sdk.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" filepath="$PROJECT_DIR$/python/python-syntax/intellij.python.syntax.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" filepath="$PROJECT_DIR$/python/python-syntax-core/intellij.python.syntax.core.iml" />
@@ -839,6 +838,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.iml" filepath="$PROJECT_DIR$/plugins/remote-control/intellij.remoteControl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" filepath="$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.iml" filepath="$PROJECT_DIR$/plugins/restructuredtext/intellij.restructuredtext.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-restructuredtext/intellij.restructuredtext.python.iml" filepath="$PROJECT_DIR$/python/python-restructuredtext/intellij.restructuredtext.python.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/core/intellij.searchEverywhereMl.ranking.core.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/core/intellij.searchEverywhereMl.ranking.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/ext/intellij.searchEverywhereMl.ranking.ext.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/ext/intellij.searchEverywhereMl.ranking.ext.iml" />

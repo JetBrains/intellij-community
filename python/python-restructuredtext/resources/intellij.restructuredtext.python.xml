@@ -1,0 +1,39 @@
+<idea-plugin package="com.intellij.restructuredtext.python">
+  <dependencies>
+    <plugin id="PythonCore"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <applicationConfigurable groupId="language" instance="com.intellij.restructuredtext.python.editor.RestConfigurable"
+                             id="restructured.text.topic" bundle="messages.RestBundle" key="configurable.RestConfigurable.display.name"/>
+
+
+    <configurationType implementation="com.intellij.restructuredtext.python.run.RestRunConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.restructuredtext.python.run.docutils.DocutilsConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.restructuredtext.python.run.sphinx.SphinxConfigurationProducer"/>
+
+    <localInspection language="ReST" shortName="RestRoleInspection" bundle="messages.RestBundle" key="INSP.role.not.defined"
+                     groupKey="INSP.GROUP.rest" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.restructuredtext.python.inspections.RestRoleInspection"/>
+
+    <languageInjector implementation="com.intellij.restructuredtext.python.PyRestDocstringLanguageInjector"/>
+
+    <lang.fileViewProviderFactory language="ReST"
+                                  implementationClass="com.intellij.restructuredtext.python.RestFileProviderFactory"/>
+
+
+    <lang.substitutor language="TEXT" implementationClass="com.intellij.restructuredtext.python.RestLanguageSubstitutor"/>
+
+    <fileEditorProvider implementation="com.intellij.restructuredtext.python.editor.RestSplitEditorProvider"/>
+
+  </extensions>
+
+  <actions resource-bundle="messages.PythonRestBundle">
+    <action id="com.intellij.restructuredtext.python.RunSphinxQuickStartAction"
+            class="com.intellij.restructuredtext.python.RunSphinxQuickStartAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+
+</idea-plugin>

@@ -6383,7 +6383,7 @@
       "name": "RestSettings",
       "scope": "app",
       "pluginId": "Pythonid",
-      "classFqn": "com.intellij.python.reStructuredText.editor.RestSettings",
+      "classFqn": "com.intellij.restructuredtext.python.editor.RestSettings",
       "storage": "other.xml",
       "properties": [
         {
