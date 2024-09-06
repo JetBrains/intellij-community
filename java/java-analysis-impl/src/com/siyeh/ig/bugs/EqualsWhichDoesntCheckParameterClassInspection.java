@@ -213,27 +213,26 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     @Override
     public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
-      if (isParameterReference(expression.getExpression()) && checksTypeOfExpression(expression)) {
-        makeChecked();
-      }
+      visitSwitchBlock(expression);
     }
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      if (isParameterReference(statement.getExpression()) && checksTypeOfExpression(statement)) {
-        makeChecked();
-      }
+      visitSwitchBlock(statement);
     }
 
-    private static boolean checksTypeOfExpression(@NotNull PsiSwitchBlock switchBlock) {
+    private void visitSwitchBlock(@NotNull PsiSwitchBlock switchBlock) {
+      if (!isParameterReference(switchBlock.getExpression())) return;
       PsiCodeBlock body = switchBlock.getBody();
-      return body != null && PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)
+      if (body == null) return;
+      boolean checksType = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class)
         .stream()
         .map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .filter(Objects::nonNull)
         .flatMap(list -> Arrays.stream(list.getElements()))
         .anyMatch(element -> element instanceof PsiTypeTestPattern);
+      if (checksType) makeChecked();
     }
 
     @Override
