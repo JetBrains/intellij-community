@@ -18,11 +18,13 @@ import java.util.Objects;
 public final class MethodDescriptor {
   public final VarType[] params;
   public final VarType ret;
+  private final String descriptor;
   public GenericMethodDescriptor genericInfo;
 
-  private MethodDescriptor(VarType[] params, VarType ret) {
+  private MethodDescriptor(VarType[] params, VarType ret, String descriptor) {
     this.params = params;
     this.ret = ret;
+    this.descriptor = descriptor;
   }
 
   public static MethodDescriptor parseDescriptor(String descriptor) {
@@ -70,7 +72,7 @@ public final class MethodDescriptor {
 
     VarType ret = new VarType(descriptor.substring(parenth + 1));
 
-    return new MethodDescriptor(params, ret);
+    return new MethodDescriptor(params, ret, descriptor);
   }
 
   public static MethodDescriptor parseDescriptor(StructMethod struct, ClassNode node) {
@@ -147,6 +149,11 @@ public final class MethodDescriptor {
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return this.descriptor;
   }
 
   @Override
