@@ -171,3 +171,17 @@ fun <T> Deferred<T>.track(displayName: String): Deferred<T> =
         }
     }
   }
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun<T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
+  val deferred = CompletableDeferred<T>()
+  coroutineScope.launch(start = CoroutineStart.ATOMIC) {
+    use { t ->
+      deferred.complete(t)
+      awaitCancellation()
+    }
+  }.invokeOnCompletion { x ->
+    deferred.completeExceptionally(x ?: RuntimeException("Resource did not start"))
+  }
+  return deferred
+}
