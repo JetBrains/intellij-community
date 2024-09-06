@@ -361,14 +361,6 @@ fun <T : CommandChain> T.doComplete(times: Int): T = apply {
   }
 }
 
-fun <T : CommandChain> T.doHighlightingWarmup(): T = apply {
-  addCommand("${CMD_PREFIX}doHighlight", WARMUP)
-}
-
-fun <T : CommandChain> T.doHighlighting(): T = apply {
-  addCommand("${CMD_PREFIX}doHighlight")
-}
-
 fun <T : CommandChain> T.openProjectView(): T = apply {
   addCommand("${CMD_PREFIX}openProjectView")
 }
