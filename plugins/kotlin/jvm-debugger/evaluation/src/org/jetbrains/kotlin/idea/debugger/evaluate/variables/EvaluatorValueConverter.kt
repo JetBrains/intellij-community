@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
@@ -28,7 +28,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
         )
 
         fun unref(value: Value?): Value? {
-            if (value !is ObjectReference) {
+            if (value !is ObjectReference || value is StringReference) {
                 return value
             }
 
