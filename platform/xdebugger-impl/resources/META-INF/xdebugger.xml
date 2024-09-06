@@ -123,6 +123,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.hotswap.HotSwapStatistics"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
