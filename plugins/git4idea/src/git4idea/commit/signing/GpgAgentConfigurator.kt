@@ -166,15 +166,11 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
   private fun changePinentryProgram(gpgAgentPaths: GpgAgentPaths, config: GpgAgentConfig) {
     val pinentryAppLauncherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
     val (configPath, configContent) = config
+    val configToSave = configContent.toMutableMap()
+    configToSave.put(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY, pinentryAppLauncherConfigPath)
     try {
-      FileUtil.writeToFile(configPath.toFile(), configContent.map { (key, value) ->
-        if (key == GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY) {
-          "$key $pinentryAppLauncherConfigPath"
-        }
-        else {
-          "$key $value"
-        }
-      }.joinToString(separator = "\n"))
+      FileUtil.writeToFile(configPath.toFile(),
+                           configToSave.map { (key, value) -> "$key $value" }.joinToString(separator = "\n"))
     }
     catch (e: IOException) {
       LOG.error("Cannot change config $configPath", e)

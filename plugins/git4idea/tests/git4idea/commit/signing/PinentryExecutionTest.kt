@@ -2,11 +2,7 @@
 package git4idea.commit.signing
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessAdapter
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
@@ -26,6 +22,7 @@ import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.net.BindException
 import java.nio.charset.StandardCharsets
+import kotlin.io.path.readLines
 import kotlin.random.Random
 
 class PinentryExecutionTest : GitSingleRepoTest() {
@@ -53,8 +50,26 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val paths = pathLocator.resolvePaths()!!
     FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY /usr/local/bin/pinentry")
     project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    val generatedConfig = paths.gpgAgentConf.readLines()
+    assertTrue(generatedConfig.size == 1)
+    assertTrue(generatedConfig[0] == "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${paths.gpgPinentryAppLauncherConfigPath}")
 
     requestPasswordAndAssert(paths)
+  }
+
+  fun `test existing gpg agent configuration but without pinentry program specified`() {
+    IoTestUtil.assumeUnix()
+
+    val pathLocator = TestGpgPathLocator()
+    val paths = pathLocator.resolvePaths()!!
+    val cacheTtlConfig = "default-cache-ttl 5000"
+    val pinentryConfig = "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${paths.gpgPinentryAppLauncherConfigPath}"
+
+    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), cacheTtlConfig)
+    project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    val generatedConfig = paths.gpgAgentConf.readLines()
+
+    assertContainsOrdered(generatedConfig, listOf(cacheTtlConfig, pinentryConfig))
   }
 
   fun `test pinentry launcher structure`() {
