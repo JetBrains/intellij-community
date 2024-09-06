@@ -8960,6 +8960,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/implement/enum.kt");
         }
 
+        @TestMetadata("fakeOverride.kt")
+        public void testFakeOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/fakeOverride.kt");
+        }
+
         @TestMetadata("finalClass.kt")
         public void testFinalClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/implement/finalClass.kt");

@@ -67,7 +67,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                             }
                             if (abstractSymbols.isNotEmpty()) {
                                 addAll(abstractSymbols)
-                            } else {
+                            } else if (intersectionOverriddenSymbols.size > 1) {
                                 // This for the [MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED] and [MANY_IMPL_MEMBER_NOT_IMPLEMENTED] compiler errors.
                                 addAll(intersectionOverriddenSymbols)
                             }
