@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class HasPlatformTypeInspection(
+internal class HasPlatformTypeInspection(
     @JvmField var publicAPIOnly: Boolean = true,
     @JvmField var reportPlatformArguments: Boolean = false
 ) : AbstractKotlinInspection() {
