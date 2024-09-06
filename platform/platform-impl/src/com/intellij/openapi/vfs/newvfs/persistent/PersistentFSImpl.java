@@ -46,6 +46,7 @@ import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import io.opentelemetry.api.metrics.Meter;
@@ -325,17 +326,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public boolean wereChildrenAccessed(@NotNull VirtualFile dir) {
+    //TODO RC: ThreadingAssertions.assertReadAccess(); ?
     return vfsPeer.wereChildrenAccessed(getFileId(dir));
   }
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
+    //TODO RC: ThreadingAssertions.assertReadAccess();
     List<? extends ChildInfo> children = listAll(file);
     return ContainerUtil.map2Array(children, String.class, id -> id.getName().toString());
   }
 
   @Override
   public String @NotNull [] listPersisted(@NotNull VirtualFile parent) {
+    //TODO RC: ThreadingAssertions.assertReadAccess();
     int[] childrenIds = vfsPeer.listIds(getFileId(parent));
     String[] names = ArrayUtil.newStringArray(childrenIds.length);
     for (int i = 0; i < childrenIds.length; i++) {
@@ -348,6 +352,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   @ApiStatus.Internal
   public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
+    //TODO RC: ThreadingAssertions.assertReadAccess();
     int id = getFileId(file);
     return areChildrenCached(id)
            ? vfsPeer.list(id).children
@@ -437,11 +442,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
+    //TODO RC: ThreadingAssertions.assertReadAccess();
+
     return vfsPeer.readAttribute(getFileId(file), att);
   }
 
   @Override
   public @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
+    //TODO RC: ThreadingAssertions.assertWriteAccess();
+
     return vfsPeer.writeAttribute(getFileId(file), att);
   }
 
@@ -570,6 +579,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
+    //TODO RC: ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(file).setWritable(file, writableFlag);
     boolean oldWritable = isWritable(file);
     if (oldWritable != writableFlag) {
@@ -580,6 +591,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   @ApiStatus.Internal
   public ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
+    //TODO RC: ThreadingAssertions.assertReadAccess() should be here, but quite a lot of callsites call this method outside RA now
+
     int parentId = getFileId(parent);
     Ref<ChildInfo> foundChildRef = new Ref<>();
 
@@ -1005,7 +1018,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         if (closed) return;
         super.close();
 
-        app.assertWriteAccessAllowed();
+        ThreadingAssertions.assertWriteAccess();
 
         long oldLength = getLastRecordedLength(file);
         VFileContentChangeEvent event = new VFileContentChangeEvent(
@@ -1061,7 +1074,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void processEvent(@NotNull VFileEvent event) {
-    app.assertWriteAccessAllowed();
+    ThreadingAssertions.assertWriteAccess();
     if (!event.isValid()) return;
 
     List<VFileEvent> outValidatedEvents = new ArrayList<>();
@@ -1386,7 +1399,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @ApiStatus.Internal
   public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events, boolean excludeAsyncListeners) {
-    app.assertWriteAccessAllowed();
+    ThreadingAssertions.assertWriteAccess();
 
     int startIndex = 0;
     int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
