@@ -64,6 +64,8 @@ interface TerminalOutputModel {
 
   fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null)
 
+  fun isErrorBlock(block: CommandBlock): Boolean = getBlockInfo(block).let { it != null && it.exitCode != 0 }
+
   companion object {
     val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
   }

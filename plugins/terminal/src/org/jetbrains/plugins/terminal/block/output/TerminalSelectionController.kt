@@ -3,10 +3,7 @@ package org.jetbrains.plugins.terminal.block.output
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.SelectionModel
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseListener
-import com.intellij.openapi.editor.event.SelectionEvent
-import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -22,7 +19,7 @@ internal class TerminalSelectionController(
   private val focusModel: TerminalFocusModel,
   private val selectionModel: TerminalSelectionModel,
   private val outputModel: TerminalOutputModel
-) : EditorMouseListener, TerminalSelectionListener {
+) : EditorMouseListener, EditorMouseMotionListener, TerminalSelectionListener {
   val selectedBlocks: List<CommandBlock>
     get() = selectionModel.selectedBlocks
 
@@ -36,6 +33,7 @@ internal class TerminalSelectionController(
 
   init {
     outputModel.editor.addEditorMouseListener(this)
+    outputModel.editor.addEditorMouseMotionListener(this)
     selectionModel.addListener(this)
     focusModel.addListener(object : TerminalFocusListener {
       override fun promptFocused() {
@@ -118,6 +116,22 @@ internal class TerminalSelectionController(
     else if (event.mouseEvent.isSelectBlockRange) {
       selectBlockRange(block)
     }
+  }
+
+  override fun mouseEntered(event: EditorMouseEvent) {
+    mouseMoved(event)
+  }
+
+  override fun mouseExited(event: EditorMouseEvent) {
+    selectionModel.hoveredBlock = null
+  }
+
+  override fun mouseMoved(e: EditorMouseEvent) {
+    var block = getBlockUnderMouse(e)
+    if (block != null && selectionModel.selectedBlocks.contains(block)) {
+      block = null
+    }
+    selectionModel.hoveredBlock = block
   }
 
   override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {

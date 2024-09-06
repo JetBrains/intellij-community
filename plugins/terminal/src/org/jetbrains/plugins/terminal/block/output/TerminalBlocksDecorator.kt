@@ -36,15 +36,15 @@ internal class TerminalBlocksDecorator(
 ) : TerminalOutputModelListener {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
-  private val gradientCache: GradientTextureCache = GradientTextureCache(
+  private val hoveredGradientCache: GradientTextureCache = GradientTextureCache(
     scheme = editor.colorsScheme,
-    colorStartKey = BlockTerminalColors.BLOCK_BACKGROUND_START,
-    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END
+    colorStartKey = BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_START,
+    colorEndKey = BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_END
   )
 
   init {
     outputModel.addListener(this)
-    EditorUtil.disposeWithEditor(editor, gradientCache)
+    EditorUtil.disposeWithEditor(editor, hoveredGradientCache)
     editor.markupModel.addRangeHighlighter(0, 0,
                                            // the order doesn't matter because there is only a custom renderer with its own order
                                            HighlighterLayer.LAST, null,
@@ -98,6 +98,15 @@ internal class TerminalBlocksDecorator(
         }
         updateSelectionDecorationState(newSelection)
       }
+
+      override fun hoverChanged(oldHovered: CommandBlock?, newHovered: CommandBlock?) {
+        if (oldHovered != null && decorations.contains(oldHovered)) {
+          updateDecorationState(oldHovered)
+        }
+        if (newHovered != null) {
+          updateHoveredState(newHovered)
+        }
+      }
     })
 
     // Mark selected blocks as inactive when the terminal loses the focus.
@@ -149,7 +158,7 @@ internal class TerminalBlocksDecorator(
 
     val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay, commandToOutputInlay)
     decorations[block] = decoration
-    setDecorationState(block, DefaultBlockDecorationState(gradientCache))
+    setDecorationState(block, DefaultBlockDecorationState())
   }
 
   private fun updateDecorationState(block: CommandBlock) {
@@ -159,23 +168,48 @@ internal class TerminalBlocksDecorator(
 
   private fun updateSelectionDecorationState(selectedBlocks: List<CommandBlock>) {
     val state = calculateSelectionDecorationState()
+    val errorState = calculateErrorSelectionDecorationState()
     for (block in selectedBlocks) {
-      setDecorationState(block, state)
+      if (outputModel.isErrorBlock(block)) {
+        setDecorationState(block, errorState)
+      }
+      else {
+        setDecorationState(block, state)
+      }
     }
+  }
+
+  private fun updateHoveredState(block: CommandBlock) {
+    val state = if (outputModel.isErrorBlock(block)) {
+      HoveredErrorBlockDecorationState(hoveredGradientCache)
+    }
+    else {
+      HoveredBlockDecorationState(hoveredGradientCache)
+    }
+    setDecorationState(block, state)
   }
 
   private fun calculateDecorationState(block: CommandBlock): BlockDecorationState {
     return if (selectionModel.selectedBlocks.contains(block)) {
-      calculateSelectionDecorationState()
+      if (outputModel.isErrorBlock(block)) {
+        calculateErrorSelectionDecorationState()
+      }
+      else {
+        calculateSelectionDecorationState()
+      }
     }
-    else if (outputModel.getBlockInfo(block).let { it != null && it.exitCode != 0 }) {
-      ErrorBlockDecorationState(gradientCache)
+    else if (outputModel.isErrorBlock(block)) {
+      ErrorBlockDecorationState()
     }
-    else DefaultBlockDecorationState(gradientCache)
+    else DefaultBlockDecorationState()
   }
 
   private fun calculateSelectionDecorationState(): BlockDecorationState {
     return if (focusModel.isActive) SelectedBlockDecorationState() else InactiveSelectedBlockDecorationState()
+  }
+
+  private fun calculateErrorSelectionDecorationState(): BlockDecorationState {
+    return if (focusModel.isActive) SelectedErrorBlockDecorationState() else InactiveSelectedErrorBlockDecorationState()
   }
 
   private fun setDecorationState(block: CommandBlock, state: BlockDecorationState) {

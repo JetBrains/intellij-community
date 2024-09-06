@@ -17,12 +17,23 @@ internal class TerminalSelectionModel(outputModel: TerminalOutputModel) {
   val primarySelection: CommandBlock?
     get() = selectedBlocks.lastOrNull()
 
+  var hoveredBlock: CommandBlock? = null
+    set(value) {
+      if (field !== value) {
+        listeners.forEach { it.hoverChanged(field, value) }
+      }
+      field = value
+    }
+
   private val listeners: MutableList<TerminalSelectionListener> = CopyOnWriteArrayList()
 
   init {
     outputModel.addListener(object : TerminalOutputModelListener {
       override fun blockRemoved(block: CommandBlock) {
         selectedBlocks -= block
+        if (hoveredBlock === block) {
+          hoveredBlock = null
+        }
       }
     })
   }
@@ -36,5 +47,7 @@ internal class TerminalSelectionModel(outputModel: TerminalOutputModel) {
 
   interface TerminalSelectionListener {
     fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {}
+
+    fun hoverChanged(oldHovered: CommandBlock?, newHovered: CommandBlock?) {}
   }
 }
