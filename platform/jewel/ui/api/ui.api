@@ -755,8 +755,18 @@ public final class org/jetbrains/jewel/ui/component/SliderState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/SplitLayoutKt {
-	public static final fun HorizontalSplitLayout-BssWTFQ (Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)V
-	public static final fun VerticalSplitLayout-BssWTFQ (Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Landroidx/compose/ui/Modifier;JFFFFFFLandroidx/compose/runtime/Composer;II)V
+	public static final fun HorizontalSplitLayout-Zv8xjqY (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;FFFLorg/jetbrains/jewel/ui/component/SplitLayoutState;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticalSplitLayout-Zv8xjqY (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;FFFLorg/jetbrains/jewel/ui/component/SplitLayoutState;Landroidx/compose/runtime/Composer;II)V
+	public static final fun rememberSplitLayoutState (FLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/SplitLayoutState;
+}
+
+public final class org/jetbrains/jewel/ui/component/SplitLayoutState {
+	public static final field $stable I
+	public fun <init> (F)V
+	public final fun getDividerPosition ()F
+	public final fun getLayoutCoordinates ()Landroidx/compose/ui/layout/LayoutCoordinates;
+	public final fun setDividerPosition (F)V
+	public final fun setLayoutCoordinates (Landroidx/compose/ui/layout/LayoutCoordinates;)V
 }
 
 public abstract interface class org/jetbrains/jewel/ui/component/TabContentScope {

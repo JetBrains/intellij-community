@@ -94,18 +94,17 @@ import org.jetbrains.jewel.ui.util.thenIf
 fun ReleasesSampleCompose(project: Project) {
     var selectedItem: ContentItem? by remember { mutableStateOf(null) }
     HorizontalSplitLayout(
-        first = { modifier ->
+        first = {
             LeftColumn(
                 project = project,
-                modifier = modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 onSelectedItemChange = { selectedItem = it },
             )
         },
-        second = { modifier -> RightColumn(selectedItem = selectedItem, modifier = modifier.fillMaxSize()) },
-        Modifier.fillMaxSize(),
-        initialDividerPosition = 400.dp,
-        minRatio = .15f,
-        maxRatio = .7f,
+        second = { RightColumn(selectedItem = selectedItem, modifier = Modifier.fillMaxSize()) },
+        modifier = Modifier.fillMaxSize(),
+        firstPaneMinWidth = 300.dp,
+        secondPaneMinWidth = 300.dp,
     )
 }
 
