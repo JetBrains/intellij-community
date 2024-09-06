@@ -42,7 +42,15 @@ public class WordCompletionContributor extends CompletionContributor implements 
     addWordCompletionVariants(result, parameters, excludes, false);
   }
 
-  public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes, boolean allowEmptyPrefix) {
+  public static void addWordCompletionVariants(CompletionResultSet result,
+                                               CompletionParameters parameters,
+                                               Set<String> excludes,
+                                               boolean allowEmptyPrefix) {
+    if (parameters.getProcess() instanceof CompletionProgressIndicator cpi &&
+        Boolean.TRUE.equals(cpi.getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+      return;
+    }
+
     final Set<String> realExcludes = new HashSet<>(excludes);
     for (String exclude : excludes) {
       String[] words = exclude.split("[ .-]");
@@ -124,6 +132,11 @@ public class WordCompletionContributor extends CompletionContributor implements 
     }
 
     if (Boolean.TRUE.equals(parameters.getOriginalFile().getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+      return false;
+    }
+
+    if (parameters.getProcess() instanceof CompletionProgressIndicator cpi &&
+        Boolean.TRUE.equals(cpi.getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return false;
     }
 
