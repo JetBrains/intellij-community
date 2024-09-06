@@ -15,6 +15,9 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepository
+import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
+import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
+import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
@@ -35,11 +38,11 @@ internal fun checkCompilationOptions(context: CompilationContext) {
       messages.error(message)
     }
   }
-  if (options.pathToCompiledClassesArchive != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+  if (options.pathToCompiledClassesArchive != null && isPortableCompilationCacheEnabled) {
     messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
   }
   val pathToCompiledClassArchiveMetadata = options.pathToCompiledClassesArchivesMetadata
-  if (pathToCompiledClassArchiveMetadata != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+  if (pathToCompiledClassArchiveMetadata != null && isPortableCompilationCacheEnabled) {
     messages.error("JPS Cache is enabled " +
                    "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
   }
@@ -108,7 +111,7 @@ internal fun isCompilationRequired(options: BuildOptions): Boolean {
 
 internal fun keepCompilationState(options: BuildOptions): Boolean {
   return !options.forceRebuild &&
-         (IS_PORTABLE_COMPILATION_CACHE_ENABLED ||
+         (isPortableCompilationCacheEnabled ||
           options.useCompiledClassesFromProjectOutput ||
           options.pathToCompiledClassesArchive == null ||
           options.pathToCompiledClassesArchivesMetadata != null ||
@@ -141,9 +144,13 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
         )
       }
     }
-    IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
+    isPortableCompilationCacheEnabled -> {
       span.addEvent("JPS remote cache will be used for compilation")
-      downloadJpsCacheAndCompileProject(context)
+      downloadCacheAndCompileProject(
+        forceDownload = isForceDownloadJpsCache,
+        gitUrl = jpsCacheRemoteGitUrl,
+        context = context,
+      )
     }
     else -> {
       block("compile modules") {

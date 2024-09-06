@@ -10,12 +10,13 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.*
-import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
-import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
+import org.jetbrains.intellij.build.jpsCache.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.withTracer
 import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
 import java.net.URI
 import java.nio.file.Files
@@ -23,8 +24,34 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 private const val COMMITS_COUNT = 1_000
+
+internal object TestJpsCacheDownload {
+  @ExperimentalPathApi
+  @JvmStatic
+  fun main(args: Array<String>) = withTracer(serviceName = "test-jps-cache-downloader") {
+    System.setProperty("jps.cache.test", "true")
+    System.setProperty("org.jetbrains.jps.portable.caches", "true")
+
+    val projectHome = ULTIMATE_HOME
+    val outputDir = projectHome.resolve("out/test-jps-cache-downloaded")
+    outputDir.deleteRecursively()
+    downloadJpsCache(
+      cacheUrl = getJpsCacheUrl("https://127.0.0.1:1900/cache/jps"),
+      gitUrl = jpsCacheRemoteGitUrl,
+      authHeader = jpsCacheAuthHeader,
+      projectHome = projectHome,
+      classOutDir = outputDir.resolve("classes"),
+      cacheDestination = outputDir.resolve("jps-build-data"),
+      reportStatisticValue = { k, v ->
+        println("$k: $v")
+      }
+    )
+  }
+}
 
 internal suspend fun downloadJpsCache(
   cacheUrl: URI,
@@ -45,7 +72,7 @@ internal suspend fun downloadJpsCache(
         prepareDownload(urlPathPrefix = urlPathPrefix, gitUrl = gitUrl, connection = connection, lastCommits = Git(projectHome).log(COMMITS_COUNT))
       } ?: return@checkMirrorAndConnect -1
       availableCommitDepth = info.second
-      spanBuilder("download jps cache").setAttribute("commit", info.first).use {
+      spanBuilder("download JPS Cache").setAttribute("commit", info.first).use {
         doDownload(
           urlPathPrefix = urlPathPrefix,
           lastCachedCommit = info.first,
@@ -82,7 +109,7 @@ private suspend fun downloadToFile(urlPath: String, file: Path, spanName: String
   }
 }
 
-private suspend fun prepareDownload(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection?, lastCommits: List<String>): Pair<String, Int>? {
+private suspend fun prepareDownload(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection, lastCommits: List<String>): Pair<String, Int>? {
   val availableCachesKeys = getAvailableCachesKeys(urlPathPrefix = urlPathPrefix, gitUrl = gitUrl, connection = connection)
   val availableCommitDepth = lastCommits.indexOfFirst {
     availableCachesKeys.contains(it)
@@ -109,14 +136,10 @@ private suspend fun prepareDownload(urlPathPrefix: String, gitUrl: String, conne
   return lastCachedCommit to availableCommitDepth
 }
 
-private suspend fun getAvailableCachesKeys(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection?): Collection<String> {
-  val commitHistoryUrl = "$urlPathPrefix/${CommitsHistory.JSON_FILE}"
-  require(!commitHistoryUrl.isS3() && connection != null)
+private suspend fun getAvailableCachesKeys(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection): Collection<String> {
+  val commitHistoryUrl = "$urlPathPrefix/$COMMIT_HISTORY_JSON_FILE"
   val json: Map<String, Set<String>> = connection.getJsonOrDefaultIfNotFound(path = commitHistoryUrl, defaultIfNotFound = emptyMap())
-  if (json.isEmpty()) {
-    return emptyList()
-  }
-  return CommitsHistory(json).commitsForRemote(gitUrl)
+  return if (json.isEmpty()) emptyList() else CommitHistory(json).commitsForRemote(gitUrl)
 }
 
 private suspend fun doDownload(

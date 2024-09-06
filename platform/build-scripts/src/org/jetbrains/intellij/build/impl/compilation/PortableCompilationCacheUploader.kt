@@ -10,17 +10,16 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
-import org.jetbrains.intellij.build.http2Client.getJsonOrDefaultIfNotFound
 import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
-import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
-import org.jetbrains.intellij.build.impl.compilation.cache.getAllCompilationOutputs
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.jpsCache.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
@@ -35,22 +34,42 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.random.Random
 
-private const val SOURCES_STATE_FILE_NAME = "target_sources_state.json"
+private const val SOURCE_STATE_FILE_NAME = "target_sources_state.json"
+
+/**
+ * Upload local JPS Cache
+ */
+suspend fun uploadJpsCache(forceUpload: Boolean, context: CompilationContext) {
+  uploadJpsCache(
+    forceUpload = forceUpload,
+    commitHash = jpsCacheCommit,
+    s3Dir = jpsCacheS3Dir,
+    authHeader = jpsCacheAuthHeader,
+    uploadUrl = jpsCacheUploadUrl,
+    dataStorageRoot = context.compilationData.dataStorageRoot,
+    classOutDir = context.classesOutputDirectory,
+    tempDir = context.paths.tempDir,
+    messages = context.messages,
+  )
+}
 
 internal suspend fun uploadJpsCache(
-  forcedUpload: Boolean,
+  forceUpload: Boolean,
   commitHash: String,
   authHeader: CharSequence?,
   s3Dir: Path?,
   uploadUrl: URI,
-  context: CompilationContext,
+  dataStorageRoot: Path,
+  classOutDir: Path,
+  tempDir: Path,
+  messages: BuildMessages,
 ) {
   if (s3Dir != null) {
     s3Dir.deleteRecursively()
     Files.createDirectories(s3Dir)
   }
 
-  val sourceStateFile = context.compilationData.dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
+  val sourceStateFile = dataStorageRoot.resolve(SOURCE_STATE_FILE_NAME)
   val sourceState = try {
     Files.newBufferedReader(sourceStateFile).use {
       BuildTargetSourcesState.readJson(JsonReader(it))
@@ -63,20 +82,27 @@ internal suspend fun uploadJpsCache(
   val start = System.nanoTime()
   val totalUploadedBytes = LongAdder()
   val uploadedOutputCount = LongAdder()
-  val messages = context.messages
   withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
-    client.connect(host = uploadUrl.host, port = uploadUrl.port, authHeader = authHeader).use { connection ->
+    client.connect(address = uploadUrl, authHeader = authHeader).use { connection ->
       val urlPathPrefix = uploadUrl.path
       withContext(Dispatchers.IO) {
         launch {
           spanBuilder("upload jps cache").use {
-            uploadJpsCaches(urlPathPrefix = urlPathPrefix, connection = connection, s3Dir = s3Dir, forcedUpload = forcedUpload, commitHash = commitHash, context = context)
+            uploadJpsCaches(
+              urlPathPrefix = urlPathPrefix,
+              connection = connection,
+              s3Dir = s3Dir,
+              forceUpload = forceUpload,
+              commitHash = commitHash,
+              dataStorageRoot = dataStorageRoot,
+              tempDir = tempDir,
+            )
           }
         }
 
         spanBuilder("upload compilation outputs").use {
-          val allCompilationOutputs = getAllCompilationOutputs(sourceState = sourceState, classOutDir = context.classesOutputDirectory)
-          val tempDir = Files.createTempDirectory(context.paths.tempDir, "jps-cache-bytecode-")
+          val allCompilationOutputs = getAllCompilationOutputs(sourceState = sourceState, classOutDir = classOutDir)
+          val zipTempDir = Files.createTempDirectory(tempDir, "jps-cache-bytecode-")
           try {
             uploadCompilationOutputs(
               uploadedOutputCount = uploadedOutputCount,
@@ -85,12 +111,12 @@ internal suspend fun uploadJpsCache(
               urlPathPrefix = urlPathPrefix,
               connection = connection,
               s3Dir = s3Dir,
-              forcedUpload = forcedUpload,
-              tempDir = tempDir,
+              forcedUpload = forceUpload,
+              tempDir = zipTempDir,
             )
           }
           finally {
-            tempDir.deleteRecursively()
+            zipTempDir.deleteRecursively()
           }
           messages.reportStatisticValue("Total outputs", allCompilationOutputs.size.toString())
         }
@@ -128,12 +154,12 @@ private suspend fun uploadJpsCaches(
   urlPathPrefix: String,
   connection: Http2ClientConnection,
   commitHash: String,
-  forcedUpload: Boolean,
+  forceUpload: Boolean,
   s3Dir: Path?,
-  context: CompilationContext,
+  dataStorageRoot: Path,
+  tempDir: Path,
 ) {
-  val dataStorageRoot = context.compilationData.dataStorageRoot
-  val zipFile = context.paths.tempDir.resolve("$commitHash-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}.zip")
+  val zipFile = tempDir.resolve("$commitHash-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}.zip")
   try {
     val compressed by lazy {
       zipWithCompression(zipFile, mapOf(dataStorageRoot to ""))
@@ -142,7 +168,7 @@ private suspend fun uploadJpsCaches(
 
     val cachePath = "caches/$commitHash"
     val urlPath = "$urlPathPrefix/$cachePath"
-    if (forcedUpload || !checkExists(connection, urlPath, logIfExists = true)) {
+    if (forceUpload || !checkExists(connection, urlPath, logIfExists = true)) {
       connection.upload(path = urlPath, file = compressed)
     }
 
@@ -196,72 +222,7 @@ private suspend fun uploadCompilationOutputs(
   }
 }
 
-/**
- * Upload and publish a file with commits history
- */
-internal suspend fun updateJpsCacheCommitHistory(
-  overrideCommits: Set<String>?,
-  remoteGitUrl: String,
-  commitHash: String,
-  uploadUrl: URI,
-  authHeader: CharSequence?,
-  s3Dir: Path?,
-  context: CompilationContext,
-) {
-  val overrideRemoteHistory = overrideCommits != null
-  val commitHistory = CommitsHistory(mapOf(remoteGitUrl to (overrideCommits ?: setOf(commitHash))))
-  withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
-    val urlPathPrefix = uploadUrl.path
-    client.connect(uploadUrl.host, uploadUrl.port, authHeader = authHeader).use { connection ->
-      for (commitHashForRemote in commitHistory.commitsForRemote(remoteGitUrl)) {
-        val cacheUploaded = checkExists(connection, "$urlPathPrefix/caches/$commitHashForRemote")
-        val metadataUploaded = checkExists(connection, "$urlPathPrefix/metadata/$commitHashForRemote")
-        if (!cacheUploaded && !metadataUploaded) {
-          val msg = "Unable to publish $commitHashForRemote due to missing caches/$commitHashForRemote and metadata/$commitHashForRemote." +
-                    " Probably caused by previous cleanup build."
-          if (overrideRemoteHistory) {
-            context.messages.error(msg)
-          }
-          else {
-            context.messages.warning(msg)
-          }
-          return@use false
-        }
-        check(cacheUploaded == metadataUploaded) {
-          "JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded"
-        }
-      }
-
-      val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + remoteCommitHistory(connection, urlPathPrefix)
-      connection.upload(path = "$urlPathPrefix/${CommitsHistory.JSON_FILE}", file = writeCommitHistory(commitHistory = newHistory, context = context, s3Dir = s3Dir))
-      val expected = newHistory.commitsForRemote(remoteGitUrl).toSet()
-      val actual = remoteCommitHistory(connection, urlPathPrefix).commitsForRemote(remoteGitUrl).toSet()
-      val missing = expected - actual
-      val unexpected = actual - expected
-      check(missing.none() && unexpected.none()) {
-        """
-          Missing: $missing
-          Unexpected: $unexpected
-        """.trimIndent()
-      }
-    }
-  }
-}
-
-private suspend fun remoteCommitHistory(connection: Http2ClientConnection, urlPathPrefix: String): CommitsHistory {
-  return CommitsHistory(connection.getJsonOrDefaultIfNotFound(path = "$urlPathPrefix/${CommitsHistory.JSON_FILE}", defaultIfNotFound = emptyMap()))
-}
-
-private fun writeCommitHistory(commitHistory: CommitsHistory, context: CompilationContext, s3Dir: Path?): Path {
-  val commitHistoryFile = (s3Dir ?: context.paths.tempDir).resolve(CommitsHistory.JSON_FILE)
-  Files.createDirectories(commitHistoryFile.parent)
-  val json = commitHistory.toJson()
-  Files.writeString(commitHistoryFile, json)
-  Span.current().addEvent("write commit history", Attributes.of(AttributeKey.stringKey("data"), json))
-  return commitHistoryFile
-}
-
-private suspend fun checkExists(
+internal suspend fun checkExists(
   connection: Http2ClientConnection,
   urlPath: String,
   logIfExists: Boolean = false,

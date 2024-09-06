@@ -1,102 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import io.netty.util.AsciiString
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.cleanOutput
-import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
+import org.jetbrains.intellij.build.jpsCache.getJpsCacheUrl
+import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
+import org.jetbrains.intellij.build.jpsCache.jpsCacheAuthHeader
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.withTracer
-import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.net.URI
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CancellationException
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
-
-internal val IS_PORTABLE_COMPILATION_CACHE_ENABLED: Boolean
-  get() = ProjectStamps.PORTABLE_CACHES && IS_JPS_CACHE_URL_CONFIGURED
 
 private var isAlreadyUpdated = false
-
-internal object TestJpsCompilationCacheDownload {
-  @ExperimentalPathApi
-  @JvmStatic
-  fun main(args: Array<String>) = withTracer {
-    System.setProperty("jps.cache.test", "true")
-    System.setProperty("org.jetbrains.jps.portable.caches", "true")
-
-    val projectHome = ULTIMATE_HOME
-    val outputDir = projectHome.resolve("out/test-jps-cache-downloaded")
-    outputDir.deleteRecursively()
-    downloadJpsCache(
-      cacheUrl = URI(System.getProperty(URL_PROPERTY, "https://127.0.0.1:1900/cache/jps")),
-      gitUrl = computeRemoteGitUrl(),
-      authHeader = getAuthHeader(),
-      projectHome = projectHome,
-      classOutDir = outputDir.resolve("classes"),
-      cacheDestination = outputDir.resolve("jps-build-data"),
-      reportStatisticValue = { k, v ->
-        println("$k: $v")
-      }
-    )
-  }
-}
-
-internal suspend fun downloadJpsCacheAndCompileProject(context: CompilationContext) {
-  downloadCacheAndCompileProject(
-    forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY).toBoolean(),
-    gitUrl = computeRemoteGitUrl(),
-    context = context,
-  )
-}
-
-/**
- * Upload local [PortableCompilationCache].
- */
-suspend fun uploadPortableCompilationCache(context: CompilationContext) {
-  uploadJpsCache(
-    forcedUpload = context.options.forceRebuild,
-    commitHash = getCommitCache(),
-    s3Dir = getS3Dir(),
-    authHeader = getAuthHeader(),
-    uploadUrl = getJpsCacheUploadUrl(),
-    context = context,
-  )
-}
-
-/**
- * Publish already uploaded [PortableCompilationCache].
- */
-suspend fun publishPortableCompilationCache(context: CompilationContext, overrideCommits: Set<String>? = null) {
-  updateJpsCacheCommitHistory(
-    overrideCommits = overrideCommits,
-    remoteGitUrl = computeRemoteGitUrl(),
-    commitHash = getCommitCache(),
-    uploadUrl = getJpsCacheUploadUrl(),
-    authHeader = getAuthHeader(),
-    context = context,
-    s3Dir = getS3Dir(),
-  )
-}
-
-private fun getCommitCache() = require(COMMIT_HASH_PROPERTY, "Repository commit")
-
-private fun getS3Dir(): Path? {
-  return System.getProperty(AWS_SYNC_FOLDER_PROPERTY)?.let<String, Path> { Path.of(it) }
-}
-
-/**
- * Publish already uploaded [PortableCompilationCache] overriding existing [CommitsHistory].
- * Used in force rebuild and cleanup.
- */
-suspend fun publishUploadedJpsCacheWithCommitHistoryOverride(forceRebuiltCommits: Set<String>, context: CompilationContext) {
-  publishPortableCompilationCache(context = context, overrideCommits = forceRebuiltCommits)
-}
 
 /**
  * Download the latest available [PortableCompilationCache],
@@ -110,19 +30,19 @@ suspend fun publishUploadedJpsCacheWithCommitHistoryOverride(forceRebuiltCommits
  * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
  */
 @Suppress("KDocUnresolvedReference")
-private suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitUrl: String, context: CompilationContext) {
+internal suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitUrl: String, context: CompilationContext) {
   val forceRebuild = context.options.forceRebuild
   spanBuilder("download JPS cache and compile")
     .setAttribute("forceRebuild", forceRebuild)
     .setAttribute("forceDownload", forceDownload)
     .use { span ->
-      val cacheUrl = URI(require(URL_PROPERTY, "Remote Cache url"))
+      val cacheUrl = getJpsCacheUrl()
       if (isAlreadyUpdated) {
-        span.addEvent("PortableCompilationCache is already updated")
+        span.addEvent("JPS Cache is already updated")
         return@use
       }
 
-      check(IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+      check(isPortableCompilationCacheEnabled) {
         "JPS Caches are expected to be enabled"
       }
 
@@ -220,12 +140,12 @@ private class PortableCompilationCache(forceDownload: Boolean) {
     classOutDir: Path,
     context: CompilationContext,
   ): Int {
-    return spanBuilder("download Portable Compilation Cache").use { span ->
+    return spanBuilder("download JPS Cache").use { span ->
       try {
         downloadJpsCache(
           cacheUrl = cacheUrl,
           gitUrl = gitUrl,
-          authHeader = getAuthHeader(),
+          authHeader = jpsCacheAuthHeader,
           projectHome = projectHome,
           classOutDir = classOutDir,
           cacheDestination = context.compilationData.dataStorageRoot,
@@ -236,9 +156,7 @@ private class PortableCompilationCache(forceDownload: Boolean) {
         throw e
       }
       catch (e: Exception) {
-        e.printStackTrace()
-        span.addEvent("Failed to download Compilation Cache. Re-trying without any caches.")
-        span.recordException(e)
+        span.recordException(e, Attributes.of(AttributeKey.stringKey("message"), "Failed to download JPS Cache. Re-trying without any caches."))
         context.options.forceRebuild = true
         forceDownload = false
         context.options.incrementalCompilation = false
@@ -258,47 +176,6 @@ internal fun portableJpsCacheUsageStatus(availableCommitDepth: Int): String {
 }
 
 /**
- * URL for read/write operations
- */
-private const val UPLOAD_URL_PROPERTY = "intellij.jps.remote.cache.upload.url"
-
-/**
- * URL for read-only operations
- */
-private const val URL_PROPERTY = "intellij.jps.remote.cache.url"
-
-private val IS_JPS_CACHE_URL_CONFIGURED = !System.getProperty(URL_PROPERTY).isNullOrBlank()
-
-/**
- * IntelliJ repository git remote url
- */
-private const val GIT_REPOSITORY_URL_PROPERTY = "intellij.remote.url"
-
-/**
- * Download [PortableCompilationCache] even if there are caches available locally
- */
-private const val FORCE_DOWNLOAD_PROPERTY = "intellij.jps.cache.download.force"
-
-/**
- * Folder to store [PortableCompilationCache] for later upload to AWS S3 bucket.
- * Upload performed in a separate process on CI.
- */
-private const val AWS_SYNC_FOLDER_PROPERTY = "jps.caches.aws.sync.folder"
-
-/**
- * Commit hash for which [PortableCompilationCache] is to be built/downloaded
- */
-private const val COMMIT_HASH_PROPERTY = "build.vcs.number"
-
-private fun require(systemProperty: String, description: String): String {
-  val value = System.getProperty(systemProperty)
-  require(!value.isNullOrBlank()) {
-    "$description is not defined. Please set '$systemProperty' system property."
-  }
-  return value
-}
-
-/**
  * Compiled bytecode of project module
  *
  * Note: cannot be used for incremental compilation without [org.jetbrains.intellij.build.impl.JpsCompilationData.dataStorageRoot]
@@ -308,21 +185,3 @@ internal class CompilationOutput(
   // local path to compilation output
   @JvmField val path: Path,
 )
-
-private fun getJpsCacheUploadUrl(): URI = URI(require(UPLOAD_URL_PROPERTY, "Remote Cache upload url"))
-
-private fun getAuthHeader(): CharSequence? {
-  val username = System.getProperty("jps.auth.spaceUsername")
-  val password = System.getProperty("jps.auth.spacePassword")
-  return when {
-    password == null -> null
-    username == null -> AsciiString.of("Bearer $password")
-    else -> AsciiString.of("Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray()))
-  }
-}
-
-private fun computeRemoteGitUrl(): String {
-  val remoteGitUrl = require(GIT_REPOSITORY_URL_PROPERTY, "Repository url")
-  Span.current().addEvent("Git remote url $remoteGitUrl")
-  return remoteGitUrl
-}

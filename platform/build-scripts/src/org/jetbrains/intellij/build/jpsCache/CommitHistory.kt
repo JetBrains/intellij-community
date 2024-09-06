@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.compilation.cache
+package org.jetbrains.intellij.build.jpsCache
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class CommitsHistory(private val commitsPerRemote: Map<String, Set<String>>) {
-  companion object {
-    internal const val JSON_FILE = "commit_history.json"
-  }
+internal const val COMMIT_HISTORY_JSON_FILE = "commit_history.json"
 
+class CommitHistory(private val commitsPerRemote: Map<String, Set<String>>) {
   constructor(json: String) : this(Json.decodeFromString<Map<String, Set<String>>>(json))
 
   fun toJson(): String {
@@ -19,12 +17,12 @@ class CommitsHistory(private val commitsPerRemote: Map<String, Set<String>>) {
     return commitsPerRemote[remote] ?: emptyList()
   }
 
-  operator fun plus(other: CommitsHistory): CommitsHistory {
-    return CommitsHistory(union(other.commitsPerRemote))
+  operator fun plus(other: CommitHistory): CommitHistory {
+    return CommitHistory(union(other.commitsPerRemote))
   }
 
-  operator fun minus(other: CommitsHistory): CommitsHistory {
-    return CommitsHistory(subtract(other.commitsPerRemote))
+  operator fun minus(other: CommitHistory): CommitHistory {
+    return CommitHistory(subtract(other.commitsPerRemote))
   }
 
   private fun union(map: Map<String, Set<String>>): Map<String, Set<String>> {

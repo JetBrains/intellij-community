@@ -6,10 +6,7 @@ package org.jetbrains.intellij.build.http2Client
 import com.intellij.platform.util.coroutines.childScope
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
-import io.netty.channel.Channel
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.SimpleChannelInboundHandler
+import io.netty.channel.*
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpStatusClass
 import io.netty.handler.codec.http2.*
@@ -31,7 +28,8 @@ import kotlin.random.asJavaRandom
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-internal class UnexpectedHttpStatus(@JvmField val status: HttpResponseStatus) : RuntimeException("Unexpected HTTP response status: $status")
+internal class UnexpectedHttpStatus(urlPath: CharSequence?, @JvmField val status: HttpResponseStatus)
+  : RuntimeException("Unexpected HTTP response status: $status" + (if (urlPath == null) "" else " (urlPath=$urlPath)"))
 
 private class ConnectionState(
   @JvmField val bootstrap: Http2StreamChannelBootstrap,
@@ -41,9 +39,13 @@ private class ConnectionState(
 
 private const val MAX_ATTEMPTS = 2
 
+private val backOffLimitMs = 500.milliseconds.inWholeMilliseconds
+private const val backOffFactor = 2L
+private const val backOffJitter = 0.1
+
 // https://cabulous.medium.com/http-2-and-how-it-works-9f645458e4b2
 // https://stackoverflow.com/questions/55087292/how-to-handle-http-2-goaway-with-java-net-httpclient
-// Server can send GOAWAY frame after X streams, that's why we need manager for channel - open a new one in case of such error
+// Server can send GOAWAY frame after X streams, that's why we need manager for channel - open a new one in case of such an error
 internal class Http2ConnectionProvider(
   private val server: InetSocketAddress,
   private val bootstrapTemplate: Bootstrap,
@@ -127,10 +129,7 @@ internal class Http2ConnectionProvider(
 
   suspend fun <T> stream(block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit): T {
     var attemptIndex = 0
-    var effectiveDelay = 1.seconds.inWholeMilliseconds
-    val backOffLimitMs = 500.milliseconds.inWholeMilliseconds
-    val backOffFactor = 2L
-    val backOffJitter = 0.1
+    var effectiveDelay = 5.seconds.inWholeMilliseconds
     var suppressedExceptions: MutableList<Throwable>? = null
     while (true) {
       var currentConnection: ConnectionState? = null
@@ -138,13 +137,7 @@ internal class Http2ConnectionProvider(
         currentConnection = getConnection()
         // use a single-thread executor as Netty does for handlers for thread safety and fewer context switches
         val eventLoop = bootstrapTemplate.config().group().next()
-        return withContext(currentConnection.coroutineScope.coroutineContext + object : CoroutineDispatcher() {
-          override fun dispatch(context: CoroutineContext, block: Runnable) {
-            eventLoop.execute(block)
-          }
-
-          override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
-        }) {
+        return withContext(currentConnection.coroutineScope.coroutineContext + EventLoopCoroutineDispatcher(eventLoop)) {
           openStreamAndConsume(connectionState = currentConnection, block = block)
         }
       }
@@ -156,9 +149,12 @@ internal class Http2ConnectionProvider(
           // task is canceled (due to GoAway or other such reasons), but not parent context - retry (without incrementing attemptIndex)
           continue
         }
+        else {
+          throw e
+        }
       }
       catch (e: UnexpectedHttpStatus) {
-        // retry only for sever errors
+        // retry only for server errors
         if (e.status.codeClass() != HttpStatusClass.SERVER_ERROR) {
           throw e
         }
@@ -170,17 +166,15 @@ internal class Http2ConnectionProvider(
               e.addSuppressed(suppressedException)
             }
           }
-          throw e
+          throw RuntimeException("${attemptIndex + 1} attempts failed", e)
         }
 
         if (suppressedExceptions == null) {
           suppressedExceptions = ArrayList()
         }
         suppressedExceptions.add(e)
-        if (attemptIndex != 0) {
-          delay(effectiveDelay)
-        }
-
+        Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attemptIndex"), attemptIndex.toLong(), AttributeKey.longKey("delay"), effectiveDelay))
+        delay(effectiveDelay)
         effectiveDelay = min(effectiveDelay * backOffFactor, backOffLimitMs) + (Random.asJavaRandom().nextGaussian() * effectiveDelay * backOffJitter).toLong()
       }
 
@@ -260,4 +254,12 @@ private class Http2ClientFrameInitializer(
       }
     }))
   }
+}
+
+private class EventLoopCoroutineDispatcher(private val eventLoop: EventLoop) : CoroutineDispatcher() {
+  override fun dispatch(context: CoroutineContext, block: Runnable) {
+    eventLoop.execute(block)
+  }
+
+  override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
 }

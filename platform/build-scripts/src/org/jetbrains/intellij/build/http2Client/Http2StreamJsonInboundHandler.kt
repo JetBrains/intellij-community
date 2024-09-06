@@ -27,7 +27,7 @@ private val json = Json {
 
 internal suspend fun Http2ClientConnection.getString(path: CharSequence): String {
   return connection.stream { stream, result ->
-    stream.pipeline().addLast(Http2StreamJsonInboundHandler(result = result, bufferAllocator = stream.alloc(), deserializer = null))
+    stream.pipeline().addLast(Http2StreamJsonInboundHandler(urlPath = path, result = result, bufferAllocator = stream.alloc(), deserializer = null))
 
     stream.writeHeaders(
       headers = createHeaders(
@@ -58,6 +58,7 @@ private suspend fun <T : Any> Http2ClientConnection.doGetJsonOrDefaultIfNotFound
 ): T {
   return connection.stream { stream, result ->
     stream.pipeline().addLast(Http2StreamJsonInboundHandler(
+      urlPath = path,
       result = result,
       bufferAllocator = stream.alloc(),
       deserializer = deserializer,
@@ -78,7 +79,7 @@ private suspend fun <T : Any> Http2ClientConnection.doGetJsonOrDefaultIfNotFound
 private suspend fun <T : Any> Http2ClientConnection.post(path: AsciiString, data: CharSequence, contentType: AsciiString, deserializer: DeserializationStrategy<T>): T {
   return connection.stream { stream, result ->
     val bufferAllocator = stream.alloc()
-    stream.pipeline().addLast(Http2StreamJsonInboundHandler(result = result, bufferAllocator = bufferAllocator, deserializer = deserializer))
+    stream.pipeline().addLast(Http2StreamJsonInboundHandler(urlPath = path, result = result, bufferAllocator = bufferAllocator, deserializer = deserializer))
 
     stream.writeHeaders(
       headers = createHeaders(
@@ -94,6 +95,7 @@ private suspend fun <T : Any> Http2ClientConnection.post(path: AsciiString, data
 }
 
 private class Http2StreamJsonInboundHandler<T : Any>(
+  private val urlPath: CharSequence,
   private val bufferAllocator: ByteBufAllocator,
   private val result: CompletableDeferred<T>,
   private val deserializer: DeserializationStrategy<T>?,
@@ -108,6 +110,8 @@ private class Http2StreamJsonInboundHandler<T : Any>(
     }
     compositeBuffer
   }
+
+  override fun acceptInboundMessage(message: Any) = message is Http2DataFrame || message is Http2HeadersFrame
 
   override fun channelRead0(context: ChannelHandlerContext, frame: Http2StreamFrame) {
     if (frame is Http2DataFrame) {
@@ -154,7 +158,7 @@ private class Http2StreamJsonInboundHandler<T : Any>(
           result.complete(defaultIfNotFound)
         }
         else {
-          result.completeExceptionally(UnexpectedHttpStatus(status))
+          result.completeExceptionally(UnexpectedHttpStatus(urlPath = urlPath, status))
         }
         return
       }

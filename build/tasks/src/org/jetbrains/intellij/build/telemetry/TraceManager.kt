@@ -24,18 +24,23 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
 // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing a ~500KB JSON file
-fun withTracer(block: suspend () -> Unit): Unit = runBlocking(Dispatchers.Default) {
+fun withTracer(serviceName: String, traceFile: Path? = null, block: suspend () -> Unit): Unit = runBlocking(Dispatchers.Default) {
   val batchSpanProcessorScope = CoroutineScope(SupervisorJob(parent = coroutineContext.job)) + CoroutineName("BatchSpanProcessor")
   @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
   val spanProcessor = BatchSpanProcessor(
     coroutineScope = batchSpanProcessorScope,
-    spanExporters = java.util.List.of(ConsoleSpanExporter()),
+    spanExporters = if (traceFile == null) {
+      java.util.List.of(ConsoleSpanExporter())
+    }
+    else {
+      java.util.List.of(ConsoleSpanExporter(), JaegerJsonSpanExporter(file = traceFile, serviceName = serviceName))
+    },
     scheduleDelay = 10.seconds,
   )
   try {
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(spanProcessor)
-      .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
+      .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), serviceName)))
       .build()
 
     traceManagerInitializer = {

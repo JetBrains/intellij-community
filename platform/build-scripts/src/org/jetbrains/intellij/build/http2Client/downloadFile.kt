@@ -90,7 +90,7 @@ private class ZstdDecompressingFileDownloadHandler(
     if (frame is Http2HeadersFrame) {
       val status = HttpResponseStatus.parseLine(frame.headers().status())
       if (status != HttpResponseStatus.OK) {
-        result.completeExceptionally(UnexpectedHttpStatus(status))
+        result.completeExceptionally(UnexpectedHttpStatus(null, status))
       }
     }
     else if (frame is Http2DataFrame) {
@@ -160,7 +160,7 @@ private class FileDownloadHandler(
           result.complete(-1)
         }
         else {
-          result.completeExceptionally(UnexpectedHttpStatus(status))
+          result.completeExceptionally(UnexpectedHttpStatus(null, status))
         }
       }
     }

@@ -24,9 +24,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.supervisorScope
 import java.net.InetSocketAddress
+import java.net.URI
 import kotlin.coroutines.CoroutineContext
 
 private fun nioIoHandlerAndSocketChannel() = NioIoHandler.newFactory() to NioSocketChannel::class.java
+
+private val commonHeaders = arrayOf(
+  HttpHeaderNames.USER_AGENT, AsciiString.of("IJ Builder"),
+  AsciiString.of("x-tc-build-id"), AsciiString.of(System.getProperty("teamcity.buildType.id", ""))
+)
 
 internal class Http2ClientConnectionFactory(
   private val bootstrapTemplate: Bootstrap,
@@ -38,8 +44,12 @@ internal class Http2ClientConnectionFactory(
     return connect(InetSocketAddress.createUnresolved(host, port.let { if (it == -1) 443 else it }), authHeader)
   }
 
+  fun connect(address: URI, authHeader: CharSequence? = null): Http2ClientConnection {
+    return connect(host = address.host, port = address.port, authHeader = authHeader)
+  }
+
   fun connect(server: InetSocketAddress, auth: CharSequence? = null): Http2ClientConnection {
-    var commonHeaders = arrayOf(HttpHeaderNames.USER_AGENT, AsciiString.of("IJ Builder"))
+    var commonHeaders = commonHeaders
     if (auth != null) {
       commonHeaders += arrayOf(HttpHeaderNames.AUTHORIZATION, AsciiString.of(auth))
     }

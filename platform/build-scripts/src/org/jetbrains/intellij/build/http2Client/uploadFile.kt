@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.http2Client
 
 import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdCompressCtx
+import io.netty.buffer.ByteBufUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
@@ -29,6 +30,17 @@ internal data class UploadResult(@JvmField var uploadedSize: Long, @JvmField var
 
 internal suspend fun Http2ClientConnection.upload(path: CharSequence, file: Path): UploadResult {
   return upload(path = path, file = file, sourceBlockSize = 1024 * 1024, zstdCompressContextPool = null)
+}
+
+internal suspend fun Http2ClientConnection.upload(path: CharSequence, data: CharSequence) {
+  return connection.stream { stream, result ->
+    val handler = WebDavPutStatusChecker(result)
+    handler.uploadedResult = Unit
+    stream.pipeline().addLast(handler)
+
+    stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
+    stream.writeData(ByteBufUtil.writeUtf8(stream.alloc(), data), endStream = true)
+  }
 }
 
 internal suspend fun Http2ClientConnection.upload(
@@ -80,9 +92,9 @@ internal suspend fun Http2ClientConnection.upload(
   }
 }
 
-private class WebDavPutStatusChecker(private val result: CompletableDeferred<UploadResult>) : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
+private class WebDavPutStatusChecker<T>(private val result: CompletableDeferred<T>) : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
   @JvmField
-  var uploadedResult: UploadResult? = null
+  var uploadedResult: T? = null
 
   override fun channelRead0(context: ChannelHandlerContext, frame: Http2HeadersFrame) {
     if (!frame.isEndStream) {
@@ -95,7 +107,7 @@ private class WebDavPutStatusChecker(private val result: CompletableDeferred<Upl
       result.complete(uploadedResult!!)
     }
     else {
-      result.completeExceptionally(UnexpectedHttpStatus(status))
+      result.completeExceptionally(UnexpectedHttpStatus(null, status))
     }
   }
 }

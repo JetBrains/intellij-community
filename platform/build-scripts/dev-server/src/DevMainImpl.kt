@@ -21,7 +21,7 @@ fun buildDevMain(): Collection<Path> {
 
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
-  withTracer {
+  withTracer(serviceName = "builder") {
     buildProductInProcess(
       BuildRequest(
         platformPrefix = System.getProperty("idea.platform.prefix", "idea"),

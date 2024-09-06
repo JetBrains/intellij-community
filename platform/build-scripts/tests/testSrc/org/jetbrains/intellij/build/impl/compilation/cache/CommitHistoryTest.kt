@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
+import org.jetbrains.intellij.build.jpsCache.CommitHistory
 import org.junit.Test
 
-class CommitsHistoryTest {
+class CommitHistoryTest {
   @Test
   fun `commit-history json union test`() {
-    val union = CommitsHistory("""{
+    val union = CommitHistory("""{
       "remote1" : [ "commit1.1", "commit1.2" ],
       "remote2" : [ "commit2.1", "commit2.2" ]
-    }""") + CommitsHistory("""{
+    }""") + CommitHistory("""{
       "remote1" : [ "commit1.3", "commit1.3" ],
       "remote3" : [ "commit3.1" ]
     }""")
@@ -20,10 +21,10 @@ class CommitsHistoryTest {
 
   @Test
   fun `commit-history json subtraction test`() {
-    val subtraction = CommitsHistory("""{
+    val subtraction = CommitHistory("""{
       "remote1" : [ "commit1.1", "commit1.2" ],
       "remote2" : [ "commit2.1", "commit2.2" ]
-    }""") - CommitsHistory("""{
+    }""") - CommitHistory("""{
       "remote1" : [ "commit1.2", "commit1.3" ],
       "remote2" : [ "commit2.1", "commit2.3" ],
       "remote3" : [ "commit3.1" ]

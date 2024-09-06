@@ -6,10 +6,7 @@ import io.opentelemetry.api.common.Attributes
 import kotlinx.coroutines.isActive
 import okio.IOException
 import org.jetbrains.intellij.build.forEachConcurrent
-import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
-import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
-import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
-import org.jetbrains.intellij.build.http2Client.download
+import org.jetbrains.intellij.build.http2Client.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.net.URI

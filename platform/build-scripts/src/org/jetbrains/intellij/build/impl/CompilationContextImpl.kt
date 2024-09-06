@@ -41,7 +41,6 @@ import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -296,7 +295,7 @@ class CompilationContextImpl private constructor(
   }
 
   override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
-    spanBuilder("resolve dependencies and compile modules").block { span ->
+    spanBuilder("resolve dependencies and compile modules").use { span ->
       compileMutex.withReentrantLock {
         resolveProjectDependencies(this@CompilationContextImpl)
         reuseOrCompile(context = this@CompilationContextImpl, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span)

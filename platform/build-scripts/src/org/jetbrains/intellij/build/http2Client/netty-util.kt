@@ -115,7 +115,6 @@ internal abstract class InboundHandlerResultTracker<T : Any>(
 ) : SimpleChannelInboundHandler<T>() {
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
-    context.close()
   }
 
   override fun channelInactive(context: ChannelHandlerContext) {
