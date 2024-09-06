@@ -139,10 +139,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     constraints.weightx = 2.0
     schemesPaneGridBagLayout.setConstraints(schemePane.pane, constraints)
 
-    SwingUtilities.invokeLater {
-      schemesPane.revalidate()
-      schemesPane.repaint()
-    }
+    schemesPane.revalidate()
+    schemesPane.repaint()
 
     service.updateScheme(schemePane.scheme.id)
   }

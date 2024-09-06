@@ -12,6 +12,8 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JRadioButton
@@ -20,6 +22,8 @@ import javax.swing.SwingUtilities
 
 class SchemePane(val scheme: WizardScheme) {
   private val backgroundColor = scheme.backgroundColor
+
+  private var hover: Boolean = false
 
   var active: Boolean = false
     set(value) {
@@ -36,7 +40,7 @@ class SchemePane(val scheme: WizardScheme) {
     }
 
   private fun update() {
-    pane.border = if (active) activeBorder else border
+    pane.border = if (active) activeBorder else if(hover) hoverBorder else border
     jRadioButton.isSelected = active
   }
 
@@ -52,7 +56,6 @@ class SchemePane(val scheme: WizardScheme) {
 
   private val roundedPanel = RoundedPanel.createRoundedPane().apply {
     contentPanel.apply {
-
       layout = GridBagLayout()
 
       background = backgroundColor
@@ -83,6 +86,9 @@ class SchemePane(val scheme: WizardScheme) {
           verticalAlignment = SwingConstants.TOP
         })
         add(jRadioButton)
+       // isOpaque = false
+        border = JBUI.Borders.empty(0, 2, 2, 2)
+        background = backgroundColor
       }, gbc)
 
     }
@@ -93,11 +99,25 @@ class SchemePane(val scheme: WizardScheme) {
   private val activeBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
                                            RoundedPanel.RADIUS)
 
+  private val hoverBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
+                                           RoundedPanel.RADIUS)
+
   private val border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.BORDER_COLOR,
                                      RoundedPanel.RADIUS)
 
 
   init {
+    this.pane.addMouseListener(object : MouseAdapter() {
+      override fun mouseEntered(e: MouseEvent?) {
+        hover = true
+        update()
+      }
+
+      override fun mouseExited(e: MouseEvent?) {
+        hover = false
+        update()
+      }
+    })
     update()
   }
 }
