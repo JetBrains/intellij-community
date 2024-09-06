@@ -1,5 +1,3 @@
 // RUNTIME_WITH_SOURCES
 // CHECK_BOX
 // SEARCH_TEXT: joinToString
-
-// IGNORE_K2
