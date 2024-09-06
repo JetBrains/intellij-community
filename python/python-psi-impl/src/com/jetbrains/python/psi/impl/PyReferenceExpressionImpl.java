@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
@@ -359,15 +360,33 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         PyType qualifierType = context.getType(qualifier);
         boolean possiblyParameterizedQualifier = !(qualifierType instanceof PyModuleType || qualifierType instanceof PyImportedModuleType);
         if (possiblyParameterizedQualifier && PyTypeChecker.hasGenerics(type, context)) {
-          final var substitutions =
-            PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
+          if (qualifierType instanceof PyCollectionType collectionType && collectionType.isDefinition()) {
+            PyCollectionType genericDefinitionType = PyTypeChecker.findGenericDefinitionType(collectionType.getPyClass(), context);
+            if (genericDefinitionType != null && type != null) {
+              List<PyTypeParameterType> typeParameterTypes =
+                ContainerUtil.filterIsInstance(genericDefinitionType.getElementTypes(), PyTypeParameterType.class);
+              PyType typeWithSubstitutions = PyTypeChecker.trySubstituteByDefaultsOnly(type, typeParameterTypes, true, context);
+              if (typeWithSubstitutions != null) {
+                return typeWithSubstitutions;
+              }
+            }
+          }
+          final var substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
           if (substitutions != null) {
-            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
+            var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutions);
+            final PyType substituted = PyTypeChecker.substitute(type, substitutionsWithDefaults, context);
             if (substituted != null) {
               return substituted;
             }
           }
         }
+      }
+    }
+
+    if (type instanceof PyClassType classType && !(type instanceof PyCollectionType)) {
+      PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, anchor, false, context);
+      if (parameterizedType instanceof PyCollectionType collectionType) {
+        return collectionType;
       }
     }
 

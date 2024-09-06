@@ -726,6 +726,19 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       .toList();
   }
 
+  @NotNull
+  private static List<PyTypeParameterType> collectTypeParametersFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement, @NotNull Context context) {
+    PyTypeParameterList typeParameterList = typeAliasStatement.getTypeParameterList();
+    if (typeParameterList != null) {
+      List<PyTypeParameter> typeParameters = typeParameterList.getTypeParameters();
+      return StreamEx.of(typeParameters)
+        .map(typeParameter -> getTypeParameterTypeFromTypeParameter(typeParameter, context))
+        .nonNull()
+        .toList();
+    }
+    return Collections.emptyList();
+  }
+
   public static boolean isGeneric(@NotNull PyWithAncestors descendant, @NotNull TypeEvalContext context) {
     if (descendant instanceof PyClass pyClass && pyClass.getTypeParameterList() != null ||
         descendant instanceof PyClassType pyClassType && pyClassType.getPyClass().getTypeParameterList() != null) {
@@ -834,6 +847,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final Ref<PyType> typeFromParenthesizedExpression = getTypeFromParenthesizedExpression(resolved, context);
       if (typeFromParenthesizedExpression != null) {
         return typeFromParenthesizedExpression;
+      }
+      final PyType parameterizedTypeFromTypeAlias = getParameterizedTypeFromTypeAlias(alias, typeHint, resolved, context);
+      if (parameterizedTypeFromTypeAlias != null) {
+        return Ref.create(parameterizedTypeFromTypeAlias);
       }
       final PyType unionType = getUnionType(resolved, context);
       if (unionType != null) {
@@ -1853,6 +1870,111 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
+  public static PyType tryParameterizeClassWithDefaults(@NotNull PyClassType classType,
+                                                        @NotNull PyExpression anchor,
+                                                        boolean toInstance,
+                                                        @NotNull TypeEvalContext context) {
+    return staticWithCustomContext(context, customContext -> parameterizeClassWithDefaults(classType, anchor, toInstance, customContext));
+  }
+
+  @Nullable
+  private static PyType parameterizeClassWithDefaults(@NotNull PyClassType classType,
+                                                      @NotNull PyExpression anchor,
+                                                      boolean toInstance,
+                                                      @NotNull Context context) {
+    PyClass pyClass = classType.getPyClass();
+    if (isGeneric(pyClass, context.getTypeContext())) {
+      PyCollectionType genericDefinitionType = PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext());
+      if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
+                                                                t -> t instanceof PyTypeParameterType typeParameterType &&
+                                                                     typeParameterType.getDefaultType() != null)) {
+        PyType parameterizedType;
+        if (anchor instanceof PySubscriptionExpression subscriptionExpression) {
+          List<PyType> indexTypes = getIndexTypes(subscriptionExpression, context);
+          parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, indexTypes, context.myContext);
+        }
+        else {
+          List<PyTypeParameterType> typeParameters = collectTypeParameters(genericDefinitionType.getPyClass(), context);
+          parameterizedType = PyTypeChecker.trySubstituteByDefaultsOnly(genericDefinitionType, typeParameters, true, context.getTypeContext());
+        }
+        if (parameterizedType instanceof PyCollectionType collectionType) {
+          return toInstance ? collectionType.toInstance() : collectionType.toClass();
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getParameterizedTypeFromTypeAlias(@Nullable PyQualifiedNameOwner alias,
+                                                          @NotNull PsiElement typeHint,
+                                                          @NotNull PsiElement element,
+                                                          @NotNull Context context) {
+    if (alias instanceof PyTypeAliasStatement typeAliasStatement) {
+      return getParameterizedTypeFromTypeAliasStatement(typeAliasStatement, typeHint, element, context);
+    }
+    if (alias != null && element instanceof PyExpression assignedExpression) {
+      if (typeHint instanceof PySubscriptionExpression subscriptionExpr) {
+        List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
+        PyType assignedType = Ref.deref(getType(assignedExpression, context));
+        if (assignedType != null) {
+          return PyTypeChecker.parameterizeType(assignedType, indexTypes, context.myContext);
+        }
+      }
+      if (typeHint instanceof PyReferenceExpression) {
+        PyType expressionType = Ref.deref(getType(assignedExpression, context));
+        if (expressionType != null && !(expressionType instanceof PyTypeParameterType)) {
+          List<PyTypeParameterType> typeAliasTypeParams =
+            PyTypeChecker.collectGenerics(expressionType, context.getTypeContext()).getAllTypeParameters();
+          if (!typeAliasTypeParams.isEmpty()) {
+            return PyTypeChecker.trySubstituteByDefaultsOnly(expressionType, typeAliasTypeParams, false, context.getTypeContext());
+          }
+        }
+        if (expressionType instanceof PyCollectionType) {
+          return expressionType;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getParameterizedTypeFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement,
+                                                                   @NotNull PsiElement typeHint,
+                                                                   @NotNull PsiElement element,
+                                                                   @NotNull Context context) {
+    if (element instanceof PyExpression expression) {
+      if (typeHint instanceof PySubscriptionExpression subscriptionExpression) {
+        final List<PyType> indexTypes = getIndexTypes(subscriptionExpression, context);
+        PyType assignedType = Ref.deref(getType(expression, context));
+        List<PyTypeParameterType> typeParamsFromAliasStmt = collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context);
+        if (assignedType != null && !typeParamsFromAliasStmt.isEmpty()) {
+
+          PyTypeChecker.GenericSubstitutions substitutions =
+            PyTypeChecker.mapTypeParametersToSubstitutions(new PyTypeChecker.GenericSubstitutions(),
+                                                           typeParamsFromAliasStmt,
+                                                           indexTypes,
+                                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
+
+          if (substitutions == null) return null;
+          var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutions);
+          return PyTypeChecker.substitute(assignedType, substitutionsWithDefaults, context.getTypeContext());
+        }
+      }
+      else if (typeHint instanceof PyReferenceExpression) {
+        List<PyTypeParameterType> typeAliasTypeParams = collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context);
+        if (!typeAliasTypeParams.isEmpty()) {
+          PyType operandType = Ref.deref(getType(expression, context));
+          if (operandType != null) {
+            return PyTypeChecker.trySubstituteByDefaultsOnly(operandType, typeAliasTypeParams, false, context.getTypeContext());
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private static PyType getParameterizedType(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PySubscriptionExpression subscriptionExpr) {
       final PyExpression operand = subscriptionExpr.getOperand();
@@ -1950,6 +2072,16 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         }
         if (element != null) {
           elements.add(Pair.create(null, element));
+        }
+      }
+    }
+    if (expression instanceof PySubscriptionExpression subscriptionExpr) {
+      // Possibly a parameterized type alias
+      PyExpression operandExpression = subscriptionExpr.getOperand();
+      List<Pair<PyQualifiedNameOwner, PsiElement>> results = tryResolvingWithAliases(operandExpression, context);
+      for (Pair<PyQualifiedNameOwner, PsiElement> pair : results) {
+        if (pair.getFirst() != null && pair.getSecond() != null) {
+          elements.add(Pair.create(pair.getFirst(), pair.getSecond()));
         }
       }
     }
