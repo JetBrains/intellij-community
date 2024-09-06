@@ -296,7 +296,7 @@ private suspend fun retryCompilation(
   var successMessage = "Clean build retry"
   when {
     e is TimeoutCancellationException -> {
-      context.messages.warning("Incremental compilation timed out. Re-trying with clean build.")
+      context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
       successMessage = "$successMessage after timeout"
       cleanOutput(context = context, keepCompilationState = false)
       context.options.incrementalCompilation = false
