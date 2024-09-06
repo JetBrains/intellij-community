@@ -4,7 +4,10 @@ package com.jetbrains.python.codeInsight.imports.mlapi
 import com.jetbrains.ml.analysis.MLTaskFeedback
 import com.jetbrains.ml.analysis.MLTaskFeedbackField
 import com.jetbrains.ml.analysis.MLUnitFeedbackField
-import com.jetbrains.ml.logs.schema.*
+import com.jetbrains.ml.logs.schema.BooleanEventField
+import com.jetbrains.ml.logs.schema.EnumEventField
+import com.jetbrains.ml.logs.schema.IntEventField
+import com.jetbrains.ml.logs.schema.LongEventField
 
 // suspendable analysis -- written after the imports were ranked
 
@@ -25,6 +28,7 @@ internal object MLFeedbackCorrectElementPosition : MLTaskFeedback() {
 
 internal val ML_FEEDBACK_TIME_MS_TO_DISPLAY = MLTaskFeedbackField(
   field = LongEventField("time_ms_before_displayed") { "Duration from the quickfix start until when the imports were displayed" },
+  throwOnTimeout = true,
 )
 
 internal val ML_FEEDBACK_TIME_MS_BEFORE_CLOSED = MLTaskFeedbackField(

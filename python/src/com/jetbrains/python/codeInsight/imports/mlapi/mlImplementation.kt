@@ -15,7 +15,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.seconds
 
 
 @Service(Service.Level.APP)
@@ -106,16 +107,16 @@ internal class RateableRankingResult(
   val order: List<ImportCandidateHolder>,
   private val timestampStarted: Long,
 ) {
-  private var submitted = false
+  private var submitted = AtomicBoolean(false)
 
   fun submitPopUpClosed() {
     val timestampClosed = System.currentTimeMillis()
     ML_FEEDBACK_TIME_MS_BEFORE_CLOSED.feedback(mlSession, timestampClosed - timestampStarted)
     service<MLApiComputations>().coroutineScope.launch {
-      delay(100.milliseconds)
+      delay(1.seconds)
       synchronized(this@RateableRankingResult) {
-        if (submitted) return@launch
-        submitted = true
+        if (submitted.get()) return@launch
+        submitted.set(true)
         MLFeedbackCorrectElementPosition.feedbackEventPairs(mlSession, MLFeedbackCorrectElementPosition.CANCELLED with true)
         MLFieldCorrectElement.cancelFeedback(mlSession)
       }
@@ -124,8 +125,7 @@ internal class RateableRankingResult(
 
   fun submitSelectedItem(selected: ImportCandidateHolder) = synchronized(this) {
     // In EDT
-    require(!submitted) { "Some feedback to the ml ranker was already submitted" }
-    submitted = true
+    require(submitted.compareAndSet(false, true)) { "Some feedback to the ml ranker was already submitted" }
     MLFieldCorrectElement.feedback(mlSession, selected, true)
     val selectedIndex = order.indexOf(selected)
     if (selectedIndex == -1)

@@ -31,7 +31,6 @@ class MLTaskPyCharmImportStatementsRanking {
 
       logger = PyCharmImportsRankingLogger
 
-      logFilter
       maxAnalysisDuration = LONGEST_POPUP_LIFE_DURATION
     }
   }

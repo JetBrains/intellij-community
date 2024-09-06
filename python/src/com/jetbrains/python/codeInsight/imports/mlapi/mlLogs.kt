@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.imports.mlapi
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
 import com.intellij.platform.ml.impl.tools.registerMLTaskLogging
@@ -19,13 +20,19 @@ import com.jetbrains.ml.tree.LevelFeaturesSchema
 import com.jetbrains.ml.tree.MLTree
 import com.jetbrains.python.PythonPluginDisposable
 
-class PyCharmImportsRankingLogs : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("pycharm.quickfix.imports", 1, ML_RECORDER_ID).also {
-    it.registerMLTaskLogging(service<MLTaskPyCharmImportStatementsRanking>().task,
-                             parentDisposable = service<PythonPluginDisposable>())
-  }
 
-  override fun getGroup() = GROUP
+@Service
+private class EventLogGroupHolder {
+  val group by lazy {
+    EventLogGroup("pycharm.quickfix.imports", 1, ML_RECORDER_ID).also {
+      it.registerMLTaskLogging(service<MLTaskPyCharmImportStatementsRanking>().task,
+                               parentDisposable = service<PythonPluginDisposable>())
+    }
+  }
+}
+
+class PyCharmImportsRankingLogs : CounterUsagesCollector() {
+  override fun getGroup() = service<EventLogGroupHolder>().group
 }
 
 internal enum class LoggingOption {
