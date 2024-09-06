@@ -34,15 +34,28 @@ class LogicalStructureAssembledModel<T> private constructor(
   /**
    * The grouping element in each pair - Any - can be any object, for which a PresentationProvider is registered
    */
-  fun getChildrenGrouped(): List<Pair<Any, List<LogicalStructureAssembledModel<*>>>> {
+  fun getChildrenGrouped(): List<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>> {
     return LogicalStructureElementsProvider.getProviders(model!!)
       .mapNotNull { provider ->
         if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) return@mapNotNull null
-        val children = provider.getElements(model)
-          .map { LogicalStructureAssembledModel(project, it, this) }
+        val children = {
+          provider.getElements(model)
+            .map { LogicalStructureAssembledModel(project, it, this) }
+        }
         Pair(provider, children)
       }
       .toList()
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as LogicalStructureAssembledModel<*>
+    return this.model == other.model && this.parent == other.parent
+  }
+
+  override fun hashCode(): Int {
+    return model.hashCode() * (parent?.hashCode() ?: 1)
   }
 
 }

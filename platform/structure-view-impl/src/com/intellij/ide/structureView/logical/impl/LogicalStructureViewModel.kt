@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
+import com.intellij.ide.structureView.logical.ExternalElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
@@ -15,18 +16,23 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
-internal class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>)
-  : StructureViewModelBase(psiFile, editor, createViewTreeElement(assembledModel, "root")),
+internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
+  : StructureViewModelBase(psiFile, editor, elementBuilder.createViewTreeElement(assembledModel)),
     StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
 
+  constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>):
+    this(psiFile, editor, assembledModel, ElementsBuilder())
+
+
   override fun isAlwaysShowsPlus(element: StructureViewTreeElement?): Boolean {
-    return element is LogicalGroupStructureElement
+    return element is ElementsBuilder.LogicalGroupStructureElement
   }
 
   override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
-    return element is PropertyPsiElementStructureElement<*> || element is PropertyStructureElement
+    return element is ElementsBuilder.PropertyPsiElementStructureElement<*> || element is ElementsBuilder.PropertyStructureElement
   }
 
   override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
@@ -38,238 +44,257 @@ internal class LogicalStructureViewModel(psiFile: PsiFile, editor: Editor?, asse
   }
 }
 
-private fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledModel<T>, parentKey: String): StructureViewTreeElement {
-  val model = assembledModel.model
-  val explicitElement = LogicalStructureTreeElementProvider.getTreeElement(model)
-  if (explicitElement != null) return explicitElement
-  val psiElement: PsiElement? = getPsiElement(model)
-  if (psiElement != null) {
-    return PsiElementStructureElement(assembledModel, psiElement, parentKey)
-  }
-  return OtherStructureElement(assembledModel, parentKey)
-}
-
-private fun getChildrenNodes(assembledModel: LogicalStructureAssembledModel<*>, parentKey: String): Collection<StructureViewTreeElement> {
-  if (hasSameModelParent(assembledModel)) return emptyList()
-  val childrenGrouped = assembledModel.getChildrenGrouped()
-  if (childrenGrouped.isEmpty()) {
-    return assembledModel.getChildren().map { createViewTreeElement(it, parentKey) }
-  }
-  val result = mutableListOf<StructureViewTreeElement>()
-  for (pair in childrenGrouped) {
-    val groupingObject = pair.first
-    val children = pair.second
-    if (children.isEmpty()) continue
-
-    if (groupingObject is PropertyElementProvider<*, *>) {
-      for (child in children) {
-        val psiElement: PsiElement? = getPsiElement(child.model)
-        if (psiElement != null) {
-          result.add(PropertyPsiElementStructureElement(groupingObject, child, psiElement, parentKey))
-        }
-        else {
-          result.add(PropertyStructureElement(groupingObject, child, parentKey))
-        }
-      }
-    }
-    else {
-      result.add(LogicalGroupStructureElement(groupingObject, children, parentKey))
-    }
-
-  }
-  return result
-}
-
-private fun getPsiElement(model: Any?): PsiElement? {
-  return when {
-    model is PsiElement -> model
-    model is PsiTarget && model.isValid() -> model.navigationElement
-    else -> null
-  }
-}
-
-private fun hasSameModelParent(assembledModel: LogicalStructureAssembledModel<*>): Boolean {
-  var parentTmp = assembledModel.parent
-  while (parentTmp != null) {
-    val first = parentTmp.model
-    val second = assembledModel.model
-    if (first == second) return true
-    if (first is PsiTarget && second is PsiTarget) {
-      if (first.isValid && second.isValid && first.navigationElement == second.navigationElement) return true
-    }
-    parentTmp = parentTmp.parent
-  }
-  return false
-}
-
-private interface LogicalStructureViewTreeElement<T>: StructureViewTreeElement {
+interface LogicalStructureViewTreeElement<T> : StructureViewTreeElement {
 
   fun getLogicalAssembledModel(): LogicalStructureAssembledModel<T>
 
 }
 
-private class PsiElementStructureElement<T>(
-  private val assembledModel: LogicalStructureAssembledModel<T>,
-  psiElement: PsiElement,
-  private val parentKey: String,
-): PsiTreeElementBase<PsiElement>(psiElement), LogicalStructureViewTreeElement<T> {
+private class ElementsBuilder {
 
-  private val typePresentationService = TypePresentationService.getService()
+  private val groupElements: MutableMap<LogicalStructureAssembledModel<*>, MutableMap<ExternalElementsProvider<*, *>, LogicalGroupStructureElement>> = ConcurrentHashMap()
 
-  override fun getPresentableText(): String? = typePresentationService.getObjectName(assembledModel.model!!)
-
-  override fun getLocationString(): String? = typePresentationService.getTypeName(assembledModel.model!!)
-
-  override fun getIcon(open: Boolean): Icon? = typePresentationService.getIcon(assembledModel.model!!)
-
-  override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-    return getChildrenNodes(assembledModel, parentKey + "." + assembledModel.model.hashCode())
+  fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledModel<T>): StructureViewTreeElement {
+    val model = assembledModel.model
+    val explicitElement = LogicalStructureTreeElementProvider.getTreeElement(model)
+    if (explicitElement != null) return explicitElement
+    val psiElement: PsiElement? = getPsiElement(model)
+    if (psiElement != null) {
+      return PsiElementStructureElement(assembledModel, psiElement)
+    }
+    return OtherStructureElement(assembledModel)
   }
 
-  override fun getLogicalAssembledModel() = assembledModel
+  private fun getChildrenNodes(assembledModel: LogicalStructureAssembledModel<*>): Collection<StructureViewTreeElement> {
+    if (hasSameModelParent(assembledModel)) return emptyList()
+    val childrenGrouped = assembledModel.getChildrenGrouped()
+    if (childrenGrouped.isEmpty()) {
+      return assembledModel.getChildren().map { createViewTreeElement(it) }
+    }
+    val result = mutableListOf<StructureViewTreeElement>()
+    for (pair in childrenGrouped) {
+      val groupingObject = pair.first
+      val childrenProvider = pair.second
+      //if (children.isEmpty()) continue
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is PsiElementStructureElement<*> || parentKey != other.parentKey) return false
-    return super.equals(other)
+      if (groupingObject is PropertyElementProvider<*, *>) {
+        for (child in childrenProvider()) {
+          val psiElement: PsiElement? = getPsiElement(child.model)
+          if (psiElement != null) {
+            result.add(PropertyPsiElementStructureElement(groupingObject, child, psiElement))
+          }
+          else {
+            result.add(PropertyStructureElement(groupingObject, child))
+          }
+        }
+      }
+      else if (groupingObject is ExternalElementsProvider<*, *>) {
+        val groupElement = groupElements.getOrPut(assembledModel) {
+          ConcurrentHashMap(mapOf(groupingObject to LogicalGroupStructureElement (assembledModel, groupingObject, childrenProvider)))
+        }.getOrPut(groupingObject) {
+          LogicalGroupStructureElement(assembledModel, groupingObject, childrenProvider)
+        }
+        result.add(groupElement)
+      } else {
+        result.add(LogicalGroupStructureElement(assembledModel, groupingObject, childrenProvider))
+      }
+
+    }
+    return result
   }
 
-  override fun hashCode(): Int {
-    return parentKey.hashCode() * 11 + super.hashCode()
-  }
-
-}
-
-private class OtherStructureElement<T>(
-  private val assembledModel: LogicalStructureAssembledModel<T>,
-  private val parentKey: String,
-): StructureViewTreeElement, LogicalStructureViewTreeElement<T> {
-
-  private val typePresentationService = TypePresentationService.getService()
-
-  override fun getValue(): Any = assembledModel.model ?: ""
-
-  override fun getLogicalAssembledModel() = assembledModel
-
-  override fun getPresentation(): ItemPresentation {
-    return object: ItemPresentation {
-      override fun getPresentableText(): String? = typePresentationService.getObjectName(assembledModel.model!!)
-
-      override fun getLocationString(): String? = typePresentationService.getTypeName(assembledModel.model!!)
-
-      override fun getIcon(unused: Boolean): Icon? = typePresentationService.getIcon(assembledModel.model!!)
+  private fun getPsiElement(model: Any?): PsiElement? {
+    return when {
+      model is PsiElement -> model
+      model is PsiTarget && model.isValid() -> model.navigationElement
+      else -> null
     }
   }
 
-  override fun getChildren(): Array<TreeElement> {
-    return getChildrenNodes(assembledModel, parentKey + "." + assembledModel.model.hashCode()).toTypedArray()
+  private fun hasSameModelParent(assembledModel: LogicalStructureAssembledModel<*>): Boolean {
+    var parentTmp = assembledModel.parent
+    while (parentTmp != null) {
+      val first = parentTmp.model
+      val second = assembledModel.model
+      if (first == second) return true
+      if (first is PsiTarget && second is PsiTarget) {
+        if (first.isValid && second.isValid && first.navigationElement == second.navigationElement) return true
+      }
+      parentTmp = parentTmp.parent
+    }
+    return false
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is OtherStructureElement<*> || parentKey != other.parentKey) return false
-    return super.equals(other)
+  inner class PsiElementStructureElement<T>(
+    private val assembledModel: LogicalStructureAssembledModel<T>,
+    psiElement: PsiElement,
+  ) : PsiTreeElementBase<PsiElement>(psiElement), LogicalStructureViewTreeElement<T> {
+
+    private val typePresentationService = TypePresentationService.getService()
+
+    override fun getPresentableText(): String? = typePresentationService.getObjectName(assembledModel.model!!)
+
+    override fun getLocationString(): String? = typePresentationService.getTypeName(assembledModel.model!!)
+
+    override fun getIcon(open: Boolean): Icon? = typePresentationService.getIcon(assembledModel.model!!)
+
+    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
+      return getChildrenNodes(assembledModel)
+    }
+
+    override fun getLogicalAssembledModel() = assembledModel
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is PsiElementStructureElement<*>) return false
+      return assembledModel == other.assembledModel
+    }
+
+    override fun hashCode(): Int {
+      return assembledModel.hashCode()
+    }
+
   }
 
-  override fun hashCode(): Int {
-    return parentKey.hashCode() * 11 + super.hashCode()
-  }
-}
+  inner class OtherStructureElement<T>(
+    private val assembledModel: LogicalStructureAssembledModel<T>
+  ) : StructureViewTreeElement, LogicalStructureViewTreeElement<T> {
 
-private class LogicalGroupStructureElement(
-  private val grouper: Any,
-  private val childrenModel: List<LogicalStructureAssembledModel<*>>,
-  private val parentKey: String,
-): StructureViewTreeElement {
+    private val typePresentationService = TypePresentationService.getService()
 
-  private val typePresentationService = TypePresentationService.getService()
+    override fun getValue(): Any = assembledModel.model ?: ""
 
-  override fun getValue(): Any = grouper
+    override fun getLogicalAssembledModel() = assembledModel
 
-  override fun getPresentation(): ItemPresentation {
-    return object: ItemPresentation {
-      override fun getPresentableText(): String? = typePresentationService.getObjectName(grouper)
+    override fun getPresentation(): ItemPresentation {
+      return object : ItemPresentation {
+        override fun getPresentableText(): String? = typePresentationService.getObjectName(assembledModel.model!!)
 
-      override fun getLocationString(): String? = typePresentationService.getTypeName(grouper)
+        override fun getLocationString(): String? = typePresentationService.getTypeName(assembledModel.model!!)
 
-      override fun getIcon(unused: Boolean): Icon? = typePresentationService.getIcon(grouper)
+        override fun getIcon(unused: Boolean): Icon? = typePresentationService.getIcon(assembledModel.model!!)
+      }
+    }
+
+    override fun getChildren(): Array<TreeElement> {
+      return getChildrenNodes(assembledModel).toTypedArray()
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is OtherStructureElement<*>) return false
+      return assembledModel == other.assembledModel
+    }
+
+    override fun hashCode(): Int {
+      return assembledModel.hashCode()
     }
   }
 
-  override fun getChildren(): Array<TreeElement> {
-    return childrenModel.map { createViewTreeElement(it, parentKey) }.toTypedArray()
-  }
+  inner class LogicalGroupStructureElement(
+    val parentAssembledModel: LogicalStructureAssembledModel<*>,
+    val grouper: Any,
+    private val childrenModelsProvider: () -> List<LogicalStructureAssembledModel<*>>
+  ) : StructureViewTreeElement {
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is LogicalGroupStructureElement || parentKey != other.parentKey) return false
-    return super.equals(other)
-  }
+    private val typePresentationService = TypePresentationService.getService()
 
-  override fun hashCode(): Int {
-    return parentKey.hashCode() * 11 + super.hashCode()
-  }
-}
+    private val cashedChildren: Array<TreeElement> by lazy {
+      calculateChildren()
+    }
 
-private class PropertyPsiElementStructureElement<T>(
-  private val grouper: PropertyElementProvider<*, *>,
-  private val assembledModel: LogicalStructureAssembledModel<T>,
-  psiElement: PsiElement,
-  private val parentKey: String,
-): PsiTreeElementBase<PsiElement>(psiElement), LogicalStructureViewTreeElement<T> {
+    override fun getValue(): Any = grouper
 
-  private val typePresentationService = TypePresentationService.getService()
+    override fun getPresentation(): ItemPresentation {
+      return object : ItemPresentation {
+        override fun getPresentableText(): String? = typePresentationService.getObjectName(grouper)
 
-  override fun getPresentableText(): String = grouper.propertyName + ": " + typePresentationService.getObjectName(assembledModel.model!!)
+        override fun getLocationString(): String? = typePresentationService.getTypeName(grouper)
 
-  override fun getLocationString(): String? = null //typePresentationService.getObjectName(assembledModel.model!!)
+        override fun getIcon(unused: Boolean): Icon? = typePresentationService.getIcon(grouper)
+      }
+    }
 
-  override fun getIcon(open: Boolean): Icon? = null //typePresentationService.getIcon(assembledModel.model!!)
+    override fun getChildren(): Array<TreeElement> {
+      if (grouper is ExternalElementsProvider<*, *>) {
+        return cashedChildren
+      }
+      return calculateChildren()
+    }
 
-  override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-    return emptyList() // getChildrenNodes (assembledModel, parentKey + "." + assembledModel.model.hashCode())
-  }
+    private fun calculateChildren(): Array<TreeElement> {
+      return childrenModelsProvider().map { createViewTreeElement(it) }.toTypedArray()
+    }
 
-  override fun getLogicalAssembledModel() = assembledModel
+    override fun equals(other: Any?): Boolean {
+      if (other !is LogicalGroupStructureElement) return false
+      return parentAssembledModel == other.parentAssembledModel && grouper == other.grouper
+    }
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is PropertyPsiElementStructureElement<*> || parentKey != other.parentKey) return false
-    return super.equals(other)
-  }
-
-  override fun hashCode(): Int {
-    return parentKey.hashCode() * 11 + super.hashCode()
-  }
-
-}
-
-private class PropertyStructureElement(
-  private val grouper: PropertyElementProvider<*, *>,
-  private val assembledModel: LogicalStructureAssembledModel<*>,
-  private val parentKey: String,
-): StructureViewTreeElement {
-
-  private val typePresentationService = TypePresentationService.getService()
-
-  override fun getValue(): Any = grouper
-
-  override fun getPresentation(): ItemPresentation {
-    return object: ItemPresentation {
-      override fun getPresentableText(): String? = grouper.propertyName
-
-      override fun getLocationString(): String? = typePresentationService.getObjectName(assembledModel.model!!)
-
-      override fun getIcon(unused: Boolean): Icon? = null //typePresentationService.getIcon(assembledModel.model!!)
+    override fun hashCode(): Int {
+      return parentAssembledModel.hashCode() * 11 + grouper.hashCode()
     }
   }
 
-  override fun getChildren(): Array<TreeElement> {
-    return getChildrenNodes(assembledModel, parentKey + "." + assembledModel.model.hashCode()).toTypedArray()
+  class PropertyPsiElementStructureElement<T>(
+    private val grouper: PropertyElementProvider<*, *>,
+    private val assembledModel: LogicalStructureAssembledModel<T>,
+    psiElement: PsiElement
+  ) : PsiTreeElementBase<PsiElement>(psiElement), LogicalStructureViewTreeElement<T> {
+
+    private val typePresentationService = TypePresentationService.getService()
+
+    override fun getPresentableText(): String = grouper.propertyName + ": " + typePresentationService.getObjectName(assembledModel.model!!)
+
+    override fun getLocationString(): String? = null //typePresentationService.getObjectName(assembledModel.model!!)
+
+    override fun getIcon(open: Boolean): Icon? = null //typePresentationService.getIcon(assembledModel.model!!)
+
+    override fun getChildrenBase(): Collection<StructureViewTreeElement> {
+      return emptyList() // getChildrenNodes (assembledModel, parentKey + "." + assembledModel.model.hashCode())
+    }
+
+    override fun getLogicalAssembledModel() = assembledModel
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is PropertyPsiElementStructureElement<*>) return false
+      return assembledModel == other.assembledModel
+    }
+
+    override fun hashCode(): Int {
+      return assembledModel.hashCode()
+    }
+
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (other !is PropertyStructureElement || parentKey != other.parentKey) return false
-    return super.equals(other)
-  }
+  inner class PropertyStructureElement(
+    private val grouper: PropertyElementProvider<*, *>,
+    private val assembledModel: LogicalStructureAssembledModel<*>
+  ) : StructureViewTreeElement {
 
-  override fun hashCode(): Int {
-    return parentKey.hashCode() * 11 + super.hashCode()
+    private val typePresentationService = TypePresentationService.getService()
+
+    override fun getValue(): Any = grouper
+
+    override fun getPresentation(): ItemPresentation {
+      return object : ItemPresentation {
+        override fun getPresentableText(): String? = grouper.propertyName
+
+        override fun getLocationString(): String? = typePresentationService.getObjectName(assembledModel.model!!)
+
+        override fun getIcon(unused: Boolean): Icon? = null //typePresentationService.getIcon(assembledModel.model!!)
+      }
+    }
+
+    override fun getChildren(): Array<TreeElement> {
+      return getChildrenNodes(assembledModel).toTypedArray()
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is PropertyStructureElement) return false
+      return assembledModel == other.assembledModel
+    }
+
+    override fun hashCode(): Int {
+      return assembledModel.hashCode()
+    }
   }
 }

@@ -75,6 +75,10 @@ public final class ViewStructureAction extends DumbAwareAction {
     }
     else {
       structureView = builder.createStructureView(fileEditor, project);
+      // TODO StructureTW: make logical structure to work correctly with FilteringTree
+      if (structureView instanceof StructureViewComposite viewComposite && viewComposite.getStructureViews().length == 2) {
+        structureView = viewComposite.getStructureViews()[1].structureView;
+      }
       treeModel = createStructureViewModel(project, fileEditor, structureView);
     }
     if (treeModel instanceof PlaceHolder) {

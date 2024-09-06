@@ -16,11 +16,17 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 interface LogicalStructureElementsProvider<P, C> {
 
+  /**
+   * Additional check that the provider cannot be applied to the element
+   */
+  fun isApplicable(parent: P): Boolean = true
+
   fun getElements(parent: P): List<C>
 
   companion object {
     fun <P> getProviders(p: P): Sequence<LogicalStructureElementsProvider<P, Any>> {
-      return PROVIDERS.forKey(p!!::class.java).asSequence() as Sequence<LogicalStructureElementsProvider<P, Any>>
+      return (PROVIDERS.forKey(p!!::class.java).asSequence() as Sequence<LogicalStructureElementsProvider<P, Any>>)
+        .filter { it.isApplicable(p) }
     }
   }
 }
@@ -31,6 +37,12 @@ interface LogicalStructureElementsProvider<P, C> {
 interface ContainerElementsProvider<P, C> : LogicalStructureElementsProvider<P, C> {
   val containerName: String?
 }
+
+/**
+ * Marker for ContainerElementsProviders which elements are not inner parent's members or properties,
+ *  but they are external elements, which e.g. are referencing to the parent element
+ */
+interface ExternalElementsProvider<P, C> : ContainerElementsProvider<P, C>
 
 /**
  * Provides logical properties with type [C] for logical object [P]
