@@ -45,8 +45,8 @@ internal class WhatsNewContentVersionChecker {
       storedVersion: WhatsNewContent.ContentVersion,
       newVersion: WhatsNewContent.ContentVersion): Boolean {
       if (storedVersion.hash.nullize() != null && newVersion.hash.nullize() != null) {
-        // If both versions have hashes, then show any new content.
-        return storedVersion.hash != newVersion.hash
+        // If both versions have hashes, then show any new content (i.e., hashes are different and the version is new).
+        return storedVersion.hash != newVersion.hash && newVersion >= storedVersion
       }
 
       // At least one of the versions doesn't have a hash: compare them by versions directly, preferring the newest.
