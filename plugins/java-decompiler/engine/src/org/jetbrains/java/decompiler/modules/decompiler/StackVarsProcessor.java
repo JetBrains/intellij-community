@@ -619,7 +619,7 @@ public class StackVarsProcessor {
 
     for (Entry<Integer, Set<VarVersionPair>> ent : mapVars.entrySet()) {
       FastSparseSet<Integer> liveverset = mapLiveVars.get(ent.getKey());
-      if (liveverset == null) {
+      if (liveverset == null || liveverset.isEmpty()) {
         return false;
       }
 
@@ -628,13 +628,13 @@ public class StackVarsProcessor {
         domset.add(ssuversions.nodes.getWithKey(verpaar));
       }
 
-      boolean isdom = false;
+      boolean isdom = true;
 
       for (Integer livever : liveverset) {
         VarVersionNode node = ssuversions.nodes.getWithKey(new VarVersionPair(ent.getKey().intValue(), livever.intValue()));
 
-        if (ssuversions.isDominatorSet(node, domset)) {
-          isdom = true;
+        if (!ssuversions.isDominatorSet(node, domset)) {
+          isdom = false;
           break;
         }
       }
