@@ -143,7 +143,7 @@ interface BuildContext : CompilationContext {
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 
-  fun checkDistributionBuildNumber()
+  fun reportDistributionBuildNumber()
 
   suspend fun cleanupJarCache()
 

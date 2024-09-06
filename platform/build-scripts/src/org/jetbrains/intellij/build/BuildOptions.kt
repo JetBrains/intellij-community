@@ -392,7 +392,7 @@ data class BuildOptions(
 
   /**
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
-   * @see BuildContext.checkDistributionBuildNumber
+   * @see BuildContext.reportDistributionBuildNumber
    */
   var buildNumber: String? = run {
     val buildNumber = System.getProperty("build.number")

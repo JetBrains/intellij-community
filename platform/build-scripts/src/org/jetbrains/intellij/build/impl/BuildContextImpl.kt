@@ -9,10 +9,13 @@ import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -62,13 +65,14 @@ class BuildContextImpl internal constructor(
     options.pluginBuildNumber ?: buildNumber
   }
 
-  override fun checkDistributionBuildNumber() {
+  override fun reportDistributionBuildNumber() {
     val suppliedBuildNumber = options.buildNumber
     val baseBuildNumber = SnapshotBuildNumber.VALUE.removeSuffix(".SNAPSHOT")
     check(suppliedBuildNumber == null || suppliedBuildNumber.startsWith(baseBuildNumber)) {
       "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
       "defined in ${SnapshotBuildNumber.PATH}"
     }
+    messages.setParameter("build.artifact.buildNumber", buildNumber)
   }
 
   override suspend fun cleanupJarCache() {

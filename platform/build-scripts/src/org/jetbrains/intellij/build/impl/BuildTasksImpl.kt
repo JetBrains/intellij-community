@@ -76,7 +76,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       BuildOptions.GENERATE_JAR_ORDER_STEP,
       SoftwareBillOfMaterials.STEP_ID,
     )
-    context.checkDistributionBuildNumber()
+    context.reportDistributionBuildNumber()
     BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
@@ -418,7 +418,7 @@ private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPlugi
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
-  context.checkDistributionBuildNumber()
+  context.reportDistributionBuildNumber()
   checkProductProperties(context as BuildContextImpl)
   copyDependenciesFile(context)
   logFreeDiskSpace("before compilation", context)
