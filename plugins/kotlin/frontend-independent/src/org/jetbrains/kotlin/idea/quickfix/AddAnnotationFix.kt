@@ -20,7 +20,7 @@ open class AddAnnotationFix(
     element: KtElement,
     private val annotationClassId: ClassId,
     private val kind: Kind = Kind.Self,
-    private val arguments: List<String?> = emptyList(),
+    private val arguments: List<String> = emptyList(),
     private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
 ) : KotlinQuickFixAction<KtElement>(element) {
     override fun getText(): String {

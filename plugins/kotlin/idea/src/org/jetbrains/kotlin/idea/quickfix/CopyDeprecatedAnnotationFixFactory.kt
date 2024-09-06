@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix.ArgumentsData
+import org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix.ArgumentsData.ReplaceWithData
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.constants.AnnotationValue
@@ -29,45 +30,41 @@ internal object CopyDeprecatedAnnotationFixFactory : KotlinIntentionActionsFacto
         val declaration = deprecation.psiElement
         return deprecation.c.mapNotNull {
             val annotation = it.target.annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return@mapNotNull null
-            val arguments = formatDeprecatedAnnotationArguments(annotation)
             val sourceName = renderName(it.target)
             val destinationName = renderName(deprecation.b)
+            val argumentsData = prepareArgumentsData(annotation) ?: return emptyList()
 
-            object : AddAnnotationFix(
+            CopyDeprecatedAnnotationFix(
                 declaration,
                 StandardClassIds.Annotations.Deprecated,
-                Kind.Copy(sourceName, destinationName),
-                arguments,
-            ) {
-                override fun renderArgumentsForIntentionName(): String = ""
-            }
+                AddAnnotationFix.Kind.Copy(sourceName, destinationName),
+                argumentsData,
+            )
         }
     }
 
-    private val MESSAGE_ARGUMENT = Name.identifier("message")
-    private val REPLACE_WITH_ARGUMENT = Name.identifier("replaceWith")
-    private val LEVEL_ARGUMENT = Name.identifier("level")
-    private val EXPRESSION_ARGUMENT = Name.identifier("expression")
-    private val IMPORTS_ARGUMENT = Name.identifier("imports")
-
-    // A custom pretty-printer for the `@Deprecated` annotation that deals with optional named arguments and varargs.
-    private fun formatDeprecatedAnnotationArguments(annotation: AnnotationDescriptor): List<String> {
-        val arguments = mutableListOf<String>()
-        annotation.allValueArguments[MESSAGE_ARGUMENT]?.safeAs<StringValue>()
+    private fun prepareArgumentsData(annotation: AnnotationDescriptor): ArgumentsData? {
+        val message = annotation.allValueArguments[MESSAGE_ARGUMENT]?.safeAs<StringValue>()
             ?.toString()
             ?.removeSurrounding("\"")
-            ?.let { arguments.add("\"${StringUtil.escapeStringCharacters(it)}\"") }
-        val replaceWith = annotation.allValueArguments[REPLACE_WITH_ARGUMENT]?.safeAs<AnnotationValue>()?.value
-        if (replaceWith != null) {
-            val expression = replaceWith.allValueArguments[EXPRESSION_ARGUMENT]?.safeAs<StringValue>()?.toString()
-            val imports = replaceWith.allValueArguments[IMPORTS_ARGUMENT]?.safeAs<ArrayValue>()?.value
-            val importsArg = if (imports.isNullOrEmpty()) "" else (", " + imports.joinToString { it.toString() })
-            if (expression != null) {
-                arguments.add("replaceWith = ReplaceWith(${expression}${importsArg})")
-            }
+            ?.let { "\"${StringUtil.escapeStringCharacters(it)}\"" } ?: return null
+
+        val replaceWithAnnotation = annotation.allValueArguments[REPLACE_WITH_ARGUMENT]?.safeAs<AnnotationValue>()?.value
+        val replaceWithData = if (replaceWithAnnotation != null) {
+            val expression = replaceWithAnnotation.allValueArguments[EXPRESSION_ARGUMENT]?.safeAs<StringValue>()?.toString() ?: return null
+            val imports = replaceWithAnnotation.allValueArguments[IMPORTS_ARGUMENT]?.safeAs<ArrayValue>()?.value?.map { it.toString() }
+            ReplaceWithData(expression, imports)
+        } else {
+            null
         }
-        annotation.allValueArguments[LEVEL_ARGUMENT]?.safeAs<EnumValue>()?.let { arguments.add("level = $it") }
-        return arguments
+
+        val level = annotation.allValueArguments[LEVEL_ARGUMENT]?.safeAs<EnumValue>()?.toString()
+
+        return ArgumentsData(
+            message,
+            replaceWithData,
+            level,
+        )
     }
 
     // A renderer for function/property names: uses qualified names when available to disambiguate names of overrides
