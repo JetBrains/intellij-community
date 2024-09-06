@@ -61,6 +61,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.jdi.ArrayReferenceImpl;
+import com.jetbrains.jdi.JNITypeParser;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
@@ -635,6 +636,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static String signatureToName(String s) {
     return new SigReader(s).getSignature();
+  }
+
+  public static String typeNameToSignature(String name) {
+    return JNITypeParser.typeNameToSignature(name);
   }
 
   public static List<Method> declaredMethodsByName(@NotNull ReferenceType type, @NotNull String name) {
