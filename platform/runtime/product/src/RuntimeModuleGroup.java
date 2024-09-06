@@ -16,7 +16,7 @@ public interface RuntimeModuleGroup {
   @NotNull List<@NotNull IncludedRuntimeModule> getIncludedModules();
 
   /**
-   * Returns IDs of modules with {@link ModuleImportance#OPTIONAL} importance, including unresolved ones.
+   * Returns IDs of modules with {@link RuntimeModuleLoadingRule#OPTIONAL} loading rule, including unresolved ones.
    */
   @NotNull Set<@NotNull RuntimeModuleId> getOptionalModuleIds();
 }

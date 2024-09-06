@@ -2,18 +2,17 @@
 package com.intellij.platform.runtime.product.impl;
 
 import com.intellij.platform.runtime.product.IncludedRuntimeModule;
-import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
   private final RuntimeModuleDescriptor myModuleDescriptor;
-  private final ModuleImportance myImportance;
+  private final RuntimeModuleLoadingRule myLoadingRule;
 
-  public IncludedRuntimeModuleImpl(@NotNull RuntimeModuleDescriptor moduleDescriptor,
-                                   @NotNull ModuleImportance importance) {
+  public IncludedRuntimeModuleImpl(@NotNull RuntimeModuleDescriptor moduleDescriptor, @NotNull RuntimeModuleLoadingRule loadingRule) {
     myModuleDescriptor = moduleDescriptor;
-    myImportance = importance;
+    myLoadingRule = loadingRule;
   }
 
   @Override
@@ -22,8 +21,8 @@ public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
   }
 
   @Override
-  public @NotNull ModuleImportance getImportance() {
-    return myImportance;
+  public @NotNull RuntimeModuleLoadingRule getLoadingRule() {
+    return myLoadingRule;
   }
 
   @Override

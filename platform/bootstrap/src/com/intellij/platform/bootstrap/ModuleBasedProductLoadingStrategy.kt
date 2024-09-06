@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
-import com.intellij.platform.runtime.product.ModuleImportance
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.PluginModuleGroup
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl
@@ -335,7 +335,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
 private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>,
                                       override val mainModule: RuntimeModuleDescriptor) : PluginModuleGroup {
-  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, ModuleImportance.FUNCTIONAL) } 
+  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) } 
   override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules 
   override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()
 }

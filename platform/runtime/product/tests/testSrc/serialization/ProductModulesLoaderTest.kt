@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.product.ModuleImportance
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
@@ -37,9 +37,9 @@ class ProductModulesLoaderTest {
     assertEquals(2, mainGroupModules.size)
     val (root, util) = mainGroupModules
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, root.importance)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
     assertEquals("util", util.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.SERVICE, util.importance)
+    assertEquals(RuntimeModuleLoadingRule.ON_DEMAND, util.loadingRule)
     assertEquals(emptySet<RuntimeModuleId>(), productModules.mainModuleGroup.optionalModuleIds)
 
     val pluginGroup = productModules.bundledPluginModuleGroups.single()
@@ -69,9 +69,9 @@ class ProductModulesLoaderTest {
     assertEquals(2, mainGroupModules.size)
     val (optional, root) = mainGroupModules
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, root.importance)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.OPTIONAL, optional.importance)
+    assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
   
@@ -92,9 +92,9 @@ class ProductModulesLoaderTest {
     assertEquals(2, pluginModules.size)
     val (plugin, optional) = pluginModules
     assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, plugin.importance)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, plugin.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.OPTIONAL, optional.importance)
+    assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
   

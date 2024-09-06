@@ -1,13 +1,6 @@
 *:com.intellij.platform.runtime.product.IncludedRuntimeModule
-- a:getImportance():com.intellij.platform.runtime.product.ModuleImportance
+- a:getLoadingRule():com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - a:getModuleDescriptor():com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
-*e:com.intellij.platform.runtime.product.ModuleImportance
-- java.lang.Enum
-- sf:FUNCTIONAL:com.intellij.platform.runtime.product.ModuleImportance
-- sf:OPTIONAL:com.intellij.platform.runtime.product.ModuleImportance
-- sf:SERVICE:com.intellij.platform.runtime.product.ModuleImportance
-- s:valueOf(java.lang.String):com.intellij.platform.runtime.product.ModuleImportance
-- s:values():com.intellij.platform.runtime.product.ModuleImportance[]
 *:com.intellij.platform.runtime.product.PluginModuleGroup
 - com.intellij.platform.runtime.product.RuntimeModuleGroup
 - a:getMainModule():com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
@@ -25,6 +18,13 @@
 *:com.intellij.platform.runtime.product.RuntimeModuleGroup
 - a:getIncludedModules():java.util.List
 - a:getOptionalModuleIds():java.util.Set
+*e:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+- java.lang.Enum
+- sf:ON_DEMAND:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+- sf:OPTIONAL:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+- sf:REQUIRED:com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+- s:valueOf(java.lang.String):com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
+- s:values():com.intellij.platform.runtime.product.RuntimeModuleLoadingRule[]
 *f:com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 - s:loadProductModules(java.io.InputStream,java.lang.String,com.intellij.platform.runtime.product.ProductMode,com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.product.ProductModules
 - s:loadProductModules(java.io.InputStream,java.lang.String,com.intellij.platform.runtime.product.ProductMode,com.intellij.platform.runtime.repository.RuntimeModuleRepository,com.intellij.platform.runtime.product.serialization.ResourceFileResolver):com.intellij.platform.runtime.product.ProductModules
@@ -34,7 +34,7 @@
 - f:getFromModule():com.intellij.platform.runtime.repository.RuntimeModuleId
 - f:getWithoutModules():java.util.Set
 *f:com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule
-- getImportance():com.intellij.platform.runtime.product.ModuleImportance
+- getLoadingRule():com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 - getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - resolve(com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.product.IncludedRuntimeModule
 *f:com.intellij.platform.runtime.product.serialization.RawProductModules

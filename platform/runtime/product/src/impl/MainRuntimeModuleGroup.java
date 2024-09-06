@@ -2,7 +2,7 @@
 package com.intellij.platform.runtime.product.impl;
 
 import com.intellij.platform.runtime.product.IncludedRuntimeModule;
-import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.product.RuntimeModuleGroup;
 import com.intellij.platform.runtime.repository.*;
@@ -33,7 +33,7 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
   @Override
   public @NotNull Set<@NotNull RuntimeModuleId> getOptionalModuleIds() {
     return myRawRootModules.stream()
-      .filter(it -> it.getImportance().equals(ModuleImportance.OPTIONAL))
+      .filter(it -> it.getLoadingRule().equals(RuntimeModuleLoadingRule.OPTIONAL))
       .map(RawIncludedRuntimeModule::getModuleId)
       .collect(Collectors.toSet());
   }
@@ -73,7 +73,7 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
     for (RuntimeModuleDescriptor dependency : descriptor.getDependencies()) {
       if (!visited.add(dependency)) continue;
       if (!rootModules.contains(dependency)) {
-        result.add(new IncludedRuntimeModuleImpl(dependency, ModuleImportance.SERVICE));
+        result.add(new IncludedRuntimeModuleImpl(dependency, RuntimeModuleLoadingRule.ON_DEMAND));
       }
       collectDependencies(dependency, rootModules, visited, result);
     }
