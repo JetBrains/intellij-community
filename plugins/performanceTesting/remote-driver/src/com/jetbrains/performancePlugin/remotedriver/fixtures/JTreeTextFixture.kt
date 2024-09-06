@@ -9,6 +9,7 @@ import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.Robot
 import org.assertj.swing.driver.BasicJTreeCellReader
 import org.assertj.swing.fixture.JTreeFixture
+import java.awt.Point
 import javax.swing.JTree
 
 open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
@@ -16,6 +17,14 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
 
   init {
     replaceCellReader(cellReader)
+  }
+
+  fun getRowPoint(row: Int): Point = computeOnEdt {
+    require(row in 0 until component.rowCount) {
+      "The given row $row should be between 0 and ${component.rowCount - 1}"
+    }
+    component.scrollRowToVisible(row)
+    component.getRowBounds(row).location
   }
 
   fun collectExpandedPaths(): TreePathToRowList {

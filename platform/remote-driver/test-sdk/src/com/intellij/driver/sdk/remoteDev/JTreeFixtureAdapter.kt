@@ -5,6 +5,7 @@ import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.ui.components.JTreeFixtureRef
 import com.intellij.driver.sdk.ui.components.JTreeUiComponent
 import com.intellij.driver.sdk.ui.remote.Robot
+import java.awt.Point
 import javax.swing.JTree
 
 class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
@@ -88,5 +89,9 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
 
   override fun expandAll(timeoutMs: Int) {
     fixture.expandAll(timeoutMs)
+  }
+
+  override fun getRowPoint(row: Int): Point {
+    return fixture.getRowPoint(row)
   }
 }

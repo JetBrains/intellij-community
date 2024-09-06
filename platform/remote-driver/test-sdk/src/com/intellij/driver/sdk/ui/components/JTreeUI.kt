@@ -1,6 +1,5 @@
 package com.intellij.driver.sdk.ui.components
 
-import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
@@ -10,10 +9,10 @@ import com.intellij.driver.sdk.remoteDev.JTreeFixtureAdapter
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
-import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
+import java.awt.Point
 import javax.swing.JTree
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -145,6 +144,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun clickRowWithShift(row: Int, shift: Point = Point(0, 0)) {
+    click(fixture.getRowPoint(row).apply { translate(shift.x, shift.y) })
+  }
+
   class PathNotFoundException(message: String? = null) : Exception(message) {
     constructor(path: List<String>) : this("$path not found")
   }
@@ -170,4 +173,5 @@ interface JTreeFixtureRef : Component {
   fun collectSelectedPaths(): List<TreePath>
   fun selectRow(row: Int): JTreeFixtureRef?
   fun expandAll(timeoutMs: Int)
+  fun getRowPoint(row: Int): Point
 }
