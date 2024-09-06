@@ -4408,6 +4408,41 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("get.kt")
+            public void testGet() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/get.kt");
+            }
+
+            @TestMetadata("insideChain.kt")
+            public void testInsideChain() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/insideChain.kt");
+            }
+
+            @TestMetadata("qualifiedk1.kt")
+            public void testQualifiedk1() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/qualifiedk1.kt");
+            }
+
+            @TestMetadata("qualifiedk2.kt")
+            public void testQualifiedk2() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/qualifiedk2.kt");
+            }
+
+            @TestMetadata("return.kt")
+            public void testReturn() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/return.kt");
+            }
+
+            @TestMetadata("shadowed.kt")
+            public void testShadowed() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/shadowed.kt");
+            }
+
+            @TestMetadata("shadowed2.kt")
+            public void testShadowed2() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/shadowed2.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/redundantRunCatching/simple.kt");

@@ -4529,6 +4529,60 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching")
+    public static class RedundantRunCatching extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("get.kt")
+        public void testGet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/get.kt");
+        }
+
+        @TestMetadata("insideChain.kt")
+        public void testInsideChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/insideChain.kt");
+        }
+
+        @TestMetadata("qualifiedk1.kt")
+        public void testQualifiedk1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/qualifiedk1.kt");
+        }
+
+        @TestMetadata("qualifiedk2.kt")
+        public void testQualifiedk2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/qualifiedk2.kt");
+        }
+
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/return.kt");
+        }
+
+        @TestMetadata("shadowed.kt")
+        public void testShadowed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/shadowed.kt");
+        }
+
+        @TestMetadata("shadowed2.kt")
+        public void testShadowed2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/shadowed2.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/joinDeclarationAndAssignment")
     public abstract static class JoinDeclarationAndAssignment extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
