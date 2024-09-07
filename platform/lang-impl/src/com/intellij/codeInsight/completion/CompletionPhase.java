@@ -224,7 +224,7 @@ public abstract class CompletionPhase implements Disposable {
 
       for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
         try {
-          ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+          ThreeState result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset);
           if (result != ThreeState.UNSURE) {
             LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
             return result == ThreeState.YES;
