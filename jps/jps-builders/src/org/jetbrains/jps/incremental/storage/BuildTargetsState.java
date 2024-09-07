@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -63,7 +63,7 @@ public final class BuildTargetsState {
   public void save() {
     try {
       File targetTypesFile = getTargetTypesFile();
-      FileUtil.createParentDirs(targetTypesFile);
+      FileUtilRt.createParentDirs(targetTypesFile);
       try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
         output.writeLong(myLastSuccessfulRebuildDuration);
@@ -113,15 +113,7 @@ public final class BuildTargetsState {
   }
 
   private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
-    BuildTargetTypeState state = myTypeStates.get(type);
-    if (state == null) {
-      final BuildTargetTypeState newState = new BuildTargetTypeState(type, this);
-      state = myTypeStates.putIfAbsent(type, newState);
-      if (state == null) {
-        state = newState;
-      }
-    }
-    return state;
+    return myTypeStates.computeIfAbsent(type, it -> new BuildTargetTypeState(it, this));
   }
 
   public void markUsedId(int id) {
@@ -139,7 +131,7 @@ public final class BuildTargetsState {
   }
 
   public void clean() {
-    FileUtil.delete(myDataPaths.getTargetsDataRoot());
+    FileUtilRt.delete(myDataPaths.getTargetsDataRoot());
   }
 
   public JpsModel getModel() {
