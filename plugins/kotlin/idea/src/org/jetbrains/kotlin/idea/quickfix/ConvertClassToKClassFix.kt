@@ -3,19 +3,14 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -28,38 +23,26 @@ internal fun KotlinType.isJClass(): Boolean {
     return expressionTypeFqName == JAVA_LANG_CLASS_FQ_NAME
 }
 
-class ConvertClassToKClassFix(element: KtDotQualifiedExpression) :
-  KotlinQuickFixAction<KtDotQualifiedExpression>(element) {
+internal object ConvertClassToKClassFixFactory : KotlinIntentionActionsFactory() {
+    override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
+        val casted = Errors.TYPE_MISMATCH.cast(diagnostic)
+        val element = casted.psiElement as? KtDotQualifiedExpression ?: return emptyList()
 
-    override fun getText() = element?.let { KotlinBundle.message("remove.0", it.children.lastOrNull()?.text.toString()) } ?: ""
-    override fun getFamilyName() = KotlinBundle.message("remove.conversion.from.kclass.to.class")
+        val expectedClassDescriptor = casted.a.constructor.declarationDescriptor as? ClassDescriptor ?: return emptyList()
+        if (!KotlinBuiltIns.isKClass(expectedClassDescriptor)) return emptyList()
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        element.replace(element.firstChild)
-    }
+        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+        val expressionType = bindingContext.getType(element) ?: return emptyList()
+        if (!expressionType.isJClass()) return emptyList()
 
-    companion object Factory : KotlinIntentionActionsFactory() {
-        override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-            val casted = Errors.TYPE_MISMATCH.cast(diagnostic)
-            val element = casted.psiElement as? KtDotQualifiedExpression ?: return emptyList()
+        val children = element.children
+        if (children.size != 2) return emptyList()
 
-            val expectedClassDescriptor = casted.a.constructor.declarationDescriptor as? ClassDescriptor ?: return emptyList()
-            if (!KotlinBuiltIns.isKClass(expectedClassDescriptor)) return emptyList()
+        val firstChild = children.first() as? KtExpression ?: return emptyList()
+        val firstChildType = bindingContext.getType(firstChild) ?: return emptyList()
 
-            val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
-            val expressionType = bindingContext.getType(element) ?: return emptyList()
-            if (!expressionType.isJClass()) return emptyList()
+        if (!firstChildType.isSubtypeOf(casted.a)) return emptyList()
 
-            val children = element.children
-            if (children.size != 2) return emptyList()
-
-            val firstChild = children.first() as? KtExpression ?: return emptyList()
-            val firstChildType = bindingContext.getType(firstChild) ?: return emptyList()
-
-            if (!firstChildType.isSubtypeOf(casted.a)) return emptyList()
-
-            return listOf(ConvertClassToKClassFix(element))
-        }
+        return listOf(ConvertClassToKClassFix(element))
     }
 }
