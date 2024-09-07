@@ -10000,13 +10000,81 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantConst")
+    public static class RedundantConst extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantConst/simple.kt");
+        }
+    }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantFun")
+    public static class RedundantFun extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantFun/simple.kt");
+        }
+    }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantInline")
+    public static class RedundantInline extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInline/function.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantLateinit")
+    public static class RedundantLateinit extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantLateinit/simple.kt");
+        }
+    }
 
 
 
@@ -11007,9 +11075,98 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeProjection")
+    public static class TypeProjection extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("conflictingProjection.kt")
+        public void testConflictingProjection() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/conflictingProjection.kt");
+        }
 
+        @TestMetadata("projectionInImmediateArgumentToSupertype.kt")
+        public void testProjectionInImmediateArgumentToSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/projectionInImmediateArgumentToSupertype.kt");
+        }
+
+        @TestMetadata("projectionOnNonClassTypeArgument1.kt")
+        public void testProjectionOnNonClassTypeArgument1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/projectionOnNonClassTypeArgument1.kt");
+        }
+
+        @TestMetadata("projectionOnNonClassTypeArgument2.kt")
+        public void testProjectionOnNonClassTypeArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/projectionOnNonClassTypeArgument2.kt");
+        }
+
+        @TestMetadata("removeRedundantProjection1.kt")
+        public void testRemoveRedundantProjection1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/removeRedundantProjection1.kt");
+        }
+
+        @TestMetadata("removeRedundantProjection2.kt")
+        public void testRemoveRedundantProjection2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/removeRedundantProjection2.kt");
+        }
+
+        @TestMetadata("removeVariance.kt")
+        public void testRemoveVariance() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeProjection/removeVariance.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/unnecessaryLateinit")
+    public static class UnnecessaryLateinit extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("lateinitWithConstructor.kt")
+        public void testLateinitWithConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unnecessaryLateinit/lateinitWithConstructor.kt");
+        }
+
+        @TestMetadata("lateinitWithInit.kt")
+        public void testLateinitWithInit() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unnecessaryLateinit/lateinitWithInit.kt");
+        }
+
+        @TestMetadata("lateinitWithMultipleConstructors.kt")
+        public void testLateinitWithMultipleConstructors() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unnecessaryLateinit/lateinitWithMultipleConstructors.kt");
+        }
+
+        @TestMetadata("lateinitWithMultipleConstructorsAndDelegation.kt")
+        public void testLateinitWithMultipleConstructorsAndDelegation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unnecessaryLateinit/lateinitWithMultipleConstructorsAndDelegation.kt");
+        }
+
+        @TestMetadata("lateinitWithMultipleInit.kt")
+        public void testLateinitWithMultipleInit() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unnecessaryLateinit/lateinitWithMultipleInit.kt");
+        }
+
+        @TestMetadata("secondaryConstructorDelegateItself.kt")
+        public void testSecondaryConstructorDelegateItself() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unnecessaryLateinit/secondaryConstructorDelegateItself.kt");
+        }
+    }
 
 
 

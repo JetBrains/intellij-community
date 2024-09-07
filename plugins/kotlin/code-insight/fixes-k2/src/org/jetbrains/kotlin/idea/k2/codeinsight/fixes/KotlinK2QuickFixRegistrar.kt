@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixFactor
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecationFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.ReplaceProtectedToPublishedApiCallFixFactory
 import org.jetbrains.kotlin.idea.quickfix.*
+import org.jetbrains.kotlin.lexer.KtTokens.*
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -22,6 +23,21 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KaFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFixBase.removeRedundantModifier)
         registerPsiQuickFixes(KaFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFixBase.removeRedundantModifier)
         registerPsiQuickFixes(KaFirDiagnostic.NonAbstractFunctionWithNoBody::class, AddFunctionBodyFix, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.ConflictingProjection::class, RemoveModifierFixBase.createRemoveProjectionFactory(false))
+        registerPsiQuickFixes(KaFirDiagnostic.ProjectionInImmediateArgumentToSupertype::class, RemoveModifierFixBase.createRemoveProjectionFactory(false))
+        registerPsiQuickFixes(KaFirDiagnostic.ProjectionOnNonClassTypeArgument::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(IN_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.ProjectionOnNonClassTypeArgument::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OUT_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.RedundantProjection::class, RemoveModifierFixBase.createRemoveProjectionFactory(true))
+        registerPsiQuickFixes(KaFirDiagnostic.VarianceOnTypeParameterNotAllowed::class, RemoveModifierFixBase.createRemoveVarianceFactory())
+        registerPsiQuickFixes(KaFirDiagnostic.UnnecessaryLateinit::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.WrongModifierContainingDeclaration::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KaFirDiagnostic.NothingToOverride::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OVERRIDE_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.ForbiddenBinaryMod::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPERATOR_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.NothingToInline::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(INLINE_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.ConstValNotTopLevelOrObject::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(CONST_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.FunInterfaceWrongCountOfAbstractMembers::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(FUN_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.TypeCantBeUsedForConstVal::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(CONST_KEYWORD))
+        registerPsiQuickFixes(KaFirDiagnostic.InapplicableLateinitModifier::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
 
         registerPsiQuickFixes(
             KaFirDiagnostic.AbstractPropertyInNonAbstractClass::class,
@@ -150,6 +166,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConvertClassToKClassFixFactories.InitializerTypeMismatchFixFactory)
         registerFactory(ConvertClassToKClassFixFactories.AssignmentTypeMismatchFixFactory)
         registerFactory(ValReassignmentFixFactories.assignToPropertyFixFactory)
+        registerFactory(CallFromPublicInlineFixFactories.nonPublicCallFromPublicInlineFixFactory)
+        registerFactory(CallFromPublicInlineFixFactories.protectedCallFromPublicInlineErrorFixFactory)
+        registerFactory(CallFromPublicInlineFixFactories.superCallFromPublicInlineFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
