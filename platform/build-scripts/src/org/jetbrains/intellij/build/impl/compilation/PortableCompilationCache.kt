@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.net.URI
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.CancellationException
 
 private var isAlreadyUpdated = false
@@ -52,7 +51,10 @@ internal suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitU
 
       val reportStatisticValue = context.messages::reportStatisticValue
       val portableCompilationCache = PortableCompilationCache(forceDownload = forceDownload)
-      val availableCommitDepth = if (!forceRebuild && (forceDownload || !isIncrementalCompilationDataAvailable(context))) {
+
+      val isLocalCacheUsed = !forceRebuild && !forceDownload && isIncrementalCompilationDataAvailable(context)
+      val shouldBeDownloaded = !forceRebuild && !isLocalCacheUsed
+      val availableCommitDepth = if (shouldBeDownloaded) {
         portableCompilationCache.downloadCache(
           cacheUrl = cacheUrl,
           gitUrl = gitUrl,
@@ -63,10 +65,10 @@ internal suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitU
         )
       }
       else {
-        -1
+        throw IllegalStateException("JPS Cache should not be downloaded")
       }
 
-      context.options.incrementalCompilation = !forceRebuild
+      context.options.incrementalCompilation = true
       // compilation is executed unconditionally here even if the exact commit cache is downloaded
       // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
       if (!context.options.useCompiledClassesFromProjectOutput) {

@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
 import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
 import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
@@ -144,24 +143,47 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
         )
       }
     }
-    isPortableCompilationCacheEnabled -> {
-      span.addEvent("JPS remote cache will be used for compilation")
-      downloadCacheAndCompileProject(
-        forceDownload = isForceDownloadJpsCache,
-        gitUrl = jpsCacheRemoteGitUrl,
-        context = context,
-      )
-    }
     else -> {
-      block("compile modules") {
-        doCompile(
-          moduleNames = moduleNames,
-          includingTestsInModules = includingTestsInModules,
-          availableCommitDepth = -1,
-          context = context,
-          // null - we checked IS_PORTABLE_COMPILATION_CACHE_ENABLED above
-          handleCompilationFailureBeforeRetry = null,
-        )
+      var doCompileWithoutJpsCache = true
+      if (isPortableCompilationCacheEnabled) {
+
+        val forceDownload = isForceDownloadJpsCache
+        val forceRebuild = context.options.forceRebuild
+
+        val isLocalCacheUsed = !forceRebuild && !forceDownload && isIncrementalCompilationDataAvailable(context)
+        val shouldBeDownloaded = !forceRebuild && !isLocalCacheUsed
+        if (shouldBeDownloaded) {
+          span.addEvent("JPS remote cache will be used for compilation")
+          doCompileWithoutJpsCache = false
+          downloadCacheAndCompileProject(
+            forceDownload = isForceDownloadJpsCache,
+            gitUrl = jpsCacheRemoteGitUrl,
+            context = context,
+          )
+        }
+        else {
+          span.addEvent(
+            "JPS remote cache will NOT be used for compilation",
+            Attributes.of(
+              AttributeKey.booleanKey("forceRebuild"), forceRebuild,
+              AttributeKey.booleanKey("forceDownload"), forceDownload,
+              AttributeKey.booleanKey("isLocalCacheUsed"), isLocalCacheUsed,
+              AttributeKey.booleanKey("isIncrementalCompilationDataAvailable"), isIncrementalCompilationDataAvailable(context),
+            ),
+          )
+        }
+      }
+
+      if (doCompileWithoutJpsCache) {
+        spanBuilder("compile modules").use {
+          doCompile(
+            moduleNames = moduleNames,
+            includingTestsInModules = includingTestsInModules,
+            availableCommitDepth = -1,
+            context = context,
+            handleCompilationFailureBeforeRetry = null,
+          )
+        }
       }
       return
     }
