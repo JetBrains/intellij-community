@@ -19,7 +19,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.types.KotlinType
 
-class AssignToPropertyFix(element: KtNameReferenceExpression) : KotlinQuickFixAction<KtNameReferenceExpression>(element) {
+class AssignToPropertyFix(
+    element: KtNameReferenceExpression,
+    private val hasSingleImplicitReceiver: Boolean,
+) : KotlinQuickFixAction<KtNameReferenceExpression>(element) {
     override fun getText() = KotlinBundle.message("fix.assign.to.property")
 
     override fun getFamilyName() = text
@@ -27,7 +30,7 @@ class AssignToPropertyFix(element: KtNameReferenceExpression) : KotlinQuickFixAc
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val psiFactory = KtPsiFactory(project)
-        if (element.getResolutionScope().getImplicitReceiversHierarchy().size == 1) {
+        if (hasSingleImplicitReceiver) {
             element.replace(psiFactory.createExpressionByPattern("this.$0", element))
         } else {
             element.containingClass()?.name?.let {
@@ -59,7 +62,8 @@ class AssignToPropertyFix(element: KtNameReferenceExpression) : KotlinQuickFixAc
 
             if (!hasAssignableProperty && !hasAssignablePropertyInPrimaryConstructor) return null
 
-            return AssignToPropertyFix(expression)
+            val hasSingleImplicitReceiver = expression.getResolutionScope().getImplicitReceiversHierarchy().size == 1
+            return AssignToPropertyFix(expression, hasSingleImplicitReceiver)
         }
     }
 
