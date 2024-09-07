@@ -17646,9 +17646,29 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("convertClassToKClass1Runtime.kt")
-        public void testConvertClassToKClass1Runtime() throws Exception {
-            runTest("testData/quickfix/typeInferenceExpectedTypeMismatch/convertClassToKClass1Runtime.kt");
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("testData/quickfix/typeInferenceExpectedTypeMismatch/argument.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("testData/quickfix/typeInferenceExpectedTypeMismatch/assignment.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("testData/quickfix/typeInferenceExpectedTypeMismatch/initializer.kt");
+        }
+
+        @TestMetadata("notKClass.kt")
+        public void testNotKClass() throws Exception {
+            runTest("testData/quickfix/typeInferenceExpectedTypeMismatch/notKClass.kt");
+        }
+
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("testData/quickfix/typeInferenceExpectedTypeMismatch/return.kt");
         }
     }
 
