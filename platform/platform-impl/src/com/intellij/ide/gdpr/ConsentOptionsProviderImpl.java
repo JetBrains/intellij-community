@@ -7,7 +7,7 @@ import com.intellij.ui.LicensingFacade;
 import java.util.Set;
 
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
-  private static final Set<String> ourFreeLicenseEligibleProducts = Set.of("QA", "RR");
+  private static final Set<String> productsSupportingForcedConsent = Set.of("QA", "RR", "WS", "RD");
 
   private volatile long myLastModificationCount = -1;
   private volatile boolean mySendingAllowed = false;
@@ -21,7 +21,7 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
   public boolean isActivatedWithFreeLicense() {
     // Using free non-commercial license is by EULA a consent to sending feature usage statistics for product improvements
     LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade == null || !ourFreeLicenseEligibleProducts.contains(facade.platformProductCode)) {
+    if (facade == null || !productsSupportingForcedConsent.contains(facade.platformProductCode)) {
       return false;
     }
     String meta = facade.metadata;
