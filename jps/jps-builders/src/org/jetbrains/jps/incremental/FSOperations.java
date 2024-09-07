@@ -293,13 +293,14 @@ public final class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            StampsStorage.Stamp previousStamp = stampStorage.getPreviousStamp(file, rd.getTarget());
+            Path nioFile = file.toPath();
+            StampsStorage.Stamp previousStamp = stampStorage.getPreviousStamp(nioFile, rd.getTarget());
             markDirty = previousStamp == null || (attrs == null
-                                                  ? stampStorage.isDirtyStamp(previousStamp, file)
-                                                  : stampStorage.isDirtyStamp(previousStamp, file, attrs));
+                                                  ? stampStorage.isDirtyStamp(previousStamp, nioFile)
+                                                  : stampStorage.isDirtyStamp(previousStamp, nioFile, attrs));
           }
           if (markDirty) {
-            // if it is full project rebuild, all storages are already completely cleared;
+            // if it is a full project rebuild, all storages are already completely cleared;
             // so passing null because there is no need to access the storage to clear non-existing data
             final StampsStorage<? extends StampsStorage.Stamp> marker = context.isProjectRebuild()? null : stampStorage;
             context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);

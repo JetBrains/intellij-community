@@ -2606,7 +2606,7 @@ org.jetbrains.jps.incremental.resources.StandardResourceBuilderEnabler
 - a:isResourceProcessingEnabled(org.jetbrains.jps.model.module.JpsModule):Z
 a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - org.jetbrains.jps.incremental.storage.StorageOwner
-- pf:myDataLock:java.lang.Object
+- pf:dataLock:java.lang.Object
 - <init>(java.io.File,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer):V
 - appendData(java.lang.Object,java.lang.Object):V
 - clean():V
@@ -2719,12 +2719,12 @@ org.jetbrains.jps.incremental.storage.StampsStorage
 - a:close():V
 - a:force():V
 - a:getCurrentStamp(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
-- a:getPreviousStamp(java.io.File,org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
+- a:getPreviousStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
 - a:getStorageRoot():java.nio.file.Path
-- a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.io.File):Z
-- a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.io.File,java.nio.file.attribute.BasicFileAttributes):Z
-- a:removeStamp(java.io.File,org.jetbrains.jps.builders.BuildTarget):V
-- a:saveStamp(java.io.File,org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.storage.StampsStorage$Stamp):V
+- a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.nio.file.Path):Z
+- a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):Z
+- a:removeStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):V
+- a:saveStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.storage.StampsStorage$Stamp):V
 - a:wipe():Z
 org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
 org.jetbrains.jps.incremental.storage.StorageOwner

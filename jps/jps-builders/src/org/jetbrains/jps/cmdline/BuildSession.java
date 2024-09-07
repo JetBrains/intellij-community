@@ -12,14 +12,10 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.StorageLockContext;
 import io.netty.channel.Channel;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -132,9 +128,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (tracingFile != null) {
         LOG.debug("Tracing enabled, file: " + tracingFile);
         Path tracingFilePath = Paths.get(tracingFile);
-        Tracer.runTracer(1, tracingFilePath, 1, e -> {
-          LOG.warn(e);
-        });
+        Tracer.runTracer(1, tracingFilePath, 1, LOG::warn);
       }
     } catch (IOException e) {
       LOG.warn(e);
@@ -485,38 +479,43 @@ final class BuildSession implements Runnable, CanceledStatus {
           pd.fsState.registerDeleted(null, rootDescriptor.getTarget(), file, stampStorage);
         }
       }
-      else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skipping deleted path: " + file.getPath());
-        }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping deleted path: " + file.getPath());
       }
     }
+
     for (String changed : event.getChangedPathsList()) {
-      final File file = new File(changed);
-      Collection<BuildRootDescriptor> descriptors = ContainerUtil.filter(
-        // ignore generates sources as they are processed at the time of generation
-        buildRootIndex.findAllParentDescriptors(file, null, null), d -> !d.isGenerated()
-      );
+      Path file = Path.of(changed);
+      Collection<BuildRootDescriptor> collection = buildRootIndex.findAllParentDescriptors(file.toFile(), null, null);
+      // ignore generates sources as they are processed at the time of generation
+      List<BuildRootDescriptor> descriptors;
+      if (collection.isEmpty()) {
+        descriptors = List.of();
+      }
+      else {
+        descriptors = new ArrayList<>();
+        for (BuildRootDescriptor t : collection) {
+          if (!t.isGenerated()) {
+            descriptors.add(t);
+          }
+        }
+      }
       if (!descriptors.isEmpty()) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Applying dirty path from fs event: " + file.getPath());
+          LOG.debug("Applying dirty path from fs event: " + file);
         }
         for (BuildRootDescriptor descriptor : descriptors) {
           StampsStorage.Stamp stamp = stampStorage.getPreviousStamp(file, descriptor.getTarget());
           if (stamp == null || stampStorage.isDirtyStamp(stamp, file)) {
-            pd.fsState.markDirty(null, file, descriptor, stampStorage, saveEventStamp);
+            pd.fsState.markDirty(null, file.toFile(), descriptor, stampStorage, saveEventStamp);
           }
-          else {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + file.getPath() + "; stamp= " + stamp);
-            }
+          else if (LOG.isDebugEnabled()) {
+            LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + file + "; stamp= " + stamp);
           }
         }
       }
-      else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skipping dirty path: " + file.getPath());
-        }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping dirty path: " + file);
       }
     }
   }
@@ -719,7 +718,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     private EventsProcessor() {
       myProcessingEnabled.down();
-      execute(() -> myProcessingEnabled.waitFor());
+      execute(myProcessingEnabled::waitFor);
     }
 
     private void startProcessing() {

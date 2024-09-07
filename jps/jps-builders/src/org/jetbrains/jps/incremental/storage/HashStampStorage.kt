@@ -28,22 +28,18 @@ internal class HashStampStorage(
   private val targetState = targetsState
   private val fileStampRoot = calcStorageRoot(dataStorageRoot)
 
-  private fun relativePath(file: File): String {
-    return relativizer.toRelative(file.absolutePath)
-  }
-
   override fun getStorageRoot(): Path = fileStampRoot
 
-  override fun saveStamp(file: File, buildTarget: BuildTarget<*>, stamp: HashStamp) {
+  override fun saveStamp(file: Path, buildTarget: BuildTarget<*>, stamp: HashStamp) {
     timestampStorage.saveStamp(file, buildTarget, FileTimestamp.fromLong(stamp.timestamp))
     val targetId = targetState.getBuildTargetId(buildTarget)
-    val path = relativePath(file)
+    val path = relativizer.toRelative(file.toString())
     update(path, updateFilesStamp(oldState = getState(path), targetId = targetId, stamp = stamp))
   }
 
-  override fun removeStamp(file: File, buildTarget: BuildTarget<*>) {
+  override fun removeStamp(file: Path, buildTarget: BuildTarget<*>) {
     timestampStorage.removeStamp(file, buildTarget)
-    val path = relativePath(file)
+    val path = relativizer.toRelative(file.toString())
     val state = getState(path) ?: return
     val targetId = targetState.getBuildTargetId(buildTarget)
     for (i in state.indices) {
@@ -60,9 +56,9 @@ internal class HashStampStorage(
     }
   }
 
-  override fun getPreviousStamp(file: File, target: BuildTarget<*>): HashStamp? {
+  override fun getPreviousStamp(file: Path, target: BuildTarget<*>): HashStamp? {
     val previousTimestamp = timestampStorage.getPreviousStamp(file, target) ?: return null
-    val state = getState(relativePath(file)) ?: return null
+    val state = getState(relativizer.toRelative(file.toString())) ?: return null
     val targetId = targetState.getBuildTargetId(target)
     return state
       .firstOrNull { it.targetId == targetId }
@@ -70,7 +66,7 @@ internal class HashStampStorage(
   }
 
   fun getStoredFileHash(file: File, target: BuildTarget<*>): Long? {
-    val state = getState(relativePath(file)) ?: return null
+    val state = getState(relativizer.toRelative(file.absolutePath)) ?: return null
     val targetId = targetState.getBuildTargetId(target)
     return state.firstOrNull { it.targetId == targetId }?.hash
   }
@@ -80,7 +76,7 @@ internal class HashStampStorage(
     return HashStamp(FileHashUtil.getFileHash(file), currentTimestamp.asLong())
   }
 
-  override fun isDirtyStamp(stamp: StampsStorage.Stamp, file: File): Boolean {
+  override fun isDirtyStamp(stamp: StampsStorage.Stamp, file: Path): Boolean {
     if (stamp !is HashStamp) {
       return true
     }
@@ -89,10 +85,10 @@ internal class HashStampStorage(
       return false
     }
 
-    return stamp.hash != FileHashUtil.getFileHash(file.toPath())
+    return stamp.hash != FileHashUtil.getFileHash(file)
   }
 
-  override fun isDirtyStamp(stamp: StampsStorage.Stamp?, file: File, attrs: BasicFileAttributes): Boolean {
+  override fun isDirtyStamp(stamp: StampsStorage.Stamp?, file: Path, attrs: BasicFileAttributes): Boolean {
     if (stamp !is HashStamp) {
       return true
     }
@@ -101,7 +97,7 @@ internal class HashStampStorage(
       return false
     }
 
-    return stamp.hash != FileHashUtil.getFileHash(file.toPath())
+    return stamp.hash != FileHashUtil.getFileHash(file)
   }
 
   override fun force() {

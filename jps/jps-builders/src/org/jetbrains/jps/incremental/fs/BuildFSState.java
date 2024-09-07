@@ -170,7 +170,7 @@ public final class BuildFSState {
                               @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage) throws IOException {
     registerDeleted(context, target, file);
     if (stampStorage != null) {
-      stampStorage.removeStamp(file, target);
+      stampStorage.removeStamp(file.toPath(), target);
     }
   }
 
@@ -275,7 +275,7 @@ public final class BuildFSState {
           }
         }
         if (stampStorage != null) {
-          stampStorage.removeStamp(file, rd.getTarget());
+          stampStorage.removeStamp(file.toPath(), rd.getTarget());
         }
       }
       else {
@@ -305,7 +305,7 @@ public final class BuildFSState {
                                        @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompileIfNotDeleted(rd, file);
     if (marked && stampStorage != null) {
-      stampStorage.removeStamp(file, rd.getTarget());
+      stampStorage.removeStamp(file.toPath(), rd.getTarget());
     }
     if (marked) {
       final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
@@ -416,7 +416,7 @@ public final class BuildFSState {
             }
             else {
               marked = true;
-              stampsStorage.saveStamp(file, target, stamp); // todo: ask jeka
+              stampsStorage.saveStamp(nioFile, target, stamp); // todo: ask jeka
             }
           }
           else {
