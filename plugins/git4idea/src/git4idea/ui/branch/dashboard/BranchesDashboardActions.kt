@@ -30,6 +30,7 @@ import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialNam
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
+import git4idea.branch.IncomingOutgoingState
 import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
@@ -68,7 +69,7 @@ internal object BranchesDashboardActions {
   internal class HeadAndBranchActions(headBranch: GitLocalBranch,
                                       headBranchRepo: GitRepository,
                                       private val branch: BranchInfo) : ActionGroup(), DumbAware {
-    private val headBranchInfo = BranchInfo(headBranch, true, true, false, null, listOf(headBranchRepo))
+    private val headBranchInfo = BranchInfo(headBranch, true, true, false, IncomingOutgoingState.EMPTY, listOf(headBranchRepo))
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       arrayOf(ShowArbitraryBranchesDiffAction(headBranchInfo, branch), ShowArbitraryBranchesFileDiffAction(headBranchInfo, branch))

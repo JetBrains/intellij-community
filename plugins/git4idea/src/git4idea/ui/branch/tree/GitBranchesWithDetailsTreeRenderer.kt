@@ -8,29 +8,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
-import com.intellij.ui.RowIcon
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
-import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.branch.GitBranchIncomingOutgoingManager
-import git4idea.branch.GitBranchUtil
-import git4idea.branch.TagsNode
+import git4idea.branch.*
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchPopupActions
-import icons.DvcsImplIcons
-import org.jetbrains.annotations.Nls
 import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTree
+import javax.swing.SwingConstants
 
 abstract class GitBranchesWithDetailsTreeRenderer(
   project: Project,
@@ -61,11 +57,11 @@ abstract class GitBranchesWithDetailsTreeRenderer(
                                           leaf: Boolean,
                                           row: Int,
                                           hasFocus: Boolean) {
-    val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
-    tree.toolTipText = inOutTooltip
+    val incomingOutgoingState = getIncomingOutgoingState(userObject)
+    tree.toolTipText = incomingOutgoingState.calcTooltip()
 
     incomingOutgoingLabel.apply {
-      icon = inOutIcon
+      icon = incomingOutgoingState.getIcon()
       isVisible = icon != null
     }
 
@@ -125,31 +121,19 @@ abstract class GitBranchesWithDetailsTreeRenderer(
     return commonTrackedBranch
   }
 
-  private fun getIncomingOutgoingIconWithTooltip(treeNode: Any?): Pair<Icon?, @Nls(capitalization = Nls.Capitalization.Sentence) String?> {
-    val empty = null to null
-    val value = treeNode ?: return empty
-    return when (value) {
-      is GitBranch -> getIncomingOutgoingIconWithTooltip(value)
-      is GitBranchesTreeModel.RefUnderRepository -> getIncomingOutgoingIconWithTooltip(value.ref)
-      else -> empty
+  private fun getIncomingOutgoingState(treeNode: Any?): IncomingOutgoingState {
+    treeNode ?: return IncomingOutgoingState.EMPTY
+    
+    return when (treeNode) {
+      is GitLocalBranch -> getIncomingOutgoingState(treeNode)
+      is GitBranchesTreeModel.RefUnderRepository -> getIncomingOutgoingState(treeNode.ref)
+      else -> IncomingOutgoingState.EMPTY
     }
   }
 
-  private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
-    val branchName = branch.name
+  private fun getIncomingOutgoingState(branch: GitLocalBranch): IncomingOutgoingState {
     val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-
-    val hasIncoming = affectedRepositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
-    val hasOutgoing = affectedRepositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
-
-    val tooltip = GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip(hasIncoming, hasOutgoing).orEmpty()
-
-    return when {
-      hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
-      hasIncoming -> DvcsImplIcons.Incoming
-      hasOutgoing -> DvcsImplIcons.Outgoing
-      else -> null
-    } to tooltip
+    return incomingOutgoingManager.getIncomingOutgoingState(affectedRepositories, branch)
   }
 
   private inner class MyMainPanel : BorderLayoutPanel() {

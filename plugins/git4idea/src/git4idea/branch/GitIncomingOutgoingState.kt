@@ -1,7 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
+import com.intellij.dvcs.ui.BranchActionGroup
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
+import icons.DvcsImplIcons
+import javax.swing.Icon
 
 internal data class IncomingOutgoingState(private val inOutRepoState: Map<GitRepository, InOutRepoState>) {
   fun hasOutgoing(): Boolean = inOutRepoState.values.any { it.hasOutgoing() }
@@ -30,4 +36,52 @@ internal data class InOutRepoState(
   fun hasIncoming(): Boolean = incoming != null
   fun hasOutgoing(): Boolean = outgoing != null
   fun hasUnfetched(): Boolean = incoming == 0
+}
+
+internal fun IncomingOutgoingState.getIcon() : Icon? {
+  val hasIncomingIcon = hasIncoming() || hasUnfetched()
+  val hasOutgoingIcon = hasOutgoing()
+
+  return when {
+    hasIncomingIcon && hasOutgoingIcon -> BranchActionGroup.getIncomingOutgoingIcon()
+    hasIncomingIcon -> DvcsImplIcons.Incoming
+    hasOutgoingIcon -> DvcsImplIcons.Outgoing
+    else -> null
+  }
+}
+
+internal fun IncomingOutgoingState.calcTooltip(): @NlsContexts.Tooltip String? {
+  if (this == IncomingOutgoingState.EMPTY) return null
+
+  val repositories = repositories()
+
+  val html = HtmlBuilder()
+
+  val totalIncoming = totalIncoming()
+  val totalOutgoing = totalOutgoing()
+
+  if (repositories.size == 1) {
+    if (totalIncoming != 0) {
+      html.append(message("branches.tooltip.number.incoming.commits", totalIncoming)).br()
+    }
+    else if (hasUnfetched()) {
+      html.append(message("branches.tooltip.some.incoming.commits.not.fetched", totalIncoming)).br()
+    }
+
+    if (totalOutgoing != 0) {
+      html.append(message("branches.tooltip.number.outgoing.commits", totalOutgoing)).br()
+    }
+  } else {
+    if (totalIncoming != 0) {
+      html.append(message("branches.tooltip.number.incoming.commits.in.repositories", totalIncoming(), reposWithIncoming())).br()
+    }
+    else if (hasUnfetched()) {
+      html.append(message("branches.tooltip.some.incoming.commits.not.fetched", totalIncoming)).br()
+    }
+
+    if (totalOutgoing != 0) {
+      html.append(message("branches.tooltip.number.outgoing.commits.in.repositories", totalOutgoing(), reposWithOutgoing())).br()
+    }
+  }
+  return html.toString()
 }
