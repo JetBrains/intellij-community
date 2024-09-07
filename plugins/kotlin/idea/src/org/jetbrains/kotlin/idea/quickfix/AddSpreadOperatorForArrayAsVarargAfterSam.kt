@@ -11,6 +11,6 @@ internal object AddSpreadOperatorForArrayAsVarargAfterSamFixFactory : KotlinSing
         val diagnosticWithParameters = Errors.TYPE_INFERENCE_CANDIDATE_WITH_SAM_AND_VARARG.cast(diagnostic)
         val argument = diagnosticWithParameters.psiElement
 
-        return AddSpreadOperatorForArrayAsVarargAfterSamFix(argument)
+        return AddSpreadOperatorForArrayAsVarargAfterSamFix(argument).asIntention()
     }
 }
