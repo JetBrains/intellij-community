@@ -8,10 +8,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.UsedReferencesCollector
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.buildOptimizedImports
 import org.jetbrains.kotlin.name.parentOrNull
@@ -54,7 +53,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
 
     @OptIn(KaPlatformInterface::class)
     private fun canOptimizeImports(file: KtFile): Boolean {
-        val module = file.moduleInfo.toKaModule()
+        val module = KotlinProjectStructureProvider.getModule(file.project, file, useSiteModule = null)
 
         // it does not make sense to optimize imports in files
         // which are not under content roots (like testdata)

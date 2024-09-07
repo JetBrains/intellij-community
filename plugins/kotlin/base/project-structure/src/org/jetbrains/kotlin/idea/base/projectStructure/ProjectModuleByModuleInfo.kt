@@ -47,23 +47,72 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 @ApiStatus.Internal
 abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
-    val ideaModuleInfo = moduleInfo as IdeaModuleInfo
+    @Volatile
+    protected var internalDirectRegularDependencies: List<KaModule>? = null
+
+    @Volatile
+    protected var internalDirectFriendDependencies: List<KaModule>? = null
+
+    @Volatile
+    protected var internalDirectDependsOnDependencies: List<KaModule>? = null
+
+    @Volatile
+    private var internalTransitiveDependsOnDependencies: List<KaModule>? = null
+
+    val ideaModuleInfo: IdeaModuleInfo = moduleInfo as IdeaModuleInfo
 
     open val directRegularDependencies: List<KaModule>
-        get() = ideaModuleInfo.dependenciesWithoutSelf().map { it.toKaModule() }.toList()
+        get() {
+            internalDirectRegularDependencies?.let { return it }
+
+            val list = ideaModuleInfo.dependenciesWithoutSelf().mapTo(ArrayList()) { it.toKaModule() }
+            return if (directRegularDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectRegularDependencies!!
+            }
+        }
 
     open val directDependsOnDependencies: List<KaModule>
-        get() = ideaModuleInfo.expectedBy.mapNotNull { (it as? IdeaModuleInfo)?.toKaModule() }
+        get() {
+            internalDirectDependsOnDependencies?.let { return it }
+
+            val list = ideaModuleInfo.expectedBy.mapNotNull { (it as? IdeaModuleInfo)?.toKaModule() }
+            return if (directDependsOnDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectDependsOnDependencies!!
+            }
+        }
 
     // TODO: Implement some form of caching. Also see `ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo`.
     val transitiveDependsOnDependencies: List<KaModule>
-        get() = computeTransitiveDependsOnDependencies(directDependsOnDependencies)
+        get() {
+            internalTransitiveDependsOnDependencies?.let { return it }
+
+            val list = computeTransitiveDependsOnDependencies(directDependsOnDependencies)
+            return if (transitiveDependsOnDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalTransitiveDependsOnDependencies!!
+            }
+        }
 
     open val directFriendDependencies: List<KaModule>
-        get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().mapNotNull { (it as? IdeaModuleInfo)?.toKaModule() }
+        get() {
+            internalDirectFriendDependencies?.let { return it }
+
+            val list = ideaModuleInfo.modulesWhoseInternalsAreVisible().mapNotNull { (it as? IdeaModuleInfo)?.toKaModule() }
+            return if (directFriendDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectFriendDependencies!!
+            }
+        }
 
     val targetPlatform: TargetPlatform get() = ideaModuleInfo.platform
 
@@ -85,6 +134,24 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     override fun toString(): String {
         return "${this::class.java.simpleName} ${(this as KaModule).moduleDescription}"
     }
+
+    companion object {
+        @JvmStatic
+        internal val directRegularDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
+            AtomicReferenceFieldUpdater.newUpdater(KtModuleByModuleInfoBase::class.java, List::class.java, "internalDirectRegularDependencies")
+
+        @JvmStatic
+        internal val directFriendDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
+            AtomicReferenceFieldUpdater.newUpdater(KtModuleByModuleInfoBase::class.java, List::class.java, "internalDirectFriendDependencies")
+
+        @JvmStatic
+        internal val directDependsOnDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
+            AtomicReferenceFieldUpdater.newUpdater(KtModuleByModuleInfoBase::class.java, List::class.java, "internalDirectDependsOnDependencies")
+
+        @JvmStatic
+        private val transitiveDependsOnDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
+            AtomicReferenceFieldUpdater.newUpdater(KtModuleByModuleInfoBase::class.java, List::class.java, "internalTransitiveDependsOnDependencies")
+    }
 }
 
 @ApiStatus.Internal
@@ -99,7 +166,16 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
     val moduleId: ModuleId get() = ModuleId(name)
 
     override val directRegularDependencies: List<KaModule>
-        get() = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
+        get() {
+            internalDirectRegularDependencies?.let { return it }
+
+            val list = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
+            return if (directRegularDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectRegularDependencies!!
+            }
+        }
 
     override val contentScope: GlobalSearchScope
         get() = if (moduleInfo is ModuleTestSourceInfo) {
@@ -203,11 +279,23 @@ private object DependencyKeys {
 
 @ApiStatus.Internal
 open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModuleInfoBase(libraryInfo), KaLibraryModule {
+    @Volatile
+    private var internalLibrarySources: KaLibrarySourceModule? = null
+
     override val libraryName: String
         get() = libraryInfo.library.name ?: "Unnamed library"
 
     override val librarySources: KaLibrarySourceModule
-        get() = libraryInfo.sourcesModuleInfo.toKaModuleOfType<KaLibrarySourceModule>()
+        get() {
+            internalLibrarySources?.let { return it }
+
+            val library = libraryInfo.sourcesModuleInfo.toKaModuleOfType<KaLibrarySourceModule>()
+            return if (librarySourcesUpdater.compareAndSet(this, null, library)) {
+                library
+            } else {
+                internalLibrarySources!!
+            }
+        }
 
     override val binaryRoots: Collection<Path>
         get() = libraryInfo.getLibraryRoots().map(Paths::get)
@@ -220,6 +308,12 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
     override val project: Project get() = libraryInfo.project
+
+    companion object {
+        @JvmStatic
+        private val librarySourcesUpdater: AtomicReferenceFieldUpdater<KtLibraryModuleByModuleInfo?, KaLibrarySourceModule?> =
+            AtomicReferenceFieldUpdater.newUpdater(KtLibraryModuleByModuleInfo::class.java, KaLibrarySourceModule::class.java, "internalLibrarySources")
+    }
 }
 
 @ApiStatus.Internal
@@ -288,25 +382,71 @@ class KtSdkLibraryModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModule
 open class KtLibrarySourceModuleByModuleInfo(
     private val moduleInfo: LibrarySourceInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KaLibrarySourceModule {
+
+    @Volatile
+    private var internalBinaryLibrary: KaLibraryModule? = null
+
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
 
     override val directRegularDependencies: List<KaModule>
-        get() = binaryLibrary.directRegularDependencies.mapNotNull { it as? KaLibraryModule }
+        get() {
+            internalDirectRegularDependencies?.let { return it }
+
+            val list = binaryLibrary.directRegularDependencies.mapNotNull { it as? KaLibraryModule }
+            return if (directRegularDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectRegularDependencies!!
+            }
+        }
 
     override val directFriendDependencies: List<KaModule>
-        get() = binaryLibrary.directFriendDependencies.mapNotNull { it as? KaLibraryModule }
+        get() {
+            internalDirectFriendDependencies?.let { return it }
+
+            val list = binaryLibrary.directFriendDependencies.mapNotNull { it as? KaLibraryModule }
+            return if (directFriendDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectFriendDependencies!!
+            }
+        }
 
     override val directDependsOnDependencies: List<KaModule>
-        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { it as? KaLibraryModule }
+        get() {
+            internalDirectDependsOnDependencies?.let { return it }
+
+            val list = binaryLibrary.directDependsOnDependencies.mapNotNull { it as? KaLibraryModule }
+            return if (directDependsOnDependenciesUpdater.compareAndSet(this, null, list)) {
+                list
+            } else {
+                internalDirectDependsOnDependencies!!
+            }
+        }
 
     override val contentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)
 
     override val binaryLibrary: KaLibraryModule
-        get() = moduleInfo.binariesModuleInfo.toKaModuleOfType<KaLibraryModule>()
+        get() {
+            internalBinaryLibrary?.let { return it }
+
+            val library = moduleInfo.binariesModuleInfo.toKaModuleOfType<KaLibraryModule>()
+            return if (binaryLibraryUpdater.compareAndSet(this, null, library)) {
+                library
+            } else {
+                internalBinaryLibrary!!
+            }
+        }
 
     override val project: Project get() = moduleInfo.project
+
+    companion object {
+        @JvmStatic
+        private val binaryLibraryUpdater: AtomicReferenceFieldUpdater<KtLibrarySourceModuleByModuleInfo?, KaLibraryModule?> =
+            AtomicReferenceFieldUpdater.newUpdater(KtLibrarySourceModuleByModuleInfo::class.java, KaLibraryModule::class.java, "internalBinaryLibrary")
+    }
 }
 
 
