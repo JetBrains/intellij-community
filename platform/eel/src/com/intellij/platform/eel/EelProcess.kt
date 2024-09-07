@@ -66,6 +66,12 @@ interface EelProcess {
    */
   suspend fun kill()
 
+  /**
+   * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
+   * Note: After conversion, this [EelProcess] shouldn't be used: Use result [Process] instead
+   */
+  fun convertToJavaProcess(): Process
+
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
   suspend fun resizePty(columns: Int, rows: Int)
 
