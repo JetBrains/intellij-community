@@ -1,8 +1,7 @@
-*:com.intellij.ai.InlinePromptManager
-- *sf:Companion:com.intellij.ai.InlinePromptManager$Companion
-- a:isInlinePromptShown(com.intellij.openapi.editor.Editor):Z
-*f:com.intellij.ai.InlinePromptManager$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ai.InlinePromptManager
+f:com.intellij.ai.InlinePrompt
+- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor):Z
+- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
+- *bs:isInlinePromptShown$default(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,I,java.lang.Object):Z
 f:com.intellij.analysis.AnalysisBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
