@@ -839,6 +839,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <customPackageIdentifier implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageCustomIdentifier"/>
     <pyRootTypeProvider implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageRootProvider"/>
+    <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
 
     <!-- Experimental packaging extensions-->
     <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
