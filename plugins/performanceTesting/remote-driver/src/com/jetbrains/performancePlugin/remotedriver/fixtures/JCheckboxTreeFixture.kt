@@ -3,9 +3,10 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePathToRowListWithCheckboxState
 import com.intellij.driver.model.TreePathToRowListWithCheckboxStateList
 import com.intellij.util.ui.tree.TreeUtil
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.JTreeTextCellReader
+import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.Robot
+import org.assertj.swing.driver.BasicJTreeCellReader
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JCheckBox
@@ -16,7 +17,7 @@ import javax.swing.tree.TreePath
 
 class JCheckboxTreeFixture(private val robot: Robot, private val component: JTree) : JTreeTextFixture(robot, component) {
 
-  private val textCellReader = JTreeTextCellReader()
+  private val textCellReader = BasicJTreeCellReader(TextCellRendererReader())
 
   fun getCheckBoxForNode(fileTreePath: TreePath): JCheckBox {
     val node = fileTreePath.lastPathComponent as DefaultMutableTreeNode
