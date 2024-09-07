@@ -11227,7 +11227,24 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/wrapWhenExpressionInParentheses")
+    public static class WrapWhenExpressionInParentheses extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("logicalExpressionInWhen.kt")
+        public void testLogicalExpressionInWhen() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/wrapWhenExpressionInParentheses/logicalExpressionInWhen.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/wrongLongSuffix")
