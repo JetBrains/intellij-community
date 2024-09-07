@@ -172,6 +172,11 @@ class CompilationContextImpl private constructor(
       enableCoroutinesDump: Boolean = true,
       customBuildPaths: BuildPaths? = null,
     ): CompilationContextImpl {
+      if (!options.useCompiledClassesFromProjectOutput) {
+        // disable compression - otherwise, our zstd/zip cannot compress efficiently
+        System.setProperty("jps.storage.do.compression", "false")
+      }
+
       check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
         Files.exists(COMMUNITY_ROOT.communityRoot.resolve(it))
       }) {

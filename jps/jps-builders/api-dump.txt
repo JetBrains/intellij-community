@@ -2596,6 +2596,7 @@ f:org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - reportUnhandledPaths():V
 - toFull(java.lang.String):java.lang.String
 - toRelative(java.lang.String):java.lang.String
+- toRelative(java.nio.file.Path):java.lang.String
 c:org.jetbrains.jps.incremental.resources.ResourcesBuilder
 - org.jetbrains.jps.incremental.TargetBuilder
 - <init>():V
@@ -2609,16 +2610,16 @@ a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - pf:dataLock:java.lang.Object
 - <init>(java.io.File,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer):V
 - appendData(java.lang.Object,java.lang.Object):V
-- clean():V
-- close():V
+- f:clean():V
+- f:close():V
 - flush(Z):V
-- force():V
+- f:force():V
 - getKeys():java.util.Collection
 - getKeysIterator():java.util.Iterator
 - getState(java.lang.Object):java.lang.Object
 - remove(java.lang.Object):V
 - update(java.lang.Object,java.lang.Object):V
-- wipe():Z
+- f:wipe():Z
 f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - sf:PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY:java.lang.String
 - <init>(org.jetbrains.jps.builders.storage.BuildDataPaths,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V

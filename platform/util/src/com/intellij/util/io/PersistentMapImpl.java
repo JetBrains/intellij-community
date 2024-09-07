@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -246,9 +245,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
    * @return empty map with exactly the same configuration as this map was created with, but based on the given path
    */
   public PersistentMapImpl<Key, Value> deriveEmptyMap(@NotNull Path path) throws IOException {
-    return myOptions.with(() -> {
-      return new PersistentMapImpl<>(myBuilder.copyWithFile(path));
-    });
+    return myOptions.with(() -> new PersistentMapImpl<>(myBuilder.copyWithFile(path)));
   }
 
   @Override
@@ -597,12 +594,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     getReadLock().lock();
     try {
       flushAppendCache();
-      return myEnumerator.processAllDataObject(processor, new PersistentEnumeratorBase.DataFilter() {
-        @Override
-        public boolean accept(final int id) throws IOException {
-          return readValueId(id) != NULL_ADDR;
-        }
-      });
+      return myEnumerator.processAllDataObject(processor, id -> readValueId(id) != NULL_ADDR);
     }
     catch (ClosedStorageException ex) {
       throw ex;
@@ -691,12 +683,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
 
     if (myValueStorage.performChunksCompaction(readResult.chunksCount)) {
-      long newValueOffset = myValueStorage.compactChunks(new AppendablePersistentMap.ValueDataAppender() {
-        @Override
-        public void append(@NotNull DataOutput out) throws IOException {
-          myValueExternalizer.save(out, valueRead);
-        }
-      }, readResult);
+      long newValueOffset = myValueStorage.compactChunks(out -> myValueExternalizer.save(out, valueRead), readResult);
 
       myEnumerator.lockStorageWrite();
       try {
@@ -1022,9 +1009,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     if (parentFile == null) return ArrayUtil.EMPTY_FILE_ARRAY;
     Path fileName = fileFromDirectory.getFileName();
     try (Stream<Path> children = Files.list(parentFile)) {
-      return children.filter(p -> {
-        return p.getFileName().toString().startsWith(fileName.toString());
-      }).map(p -> p.toFile()).toArray(File[]::new);
+      return children.filter(p -> p.getFileName().toString().startsWith(fileName.toString())).map(Path::toFile).toArray(File[]::new);
     }
   }
 

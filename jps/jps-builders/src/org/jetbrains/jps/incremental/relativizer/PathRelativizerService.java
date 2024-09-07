@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,6 +69,10 @@ public final class PathRelativizerService {
     myRelativizers.add(new JavaSdkPathRelativizer(javaSdks));
     myRelativizers.add(new MavenPathRelativizer());
     myRelativizers.add(new GradlePathRelativizer());
+  }
+
+  public @NotNull String toRelative(@NotNull Path path) {
+    return toRelative(path.toString());
   }
 
   /**

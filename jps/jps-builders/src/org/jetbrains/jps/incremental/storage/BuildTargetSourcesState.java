@@ -272,12 +272,11 @@ public final class BuildTargetSourcesState implements BuildListener {
         }
 
         @Override
-        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-          File file = path.toFile();
-          if (!buildRootIndex.isFileAccepted(file, rootDescriptor)) {
+        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+          if (!buildRootIndex.isFileAccepted(path.toFile(), rootDescriptor)) {
             return FileVisitResult.CONTINUE;
           }
-          getFileHash(target, file, path, rootFile, hash, hashToReuse);
+          getFileHash(target, path, rootFile, hash, hashToReuse);
           return FileVisitResult.CONTINUE;
         }
       });
@@ -307,15 +306,14 @@ public final class BuildTargetSourcesState implements BuildListener {
   }
 
   private void getFileHash(@NotNull BuildTarget<?> target,
-                           @NotNull File file,
                            @NotNull Path path,
                            @NotNull Path rootFile,
                            @NotNull LongArrayList hash,
-                           @NotNull HashStream64 hashToReuse) throws IOException {
+                           @NotNull HashStream64 hashToReuse) {
     StampsStorage<? extends StampsStorage.Stamp> storage = projectStamps.getStampStorage();
     assert storage instanceof HashStampStorage;
     HashStampStorage fileStampStorage = (HashStampStorage)storage;
-    Long fileHash = fileStampStorage.getStoredFileHash(file, target);
+    Long fileHash = fileStampStorage.getStoredFileHash(path, target);
     if (fileHash == null) {
       return;
     }
