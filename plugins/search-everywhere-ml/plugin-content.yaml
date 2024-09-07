@@ -6,20 +6,20 @@
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.0.0/find-action-model-231.0.0.jar
         size: 236768
       find-action-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/233.0.1/find-action-model-233.0.1.jar
-        size: 314360
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/243.0.1/find-action-model-243.0.1.jar
+        size: 401889
       find-file-model:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.1.1/find-file-model-232.1.1.jar
         size: 70478
       find-file-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.1.1/find-file-model-233.1.1.jar
-        size: 139933
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/243.0.1/find-file-model-243.0.1.jar
+        size: 526417
       find-classes-model:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.0.0/find-classes-model-231.0.0.jar
         size: 146583
       find-classes-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/233.1.1/find-classes-model-233.1.1.jar
-        size: 527225
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/243.0.1/find-classes-model-243.0.1.jar
+        size: 1166068
       find-all-model-experimental:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232.1.1/find-all-model-232.1.1.jar
         size: 188471

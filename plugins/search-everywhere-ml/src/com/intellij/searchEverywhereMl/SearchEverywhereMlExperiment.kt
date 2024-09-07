@@ -38,7 +38,6 @@ class SearchEverywhereMlExperiment {
   private val tabExperiments = hashMapOf(
     SearchEverywhereTabWithMlRanking.ACTION to Experiment(
       1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
-      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.ENABLE_TYPOS,
     ),
 

@@ -14,6 +14,7 @@ import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContrib
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.BUFFERED_TIMESTAMP
 import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.ui.components.JBList
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -41,11 +42,17 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   internal fun shouldUseExperimentalModel(tab: SearchEverywhereTabWithMlRanking): Boolean {
     return when (experiment.getExperimentForTab(tab)) {
+      SearchEverywhereMlExperiment.ExperimentType.ENABLE_SEMANTIC_SEARCH -> {
+        tab == SearchEverywhereTabWithMlRanking.ACTION ||
+        tab == SearchEverywhereTabWithMlRanking.FILES ||
+        tab == SearchEverywhereTabWithMlRanking.CLASSES && PlatformUtils.isPyCharm() && PlatformUtils.isIntelliJ()
+      }
       SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL -> true
       SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION -> true
       else -> false
     }
   }
+
 
   internal fun getCurrentSession(): SearchEverywhereMLSearchSession? {
     if (isEnabled()) {
