@@ -1,21 +1,32 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtFile
 
-class ConvertClassToKClassFix(element: KtDotQualifiedExpression) :
-    KotlinQuickFixAction<KtDotQualifiedExpression>(element) {
+class ConvertClassToKClassFix(
+    element: KtDotQualifiedExpression,
+) : PsiUpdateModCommandAction<KtDotQualifiedExpression>(element) {
 
-    override fun getText() = element?.let { KotlinBundle.message("remove.0", it.children.lastOrNull()?.text.toString()) } ?: ""
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtDotQualifiedExpression,
+    ): Presentation {
+        val actionName = element.let { KotlinBundle.message("remove.0", it.lastChild?.text.toString()) }
+        return Presentation.of(actionName)
+    }
+
     override fun getFamilyName() = KotlinBundle.message("remove.conversion.from.kclass.to.class")
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
+    override fun invoke(
+        context: ActionContext,
+        element: KtDotQualifiedExpression,
+        updater: ModPsiUpdater,
+    ) {
         element.replace(element.firstChild)
     }
 }

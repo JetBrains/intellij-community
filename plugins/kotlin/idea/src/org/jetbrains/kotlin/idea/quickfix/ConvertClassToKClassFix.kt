@@ -43,6 +43,6 @@ internal object ConvertClassToKClassFixFactory : KotlinIntentionActionsFactory()
 
         if (!firstChildType.isSubtypeOf(casted.a)) return emptyList()
 
-        return listOf(ConvertClassToKClassFix(element))
+        return listOf(ConvertClassToKClassFix(element).asIntention())
     }
 }
