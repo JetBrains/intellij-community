@@ -15,19 +15,19 @@ import org.jetbrains.kotlin.psi.KtProperty
 
 internal object ConvertClassToKClassFixFactories {
 
-    val ArgumentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         listOfNotNull(createFixIfAvailable(diagnostic.psi, diagnostic.expectedType))
     }
 
-    val ReturnTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
+    val returnTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
         listOfNotNull(createFixIfAvailable(diagnostic.psi, diagnostic.expectedType))
     }
 
-    val InitializerTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
+    val initializerTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InitializerTypeMismatch ->
         listOfNotNull(createFixIfAvailable((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType))
     }
 
-    val AssignmentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatchFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.AssignmentTypeMismatch ->
         listOfNotNull(createFixIfAvailable(diagnostic.psi, diagnostic.expectedType))
     }
 
