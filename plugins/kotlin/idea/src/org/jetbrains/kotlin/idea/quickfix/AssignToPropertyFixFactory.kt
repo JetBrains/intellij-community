@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -23,7 +23,7 @@ internal object AssignToPropertyFixFactory : KotlinSingleIntentionActionFactory(
     private fun KtCallableDeclaration.hasNameAndTypeOf(name: Name, type: KotlinType) =
         nameAsName == name && (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType == type
 
-    override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtNameReferenceExpression>? {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val expression = diagnostic.psiElement as? KtNameReferenceExpression ?: return null
 
         val containingClass = expression.containingClass() ?: return null
@@ -43,6 +43,6 @@ internal object AssignToPropertyFixFactory : KotlinSingleIntentionActionFactory(
         if (!hasAssignableProperty && !hasAssignablePropertyInPrimaryConstructor) return null
 
         val hasSingleImplicitReceiver = expression.getResolutionScope().getImplicitReceiversHierarchy().size == 1
-        return AssignToPropertyFix(expression, hasSingleImplicitReceiver)
+        return AssignToPropertyFix(expression, hasSingleImplicitReceiver).asIntention()
     }
 }
