@@ -6732,7 +6732,79 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/assignToProperty")
+    public static class AssignToProperty extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentNameProperty.kt")
+        public void testDifferentNameProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/differentNameProperty.kt");
+        }
+
+        @TestMetadata("differentNameProperty2.kt")
+        public void testDifferentNameProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/differentNameProperty2.kt");
+        }
+
+        @TestMetadata("differentTypeProperty.kt")
+        public void testDifferentTypeProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/differentTypeProperty.kt");
+        }
+
+        @TestMetadata("differentTypeProperty2.kt")
+        public void testDifferentTypeProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/differentTypeProperty2.kt");
+        }
+
+        @TestMetadata("inSecondaryConstructor.kt")
+        public void testInSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/inSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("noProperty.kt")
+        public void testNoProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/noProperty.kt");
+        }
+
+        @TestMetadata("qualifiedThis.kt")
+        public void testQualifiedThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/qualifiedThis.kt");
+        }
+
+        @TestMetadata("sameProperty.kt")
+        public void testSameProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/sameProperty.kt");
+        }
+
+        @TestMetadata("sameProperty2.kt")
+        public void testSameProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/sameProperty2.kt");
+        }
+
+        @TestMetadata("sameProperty3.kt")
+        public void testSameProperty3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/sameProperty3.kt");
+        }
+
+        @TestMetadata("valProperty.kt")
+        public void testValProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/valProperty.kt");
+        }
+
+        @TestMetadata("valProperty2.kt")
+        public void testValProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/assignToProperty/valProperty2.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/callFromPublicInline")
