@@ -367,7 +367,7 @@ object ChangeVisibilityFixFactories {
         }
 
         if (!available) return null
-        var name = declaration.asDisplayableName(symbol) ?: return null
+        val name = declaration.asDisplayableName(symbol) ?: return null
 
         return when (visibility) {
             Visibilities.Private -> ChangeToPrivateModCommandAction(declaration, name)
