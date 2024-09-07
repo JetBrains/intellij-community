@@ -1,3 +1,8 @@
+*:com.intellij.ai.InlinePromptManager
+- *sf:Companion:com.intellij.ai.InlinePromptManager$Companion
+- a:isInlinePromptShown(com.intellij.openapi.editor.Editor):Z
+*f:com.intellij.ai.InlinePromptManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ai.InlinePromptManager
 f:com.intellij.analysis.AnalysisBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
@@ -168,6 +173,7 @@ com.intellij.codeInsight.completion.BatchConsumer
 - startBatch():V
 a:com.intellij.codeInsight.completion.CompletionConfidence
 - <init>():V
+- shouldSkipAutopopup(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 - shouldSkipAutopopup(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,I):com.intellij.util.ThreeState
 f:com.intellij.codeInsight.completion.CompletionConfidenceEP
 - com.intellij.lang.LanguageExtensionPoint
