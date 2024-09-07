@@ -28,26 +28,11 @@ internal fun KotlinType.isJClass(): Boolean {
     return expressionTypeFqName == JAVA_LANG_CLASS_FQ_NAME
 }
 
-class ConvertClassToKClassFix(element: KtDotQualifiedExpression, type: KotlinType) :
+class ConvertClassToKClassFix(element: KtDotQualifiedExpression) :
   KotlinQuickFixAction<KtDotQualifiedExpression>(element) {
-    private val isApplicable: Boolean = run {
-        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
-        val expressionType = bindingContext.getType(element) ?: return@run false
-        if (!expressionType.isJClass()) return@run false
-
-        val children = element.children
-        if (children.size != 2) return@run false
-
-        val firstChild = children.first() as? KtExpression ?: return@run false
-        val firstChildType = bindingContext.getType(firstChild) ?: return@run false
-
-        return@run firstChildType.isSubtypeOf(type)
-    }
 
     override fun getText() = element?.let { KotlinBundle.message("remove.0", it.children.lastOrNull()?.text.toString()) } ?: ""
     override fun getFamilyName() = KotlinBundle.message("remove.conversion.from.kclass.to.class")
-
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile) = isApplicable
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
@@ -57,12 +42,24 @@ class ConvertClassToKClassFix(element: KtDotQualifiedExpression, type: KotlinTyp
     companion object Factory : KotlinIntentionActionsFactory() {
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
             val casted = Errors.TYPE_MISMATCH.cast(diagnostic)
+            val element = casted.psiElement as? KtDotQualifiedExpression ?: return emptyList()
 
             val expectedClassDescriptor = casted.a.constructor.declarationDescriptor as? ClassDescriptor ?: return emptyList()
             if (!KotlinBuiltIns.isKClass(expectedClassDescriptor)) return emptyList()
 
-            val element = casted.psiElement as? KtDotQualifiedExpression ?: return emptyList()
-            return listOf(ConvertClassToKClassFix(element, casted.a))
+            val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+            val expressionType = bindingContext.getType(element) ?: return emptyList()
+            if (!expressionType.isJClass()) return emptyList()
+
+            val children = element.children
+            if (children.size != 2) return emptyList()
+
+            val firstChild = children.first() as? KtExpression ?: return emptyList()
+            val firstChildType = bindingContext.getType(firstChild) ?: return emptyList()
+
+            if (!firstChildType.isSubtypeOf(casted.a)) return emptyList()
+
+            return listOf(ConvertClassToKClassFix(element))
         }
     }
 }
