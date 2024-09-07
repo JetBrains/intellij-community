@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import java.awt.Point
 import java.awt.Rectangle
 
@@ -62,3 +63,9 @@ interface Registry {
 interface RegistryValue {
   fun setValue(value: String)
 }
+
+@Remote("org.assertj.swing.driver.CellRendererReader")
+interface CellRendererReader
+
+@Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.AccessibleNameCellRendererReader", plugin = REMOTE_ROBOT_MODULE_ID)
+interface AccessibleNameCellRendererReader: CellRendererReader

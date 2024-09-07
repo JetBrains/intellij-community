@@ -17,6 +17,10 @@ class JListTextFixture(robot: Robot, component: JList<*>) : JListFixture(robot, 
     replaceCellReader(BasicJListCellReader(TextCellRendererReader()))
   }
 
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    replaceCellReader(BasicJListCellReader(reader))
+  }
+
   fun collectRawItems(): List<String> = computeOnEdt {
     val model = target().model
     List(model.size) { model.getElementAt(it).toString() }

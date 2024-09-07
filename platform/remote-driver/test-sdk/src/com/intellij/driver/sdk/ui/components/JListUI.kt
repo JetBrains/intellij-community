@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.RectangleRef
@@ -34,6 +35,10 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   val selectedItems: List<String>
     get() = fixture.collectSelectedItems()
+
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    fixture.replaceCellRendererReader(reader)
+  }
 
   fun clickItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
     findItemIndex(itemText, fullMatch)?.let { index ->
@@ -85,6 +90,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
 interface JListFixtureRef {
+  fun replaceCellRendererReader(reader: CellRendererReader)
   fun collectItems(): List<String>
   fun collectRawItems(): List<String>
   fun collectSelectedItems(): List<String>
@@ -96,4 +102,3 @@ interface JListFixtureRef {
 interface JListComponent {
   fun getCellBounds(index0: Int, index1: Int): RectangleRef
 }
-
