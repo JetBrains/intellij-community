@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.scripting.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
