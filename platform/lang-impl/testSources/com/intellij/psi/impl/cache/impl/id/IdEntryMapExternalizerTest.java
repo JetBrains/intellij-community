@@ -35,7 +35,7 @@ class IdEntryMapExternalizerTest {
     externalizersAreEquivalent(emptyMap, defaultMapExternalizer, optimizedMapExternalizer);
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "{displayName}")//otherwise TeamCity generates test id per each parameter value tested
   @MethodSource("generateMaps")
   void generatedMapsSerializeIdenticallyByBothExternalizers(IdEntryToScopeMapImpl generatedMap) throws IOException {
     externalizersAreEquivalent(generatedMap, defaultMapExternalizer, optimizedMapExternalizer);
