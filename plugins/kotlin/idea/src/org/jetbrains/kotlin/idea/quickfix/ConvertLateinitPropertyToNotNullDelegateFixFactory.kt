@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -21,10 +20,6 @@ internal object ConvertLateinitPropertyToNotNullDelegateFixFactory : KotlinSingl
         val type = property.analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, typeReference] ?: return null
         if (!KotlinBuiltIns.isPrimitiveType(type)) return null
 
-        return object : ConvertLateinitPropertyToNotNullDelegateFixBase(property, type.toString()) {
-            override fun shortenReferences(element: KtProperty) {
-                ShortenReferences.DEFAULT.process(element)
-            }
-        }.asIntention()
+        return ConvertLateinitPropertyToNotNullDelegateFix(property, type.toString()).asIntention()
     }
 }

@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-abstract class ConvertLateinitPropertyToNotNullDelegateFixBase(
+class ConvertLateinitPropertyToNotNullDelegateFix(
     element: KtProperty,
     private val type: String
 ) : PsiUpdateModCommandAction<KtProperty>(element) {
@@ -29,8 +30,6 @@ abstract class ConvertLateinitPropertyToNotNullDelegateFixBase(
         )
         element.addAfter(propertyDelegate, typeReference)
         element.typeReference = null
-        shortenReferences(element)
+        ShortenReferencesFacility.getInstance().shorten(element)
     }
-
-    abstract fun shortenReferences(element: KtProperty)
 }
