@@ -164,6 +164,11 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   @NotNull
+  public PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
+    return withDeclarationElement(targetExpression);
+  }
+
+  @NotNull
   public PyGenericType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
     return new PyGenericType(getName(), getBound(), getDefaultType(), isDefinition(), declarationElement, getScopeOwner());
   }
