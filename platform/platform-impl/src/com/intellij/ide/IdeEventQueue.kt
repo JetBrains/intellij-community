@@ -14,7 +14,6 @@ import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.ui.UISettings
-import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -39,7 +38,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
-import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -466,18 +464,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Suppress("UsePropertyAccessSyntax")
   override fun getNextEvent(): AWTEvent {
-    val event = if (isImplicitReadOnEDTDisabled) {
-      super.getNextEvent()
-    }
-    else {
-      val applicationEx = ApplicationManagerEx.getApplicationEx()
-      if (applicationEx != null && appIsLoaded()) {
-        applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
-      }
-      else {
-        super.getNextEvent()
-      }
-    }
+    val event = super.getNextEvent()
     eventsReturned.incrementAndGet()
     if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")

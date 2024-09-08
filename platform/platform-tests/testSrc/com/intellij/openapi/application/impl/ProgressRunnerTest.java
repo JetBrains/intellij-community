@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.ProgressWindowTest.TestProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
@@ -55,9 +54,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   public static List<Object[]> dataOnEdt() {
     List<Object[]> result = new ArrayList<>();
     result.add(new Boolean[]{true, false});
-    if (StartupUtil.isImplicitReadOnEDTDisabled()) {
-      result.add(new Boolean[]{true, true});
-    }
+    result.add(new Boolean[]{true, true});
     result.add(new Boolean[]{false, false});
     return result;
   }

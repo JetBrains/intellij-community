@@ -56,7 +56,6 @@ internal const val IDE_STARTED: String = "--------------------------------------
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
 
 private const val IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app"
-private const val DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY = "idea.disable.implicit.read.on.edt"
 private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 
 private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
@@ -359,10 +358,6 @@ private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
     }
   }
 }
-
-@get:Internal
-val isImplicitReadOnEDTDisabled: Boolean
-  get() = "false" != System.getProperty(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 @Internal
 // called by the app after startup
