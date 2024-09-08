@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeAct
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiFileIntentionTest
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INTENTIONS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 
@@ -121,7 +121,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/removeExplicitLambdaParameterTypes", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertPrimaryConstructorToSecondary", pattern = pattern)
             model("${idea}intentions/convertArgumentToSet", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/addAnnotationUseSiteTarget", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/addAnnotationUseSiteTarget", pattern = pattern)
             model("${idea}intentions/convertEnumToSealedClass", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertToIndexedFunctionCall", pattern = pattern, isIgnored = true)
             model("${idea}intentions/samConversionToAnonymousObject", pattern = pattern, isIgnored = true)

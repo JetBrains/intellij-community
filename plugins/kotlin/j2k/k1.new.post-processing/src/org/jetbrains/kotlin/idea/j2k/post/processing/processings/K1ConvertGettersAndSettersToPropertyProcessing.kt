@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
 import org.jetbrains.kotlin.idea.core.setVisibility
-import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
