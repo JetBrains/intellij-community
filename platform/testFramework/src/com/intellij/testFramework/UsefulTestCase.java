@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -69,6 +69,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.TestLoggerKt.rethrowErrorsLoggedInTheCurrentThread;
 import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTestEnvironment;
 import static org.junit.Assume.assumeTrue;
@@ -522,7 +523,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
       boolean success = false;
       TestLoggerFactory.onTestStarted();
       try {
-        testRunnable.run();
+        rethrowErrorsLoggedInTheCurrentThread(() -> testRunnable.run());
         success = true;
       }
       catch (AssumptionViolatedException e) {

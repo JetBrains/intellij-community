@@ -15,9 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -37,6 +39,7 @@ import java.util.logging.StreamHandler;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
+import static com.intellij.testFramework.TestLoggerKt.rethrowErrorsLoggedInTheCurrentThread;
 import static java.util.Objects.requireNonNullElse;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
@@ -376,33 +379,40 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static @NotNull TestRule createTestWatcher() {
-    return new TestWatcher() {
-      @Override
-      protected void succeeded(Description description) {
-        onTestFinished(true, description);
-      }
+    return RuleChain.emptyRuleChain()
+      .around(new TestWatcher() {
+        @Override
+        protected void succeeded(Description description) {
+          onTestFinished(true, description);
+        }
 
-      @Override
-      protected void failed(Throwable e, Description description) {
-        logTestFailure(e);
-        onTestFinished(false, description);
-      }
+        @Override
+        protected void failed(Throwable e, Description description) {
+          logTestFailure(e);
+          onTestFinished(false, description);
+        }
 
-      @Override
-      protected void skipped(AssumptionViolatedException e, Description description) {
-        onTestFinished(true, description);
-      }
+        @Override
+        protected void skipped(AssumptionViolatedException e, Description description) {
+          onTestFinished(true, description);
+        }
 
-      @Override
-      protected void starting(@NotNull Description d) {
-        onTestStarted();
-      }
-    };
+        @Override
+        protected void starting(@NotNull Description d) {
+          onTestStarted();
+        }
+      })
+      .around((base, description) -> new Statement() {
+        @Override
+        public void evaluate() {
+          rethrowErrorsLoggedInTheCurrentThread(() -> base.evaluate());
+        }
+      });
   }
 
   @Internal
   public static final class TestLoggerAssertionError extends AssertionError {
-    private TestLoggerAssertionError(String message, Throwable cause) {
+    TestLoggerAssertionError(String message, Throwable cause) {
       super(message, cause);
     }
   }
@@ -420,6 +430,11 @@ public final class TestLoggerFactory implements Logger.Factory {
       Set<LoggedErrorProcessor.Action>
         actions = LoggedErrorProcessor.getInstance().processError(myLogger.getName(), requireNonNullElse(message, ""), details, t);
 
+      ErrorLog errorLog = TestLoggerKt.getErrorLog();
+      if (actions.contains(LoggedErrorProcessor.Action.RETHROW) && errorLog != null) {
+        errorLog.recordLoggedError(message, details, t);
+        return;
+      }
       if (actions.contains(LoggedErrorProcessor.Action.LOG)) {
         if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && details.length == 0) {
           throw (TestLoggerAssertionError)t;
