@@ -33,10 +33,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.modcommand.ModCommandWithContext;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,10 +44,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -158,7 +152,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       useAlternativeResolve
       ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
       : prioritizedRunnable;
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
+    return WriteIntentReadAction.compute((Computable<CachedIntentions>)() ->
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
+    );
   }
 
   private static void letAutoImportComplete(@NotNull Editor editor, @NotNull PsiFile file, DaemonCodeAnalyzerImpl codeAnalyzer) {

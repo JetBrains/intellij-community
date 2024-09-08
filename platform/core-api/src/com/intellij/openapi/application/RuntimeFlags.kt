@@ -3,8 +3,6 @@ package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
 
-private const val COROUTINE_WIL_PROPERTY = "ide.coroutine.write.intent.lock"
-
 /**
  * - `false` means log an exception and proceed.
  * - `true` means throw an exception.
@@ -19,7 +17,7 @@ val isMessageBusThrowsWhenDisposed: Boolean =
  */
 @get:ApiStatus.Internal
 val isCoroutineWILEnabled: Boolean =
-  System.getProperty(COROUTINE_WIL_PROPERTY, "true").toBoolean()
+  System.getProperty("ide.coroutine.write.intent.lock", "true").toBoolean()
 
 /**
  * - `false` means exceptions from [com.intellij.util.messages.Topic] subscribers are being logged
