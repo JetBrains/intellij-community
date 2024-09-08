@@ -459,14 +459,14 @@
       <action id="Vcs.Diff.ResolveConflictsInImports" class="com.intellij.diff.merge.ResolveConflictsInImportsToggleAction">
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings"/>
       </action>
-      <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToEditorAction">
+      <action id="Vcs.Diff.ShowDiffInEditorTab" class="com.intellij.diff.editor.MoveDiffEditorAction$ToEditor">
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
         <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
       </action>
       <group id="Vcs.Diff.EditorTabs.Group" searchable="false">
         <action id="Vcs.Diff.ShowDiffInNewWindow"
                 icon="AllIcons.Actions.MoveToWindow"
-                class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
+                class="com.intellij.diff.editor.MoveDiffEditorAction$ToWindow">
           <add-to-group group-id="Diff.Binary.Settings"/>
         </action>
         <action id="Vcs.Diff.EnableDisableCombinedDiff"

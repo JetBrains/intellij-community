@@ -5,4 +5,9 @@
 
     <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.diff.editor.EditorTabDiffPreviewAdvancedSettingsListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+  </applicationListeners>
 </idea-plugin>

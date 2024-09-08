@@ -14,7 +14,7 @@ interface DiffEditorTabFilesManager {
   fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor>
 
   companion object {
-    private const val SHOW_DIFF_IN_EDITOR_SETTING = "show.diff.as.editor.tab"
+    internal const val SHOW_DIFF_IN_EDITOR_SETTING = "show.diff.as.editor.tab"
 
     /**
      * If enabled - the [DiffViewerVirtualFile] will open like a normal editor in current split.
@@ -23,7 +23,11 @@ interface DiffEditorTabFilesManager {
     @JvmStatic
     var isDiffInEditor: Boolean
       get() = AdvancedSettings.getBoolean(SHOW_DIFF_IN_EDITOR_SETTING)
-      set(value) = AdvancedSettings.setBoolean(SHOW_DIFF_IN_EDITOR_SETTING, value)
+      set(value) {
+        if (AdvancedSettings.getBoolean(SHOW_DIFF_IN_EDITOR_SETTING) != value) {
+          AdvancedSettings.setBoolean(SHOW_DIFF_IN_EDITOR_SETTING, value)
+        }
+      }
 
     @JvmStatic
     val isDiffInWindow: Boolean get() = !isDiffInEditor

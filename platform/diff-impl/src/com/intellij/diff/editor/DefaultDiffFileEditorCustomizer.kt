@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 
-private val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDITOR")
+internal val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDITOR")
 private val CUSTOM_DIFF_ESCAPE_HANDLER: Key<AnAction> = Key.create("CUSTOM_DIFF_ESCAPE_HANDLER")
 
 private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
