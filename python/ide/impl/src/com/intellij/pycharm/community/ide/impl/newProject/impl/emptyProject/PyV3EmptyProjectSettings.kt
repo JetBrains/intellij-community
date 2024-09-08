@@ -3,6 +3,7 @@ package com.intellij.pycharm.community.ide.impl.newProject.impl.emptyProject
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,7 +20,9 @@ class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV
       PyWelcome.prepareFile(module.project, baseDir)
     }
     withContext(Dispatchers.EDT) {
-      file.navigate(true)
+      writeIntentReadAction {
+        file.navigate(true)
+      }
     }
   }
 

@@ -526,7 +526,9 @@ class InlineCompletionHandler(
   @RequiresEdt
   private fun traceBlocking(event: InlineCompletionEventType) {
     ThreadingAssertions.assertEventDispatchThread()
-    eventListeners.getMulticaster().on(event)
+    WriteIntentReadAction.run {
+      eventListeners.getMulticaster().on(event)
+    }
   }
 
   @RequiresEdt

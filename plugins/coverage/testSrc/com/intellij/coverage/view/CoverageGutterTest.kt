@@ -6,6 +6,7 @@ import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
@@ -187,7 +188,9 @@ internal suspend fun findEditor(project: Project, className: String): EditorImpl
 internal suspend fun closeEditor(project: Project, className: String) {
   val psiClass = getPsiClass(project, className)
   withContext(Dispatchers.EDT) {
-    FileEditorManager.getInstance(project).closeFile(psiClass.containingFile.virtualFile)
+    writeIntentReadAction {
+      FileEditorManager.getInstance(project).closeFile(psiClass.containingFile.virtualFile)
+    }
   }
 }
 

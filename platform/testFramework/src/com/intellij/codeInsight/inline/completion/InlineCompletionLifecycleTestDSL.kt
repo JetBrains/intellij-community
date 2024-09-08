@@ -85,7 +85,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     withContext(Dispatchers.EDT) {
       val lookup = fixture.lookup as? LookupImpl
       assertThat(lookup).isNotNull()
-      lookup!!.hideLookup(false)
+      writeIntentReadAction {
+        lookup!!.hideLookup(false)
+      }
     }
   }
 

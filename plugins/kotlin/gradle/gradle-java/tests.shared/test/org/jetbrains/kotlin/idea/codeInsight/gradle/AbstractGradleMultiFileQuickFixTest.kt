@@ -90,21 +90,23 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                 refreshRecursively(projectVFile)
 
                 withContext(Dispatchers.EDT) {
-                    PlatformTestUtil.assertDirectoriesEqual(
-                        expected,
-                        projectVFile,
-                        fun(vFile: VirtualFile): Boolean {
-                            if (vFile.parent == projectVFile) {
-                                when (vFile.name) {
-                                    ".gradle", "gradle", "build", "gradle.properties", "gradlew", "gradlew.bat", ".kotlin" -> return false
+                    writeIntentReadAction {
+                        PlatformTestUtil.assertDirectoriesEqual(
+                            expected,
+                            projectVFile,
+                            fun(vFile: VirtualFile): Boolean {
+                                if (vFile.parent == projectVFile) {
+                                    when (vFile.name) {
+                                        ".gradle", "gradle", "build", "gradle.properties", "gradlew", "gradlew.bat", ".kotlin" -> return false
+                                    }
                                 }
-                            }
 
-                            if (ignoreChangesInBuildScriptFiles && ".gradle" in vFile.name) return false
+                                if (ignoreChangesInBuildScriptFiles && ".gradle" in vFile.name) return false
 
-                            return additionalResultFileFilter(vFile)
-                        },
-                    )
+                                return additionalResultFileFilter(vFile)
+                            },
+                        )
+                    }
                 }
             }
 

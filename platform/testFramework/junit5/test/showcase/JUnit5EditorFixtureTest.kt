@@ -2,6 +2,7 @@
 package com.intellij.testFramework.junit5.showcase
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
 import kotlinx.coroutines.Dispatchers
@@ -32,8 +33,10 @@ class JUnit5EditorFixtureTest {
   fun `caret position in editors`() {
     runBlocking {
       withContext(Dispatchers.EDT) {
-        localEditor.get().caretModel.moveToOffset(2)
-        Assertions.assertEquals(2, localEditor.get().caretModel.offset)
+        writeIntentReadAction {
+          localEditor.get().caretModel.moveToOffset(2)
+          Assertions.assertEquals(2, localEditor.get().caretModel.offset)
+        }
       }
     }
   }
@@ -42,8 +45,10 @@ class JUnit5EditorFixtureTest {
   fun `selection in editors`() {
     runBlocking {
       withContext(Dispatchers.EDT) {
-        localEditor.get().selectionModel.setSelection(1, 3)
-        Assertions.assertEquals("bc", localEditor.get().selectionModel.selectedText)
+        writeIntentReadAction {
+          localEditor.get().selectionModel.setSelection(1, 3)
+          Assertions.assertEquals("bc", localEditor.get().selectionModel.selectedText)
+        }
       }
     }
   }
