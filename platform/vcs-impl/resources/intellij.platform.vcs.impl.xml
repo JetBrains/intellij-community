@@ -42,9 +42,6 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
 
-    <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager"
-                    overrides="true"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
 
     <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"

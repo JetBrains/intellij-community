@@ -1491,15 +1491,11 @@ a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewKt
 - sf:showExternalToolIfNeeded(com.intellij.openapi.project.Project,com.intellij.openapi.ListSelection):Z
 f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-- com.intellij.diff.editor.DiffEditorTabFilesManager
 - sf:Companion:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
 - sf:EDITOR_TAB_DIFF_PREVIEW:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project):V
-- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-- showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
 - f:subscribeToPreviewVisibilityChange(com.intellij.openapi.Disposable,java.lang.Runnable):V
 f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 a:com.intellij.openapi.vcs.changes.EditorTabPreview
 - com.intellij.openapi.vcs.changes.EditorTabPreviewBase
 - <init>(com.intellij.diff.impl.DiffRequestProcessor):V

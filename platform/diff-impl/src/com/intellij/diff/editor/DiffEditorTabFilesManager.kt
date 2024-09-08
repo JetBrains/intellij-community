@@ -3,7 +3,6 @@ package com.intellij.diff.editor
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -42,10 +41,3 @@ interface DiffEditorTabFilesManager {
 
 @JvmField
 val DIFF_OPENED_IN_NEW_WINDOW = Key<Boolean>("DIFF_OPENED_IN_NEW_WINDOW")
-
-internal class DefaultDiffTabFilesManager(private val project: Project) : DiffEditorTabFilesManager {
-
-  override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
-    return FileEditorManager.getInstance(project).openFile(diffFile, true)
-  }
-}

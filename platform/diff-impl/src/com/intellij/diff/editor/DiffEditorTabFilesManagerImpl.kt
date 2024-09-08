@@ -1,15 +1,44 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.codeWithMe.ClientId
+import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.headTail
+
+internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorTabFilesManager {
+  override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      // do not use FileEditorManagerImpl.getWindows - these are not implemented for clients
+      return editorManager.openFile(file = diffFile, focusEditor = focusEditor, searchForOpen = true)
+    }
+
+    val openMode = if (isDiffInEditor) FileEditorManagerImpl.OpenMode.DEFAULT else FileEditorManagerImpl.OpenMode.NEW_WINDOW
+    val newTab = editorManager.openFile(
+      file = diffFile,
+      window = null,
+      options = FileEditorOpenOptions(
+        openMode = openMode,
+        isSingletonEditorInWindow = true,
+        reuseOpen = true,
+        requestFocus = focusEditor,
+      ),
+    )
+    return newTab.allEditors.toTypedArray()
+  }
+}
 
 internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolean) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
