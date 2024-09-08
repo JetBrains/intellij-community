@@ -172,6 +172,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConfusingBranchConditionErrorFixFactories.wrapExpressionInParenthesesFixFactory)
         registerFactory(WrapWithParenthesesFixFactories.suspendFixFactory)
         registerFactory(WrapWithParenthesesFixFactories.suspendFunErrorFixFactory)
+        registerFactory(DeclarationCantBeInlinedFixFactories.removeOpenModifierFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

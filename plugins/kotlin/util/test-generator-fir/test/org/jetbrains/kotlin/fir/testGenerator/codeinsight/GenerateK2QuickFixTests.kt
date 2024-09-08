@@ -112,7 +112,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/convertToIsArrayOfCall", pattern = pattern)
             model("$idea/quickfix/createFromUsage", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/createLabel", pattern = pattern)
-            model("$idea/quickfix/declarationCantBeInlined", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/declarationCantBeInlined", pattern = pattern)
             model("$idea/quickfix/declaringJavaClass", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/decreaseVisibility", pattern = pattern)
             model("$idea/quickfix/deprecatedJavaAnnotation", pattern = pattern, isIgnored = true)
