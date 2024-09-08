@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.BundleBase;
@@ -24,6 +24,11 @@ import java.util.function.Supplier;
 public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   public final @NotNull @NonNls String myName;
 
+  /**
+   * The value of the highlighting level.
+   * Used for comparing the annotations: if two annotations with different severity levels cover the same text range,
+   * only the annotation with a higher severity level is displayed.
+   */
   public final int myVal;
 
   private final @Nullable Supplier<@Nls String> myDisplayName;
