@@ -6,13 +6,13 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtTypeReference
 
-abstract class ChangeAccessorTypeFixBase(
+class ChangeAccessorTypeFix(
     element: KtPropertyAccessor,
     private val typePresentation: String,
     private val typeSourceCode: String,
@@ -41,8 +41,6 @@ abstract class ChangeAccessorTypeFixBase(
         val typeReference = if (element.isGetter) element.returnTypeReference else element.parameter!!.typeReference
 
         val insertedTypeRef = typeReference!!.replaced(newTypeReference)
-        shortenReferences(insertedTypeRef)
+        ShortenReferencesFacility.getInstance().shorten(insertedTypeRef)
     }
-
-    abstract fun shortenReferences(element: KtTypeReference)
 }
