@@ -97,8 +97,10 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         endColor = WARNING_END_COLOR;
       }
       else {
-        startColor = getStartColor(c);
-        endColor = getEndColor(c);
+        Object clientPropertyStartColor = progressBar.getClientProperty("ProgressBar.indeterminateStartColor");
+        Object clientPropertyEndColor = progressBar.getClientProperty("ProgressBar.indeterminateEndColor");
+        startColor = clientPropertyStartColor instanceof Color ? (Color)clientPropertyStartColor : getStartColor(c);
+        endColor = clientPropertyEndColor instanceof Color ? (Color)clientPropertyEndColor : getEndColor(c);
       }
 
       int pHeight = progressBar.getPreferredSize().height;
