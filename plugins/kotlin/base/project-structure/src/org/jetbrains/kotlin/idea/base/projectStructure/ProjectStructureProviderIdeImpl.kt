@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
@@ -116,10 +117,15 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
     fun <T> computeModule(
         psiElement: PsiElement,
         contextualModule: T? = null
-    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
-        val containingFile = psiElement.containingFile
-        val virtualFile = containingFile?.virtualFile
+    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase =
+        psiElement.containingFile.let { computeModule(it, psiElement, contextualModule, it?.virtualFile) }
 
+    fun <T> computeModule(
+        containingFile: PsiFile?,
+        psiElement: PsiElement,
+        contextualModule: T?,
+        virtualFile: VirtualFile?
+    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
         if (containingFile != null) {
             computeSpecialModule(containingFile)?.let { return it }
         }
@@ -193,14 +199,28 @@ private fun <T> cachedKtModule(
 ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
     val contextToKtModule = CachedValuesManager.getCachedValue(anchorElement) {
         val project = anchorElement.project
+        val containingFile = anchorElement.containingFile
+        val virtualFile = containingFile?.virtualFile
+        val isLibraryFile =
+            virtualFile?.let { RootKindMatcher.matches(project, it, RootKindFilter.libraryFiles) } ?: false
+        val dependencies = if (isLibraryFile) {
+            arrayOf(
+                ProjectRootModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project)
+            )
+        } else {
+            arrayOf(
+                ProjectRootModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
+                KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker()
+            )
+        }
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KaModule> { context ->
                 val projectStructureProvider = KotlinProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
-                projectStructureProvider.computeModule(anchorElement, context)
+                projectStructureProvider.computeModule(containingFile, anchorElement, context, virtualFile)
             },
-            ProjectRootModificationTracker.getInstance(project),
-            JavaLibraryModificationTracker.getInstance(project),
-            KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
+            dependencies,
         )
     }
 
