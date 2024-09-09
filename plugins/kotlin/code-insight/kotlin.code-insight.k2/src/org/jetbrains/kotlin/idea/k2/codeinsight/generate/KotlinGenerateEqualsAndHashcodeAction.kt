@@ -46,6 +46,8 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
         const val SUPER_HAS_EQUALS = "superHasEquals"
         const val SUPER_HAS_HASHCODE = "superHasHashCode"
 
+        const val SUPER_PARAM_NAME = "superParamName"
+
         const val CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof"
     }
 

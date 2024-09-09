@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiType;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -18,17 +19,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
-import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.view.GenerateTemplateConfigurable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 
-public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
+public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
   private static final Namer<Couple<TemplateResource>> NAMER = new Namer<>() {
 
     @Override
@@ -82,7 +83,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
       }
     };
   private final Project myProject;
-  private final TemplatesManager myManager;
+  private final EqualsHashCodeTemplatesManagerBase myManager;
 
   public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManagerBase manager) {
     super(NAMER, FACTORY, CLONER, COMPARER, new ArrayList<>(manager.getTemplateCouples()));
@@ -127,8 +128,8 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
 
   @Override
   protected UnnamedConfigurable createConfigurable(Couple<TemplateResource> item) {
-    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
-    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
+    final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, getEqualsImplicitVars(), myProject);
+    final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
       @Override
       public @NotNull JComponent createComponent() {
@@ -174,6 +175,14 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
         hashCodeConfigurable.disposeUIResources();
       }
     };
+  }
+
+  protected @NotNull Map<String, PsiType> getHashCodeImplicitVars() {
+    return GenerateEqualsHelper.getHashCodeImplicitVars();
+  }
+
+  protected @NotNull Map<String, PsiType> getEqualsImplicitVars() {
+    return GenerateEqualsHelper.getEqualsImplicitVars(myProject);
   }
 
   @Override

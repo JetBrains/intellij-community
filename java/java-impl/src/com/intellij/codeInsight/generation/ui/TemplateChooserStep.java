@@ -10,12 +10,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
@@ -32,10 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public abstract class TemplateChooserStep extends StepAdapter {
   private final JComponent myPanel;
@@ -57,10 +56,10 @@ public abstract class TemplateChooserStep extends StepAdapter {
                                   .toArray(String[]::new));
     myComboBox.setSelectedItem(myTemplatesManager.getDefaultTemplateBaseName());
     myComboBox.setSwingPopup(false);
+    Project project = contextElement.getProject();
     final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
       new ComponentWithBrowseButton<>(myComboBox, e -> {
-        EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(contextElement.getProject(), myTemplatesManager);
-        ui.selectNodeInTree(myTemplatesManager.getDefaultTemplateBaseName());
+        EqualsHashCodeTemplatesPanel ui = createTemplatesPanel(project);
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, ui);
         String[] names = myTemplatesManager.getAllTemplates().stream()
           .map(EqualsHashCodeTemplatesManagerBase::getTemplateBaseName)
@@ -72,11 +71,11 @@ public abstract class TemplateChooserStep extends StepAdapter {
     templateChooserLabel.setLabelFor(myComboBox);
     ReadAction.nonBlocking(() -> {
         GlobalSearchScope resolveScope = contextElement.getResolveScope();
-        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(contextElement.getProject());
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         Set<String> names = new LinkedHashSet<>();
         Set<String> invalid = new HashSet<>();
 
-        DumbService dumbService = DumbService.getInstance(contextElement.getProject());
+        DumbService dumbService = DumbService.getInstance(project);
         for (TemplateResource resource : myTemplatesManager.getAllTemplates()) {
           String templateBaseName = EqualsHashCodeTemplatesManagerBase.getTemplateBaseName(resource);
           if (names.add(templateBaseName)) {
@@ -108,6 +107,22 @@ public abstract class TemplateChooserStep extends StepAdapter {
     myPanel.add(templateChooserPanel);
 
     appendAdditionalOptions(myPanel);
+  }
+
+  private @NotNull EqualsHashCodeTemplatesPanel createTemplatesPanel(Project project) {
+    EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(project, myTemplatesManager) {
+      @Override
+      protected @NotNull Map<String, PsiType> getEqualsImplicitVars() {
+        return myTemplatesManager.getEqualsImplicitVars(project);
+      }
+
+      @Override
+      protected @NotNull Map<String, PsiType> getHashCodeImplicitVars() {
+        return myTemplatesManager.getHashCodeImplicitVars(project);
+      }
+    };
+    ui.selectNodeInTree(myTemplatesManager.getDefaultTemplateBaseName());
+    return ui;
   }
 
   protected void appendAdditionalOptions(JComponent stepPanel) {

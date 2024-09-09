@@ -52,7 +52,6 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
             .createFileFromText(template.getFileName(), ftl, template.getTemplate(), LocalTimeCounter.currentTime(), true);
           if (!template.isDefault()) {
             final HashMap<String, PsiType> map = new LinkedHashMap<>();
-            map.put("java_version", PsiTypes.intType());
             map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
             if (multipleFields) {
               map.put("fields", TemplatesManager.createFieldListElementType(project));
@@ -61,7 +60,6 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
               map.put("field", TemplatesManager.createElementType(project, FieldElement.class));
             }
             map.put("helper", TemplatesManager.createElementType(project, GenerationHelper.class));
-            map.put("settings", TemplatesManager.createElementType(project, JavaCodeStyleSettings.class));
             map.putAll(contextMap);
             availableImplicits.addAll(map.keySet());
             file.getViewProvider().putUserData(TemplatesManager.TEMPLATE_IMPLICITS, map);

@@ -1,9 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +20,10 @@ import org.jetbrains.java.generate.template.TemplatesManager;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.codeInsight.generation.GenerateEqualsHelper.INSTANCE_NAME;
 
 public abstract class EqualsHashCodeTemplatesManagerBase extends TemplatesManager {
   public static final @NonNls String INTELLI_J_DEFAULT = "IntelliJ Default";
@@ -84,6 +94,24 @@ public abstract class EqualsHashCodeTemplatesManagerBase extends TemplatesManage
 
   public @NlsSafe String getDefaultTemplateBaseName() {
     return getTemplateBaseName(getDefaultTemplate());
+  }
+
+  public Map<String, PsiType> getEqualsImplicitVars(Project project) {
+    Map<String, PsiType> map = GenerateEqualsHelper.getEqualsImplicitVars(project);
+    map.put(INSTANCE_NAME, PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project)));
+    appendDefaultJavaSettings(project, map);
+    return map;
+  }
+
+  private static void appendDefaultJavaSettings(Project project, Map<String, PsiType> map) {
+    map.put("java_version", PsiTypes.intType());
+    map.put("settings", createElementType(project, JavaCodeStyleSettings.class));
+  }
+
+  public Map<String, PsiType> getHashCodeImplicitVars(Project project) {
+    Map<String, PsiType> map = GenerateEqualsHelper.getHashCodeImplicitVars();
+    appendDefaultJavaSettings(project, map);
+    return map;
   }
 
   protected static String readFile(String resourceName) throws IOException {

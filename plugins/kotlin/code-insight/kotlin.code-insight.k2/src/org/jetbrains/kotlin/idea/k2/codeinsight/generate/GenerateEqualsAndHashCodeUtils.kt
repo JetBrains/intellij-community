@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAnd
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.CHECK_PARAMETER_WITH_INSTANCEOF
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_HAS_EQUALS
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_HAS_HASHCODE
+import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_PARAM_NAME
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -151,7 +152,9 @@ object GenerateEqualsAndHashCodeUtils {
         contextMap[BASE_PARAM_NAME] = "other"
         if (equalsFunction != null) {
             (equalsFunction as? KaFunctionSymbol)?.valueParameters?.firstOrNull()?.let {
-                contextMap[BASE_PARAM_NAME] = it.name.asString()
+                val paramName = it.name.asString()
+                contextMap[BASE_PARAM_NAME] = paramName
+                contextMap[SUPER_PARAM_NAME] = paramName
             }
         }
 

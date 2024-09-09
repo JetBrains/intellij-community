@@ -27,7 +27,7 @@ import java.util.*;
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
-  private static final @NonNls String INSTANCE_NAME = "instanceBaseName";
+  static final @NonNls String INSTANCE_NAME = "instanceBaseName";
   private static final @NonNls String BASE_PARAM_NAME = "baseParamName";
   private static final @NonNls String SUPER_PARAM_NAME = "superParamName";
   private static final @NonNls String SUPER_HAS_EQUALS = "superHasEquals";
@@ -141,7 +141,6 @@ public class GenerateEqualsHelper implements Runnable {
     final Map<String, PsiType> map = new LinkedHashMap<>();
     final PsiType stringType = project != null ? PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project))
                                                : (PsiPrimitiveType)PsiTypes.nullType();
-    map.put(INSTANCE_NAME, stringType);
     map.put(BASE_PARAM_NAME, stringType);
     map.put(SUPER_PARAM_NAME, stringType);
     map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiTypes.booleanType());
