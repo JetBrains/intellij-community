@@ -703,21 +703,24 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     val uiSettings = UISettings.getInstance()
     val currentScale = uiSettings.currentIdeScale
     val overrideLafFonts = uiSettings.overrideLafFonts
-    LOG.debug { "patchLafFonts: scale=$currentScale, overrideLafFonts=$overrideLafFonts" }
+    val useInterFont = useInterFont()
+    LOG.debug { "patchLafFonts: scale=$currentScale, overrideLafFonts=$overrideLafFonts, useInterFont=$useInterFont" }
     if (overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
       val fontFace = if (overrideLafFonts) uiSettings.fontFace else defaultFont.family
       val fontSize = (if (overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
       LOG.debug { "patchLafFonts: using font '$fontFace' with size $fontSize" }
       initFontDefaults(uiDefaults, getFontWithFallback(fontFace, Font.PLAIN, fontSize))
-      val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
+      val userScaleFactor = if (useInterFont) fontSize / INTER_SIZE else getFontScale(fontSize)
+      LOG.debug { "patchLafFonts: computed user scale factor $userScaleFactor from font size $fontSize" }
       setUserScaleFactor(userScaleFactor)
     }
-    else if (useInterFont()) {
+    else if (useInterFont) {
       storeOriginalFontDefaults(uiDefaults)
       val interFont = defaultInterFont
       LOG.debug { "patchLafFonts: using Inter font with size ${interFont.size2D}" }
       initFontDefaults(uiDefaults, interFont)
+      LOG.debug { "patchLafFonts: setting the default scale factor $defaultUserScaleFactor" }
       setUserScaleFactor(defaultUserScaleFactor)
     }
     else {
@@ -747,7 +750,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
-    setUserScaleFactor(getFontScale(fontSize = JBFont.label().size.toFloat()))
+    val fontScale = getFontScale(fontSize = JBFont.label().size.toFloat())
+    LOG.debug { "restoreOriginalFontDefaults: setting the user scale factor to $fontScale" }
+    setUserScaleFactor(fontScale)
   }
 
   private fun storeOriginalFontDefaults(defaults: UIDefaults) {
