@@ -146,7 +146,7 @@ class CodeFragmentParameterAnalyzer(
             }
 
             private fun processDescriptor(descriptor: DeclarationDescriptor, expression: KtSimpleNameExpression): SmartCodeFragmentParameter? {
-                return processDebugLabel(descriptor)
+                return processForeignProperty(descriptor)
                     ?: processCoroutineContextCall(descriptor)
                     ?: processSimpleNameExpression(descriptor, expression)
             }
@@ -366,14 +366,11 @@ class CodeFragmentParameterAnalyzer(
         return null
     }
 
-    private fun processDebugLabel(target: DeclarationDescriptor): SmartCodeFragmentParameter? {
-        val debugLabelPropertyDescriptor = target as? DebugLabelPropertyDescriptor ?: return null
-        val labelName = debugLabelPropertyDescriptor.labelName
-        val debugString = debugLabelPropertyDescriptor.name.asString()
+    private fun processForeignProperty(target: DeclarationDescriptor): SmartCodeFragmentParameter? {
+        val descriptor = target as? ForeignPropertyDescriptor ?: return null
 
         return parameters.getOrPut(target) {
-            val type = debugLabelPropertyDescriptor.type
-            SmartCodeFragmentParameter(Dumb(Kind.DEBUG_LABEL, labelName, debugString), type, debugLabelPropertyDescriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.FOREIGN_VALUE, descriptor.propertyName), descriptor.type, descriptor)
         }
     }
 

@@ -20,7 +20,7 @@ internal class JavaEvaluationContextWrapper : EvaluationContextWrapper {
   override fun wrapContext(project: Project, context: PsiElement?, additionalElements: List<AdditionalContextElement>): PsiElement? {
     if (additionalElements.isEmpty()) return context
     val elementsByName = additionalElements.groupBy { it.name }.mapValues { (_, v) -> v[0] }
-    val text = additionalElements.joinToString("\n") { (name, jvmTypeName, _) ->
+    val text = additionalElements.joinToString("\n") { (name, _, jvmTypeName, _) ->
       val suitableTypeName = convertTypeName(jvmTypeName)
       "$suitableTypeName $name;"
     }

@@ -37,4 +37,4 @@ interface AdditionalContextProvider {
 }
 
 @ApiStatus.Internal
-data class AdditionalContextElement(val name: String, val jvmTypeName: String, val value: () -> Value)
+data class AdditionalContextElement(val name: String, val jvmSignature: String, val jvmTypeName: String, val value: () -> Value)

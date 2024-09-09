@@ -328,7 +328,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val args = valueParameters.zip(asmValueParameters)
 
         return args.map { (parameter, asmType) ->
-            val result = variableFinder.find(parameter, asmType)
+            val result = variableFinder.find(parameter, asmType, codeFragment)
 
             if (result == null) {
                 val name = parameter.debugString

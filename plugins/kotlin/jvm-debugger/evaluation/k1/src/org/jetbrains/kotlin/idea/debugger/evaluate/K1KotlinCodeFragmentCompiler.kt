@@ -79,7 +79,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
         val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
 
-        DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
+        DebugForeignPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugForeignProperties()
 
         val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(codeFragment)
 

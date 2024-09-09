@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugForeignPropertyDescriptorProvider
 import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
@@ -44,8 +44,6 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", item.text, initImports(item.imports), contextElement)
-
-        supplyDebugInformation(codeFragment, context)
 
         codeFragment.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
             val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
@@ -127,6 +125,8 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
             }
         }
 
+        supplyDebugInformation(codeFragment, context)
+
         return codeFragment
     }
 
@@ -137,7 +137,7 @@ class KotlinK1CodeFragmentFactory : CodeFragmentFactory() {
     private fun supplyDebugInformation(codeFragment: KtCodeFragment, context: PsiElement?) {
         val project = codeFragment.project
         val debugProcess = DebugContextProvider.getDebuggerContext(project, context)?.debugProcess ?: return
-        DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
+        DebugForeignPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugForeignProperties()
     }
 
     private fun getFrameInfo(project: Project, contextElement: PsiElement?, debuggerContext: DebuggerContextImpl): FrameInfo? {

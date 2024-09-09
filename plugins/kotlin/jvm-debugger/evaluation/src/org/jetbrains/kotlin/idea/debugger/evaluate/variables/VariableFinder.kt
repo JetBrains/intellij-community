@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -30,10 +31,10 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyI
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.MarkupUtils
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import kotlin.coroutines.Continuation
 import com.sun.jdi.Type as JdiType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
@@ -138,7 +139,7 @@ class VariableFinder(val context: ExecutionContext) {
         }
     }
 
-    fun find(parameter: CodeFragmentParameter, asmType: AsmType): Result? {
+    fun find(parameter: CodeFragmentParameter, asmType: AsmType, codeFragment: KtCodeFragment): Result? {
         return when (parameter.kind) {
             Kind.ORDINARY -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = false))
             Kind.DELEGATED -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = true))
@@ -149,7 +150,7 @@ class VariableFinder(val context: ExecutionContext) {
             Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType))
             Kind.COROUTINE_CONTEXT -> findCoroutineContext()
             Kind.FIELD_VAR -> findFieldVariable(VariableKind.FieldVar(parameter.name, asmType))
-            Kind.DEBUG_LABEL -> findDebugLabel(parameter.name)
+            Kind.FOREIGN_VALUE -> findForeignValue(parameter.name, codeFragment)
         }
     }
 
@@ -289,16 +290,11 @@ class VariableFinder(val context: ExecutionContext) {
         return null
     }
 
-    private fun findDebugLabel(name: String): Result? {
-        val markupMap = MarkupUtils.getMarkupMap(context.debugProcess)
-
-        for ((value, markup) in markupMap) {
-            if (markup.text == name) {
-                return Result(value)
-            }
-        }
-
-        return null
+    private fun findForeignValue(foreignValueName: String, codeFragment: KtCodeFragment): Result? {
+        val contextElements = AdditionalContextProvider
+            .getAllAdditionalContextElements(codeFragment.project, codeFragment.context)
+        val element = contextElements.firstOrNull { it.name == foreignValueName } ?: return null
+        return Result(element.value())
     }
 
     private fun findUnlabeledThis(kind: VariableKind.UnlabeledThis): Result? {

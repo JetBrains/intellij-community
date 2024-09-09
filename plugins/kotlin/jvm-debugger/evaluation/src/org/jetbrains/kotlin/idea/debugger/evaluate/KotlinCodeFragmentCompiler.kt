@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.openapi.components.service
@@ -151,9 +150,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, displayText)
             }
             is CodeFragmentCapturedValue.ForeignValue -> {
-                assert(name.endsWith(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX))
-                val valueName = name.substringBeforeLast(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX)
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DEBUG_LABEL, valueName, name)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name)
             }
             is CodeFragmentCapturedValue.BackingField ->
                 CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, displayText)

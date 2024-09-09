@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.psi.search.GlobalSearchScope
-import com.sun.jdi.*
 import org.jetbrains.kotlin.backend.common.SimpleMemberScope
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -24,42 +24,40 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
-import com.sun.jdi.Type as JdiType
-import org.jetbrains.org.objectweb.asm.Type as AsmType
+import org.jetbrains.org.objectweb.asm.Type
 
-class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val debugProcess: DebugProcessImpl) {
+class DebugForeignPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val debugProcess: DebugProcessImpl) {
 
-    private val moduleDescriptor = DebugLabelModuleDescriptor
+    private val moduleDescriptor = DebugForeignPropertyModuleDescriptor
 
-    fun supplyDebugLabels() {
+    fun supplyDebugForeignProperties() {
         val packageFragment = object : PackageFragmentDescriptorImpl(moduleDescriptor, FqName.ROOT) {
-            val properties = createDebugLabelDescriptors(this)
+            val properties = createForeignPropertyDescriptors(this)
             override fun getMemberScope() = SimpleMemberScope(properties)
         }
 
         codeFragment.externalDescriptors = packageFragment.properties
     }
 
-    private fun createDebugLabelDescriptors(containingDeclaration: PackageFragmentDescriptor): List<PropertyDescriptor> {
-        val markupMap = MarkupUtils.getMarkupMap(debugProcess)
+    private fun createForeignPropertyDescriptors(containingDeclaration: PackageFragmentDescriptor): List<PropertyDescriptor> {
+        val result = mutableListOf<PropertyDescriptor>()
+        val additionalContextElements = AdditionalContextProvider
+            .getAllAdditionalContextElements(codeFragment.project, codeFragment.context)
 
-        val result = ArrayList<PropertyDescriptor>(markupMap.size)
-
-        nextValue@ for ((value, markup) in markupMap) {
-            val labelName = markup.text
-            val kotlinType = value?.type()?.let { convertType(it) } ?: moduleDescriptor.builtIns.nullableAnyType
-            result += createDebugLabelDescriptor(labelName, kotlinType, containingDeclaration)
+        for ((name, signature, _, _) in additionalContextElements) {
+            val kotlinType = convertType(signature)
+            result += createForeignPropertyDescriptor(name, kotlinType, containingDeclaration)
         }
 
         return result
     }
 
-    private fun createDebugLabelDescriptor(
-        labelName: String,
+    private fun createForeignPropertyDescriptor(
+        name: String,
         type: KotlinType,
         containingDeclaration: PackageFragmentDescriptor
     ): PropertyDescriptor {
-        val propertyDescriptor = DebugLabelPropertyDescriptor(containingDeclaration, labelName)
+        val propertyDescriptor = ForeignPropertyDescriptor(containingDeclaration, name)
         propertyDescriptor.setType(type, emptyList(), null, null, emptyList())
 
         val getterDescriptor = PropertyGetterDescriptorImpl(
@@ -79,42 +77,41 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
         return propertyDescriptor
     }
 
-    private fun convertType(type: JdiType): KotlinType {
-        val builtIns = moduleDescriptor.builtIns
+    private fun convertType(signature: String): KotlinType = convertType(Type.getType(signature))
 
-        return when (type) {
-            is VoidType -> builtIns.unitType
-            is LongType -> builtIns.longType
-            is DoubleType -> builtIns.doubleType
-            is CharType -> builtIns.charType
-            is FloatType -> builtIns.floatType
-            is ByteType -> builtIns.byteType
-            is IntegerType -> builtIns.intType
-            is BooleanType -> builtIns.booleanType
-            is ShortType -> builtIns.shortType
-            is ArrayType -> {
-                when (val componentType = type.componentType()) {
-                    is VoidType -> builtIns.getArrayType(Variance.INVARIANT, builtIns.unitType)
-                    is LongType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.LONG)
-                    is DoubleType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.DOUBLE)
-                    is CharType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.CHAR)
-                    is FloatType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.FLOAT)
-                    is ByteType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.BYTE)
-                    is IntegerType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.INT)
-                    is BooleanType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.BOOLEAN)
-                    is ShortType -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.SHORT)
-                    else -> builtIns.getArrayType(Variance.INVARIANT, convertReferenceType(componentType))
+    private fun convertType(asmType: Type): KotlinType {
+        val builtIns = moduleDescriptor.builtIns
+        return when (asmType.sort) {
+            Type.VOID -> builtIns.unitType
+            Type.LONG -> builtIns.longType
+            Type.DOUBLE -> builtIns.doubleType
+            Type.CHAR -> builtIns.charType
+            Type.FLOAT -> builtIns.floatType
+            Type.BYTE -> builtIns.byteType
+            Type.INT -> builtIns.intType
+            Type.BOOLEAN -> builtIns.booleanType
+            Type.SHORT -> builtIns.shortType
+            Type.ARRAY -> {
+                when (asmType.elementType.sort) {
+                    Type.VOID -> builtIns.getArrayType(Variance.INVARIANT, builtIns.unitType)
+                    Type.LONG -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.LONG)
+                    Type.DOUBLE -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.DOUBLE)
+                    Type.CHAR -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.CHAR)
+                    Type.FLOAT -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.FLOAT)
+                    Type.BYTE -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.BYTE)
+                    Type.INT -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.INT)
+                    Type.BOOLEAN -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.BOOLEAN)
+                    Type.SHORT -> builtIns.getPrimitiveArrayKotlinType(PrimitiveType.SHORT)
+                    else -> builtIns.getArrayType(Variance.INVARIANT, convertReferenceType(asmType.elementType))
                 }
             }
-            is ReferenceType -> convertReferenceType(type)
+            Type.OBJECT -> convertReferenceType(asmType)
             else -> builtIns.anyType
         }
     }
 
-    private fun convertReferenceType(type: JdiType): KotlinType {
-        require(type is ClassType || type is InterfaceType)
-
-        val asmType = AsmType.getType(type.signature())
+    private fun convertReferenceType(asmType: Type): KotlinType {
+        require(asmType.sort == Type.OBJECT)
         val project = codeFragment.project
         val classDescriptor = asmType.getClassDescriptor(GlobalSearchScope.allScope(project), mapBuiltIns = false)
             ?: return moduleDescriptor.builtIns.nullableAnyType
@@ -122,8 +119,8 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
     }
 }
 
-private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotations.EMPTY, Name.identifier("DebugLabelExtensions")),
-    ModuleDescriptor {
+private object DebugForeignPropertyModuleDescriptor : DeclarationDescriptorImpl(Annotations.EMPTY, Name.identifier("DebugLabelExtensions")),
+                                                      ModuleDescriptor {
     override val builtIns: KotlinBuiltIns
         get() = DefaultBuiltIns.Instance
 
@@ -143,7 +140,7 @@ private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotation
                 get() = MemberScope.Empty
 
             override val module: ModuleDescriptor
-                get() = this@DebugLabelModuleDescriptor
+                get() = this@DebugForeignPropertyModuleDescriptor
 
             override val fragments: List<PackageFragmentDescriptor>
                 get() = emptyList()
@@ -178,9 +175,9 @@ private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotation
     override fun assertValid() {}
 }
 
-internal class DebugLabelPropertyDescriptor(
+internal class ForeignPropertyDescriptor(
     containingDeclaration: DeclarationDescriptor,
-    val labelName: String
+    val propertyName: String
 ) : PropertyDescriptorImpl(
     containingDeclaration,
     null,
@@ -188,7 +185,7 @@ internal class DebugLabelPropertyDescriptor(
     Modality.FINAL,
     DescriptorVisibilities.PUBLIC,
     /*isVar = */false,
-    Name.identifier(labelName + "_DebugLabel"),
+    Name.identifier(propertyName),
     CallableMemberDescriptor.Kind.SYNTHESIZED,
     SourceElement.NO_SOURCE,
     /*lateInit = */false,
