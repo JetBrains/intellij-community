@@ -38,6 +38,16 @@ internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorT
     )
     return newTab.allEditors.toTypedArray()
   }
+
+  override fun isDiffOpenedInWindow(file: VirtualFile): Boolean {
+    if (file !is DiffContentVirtualFile) return false
+
+    val editorManager = FileEditorManager.getInstance(project)
+    if (editorManager !is FileEditorManagerImpl) return false
+
+    val window = editorManager.windows.find { it.isFileOpen(file) } ?: return false
+    return isSingletonEditorInWindow(window)
+  }
 }
 
 internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolean) : DumbAwareAction() {
@@ -53,7 +63,7 @@ internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolea
       return
     }
 
-    val isInWindow = editorWindow.owner.isFloating && editorWindow.tabCount == 1
+    val isInWindow = isSingletonEditorInWindow(editorWindow)
     e.presentation.isEnabledAndVisible = isInWindow != openInNewWindow
   }
 
@@ -79,10 +89,14 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
      * Unlike [com.intellij.diff.editor.DiffEditorViewerFileEditor.reloadDiffEditorsForFiles], should not try to reopen tabs in-place.
      */
     private fun reopenDiffEditorsForFiles(project: Project) {
+      val isOpenInNewWindow = DiffEditorTabFilesManager.isDiffInWindow
+
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
       val diffEditorManager = DiffEditorTabFilesManager.getInstance(project)
 
-      val diffFiles = editorManager.openFiles
+      val diffFiles = editorManager.windows
+        .filter { window -> isSingletonEditorInWindow(window) != isOpenInNewWindow }
+        .flatMap { window -> window.fileList }
         .filter { it is DiffContentVirtualFile }
         .distinct()
       if (diffFiles.isEmpty()) return
@@ -98,4 +112,8 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
       diffEditorManager.showDiffFile(toFocus, true)
     }
   }
+}
+
+internal fun isSingletonEditorInWindow(window: EditorWindow): Boolean {
+  return window.owner.isFloating && window.tabCount == 1
 }

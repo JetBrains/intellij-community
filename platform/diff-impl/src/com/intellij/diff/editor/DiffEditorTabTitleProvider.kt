@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffOpenedInNewWindow
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -26,8 +25,13 @@ import org.jetbrains.annotations.Nls
 
 private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
-    val title = getEditorTabName(project, file)
-    return if (isDiffOpenedInNewWindow(file)) title else title?.shorten()
+    val title = getEditorTabName(project, file) ?: return null
+    if (DiffEditorTabFilesManager.getInstance(project).isDiffOpenedInWindow(file)) {
+      return title
+    }
+    else {
+      return title.shorten()
+    }
   }
 
   override suspend fun getEditorTabTitleAsync(project: Project, file: VirtualFile): String? {

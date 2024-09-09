@@ -13,6 +13,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.editor.DiffEditorTabFilesManager;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
@@ -60,6 +61,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
@@ -120,7 +122,6 @@ import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
-import static com.intellij.diff.editor.DiffEditorTabFilesManagerKt.DIFF_OPENED_IN_NEW_WINDOW;
 import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -1630,14 +1631,18 @@ public final class DiffUtil {
     EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, diffComponent);
     if (holder == null) return;
 
-    List<EditorComposite> composites = holder.getEditorWindow().getAllComposites();
-    if (composites.size() == 1) {
-      if (DIFF_OPENED_IN_NEW_WINDOW.get(composites.get(0).getFile(), false)) {
-        Window window = UIUtil.getWindow(diffComponent);
-        if (window != null && !canBeHiddenBehind(window)) {
-          if (window instanceof Frame) {
-            ((Frame)window).setState(Frame.ICONIFIED);
-          }
+    EditorWindow editorWindow = holder.getEditorWindow();
+    List<EditorComposite> composites = editorWindow.getAllComposites();
+    if (composites.size() != 1) return;
+
+    Project project = editorWindow.getManager().getProject();
+    VirtualFile file = composites.get(0).getFile();
+
+    if (DiffEditorTabFilesManager.getInstance(project).isDiffOpenedInWindow(file)) {
+      Window window = UIUtil.getWindow(diffComponent);
+      if (window != null && !canBeHiddenBehind(window)) {
+        if (window instanceof Frame) {
+          ((Frame)window).setState(Frame.ICONIFIED);
         }
       }
     }
