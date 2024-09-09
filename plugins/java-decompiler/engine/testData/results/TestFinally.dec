@@ -1,0 +1,103 @@
+package pkg;
+
+import java.util.List;
+
+public class TestFinally {
+   public void test(List<A<String>> a) {
+      try {
+         this.testThrow();// 13
+      } catch (Exception var12) {// 15
+         var12.printStackTrace();// 16
+      } catch (Throwable var13) {// 17
+         throw new RuntimeException(var13);// 18
+      } finally {
+         for(A<String> s : a) {// 21
+            String a2 = s.toString();// 22
+            System.out.println(a2);// 23
+         }
+
+      }
+
+   }// 26
+
+   public void testThrow() {
+   }// 30
+
+   public class A<B> {
+      public A(final TestFinally this$0) {
+      }// 8
+   }
+}
+
+class 'pkg/TestFinally' {
+   method 'test (Ljava/util/List;)V' {
+      0      7
+      1      7
+      32      8
+      34      9
+      65      10
+      6e      11
+      71      13
+      72      13
+      73      13
+      74      13
+      75      13
+      76      13
+      77      13
+      78      13
+      83      13
+      84      13
+      85      13
+      86      13
+      87      13
+      88      13
+      89      13
+      8a      13
+      8b      13
+      8c      13
+      8d      13
+      8e      13
+      8f      14
+      90      14
+      91      14
+      92      14
+      93      14
+      94      14
+      95      14
+      96      15
+      97      15
+      98      15
+      99      15
+      9a      15
+      9b      15
+      9c      15
+      9d      15
+      a4      20
+   }
+
+   method 'testThrow ()V' {
+      0      23
+   }
+}
+
+class 'pkg/TestFinally$A' {
+   method '<init> (Lpkg/TestFinally;)V' {
+      4      27
+   }
+}
+
+Lines mapping:
+8 <-> 28
+13 <-> 8
+15 <-> 9
+16 <-> 10
+17 <-> 11
+18 <-> 12
+21 <-> 14
+22 <-> 15
+23 <-> 16
+26 <-> 21
+30 <-> 24
+Not mapped:
+24
+25

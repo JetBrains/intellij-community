@@ -922,14 +922,14 @@ public class NestedClassProcessor {
         case Exprent.EXPRENT_VAR -> {
           VarExprent varExpr = (VarExprent)expr;
           if (varExpr.isDefinition()) {
-            Stack<VarType> stack = new Stack<>();
-            stack.push(varExpr.getDefinitionType());
+            List<VarType> stack = new ArrayList<>();
+            stack.add(varExpr.getDefinitionType());
             while (!stack.isEmpty()) {
-              VarType varType = stack.pop();
+              VarType varType = stack.remove(0);
               if (classType.equals(varType) || (varType != null && varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
                 res = true;
               } else if (varType != null && varType.isGeneric()) {
-                ((GenericType)varType).getArguments().forEach(stack::push);
+                stack.addAll(((GenericType)varType).getArguments());
               }
             }
           }

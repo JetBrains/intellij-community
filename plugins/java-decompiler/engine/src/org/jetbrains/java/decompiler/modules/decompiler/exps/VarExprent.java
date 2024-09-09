@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -68,7 +69,8 @@ public class VarExprent extends Exprent {
       try {
         return GenericType.parse(lvt.getSignature());
       } catch (StringIndexOutOfBoundsException ex) {
-        ex.printStackTrace();
+        DecompilerContext.getLogger().writeMessage("Inconsistent data: ",
+                                                   IFernflowerLogger.Severity.WARN, ex);
       }
     }
     else if (lvt != null) {
