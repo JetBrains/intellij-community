@@ -10,6 +10,7 @@ import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -17,6 +18,7 @@ abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
   override val timestamp: Long = changeSet.timestamp
   val id = changeSet.id
   val activityId: ActivityId? = changeSet.activityId
+  open val fullName: @NlsSafe String? get() = name
   abstract val name: @NlsSafe String?
 
   override fun equals(other: Any?): Boolean {
@@ -26,6 +28,12 @@ abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
   }
 
   override fun hashCode(): Int = id.hashCode()
+
+  override fun toString(): String {
+    val fullName = fullName.orEmpty()
+    return DateFormatUtil.formatDateTime(timestamp) +
+           if (fullName.isNotBlank()) ": $fullName" else ""
+  }
 }
 
 val ChangeSetActivityItem?.revisionId: RevisionId get() = if (this != null) RevisionId.ChangeSet(id) else RevisionId.Current
@@ -69,7 +77,8 @@ private fun ChangeSet.presentableNameFromPaths(): @NlsContexts.Label String? {
 }
 
 internal class LabelActivityItem(changeSet: ChangeSet) : ChangeSetActivityItem(changeSet) {
-  override val name = shorten(changeSet.label ?: changeSet.name)
+  override val fullName = changeSet.label ?: changeSet.name
+  override val name get() = shorten(fullName)
   val color = changeSet.labelColor
 
   private fun shorten(name: String?): String? {
