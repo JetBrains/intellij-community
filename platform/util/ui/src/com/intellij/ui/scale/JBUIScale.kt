@@ -207,23 +207,26 @@ object JBUIScale {
 
   @VisibleForTesting
   fun computeSystemScaleFactor(uiDefaults: Supplier<UIDefaults?>?): Float {
-    if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
-      return 1f
+    val mode: String
+    val result = if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
+      mode = "non-HiDPI"
+      1f
     }
-
-    if (JreHiDpiUtil.isJreHiDPIEnabled()) {
-      return computeSystemScaleFactorForJreHiDPI()
+    else if (JreHiDpiUtil.isJreHiDPIEnabled()) {
+      mode = "JRE-managed HiDPI"
+      computeSystemScaleFactorForJreHiDPI()
     }
     else {
+      mode = "IDE-managed HiDPI"
       // we have init tests in a non-headless mode, but we cannot use here ApplicationManager
       if (uiDefaults == null && !LoadingState.APP_STARTED.isOccurred && !GraphicsEnvironment.isHeadless()) {
         thisLogger().error("Must be precomputed")
       }
 
-      val result = getFontScale(getSystemFontData(uiDefaults).second.toFloat())
-      thisLogger().info("System scale factor: $result (${if (JreHiDpiUtil.isJreHiDPIEnabled()) "JRE" else "IDE"}-managed HiDPI)")
-      return result
+      getFontScale(getSystemFontData(uiDefaults).second.toFloat())
     }
+    thisLogger().info("System scale factor: $result ($mode)")
+    return result
   }
 
   @TestOnly
