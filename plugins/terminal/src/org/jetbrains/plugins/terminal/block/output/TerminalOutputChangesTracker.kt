@@ -81,6 +81,16 @@ internal class TerminalOutputChangesTracker(
           }
         }
       }
+
+      override fun widthResized() {
+        // Consider resize of the width as a full replacement of the output.
+        // Because in the process of this operation, some lines might be discarded from the Text Buffer,
+        // and it is not tracked now, so it may bring the inconsistency if we omit it.
+        // Todo: consider tracking of the discarded lines in case of resizing to not replace everything.
+        lastChangedVisualLine = 0
+        wasAnyLineChanged = true
+        wereChangesDiscarded = true
+      }
     }
 
     textBuffer.addChangesListener(listener)
