@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.ex
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -33,6 +34,8 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     @JvmStatic
     @RequiresBlockingContext
     fun getInstanceEx(project: Project): FileEditorManagerEx = getInstance(project) as FileEditorManagerEx
+
+    suspend fun getInstanceExAsync(project: Project): FileEditorManagerEx = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
 
     fun getInstanceExIfCreated(project: Project): FileEditorManagerEx? {
       return project.serviceIfCreated<FileEditorManager>() as FileEditorManagerEx?
