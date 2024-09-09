@@ -7,10 +7,12 @@ import org.jetbrains.plugins.terminal.block.session.StyleRange
  * @param styles ranges inside the [text] bounds.
  * @param logicalLineIndex absolut index of the logical line where provided [text] starts in the command output.
  * @param terminalWidth width at the moment of partial output collection.
+ * @param wereChangesDiscarded whether some lines were discarded from the history before being collected.
  */
 internal data class PartialCommandOutput(
   val text: String,
   val styles: List<StyleRange>,
   val logicalLineIndex: Int,
-  val terminalWidth: Int
+  val terminalWidth: Int,
+  val wereChangesDiscarded: Boolean,
 )

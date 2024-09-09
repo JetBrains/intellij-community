@@ -247,6 +247,12 @@ internal class TerminalOutputController(
       editor.document.insertString(block.endOffset, "\n")
     }
 
+    if (output.wereChangesDiscarded) {
+      // The output was so big, so the history buffer was overflown, and some changes were lost.
+      // Consider all available lines in the block as trimmed
+      block.trimmedLinesCount = output.logicalLineIndex
+    }
+
     val outputStartLine = editor.document.getLineNumber(block.outputStartOffset)
     val replaceStartLine = outputStartLine + output.logicalLineIndex - block.trimmedLinesCount
     if (replaceStartLine >= editor.document.lineCount && editor.document.textLength > 0) {

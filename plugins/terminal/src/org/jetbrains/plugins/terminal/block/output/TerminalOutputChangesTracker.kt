@@ -46,6 +46,12 @@ internal class TerminalOutputChangesTracker(
    */
   private var wasAnyLineChanged: Boolean = true
 
+  /**
+   * Whether some lines were discarded from the history before being collected.
+   * Guarded by the TerminalTextBuffer lock.
+   */
+  private var wereChangesDiscarded: Boolean = false
+
   private val changeListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   init {
@@ -66,6 +72,7 @@ internal class TerminalOutputChangesTracker(
         }
         else {
           lastChangedVisualLine = 0
+          wereChangesDiscarded = true
         }
 
         for (line in lines) {
@@ -137,11 +144,13 @@ internal class TerminalOutputChangesTracker(
     val (text, styles) = collectChangedLines(startLine)
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
     val logicalLineIndex = getLogicalLineIndex(startLine) + discardedLogicalLinesCount
+    val anyDiscarded = wereChangesDiscarded
 
     lastChangedVisualLine = textBuffer.historyLinesCount
     wasAnyLineChanged = false
+    wereChangesDiscarded = false
 
-    return PartialCommandOutput(text, styles, logicalLineIndex, textBuffer.width)
+    return PartialCommandOutput(text, styles, logicalLineIndex, textBuffer.width, anyDiscarded)
   }
 
   private fun collectChangedLines(startLine: Int): Pair<String, List<StyleRange>> {
