@@ -4,13 +4,14 @@ package com.intellij.diff.impl.ui
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.applyIf
 import com.intellij.util.ui.FilePathSplittingPolicy
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import java.io.File
-import javax.swing.GroupLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -20,40 +21,30 @@ class FilePathDiffTitleCustomizer(
   private val label: JComponent? = null,
 ) : DiffEditorTitleCustomizer {
   override fun getLabel(): JComponent {
-    val revisionWithPath = JPanel(null)
-    val grLayout = GroupLayout(revisionWithPath)
-    revisionWithPath.layout = grLayout
+    val revisionWithPath = JPanel(GridBagLayout())
 
-    val pathLabel = FilePathLabelWrapper(
-      FilePathLabel(displayedPath).apply {
-        isAllowAutoWrapping = true
-        setCopyable(true)
-        toolTipText = fullPath
-        foreground = UIUtil.getContextHelpForeground()
-      }
-    )
-
-    val gap = JBUI.scale(8)
-    grLayout.setHorizontalGroup(
-      grLayout.createSequentialGroup()
-        .applyIf(label != null) {
-          addComponent(label, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE).addGap(gap, gap, gap)
-        }
-        .addComponent(pathLabel, 0, GroupLayout.DEFAULT_SIZE, Int.MAX_VALUE)
-    )
-
-    grLayout.setVerticalGroup(
-      grLayout.createSequentialGroup()
-        .addGroup(grLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .applyIf(label != null) { addComponent(label) }
-                    .addComponent(pathLabel))
-    )
-
+    if (label != null) {
+      revisionWithPath.add(label, GridBagConstraints().apply {
+        fill = GridBagConstraints.BOTH
+        weightx = 0.0
+        gridx = 0
+        ipadx = scale(8)
+      })
+    }
+    val pathLabel = DiffFilePathLabelWrapper(displayedPath, fullPath)
+    revisionWithPath.add(pathLabel, GridBagConstraints().apply {
+      fill = GridBagConstraints.BOTH
+      weightx = 1.0;
+      gridx = 1
+    })
     return revisionWithPath
   }
 }
 
-private class FilePathLabelWrapper(private val wrappedLabel: FilePathLabel) : JComponent() {
+@ApiStatus.Internal
+class DiffFilePathLabelWrapper(val displayedPath: String, val fullPath: String) : JComponent() {
+  private val wrappedLabel = DiffFilePathLabel(displayedPath, fullPath)
+
   init {
     layout = null
     add(wrappedLabel)
@@ -69,8 +60,15 @@ private class FilePathLabelWrapper(private val wrappedLabel: FilePathLabel) : JC
   override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
 }
 
-private class FilePathLabel(path: String) : JBLabel() {
+private class DiffFilePathLabel(path: String, fullPath: @NlsSafe String) : JBLabel() {
   private val file = File(path)
+
+  init {
+    isAllowAutoWrapping = true
+    setCopyable(true)
+    toolTipText = fullPath
+    foreground = UIUtil.getContextHelpForeground()
+  }
 
   override fun setSize(d: Dimension) {
     super.setSize(d)
