@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -716,7 +717,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
-    try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
