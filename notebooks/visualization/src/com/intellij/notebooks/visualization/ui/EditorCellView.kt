@@ -63,7 +63,7 @@ class EditorCellView(
 
   val input: EditorCellInput = createEditorCellInput()
 
-  var outputs: com.intellij.notebooks.visualization.ui.EditorCellOutputs? = null
+  var outputs: EditorCellOutputs? = null
     private set
 
   var selected = false
@@ -160,7 +160,7 @@ class EditorCellView(
   internal fun updateOutputs() {
     if (hasOutputs()) {
       if (outputs == null) {
-        outputs = com.intellij.notebooks.visualization.ui.EditorCellOutputs(editor, { interval })
+        outputs = EditorCellOutputs(editor, { interval })
           .also {
             Disposer.register(this, it)
             add(it)
@@ -408,14 +408,6 @@ class EditorCellView(
 
   override fun doGetInlays(): Sequence<Inlay<*>> {
     return controllers.map { it.inlay }.asSequence()
-  }
-
-  fun switchToEditMode(ctx: UpdateContext) {
-    input.switchToEditMode(ctx)
-  }
-
-  fun switchToCommandMode(ctx: UpdateContext) {
-    input.switchToCommandMode(ctx)
   }
 
   fun requestCaret() {

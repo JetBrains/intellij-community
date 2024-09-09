@@ -1,12 +1,11 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.UpdateContext
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.Rectangle
 
 class EditorCellInput(
@@ -93,14 +92,6 @@ class EditorCellInput(
 
   fun updateInput() = cell.manager.update { ctx ->
     (component as? InputComponent)?.updateInput(ctx)
-  }
-
-  fun switchToEditMode(ctx: UpdateContext) {
-    (component as? InputComponent)?.switchToEditMode(ctx)
-  }
-
-  fun switchToCommandMode(ctx: UpdateContext) {
-    (component as? InputComponent)?.switchToCommandMode(ctx)
   }
 
   fun requestCaret() {

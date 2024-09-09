@@ -17,6 +17,8 @@ import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.execution.ExecutionEvent
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.observable.properties.AtomicProperty
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
@@ -111,7 +113,7 @@ class EditorCell(
 
   private var executionEndTime: ZonedDateTime? = null
 
-  private var mode = NotebookEditorMode.COMMAND
+  val mode = AtomicProperty<NotebookEditorMode>(NotebookEditorMode.COMMAND)
 
   override fun dispose() {
     cleanupExtensions()
@@ -200,18 +202,12 @@ class EditorCell(
     view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
   }
 
-  fun switchToEditMode() = manager.update { ctx ->
-    if (mode != NotebookEditorMode.EDIT) {
-      mode = NotebookEditorMode.EDIT
-      view?.switchToEditMode(ctx)
-    }
+  fun switchToEditMode() = runInEdt {
+    mode.set(NotebookEditorMode.EDIT)
   }
 
-  fun switchToCommandMode() = manager.update { ctx ->
-    if (mode != NotebookEditorMode.COMMAND) {
-      mode = NotebookEditorMode.COMMAND
-      view?.switchToCommandMode(ctx)
-    }
+  fun switchToCommandMode() = runInEdt {
+    mode.set(NotebookEditorMode.COMMAND)
   }
 
   fun requestCaret() {
