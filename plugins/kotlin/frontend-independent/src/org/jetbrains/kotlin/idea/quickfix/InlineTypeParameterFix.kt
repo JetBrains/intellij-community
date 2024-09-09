@@ -8,7 +8,6 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.quickfix.InlineTypeParameterFix.ElementContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -18,12 +17,6 @@ class InlineTypeParameterFix(
     private val typeReferencesToInline: List<SmartPsiElementPointer<KtTypeReference>>,
 ) : PsiUpdateModCommandAction<KtTypeReference>(element) {
 
-    data class ElementContext(
-        val parameter: KtTypeParameter,
-        val bound: KtTypeReference,
-        val constraint: KtElement?,
-    )
-
     override fun invoke(
         actionContext: ActionContext,
         element: KtTypeReference,
@@ -31,7 +24,7 @@ class InlineTypeParameterFix(
     ) {
         val parameterListOwner = element.getStrictParentOfType<KtTypeParameterListOwner>() ?: return
         val parameterList = parameterListOwner.typeParameterList ?: return
-        val (parameter, bound, constraint) = prepareElementContext(element, parameterList) ?: return
+        val (parameter, bound, constraint) = prepareInlinedTypeParameterContext(element, parameterList) ?: return
 
         typeReferencesToInline.mapNotNull { it.element }.map(updater::getWritable).forEach { it.replace(bound) }
 
@@ -53,21 +46,27 @@ class InlineTypeParameterFix(
     override fun getFamilyName() = KotlinBundle.message("inline.type.parameter")
 }
 
-fun prepareElementContext(
+data class InlinedTypeParameterContext(
+    val parameter: KtTypeParameter,
+    val bound: KtTypeReference,
+    val constraint: KtElement?,
+)
+
+fun prepareInlinedTypeParameterContext(
     element: KtTypeReference,
     parameterList: KtTypeParameterList
-): ElementContext? {
+): InlinedTypeParameterContext? {
     return when (val parent = element.parent) {
         is KtTypeParameter -> {
             val bound = parent.extendsBound ?: return null
-            ElementContext(parent, bound, null)
+            InlinedTypeParameterContext(parent, bound, null)
         }
 
         is KtTypeConstraint -> {
             val subjectTypeParameterName = parent.subjectTypeParameterName?.text ?: return null
             val parameter = parameterList.parameters.firstOrNull { it.name == subjectTypeParameterName } ?: return null
             val bound = parent.boundTypeReference ?: return null
-            ElementContext(parameter, bound, parent)
+            InlinedTypeParameterContext(parameter, bound, parent)
         }
 
         else -> null

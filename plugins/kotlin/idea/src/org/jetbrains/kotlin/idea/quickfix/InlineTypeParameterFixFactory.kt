@@ -18,7 +18,7 @@ internal object InlineTypeParameterFixFactory : KotlinSingleIntentionActionFacto
         val element = Errors.FINAL_UPPER_BOUND.cast(diagnostic).psiElement
         val parameterListOwner = element.getStrictParentOfType<KtTypeParameterListOwner>() ?: return null
         val parameterList = parameterListOwner.typeParameterList ?: return null
-        val (parameter, _, _) = prepareElementContext(element, parameterList) ?: return null
+        val (parameter, _, _) = prepareInlinedTypeParameterContext(element, parameterList) ?: return null
 
         val context = parameterListOwner.analyzeWithContent()
         val parameterDescriptor = context[BindingContext.TYPE_PARAMETER, parameter] ?: return null
