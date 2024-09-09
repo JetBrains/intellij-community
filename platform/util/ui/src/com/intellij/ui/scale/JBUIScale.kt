@@ -248,7 +248,7 @@ object JBUIScale {
     }
 
     userScaleFactor.value = value
-    thisLogger().info("User scale factor: $value")
+    thisLogger().info("Set user scale factor: $value")
     PROPERTY_CHANGE_SUPPORT.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, oldValue, value)
   }
 
@@ -290,7 +290,25 @@ object JBUIScale {
   }
 
   private fun computeUserScaleFactor(): Float {
-    return DEBUG_USER_SCALE_FACTOR.value ?: computeUserScaleFactor(if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else systemScaleFactor.value)
+    val debugValue = DEBUG_USER_SCALE_FACTOR.value
+    val origin: String
+    val result = if (debugValue != null) {
+      origin = "set by the 'ide.ui.scale' JVM property"
+      debugValue
+    }
+    else {
+      val sysScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) {
+        origin = "JRE-managed HiDPI"
+        1f
+      }
+      else {
+        origin = "IDE-managed HiDPI"
+        systemScaleFactor.value
+      }
+      computeUserScaleFactor(sysScale)
+    }
+    thisLogger().info("Computed user scale factor: $result ($origin)")
+    return result
   }
 
   private fun computeUserScaleFactor(value: Float): Float {
