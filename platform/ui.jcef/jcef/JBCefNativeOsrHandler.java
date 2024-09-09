@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.Gray;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
@@ -118,6 +119,14 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     return frame == null ? null : new Dimension(frame.getWidth(), frame.getHeight());
   }
 
+  private void clearVolatileImage(VolatileImage vi) {
+    Graphics2D g = (Graphics2D)vi.getGraphics().create();
+    g.setBackground(Gray.TRANSPARENT);
+    g.setComposite(AlphaComposite.Src);
+    g.clearRect(0, 0, vi.getWidth(), vi.getHeight());
+    g.dispose();
+  }
+
   @Override
   protected void drawVolatileImage(VolatileImage vi) {
     final SharedMemory.WithRaster frame = myCurrentFrame;
@@ -125,6 +134,8 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       return;
 
     // Shared-memory frame presented, so draw it into volatile image.
+    clearVolatileImage(vi);
+
     synchronized (frame) {
       try {
         frame.lock();
