@@ -548,6 +548,7 @@ com.intellij.codeInsight.intention.CustomizableIntentionAction
 - getRangesToHighlight(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):java.util.List
 - getTooltipText():java.lang.String
 - hasSeparatorAbove():Z
+- isOverrideIntentionBulb():Z
 - isSelectable():Z
 - isShowIcon():Z
 - isShowLightBulb():Z
