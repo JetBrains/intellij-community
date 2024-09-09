@@ -157,8 +157,11 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param presentation the instance to copy the parameters from.
    */
   public void updateFrom(ItemPresentation presentation) {
-    if (presentation instanceof PresentationData) {
-      setBackground(((PresentationData)presentation).getBackground());
+    if (presentation instanceof PresentationData presentationData) {
+      setBackground(presentationData.getBackground());
+      for (PresentableNodeDescriptor.ColoredFragment fragment : presentationData.getColoredText()) {
+        addText(fragment);
+      }
     }
     setIcon(presentation.getIcon(false));
     setPresentableText(presentation.getPresentableText());

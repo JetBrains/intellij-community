@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.ide.structureView.logical.LogicalStructureDataKeys;
 import com.intellij.ide.structureView.symbol.DelegatingPsiElementWithSymbolPointer;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbar;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -42,6 +44,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -80,6 +83,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
@@ -116,6 +120,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   // read from different threads
   // written from EDT only
   private volatile @Nullable CancellablePromise<?> myLastAutoscrollPromise;
+
+  private final FloatingToolbar floatingToolbar;
 
 
   public StructureViewComponent(@Nullable FileEditor editor,
@@ -173,7 +179,19 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       myTreeModelWrapper.removeModelListener(modelListener);
     });
 
-    setContent(ScrollPaneFactory.createScrollPane(myTree));
+    JScrollPane content = ScrollPaneFactory.createScrollPane(myTree);
+    MyLayeredPane layeredPane = new MyLayeredPane(content);
+    floatingToolbar = new FloatingToolbar(
+      layeredPane,
+      (ActionGroup) ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR),
+      this
+    );
+    floatingToolbar.setAlignmentX(Component.RIGHT_ALIGNMENT);
+    floatingToolbar.setShowingTime(150);
+    floatingToolbar.setHidingTime(50);
+    layeredPane.add(content, JLayeredPane.DEFAULT_LAYER);
+    layeredPane.add(floatingToolbar, JLayeredPane.POPUP_LAYER);
+    setContent(layeredPane);
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
@@ -218,7 +236,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private void setupTree() {
-    myTree.setCellRenderer(new NodeRenderer());
+    if (myTreeModel instanceof StructureViewModel.ElementRendererProvider rendererProvider) {
+      myTree.setCellRenderer(rendererProvider.getRenderer());
+    }
+    else {
+      myTree.setCellRenderer(new NodeRenderer());
+    }
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
     registerPsiListener(myProject, this, this::queueUpdate);
@@ -767,6 +790,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         .filter(Symbol.class)
         .toList();
     });
+    sink.lazy(LogicalStructureDataKeys.STRUCTURE_TREE_ELEMENT, () -> {
+      for (Object o : selection) {
+        StructureViewTreeElement element = getStructureTreeElement(o);
+        if (element != null) return element;
+      }
+      return null;
+    });
   }
 
   @Override
@@ -802,6 +832,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class);
 
     return provider == null ? 2 : provider.getMinimumAutoExpandDepth();
+  }
+
+  private StructureViewTreeElement getStructureTreeElement(Object pathComponent) {
+    if (!(pathComponent instanceof DefaultMutableTreeNode node)) return null;
+    if (!(node.getUserObject() instanceof AbstractTreeNode<?> abstractTreeNode)) return null;
+    if (!(abstractTreeNode.getValue() instanceof StructureViewTreeElement treeElement)) return null;
+    return treeElement;
   }
 
   private static final class MyNodeWrapper extends TreeElementWrapper
@@ -941,7 +978,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static final class MyTree extends DnDAwareTree implements PlaceProvider {
+  private final class MyTree extends DnDAwareTree implements PlaceProvider {
+
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
       ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> !isSmartExpand(node));
@@ -956,7 +994,40 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
+      if (myTreeModel instanceof StructureViewModel.ElementRendererProvider elementRendererProvider) {
+        boolean handled = processCustomEventHandler(elementRendererProvider, event);
+        if (handled) {
+          event.consume();
+          return;
+        };
+      }
       super.processMouseEvent(event);
+    }
+
+    private boolean processCustomEventHandler(StructureViewModel.ElementRendererProvider rendererProvider, MouseEvent event) {
+      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return false;
+      TreePath pathTmp = getPathForLocation(event.getX(), event.getY());
+      if (pathTmp == null) return false;
+      final TreePath path = pathTmp;
+
+      Object lastPathComponent = path.getLastPathComponent();
+      StructureViewTreeElement treeElement = getStructureTreeElement(lastPathComponent);
+      if (treeElement == null) return false;
+      Rectangle pathBounds = getPathBounds(path);
+      if (pathBounds == null) return false;
+
+      floatingToolbar.hideImmediately();
+      Rectangle toolWindowBounds = getBounds();
+      floatingToolbar.setBounds(toolWindowBounds.width - 70, pathBounds.y - 5, 60, pathBounds.height + 5);
+      floatingToolbar.scheduleShow();
+
+      int dx = event.getX();
+      dx -= pathBounds.getX();
+      if (dx < 0 || dx > pathBounds.width) return false;
+
+      Supplier<Component> componentSupplier = () ->
+        this.cellRenderer.getTreeCellRendererComponent(this, lastPathComponent, false, false, true, getRowForPath(path), false);
+      return rendererProvider.handleClick(dx, treeElement, componentSupplier);
     }
 
     @Override
@@ -976,6 +1047,29 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       return true;
     }
+  }
+
+  private static class MyAction extends AnAction {
+
+    MyAction(String text, Icon icon) {
+      super(text, null, icon);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      System.out.println();
+    }
+
   }
 
   private static final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
@@ -1124,6 +1218,30 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       // expand root node & its immediate children
       NodeDescriptor<?> parent = nodeDescriptor.getParentDescriptor();
       return parent == null || parent.getParentDescriptor() == null;
+    }
+  }
+
+  private static class MyLayeredPane extends JBLayeredPane {
+
+    private final JComponent mainComponent;
+
+    MyLayeredPane(JComponent mainComponent) {
+      this.mainComponent = mainComponent;
+    }
+
+    @Override
+    public void doLayout() {
+      Rectangle bounds = getBounds();
+      for (Component component : getComponents()) {
+        if (component == mainComponent) {
+          component.setBounds(0, 0, bounds.width, bounds.height);
+        }
+      }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return mainComponent.getPreferredSize();
     }
   }
 }

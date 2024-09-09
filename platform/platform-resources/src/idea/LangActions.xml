@@ -966,6 +966,7 @@
     </group>
 
     <group id="StructureViewToolbar"/>
+    <group id="StructureViewFloatingToolbar"/>
 
     <group id="StructureViewPopupMenu">
       <reference ref="EditSource"/>
@@ -981,6 +982,7 @@
       <separator/>
       <reference ref="CompareTwoFiles"/>
     </group>
+
 
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>

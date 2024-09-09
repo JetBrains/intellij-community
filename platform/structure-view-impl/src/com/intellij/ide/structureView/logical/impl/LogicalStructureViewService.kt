@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
@@ -32,6 +33,10 @@ class LogicalStructureViewService(
 
       override fun isRootNodeShown(): Boolean {
         return false
+      }
+
+      override fun createStructureView(fileEditor: FileEditor?, project: Project): StructureView {
+        return super.createStructureView(fileEditor, project)
       }
     }
   }
