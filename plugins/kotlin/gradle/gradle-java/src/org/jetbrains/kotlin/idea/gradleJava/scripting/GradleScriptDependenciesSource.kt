@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -86,15 +87,14 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
             newClasses.addAll(toVfsRoots(configurationWrapper.dependenciesClassPath))
             newSources.addAll(toVfsRoots(configurationWrapper.dependenciesSources))
 
-            if (javaHomePath != null) {
+            val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+            if (projectSdk != null && projectSdk.sdkType is JavaSdkType) {
+                projectSdk.homePath?.let { path ->
+                    sdks.computeIfAbsent(Path.of(path)) { projectSdk  }
+                }
+            } else if (javaHomePath != null) {
                 sdks.computeIfAbsent(javaHomePath) {
-                    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-
-                    if (projectSdk != null && projectSdk.homePath == script.javaHome) {
-                        projectSdk
-                    } else {
-                        ExternalSystemJdkUtil.lookupJdkByPath(it.pathString)
-                    }
+                    ExternalSystemJdkUtil.lookupJdkByPath(it.pathString)
                 }
             }
         }

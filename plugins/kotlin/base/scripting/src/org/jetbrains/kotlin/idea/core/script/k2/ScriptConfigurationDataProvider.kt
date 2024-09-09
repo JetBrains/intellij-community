@@ -87,18 +87,16 @@ class ScriptConfigurationDataProvider(project: Project) : ScriptDependenciesProv
     }
 
     override fun getFirstScriptsSdk(): Sdk? =
-        scriptDependenciesData.get().sdks.values.firstOrNull()
+        getProjectSdk() ?: scriptDependenciesData.get().sdks.values.firstOrNull()
 
     override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = with(scriptDependenciesData.get()) {
+        getProjectSdk()?.let { return it }
         val configurationWrapper = scriptDependenciesData.get().configurations[virtualFile]?.valueOrNull()
-        return configurationWrapper?.javaHome?.let { sdks[it.toPath()] } ?: getDefaultSdk()
+        return configurationWrapper?.javaHome?.let { sdks[it.toPath()] } ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
     }
 
-    private fun getDefaultSdk(): Sdk? {
-        val projectSdk = ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.canBeUsedForScript() }
-        if (projectSdk != null) return projectSdk
-
-        return ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
+    private fun getProjectSdk(): Sdk? {
+        return ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.canBeUsedForScript() }
     }
 
     private fun Sdk.hasValidClassPathRoots(): Boolean {
