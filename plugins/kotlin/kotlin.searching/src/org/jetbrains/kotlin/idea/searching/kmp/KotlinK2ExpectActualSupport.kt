@@ -21,7 +21,7 @@ class KotlinK2ExpectActualSupport: ExpectActualSupport {
             val index = function.valueParameters.indexOf(declaration)
             return actualsForExpected(function, module).mapNotNull { (it as? KtCallableDeclaration)?.valueParameters?.getOrNull(index) }.toSet()
         }
-        return declaration.findAllActualForExpect( runReadAction { module?.moduleTestsWithDependentsScope ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
+        return declaration.findAllActualForExpect( runReadAction { module?.moduleWithDependentsScope ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
     }
 
     @OptIn(KaExperimentalApi::class)
