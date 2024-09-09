@@ -6,7 +6,6 @@
                 dynamic="true"/>
     </extensionPoints>
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDECodegenExtension"/>
         <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEResolveExtension"/>
         <jsSyntheticTranslateExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEJsExtension"/>
         <irGenerationExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEIrExtension"/>
