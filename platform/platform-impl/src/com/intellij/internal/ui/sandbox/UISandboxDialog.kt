@@ -75,7 +75,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         LcrSeparatorPanel(),
         LcrOthersPanel()
       )),
-      Group("Validaiton", children = listOf(
+      Group("Validation", children = listOf(
         CrossValidationPanel(),
         ValidationPanel(),
         ValidationRefactoringPanel(),
