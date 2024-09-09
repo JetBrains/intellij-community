@@ -47,6 +47,30 @@ public fun JewelToolWindowComposePanel(content: @Composable () -> Unit): JCompon
         }
     }
 
+@ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
+public fun JewelComposeNoThemePanel(content: @Composable () -> Unit): JComponent =
+    createJewelComposePanel { jewelPanel ->
+        setContent {
+            CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                ComponentDataProviderBridge(jewelPanel, content = content)
+            }
+        }
+    }
+
+@ExperimentalJewelApi
+@Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
+public fun JewelToolWindowNoThemeComposePanel(content: @Composable () -> Unit): JComponent =
+    createJewelComposePanel { jewelPanel ->
+        setContent {
+            Compose17IJSizeBugWorkaround {
+                CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                    ComponentDataProviderBridge(jewelPanel, content = content)
+                }
+            }
+        }
+    }
+
 private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanel) -> Unit): JewelComposePanel {
     val jewelPanel = JewelComposePanel()
     jewelPanel.layout = BorderLayout()
