@@ -48,11 +48,11 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
     private fun saveSettings() {
         mainPanel.apply()
         KotlinCommonRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages
+        PropertiesComponent.getInstance().setValue("MoveFile.OpenInEditor", isOpenInEditor)
     }
 
     override fun doAction() {
         saveSettings()
-        if (isOpenInEditor) PropertiesComponent.getInstance().setValue("MoveFile.OpenInEditor", true)
         val descriptor = ActionUtil.underModalProgress(
             project,
             KotlinBundle.message("preparing.move.descriptor")
