@@ -87,6 +87,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
         }
       }
       BUILD_CANCEL -> print(ServiceMessageTypes.BUILD_STOP, "comment" to message.text, "readdToQueue" to "false")
+      IMPORT_DATA -> print("importData", "type" to "streamToBuildLog", "filePath" to message.text, "wrapFileContentInBlock" to "false")
     }
   }
 

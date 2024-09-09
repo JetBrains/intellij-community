@@ -162,6 +162,10 @@ class BuildMessagesImpl private constructor(
   override fun cancelBuild(reason: String) {
     logger.processMessage(LogMessage(LogMessage.Kind.BUILD_CANCEL, reason))
   }
+
+  override fun startWritingFileToBuildLog(artifactPath: String) {
+    logger.processMessage(LogMessage(LogMessage.Kind.IMPORT_DATA, artifactPath))
+  }
 }
 
 /**
