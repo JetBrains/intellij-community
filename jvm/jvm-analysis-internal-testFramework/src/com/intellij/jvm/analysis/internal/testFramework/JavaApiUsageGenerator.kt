@@ -192,6 +192,10 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
           super.visitElement(element)
           if (element is PsiMember && element.isPublicApi()) {
             val signature = LanguageLevelUtil.getSignature(element) ?: return
+            val className = signature.substringBefore("#")
+            if (JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) == null) {
+              return // If the class is not in all scope, don't generate
+            }
             if (isDocumentedSinceApi(element) && !previews.contains(signature)) {
               println(signature)
             } else if (element is PsiMethod && element.docComment == null) { // find inherited doc
