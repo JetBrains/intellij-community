@@ -1,4 +1,4 @@
-Function call 20 super<A>.foo()
+Delegate to super method 20 super<A>.foo()
 Function call 7 A.foos()
 New instance creation 2 var next: A? = A()
 New instance creation 32 fun X.bar(a: A = A()) {

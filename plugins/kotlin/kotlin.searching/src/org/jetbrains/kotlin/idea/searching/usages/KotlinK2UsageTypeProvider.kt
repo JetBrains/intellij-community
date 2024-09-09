@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
 import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -38,7 +40,17 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
 
                 with(refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }) {
                     this?.calleeExpression is KtSimpleNameExpression
-                } -> if (functionSymbol is KaConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL
+                } -> {
+                    val callExpression = refExpr.getNonStrictParentOfType<KtCallExpression>()
+                    val qualifiedCall = callExpression?.parent as? KtDotQualifiedExpression
+
+                    if (qualifiedCall?.receiverExpression is KtSuperExpression && qualifiedCall.selectorExpression == callExpression)
+                        SUPER_DELEGATION
+                    else if (functionSymbol is KaConstructorSymbol)
+                        CLASS_NEW_OPERATOR
+                    else
+                        FUNCTION_CALL
+                }
 
                 refExpr.getParentOfTypeAndBranch<KtBinaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtUnaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtWhenConditionInRange> { operationReference } != null -> FUNCTION_CALL
 

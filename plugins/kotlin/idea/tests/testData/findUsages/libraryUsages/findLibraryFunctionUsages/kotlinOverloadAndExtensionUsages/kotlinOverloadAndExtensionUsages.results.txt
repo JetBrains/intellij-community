@@ -1,4 +1,4 @@
-[kotlinOverloadAndExtensionUsages.0.kt] Function call 11 super<A>.foo(t)
+[kotlinOverloadAndExtensionUsages.0.kt] Delegate to super method 11 super<A>.foo(t)
 [kotlinOverloadAndExtensionUsages.0.kt] Function call 15 a.foo(0, "")
 [kotlinOverloadAndExtensionUsages.0.kt] Usage in import 7 import library.foo
 [kotlinOverloadAndExtensionUsagesLib0.kt] Function call 11 x.foo(1, 2)
@@ -6,5 +6,5 @@
 [kotlinOverloadAndExtensionUsagesLib0.kt] Function call 30 a.foo(1, "")
 [kotlinOverloadAndExtensionUsagesLib0.kt] Function call 35 foo(t)
 [kotlinOverloadAndExtensionUsagesLib0.kt] Function call 39 foo(s)
+[kotlinOverloadAndExtensionUsagesLib1.kt] Delegate to super method 5 super<A>.foo(t)
 [kotlinOverloadAndExtensionUsagesLib1.kt] Function call 13 a.foo(0, "")
-[kotlinOverloadAndExtensionUsagesLib1.kt] Function call 5 super<A>.foo(t)
