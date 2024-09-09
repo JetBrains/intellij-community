@@ -10,6 +10,7 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.execution.ui.RedesignedRunWidgetKt;
+import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -553,6 +554,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public SelectConfigAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
       myProject = project;
       myConfiguration = configuration;
+      getTemplatePresentation().putClientProperty(RunToolbarPopupKt.RUN_CONFIGURATION_ID, myConfiguration.getUniqueID());
       // TODO remove when BackendAsyncActionHost.isNewActionUpdateEnabled is inlined
       if (ClientId.getCurrentOrNull() != null && !Registry.is("rdct.new.async.actions", true)) {
         Presentation p = getTemplatePresentation().clone();

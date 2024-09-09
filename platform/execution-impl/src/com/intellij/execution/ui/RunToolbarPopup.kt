@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -79,6 +80,9 @@ private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.con
 @ApiStatus.Internal
 @JvmField
 val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
+
+@JvmField
+internal val RUN_CONFIGURATION_ID: Key<String> = Key.create("sub.popup.run.configuration.unique.id")
 
 private const val TAG_PINNED = "pinned"
 private const val TAG_RECENT = "recent"
@@ -234,12 +238,17 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     serviceState = RunConfigurationStartHistory.getInstance(project)
     list.setExpandableItemsEnabled(false)
     (myStep as ActionPopupStep).setSubStepContextAdjuster { context, action ->
-      if (action is SelectConfigAction) {
-        CustomizedDataContext.withSnapshot(context) { sink ->
-          sink[RUN_CONFIGURATION_KEY] = action.configuration
+      val configuration = when {
+        action is SelectConfigAction -> action.configuration
+        else -> {
+          action.templatePresentation.getClientProperty(RUN_CONFIGURATION_ID)?.let { configId ->
+            RunManager.getInstance(project).allSettings.find { it.uniqueID == configId }
+          } ?: return@setSubStepContextAdjuster context
         }
       }
-      else context
+      CustomizedDataContext.withSnapshot(context) { sink ->
+        sink[RUN_CONFIGURATION_KEY] = configuration
+      }
     }
     pinnedSize = (myStep as ActionPopupStep).values.asSequence()
       .filter { it.action !is Separator }
