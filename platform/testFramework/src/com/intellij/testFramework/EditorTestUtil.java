@@ -137,6 +137,12 @@ public final class EditorTestUtil {
     }
   }
 
+  public static boolean checkActionIsEnabled(@NotNull Editor editor, @NotNull AnAction action) {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    return event.getPresentation().isEnabled();
+  }
+
   @NotNull
   private static DataContext createEditorContext(@NotNull Editor editor) {
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
