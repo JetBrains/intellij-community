@@ -11,86 +11,102 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
+import com.intellij.platform.ml.embeddings.local.helpers.UnsupportedArchitectureException
+import com.intellij.platform.ml.embeddings.local.helpers.UnsupportedOSException
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingsManager.Companion.INDEXING_VERSION
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.MODEL_VERSION
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SERVER_VERSION
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.getArchitectureId
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.getOsId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
-import com.intellij.util.io.Decompressor
+import com.intellij.util.io.ZipUtil
 import com.intellij.util.io.delete
+import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
+import java.nio.file.Path
+import kotlin.io.path.*
 
-/* Service that manages the artifacts for local semantic models */
-@OptIn(ExperimentalCoroutinesApi::class)
+/* Service that manages the artifacts for local embedding search models */
 @Service
 class LocalArtifactsManager {
-  private val root = File(PathManager.getSystemPath())
-    .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
-    .resolve(MODEL_VERSION)
-    .also { Files.createDirectories(it.toPath()) }
+  init {
+    clearUnusedResources()
+    removeOutdatedModels()
+    removeOutdatedServers()
+  }
 
-  private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
-
+  @OptIn(ExperimentalCoroutinesApi::class)
   private val downloadContext = Dispatchers.IO.limitedParallelism(1)
+
   private var failNotificationShown = false
   private var downloadCanceled = false
 
-  init {
-    root.parentFile.toPath().listDirectoryEntries().filter { it.name != MODEL_VERSION }.forEach { it.delete(recursively = true) }
-  }
+  // TODO: the list may be changed depending on the project size
+  private val availableModels = listOf(ModelArtifact.SmallModelArtifact)
 
-  fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
+  fun getCustomRootDataLoader() = CustomRootDataLoader(modelsRoot)
 
   @RequiresBackgroundThread
-  suspend fun downloadArtifactsIfNecessary(project: Project? = null,
-                                           retryIfCanceled: Boolean = true) = withContext(downloadContext) {
-    if (!checkArtifactsPresent() && !ApplicationManager.getApplication().isUnitTestMode && (retryIfCanceled || !downloadCanceled)) {
-      logger.debug("Semantic search artifacts are not present, starting the download...")
-      if (project != null) {
-        withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
-          try {
-            coroutineToIndicator { // platform code relies on the existence of indicator
-              downloadArtifacts()
+  suspend fun downloadArtifactsIfNecessary(
+    project: Project? = null,
+    retryIfCanceled: Boolean = true,
+  ) {
+    if (ApplicationManager.getApplication().isUnitTestMode || (!retryIfCanceled && downloadCanceled)) return
+
+    withContext(downloadContext) {
+      val absentArtifacts: MutableList<DownloadableArtifact> = availableModels.filter { !it.checkPresent() }.toMutableList()
+      if (!NativeServerArtifact.checkPresent()) absentArtifacts.add(NativeServerArtifact)
+      if (absentArtifacts.isNotEmpty()) {
+        logger.debug("Embedding search artifacts are not present, starting the download...")
+        if (project != null) {
+          withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
+            try {
+              coroutineToIndicator { // platform code relies on the existence of indicator
+                downloadArtifacts(absentArtifacts)
+              }
+            }
+            catch (e: CancellationException) {
+              logger.debug("Artifacts downloading was canceled")
+              downloadCanceled = true
+              throw e
             }
           }
-          catch (e: CancellationException) {
-            logger.debug("Artifacts downloading was canceled")
-            downloadCanceled = true
-            throw e
-          }
         }
-      }
-      else {
-        downloadArtifacts()
+        else downloadArtifacts(absentArtifacts)
       }
     }
   }
 
-  fun getModelVersion(): String = MODEL_VERSION
+  // TODO: provide model id in arguments
+  fun getModelArtifact(): ModelArtifact = availableModels.first()
+  fun getServerArtifact() = NativeServerArtifact
 
-  fun checkArtifactsPresent(): Boolean {
-    return Files.isDirectory(modelArtifactsRoot.toPath()) && modelArtifactsRoot.toPath().listDirectoryEntries().isNotEmpty()
-  }
+  fun checkArtifactsPresent(): Boolean = availableModels.all { it.checkPresent() }
 
-  private fun downloadArtifacts() {
-    Files.createDirectories(root.toPath())
+  private fun downloadArtifacts(artifacts: List<DownloadableArtifact>) {
     try {
       DownloadableFileService.getInstance().run {
-        createDownloader(listOf(createFileDescription(MAVEN_ROOT, ARCHIVE_NAME)), ARTIFACTS_DOWNLOAD_TASK_NAME)
-      }.download(root)
-      logger.debug { "Downloaded archive with search artifacts into ${root.absoluteFile}" }
+        val filesToDownload = artifacts.map { createFileDescription(it.downloadLink, it.archiveName) }
+        createDownloader(filesToDownload, ARTIFACTS_DOWNLOAD_TASK_NAME)
+      }.download(resourcesRoot.toFile())
+      logger.debug { "Downloaded embedding search artifacts into ${resourcesRoot.absolute()}" }
 
-      modelArtifactsRoot.deleteRecursively()
-      unpackArtifactsArchive(root.resolve(ARCHIVE_NAME), root)
-      logger.debug { "Extracted model artifacts into the ${root.absoluteFile}" }
+      for (artifact in artifacts) {
+        val destination = artifact.destination
+        destination.delete(recursively = true)
+        unpackArtifactsArchive(resourcesRoot.resolve(artifact.archiveName), destination)
+      }
+      logger.debug { "Extracted embedding search artifacts into the ${resourcesRoot.absolute()}" }
     }
     catch (e: IOException) {
       logger.warn("Failed to download semantic search artifacts: $e")
@@ -101,23 +117,42 @@ class LocalArtifactsManager {
     }
   }
 
-  private fun unpackArtifactsArchive(archiveFile: File, destination: File) {
-    Decompressor.Zip(archiveFile).overwrite(false).extract(destination)
+  private fun unpackArtifactsArchive(archiveFile: Path, destination: Path) {
+    ZipUtil.extract(archiveFile, destination, null, true)
     archiveFile.delete()
   }
 
+  private fun removeOutdatedModels() = ensureParentFolderHasSingleChild(modelsRoot)
+  private fun removeOutdatedServers() = ensureParentFolderHasSingleChild(serverRoot)
+  private fun ensureParentFolderHasSingleChild(path: Path) {
+    path.parent.listDirectoryEntries().filter { it.name != path.name }.forEach { it.delete(recursively = true) }
+  }
+
+  private fun clearUnusedResources() {
+    resourcesRoot.listDirectoryEntries().filter {
+      it.name !in listOf(INDICES_DIR_NAME, MODELS_DIR_NAME, SERVER_DIR_NAME)
+    }.forEach { it.delete(recursively = true) }
+  }
+
   companion object {
-    const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
+    const val SEMANTIC_SEARCH_RESOURCES_DIR_NAME = "semantic-search" // TODO: move to common constants
+
+    const val INDICES_DIR_NAME = "indices"
+    private const val MODELS_DIR_NAME = "models"
+    private const val SERVER_DIR_NAME = "server"
 
     private val ARTIFACTS_DOWNLOAD_TASK_NAME
       get() = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
-    private val MODEL_VERSION
+    internal val MODEL_VERSION
       get() = Registry.stringValue("intellij.platform.ml.embeddings.model.version")
-    private val MAVEN_ROOT
-      get() = Registry.stringValue("intellij.platform.ml.embeddings.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
+    internal val SERVER_VERSION
+      get() = Registry.stringValue("intellij.platform.ml.embeddings.server.version")
 
-    private const val MODEL_ARTIFACTS_DIR = "models"
-    private const val ARCHIVE_NAME = "semantic-text-search.jar"
+    private val resourcesRoot = Path(PathManager.getSystemPath()) / SEMANTIC_SEARCH_RESOURCES_DIR_NAME
+    internal val serverRoot: Path = (resourcesRoot / SERVER_DIR_NAME / SERVER_VERSION).also { Files.createDirectories(it) }
+    internal val modelsRoot: Path = (resourcesRoot / MODELS_DIR_NAME / MODEL_VERSION).also { Files.createDirectories(it) }
+    internal val indicesRoot: Path = (resourcesRoot / INDICES_DIR_NAME / INDEXING_VERSION).also { Files.createDirectories(it) }
+
     private const val NOTIFICATION_GROUP_ID = "Embedding-based search"
 
     private val logger = Logger.getInstance(LocalArtifactsManager::class.java)
@@ -125,13 +160,83 @@ class LocalArtifactsManager {
     fun getInstance(): LocalArtifactsManager = service()
 
     private fun showDownloadErrorNotification() {
-      NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
-        ?.createNotification(
-          EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.title"),
-          EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.content"),
-          NotificationType.WARNING
-        )
-        ?.notify(null)
+      if (ApplicationManager.getApplication().isInternal) {
+        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
+          ?.createNotification(
+            EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.title"),
+            EmbeddingsBundle.getMessage("ml.embeddings.notification.model.downloading.failed.content"),
+            NotificationType.WARNING
+          )
+          ?.notify(null)
+      }
+      logger.warn("Failed to download embedding models")
     }
+
+    fun getOsId(): String = when {
+      SystemInfoRt.isLinux -> "linux"
+      SystemInfoRt.isMac -> "macos"
+      SystemInfoRt.isWindows -> "windows"
+      else -> throw UnsupportedOSException(SystemInfoRt.OS_NAME)
+    }
+
+    fun getArchitectureId(): String = when (CpuArch.CURRENT) {
+      CpuArch.X86 -> "x86_64"
+      CpuArch.ARM64 -> "arm_64"
+      else -> throw UnsupportedArchitectureException(System.getProperty("os.arch"))
+    }
+  }
+}
+
+sealed interface DownloadableArtifact {
+  val archiveName: String
+  val downloadLink: String
+  val destination: Path
+  // TODO: add signature link
+
+  fun checkPresent(): Boolean
+}
+
+sealed class ModelArtifact(
+  val name: String,
+  private val weightsPath: String,
+  private val vocabPath: String,
+) : DownloadableArtifact {
+  data object SmallModelArtifact : ModelArtifact("small", "dan_100k_optimized.onnx", "bert-base-uncased.txt")
+
+  override val archiveName = "$name.zip"
+  override val downloadLink: String = listOf(CDN_LINK_BASE, MODEL_VERSION, "$name.zip").joinToString(separator = "/")
+  override val destination: Path = LocalArtifactsManager.modelsRoot / name
+
+  override fun checkPresent(): Boolean {
+    // TODO: add signature check
+    return listOf(weightsPath, vocabPath).all { destination.resolve(it).exists() }
+  }
+
+  fun getVocabPath(): Path = destination / vocabPath
+  fun getWeightsPath(): Path = destination / weightsPath
+
+  companion object {
+    // TODO: synchronize with teamcity config
+    private const val CDN_LINK_BASE = "https://download.jetbrains.com/resources/ml/embeddings/models"
+  }
+}
+
+data object NativeServerArtifact : DownloadableArtifact {
+  private const val BINARY_NAME = "embeddings-server"
+  private const val CDN_LINK_BASE = "https://download.jetbrains.com/resources/ml/full-line/servers"
+
+  override val archiveName: String = "embeddings-server.zip"
+  override val downloadLink: String = listOf(
+    CDN_LINK_BASE, SERVER_VERSION, getOsId(), getArchitectureId(), archiveName).joinToString(separator = "/")
+  override val destination: Path = LocalArtifactsManager.serverRoot
+
+  fun getBinaryPath(): Path = when {
+    SystemInfoRt.isMac -> destination / "$BINARY_NAME.app" / "Contents" / "MacOS" / BINARY_NAME
+    SystemInfoRt.isWindows -> destination / "$BINARY_NAME.exe"
+    else -> destination / BINARY_NAME
+  }
+
+  override fun checkPresent(): Boolean {
+    return destination.isDirectory() && getBinaryPath().exists()
   }
 }

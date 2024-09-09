@@ -6,14 +6,13 @@
                        bundle="messages.EmbeddingsBundle"
                        key="ml.embeddings.notification.group.name"/>
 
-    <registryKey defaultValue="0.0.3"
-                 description="Embeddings model version"
+    <registryKey defaultValue="0.0.5"
+                 description="Embeddings models version"
                  key="intellij.platform.ml.embeddings.model.version"/>
 
-    <registryKey
-      defaultValue="https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/searcheverywhereMl/semantics/semantic-text-search/%MODEL_VERSION%/semantic-text-search-%MODEL_VERSION%.jar"
-      description="Semantic search artifacts template link"
-      key="intellij.platform.ml.embeddings.model.artifacts.link"/>
+    <registryKey defaultValue="2.0.138"
+                 description="Embeddings native server version"
+                 key="intellij.platform.ml.embeddings.server.version"/>
 
     <registryKey
       defaultValue="true"
