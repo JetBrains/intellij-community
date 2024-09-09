@@ -3,6 +3,7 @@ package com.intellij.util.io
 
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.io.cache.ManagedPersistentCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -67,11 +68,13 @@ internal class ManagedCacheTest {
   @Test
   fun testOpenTwiceFails() = runBlocking {
     withCache {
-      val exception = assertThrows<TestLoggerAssertionError>("second cache expected to not be opened") {
-        createCache()
+      rethrowLoggedErrorsIn {
+        val exception = assertThrows<TestLoggerAssertionError>("second cache expected to not be opened") {
+          createCache()
+        }
+        // Storage is already registered
+        assertTrue(exception.cause is IllegalStateException)
       }
-      // Storage is already registered
-      assertTrue(exception.cause is IllegalStateException)
     }
   }
 

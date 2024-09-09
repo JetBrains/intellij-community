@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
 import com.intellij.openapi.application.*
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume
@@ -59,7 +60,7 @@ class TransactionTest : LightPlatformTestCase() {
   }
 
   @Test
-  fun `test write action without transaction prohibited`() {
+  fun `test write action without transaction prohibited`(): Unit = rethrowLoggedErrorsIn {
     val app = app!!
     assertThat(app.isDispatchThread).isTrue()
     assertThat(app.isWriteAccessAllowed).isFalse()
@@ -69,7 +70,7 @@ class TransactionTest : LightPlatformTestCase() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
-  fun `test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater`() {
+  fun `test write action allowed inside user activity but not in modal dialog shown from non-modal invokeLater`(): Unit = rethrowLoggedErrorsIn {
     SwingUtilities.invokeLater {
       guard.performUserActivity { app!!.runWriteAction { log.add("1") } }
 
@@ -181,7 +182,7 @@ class TransactionTest : LightPlatformTestCase() {
     }
   }
 
-  fun `test write access in modal invokeLater`() {
+  fun `test write access in modal invokeLater`(): Unit = rethrowLoggedErrorsIn {
     LaterInvocator.enterModal(Object())
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     val unsafeModality = ModalityState.current()
@@ -214,7 +215,7 @@ class TransactionTest : LightPlatformTestCase() {
     assertThat(log).containsExactly("1", "2", "3", "4", "5")
   }
 
-  fun `test no synchronous transactions inside invokeLater`() {
+  fun `test no synchronous transactions inside invokeLater`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     SwingUtilities.invokeLater {
       log.add("1")

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -499,14 +499,16 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testModalityStateCurrentAllowedOnlyFromEDT() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
-    try {
-      future.get(1000, TimeUnit.MILLISECONDS);
-      fail("should fail");
-    }
-    catch (ExecutionException e) {
-      assertThat(e.getMessage()).contains("EventQueue.isDispatchThread()=false");
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
+      try {
+        future.get(1000, TimeUnit.MILLISECONDS);
+        fail("should fail");
+      }
+      catch (ExecutionException e) {
+        assertThat(e.getMessage()).contains("EventQueue.isDispatchThread()=false");
+      }
+    });
   }
 
   public void testDispatchInvocationEventsWorksForJustSubmitted() {

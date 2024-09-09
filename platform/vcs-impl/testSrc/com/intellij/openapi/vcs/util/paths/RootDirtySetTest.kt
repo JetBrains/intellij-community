@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator.NATURAL
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.ReflectionUtil
 import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.ints.Int2IntMap
@@ -142,7 +143,7 @@ class RootDirtySetTest {
   }
 
   @Test
-  fun testWrongRootThrows1() {
+  fun testWrongRootThrows1(): Unit = rethrowLoggedErrorsIn {
     Assumptions.assumeTrue(SystemInfo.isUnix)
     val dirty = RootDirtySet("/root2".filePath, true)
 
@@ -168,7 +169,7 @@ class RootDirtySetTest {
   }
 
   @Test
-  fun testWrongRootThrows2() {
+  fun testWrongRootThrows2(): Unit = rethrowLoggedErrorsIn {
     Assumptions.assumeTrue(SystemInfo.isUnix)
     val dirty = RootDirtySet("/root2".filePath, true)
 

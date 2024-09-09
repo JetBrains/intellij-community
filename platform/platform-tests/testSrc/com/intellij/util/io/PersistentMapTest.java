@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -454,44 +455,46 @@ public class PersistentMapTest extends PersistentMapTestBase {
       PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);
     }
   }
-  
-  public void testFailedReadWriteSetsCorruptedFlag() throws IOException {
-    EnumeratorStringDescriptor throwingException = new EnumeratorStringDescriptor() {
-      @Override
-      public void save(@NotNull DataOutput storage, @NotNull String value) throws IOException {
-        throw new IOException("test");
+
+  public void testFailedReadWriteSetsCorruptedFlag() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      EnumeratorStringDescriptor throwingException = new EnumeratorStringDescriptor() {
+        @Override
+        public void save(@NotNull DataOutput storage, @NotNull String value) throws IOException {
+          throw new IOException("test");
+        }
+
+        @Override
+        public String read(@NotNull DataInput storage) throws IOException {
+          throw new IOException("test");
+        }
+      };
+
+      PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenKeyDescriptor =
+        (file) -> IOUtil.openCleanOrResetBroken(
+          () -> new PersistentHashMap<>(file, throwingException, EnumeratorStringDescriptor.INSTANCE), file);
+
+      PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenValueDescriptor =
+        (file) -> IOUtil.openCleanOrResetBroken(
+          () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, throwingException), file);
+
+      try {
+        runIteration(mapConstructorWithBrokenKeyDescriptor);
       }
-
-      @Override
-      public String read(@NotNull DataInput storage) throws IOException {
-        throw new IOException("test");
+      catch (AssertionError ignore) {
       }
-    };
-
-    PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenKeyDescriptor =
-      (file) -> IOUtil.openCleanOrResetBroken(
-        () -> new PersistentHashMap<>(file, throwingException, EnumeratorStringDescriptor.INSTANCE), file);
-
-    PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenValueDescriptor =
-      (file) -> IOUtil.openCleanOrResetBroken(
-        () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, throwingException), file);
-
-    try {
-      runIteration(mapConstructorWithBrokenKeyDescriptor);
-    }
-    catch (AssertionError ignore) {
-    }
-    try {
-      runIteration(mapConstructorWithBrokenValueDescriptor);
-    }
-    catch (AssertionError ignore) {
-    }
-    try {
-      myMap.close();
-      fail();
-    }
-    catch (Exception ignored) {
-    }
+      try {
+        runIteration(mapConstructorWithBrokenValueDescriptor);
+      }
+      catch (AssertionError ignore) {
+      }
+      try {
+        myMap.close();
+        fail();
+      }
+      catch (Exception ignored) {
+      }
+    });
   }
 
   public void testExistingKeys() throws IOException {

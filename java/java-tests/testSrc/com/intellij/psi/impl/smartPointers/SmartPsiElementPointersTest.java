@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -1006,17 +1006,19 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testDoubleRemoveIsAnError() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    @Language("JAVA")
-    String text = "class A {}";
-    SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", text));
-    getPointerManager().removePointer(pointer);
-    try {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      @Language("JAVA")
+      String text = "class A {}";
+      SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", text));
       getPointerManager().removePointer(pointer);
-      fail("Should have failed");
-    }
-    catch (AssertionError e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
-    }
+      try {
+        getPointerManager().removePointer(pointer);
+        fail("Should have failed");
+      }
+      catch (AssertionError e) {
+        assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
+      }
+    });
   }
 
   public void testStubSmartPointersAreCreatedEvenInAstPresence() throws Exception {
@@ -1098,32 +1100,34 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   // if the assertion is to be removed, please ensure that the test in IDEA-182567 passes
   public void testCreatingPointerInsidePsiListenerProhibited() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    @Language("JAVA")
-    String text = "class Foo { { int a; } }";
-    PsiFile file = createFile("a.java", text);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      @Language("JAVA")
+      String text = "class Foo { { int a; } }";
+      PsiFile file = createFile("a.java", text);
 
-    try {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        PsiLocalVariable var = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("int"), PsiLocalVariable.class, false);
-        PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
-          @Override
-          public void childAdded(@NotNull PsiTreeChangeEvent event) {
-            createPointer(var);
+      try {
+        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+          PsiLocalVariable var = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("int"), PsiLocalVariable.class, false);
+          PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
+            @Override
+            public void childAdded(@NotNull PsiTreeChangeEvent event) {
+              createPointer(var);
+            }
+          };
+          PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
+          try {
+            var.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
           }
-        };
-        PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
-        try {
-          var.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-        }
-        finally {
-          PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
-        }
-      });
-      fail();
-    }
-    catch (AssertionError e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("must not be created"));
-    }
+          finally {
+            PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
+          }
+        });
+        fail();
+      }
+      catch (AssertionError e) {
+        assertTrue(e.getMessage(), e.getMessage().contains("must not be created"));
+      }
+    });
   }
 
   public void testCanRestoreErrorElementsAtSameOffset() throws Exception {

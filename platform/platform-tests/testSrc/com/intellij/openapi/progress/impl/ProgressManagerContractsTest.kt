@@ -10,13 +10,14 @@ import com.intellij.openapi.progress.impl.CoreProgressManager.shouldEnterModalit
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProgressManagerContractsTest : LightPlatformTestCase() {
   @TestFor(issues = ["IDEA-241785"])
-  fun `test leaked exception from backgroundable task`() {
+  fun `test leaked exception from backgroundable task`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     val message = "this is test exception message to ignore"
     try {
@@ -33,7 +34,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
   }
 
   @TestFor(issues = ["IDEA-241785"])
-  fun `test leaked invokeLater exception from backgroundable task`() {
+  fun `test leaked invokeLater exception from backgroundable task`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     val message = "this is test exception message to ignore"
     try {

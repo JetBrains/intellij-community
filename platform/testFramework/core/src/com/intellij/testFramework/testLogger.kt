@@ -5,6 +5,7 @@ import com.intellij.concurrency.withThreadLocal
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.Throws
 
 private val tlErrorLog: ThreadLocal<ErrorLog?> = ThreadLocal()
 
@@ -68,4 +69,14 @@ private fun rethrowLoggedErrors(
     throwable.addSuppressed(loggedError)
   }
   throw throwable
+}
+
+@Deprecated("Re-throwing from Logger.error() makes the test behaviour different from the production run")
+@Throws(Exception::class)
+fun rethrowLoggedErrorsIn(executable: ThrowableRunnable<*>) {
+  withThreadLocal(tlErrorLog) {
+    null
+  }.use { _ ->
+    executable.run()
+  }
 }

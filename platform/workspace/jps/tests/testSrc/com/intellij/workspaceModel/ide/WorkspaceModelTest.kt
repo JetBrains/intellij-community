@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -127,7 +128,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update`() {
+  fun `recursive update`(): Unit = rethrowLoggedErrorsIn {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         ApplicationManager.getApplication().runWriteAction {
@@ -143,7 +144,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update silent`() {
+  fun `recursive update silent`(): Unit = rethrowLoggedErrorsIn {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
@@ -157,7 +158,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update mixed 1`() {
+  fun `recursive update mixed 1`(): Unit = rethrowLoggedErrorsIn {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         ApplicationManager.getApplication().runWriteAction {
@@ -173,7 +174,7 @@ class WorkspaceModelTest {
   }
 
   @Test
-  fun `recursive update mixed 2`() {
+  fun `recursive update mixed 2`(): Unit = rethrowLoggedErrorsIn {
     val exception = assertThrows<Throwable> {
       invokeAndWaitIfNeeded {
         runWriteAction {

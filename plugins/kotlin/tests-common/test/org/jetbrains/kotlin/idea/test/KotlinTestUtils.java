@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -19,10 +19,7 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.TestDataFile;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
 import kotlin.collections.CollectionsKt;
@@ -508,7 +505,12 @@ public final class KotlinTestUtils {
     }
 
     public static void runTest(@NotNull DoTest test, @NotNull TestCase testCase, @TestDataFile String testDataFile) throws Exception {
-        runTestImpl(testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase), testCase, testDataFile);
+        TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+            runTestImpl(
+                    testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase),
+                    testCase, testDataFile
+            );
+        });
     }
 
     // In this test runner version the `testDataFile` parameter is annotated by `TestDataFile`.

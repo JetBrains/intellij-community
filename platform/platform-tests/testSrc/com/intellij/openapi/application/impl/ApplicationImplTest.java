@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.Job;
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.RunFirst;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -648,71 +649,76 @@ public class ApplicationImplTest extends LightPlatformTestCase {
                                           (ThrowableComputable<ThrowableRunnable<?>, IOException>)() -> { throw new IOException("aaaah"); }));
   }
 
-  public void testMustNotAllowStartingWriteActionFromWithinWriteActionListener() {
-    Disposable disposable = Disposer.newDisposable();
-    try {
-      AtomicInteger nestingCount = new AtomicInteger();
-      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-      application.addApplicationListener(new ApplicationListener() {
-        @Override
-        public void beforeWriteActionStart(@NotNull Object action) {
-          nestingCount.incrementAndGet();
-          assertTrue(application.isWriteIntentLockAcquired());
-          assertEquals(nestingCount.get() > 1, application.isWriteAccessAllowed());
-          assertTrue(application.isWriteActionPending());
-          assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
-        }
-
-        @Override
-        public void writeActionStarted(@NotNull Object action) {
-          assertTrue(application.isWriteIntentLockAcquired());
-          assertTrue(application.isWriteActionInProgress());
-          assertTrue(application.isWriteAccessAllowed());
-          assertFalse(application.isWriteActionPending());
-          // jury is still out on whether we should allow starting write action from here
-          //assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
-        }
-
-        @Override
-        public void writeActionFinished(@NotNull Object action) {
-          assertTrue(application.isWriteIntentLockAcquired());
-          assertTrue(application.isWriteAccessAllowed());
-          assertTrue(application.isWriteActionInProgress());
-          assertFalse(application.isWriteActionPending());
-          if (nestingCount.get() < 2) {
-            // strange to allow it but this is how reformat works
-            application.runWriteAction(() -> { });
-          }
-        }
-
-        @Override
-        public void afterWriteActionFinished(@NotNull Object action) {
-          assertTrue(application.isWriteIntentLockAcquired());
-          assertFalse(application.isWriteAccessAllowed());
-          assertFalse(application.isWriteActionInProgress());
-          assertFalse(application.isWriteActionPending());
-          if (nestingCount.get() < 2) {
-            // strange to allow it but this is how a lot of code is
-            application.runWriteAction(() -> { });
-          }
-        }
-      }, disposable);
-      application.runWriteAction(() -> {
-        assertTrue(application.isWriteIntentLockAcquired());
-        assertTrue(application.isWriteAccessAllowed());
-        assertFalse(application.isWriteActionPending());
-        if (nestingCount.get() < 2) {
-          application.runWriteAction(() -> {
+  public void testMustNotAllowStartingWriteActionFromWithinWriteActionListener() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Disposable disposable = Disposer.newDisposable();
+      try {
+        AtomicInteger nestingCount = new AtomicInteger();
+        ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+        application.addApplicationListener(new ApplicationListener() {
+          @Override
+          public void beforeWriteActionStart(@NotNull Object action) {
+            nestingCount.incrementAndGet();
             assertTrue(application.isWriteIntentLockAcquired());
+            assertEquals(nestingCount.get() > 1, application.isWriteAccessAllowed());
+            assertTrue(application.isWriteActionPending());
+            assertThrows(IllegalStateException.class, () -> application.runWriteAction(() -> {
+            }));
+          }
+
+          @Override
+          public void writeActionStarted(@NotNull Object action) {
+            assertTrue(application.isWriteIntentLockAcquired());
+            assertTrue(application.isWriteActionInProgress());
             assertTrue(application.isWriteAccessAllowed());
             assertFalse(application.isWriteActionPending());
-          });
-        }
-      });
-    }
-    finally {
-      Disposer.dispose(disposable);
-    }
+            // jury is still out on whether we should allow starting write action from here
+            //assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
+          }
+
+          @Override
+          public void writeActionFinished(@NotNull Object action) {
+            assertTrue(application.isWriteIntentLockAcquired());
+            assertTrue(application.isWriteAccessAllowed());
+            assertTrue(application.isWriteActionInProgress());
+            assertFalse(application.isWriteActionPending());
+            if (nestingCount.get() < 2) {
+              // strange to allow it but this is how reformat works
+              application.runWriteAction(() -> {
+              });
+            }
+          }
+
+          @Override
+          public void afterWriteActionFinished(@NotNull Object action) {
+            assertTrue(application.isWriteIntentLockAcquired());
+            assertFalse(application.isWriteAccessAllowed());
+            assertFalse(application.isWriteActionInProgress());
+            assertFalse(application.isWriteActionPending());
+            if (nestingCount.get() < 2) {
+              // strange to allow it but this is how a lot of code is
+              application.runWriteAction(() -> {
+              });
+            }
+          }
+        }, disposable);
+        application.runWriteAction(() -> {
+          assertTrue(application.isWriteIntentLockAcquired());
+          assertTrue(application.isWriteAccessAllowed());
+          assertFalse(application.isWriteActionPending());
+          if (nestingCount.get() < 2) {
+            application.runWriteAction(() -> {
+              assertTrue(application.isWriteIntentLockAcquired());
+              assertTrue(application.isWriteAccessAllowed());
+              assertFalse(application.isWriteActionPending());
+            });
+          }
+        });
+      }
+      finally {
+        Disposer.dispose(disposable);
+      }
+    });
   }
 
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
@@ -163,9 +164,11 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     checkMyExceptionThrownImmediately();
   }
 
-  public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getScheduledExecutorInstance().schedule(()->throwMyException(), 1, TimeUnit.MILLISECONDS);
-    checkMyExceptionThrownImmediately();
+  public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> throwMyException(), 1, TimeUnit.MILLISECONDS);
+      checkMyExceptionThrownImmediately();
+    });
   }
 
   public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {

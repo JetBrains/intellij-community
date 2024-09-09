@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
@@ -359,23 +360,25 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() {
+  public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
-    TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
-    TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
-    try {
-      keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
-      fail("Must fail");
-    }
-    catch (IllegalStateException | AssertionError e) {
-      assertTrue(e.getMessage().contains("already registered"));
-    }
-    finally {
-      TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
-      TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
-      TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
+      TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
+      TextAttributesKey keyC = TextAttributesKey.createTextAttributesKey("C", keyD);
+      try {
+        keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
+        fail("Must fail");
+      }
+      catch (IllegalStateException | AssertionError e) {
+        assertTrue(e.getMessage().contains("already registered"));
+      }
+      finally {
+        TextAttributesKey.removeTextAttributesKey(keyB.getExternalName());
+        TextAttributesKey.removeTextAttributesKey(keyC.getExternalName());
+        TextAttributesKey.removeTextAttributesKey(keyD.getExternalName());
+      }
+    });
   }
 
   public void testIdea152156() {

@@ -8,6 +8,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtures
 import com.intellij.testFramework.junit5.http.localhostHttpServer
 import com.intellij.testFramework.junit5.http.url
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.TimeoutUtil
 import com.sun.net.httpserver.HttpServer
 import org.assertj.core.api.Assertions.assertThat
@@ -126,7 +127,7 @@ class HttpRequestsTest {
   }
 
   @Test
-  fun putNotAllowed() {
+  fun putNotAllowed(): Unit = rethrowLoggedErrorsIn {
     assertThatExceptionOfType(AssertionError::class.java)
       .isThrownBy { HttpRequests.request(server.url).tuner { (it as HttpURLConnection).requestMethod = "PUT" }.tryConnect() }
       .withMessageContaining("'PUT' not supported")
@@ -191,7 +192,7 @@ class HttpRequestsTest {
   }
 
   @Test
-  fun invalidHeader() {
+  fun invalidHeader(): Unit = rethrowLoggedErrorsIn {
     assertThatExceptionOfType(AssertionError::class.java)
       .isThrownBy { HttpRequests.request(server.url).tuner { it.setRequestProperty("X-Custom", "c-str\u0000") }.readString(null) }
       .withMessageContaining("value contains NUL bytes")

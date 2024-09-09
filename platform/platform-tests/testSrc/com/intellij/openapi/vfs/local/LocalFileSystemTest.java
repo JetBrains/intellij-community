@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -517,16 +518,18 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testNoMoreFakeRoots() {
+  public void testNoMoreFakeRoots() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    try {
-      ManagingFS.getInstance().findRoot("", myFS);
-      fail("should fail by assertion in PersistentFsImpl.findRoot()");
-    }
-    catch (Throwable t) {
-      String message = t.getMessage();
-      assertTrue(message, message.startsWith("Invalid root"));
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      try {
+        ManagingFS.getInstance().findRoot("", myFS);
+        fail("should fail by assertion in PersistentFsImpl.findRoot()");
+      }
+      catch (Throwable t) {
+        String message = t.getMessage();
+        assertTrue(message, message.startsWith("Invalid root"));
+      }
+    });
   }
 
   @Test

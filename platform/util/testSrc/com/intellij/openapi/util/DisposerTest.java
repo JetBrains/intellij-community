@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -6,8 +6,9 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -411,42 +412,49 @@ public class DisposerTest  {
   }
 
   @Test
-  public void testDisposeDespiteExceptions() {
+  public void testDisposeDespiteExceptions() throws Exception {
     DefaultLogger.disableStderrDumping(myRoot);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Disposable parent = Disposer.newDisposable();
+      Disposable first = Disposer.newDisposable();
+      Disposable last = Disposer.newDisposable();
 
-    Disposable parent = Disposer.newDisposable();
-    Disposable first = Disposer.newDisposable();
-    Disposable last = Disposer.newDisposable();
+      Disposer.register(parent, first);
+      Disposer.register(parent, () -> {
+        throw new AssertionError("Expected");
+      });
+      Disposer.register(parent, () -> {
+        throw new ProcessCanceledException() {
+          @Override
+          public String getMessage() {
+            return "Expected";
+          }
+        };
+      });
+      Disposer.register(parent, last);
 
-    Disposer.register(parent, first);
-    Disposer.register(parent, () -> { throw new AssertionError("Expected"); });
-    Disposer.register(parent, () -> { throw new ProcessCanceledException() {
-      @Override
-      public String getMessage() {
-        return "Expected";
-      }
-    }; });
-    Disposer.register(parent, last);
+      UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
 
-    UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
-
-    assertTrue(Disposer.isDisposed(parent));
-    assertTrue(Disposer.isDisposed(first));
-    assertTrue(Disposer.isDisposed(last));
+      assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(first));
+      assertTrue(Disposer.isDisposed(last));
+    });
   }
 
   @Test
-  public void testMustNotAllowToRegisterDuringParentDisposal() {
-    DefaultLogger.disableStderrDumping(myRoot);
+  public void testMustNotAllowToRegisterDuringParentDisposal() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      DefaultLogger.disableStderrDumping(myRoot);
 
-    Disposable parent = Disposer.newDisposable("parent");
-    Disposable last = Disposer.newDisposable("child");
+      Disposable parent = Disposer.newDisposable("parent");
+      Disposable last = Disposer.newDisposable("child");
 
-    Disposer.register(parent, () -> Disposer.register(parent, last));
+      Disposer.register(parent, () -> Disposer.register(parent, last));
 
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
+      UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
 
-    assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(parent));
+    });
   }
 
   @Test

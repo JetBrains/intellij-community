@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.environment
 
 import com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.CoroutineScope
@@ -143,24 +144,26 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     assertEquals("secret-value", dummyKeyValue)
   }
 
-  fun testAbsentKey() = runTestWithFile(
-    """[
-  {
-    "description": [
-      "My dummy test key",
-      "With a long description"
-    ],
-    "key": "my.dummy.test.key",
-    "value": ""
-  }
-]""") {
-    try {
-      TestCase.assertEquals(undefined, service<EnvironmentService>().getEnvironmentValue(dummyKey, undefined))
-      service<EnvironmentService>().getEnvironmentValue(dummyKey)
-      fail("should throw")
+  fun testAbsentKey(): Unit = rethrowLoggedErrorsIn {
+    runTestWithFile(
+      """[
+    {
+      "description": [
+        "My dummy test key",
+        "With a long description"
+      ],
+      "key": "my.dummy.test.key",
+      "value": ""
     }
-    catch (e: Throwable) {
-      // ignored, we expect this outcome
+  ]""") {
+      try {
+        TestCase.assertEquals(undefined, service<EnvironmentService>().getEnvironmentValue(dummyKey, undefined))
+        service<EnvironmentService>().getEnvironmentValue(dummyKey)
+        fail("should throw")
+      }
+      catch (e: Throwable) {
+        // ignored, we expect this outcome
+      }
     }
   }
 
