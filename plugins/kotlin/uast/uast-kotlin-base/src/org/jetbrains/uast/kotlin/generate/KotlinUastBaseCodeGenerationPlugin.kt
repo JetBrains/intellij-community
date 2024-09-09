@@ -85,7 +85,7 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
         TODO("Not implemented")
     }
 
-    override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+    override fun initializeField(uField: UField, uParameter: UParameter, anchor: PsiElement?, addBefore: Boolean): UExpression? {
         val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
         val sourcePsi = uMethod.sourcePsi ?: return null
         if (sourcePsi is KtPrimaryConstructor) {
@@ -125,8 +125,18 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
             appendFixedText(" = ")
             appendName(Name.identifier(uParameter.name))
         }
-
-        body.addBefore(assignmentExpression, body.rBrace)
+        if (anchor != null) {
+            val newLine = ktPsiFactory.createWhiteSpace("\n")
+            if (addBefore) {
+                val anchor = body.addBefore(newLine, anchor)
+                body.addBefore(assignmentExpression, anchor)
+            } else {
+                val anchor = body.addAfter(newLine, anchor)
+                body.addAfter(assignmentExpression, anchor)
+            }
+        } else {
+            body.addBefore(assignmentExpression, body.rBrace)
+        }
         return assignmentExpression.toUElementOfType()
     }
 

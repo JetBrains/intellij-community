@@ -57,6 +57,14 @@ public interface CreateFieldRequest extends ActionRequest {
   boolean isConstant();
 
   /**
+   * Only for Kotlin
+   * Determines whether an empty initializer should be created for the field.
+   *
+   * @return true if an empty initializer should be created, false otherwise.
+   */
+  default boolean isCreateEmptyInitializer() { return true; }
+
+  /**
    * @return should start live template after a new field was created.
    */
   default boolean isStartTemplate() {
