@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress
 
-import org.junit.jupiter.api.Assertions.fail
+import com.intellij.testFramework.assertErrorLogged
 import org.junit.jupiter.api.Test
 
 class RawProgressReporterTest {
@@ -17,13 +17,11 @@ class RawProgressReporterTest {
   fun `incorrect fraction`() {
     progressReporterTest {
       reportRawProgress { reporter ->
-        assertLogThrows<IllegalArgumentException> {
+        assertErrorLogged<IllegalArgumentException> {
           reporter.fraction(-1.0 / Int.MAX_VALUE)
-          fail()
         }
-        assertLogThrows<IllegalArgumentException> {
+        assertErrorLogged<IllegalArgumentException> {
           reporter.fraction(1.0 + 1.0 / Int.MAX_VALUE)
-          fail()
         }
       }
     }

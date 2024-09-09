@@ -2,14 +2,62 @@
 package com.intellij.testFramework
 
 import com.intellij.concurrency.withThreadLocal
+import com.intellij.openapi.application.AccessToken
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import kotlin.Throws
 
 private val tlErrorLog: ThreadLocal<ErrorLog?> = ThreadLocal()
 
+internal fun withErrorLog(errorLog: ErrorLog?): AccessToken {
+  return withThreadLocal(tlErrorLog) {
+    errorLog
+  }
+}
+
 internal val errorLog: ErrorLog? get() = tlErrorLog.get()
+
+inline fun <reified T : Throwable> assertErrorLogged(noinline executable: () -> Unit): T {
+  return assertErrorLogged(T::class.java, executable)
+}
+
+fun <T : Throwable> assertErrorLogged(clazz: Class<T>, executable: ThrowableRunnable<*>): T {
+  return assertErrorLogged(clazz, executable::run)
+}
+
+@PublishedApi
+internal fun <T : Throwable> assertErrorLogged(clazz: Class<T>, executable: () -> Unit): T {
+  val errors = collectErrorsLoggedInTheCurrentThread(executable)
+  return assertErrorLogged(clazz, errors)
+}
+
+private fun <T : Throwable> assertErrorLogged(clazz: Class<T>, errors: List<LoggedError>): T {
+  when (errors.size) {
+    0 -> {
+      throw TestLoggerAssertionError("No errors were reported", null)
+    }
+    1 -> {
+      return assertInstanceOf(clazz, errors.single().cause)
+    }
+    else -> {
+      throw TestLoggerAssertionError("Multiple errors were reported", null).also {
+        for (error in errors) {
+          it.addSuppressed(error)
+        }
+      }
+    }
+  }
+}
+
+private fun collectErrorsLoggedInTheCurrentThread(executable: () -> Unit): List<LoggedError> {
+  val errorLog = ErrorLog()
+  withErrorLog(errorLog).use { _ ->
+    executable()
+  }
+  return errorLog.takeLoggedErrors()
+}
 
 /**
  * Installs a thread-local [LoggedErrorProcessor] which collects errors
@@ -25,9 +73,7 @@ fun <T> rethrowErrorsLoggedInTheCurrentThread(executable: () -> T): T {
   }
   val errorLog = ErrorLog()
   val result: T = try {
-    withThreadLocal(tlErrorLog) {
-      errorLog
-    }.use { _ ->
+    withErrorLog(errorLog).use { _ ->
       executable()
     }
   }
@@ -74,9 +120,7 @@ private fun rethrowLoggedErrors(
 @Deprecated("Re-throwing from Logger.error() makes the test behaviour different from the production run")
 @Throws(Exception::class)
 fun rethrowLoggedErrorsIn(executable: ThrowableRunnable<*>) {
-  withThreadLocal(tlErrorLog) {
-    null
-  }.use { _ ->
+  withErrorLog(null).use { _ ->
     executable.run()
   }
 }

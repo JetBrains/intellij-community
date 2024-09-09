@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.tests
 
-import com.intellij.openapi.progress.assertLogThrows
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import com.intellij.platform.instanceContainer.internal.*
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
@@ -104,7 +104,7 @@ class InstanceContainerTest {
         registerInitializer(keyClassName, ReadyInitializer(instance), override = false)
 
         // re-registration in the same scope
-        assertLogThrows<InstanceAlreadyRegisteredException> {
+        assertErrorLogged<InstanceAlreadyRegisteredException> {
           registerInitializer(keyClassName, ThrowingInitializer, override = false)
         }
 
@@ -115,7 +115,7 @@ class InstanceContainerTest {
 
       container.startRegistration(pluginScope).run {
         // re-registration in a different scope
-        assertLogThrows<InstanceAlreadyRegisteredException> {
+        assertErrorLogged<InstanceAlreadyRegisteredException> {
           registerInitializer(keyClassName, ThrowingInitializer, override = false)
         }
         assertNull(complete())
@@ -136,14 +136,14 @@ class InstanceContainerTest {
     withContainer(testInfo.displayName) { container ->
 
       fun InstanceRegistrar.testOverrideNonExistent() {
-        assertLogThrows<InstanceNotRegisteredException> {
+        assertErrorLogged<InstanceNotRegisteredException> {
           overrideInitializer(keyClassName, ThrowingInitializer)
         }
         assertNull(complete())
       }
 
       fun InstanceRegistrar.testRemoveNonExistent() {
-        assertLogThrows<InstanceNotRegisteredException> {
+        assertErrorLogged<InstanceNotRegisteredException> {
           overrideInitializer(keyClassName, null)
         }
         assertNull(complete())

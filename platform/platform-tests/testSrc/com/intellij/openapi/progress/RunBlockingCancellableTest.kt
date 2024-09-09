@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.impl.ModalityStateEx
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
@@ -16,10 +16,8 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   fun `without context`() {
-    assertLogThrows<IllegalStateException> {
-      runBlockingCancellable {
-        fail()
-      }
+    assertErrorLogged<IllegalStateException> {
+      runBlockingCancellable {}
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.testFramework.TestLoggerKt.assertErrorLogged;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -225,14 +226,9 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     InternalTemplateBean bean = new InternalTemplateBean();
     bean.name = "Unknown";
     point.registerExtension(bean, new DefaultPluginDescriptor("testInternalTemplatePlugin"), getTestRootDisposable());
-    try {
-      myTemplateManager.getInternalTemplates();
-      fail();
-    }
-    catch (Throwable e) {
-      assertThat(e.getMessage()).isEqualTo("Can't find template Unknown [Plugin: testInternalTemplatePlugin]");
-      assertThat(((PluginException)e.getCause()).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
-    }
+    Throwable e = assertErrorLogged(Throwable.class, () -> myTemplateManager.getInternalTemplates());
+    assertThat(e.getMessage()).isEqualTo("Template not found: Unknown [Plugin: testInternalTemplatePlugin]");
+    assertThat(((PluginException)e).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
   }
 
   public void _testMultiFile() {

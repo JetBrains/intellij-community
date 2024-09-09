@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress
 
-import org.junit.jupiter.api.Assertions.fail
+import com.intellij.testFramework.assertErrorLogged
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -10,11 +10,10 @@ class SequentialProgressReporterTest {
 
   @Test
   fun `negative size`() {
-    assertLogThrows<IllegalArgumentException> {
+    assertErrorLogged<IllegalArgumentException> {
       progressReporterTest {
-        reportSequentialProgress(-1) {
-          fail()
-        }
+        reportSequentialProgress(-1) {} // <- Logger.error()
+        reportProgress {} // keep progressReporterTest happy
       }
     }
   }
@@ -31,9 +30,8 @@ class SequentialProgressReporterTest {
   fun `end fraction must be greater than 0 and less or equal to size`(endFraction: Int) {
     progressReporterTest {
       reportSequentialProgress { reporter ->
-        assertLogThrows<IllegalArgumentException> {
+        assertErrorLogged<IllegalArgumentException> {
           reporter.nextStep(endFraction)
-          fail()
         }
       }
     }
@@ -44,9 +42,8 @@ class SequentialProgressReporterTest {
   fun `work size must be greater or equal to 0 and less or equal to size`(workSize: Int) {
     progressReporterTest {
       reportSequentialProgress { reporter ->
-        assertLogThrows<IllegalArgumentException> {
+        assertErrorLogged<IllegalArgumentException> {
           reporter.sizedStep(workSize)
-          fail()
         }
       }
     }
@@ -56,12 +53,12 @@ class SequentialProgressReporterTest {
   fun `two subsequent steps must not request the same end fraction`() {
     progressReporterTest(
       ExpectedState(fraction = 0.0),
+      ExpectedState(fraction = 0.3),
     ) {
       reportSequentialProgress { reporter ->
         reporter.nextStep(endFraction = 30)
-        assertLogThrows<IllegalArgumentException> {
+        assertErrorLogged<IllegalArgumentException> {
           reporter.nextStep(endFraction = 30)
-          fail()
         }
       }
     }
@@ -73,9 +70,8 @@ class SequentialProgressReporterTest {
     progressReporterTest {
       reportSequentialProgress(size) { reporter ->
         reporter.indeterminateStep() // ok
-        assertLogThrows<IllegalArgumentException> {
+        assertErrorLogged<IllegalArgumentException> {
           reporter.sizedStep(size + 1)
-          fail()
         }
         reporter.indeterminateStep() // ok
       }
