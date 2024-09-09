@@ -48,7 +48,7 @@ class SemanticSearchFileChangeListener(private val project: Project, cs: Corouti
   }
 
   private suspend fun processFiles(queue: Set<VirtualFile>) {
-    project.serviceAsync<FileBasedEmbeddingStoragesManager>().indexFiles(queue.toList())
+    project.serviceAsync<FileBasedEmbeddingsManager>().indexFiles(queue.toList())
   }
 
   companion object {

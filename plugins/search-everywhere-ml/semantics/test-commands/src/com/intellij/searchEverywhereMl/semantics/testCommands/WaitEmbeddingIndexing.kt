@@ -3,7 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.testCommands
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings
 import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl
-import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
+import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingsManager
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.annotations.NonNls
 
@@ -22,7 +22,7 @@ class WaitEmbeddingIndexing(text: @NonNls String, line: Int) : PerformanceComman
       }
     )
 
-    FileBasedEmbeddingStoragesManager.getInstance(context.project).prepareForSearch().join()
+    FileBasedEmbeddingsManager.getInstance(context.project).prepareForSearch().join()
   }
 
   override fun getName() = NAME

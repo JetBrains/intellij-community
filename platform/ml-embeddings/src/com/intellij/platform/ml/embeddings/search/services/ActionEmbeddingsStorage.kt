@@ -8,15 +8,15 @@ import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexType.ACTIONS
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.INDICES_DIR_NAME
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR_NAME
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import java.io.File
+import kotlin.io.path.Path
 
 /**
  * Thread-safe service for semantic actions search.
@@ -26,10 +26,10 @@ import java.io.File
 @Service(Service.Level.APP)
 class ActionEmbeddingsStorage : EmbeddingsStorage {
   val index = InMemoryEmbeddingSearchIndex(
-    File(PathManager.getSystemPath())
-      .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
-      .resolve(LocalArtifactsManager.getInstance().getModelVersion())
-      .resolve(INDEX_DIR).toPath()
+    Path(PathManager.getSystemPath())
+      .resolve(SEMANTIC_SEARCH_RESOURCES_DIR_NAME)
+      .resolve(INDICES_DIR_NAME)
+      .resolve(INDEX_DIR)
   )
 
   @RequiresBackgroundThread

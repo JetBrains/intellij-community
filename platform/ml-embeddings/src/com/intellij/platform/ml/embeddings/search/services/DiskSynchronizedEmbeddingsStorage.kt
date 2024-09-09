@@ -4,6 +4,8 @@ package com.intellij.platform.ml.embeddings.search.services
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.platform.ml.embeddings.local.NativeServerManager
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexType
@@ -22,12 +24,15 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.embeddings.local.server.stubs.searchRequest
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class)
-abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val project: Project,
-                                                                      private val cs: CoroutineScope) : EmbeddingsStorage {
+abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(
+  val project: Project,
+  private val cs: CoroutineScope,
+) : EmbeddingsStorage {
   abstract val index: DiskSynchronizedEmbeddingSearchIndex
 
   internal abstract val reportableIndex: IndexType
@@ -91,28 +96,30 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
-    FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
+    FileBasedEmbeddingsManager.getInstance(project).triggerIndexing()
     val searchStartTime = System.nanoTime()
-    val neighbours: List<ScoredText>
-    val loadJob = cs.launch(Dispatchers.IO) { loadIndex() }
-    val embedding = generateEmbedding(text) ?: return emptyList()
-    LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
-    usageSessionCount.incrementAndGet()
-    try {
-      loadJob.join()
-      neighbours = index.findClosest(embedding, topK, similarityThreshold)
-      scheduleOffload()
-    }
-    finally {
-      usageSessionCount.decrementAndGet()
-    }
+    val connection = NativeServerManager.getInstance().getConnection()
+    val response = connection.search(searchRequest {
+      projectId = project.getProjectCacheFileName()
+      indexType = reportableIndex.name.lowercase()
+      this.text = text
+      top = topK
+    })
     EmbeddingSearchLogger.searchFinished(project, reportableIndex, TimeoutUtil.getDurationMillis(searchStartTime))
-    return neighbours
+    val embeddingManager = FileBasedEmbeddingsManager.getInstance(project)
+    return response.resultsList.mapNotNull {
+      val similarity = 1 - it.distance.toDouble()
+      val elementId = embeddingManager.getIndexableRepresentation(it.id)?.split("#", limit = 2)?.firstOrNull()
+      println("elementId: ${embeddingManager.getIndexableRepresentation(it.id)}, similarity: $similarity")
+      if (elementId != null && similarityThreshold != null && similarity > similarityThreshold)
+        ScoredText(elementId, similarity)
+      else null
+    }
   }
 
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Flow<ScoredText> {
-    FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
+    FileBasedEmbeddingsManager.getInstance(project).triggerIndexing()
     val loadJob = cs.launch(Dispatchers.IO) { loadIndex() }
     val embedding = generateEmbedding(text) ?: return emptyFlow()
     LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
@@ -136,5 +143,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   companion object {
     private val OFFLOAD_TIMEOUT = 10.seconds
     private val logger = Logger.getInstance(DiskSynchronizedEmbeddingsStorage::class.java)
+
+    internal const val OLD_API_DIR_NAME = "old-api"
   }
 }

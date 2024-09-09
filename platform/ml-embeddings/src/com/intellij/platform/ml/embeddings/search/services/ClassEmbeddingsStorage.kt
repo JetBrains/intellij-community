@@ -9,8 +9,7 @@ import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbedd
 import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.search.indices.IndexType.CLASSES
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR_NAME
 import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
@@ -26,9 +25,10 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope)
   : DiskSynchronizedEmbeddingsStorage<IndexableClass>(project, cs) {
   override val index = DiskSynchronizedEmbeddingSearchIndex(
     project.getProjectCachePath(
-      File(SEMANTIC_SEARCH_RESOURCES_DIR)
-        .resolve(LocalArtifactsManager.getInstance().getModelVersion())
-        .resolve(INDEX_DIR).toString()
+      File(SEMANTIC_SEARCH_RESOURCES_DIR_NAME)
+        .resolve(OLD_API_DIR_NAME)
+        .resolve(INDEX_DIR)
+        .toString()
     )
   )
 
