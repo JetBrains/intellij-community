@@ -132,7 +132,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
       if (signature.contains("(")) {
         val methods = clazz.findMethodsByName(signature.substringAfter("#").substringBefore("("), true)
         if (methods.isEmpty()) return null
-        val paramFqns = signature.substringAfter("(").substringBefore(")").split(";").dropLast(1)
+        val paramFqns = getParamFqns(signature)
         val method = methods.firstOrNull { method ->
           if (method.parameterList.parametersCount != paramFqns.size) return@firstOrNull false
           method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes().zip(paramFqns).all { (paramType, sigTypeCanonicalText) ->
@@ -151,6 +151,10 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
       doCollectSinceApiUsages()
     }
+  }
+
+  fun getParamFqns(signature: String): List<String> {
+    return signature.substringAfter("(").substringBefore(")").split(";").dropLast(1)
   }
 
   /**
@@ -196,6 +200,10 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
             if (JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) == null) {
               return // If the class is not in all scope, don't generate
             }
+            val paramFqns = getParamFqns(signature).map { name -> name.substringBefore("[").substringBefore("<") }
+            if (paramFqns.any { name -> !isValidTypeName(element, name) }) {
+              throw IllegalStateException("Generated parameters $paramFqns must be fully qualified or primitive")
+            }
             if (isDocumentedSinceApi(element) && !previews.contains(signature)) {
               println(signature)
             } else if (element is PsiMethod && element.docComment == null) { // find inherited doc
@@ -220,6 +228,18 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     }
     val srcFile = JarFileSystem.getInstance().findFileByPath("$JDK_HOME/lib/src.zip!/") ?: return
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator)
+  }
+
+  private fun isValidTypeName(element: PsiMember, name: String): Boolean {
+    if (name in PsiTypes.primitiveTypes().map(PsiPrimitiveType::getName)) return true
+    if (isValidTypeArgName(element, name)) return true
+    return name.contains(".")
+  }
+
+  private fun isValidTypeArgName(element: PsiMember, name: String): Boolean {
+    if (element is PsiTypeParameterListOwner && name in element.typeParameters.map { it.name }) return true
+    val parent = element.parentOfType<PsiMember>() ?: return false
+    return isValidTypeName(parent, name)
   }
 
   companion object {
