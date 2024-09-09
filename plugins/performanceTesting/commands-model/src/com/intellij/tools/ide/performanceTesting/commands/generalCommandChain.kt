@@ -715,6 +715,10 @@ fun <T : CommandChain> T.setupInlineCompletionListener(): T = apply {
   addCommand("${CMD_PREFIX}setupInlineCompletionListener")
 }
 
+fun <T : CommandChain> T.callInlineCompletionCommand(): T = apply {
+  addCommand("${CMD_PREFIX}callInlineCompletionCommand")
+}
+
 fun <T : CommandChain> T.validateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
   val options = objectMapper.writeValueAsString(settings)
   addCommand("${CMD_PREFIX}validateMavenGoal $options")
