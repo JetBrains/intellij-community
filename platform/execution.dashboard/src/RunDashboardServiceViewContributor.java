@@ -1,21 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.*;
 import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.dashboard.actions.RunDashboardGroupNode;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.FakeRerunAction;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
@@ -24,12 +26,14 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
 import com.intellij.platform.execution.dashboard.tree.GroupingNode;
 import com.intellij.platform.execution.dashboard.tree.RunConfigurationNode;
@@ -43,6 +47,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -52,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -77,7 +83,8 @@ public final class RunDashboardServiceViewContributor
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
                              value -> new RunConfigurationContributor(
                                new RunConfigurationNode(project, value,
-                                                        RunDashboardManagerImpl.getCustomizers(value.getSettings(), value.getDescriptor()))));
+                                                        RunDashboardManagerImpl.getCustomizers(value.getSettings(),
+                                                                                               value.getDescriptor()))));
   }
 
   @NotNull
@@ -306,7 +313,6 @@ public final class RunDashboardServiceViewContributor
           return canNavigate();
         }
       };
-
     }
 
     @Nullable
@@ -407,6 +413,66 @@ public final class RunDashboardServiceViewContributor
         ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getStatusFilter();
       return statusFilter.isVisible(myNode);
     }
+
+    @Override
+    public boolean handleDoubleClick(@NotNull MouseEvent event) {
+      Executor executor = getExecutor();
+      if (executor == null) return true;
+
+      DataContext dataContext = DataManager.getInstance().getDataContext(event.getComponent());
+      AnAction action = new ExecutorAction() {
+        @Override
+        protected Executor getExecutor() {
+          return executor;
+        }
+
+        @Override
+        protected void update(@NotNull AnActionEvent e, boolean running) {
+        }
+      };
+      Project project = myNode.getProject();
+      Presentation presentation = new Presentation();
+      AnActionEvent actionEvent =
+        AnActionEvent.createEvent(dataContext, presentation, ActionPlaces.SERVICES_POPUP, ActionUiKind.POPUP, event);
+      ReadAction.nonBlocking(() -> {
+          action.update(actionEvent);
+          return presentation.isEnabled();
+        })
+        .coalesceBy(RunDashboardManager.getInstance(project))
+        .expireWith(project)
+        .finishOnUiThread(ModalityState.current(), enabled -> {
+          if (enabled) {
+            action.actionPerformed(actionEvent);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+
+      return true;
+    }
+
+    private Executor getExecutor() {
+      RunContentDescriptor descriptor = myNode.getDescriptor();
+      if (descriptor != null) {
+        Set<Executor> executors = ExecutionManager.getInstance(myNode.getProject()).getExecutors(descriptor);
+        Executor executor = ContainerUtil.getFirstItem(executors);
+        if (executor != null) return executor;
+      }
+      RunConfiguration configuration = myNode.getConfigurationSettings().getConfiguration();
+      Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
+
+      ProgramRunner<?> runner = ProgramRunner.getRunner(runExecutor.getId(), configuration);
+      if (runner != null) {
+        return runExecutor;
+      }
+
+      Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+      if (debugExecutor != null &&
+          ProgramRunner.getRunner(ToolWindowId.DEBUG, configuration) != null) {
+        return debugExecutor;
+      }
+
+      return null;
+    }
   }
 
   private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem {
@@ -497,7 +563,8 @@ public final class RunDashboardServiceViewContributor
     }
   }
 
-  private static final class RunDashboardFolderGroupViewDescriptor extends RunDashboardGroupViewDescriptor implements ServiceViewDnDDescriptor {
+  private static final class RunDashboardFolderGroupViewDescriptor extends RunDashboardGroupViewDescriptor
+    implements ServiceViewDnDDescriptor {
     RunDashboardFolderGroupViewDescriptor(GroupingNode node) {
       super(node);
     }
@@ -692,7 +759,9 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public DataProvider getDataProvider() {
-      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : TREE_EXPANDER_HIDE_PROVIDER.getData(id);
+      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id)
+                   ? new RunDashboardServiceViewDeleteProvider()
+                   : TREE_EXPANDER_HIDE_PROVIDER.getData(id);
     }
 
     @Override
