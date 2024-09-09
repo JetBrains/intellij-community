@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandB
 import org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider.Companion.COMMAND_BLOCK_HIGHLIGHTER_PROVIDER_EP_NAME
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.session.*
+import org.jetbrains.plugins.terminal.block.ui.executeInBulk
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
@@ -162,6 +163,10 @@ internal class TerminalOutputController(
     val outputText = editor.document.charsSequence.subSequence(outputStartOffset, block.endOffset)
     val lastLineStart = outputText.lastIndexOf('\n').takeIf { it != -1 } ?: 0
     if (outputText.subSequence(lastLineStart, outputText.length).isBlank()) {
+      val highlightings = outputModel.getHighlightings(block)
+        .filter { it.endOffset <= outputStartOffset + lastLineStart }
+      outputModel.putHighlightings(block, highlightings)
+
       editor.document.deleteString(outputStartOffset + lastLineStart, block.endOffset)
     }
   }
@@ -238,30 +243,36 @@ internal class TerminalOutputController(
   }
 
   private fun updateBlock(block: CommandBlock, output: PartialCommandOutput) {
-    // todo: update highlightings
-    outputModel.putHighlightings(block, emptyList())
+    // Execute update in the document bulk mode because it consists of several document changes.
+    // Highlightings are requested on each change, and they might be not in sync with actual document content.
+    // So better to use bulk mode to run highlighters after the actual change and avoid possible inconsistency.
+    editor.document.executeInBulk {
+      // add \n between command and output here (postponed from `TerminalOutputModel.createBlock`)
+      val isPostponedNewLine = block.withPrompt || block.withCommand
+      if (isPostponedNewLine && !block.withOutput) {
+        editor.document.insertString(block.endOffset, "\n")
+      }
 
-    // add \n between command and output here (postponed from `TerminalOutputModel.createBlock`)
-    val isPostponedNewLine = block.withPrompt || block.withCommand
-    if (isPostponedNewLine && !block.withOutput) {
-      editor.document.insertString(block.endOffset, "\n")
+      if (output.wereChangesDiscarded) {
+        // The output was so big, so the history buffer was overflown, and some changes were lost.
+        // Consider all available lines in the block as trimmed
+        block.trimmedLinesCount = output.logicalLineIndex
+      }
+
+      val outputStartLine = editor.document.getLineNumber(block.outputStartOffset)
+      val replaceStartLine = outputStartLine + output.logicalLineIndex - block.trimmedLinesCount
+      if (replaceStartLine >= editor.document.lineCount && editor.document.textLength > 0) {
+        val newLines = "\n".repeat(replaceStartLine - editor.document.lineCount + 1)
+        editor.document.insertString(editor.document.textLength, newLines)
+      }
+
+      val replaceStartOffset = editor.document.getLineStartOffset(replaceStartLine)
+      editor.document.replaceString(replaceStartOffset, block.endOffset, output.text)
+
+      updateHighlightings(block, replaceStartOffset, output.styles)
     }
-
-    if (output.wereChangesDiscarded) {
-      // The output was so big, so the history buffer was overflown, and some changes were lost.
-      // Consider all available lines in the block as trimmed
-      block.trimmedLinesCount = output.logicalLineIndex
-    }
-
-    val outputStartLine = editor.document.getLineNumber(block.outputStartOffset)
-    val replaceStartLine = outputStartLine + output.logicalLineIndex - block.trimmedLinesCount
-    if (replaceStartLine >= editor.document.lineCount && editor.document.textLength > 0) {
-      val newLines = "\n".repeat(replaceStartLine - editor.document.lineCount + 1)
-      editor.document.insertString(editor.document.textLength, newLines)
-    }
-
-    val replaceStartOffset = editor.document.getLineStartOffset(replaceStartLine)
-    editor.document.replaceString(replaceStartOffset, block.endOffset, output.text)
+    // Move trimming out of bulk update because it may delete some blocks and cause access to the editor UI caches.
+    // Which is prohibited in the bulk mode.
     outputModel.trimOutput()
 
     hyperlinkHighlighter.highlightHyperlinks(block)
@@ -276,6 +287,17 @@ internal class TerminalOutputController(
     // caret highlighter can be removed at this moment, because we replaced the text of the block
     // so, call repaint manually
     runningCommandInteractivity?.caretPainter?.repaint()
+  }
+
+  private fun updateHighlightings(block: CommandBlock, replaceOffset: Int, styles: List<StyleRange>) {
+    val replaceHighlightings = styles.map {
+      HighlightingInfo(replaceOffset + it.startOffset, replaceOffset + it.endOffset, it.style.toTextAttributesProvider())
+    }
+    val newHighlightings = outputModel.getHighlightings(block).asSequence()
+      .filter { it.endOffset <= replaceOffset }
+      .plus(replaceHighlightings)
+      .toList()
+    outputModel.putHighlightings(block, newHighlightings)
   }
 
   /**
