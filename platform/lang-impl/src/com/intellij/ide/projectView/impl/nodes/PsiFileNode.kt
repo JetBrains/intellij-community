@@ -138,7 +138,9 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
           openFileWithPsiElementAsync(element = extractPsiFromValue()!!, searchForOpen = true, requestFocus = true)
         }
         else {
-          navigationItem?.navigate(/* requestFocus = */ false)
+          withContext(Dispatchers.EDT) {
+            navigationItem?.navigate(/* requestFocus = */ false)
+          }
         }
       }
     }
