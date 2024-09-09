@@ -4,15 +4,16 @@ package com.intellij.execution.target
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 
 /**
- * Hints for [BrowsableTargetEnvironmentType.createBrowser]
- *  [showLocalFsInBrowser]: some targets (WSL is the only known for now) may provide access to the local filesystem.
- *  This flag allows such access, hence user could choose local path on target (like ``/mnt/c`` for WSL).
- *  For other targets this flag might be ignored.
+ * Hints for [BrowsableTargetEnvironmentType.createBrowser].
  *
- *  [customFileChooserDescriptor] to browse files. It also might be ignored by some targets.
+ * [showLocalFsInBrowser]: some targets (WSL is the only known for now) may provide access to the local filesystem.
+ *   This flag allows such access, hence user could choose a local path on the target (like ``/mnt/c`` for WSL).
+ *   For other targets this flag might be ignored.
+ *
+ * [customFileChooserDescriptor] to browse files; it also might be ignored by some targets.
  **/
-
+@Suppress("removal")
 data class TargetBrowserHints @JvmOverloads constructor(
-  val showLocalFsInBrowser: Boolean,
-  val customFileChooserDescriptor: FileChooserDescriptor? = null
+  val showLocalFsInBrowser: Boolean = true,
+  val customFileChooserDescriptor: FileChooserDescriptor? = null,
 )

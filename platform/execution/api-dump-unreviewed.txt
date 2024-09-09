@@ -1440,6 +1440,7 @@ f:com.intellij.execution.target.TargetBasedSdks
 - sf:saveTargetBasedSdkAdditionalData(org.jdom.Element,com.intellij.execution.target.ContributedConfigurationsList$ContributedStateBase):V
 - sf:saveTargetConfiguration(org.jdom.Element,com.intellij.execution.target.TargetEnvironmentConfiguration):V
 f:com.intellij.execution.target.TargetBrowserHints
+- <init>():V
 - <init>(Z):V
 - <init>(Z,com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - b:<init>(Z,com.intellij.openapi.fileChooser.FileChooserDescriptor,I,kotlin.jvm.internal.DefaultConstructorMarker):V
