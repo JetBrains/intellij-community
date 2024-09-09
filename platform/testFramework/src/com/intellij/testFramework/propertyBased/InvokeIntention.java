@@ -51,6 +51,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
@@ -152,6 +153,7 @@ public class InvokeIntention extends ActionOnFile {
         } else {
           CommandProcessor.getInstance().executeCommand(
             project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), null, null);
+          UIUtil.dispatchAllInvocationEvents();
         }
       }
 
