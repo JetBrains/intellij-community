@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -22,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.*
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
@@ -329,8 +329,10 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         indicator.text = ProjectBundle.message("progress.text.checking.existing.jdks")
 
         val result = mutableListOf<JavaLocalSdkFix>()
-        for (it in runReadAction { ProjectJdkTable.getInstance().allJdks }) {
-          if (it.sdkType != sdkType) continue
+        for (it in ApplicationManager.getApplication().runReadAction(Computable { ProjectJdkTable.getInstance().allJdks})) {
+          if (it.sdkType != sdkType) {
+            continue
+          }
 
           val homeDir = runCatching { it.homePath }.getOrNull() ?: continue
           val versionString = runCatching { it.versionString }.getOrNull() ?: continue
