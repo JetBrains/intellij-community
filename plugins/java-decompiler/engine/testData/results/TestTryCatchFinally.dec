@@ -32,10 +32,10 @@ public class TestTryCatchFinally {
       } catch (Exception var6) {// 52
          System.out.println("Error" + var6);// 53
       } finally {
-         System.out.println("Finally");// 55
+         System.out.println("Finally");
       }
 
-      return -1;// 56 57
+      return -1;// 55 56 57
    }
 }
 
@@ -54,13 +54,12 @@ class 'pkg/TestTryCatchFinally' {
       18      8
       19      8
       1f      9
-      2b      12
-      2c      12
       2d      12
       2e      12
       2f      12
       30      12
       31      12
+      32      12
       38      15
    }
 
@@ -98,13 +97,13 @@ class 'pkg/TestTryCatchFinally' {
       31      37
       32      37
       33      37
-      34      34
+      34      37
       35      34
       36      34
       37      34
       38      34
       39      34
-      3a      37
+      3a      34
       3b      37
       3c      37
       3d      37
@@ -127,7 +126,7 @@ Lines mapping:
 51 <-> 30
 52 <-> 32
 53 <-> 33
-55 <-> 35
+55 <-> 38
 56 <-> 38
 57 <-> 38
 Not mapped:
