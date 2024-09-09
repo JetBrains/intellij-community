@@ -122,7 +122,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  public final T findSingle(@NotNull KeyT key) {
+  public final @UnknownNullability T findSingle(@NotNull KeyT key) {
     List<T> list = forKey(key);
     return list.isEmpty() ? null : list.get(0);
   }
