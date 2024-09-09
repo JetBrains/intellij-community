@@ -5,17 +5,10 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
@@ -39,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordForRead;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
-import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
@@ -72,9 +64,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
-import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
-import static com.intellij.util.SystemProperties.getLongProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -86,18 +76,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
-
-  /**
-   * Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds]
-   * <br/>
-   * By default notification is <b>off completely</b>: there is too much controversy about it's
-   * usefulness and wording, and from the other side -- so far recovery seems to work smoothly
-   * enough, so user doesn't really need to even know about it.
-   * TODO RC: consider removing it completely in the v243, if not re-requested
-   */
-  private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
-    getLongProperty("vfs.notify-user-if-recovery-longer-sec", Long.MAX_VALUE)
-  );
 
   /**
    * Sometimes PFS got request for the files with lost (missed) roots. We try to resolve each root against persistence,
@@ -221,14 +199,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VFSRecoveryInfo recoveryInfo = _vfsPeer.connection().recoveryInfo();
       List<VFSInitException> recoveredErrors = recoveryInfo.recoveredErrors;
       if (!recoveredErrors.isEmpty()) {
-
-        //if there was recovery, and it took long enough for user to notice:
-        VFSInitializationResult initializationResult = _vfsPeer.initializationResult();
-        if (app != null && !app.isHeadlessEnvironment()
-            && initializationResult.totalInitializationDurationNs > NOTIFY_OF_RECOVERY_IF_LONGER_NS) {
-          showNotificationAboutLongRecovery();
-        }
-
         //refresh the folders there something was 'recovered':
         refreshSuspiciousDirectories(recoveryInfo.directoriesIdsToRefresh());
       }
@@ -255,25 +225,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       catch (Throwable t) {
         LOG.warn("Can't refresh recovered directories: " + directoryIdsToRefresh, t);
       }
-    }
-  }
-
-  private static void showNotificationAboutLongRecovery() {
-    NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("VFS");
-    if (notificationGroup != null) {
-      ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
-      Notification notification = notificationGroup.createNotification(
-          IdeBundle.message("notification.vfs.vfs-recovered.notification.title", names.getFullProductName()),
-          IdeBundle.message("notification.vfs.vfs-recovered.notification.text", names.getFullProductName()),
-          INFORMATION
-        )
-        .setDisplayId("VFS.recovery.happened")
-        .setImportant(false);
-      AnAction reportProblemAction = ActionManager.getInstance().getAction("ReportProblem");
-      if (reportProblemAction != null) {
-        notification = notification.addAction(reportProblemAction);
-      }
-      notification.notify(/*project: */ null);
     }
   }
 
