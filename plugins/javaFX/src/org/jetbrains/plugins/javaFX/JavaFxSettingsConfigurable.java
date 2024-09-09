@@ -7,18 +7,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public final class JavaFxSettingsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final JavaFxSettings mySettings;
-  private JavaFxConfigurablePanel myPanel;
+  private JavaFxSettingsConfigurableUi myPanel;
 
   public JavaFxSettingsConfigurable() {
     mySettings = JavaFxSettings.getInstance();
@@ -35,9 +31,9 @@ public final class JavaFxSettingsConfigurable implements SearchableConfigurable,
   }
 
   @Override
-  public @Nullable JComponent createComponent() {
-    myPanel = new JavaFxConfigurablePanel();
-    return myPanel.myWholePanel;
+  public JComponent createComponent() {
+    myPanel = new JavaFxSettingsConfigurableUi();
+    return myPanel.getPanel();
   }
 
   @Override
@@ -70,31 +66,5 @@ public final class JavaFxSettingsConfigurable implements SearchableConfigurable,
     descriptor.setTitle(JavaFXBundle.message("javafx.settings.configurable.scene.builder.configuration.title"));
     descriptor.setDescription(JavaFXBundle.message("javafx.settings.configurable.scene.builder.configuration.description"));
     return descriptor;
-  }
-
-  public static final class JavaFxConfigurablePanel {
-    private TextFieldWithBrowseButton myPathField;
-    private JPanel myWholePanel;
-
-    public JavaFxConfigurablePanel() {
-      myPathField.addBrowseFolderListener(null, createSceneBuilderDescriptor());
-    }
-
-    private void reset(JavaFxSettings settings) {
-      final String pathToSceneBuilder = settings.getPathToSceneBuilder();
-      if (pathToSceneBuilder != null) {
-        myPathField.setText(FileUtil.toSystemDependentName(pathToSceneBuilder));
-      }
-    }
-
-    private void apply(JavaFxSettings settings) {
-      settings.setPathToSceneBuilder(FileUtil.toSystemIndependentName(myPathField.getText().trim()));
-    }
-
-    private boolean isModified(JavaFxSettings settings) {
-      final String pathToSceneBuilder = settings.getPathToSceneBuilder();
-      return !Comparing.strEqual(FileUtil.toSystemIndependentName(myPathField.getText().trim()),
-                                 pathToSceneBuilder != null ? pathToSceneBuilder.trim() : null);
-    }
   }
 }
