@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.toolbarLayout
 
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionToolbar.experimentalToolbarMinimumButtonSize
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -18,63 +19,18 @@ import kotlin.math.max
  */
 @Internal
 open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
-  override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {
+  override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
     val toolbarComponent = toolbar.component
     val componentsCount = toolbarComponent.componentCount
-    val insets: Insets = toolbarComponent.insets
-    val bounds = MutableList(componentsCount) { Rectangle() }
-    val maxHeight: Int = maxComponentPreferredHeight(toolbarComponent)
-    var offset = insets.left
+    val bounds = List(componentsCount) { Rectangle() }
     val preferredAndRealSize = getPreferredAndRealWidth(toolbarComponent.parent)
-    var toolbarWidthRatio = preferredAndRealSize.second / preferredAndRealSize.first
-    toolbarWidthRatio = if (toolbarWidthRatio > 1) 1.0 else toolbarWidthRatio
-    val componentSizes = calculateComponentSizes(toolbar, preferredAndRealSize)
-    for (i in 0 until componentsCount) {
-      val component = toolbarComponent.getComponent(i) as? JComponent ?: continue
-      val d: Dimension = componentSizes[component]
-                         ?: getChildPreferredSize(toolbarComponent, i).apply { width = (width * toolbarWidthRatio).toInt() }
-      val r: Rectangle = bounds[i]
-      r.setBounds(offset, insets.top + (maxHeight - d.height) / 2, d.width, d.height)
-      offset += d.width
-    }
 
-    for (i in 0 until bounds.size) {
-      val prevRect = if (i > 0) bounds[i - 1] else null
-      val rect = bounds[i]
-      fitRectangle(prevRect, rect, toolbarComponent.height)
-    }
-    val componentWidth = toolbarComponent.width
-
-    if (componentsCount > 0) {
-      var rightOffset = insets.right
-      var i = componentsCount - 1
-      var j = 1
-      while (i > 0) {
-        val child: Component = toolbarComponent.getComponent(i)
-        if (child is JComponent && child.getClientProperty(RIGHT_ALIGN_KEY) == true) {
-          rightOffset += bounds[i].width
-          val r: Rectangle = bounds[bounds.size - j]
-          r.x = componentWidth - rightOffset
-        }
-        i--
-        j++
-      }
-    }
+    calculateComponentSizes(preferredAndRealSize, toolbar, bounds)
+    layoutComponents(toolbarComponent, bounds)
+    rightAlignComponents(toolbarComponent, bounds)
 
     return bounds
   }
-
-  /**
-   * Calculate the maximum preferred height of the components in the given parent container.
-   *
-   * @param parent The parent container containing the components.
-   * @return The maximum preferred height of the components. Returns 0 if there are no visible components.
-   */
-  private fun maxComponentPreferredHeight(parent: Container): Int = parent.components
-                                                                      .filter { it.isVisible }
-                                                                      .map { it.preferredSize }
-                                                                      .maxOfOrNull { it.height } ?: 0
-
 
   override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
     val res = Dimension()
@@ -123,61 +79,91 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
     return mainToolbar.components.filterNot { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.sumOf { it.preferredSize.width}
   }
 
-  private fun calculateComponentSizes(toolbar: ActionToolbar, preferredAndRealSize: Pair<Double, Double>): Map<Component, Dimension> {
-    val mainToolbar = toolbar.component.parent
-    val toolbarWidthDiff = preferredAndRealSize.first - preferredAndRealSize.second
-    return if (toolbarWidthDiff > 0) {
-      val components = mainToolbar.components.filter { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.flatMap {
-        (it as? JComponent)?.components?.toList() ?: listOf(it)
-      }
-      calculateComponentWidths(preferredAndRealSize.second, components).map { entry -> Pair(entry.key, Dimension(entry.value, entry.key.preferredSize.height)) }.toMap()
-    }
-    else {
-      mainToolbar.components.flatMap { (it as? Container)?.components?.toList() ?: listOf(it) }.associateWith { it.preferredSize }
-    }
-  }
-
-  private fun calculateComponentWidths(availableWidth: Double, components: List<Component>): Map<Component, Int> {
-    val componentToPreferredWidthMap = components.associateWith { it.preferredSize.width }
-    if (availableWidth >= componentToPreferredWidthMap.values.sum()) {
-      return componentToPreferredWidthMap
-    }
-
-    val componentWidths = components.associateWith { it.minimumSize.width }.toMutableMap()
-    var currentWidthSum = componentWidths.values.sum()
-    // Create a priority queue that polls the smallest width component
-    val minWidthQueue: PriorityQueue<Component> = PriorityQueue(
-      compareBy({ componentWidths[it]!! }, { -(componentToPreferredWidthMap[it]!!) })
-    )
-    val compressibleComponents = components.filter { componentWidths[it]!! < componentToPreferredWidthMap[it]!! }
-    minWidthQueue.addAll(compressibleComponents)
-
-    while (availableWidth > currentWidthSum && !minWidthQueue.isEmpty()) {
-      val minWidthComponent =  minWidthQueue.poll()
-      if (minWidthComponent != null && componentWidths[minWidthComponent]!! < componentToPreferredWidthMap[minWidthComponent]!!) {
-        currentWidthSum++
-        componentWidths[minWidthComponent] = componentWidths[minWidthComponent]!! + 1
-        if (componentWidths[minWidthComponent] != componentToPreferredWidthMap[minWidthComponent]) {
-          minWidthQueue.add(minWidthComponent)
-        }
-      }
-    }
-    return componentWidths
-  }
-
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
     return JBUI.emptySize()
   }
+}
 
-  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, toolbarHeight: Int) {
-    val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    currRect.height = max(currRect.height, minButtonSize.height)
-
-    if (currRect.x == Int.MAX_VALUE || currRect.y == Int.MAX_VALUE) return
-
-    if (prevRect != null && prevRect.maxX > currRect.minX) {
-      currRect.x = prevRect.maxX.toInt()
+private fun calculateComponentSizes(toolbar: ActionToolbar, preferredAndRealSize: Pair<Double, Double>): Map<Component, Dimension> {
+  val mainToolbar = toolbar.component.parent
+  val toolbarWidthDiff = preferredAndRealSize.first - preferredAndRealSize.second
+  return if (toolbarWidthDiff > 0) {
+    val components = mainToolbar.components.filter { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.flatMap {
+      (it as? JComponent)?.components?.toList() ?: listOf(it)
     }
-    currRect.y = (toolbarHeight - currRect.height) / 2
+    calculateComponentWidths(preferredAndRealSize.second.toInt(), components).map { entry -> Pair(entry.key, Dimension(entry.value, entry.key.preferredSize.height)) }.toMap()
+  }
+  else {
+    mainToolbar.components.flatMap { (it as? Container)?.components?.toList() ?: listOf(it) }.associateWith { it.preferredSize }
+  }
+}
+
+private fun calculateComponentSizes(
+  preferredAndRealSize: Pair<Double, Double>,
+  toolbar: ActionToolbar,
+  bounds: List<Rectangle>,
+) {
+  val toolbarComponent = toolbar.component
+  var toolbarWidthRatio = preferredAndRealSize.second / preferredAndRealSize.first
+  toolbarWidthRatio = if (toolbarWidthRatio > 1) 1.0 else toolbarWidthRatio
+  val componentSizes = calculateComponentSizes(toolbar, preferredAndRealSize)
+  for (i in bounds.indices) {
+    val component: Component = toolbarComponent.getComponent(i)
+    val d: Dimension = componentSizes[component]
+                       ?: getChildPreferredSize(toolbarComponent, i).apply { width = (width * toolbarWidthRatio).toInt() }
+    bounds[i].size = d
+  }
+}
+
+private fun calculateComponentWidths(availableWidth: Int, components: List<Component>): Map<Component, Int> {
+  val preferredWidths = components.associateWith { it.preferredSize.width }
+  if (availableWidth >= preferredWidths.values.sum()) {
+    return preferredWidths
+  }
+
+  val calculatedWidths = components.associateWith { it.minimumSize.width }.toMutableMap()
+  var currentWidthSum = calculatedWidths.values.sum()
+  // Create a priority queue that polls the smallest width component,
+  // prioritizing among such components the one that has the maximum preferred width (most space to grow).
+  val compressibleComponents: PriorityQueue<Component> = PriorityQueue(
+    compareBy({ calculatedWidths.getValue(it) }, { -preferredWidths.getValue(it) })
+  )
+  compressibleComponents.addAll(components.filter { calculatedWidths.getValue(it) < preferredWidths.getValue(it) })
+
+  while (currentWidthSum < availableWidth && !compressibleComponents.isEmpty()) {
+    val minWidthComponent: Component =  compressibleComponents.remove()
+    if (calculatedWidths.getValue(minWidthComponent) < preferredWidths.getValue(minWidthComponent)) {
+      currentWidthSum++
+      val newWidth = calculatedWidths.getValue(minWidthComponent) + 1
+      calculatedWidths[minWidthComponent] = newWidth
+      if (newWidth < preferredWidths.getValue(minWidthComponent)) {
+        compressibleComponents.add(minWidthComponent)
+      }
+    }
+  }
+  return calculatedWidths
+}
+
+private fun layoutComponents(toolbarComponent: JComponent, bounds: List<Rectangle>) {
+  val toolbarHeight = toolbarComponent.height
+  val minHeight = experimentalToolbarMinimumButtonSize().height
+  var x = toolbarComponent.insets.left
+  for (rect in bounds) {
+    rect.height = rect.height.coerceAtLeast(minHeight)
+    rect.x = x
+    rect.y = (toolbarHeight - rect.height) / 2
+    x += rect.width
+  }
+}
+
+private fun rightAlignComponents(toolbarComponent: JComponent, bounds: List<Rectangle>) {
+  val componentWidth = toolbarComponent.width
+  var rightOffset = toolbarComponent.insets.right
+  for (i in bounds.indices.reversed()) {
+    val child: Component = toolbarComponent.getComponent(i)
+    if (child is JComponent && child.getClientProperty(RIGHT_ALIGN_KEY) == true) {
+      rightOffset += bounds[i].width
+      bounds[i].x = componentWidth - rightOffset
+    }
   }
 }
