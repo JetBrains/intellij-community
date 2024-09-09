@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -921,9 +922,15 @@ public class NestedClassProcessor {
         case Exprent.EXPRENT_VAR -> {
           VarExprent varExpr = (VarExprent)expr;
           if (varExpr.isDefinition()) {
-            VarType varType = varExpr.getVarType();
-            if (classType.equals(varType) || (varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
-              res = true;
+            Stack<VarType> stack = new Stack<>();
+            stack.push(varExpr.getDefinitionType());
+            while (!stack.isEmpty()) {
+              VarType varType = stack.pop();
+              if (classType.equals(varType) || (varType != null && varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
+                res = true;
+              } else if (varType != null && varType.isGeneric()) {
+                ((GenericType)varType).getArguments().forEach(stack::push);
+              }
             }
           }
         }

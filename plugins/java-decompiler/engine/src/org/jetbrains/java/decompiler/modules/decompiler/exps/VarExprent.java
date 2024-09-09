@@ -159,7 +159,7 @@ public class VarExprent extends Exprent {
   }
   */
 
-  void appendDefinitionType(TextBuffer buffer) {
+  public VarType getDefinitionType() {
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
 
       if (lvt != null) {
@@ -167,13 +167,11 @@ public class VarExprent extends Exprent {
           if (lvt.getSignature() != null) {
             GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
             if (descriptor != null) {
-              buffer.append(ExprProcessor.getCastTypeName(descriptor.type, Collections.emptyList()));
-              return;
+              return descriptor.type;
             }
           }
         }
-        buffer.append(ExprProcessor.getCastTypeName(getVarType(), Collections.emptyList()));
-        return;
+        return getVarType();
       }
 
       MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
@@ -193,8 +191,7 @@ public class VarExprent extends Exprent {
               if (signature != null) {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
-                  buffer.append(ExprProcessor.getCastTypeName(descriptor.type, Collections.emptyList()));
-                  return;
+                  return descriptor.type;
                 }
               }
             }
@@ -205,15 +202,17 @@ public class VarExprent extends Exprent {
           if (attr != null) {
             String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
             if (descriptor != null) {
-              buffer.append(ExprProcessor.getCastTypeName(new VarType(descriptor), Collections.emptyList()));
-              return;
+              return new VarType(descriptor);
             }
           }
         }
       }
     }
+    return getVarType();
+  }
 
-    buffer.append(ExprProcessor.getCastTypeName(getVarType(), Collections.emptyList()));
+  void appendDefinitionType(TextBuffer buffer) {
+    buffer.append(ExprProcessor.getCastTypeName(getDefinitionType(), Collections.emptyList()));
   }
 
   @Override
