@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 public class PsiFieldMember extends PsiElementClassMember<PsiField> implements PropertyClassMember {
@@ -30,12 +31,18 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException {
+    return generateGetters(aClass, EnumSet.noneOf(Option.class));
+  }
+
+  @Override
+  public GenerationInfo @Nullable [] generateGetters(PsiClass aClass, @NotNull  EnumSet<Option> options) throws IncorrectOperationException {
     PsiField field = getElement();
-    if (field.hasModifierProperty(PsiModifier.STATIC) && 
+    if (field.hasModifierProperty(PsiModifier.STATIC) &&
         field.hasModifierProperty(PsiModifier.FINAL)) {
       return null;
     }
-    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
+    return createGenerateInfos(aClass,
+                               GetterSetterPrototypeProvider.generateGetterSetters(field, true, false, options));
   }
 
   @Override
@@ -51,11 +58,16 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public GenerationInfo @Nullable [] generateSetters(PsiClass aClass) {
+    return generateSetters(aClass, EnumSet.noneOf(Option.class));
+  }
+
+  @Override
+  public GenerationInfo @Nullable [] generateSetters(PsiClass aClass, @NotNull EnumSet<Option> options) {
     final PsiField field = getElement();
     if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
       return null;
     }
-    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false));
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false, options));
   }
 
   private static GenerationInfo[] createGenerateInfos(PsiClass aClass, PsiMethod[] prototypes) {

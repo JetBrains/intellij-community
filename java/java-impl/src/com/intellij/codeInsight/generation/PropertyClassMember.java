@@ -17,16 +17,37 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.EnumSet;
 
 public interface PropertyClassMember extends EncapsulatableClassMember {
   /**
    * @return PsiElement or TemplateGenerationInfo
+   * @deprecated please, use {@link PropertyClassMember#generateGetters(PsiClass, EnumSet)}
    */
+  @Deprecated
   GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
+   * @deprecated please, use {@link PropertyClassMember#generateSetters(PsiClass, EnumSet)}
    */
+  @Deprecated
   GenerationInfo @Nullable [] generateSetters(PsiClass aClass) throws IncorrectOperationException;
+
+  /**
+   * @return PsiElement or TemplateGenerationInfo
+   */
+  default GenerationInfo @Nullable [] generateGetters(PsiClass aClass, @NotNull EnumSet<Option> options) throws IncorrectOperationException{
+    return generateGetters(aClass);
+  }
+
+  /**
+   * @return PsiElement or TemplateGenerationInfo
+   */
+  default GenerationInfo @Nullable [] generateSetters(PsiClass aClass, @NotNull EnumSet<Option> options) throws IncorrectOperationException{
+    return generateSetters(aClass);
+  }
 }

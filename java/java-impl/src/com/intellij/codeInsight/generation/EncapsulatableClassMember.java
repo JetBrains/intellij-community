@@ -15,26 +15,55 @@
  */
 package com.intellij.codeInsight.generation;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface EncapsulatableClassMember extends ClassMember{
+import java.util.EnumSet;
+
+public interface EncapsulatableClassMember extends ClassMember {
+
+
   /**
    * @return PsiElement or TemplateGenerationInfo
+   * @deprecated please, use {@link EncapsulatableClassMember#generateGetter(EnumSet)}
    */
+  @Deprecated
   @Nullable
   GenerationInfo generateGetter() throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
+   * @deprecated please, use {@link EncapsulatableClassMember#generateSetter(EnumSet)}
    */
+  @Deprecated
   @Nullable
   GenerationInfo generateSetter() throws IncorrectOperationException;
 
   /**
-   * @return true if the member is definitely read-only (no setter could be generated); false if it's not known. 
+   * @return PsiElement or TemplateGenerationInfo
+   */
+  @Nullable
+  default GenerationInfo generateGetter(@NotNull EnumSet<Option> options) throws IncorrectOperationException {
+    return generateGetter();
+  }
+
+  /**
+   * @return PsiElement or TemplateGenerationInfo
+   */
+  @Nullable
+  default GenerationInfo generateSetter(@NotNull EnumSet<Option> options) throws IncorrectOperationException {
+    return generateSetter();
+  }
+
+  /**
+   * @return true if the member is definitely read-only (no setter could be generated); false if it's not known.
    */
   default boolean isReadOnlyMember() {
     return false;
+  }
+
+  enum Option {
+    COPY_ALL_ANNOTATIONS
   }
 }

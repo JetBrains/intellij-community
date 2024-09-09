@@ -763,20 +763,29 @@ public final class GenerateMembersUtil {
   }
 
   public static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, PsiClass aClass) {
-    return generatePrototype(field, aClass, true, SetterTemplatesManager.getInstance());
+    return generatePrototype(field, aClass, true, EnumSet.noneOf(EncapsulatableClassMember.Option.class), SetterTemplatesManager.getInstance());
   }
 
   static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, GetterTemplatesManager.getInstance());
+    return generateGetterPrototype(field, ignoreInvalidTemplate, EnumSet.noneOf(EncapsulatableClassMember.Option.class));
   }
 
   static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, SetterTemplatesManager.getInstance());
+    return generateSetterPrototype(field, ignoreInvalidTemplate, EnumSet.noneOf(EncapsulatableClassMember.Option.class));
+  }
+
+  static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull EnumSet<EncapsulatableClassMember.Option> options) {
+    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, GetterTemplatesManager.getInstance());
+  }
+
+  static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull EnumSet<EncapsulatableClassMember.Option> options) {
+    return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, SetterTemplatesManager.getInstance());
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field,
                                                       PsiClass psiClass,
                                                       boolean ignoreInvalidTemplate,
+                                                      @NotNull EnumSet<EncapsulatableClassMember.Option> options,
                                                       @NotNull TemplatesManager templatesManager) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -823,10 +832,92 @@ public final class GenerateMembersUtil {
       annotationTarget = parameters.length == 1 ? parameters[0] : null;
     }
     if (annotationTarget != null) {
+      PsiType fieldType = field.getType();
+      String type = options.contains(EncapsulatableClassMember.Option.COPY_ALL_ANNOTATIONS) ? fieldType.getCanonicalText(true) :
+                    getTypeWithNullableAnnotations(factory, fieldType);
+      if (annotationTarget instanceof PsiParameter psiParameter && psiParameter.getTypeElement() != null) {
+        psiParameter.getTypeElement().replace(factory.createTypeElementFromText(type, psiParameter));
+      }
+      else {
+        PsiMethod psiMethod = (PsiMethod)annotationTarget;
+        PsiTypeElement returnTypeElement = psiMethod.getReturnTypeElement();
+        if (returnTypeElement != null) {
+          returnTypeElement.replace(factory.createTypeElementFromText(type, psiMethod));
+        }
+      }
       NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
     }
 
-    return generatePrototype(field, result);
+    PsiMethod method = generatePrototype(field, result);
+    PsiModifierList modifierList = method.getModifierList();
+    PsiModifierList newList = ModifierListUtil.createSortedModifierList(modifierList, null, true);
+    if (newList != null) {
+      new CommentTracker().replace(modifierList, newList);
+    }
+    return method;
+  }
+
+  /**
+   * Let's keep only nullable annotations, otherwise it can bother users who use frameworks, especially Hibernate
+   */
+  private static @NotNull String getTypeWithNullableAnnotations(PsiElementFactory factory, PsiType type) {
+    PsiType copyType = factory.createTypeFromText(type.getCanonicalText(true), null);
+    List<PsiAnnotation> annotationsToDelete = new ArrayList<>();
+    PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
+      @Override
+      public PsiType visitType(@NotNull PsiType type) {
+        for (PsiAnnotation annotation : type.getAnnotations()) {
+          if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
+            annotationsToDelete.add(annotation);
+          }
+        }
+        return super.visitType(type);
+      }
+
+      @Override
+      public PsiType visitClassType(@NotNull PsiClassType classType) {
+        for (PsiType parameter : classType.getParameters()) {
+          parameter.accept(this);
+        }
+        return super.visitClassType(classType);
+      }
+
+
+      @Override
+      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
+        arrayType.getComponentType().accept(this);
+        return super.visitArrayType(arrayType);
+      }
+
+      @Override
+      public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
+        if(wildcardType.getBound() != null) {
+          wildcardType.getBound().accept(this);
+        }
+        return super.visitWildcardType(wildcardType) ;
+      }
+
+      @Override
+      public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
+        for (PsiType t1 : intersectionType.getConjuncts()) {
+          t1.accept(this);
+        }
+        return null;
+      }
+
+      @Override
+      public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
+        for (PsiType t1 : disjunctionType.getDisjunctions()) {
+          t1.accept(this);
+        }
+        return super.visitDisjunctionType(disjunctionType);
+      }
+    };
+    copyType.accept(visitor);
+    for (PsiAnnotation annotation : annotationsToDelete) {
+      annotation.delete();
+    }
+    return copyType.getCanonicalText(true);
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field, @NotNull PsiMethod result) {

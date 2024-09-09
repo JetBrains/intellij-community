@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -30,10 +31,15 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
+
+  protected boolean myGenerateAnnotations;
+  @Nullable
+  private JBCheckBox myGenerateAnnotationsCheckBox;
 
   public GenerateGetterSetterHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     super(chooserTitle);
@@ -61,6 +67,33 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
       return null;
     }
     return chooseMembers(allMembers, false, false, project, editor);
+  }
+
+  @Override
+  protected ClassMember @Nullable [] chooseMembers(ClassMember[] members,
+                                                   boolean allowEmptySelection,
+                                                   boolean copyJavadocCheckbox,
+                                                   Project project,
+                                                   @Nullable Editor editor) {
+    ClassMember[] chosenMembers = super.chooseMembers(members, allowEmptySelection, copyJavadocCheckbox, project, editor);
+    myGenerateAnnotations = myGenerateAnnotationsCheckBox != null && myGenerateAnnotationsCheckBox.isSelected();
+    myGenerateAnnotationsCheckBox = null;
+    return chosenMembers;
+  }
+
+  @Override
+  protected JComponent @Nullable [] getOptionControls() {
+    if (myGenerateAnnotationsCheckBox == null) {
+      myGenerateAnnotationsCheckBox = new JBCheckBox(JavaBundle.message("generate.getter.setter.generate.all.annotations"), false);
+      myGenerateAnnotationsCheckBox.setToolTipText(JavaBundle.message("generate.getter.setter.generate.all.annotations.tooltip"));
+    }
+    return new JComponent[] {myGenerateAnnotationsCheckBox};
+  }
+
+  protected @NotNull EnumSet<EncapsulatableClassMember.Option> getOptions() {
+    return myGenerateAnnotations
+           ? EnumSet.of(EncapsulatableClassMember.Option.COPY_ALL_ANNOTATIONS)
+           : EnumSet.noneOf(EncapsulatableClassMember.Option.class);
   }
 
   protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final @Nls String templatesTitle) {

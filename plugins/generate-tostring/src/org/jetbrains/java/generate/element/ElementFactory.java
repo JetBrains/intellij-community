@@ -15,7 +15,6 @@
  */
 package org.jetbrains.java.generate.element;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -25,9 +24,6 @@ import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Factory for creating {@link FieldElement} or {@link ClassElement} objects.
@@ -169,7 +165,7 @@ public final class ElementFactory {
     // type names
     element.setTypeName(PsiAdapter.getTypeClassName(type));
     element.setTypeQualifiedName(PsiAdapter.getTypeQualifiedClassName(type));
-    element.setType(getTypeWithNullableAnnotations(factory, type));
+    element.setType(type.getCanonicalText());
 
     // arrays, collections and maps types
     if (PsiAdapter.isObjectArrayType(type)) {
@@ -220,68 +216,5 @@ public final class ElementFactory {
       }
       else if (modifiers.hasModifierProperty(PsiModifier.PRIVATE)) element.setModifierPrivate(true);
     }
-  }
-
-  /**
-   * Let's keep only nullable annotations, otherwise it can bother users who use frameworks, especially Hibernate
-   */
-  private static @NotNull String getTypeWithNullableAnnotations(PsiElementFactory factory, PsiType type) {
-    PsiType copyType = factory.createTypeFromText(type.getCanonicalText(true), null);
-    List<PsiAnnotation> annotationsToDelete = new ArrayList<>();
-    PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
-      @Override
-      public PsiType visitType(@NotNull PsiType type) {
-        for (PsiAnnotation annotation : type.getAnnotations()) {
-          if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
-            annotationsToDelete.add(annotation);
-          }
-        }
-        return super.visitType(type);
-      }
-
-      @Override
-      public PsiType visitClassType(@NotNull PsiClassType classType) {
-        for (PsiType parameter : classType.getParameters()) {
-          parameter.accept(this);
-        }
-        return super.visitClassType(classType);
-      }
-
-
-      @Override
-      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
-        arrayType.getComponentType().accept(this);
-        return super.visitArrayType(arrayType);
-      }
-
-      @Override
-      public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
-        if(wildcardType.getBound() != null) {
-          wildcardType.getBound().accept(this);
-        }
-        return super.visitWildcardType(wildcardType) ;
-      }
-
-      @Override
-      public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
-        for (PsiType t1 : intersectionType.getConjuncts()) {
-          t1.accept(this);
-        }
-        return null;
-      }
-
-      @Override
-      public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
-        for (PsiType t1 : disjunctionType.getDisjunctions()) {
-          t1.accept(this);
-        }
-        return super.visitDisjunctionType(disjunctionType);
-      }
-    };
-    copyType.accept(visitor);
-    for (PsiAnnotation annotation : annotationsToDelete) {
-      annotation.delete();
-    }
-    return copyType.getCanonicalText(true);
   }
 }
