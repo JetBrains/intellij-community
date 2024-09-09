@@ -43,7 +43,7 @@ final class CoverageDataAnnotationsManager implements Disposable {
 
   CoverageDataAnnotationsManager(Project project) {
     myProject = project;
-    myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("CoverageDataAnnotationsManager Pool", 1);
+    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("CoverageDataAnnotationsManager Pool", 1);
   }
 
   public static CoverageDataAnnotationsManager getInstance(@NotNull Project project) {
@@ -57,7 +57,7 @@ final class CoverageDataAnnotationsManager implements Disposable {
 
   public synchronized void clearAnnotations() {
     for (var it = myRequests.entrySet().iterator(); it.hasNext(); ) {
-      it.next().getValue().cancel(true);
+      it.next().getValue().cancel(false);
       it.remove();
     }
     myExecutor.execute(() -> {
@@ -167,7 +167,7 @@ final class CoverageDataAnnotationsManager implements Disposable {
 
       Future<?> request = manager.myRequests.remove(editor);
       if (request != null) {
-        request.cancel(true);
+        request.cancel(false);
       }
 
       manager.myExecutor.execute(() -> manager.clearEditor(editor));
