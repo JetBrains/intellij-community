@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.components.service
@@ -13,11 +13,11 @@ import org.jetbrains.annotations.Nls
 
 /**
  * Use this service to resolve an SDK request to a given component allowing
- * the platform to guess or automatically suggest a possible option (or wait
- * for an option to be completed).
+ * the platform to guess or automatically suggest a possible option (or wait for an option to be completed).
  *
- * The lookup process can take some time to resolve. The code can be executed
- * from any thread. There is no guaranty callbacks happen from EDT thread too.
+ * The lookup process can take some time to resolve.
+ * The code can be executed from any thread.
+ * There is no guaranty callbacks happen from EDT thread too.
  */
 interface SdkLookup {
   fun createBuilder(): SdkLookupBuilder
@@ -101,7 +101,7 @@ interface SdkLookupBuilder {
 
   /**
    * A notification that is invoked at the moment where we failed to find
-   * a suitable SDK from a given name, project. At that moment we star
+   * a suitable SDK from a given name, project. At that moment, we star
    * looking for a possible SDK suggestions. Return `false` from the
    * callback to stop the search.
    */

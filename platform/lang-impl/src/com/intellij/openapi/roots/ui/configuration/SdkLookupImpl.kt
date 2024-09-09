@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
@@ -116,15 +117,14 @@ private val LOG = logger<SdkLookupImpl>()
 @VisibleForTesting
 @ApiStatus.Internal
 class SdkLookupImpl : SdkLookup {
-  override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
+  override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder(lookup = { service<SdkLookup>().lookup(it) })
 
   override fun lookup(lookup: SdkLookupParameters) {
     SdkLookupContextEx(lookup).lookup()
   }
 
+  @RequiresBackgroundThread
   override fun lookupBlocking(lookup: SdkLookupParameters) {
-    ThreadingAssertions.assertBackgroundThread()
-
     object : SdkLookupContextEx(lookup) {
       override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
         LOG.warn("It is not possible to wait for SDK download to complete in blocking execution mode. " +
