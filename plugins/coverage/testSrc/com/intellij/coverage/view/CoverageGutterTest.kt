@@ -27,6 +27,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 private const val TIMEOUT_MS = 20_000L
+private val CLASSES = listOf("foo.bar.BarClass", "foo.bar.UncoveredClass", "foo.FooClass")
 
 @RunWith(JUnit4::class)
 class CoverageGutterTest : CoverageIntegrationBaseTest() {
@@ -41,6 +42,29 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
 
     assertCoveredFiles()
     closeSuite(suite)
+    assertNoCoverage()
+  }
+
+  @Test(timeout = TIMEOUT_MS)
+  fun `test gutter annotations for closing files`(): Unit = runBlocking {
+    ThreadingAssertions.assertBackgroundThread()
+    openFiles()
+
+    val suite = loadIJSuite()
+    openSuiteAndWait(suite)
+    assertCoveredFiles()
+    val highlighters = CLASSES.map { getHighlighters(it)!! }
+    closeFiles()
+    awaitGutterAnnotations()
+    withContext(Dispatchers.EDT) {
+      for (hs in highlighters) {
+        for (highlighter in hs) {
+          assertFalse(highlighter.isValid)
+        }
+      }
+    }
+    closeSuite(suite)
+    openFiles()
     assertNoCoverage()
   }
 
@@ -110,9 +134,9 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun assertNoCoverage() {
-    assertGutterHighlightLines("foo.bar.BarClass", null)
-    assertGutterHighlightLines("foo.bar.UncoveredClass", null)
-    assertGutterHighlightLines("foo.FooClass", null)
+    for (className in CLASSES) {
+      assertGutterHighlightLines(className, null)
+    }
   }
 
   private suspend fun assertCoveredFiles() {
@@ -123,10 +147,16 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
   }
 
   private suspend fun openFiles() {
-    openClass(myProject, "foo.bar.BarClass")
-    openClass(myProject, "foo.bar.UncoveredClass")
-    openClass(myProject, "foo.FooClass")
+    for (className in CLASSES) {
+      openClass(myProject, className)
+    }
     awaitGutterAnnotations()
+  }
+
+  private suspend fun closeFiles() {
+    for (className in CLASSES) {
+      closeEditor(myProject, className)
+    }
   }
 
   private suspend fun assertGutterHighlightLines(className: String, expected: Map<Int, Byte>?) {
@@ -152,6 +182,13 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
 internal suspend fun findEditor(project: Project, className: String): EditorImpl {
   val psiClass = getPsiClass(project, className)
   return readAction { findEditor(psiClass) }
+}
+
+internal suspend fun closeEditor(project: Project, className: String) {
+  val psiClass = getPsiClass(project, className)
+  withContext(Dispatchers.EDT) {
+    FileEditorManager.getInstance(project).closeFile(psiClass.containingFile.virtualFile)
+  }
 }
 
 private fun findEditor(psiClass: PsiClass): EditorImpl {

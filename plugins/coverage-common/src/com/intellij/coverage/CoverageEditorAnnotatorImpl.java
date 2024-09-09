@@ -75,7 +75,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     Editor editor = myEditor;
     PsiFile file = myFile;
     Document document = myDocument;
-    if (editor == null || editor.isDisposed() || file == null || document == null) return;
+    if (editor == null || file == null || document == null) return;
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     removeHighlighters();
 
@@ -95,7 +95,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
 
   private synchronized void removeHighlighters() {
     var editor = myEditor;
-    if (editor == null || editor.isDisposed()) return;
+    if (editor == null) return;
     var highlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
     if (highlighters != null) {
       for (var highlighter : highlighters) {
