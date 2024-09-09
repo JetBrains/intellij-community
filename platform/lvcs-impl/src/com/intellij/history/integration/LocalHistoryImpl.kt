@@ -11,7 +11,6 @@ import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
@@ -25,13 +24,11 @@ import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.platform.lvcs.impl.diff.findEntry
 import com.intellij.platform.lvcs.impl.operations.getRevertCommandName
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.lang.Runnable
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.Throws
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
@@ -39,11 +36,12 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   companion object {
     private const val DAYS_TO_KEEP = "localHistory.daysToKeep"
 
+    /**
+     * @see [LocalHistory.getInstance]
+     * @see [LocalHistoryFacade.getInstance]
+     */
     @JvmStatic
     fun getInstanceImpl(): LocalHistoryImpl = getInstance() as LocalHistoryImpl
-
-    val storageDir: Path
-      get() = Path.of(PathManager.getSystemPath(), "LocalHistory")
 
     private fun getProjectId(p: Project): String = p.getLocationHash()
   }
@@ -113,15 +111,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   }
 
   private fun initHistory() {
-    var storage: ChangeListStorage
-    try {
-      storage = ChangeListStorageImpl(storageDir)
-    }
-    catch (e: Throwable) {
-      LocalHistoryLog.LOG.warn("cannot create storage, in-memory  implementation will be used", e)
-      storage = InMemoryChangeListStorage()
-    }
-    facade = LocalHistoryFacade(ChangeList(storage))
+    facade = LocalHistoryFacade.getInstance()
     eventDispatcher = LocalHistoryEventDispatcher(facade!!, gateway)
   }
 
@@ -151,7 +141,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   @TestOnly
   fun cleanupForNextTest() {
     doDispose()
-    storageDir.delete()
+    facade?.reset()
     init()
   }
 

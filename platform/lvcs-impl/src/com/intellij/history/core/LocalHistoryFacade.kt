@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core
 
 import com.intellij.history.ActivityId
@@ -21,7 +7,10 @@ import com.intellij.history.core.changes.*
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
+import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -30,11 +19,44 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
-open class LocalHistoryFacade(internal val changeList: ChangeList) {
+open class LocalHistoryFacade {
+
+  private val storageDir: Path
+    get() = Path.of(PathManager.getSystemPath(), "LocalHistory")
+
+  internal var changeList: ChangeList
+    private set
+
+  init {
+    changeList = ChangeList(createStorage())
+  }
+
+  @TestOnly
+  internal fun reset() {
+    storageDir.delete()
+    changeList = ChangeList(createStorage())
+  }
+
+  protected open fun createStorage(): ChangeListStorage {
+    var storage: ChangeListStorage
+    try {
+      storage = ChangeListStorageImpl(storageDir)
+    }
+    catch (e: Throwable) {
+      LocalHistoryLog.LOG.warn("cannot create storage, in-memory  implementation will be used", e)
+      storage = InMemoryChangeListStorage()
+    }
+
+    return storage
+  }
+
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   @get:TestOnly
@@ -187,6 +209,11 @@ open class LocalHistoryFacade(internal val changeList: ChangeList) {
   abstract class Listener {
     open fun changeAdded(c: Change) = Unit
     open fun changeSetFinished(changeSet: ChangeSet) = Unit
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): LocalHistoryFacade = application.service()
   }
 }
 

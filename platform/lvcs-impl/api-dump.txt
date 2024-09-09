@@ -72,12 +72,14 @@ com.intellij.history.core.LabelImpl
 - a:getByteContent(com.intellij.history.core.tree.RootEntry,java.lang.String):com.intellij.history.ByteContent
 - a:getLabelChangeId():J
 c:com.intellij.history.core.LocalHistoryFacade
-- <init>(com.intellij.history.core.ChangeList):V
+- sf:Companion:com.intellij.history.core.LocalHistoryFacade$Companion
+- <init>():V
 - f:accept(com.intellij.history.core.changes.ChangeVisitor):V
 - f:addChangeInTests(com.intellij.history.core.changes.StructuralChange):V
 - f:addListener(com.intellij.history.core.LocalHistoryFacade$Listener,com.intellij.openapi.Disposable):V
 - f:beginChangeSet():V
 - f:contentChanged(java.lang.String,com.intellij.history.core.Content,J):V
+- p:createStorage():com.intellij.history.core.ChangeListStorage
 - f:created(java.lang.String,Z):V
 - f:deleted(java.lang.String,com.intellij.history.core.tree.Entry):V
 - f:endChangeSet(java.lang.String):V
@@ -85,6 +87,7 @@ c:com.intellij.history.core.LocalHistoryFacade
 - bs:endChangeSet$default(com.intellij.history.core.LocalHistoryFacade,java.lang.String,com.intellij.history.ActivityId,I,java.lang.Object):V
 - f:forceBeginChangeSet():V
 - f:getChangeListInTests():com.intellij.history.core.ChangeList
+- sf:getInstance():com.intellij.history.core.LocalHistoryFacade
 - f:moved(java.lang.String,java.lang.String):V
 - f:putLabelInTests(com.intellij.history.core.changes.PutLabelChange):V
 - f:putSystemLabel(java.lang.String,java.lang.String,I):com.intellij.history.core.LabelImpl
@@ -94,6 +97,8 @@ c:com.intellij.history.core.LocalHistoryFacade
 - f:renamed(java.lang.String,java.lang.String):V
 - f:revertUpToChange(com.intellij.history.core.tree.RootEntry,J,java.lang.String,Z,Z):java.lang.String
 - f:revertUpToChangeSet(com.intellij.history.core.tree.RootEntry,J,java.lang.String,Z,Z):java.lang.String
+f:com.intellij.history.core.LocalHistoryFacade$Companion
+- f:getInstance():com.intellij.history.core.LocalHistoryFacade
 a:com.intellij.history.core.LocalHistoryFacade$Listener
 - <init>():V
 - changeAdded(com.intellij.history.core.changes.Change):V

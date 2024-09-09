@@ -81,6 +81,7 @@
 
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl"/>
+    <applicationService serviceImplementation="com.intellij.history.core.LocalHistoryFacade"/>
 
     <virtualFileManagerListener
       implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
