@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.idea.ActionsBundle.message
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 
 internal class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
@@ -30,5 +30,5 @@ internal class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
     diffPreview.performDiffAction()
   }
 
-  private fun getDiffPreview(e: AnActionEvent) = e.getData(EDITOR_TAB_DIFF_PREVIEW)
+  private fun getDiffPreview(e: AnActionEvent): DiffPreview? = e.getData(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW)
 }

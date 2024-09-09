@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -732,7 +733,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+      sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, myCommitPanel);
     }

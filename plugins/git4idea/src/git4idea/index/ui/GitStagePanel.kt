@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
@@ -215,7 +216,7 @@ internal class GitStagePanel(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[QuickActionProvider.KEY] = toolbar as? QuickActionProvider
-    sink[EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
+    sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
     sink[PlatformDataKeys.HELP_ID] = HELP_ID
 
     // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
@@ -328,7 +329,7 @@ internal class GitStagePanel(
     override fun isSelected(e: AnActionEvent): Boolean {
       return VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN
     }
-    
+
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state
 

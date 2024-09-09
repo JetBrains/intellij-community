@@ -5,6 +5,7 @@ import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.find.EditorSearchSession
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.lvcs.impl.*
@@ -171,7 +171,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   override fun uiDataSnapshot(sink: DataSink) {
     sink[ActivityViewDataKeys.SELECTION] = activityList.selection
     sink[ActivityViewDataKeys.SCOPE] = activityScope
-    sink[EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW] = editorDiffPreview
+    sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorDiffPreview
     sink[ActivityViewDataKeys.DIRECTORY_DIFF_MODE] = model.diffMode
   }
 

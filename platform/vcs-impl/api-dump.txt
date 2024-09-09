@@ -1431,17 +1431,6 @@ c:com.intellij.openapi.vcs.changes.DeletedFilesHolder
 - hashCode():I
 - isContainedInLocallyDeleted(com.intellij.openapi.vcs.FilePath):Z
 - takeFrom(com.intellij.openapi.vcs.changes.DeletedFilesHolder):V
-com.intellij.openapi.vcs.changes.DiffPreview
-- sf:Companion:com.intellij.openapi.vcs.changes.DiffPreview$Companion
-- a:closePreview():V
-- s:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
-- a:openPreview(Z):Z
-- performDiffAction():Z
-- s:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
-- updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.vcs.changes.DiffPreview$Companion
-- f:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
-- f:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
 com.intellij.openapi.vcs.changes.DiffPreviewProvider
 - a:createDiffRequestProcessor():com.intellij.diff.impl.DiffRequestProcessor
 - a:getEditorTabName(com.intellij.diff.impl.DiffRequestProcessor):java.lang.String
@@ -1460,27 +1449,6 @@ a:com.intellij.openapi.vcs.changes.DnDActivateOnHoldTarget
 - drop(com.intellij.ide.dnd.DnDEvent):V
 - a:isDropPossible(com.intellij.ide.dnd.DnDEvent):Z
 - update(com.intellij.ide.dnd.DnDEvent):Z
-a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
-- com.intellij.openapi.util.CheckedDisposable
-- com.intellij.openapi.vcs.changes.DiffPreview
-- <init>(com.intellij.openapi.project.Project):V
-- closePreview():V
-- pa:collectDiffProducers(Z):com.intellij.openapi.ListSelection
-- createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
-- pa:createViewer():com.intellij.diff.impl.DiffEditorViewer
-- dispose():V
-- pa:getEditorTabName(com.intellij.diff.impl.DiffEditorViewer):java.lang.String
-- f:getPreviewFile():com.intellij.openapi.vfs.VirtualFile
-- f:getProject():com.intellij.openapi.project.Project
-- p:handleEscapeKey():V
-- a:hasContent():Z
-- isDisposed():Z
-- f:isPreviewOpen():Z
-- openPreview(Z):Z
-- performDiffAction():Z
-- updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewKt
-- sf:showExternalToolIfNeeded(com.intellij.openapi.project.Project,com.intellij.openapi.ListSelection):Z
 f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 - sf:Companion:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
 - sf:EDITOR_TAB_DIFF_PREVIEW:com.intellij.openapi.actionSystem.DataKey
@@ -1790,13 +1758,11 @@ f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 - sf:Companion:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager$Companion
 - <init>():V
 - dispose():V
-- sf:findFloatingWindowForFile(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - sf:getInstance():com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 - f:getShouldOpenInNewWindow():Z
 - f:openFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):java.util.List
 - f:openFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,Z):java.util.List
 f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager$Companion
-- f:findFloatingWindowForFile(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:getInstance():com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager$State
 - com.intellij.openapi.components.BaseState

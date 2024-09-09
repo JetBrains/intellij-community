@@ -24,6 +24,7 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.pom.Navigatable;
 
 public interface DiffDataKeys {
@@ -56,4 +57,6 @@ public interface DiffDataKeys {
    * See also {@link com.intellij.diff.actions.ShowDiffAction} and {@link AnActionExtensionProvider} for more flexibility.
    */
   DataKey<DiffRequest> DIFF_REQUEST_TO_COMPARE = DataKey.create("diff_request_to_compare");
+
+  DataKey<DiffPreview> EDITOR_TAB_DIFF_PREVIEW = DataKey.create("EditorTabDiffPreview");
 }

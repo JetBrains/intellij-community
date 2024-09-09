@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -272,7 +272,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     sink.set(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS, Collections.singleton(myRoot));
     sink.set(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION, false);
     sink.set(VcsLogInternalDataKeys.LOG_DIFF_HANDLER, myFileHistoryModel.getDiffHandler());
-    sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+    sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     sink.set(VcsLogInternalDataKeys.FILE_HISTORY_MODEL, myFileHistoryModel.createSnapshot());
     sink.set(QuickActionProvider.KEY, new ComponentQuickActionProvider(this));
     sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);

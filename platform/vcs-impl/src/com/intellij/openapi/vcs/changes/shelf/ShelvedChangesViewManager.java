@@ -7,6 +7,7 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
@@ -905,7 +906,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+      sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {

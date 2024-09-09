@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.ui.*
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
@@ -172,7 +172,7 @@ open class SavedPatchesUi(project: Project,
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
-    sink[EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
+    sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
     sink[SAVED_PATCH_SELECTED_PATCH] = selectedPatchObjectOrNull()
     sink[SAVED_PATCHES_UI] = this
     sink[SAVED_PATCH_CHANGES] = changesBrowser.getSavedPatchChanges()
