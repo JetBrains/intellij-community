@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.implCommon
 
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
@@ -10,9 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -25,7 +23,6 @@ import javax.swing.Icon
 
 class ActualCompletionLookupElementDecorator(
     lookupElement: LookupElement,
-    private val declarationLookupObject: DescriptorBasedDeclarationLookupObject,
     private val text: String,
     private val icon: RowIcon,
     private val baseClassName: String?,
@@ -33,15 +30,13 @@ class ActualCompletionLookupElementDecorator(
     private val isSuspend: Boolean,
     private val generateMember: () -> KtDeclaration,
     private val shortenReferences: (KtElement) -> Unit,
+    private val declarationLookupObject: Any? = null,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
     private val actualKeyword: String = KtTokens.ACTUAL_KEYWORD.value
 
     override fun getObject(): Any {
-        // NOTE: Override `object` to avoid `expect` declaration in a lookup object
-        return object : DescriptorBasedDeclarationLookupObject by declarationLookupObject {
-            @Suppress("OVERRIDE_DEPRECATION")
-            override val descriptor: DeclarationDescriptor? = null
-        }
+        if (declarationLookupObject == null) return super.getObject()
+        return declarationLookupObject
     }
 
     override fun getLookupString(): String = actualKeyword

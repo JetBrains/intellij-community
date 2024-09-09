@@ -10,12 +10,14 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
@@ -105,7 +107,6 @@ internal class ActualDeclarationCompletion(
 
         return ActualCompletionLookupElementDecorator(
             baseLookupElement,
-            declarationLookupObject = descriptorBasedDeclarationLookupObject,
             text = descriptor.textPresentation(),
             icon = descriptorBasedDeclarationLookupObject.iconPresentation(),
             baseClassName = baseClassName,
@@ -113,6 +114,7 @@ internal class ActualDeclarationCompletion(
             isSuspend = descriptor.isSuspend,
             generateMember = { ExpectActualGenerationUtils.generateActualDeclaration(project, module, expectDeclaration) },
             shortenReferences = ShortenReferences.DEFAULT::process,
+            declarationLookupObject = descriptorBasedDeclarationLookupObject.withOverridedDescription(),
         )
     }
 
@@ -135,6 +137,15 @@ internal class ActualDeclarationCompletion(
         val icon = RowIcon(baseIcon, additionalIcon)
 
         return icon
+    }
+
+    // NOTE: Override `object` to avoid `expect` declaration in a lookup object (related to K1)
+    private fun DescriptorBasedDeclarationLookupObject.withOverridedDescription(): DescriptorBasedDeclarationLookupObject {
+        val declarationLookupObject = this
+        return object : DescriptorBasedDeclarationLookupObject by declarationLookupObject {
+            @Suppress("OVERRIDE_DEPRECATION")
+            override val descriptor: DeclarationDescriptor? = null
+        }
     }
 
     // Scripts have no package directive, all other files must have package directives
