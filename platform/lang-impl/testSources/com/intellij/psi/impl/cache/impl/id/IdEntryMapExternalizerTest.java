@@ -5,8 +5,6 @@ import com.intellij.util.indexing.InputMapExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.*;
 import java.util.concurrent.ThreadLocalRandom;
