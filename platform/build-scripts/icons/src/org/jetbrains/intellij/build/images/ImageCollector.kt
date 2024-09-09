@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.google.gson.GsonBuilder
@@ -106,7 +106,7 @@ internal class ImageInfo(
     val deprecation = this.deprecation
     val imageFile: Path
     if (deprecation?.replacement == null) {
-      imageFile = basicFile!!
+      imageFile = requireNotNull(basicFile) { "Basic file is missing for $id" }
     }
     else {
       imageFile = rootDir.resolve(deprecation.replacement.removePrefix("/").removePrefix(File.separator))
