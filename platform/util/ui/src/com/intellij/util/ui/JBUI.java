@@ -1125,7 +1125,7 @@ public final class JBUI {
       }
 
       public static int defaultHeaderHeight() {
-        return 42;
+        return 41;
       }
 
       public static JBInsets headerLabelLeftRightInsets() {
