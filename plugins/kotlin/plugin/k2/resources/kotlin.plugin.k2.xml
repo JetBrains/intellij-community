@@ -51,6 +51,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationActivity implementation="org.jetbrains.kotlin.idea.base.plugin.K2UnsupportedPluginsNotificationActivity"/>
+    <notificationGroup id="Plugins Incompatible With Kotlin Plugin in K2 Mode" displayType="BALLOON" bundle="messages.KotlinBasePluginBundle" key="plugins.incompatible.with.k2.title"/>
+
     <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IDEKotlinK2KotlinParserDefinition"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"

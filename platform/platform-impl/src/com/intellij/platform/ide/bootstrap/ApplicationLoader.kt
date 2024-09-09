@@ -271,6 +271,7 @@ private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "com.intellij.ide.AgreementUpdater",
   "com.intellij.internal.statistic.updater.StatisticsJobsScheduler",
   "com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler",
+  "org.jetbrains.kotlin.idea.base.plugin.K2UnsupportedPluginsNotificationActivity",
 )
 
 private fun CoroutineScope.executeAsyncAppInitListeners() {

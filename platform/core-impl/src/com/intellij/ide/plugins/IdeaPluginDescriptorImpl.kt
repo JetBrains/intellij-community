@@ -409,7 +409,7 @@ class IdeaPluginDescriptorImpl(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
-        isNotifyUser = true,
+        isNotifyUser = false,
       ))
       return
     }
