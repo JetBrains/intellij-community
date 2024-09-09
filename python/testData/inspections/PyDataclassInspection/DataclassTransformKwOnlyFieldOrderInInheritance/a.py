@@ -1,4 +1,4 @@
-from decorator import my_dataclass, my_dataclass_kw_only_default, my_field, my_filed_kw_only_default
+from decorator import my_dataclass, my_dataclass_kw_only_default, my_field, my_field_kw_only_default
 
 
 @my_dataclass(kw_only=True)
@@ -36,12 +36,12 @@ class C3(KwOnlyExplicitFieldParam):
 
 @my_dataclass()
 class KwOnlyImplicitFieldParam:
-    kw_only_default: int = my_filed_kw_only_default(default=42)
+    kw_only_default: int = my_field_kw_only_default(default=42)
     kw_only_no_default: int
 
 
 @my_dataclass()
-class C3(KwOnlyImplicitFieldParam):
+class C4(KwOnlyImplicitFieldParam):
     not_kw_only_no_default: int
 
 
@@ -72,4 +72,4 @@ class SubKwOnlyExplicitFieldParam(BaseNotKwOnlyDefault):
 
 @my_dataclass()
 class SubKwOnlyExplicitFieldParam(BaseNotKwOnlyDefault):
-    kw_only_no_default: int = my_filed_kw_only_default()
+    kw_only_no_default: int = my_field_kw_only_default()
