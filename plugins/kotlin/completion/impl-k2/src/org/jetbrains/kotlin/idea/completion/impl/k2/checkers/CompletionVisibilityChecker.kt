@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.checkers
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -25,6 +26,16 @@ internal class CompletionVisibilityChecker(
     private val basicContext: FirBasicCompletionContext,
     private val positionContext: KotlinRawPositionContext
 ) {
+    /**
+     * We cache [KaModule.directFriendDependencies] for [FirBasicCompletionContext.useSiteModule],
+     * because computing it can be costly for certain types of modules.
+     *
+     * Supposed to be used only during a single completion session and from a single thread.
+     */
+    private val useSiteModuleDirectFriendDependencies: Set<KaModule> by lazy(LazyThreadSafetyMode.NONE) {
+        basicContext.useSiteModule.directFriendDependencies.toSet()
+    }
+
     fun isDefinitelyInvisibleByPsi(declaration: KtDeclaration): Boolean = forbidAnalysis("isDefinitelyInvisibleByPsi") {
         if (basicContext.parameters.invocationCount >= 2) return false
         if (basicContext.originalKtFile is KtCodeFragment) return false
@@ -51,7 +62,7 @@ internal class CompletionVisibilityChecker(
         val declarationModule = KaModuleProvider.getModule(basicContext.project, file, useSiteModule = useSiteModule)
 
         return declarationModule == useSiteModule ||
-                declarationModule in basicContext.useSiteModule.directFriendDependencies
+                declarationModule in useSiteModuleDirectFriendDependencies
     }
 
     context(KaSession)
