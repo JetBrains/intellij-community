@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -113,6 +114,7 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
 private val LOG = logger<SdkLookupImpl>()
 
 @VisibleForTesting
+@ApiStatus.Internal
 class SdkLookupImpl : SdkLookup {
   override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
 

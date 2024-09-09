@@ -21596,12 +21596,6 @@ e:com.intellij.openapi.roots.ui.configuration.SdkLookupDownloadDecision
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupDownloadDecision
 - s:values():com.intellij.openapi.roots.ui.configuration.SdkLookupDownloadDecision[]
-f:com.intellij.openapi.roots.ui.configuration.SdkLookupImpl
-- com.intellij.openapi.roots.ui.configuration.SdkLookup
-- <init>():V
-- createBuilder():com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
-- lookup(com.intellij.openapi.roots.ui.configuration.SdkLookupParameters):V
-- lookupBlocking(com.intellij.openapi.roots.ui.configuration.SdkLookupParameters):V
 com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
 - a:getLookupReason():java.lang.String
 - a:getOnBeforeSdkSuggestionStarted():kotlin.jvm.functions.Function0
