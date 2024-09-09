@@ -7,6 +7,11 @@ def my_field(**kwargs):
     ...
 
 
-@dataclass_transform(field_specifiers=(my_field,))
+class MyField:
+    def __init__(self, **kwargs):
+        ...
+
+
+@dataclass_transform(field_specifiers=(my_field, MyField,))
 def my_dataclass(**kwargs) -> Callable[[type[T]], type[T]]:
     ...

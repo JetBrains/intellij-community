@@ -1,7 +1,7 @@
 import dataclasses
 from typing import ClassVar
 
-from decorator import my_dataclass, my_field
+from decorator import my_dataclass, my_field, MyField
 
 
 @my_dataclass()
@@ -60,6 +60,18 @@ class B3:
 
 
 @my_dataclass()
+class B4:
+    <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = MyField(default=1)
+    b: int = MyField()
+
+
+@my_dataclass()
+class B5:
+    <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = MyField(default_factory=int)
+    b: int = MyField()
+
+
+@my_dataclass()
 class C1:
     x: int = dataclasses.MISSING
     y: int
@@ -68,23 +80,26 @@ class C1:
 @my_dataclass()
 class C2:
     x: int = my_field(default=dataclasses.MISSING)
-    y: int
+    y: int = MyField(default=dataclasses.MISSING)
+    z: int
 
-C2(1, 2)
+C2(1, 2, 3)
 
 
 @my_dataclass()
 class C3:
     x: int = my_field(default_factory=dataclasses.MISSING)
-    y: int
+    y: int = MyField(default_factory=dataclasses.MISSING)
+    z: int
 
-C3(1, 2)
+C3(1, 2, 3)
 
 
 @my_dataclass()
 class D1:
     x: int = 0
     y: int = my_field(init=False)
+    z: int = MyField(init=False)
 
 
 @my_dataclass()

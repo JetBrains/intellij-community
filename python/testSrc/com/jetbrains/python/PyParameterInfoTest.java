@@ -1229,7 +1229,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   // PY-54560
-  public void testInitializingDataclassTransformFieldSpecifierKwOnlyArgument() {
+  public void testInitializingDataclassTransformFieldSpecifierKwOnlyArgumentDecoratorApiFunctionSpecifiers() {
+    final Map<String, PsiElement> marks = loadTest(5);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, not_kw_only_inferred: int, *, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});
+  }
+
+  // PY-54560
+  public void testInitializingDataclassTransformFieldSpecifierKwOnlyArgumentBaseClassApiClassSpecifiers() {
     final Map<String, PsiElement> marks = loadTest(5);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("not_kw_only_spec_default: int, not_kw_only_spec_arg: int, *, kw_only_inferred: int, kw_only_spec_default: int, kw_only_spec_arg: int", new String[]{"not_kw_only_spec_default: int, "});

@@ -682,26 +682,25 @@ fun resolveDataclassFieldParameters(
   }
   if (field.calleeName == null) return null
   val fieldSpecifierDeclaration = PyResolveUtil.resolveQualifiedNameInScope(field.calleeName!!, ScopeUtil.getScopeOwner(dataclass)!!, context)
-    .mapNotNull {
-      when (it) {
-        is PyFunction -> it
-        // TODO add a test for constructors
-        is PyClass -> it.findInitOrNew(true, context)
-        else -> null
-      }
-    }
+    .filterIsInstance<PyQualifiedNameOwner>()
     .firstOrNull { 
       val qualifiedName = it.qualifiedName
       qualifiedName != null && QualifiedName.fromDottedString(qualifiedName) in dataclassParams.fieldSpecifiers 
     }
   if (fieldSpecifierDeclaration == null) return null
+  val fieldSpecifierCallable = when (fieldSpecifierDeclaration) {
+    is PyClass -> fieldSpecifierDeclaration.findInitOrNew(true, context)
+    is PyFunction -> fieldSpecifierDeclaration
+    else -> null
+  }  
+  if (fieldSpecifierCallable == null) return null
   return PyDataclassFieldParameters(
     hasDefault = fieldStub?.hasDefault() ?: false,
     hasDefaultFactory = fieldStub?.hasDefaultFactory() ?: false,
     // TODO Should we delegate to dataclass parameters init here?
     // TODO support overloading init with Literal types
-    initValue = fieldStub?.initValue() ?: getArgumentDefault("init", fieldSpecifierDeclaration) ?: true,
-    kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", fieldSpecifierDeclaration) ?: dataclassParams.kwOnly,
+    initValue = fieldStub?.initValue() ?: getArgumentDefault("init", fieldSpecifierCallable) ?: true,
+    kwOnly = fieldStub?.kwOnly() ?: getArgumentDefault("kw_only", fieldSpecifierCallable) ?: dataclassParams.kwOnly,
     alias = fieldStub?.alias,
   )
 }
