@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @RequiresBlockingContext
 fun Application.forEachSession(kind: ClientKind, action: (ClientAppSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind)) {
-    ClientId.withClientId(session.clientId) {
+    ClientId.withExplicitClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session as ClientAppSession)
       }
@@ -54,7 +54,7 @@ suspend fun Application.forEachSessionSuspending(kind: ClientKind, action: suspe
 @RequiresBlockingContext
 fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>) {
-    ClientId.withClientId(session.clientId) {
+    ClientId.withExplicitClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session)
       }
