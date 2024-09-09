@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -1476,11 +1475,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private final class InnerSearchableConfigurable
-    implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll, InnerWithModifiableParent, ConfigurableMarkerProvider {
+    implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll, InnerWithModifiableParent {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
     private final @NotNull ColorAndFontPanelFactory myFactory;
-    private @Nls @Nullable String myMarkerText = null;
 
     private InnerSearchableConfigurable(@NotNull ColorAndFontPanelFactory factory) {
       myFactory = factory;
@@ -1615,16 +1613,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public @NotNull List<Configurable> getModifiableParents() {
       return List.of(ColorAndFontOptions.this);
-    }
-
-    @Override
-    public @Nls @Nullable String getMarkerText() {
-      return myMarkerText;
-    }
-
-    @Override
-    public void setMarkerText(@Nls @Nullable String text) {
-      myMarkerText = text;
     }
   }
 

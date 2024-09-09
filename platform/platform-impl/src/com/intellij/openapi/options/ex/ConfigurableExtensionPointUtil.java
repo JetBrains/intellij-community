@@ -146,12 +146,6 @@ public final class ConfigurableExtensionPointUtil {
       if (Registry.is("ide.settings.replace.group.with.single.configurable")) {
         replaceGroupWithSingleConfigurable(root.myList);
       }
-
-      for (Configurable configurable : root.myList) {
-        if (configurable instanceof SortedConfigurableGroup group) {
-          configureGroup(group);
-        }
-      }
     }
     return root;
   }
@@ -256,13 +250,6 @@ public final class ConfigurableExtensionPointUtil {
       parentId = Node.cyclic(tree, parentId, ROOT_ID, groupId, node);
       node.myParent = Node.add(tree, parentId, groupId);
       addGroup(tree, project, parentId, null, bundle);
-    }
-  }
-
-  private static void configureGroup(@NotNull SortedConfigurableGroup group) {
-    List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
-    for (ConfigurablesPatcher modificator : modificators) {
-      modificator.configureGroup(group);
     }
   }
 

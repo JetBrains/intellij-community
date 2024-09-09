@@ -4,9 +4,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +14,7 @@ import java.util.List;
 
 public class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
-  implements Weighted, ConfigurableGroup, Configurable.NoScroll, ConfigurableMarkerProvider {
+  implements Weighted, ConfigurableGroup, Configurable.NoScroll {
 
   private final String myId;
   private final @NlsContexts.ConfigurableName String myDisplayName;
@@ -25,8 +23,6 @@ public class SortedConfigurableGroup
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
   List<Configurable> myList = new ArrayList<>();
-
-  private @Nls @Nullable String myMarkerText = null;
 
   public SortedConfigurableGroup(@NonNls @NotNull String id,
                                  @NlsContexts.ConfigurableName @NotNull String displayName,
@@ -72,15 +68,5 @@ public class SortedConfigurableGroup
   @Override
   public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
-  }
-
-  @Override
-  public @Nls @Nullable String getMarkerText() {
-    return myMarkerText;
-  }
-
-  @Override
-  public void setMarkerText(@Nls @Nullable String text) {
-    myMarkerText = text;
   }
 }

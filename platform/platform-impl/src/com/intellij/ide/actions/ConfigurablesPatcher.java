@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,4 @@ public interface ConfigurablesPatcher {
    */
   void modifyOriginalConfigurablesList(@NotNull List<Configurable> originalConfigurables,
                                        @Nullable Project project);
-
-  void configureGroup(@NotNull SortedConfigurableGroup group);
 }

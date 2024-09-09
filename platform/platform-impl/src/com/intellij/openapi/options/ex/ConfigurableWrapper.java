@@ -359,11 +359,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
         list.removeIf(Predicate.not(myFilter));
       }
       myKids = list.toArray(new Configurable[0]);
-      for (Configurable configurable : myKids) {
-        if (configurable instanceof ConfigurableMarkerProvider markerProvider) {
-          markerProvider.setMarkerText(getMarkerText());
-        }
-      }
       isInitialized = true;
       ConfigurableCardPanel.warn(this, "children", time);
       return myKids;

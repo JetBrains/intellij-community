@@ -15181,9 +15181,7 @@ c:com.intellij.openapi.options.ex.SortedConfigurableGroup
 - getDisplayName():java.lang.String
 - getHelpTopic():java.lang.String
 - getId():java.lang.String
-- getMarkerText():java.lang.String
 - getWeight():I
-- setMarkerText(java.lang.String):V
 com.intellij.openapi.options.newEditor.ISettingsTreeViewFactory
 - a:createTreeView(com.intellij.openapi.options.newEditor.SettingsFilter,java.util.List):com.intellij.openapi.options.newEditor.SettingsTreeView
 com.intellij.openapi.options.newEditor.OptionsEditorColleague
