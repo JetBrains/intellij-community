@@ -16,3 +16,13 @@ else:
 sys.modules['_pydevd_bundle.pydevd_pep_669_tracing'] = mod
 
 enable_pep669_monitoring = mod.enable_pep669_monitoring
+global_cache_skips = mod.global_cache_skips
+global_cache_frame_skips = mod.global_cache_frame_skips
+
+try:
+    restart_events = sys.monitoring.restart_events
+except AttributeError:
+    def _dummy_restart_events():
+        pass
+
+    restart_events = _dummy_restart_events
