@@ -843,9 +843,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
 
         for (var contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
-          for (var source : contentRootNode.getData().getSourceRoots().entrySet()) {
-            var sourceRootType = source.getKey();
-            for (var sourceRoot : source.getValue()) {
+          for (var sourceRootType : ExternalSystemSourceType.values()) {
+            for (var sourceRoot : contentRootNode.getData().getPaths(sourceRootType)) {
               var sourceRootPath = sourceRoot.getPath();
               var packagePrefix = sourceRoot.getPackagePrefix();
               var contentRootData = ContainerUtil.getLastItem(contentRootNodes.getAncestorValues(sourceRootPath));
@@ -879,9 +878,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       var externalContentRootNodes = new ArrayList<ContentRootData>();
 
       for (var contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
-        for (var source : contentRootNode.getData().getSourceRoots().entrySet()) {
-          var sourceRootType = source.getKey();
-          for (var sourceRoot : source.getValue()) {
+        for (var sourceRootType : ExternalSystemSourceType.values()) {
+          for (var sourceRoot : contentRootNode.getData().getPaths(sourceRootType)) {
             var sourceRootPath = sourceRoot.getPath();
             var packagePrefix = sourceRoot.getPackagePrefix();
             if (FileUtil.isAncestor(projectRootPath, sourceRootPath, false)) {

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -110,9 +111,9 @@ class GradleContentRootIndex {
   ): Map<IExternalSystemSourceType, Collection<ContentRootData.SourceRoot>> {
     val sources = HashMap<IExternalSystemSourceType, HashSet<ContentRootData.SourceRoot>>()
     for (contentRootNode in ExternalSystemApiUtil.findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
-      for ((sourceRootType, sourceRoots) in contentRootNode.data.sourceRoots) {
+      for (sourceRootType in ExternalSystemSourceType.entries) {
         sources.computeIfAbsent(sourceRootType) { HashSet() }
-          .addAll(sourceRoots)
+          .addAll(contentRootNode.data.getPaths(sourceRootType))
       }
     }
     return sources
