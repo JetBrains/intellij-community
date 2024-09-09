@@ -45,7 +45,7 @@ public class TestJava11StringConcatEmptyAffix {
     }
 
     public String testIntString(int intValue, String stringValue) {
-        return "" + intValue + stringValue;
+        return intValue + stringValue;
     }
 
     public String testStringInt(int intValue, String stringValue) {

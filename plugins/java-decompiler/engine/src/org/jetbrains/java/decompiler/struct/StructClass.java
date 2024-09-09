@@ -292,6 +292,10 @@ public class StructClass extends StructMember {
     return isVersion21();
   }
 
+  public boolean isVersion(int minVersion) {
+    return majorVersion >= minVersion;
+  }
+
   @Override
   public String toString() {
     return qualifiedName;
