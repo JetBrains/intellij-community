@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferenceP
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
@@ -35,17 +36,22 @@ internal class CompletionVisibilityChecker(
             }
         }
         if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
-            if (declarationContainingFile.isCompiled) {
-                return true
-            }
-            val useSiteModule = basicContext.useSiteModule
-
-            val declarationModule = KaModuleProvider.getModule(basicContext.project, declarationContainingFile, useSiteModule = useSiteModule)
-            if (declarationModule != useSiteModule && declarationModule !in useSiteModule.directFriendDependencies) {
-                return true
-            }
+            return !canAccessInternalDeclarationsFromFile(declarationContainingFile)
         }
+
         return false
+    }
+
+    private fun canAccessInternalDeclarationsFromFile(file: KtFile): Boolean {
+        if (file.isCompiled) {
+            return false
+        }
+        val useSiteModule = basicContext.useSiteModule
+
+        val declarationModule = KaModuleProvider.getModule(basicContext.project, file, useSiteModule = useSiteModule)
+
+        return declarationModule == useSiteModule ||
+                declarationModule in basicContext.useSiteModule.directFriendDependencies
     }
 
     context(KaSession)
