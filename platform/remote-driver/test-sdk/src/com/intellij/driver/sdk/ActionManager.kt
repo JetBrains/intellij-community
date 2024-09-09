@@ -6,6 +6,7 @@ import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.openapi.diagnostic.fileLogger
 import java.awt.event.InputEvent
 
 @Remote(value = "com.intellij.openapi.actionSystem.ActionManager")
@@ -23,10 +24,15 @@ interface ActionManager {
 interface AnAction
 
 @Remote(value = "com.intellij.openapi.util.ActionCallback")
-interface ActionCallback
+interface ActionCallback {
+  fun isRejected(): Boolean
+  fun isProcessed(): Boolean
+  fun getError(): String
+}
 
-fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, rdTarget: RdTarget? = null) {
-  withContext(OnDispatcher.EDT) {
+fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, rdTarget: RdTarget? = null): ActionCallback {
+  fileLogger().info("Invoke action $actionId")
+  return withContext(OnDispatcher.EDT) {
     val target = rdTarget ?: if (isRemoteIdeMode) RdTarget.FRONTEND else RdTarget.DEFAULT
     val actionManager = service<ActionManager>(target)
     val action = actionManager.getAction(actionId)
@@ -34,7 +40,16 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
       throw IllegalStateException("Action $actionId was not found")
     }
     else {
-      actionManager.tryToExecute(action, null, component, null, now)
+      val actionCallback = actionManager.tryToExecute(action, null, component, null, now)
+      if (now || actionCallback.isProcessed()) {
+        if (actionCallback.isRejected()) {
+          fileLogger().info("Action $actionId was rejected with error: ${actionCallback.getError()}")
+        }
+        else {
+          fileLogger().info("Action $actionId was executed")
+        }
+      }
+      return@withContext actionCallback
     }
   }
 }
