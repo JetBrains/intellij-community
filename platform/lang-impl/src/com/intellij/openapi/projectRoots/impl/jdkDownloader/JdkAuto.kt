@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
@@ -153,7 +153,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           .state
           .jdks.singleOrNull {
             it.name.equals(sdkName, ignoreCase = true) &&
-            it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } ?: false
+            it.path?.let { path -> projectInWsl == WslPath.isWslUncPath(path) } == true
           }
       }
 
