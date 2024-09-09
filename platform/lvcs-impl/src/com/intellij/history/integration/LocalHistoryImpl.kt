@@ -39,6 +39,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     /**
      * @see [LocalHistory.getInstance]
      * @see [LocalHistoryFacade.getInstance]
+     * @see [IdeaGateway.getInstance]
      */
     @JvmStatic
     fun getInstanceImpl(): LocalHistoryImpl = getInstance() as LocalHistoryImpl
@@ -54,7 +55,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   var facade: LocalHistoryFacade? = null
     private set
 
-  val gateway: IdeaGateway = IdeaGateway()
+  val gateway: IdeaGateway = IdeaGateway.getInstance()
 
   private var flusherTask: Job? = null
   private val initialFlush = AtomicBoolean(true)

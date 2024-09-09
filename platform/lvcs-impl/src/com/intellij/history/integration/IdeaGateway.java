@@ -48,6 +48,10 @@ public class IdeaGateway {
   private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
+  public static @NotNull IdeaGateway getInstance() {
+    return ApplicationManager.getApplication().getService(IdeaGateway.class);
+  }
+
   public boolean isVersioned(@NotNull VirtualFile f) {
     return isVersioned(f, false);
   }

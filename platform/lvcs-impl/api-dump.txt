@@ -436,6 +436,7 @@ c:com.intellij.history.integration.IdeaGateway
 - findVirtualFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getDocument(java.lang.String):com.intellij.openapi.editor.Document
 - getFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- s:getInstance():com.intellij.history.integration.IdeaGateway
 - s:getNameOrUrlPart(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
