@@ -121,6 +121,8 @@ internal object InlineCompletionContextLogs {
     result.add(Logs.BLOCK_STATEMENT_LEVEL with featuresCollector.getBlockStatementLevel(element))
 
     result += getExtendedScopeFeatures(featuresCollector, file, offset)
+    result += getTypingSpeedFeatures()
+
     return result
   }
 
@@ -222,6 +224,14 @@ internal object InlineCompletionContextLogs {
     return result
   }
 
+  private fun getTypingSpeedFeatures(): List<EventPair<*>> = buildList {
+    val tracker = TypingSpeedTracker.getInstance()
+    tracker.getTimeSinceLastTyping()?.let {
+      add(Logs.TIME_SINCE_LAST_TYPING with it)
+      addAll(tracker.getTypingSpeedEventPairs().map { it.first })
+    }
+  }
+
   private object Logs : PhasedLogs(InlineCompletionLogsContainer.Phase.INLINE_API_STARTING) {
     val ELEMENT_PREFIX_LENGTH = register(EventFields.Int("element_prefix_length"))
     val LINE_NUMBER = register(EventFields.Int("line_number"))
@@ -276,6 +286,11 @@ internal object InlineCompletionContextLogs {
     val SCOPE_VALUABLE_SYMBOLS_BEFORE = scopeFeatures { EventFields.Boolean("${it}_scope_valuable_symbols_before", "False if in the ${it} scope before caret there are only whitespaces or statements/strings enclosures") }
     val SCOPE_VALUABLE_SYMBOLS_AFTER = scopeFeatures { EventFields.Boolean("${it}_scope_valuable_symbols_after", "False if in the ${it} scope after caret there are only whitespaces or statements/strings enclosures") }
     val SCOPE_HAS_ERROR_PSI = scopeFeatures { EventFields.Boolean("${it}_scope_has_error_psi", "True if in the ${it} scope there's any PsiError element") }
+
+    val TIME_SINCE_LAST_TYPING = register(EventFields.Long("time_since_last_typing"))
+    val TYPING_SPEEDS = TypingSpeedTracker.getEventFields().map {
+      register(it)
+    }
 
     private fun <T> scopeFeatures(createFeatureDeclaration: (String) -> EventField<T>): List<EventField<T>> {
       return listOf(
