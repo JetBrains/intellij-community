@@ -175,7 +175,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     cancellationManager.checkCanceled();
 
-    if (cl.isVersion(CodeConstants.BYTECODE_JAVA_9)) {
+    if (cl.isVersion9()) {
       ConcatenationHelper.simplifyStringConcat(root);
     }
 

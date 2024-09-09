@@ -26,7 +26,7 @@ public class TestJava11StringConcatEmptyAffix {
    }
 
    public String testIntSuffix(int value) {
-      return "" + value + "suffix";// 32
+      return value + "suffix";// 32
    }
 
    public String testStringSuffix(String value) {
