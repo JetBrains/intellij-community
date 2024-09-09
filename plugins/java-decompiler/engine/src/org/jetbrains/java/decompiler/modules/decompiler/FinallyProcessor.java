@@ -701,23 +701,29 @@ public class FinallyProcessor {
                                        int finallyType,
                                        List<int[]> lstStoreVars) {
     InstructionSequence seqPattern = pattern.getSeq();
+    List<Integer> instrOldOffsetsPattern = pattern.getOriginalOffsets();
     InstructionSequence seqSample = sample.getSeq();
+    List<Integer> instrOldOffsetsSample = sample.getOriginalOffsets();
 
     if (type != 0) {
       seqPattern = seqPattern.clone();
+      instrOldOffsetsPattern = new ArrayList<>(instrOldOffsetsPattern);
 
       if ((type & 1) > 0) { // first
         if (finallyType > 0) {
+          instrOldOffsetsPattern.remove(0);
           seqPattern.removeInstruction(0);
         }
       }
 
       if ((type & 2) > 0) { // last
         if (finallyType == 0 || finallyType == 2) {
+          instrOldOffsetsPattern.remove(instrOldOffsetsPattern.size() - 1);
           seqPattern.removeLast();
         }
 
         if (finallyType == 2) {
+          instrOldOffsetsPattern.remove(instrOldOffsetsPattern.size() - 1);
           seqPattern.removeLast();
         }
       }
@@ -744,6 +750,7 @@ public class FinallyProcessor {
         seq.addInstruction(0, seqSample.getInstr(i), -1);
         oldOffsets.addFirst(sample.getOriginalOffset(i));
         seqSample.removeInstruction(i);
+        instrOldOffsetsSample.remove(i);
       }
 
       BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
@@ -905,26 +912,31 @@ public class FinallyProcessor {
 
   private static void removeExceptionInstructionsEx(BasicBlock block, int blockType, int finallyType) {
     InstructionSequence seq = block.getSeq();
+    List<Integer> instrOldOffsets = block.getOriginalOffsets();
 
     if (finallyType == 3) { // empty finally handler
       for (int i = seq.length() - 1; i >= 0; i--) {
         seq.removeInstruction(i);
+        instrOldOffsets.remove(i);
       }
     }
     else {
       if ((blockType & 1) > 0) { // first
         if (finallyType == 2 || finallyType == 1) { // `AStore` or `Pop`
           seq.removeInstruction(0);
+          instrOldOffsets.remove(0);
         }
       }
 
       if ((blockType & 2) > 0) { // last
         if (finallyType == 2 || finallyType == 0) {
           seq.removeLast();
+          instrOldOffsets.remove(instrOldOffsets.size() - 1);
         }
 
         if (finallyType == 2) { // `AStore`
           seq.removeLast();
+          instrOldOffsets.remove(instrOldOffsets.size() - 1);
         }
       }
     }
