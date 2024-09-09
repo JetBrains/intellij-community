@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.scripting.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -68,8 +67,8 @@ private class KtScriptModuleByModuleInfo(
     override val languageVersionSettings: LanguageVersionSettings
         get() = moduleInfo.languageVersionSettings
 
-    override val directFriendDependencies: List<KaModule>
-        get() = if (hasDirectFriendDependencies == false) {
+    override fun computeDirectFriendDependencies(): List<KaModule> =
+        if (hasDirectFriendDependencies == false) {
             emptyList()
         } else {
             val ktModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(moduleInfo.scriptFile, moduleInfo.project)
