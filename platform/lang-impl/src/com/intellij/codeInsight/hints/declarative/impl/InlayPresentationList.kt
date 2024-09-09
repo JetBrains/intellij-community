@@ -40,7 +40,6 @@ class InlayPresentationList(
   internal val sourceId: String,
 ) {
   companion object {
-    private val NOT_COMPUTED = DeclarativeHintWidth(-1, -1, -1)
     private val MARGIN_PADDING_BY_FORMAT = enumMapOf<HintMarginPadding, Pair<Int, Int>>().apply {
       put(HintMarginPadding.OnlyPadding, 0 to 7)
       put(HintMarginPadding.MarginAndSmallerPadding, 2 to 6)
@@ -52,28 +51,30 @@ class InlayPresentationList(
 
   private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
-  private var computedWidth: DeclarativeHintWidth = NOT_COMPUTED
   private var size: Float = Float.MAX_VALUE
   private var fontName: String = ""
 
-  private fun computePartialSums(fontMetricsStorage: InlayTextMetricsStorage): IntArray {
-    var width = 0
+  private fun computePartialSums(textMetrics: InlayTextMetrics): IntArray {
+    var widthSoFar = 0
     return IntArray(entries.size) {
       val entry = entries[it]
-      val oldWidth = width
-      width += entry.computeWidth(getMetrics(fontMetricsStorage))
-      oldWidth
+      widthSoFar += entry.computeWidth(textMetrics)
+      widthSoFar
     }
   }
 
   private fun getPartialWidthSums(storage: InlayTextMetricsStorage): IntArray {
     val sums = _partialWidthSums
-    if (sums != null) {
-      return sums
+    val metrics = getMetrics(storage)
+    val isActual = metrics.isActual(size, fontName)
+    if (!isActual || sums == null) {
+      val computed = computePartialSums(metrics)
+      _partialWidthSums = computed
+      size = metrics.font.size2D
+      fontName = metrics.font.family
+      return computed
     }
-    val computed = computePartialSums(storage)
-    _partialWidthSums = computed
-    return computed
+    return sums
   }
 
   fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
@@ -83,18 +84,31 @@ class InlayPresentationList(
     }
   }
 
+  private val marginAndPadding: Pair<Int, Int> = MARGIN_PADDING_BY_FORMAT[hintFormat.horizontalMarginPadding]!!
+  private fun getTextWidth(storage: InlayTextMetricsStorage): Int = getPartialWidthSums(storage).lastOrNull() ?: 0
+  private fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
+    val (_, padding) = marginAndPadding
+    return 2 * padding + getTextWidth(storage)
+  }
+
+  private fun getFullWidth(storage: InlayTextMetricsStorage): Int {
+    val (margin, padding) = marginAndPadding
+    return 2 * (margin + padding) + getTextWidth(storage)
+  }
+
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {
     val x = pointInsideInlay.x
     val partialWidthSums = getPartialWidthSums(fontMetricsStorage)
-    val hintWidth = getWidthInPixels(fontMetricsStorage)
+    val (margin, padding) = marginAndPadding
+    var previousRightBound = margin + padding
     for ((index, entry) in entries.withIndex()) {
-      val leftBound = partialWidthSums[index] + hintWidth.marginAndPadding
-      val rightBound = partialWidthSums.getOrNull(index + 1)?.let { it + hintWidth.marginAndPadding }
-                       ?: Int.MAX_VALUE
+      val leftBound = previousRightBound
+      val rightBound = partialWidthSums[index]
 
-      if (x in leftBound..rightBound) {
+      if (x in leftBound..<rightBound) {
         return entry
       }
+      previousRightBound = rightBound
     }
     return null
   }
@@ -109,7 +123,6 @@ class InlayPresentationList(
     updateStateTree(state, this.state, 0, 0)
     this.state = state
     this.entries = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
-    this.computedWidth = NOT_COMPUTED
     this._partialWidthSums = null
     this.isDisabled = disabled
     this.hintFormat = hintFormat
@@ -154,29 +167,7 @@ class InlayPresentationList(
     updateState(state, isDisabled, hintFormat)
   }
 
-  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): DeclarativeHintWidth {
-    val metrics = getMetrics(textMetricsStorage)
-    val isActual = metrics.isActual(size, fontName)
-    if (!isActual || computedWidth == NOT_COMPUTED) {
-      size = metrics.font.size2D
-      fontName = metrics.font.family
-      val textWidth = entries.sumOf { it.computeWidth(metrics) }
-      val (margin, padding) = MARGIN_PADDING_BY_FORMAT[hintFormat.horizontalMarginPadding]!!
-      computedWidth = DeclarativeHintWidth(margin, padding, textWidth)
-      return computedWidth
-    }
-    return computedWidth
-  }
-
-  data class DeclarativeHintWidth(
-    internal val margin: Int,
-    internal val padding: Int,
-    internal val textWidth: Int,
-  ) {
-    val marginAndPadding: Int get() = margin + padding
-    val boxWidth: Int get() = 2 * padding + textWidth
-    val fullWidth: Int get() = 2 * margin + boxWidth
-  }
+  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int = getFullWidth(textMetricsStorage)
 
   fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
     val editor = inlay.editor as EditorImpl
@@ -190,20 +181,20 @@ class InlayPresentationList(
       HintColorKind.TextWithoutBackground -> DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
     }
     val attrs = editor.colorsScheme.getAttributes(attrKey)
+    val (margin, padding) = marginAndPadding
     g.withTranslated(targetRegion.x, targetRegion.y) {
       if (hintFormat.colorKind.hasBackground()) {
         val rectHeight = targetRegion.height.toInt() - gap * 2
-        val rectWidth = getWidthInPixels(storage)
         val config = GraphicsUtil.setupAAPainting(g)
         GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA)
         g.color = attrs.backgroundColor ?: textAttributes.backgroundColor
-        g.fillRoundRect(rectWidth.margin, gap, rectWidth.boxWidth, rectHeight, ARC_WIDTH, ARC_HEIGHT)
+        g.fillRoundRect(margin, gap, getBoxWidth(storage), rectHeight, ARC_WIDTH, ARC_HEIGHT)
         config.restore()
       }
     }
 
 
-    g.withTranslated(getWidthInPixels(storage).marginAndPadding + targetRegion.x, targetRegion.y) {
+    g.withTranslated(margin + padding + targetRegion.x, targetRegion.y) {
       for (entry in entries) {
         val hoveredWithCtrl = entry.isHoveredWithCtrl
         val finalAttrs = if (hoveredWithCtrl) {

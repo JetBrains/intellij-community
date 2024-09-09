@@ -34,7 +34,7 @@ class DeclarativeInlayRenderer(
   private var inlay: Inlay<DeclarativeInlayRenderer>? = null
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    return presentationList.getWidthInPixels(fontMetricsStorage).fullWidth
+    return presentationList.getWidthInPixels(fontMetricsStorage)
   }
 
   @RequiresEdt
