@@ -364,7 +364,7 @@
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.inlinePrompt.InlinePromptManager"
-                    serviceImplementation="com.intellij.ai.EmptyInlinePromptManager"/>
+                    serviceImplementation="com.intellij.inlinePrompt.EmptyInlinePromptManager"/>
 
     <applicationService
       serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"/>
