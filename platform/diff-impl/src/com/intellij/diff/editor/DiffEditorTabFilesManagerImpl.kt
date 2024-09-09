@@ -5,8 +5,12 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileOpenedSyncListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -110,6 +114,29 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
         diffEditorManager.showDiffFile(file, false)
       }
       diffEditorManager.showDiffFile(toFocus, true)
+    }
+  }
+}
+
+/**
+ * Toggle option on drag-n-drop
+ */
+internal class DiffInWindowDndListener : FileOpenedSyncListener {
+  override fun fileOpenedSync(editorManager: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
+    if (file !is DiffContentVirtualFile) return
+    if (editorManager !is FileEditorManagerImpl) return
+
+    // flag is not properly set for async editor opening
+    //if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != true) return
+
+    val openedFileEditors = editorsWithProviders.map { it.fileEditor }
+    val window = editorManager.windows.find { it.allComposites.any { it.allEditors.any { openedFileEditors.contains(it) } } } ?: return
+
+    val isFileInEditor = !isSingletonEditorInWindow(window)
+    if (DiffEditorTabFilesManager.isDiffInEditor != isFileInEditor) {
+      invokeLater(ModalityState.nonModal()) {
+        DiffEditorTabFilesManager.isDiffInEditor = isFileInEditor
+      }
     }
   }
 }

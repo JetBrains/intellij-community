@@ -2,15 +2,10 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.diff.editor.DiffContentVirtualFile
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
@@ -26,22 +21,6 @@ class VcsEditorTabFilesManager :
 
   class State : BaseState() {
     var openInNewWindow by property(false)
-  }
-
-  init {
-    val messageBus = ApplicationManager.getApplication().messageBus
-    messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        //currently shouldOpenInNewWindow is bound only to diff files
-        if (file is DiffContentVirtualFile && source is FileEditorManagerEx) {
-          val isOpenInNewWindow = source.findFloatingWindowForFile(file)?.let {
-            it.tabCount == 1
-          } ?: false
-          shouldOpenInNewWindow = isOpenInNewWindow
-          messageBus.syncPublisher(VcsEditorTabFilesListener.TOPIC).shouldOpenInNewWindowChanged(file, isOpenInNewWindow)
-        }
-      }
-    })
   }
 
   var shouldOpenInNewWindow: Boolean
@@ -89,11 +68,6 @@ class VcsEditorTabFilesManager :
   companion object {
     @JvmStatic
     fun getInstance(): VcsEditorTabFilesManager = service()
-
-    @JvmStatic
-    fun FileEditorManagerEx.findFloatingWindowForFile(file: VirtualFile): EditorWindow? {
-      return windows.find { it.owner.isFloating && it.isFileOpen(file) }
-    }
   }
 }
 

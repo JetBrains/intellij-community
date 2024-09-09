@@ -1419,11 +1419,6 @@ c:com.intellij.openapi.vcs.changes.DefaultChangeListOwner
 - addUnversionedFiles(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List):V
 - getProject():com.intellij.openapi.project.Project
 - moveChangesTo(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List):V
-a:com.intellij.openapi.vcs.changes.DefaultDiffEditorTabFilesListener
-- com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener
-- <init>():V
-- a:shouldOpenInNewWindowChanged(com.intellij.diff.editor.DiffContentVirtualFile,Z):V
-- f:shouldOpenInNewWindowChanged(com.intellij.openapi.vfs.VirtualFile,Z):V
 c:com.intellij.openapi.vcs.changes.DeletedFilesHolder
 - com.intellij.openapi.vcs.changes.FileHolder
 - <init>():V
@@ -1436,10 +1431,6 @@ c:com.intellij.openapi.vcs.changes.DeletedFilesHolder
 - hashCode():I
 - isContainedInLocallyDeleted(com.intellij.openapi.vcs.FilePath):Z
 - takeFrom(com.intellij.openapi.vcs.changes.DeletedFilesHolder):V
-f:com.intellij.openapi.vcs.changes.DiffEditorTabStateListener
-- com.intellij.openapi.vcs.changes.DefaultDiffEditorTabFilesListener
-- <init>():V
-- shouldOpenInNewWindowChanged(com.intellij.diff.editor.DiffContentVirtualFile,Z):V
 com.intellij.openapi.vcs.changes.DiffPreview
 - sf:Companion:com.intellij.openapi.vcs.changes.DiffPreview$Companion
 - a:closePreview():V

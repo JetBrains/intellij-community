@@ -58,8 +58,4 @@
     <listener class="com.intellij.platform.ide.impl.statistic.ToolWindowStateListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
-  <applicationListeners>
-    <listener class="com.intellij.openapi.vcs.changes.DiffEditorTabStateListener"
-              topic="com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener"/>
-  </applicationListeners>
 </idea-plugin>

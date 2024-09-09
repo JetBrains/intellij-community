@@ -9,5 +9,7 @@
   <applicationListeners>
     <listener class="com.intellij.diff.editor.EditorTabDiffPreviewAdvancedSettingsListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+    <listener class="com.intellij.diff.editor.DiffInWindowDndListener"
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener"/>
   </applicationListeners>
 </idea-plugin>

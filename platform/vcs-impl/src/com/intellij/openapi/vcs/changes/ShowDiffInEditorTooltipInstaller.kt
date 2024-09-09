@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
-import com.intellij.diff.editor.DiffContentVirtualFile
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ActionToolbarGotItTooltip
@@ -27,9 +28,11 @@ internal class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCust
   }
 }
 
-private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
-                                               private val toolbarToShowTooltip: ActionToolbar) :
-  DefaultDiffEditorTabFilesListener(), Disposable {
+private class ShowDiffInEditorTabTooltipHolder(
+  disposable: Disposable,
+  private val toolbarToShowTooltip: ActionToolbar,
+)
+  : AdvancedSettingsChangeListener, Disposable {
 
   companion object {
     const val TOOLTIP_ID = "show.diff.in.editor"
@@ -42,11 +45,11 @@ private class ShowDiffInEditorTabTooltipHolder(disposable: Disposable,
 
   init {
     Disposer.register(disposable, this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(VcsEditorTabFilesListener.TOPIC, this)
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(AdvancedSettingsChangeListener.TOPIC, this)
   }
 
-  override fun shouldOpenInNewWindowChanged(diffFile: DiffContentVirtualFile, shouldOpenInNewWindow: Boolean) {
-    if (shouldOpenInNewWindow) {
+  override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+    if (id == DiffEditorTabFilesManager.SHOW_DIFF_IN_EDITOR_SETTING && !DiffEditorTabFilesManager.isDiffInEditor) {
       showGotItTooltip()
     }
   }
