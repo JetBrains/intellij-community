@@ -547,7 +547,6 @@ f:com.intellij.openapi.externalSystem.model.project.ContentRootData
 - <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V
 - getPaths(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType):java.util.Collection
 - getRootPath():java.lang.String
-- getSourceRoots():java.util.Map
 - storePath(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType,java.lang.String):V
 - storePath(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType,java.lang.String,java.lang.String):V
 c:com.intellij.openapi.externalSystem.model.project.ContentRootData$SourceRoot
