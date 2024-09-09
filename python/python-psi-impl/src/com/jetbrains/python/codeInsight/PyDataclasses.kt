@@ -662,8 +662,6 @@ fun resolveDataclassFieldParameters(
     }
   }
   
-  // TODO test that the following would cause unstubbing
-  // val fieldStub = field.stub?.getCustomStub(PyDataclassFieldStub::class.java) ?: PyDataclassFieldStubImpl.create(field)
   val fieldStub = if (field.stub != null) {
     // TODO access the green stub here
     field.stub.getCustomStub(PyDataclassFieldStub::class.java)
