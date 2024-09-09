@@ -91,7 +91,7 @@ private suspend fun checkThatJpsCacheWasUploaded(
   overrideRemoteHistory: Boolean,
 ): Boolean {
   for (commitHashForRemote in commitHistory.commitsForRemote(remoteGitUrl)) {
-    val cacheUrl = "$urlPathPrefix/caches/$commitHashForRemote"
+    val cacheUrl = "$urlPathPrefix/caches/$commitHashForRemote.zip.zstd"
     val cacheUploaded = checkExists(connection, cacheUrl)
     val metadataUrlPath = "$urlPathPrefix/metadata/$commitHashForRemote"
     val metadataUploaded = checkExists(connection, metadataUrlPath)

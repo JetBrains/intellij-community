@@ -1,89 +1,42 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.util.lang.ByteBufferCleaner
+import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
-class IkvIndexBuilder(private val writeSize: Boolean = true) {
+class IkvIndexBuilder() {
   private val entries = LinkedHashSet<IkvIndexEntry>()
-  @JvmField val names = mutableListOf<ByteArray>()
 
-  @JvmField var classPackages: LongOpenHashSet = LongOpenHashSet()
-  @JvmField var resourcePackages: LongOpenHashSet = LongOpenHashSet()
+  @JvmField
+  val names = mutableListOf<ByteArray>()
 
-  fun entry(key: Long, offset: Long, size: Int): IkvIndexEntry {
-    val entry = LongKeyedEntry(longKey = key, offset = offset)
-    entry.size = size
-    return entry
-  }
+  @JvmField
+  val classPackages: LongOpenHashSet = LongOpenHashSet()
 
-  fun add(entry: IkvIndexEntry) {
+  @JvmField
+  val resourcePackages: LongOpenHashSet = LongOpenHashSet()
+
+  internal fun add(entry: IkvIndexEntry) {
     if (!entries.add(entry)) {
       throw IllegalStateException("$entry duplicates ${entries.find { it == entry }}\n")
     }
   }
 
-  fun write(writer: (ByteBuffer) -> Unit) {
-    writeIkvIndex(entries = entries, writeSize = writeSize, writer = writer)
+  fun write(buffer: ByteBuf) {
+    buffer.ensureWritable((entries.size * Long.SIZE_BYTES * 2) + Int.SIZE_BYTES + 1)
+    for (entry in entries) {
+      buffer.writeLongLE(entry.longKey)
+      buffer.writeLongLE(entry.offset shl 32 or (entry.size.toLong() and 0xffffffffL))
+    }
+
+    buffer.writeIntLE(entries.size)
+    // has size - redundant, cannot be removed to avoid format change
+    buffer.writeByte(1)
   }
 }
 
-sealed class IkvIndexEntry(@JvmField internal val offset: Long) {
-  internal var size: Int = -1
-}
-
-internal class IntKeyedEntry(@JvmField internal val intKey: Int, offset: Long) : IkvIndexEntry(offset) {
-  override fun equals(other: Any?): Boolean = intKey == (other as? IntKeyedEntry)?.intKey
-
-  override fun hashCode(): Int = intKey
-}
-
-internal class LongKeyedEntry(@JvmField internal val longKey: Long, offset: Long) : IkvIndexEntry(offset) {
-  override fun equals(other: Any?): Boolean = longKey == (other as? LongKeyedEntry)?.longKey
+class IkvIndexEntry(@JvmField internal val longKey: Long, @JvmField internal val offset: Long, @JvmField internal val size: Int) {
+  override fun equals(other: Any?): Boolean = longKey == (other as? IkvIndexEntry)?.longKey
 
   override fun hashCode(): Int = longKey.toInt()
-}
-
-private fun writeIkvIndex(entries: Collection<IkvIndexEntry>, writeSize: Boolean = true, writer: (ByteBuffer) -> Unit) {
-  val keyListSize = entries.size * (if (writeSize) Long.SIZE_BYTES else Int.SIZE_BYTES)
-  val buffer = ByteBuffer.allocateDirect(keyListSize +
-                                         (entries.size * (if (writeSize) Long.SIZE_BYTES else Int.SIZE_BYTES)) +
-                                         Int.SIZE_BYTES + 1)
-    .order(ByteOrder.LITTLE_ENDIAN)
-  try {
-    if (writeSize) {
-      val longBuffer = buffer.asLongBuffer()
-      if (entries.firstOrNull() is IntKeyedEntry) {
-        for (entry in entries) {
-          longBuffer.put((entry as IntKeyedEntry).intKey.toLong())
-          longBuffer.put(entry.offset shl 32 or (entry.size.toLong() and 0xffffffffL))
-        }
-      }
-      else {
-        for (entry in entries) {
-          longBuffer.put((entry as LongKeyedEntry).longKey)
-          longBuffer.put(entry.offset shl 32 or (entry.size.toLong() and 0xffffffffL))
-        }
-      }
-      buffer.position(buffer.position() + (longBuffer.position() * Long.SIZE_BYTES))
-    }
-    else {
-      val intBuffer = buffer.asIntBuffer()
-      for (entry in entries) {
-        intBuffer.put((entry as IntKeyedEntry).intKey)
-        intBuffer.put(Math.toIntExact(entry.offset))
-      }
-      buffer.position(buffer.position() + (intBuffer.position() * Int.SIZE_BYTES))
-    }
-
-    buffer.putInt(entries.size)
-    buffer.put(if (writeSize) 1 else 0)
-    buffer.flip()
-    writer(buffer)
-  }
-  finally {
-    ByteBufferCleaner.unmapBuffer(buffer)
-  }
 }

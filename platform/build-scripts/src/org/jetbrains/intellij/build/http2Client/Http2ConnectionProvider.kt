@@ -6,7 +6,10 @@ package org.jetbrains.intellij.build.http2Client
 import com.intellij.platform.util.coroutines.childScope
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
-import io.netty.channel.*
+import io.netty.channel.Channel
+import io.netty.channel.ChannelInboundHandlerAdapter
+import io.netty.channel.ChannelInitializer
+import io.netty.channel.EventLoop
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpStatusClass
 import io.netty.handler.codec.http2.*
@@ -22,11 +25,8 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.math.min
 import kotlin.random.Random
 import kotlin.random.asJavaRandom
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 internal class UnexpectedHttpStatus(urlPath: CharSequence?, @JvmField val status: HttpResponseStatus)
   : RuntimeException("Unexpected HTTP response status: $status" + (if (urlPath == null) "" else " (urlPath=$urlPath)"))
@@ -37,11 +37,7 @@ private class ConnectionState(
   @JvmField val coroutineScope: CoroutineScope,
 )
 
-private const val MAX_ATTEMPTS = 2
-
-private val backOffLimitMs = 500.milliseconds.inWholeMilliseconds
-private const val backOffFactor = 2L
-private const val backOffJitter = 0.1
+private const val MAX_ATTEMPTS = 3
 
 // https://cabulous.medium.com/http-2-and-how-it-works-9f645458e4b2
 // https://stackoverflow.com/questions/55087292/how-to-handle-http-2-goaway-with-java-net-httpclient
@@ -127,9 +123,9 @@ internal class Http2ConnectionProvider(
     }
   }
 
-  suspend fun <T> stream(block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit): T {
-    var attemptIndex = 0
-    var effectiveDelay = 5.seconds.inWholeMilliseconds
+  suspend fun <T, R> stream(block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<R>) -> T): T {
+    var attempt = 1
+    var currentDelay = 1_000L
     var suppressedExceptions: MutableList<Throwable>? = null
     while (true) {
       var currentConnection: ConnectionState? = null
@@ -142,7 +138,7 @@ internal class Http2ConnectionProvider(
         }
       }
       catch (e: Http2Exception) {
-        handleHttpError(e = e, attemptIndex = attemptIndex, currentConnection = currentConnection)
+        handleHttpError(e = e, attempt = attempt, currentConnection = currentConnection)
       }
       catch (e: CancellationException) {
         if (coroutineContext.isActive) {
@@ -160,29 +156,32 @@ internal class Http2ConnectionProvider(
         }
       }
       catch (e: Throwable) {
-        if (attemptIndex >= MAX_ATTEMPTS) {
+        if (attempt >= MAX_ATTEMPTS || e is IndexOutOfBoundsException) {
           if (suppressedExceptions != null) {
             for (suppressedException in suppressedExceptions) {
               e.addSuppressed(suppressedException)
             }
           }
-          throw RuntimeException("${attemptIndex + 1} attempts failed", e)
+          throw RuntimeException("$attempt attempts failed", e)
         }
 
         if (suppressedExceptions == null) {
           suppressedExceptions = ArrayList()
         }
         suppressedExceptions.add(e)
-        Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attemptIndex"), attemptIndex.toLong(), AttributeKey.longKey("delay"), effectiveDelay))
-        delay(effectiveDelay)
-        effectiveDelay = min(effectiveDelay * backOffFactor, backOffLimitMs) + (Random.asJavaRandom().nextGaussian() * effectiveDelay * backOffJitter).toLong()
+
+        val nextDelay = RetryService.nextDelay(currentDelay)
+        Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attemptIndex"), attempt.toLong(), AttributeKey.longKey("nextDelay"), nextDelay))
+
+        delay(nextDelay)
+        currentDelay = (currentDelay * 2).coerceAtMost(32_000)
       }
 
-      attemptIndex++
+      attempt++
     }
   }
 
-  private suspend fun handleHttpError(e: Http2Exception, attemptIndex: Int, currentConnection: ConnectionState?) {
+  private suspend fun handleHttpError(e: Http2Exception, attempt: Int, currentConnection: ConnectionState?) {
     when (val error = e.error()) {
       Http2Error.REFUSED_STREAM -> {
         // result of goaway frame - open a new connection
@@ -193,36 +192,38 @@ internal class Http2ConnectionProvider(
         }
       }
       Http2Error.ENHANCE_YOUR_CALM -> {
-        delay(100L * (attemptIndex + 1))
+        delay(RetryService.nextDelay(1_000L))
+        Span.current().addEvent("enhance your calm", Attributes.of(AttributeKey.longKey("attempt"), attempt.toLong(), AttributeKey.stringKey("name"), error.name))
       }
       else -> {
-        if (attemptIndex >= MAX_ATTEMPTS) {
+        if (attempt >= MAX_ATTEMPTS) {
           throw e
         }
         else {
           // log error and continue
-          Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attemptIndex"), attemptIndex.toLong(), AttributeKey.stringKey("name"), error.name))
+          Span.current().recordException(e, Attributes.of(AttributeKey.longKey("attempt"), attempt.toLong(), AttributeKey.stringKey("name"), error.name))
         }
       }
     }
   }
 
   // must be called with ioDispatcher
-  private suspend fun <T> openStreamAndConsume(
+  private suspend fun <T, R> openStreamAndConsume(
     connectionState: ConnectionState,
-    block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit,
+    block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<R>) -> T,
   ): T {
     val streamChannel = connectionState.bootstrap.open().cancellableAwait()
     try {
       // must be canceled when the parent context is canceled
-      val result = CompletableDeferred<T>(parent = coroutineContext.job)
-      block(streamChannel, result)
+      val deferred = CompletableDeferred<R>(parent = coroutineContext.job)
+      val result = block(streamChannel, deferred)
       // Ensure the stream is closed before completing the operation.
       // This prevents the risk of opening more streams than intended,
       // especially when there is a limit on the number of parallel executed tasks.
       // Also, avoid explicitly closing the stream in case of a successful operation.
       streamChannel.closeFuture().joinCancellable(cancelFutureOnCancellation = false)
-      return result.await()
+      deferred.await()
+      return result
     }
     finally {
       if (streamChannel.isOpen && connectionState.coroutineScope.isActive) {
@@ -246,20 +247,25 @@ private class Http2ClientFrameInitializer(
 
     pipeline.addLast("Http2FrameCodec", Http2FrameCodecBuilder.forClient().build())
     // Http2MultiplexHandler requires not-null handlers for child streams - add noop
-    pipeline.addLast("Http2MultiplexHandler", Http2MultiplexHandler(object : SimpleChannelInboundHandler<Any>() {
-      override fun acceptInboundMessage(message: Any?): Boolean = false
-
-      override fun channelRead0(ctx: ChannelHandlerContext, message: Any?) {
-        // noop
-      }
+    pipeline.addLast("Http2MultiplexHandler", Http2MultiplexHandler(object : ChannelInboundHandlerAdapter() {
     }))
   }
 }
 
-private class EventLoopCoroutineDispatcher(private val eventLoop: EventLoop) : CoroutineDispatcher() {
+internal class EventLoopCoroutineDispatcher(@JvmField val eventLoop: EventLoop) : CoroutineDispatcher() {
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     eventLoop.execute(block)
   }
 
   override fun isDispatchNeeded(context: CoroutineContext) = !eventLoop.inEventLoop()
+}
+
+private object RetryService {
+  private val random by lazy { Random.asJavaRandom() }
+
+  fun nextDelay(currentDelay: Long): Long {
+    val jitter = random.nextGaussian(2000.0, 500.0).toLong()
+    // ensure no negative delay
+    return (currentDelay + jitter).coerceAtLeast(100)
+  }
 }

@@ -118,9 +118,8 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
     orderedNameToIndex.put(orderedName, index)
   }
 
-  return transformZipUsingTempFile(jarFile) { zipCreator ->
-    val packageIndexBuilder = PackageIndexBuilder()
-
+  val packageIndexBuilder = PackageIndexBuilder()
+  return transformZipUsingTempFile(jarFile, packageIndexBuilder.indexWriter) { zipCreator ->
     HashMapZipFile.load(jarFile).use { sourceZip ->
       val entries = sourceZip.entries.filterTo(mutableListOf()) { !it.isDirectory && it.name != INDEX_FILENAME }
       // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
@@ -151,7 +150,6 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
         zipCreator.uncompressedData(
           nameString = entry.name,
           data = entry.getByteBuffer(sourceZip, null),
-          indexWriter = packageIndexBuilder.indexWriter,
         )
       }
       packageIndexBuilder.writePackageIndex(zipCreator)

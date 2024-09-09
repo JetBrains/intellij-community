@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -105,7 +105,8 @@ class ZipTest {
 
     checkZip(archiveFile) { zipFile ->
       for (name in list) {
-        assertThat(zipFile.getResource("test/$name")).isNotNull()
+        val path = "test/$name"
+        assertThat(zipFile.getResource(path)).describedAs("Entry $path not found").isNotNull()
       }
     }
   }
@@ -227,12 +228,10 @@ class ZipTest {
     zipWithCompression(archiveFile, mapOf(dir to ""))
 
     HashMapZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getRawEntry("samples/nested_dir/__init__.py")
-        assertThat(entry).isNotNull()
-        assertThat(entry!!.isCompressed).isFalse()
-        assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
-      }
+      val entry = zipFile.getRawEntry("samples/nested_dir/__init__.py")
+      assertThat(entry).isNotNull()
+      assertThat(entry!!.isCompressed).isFalse()
+      assertThat(entry.getData(zipFile).decodeToString()).isEqualTo("\n")
     }
   }
 
@@ -327,7 +326,7 @@ class ZipTest {
     }
   }
 
-  // check both IKV- and non-IKV variants of immutable zip file
+  // check both IKV- and non-IKV variants of an immutable zip file
   private fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
     HashMapZipFile.load(file).use { zipFile ->
       checker(zipFile)

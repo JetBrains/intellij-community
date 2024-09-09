@@ -38,6 +38,7 @@ internal class Http2ClientConnection internal constructor(
       })
 
       stream.writeHeaders(createHeaders(HttpMethod.HEAD, AsciiString.of(path)), endStream = true)
+      result.await()
     }
   }
 
@@ -59,6 +60,7 @@ internal class Http2ClientConnection internal constructor(
       })
 
       stream.writeHeaders(createHeaders(HttpMethod.HEAD, AsciiString.of(path)), endStream = true)
+      result.await()
     }
   }
 

@@ -20,9 +20,9 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 }
 
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
-  zipFileWriter.uncompressedData("platform.yaml", ByteBuffer.wrap(buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null))), null)
-  zipFileWriter.uncompressedData("bundled-plugins.yaml", ByteBuffer.wrap(buildPluginContentReport(contentReport.bundledPlugins, buildPaths)), null)
-  zipFileWriter.uncompressedData("non-bundled-plugins.yaml", ByteBuffer.wrap(buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths)), null)
+  zipFileWriter.uncompressedData("platform.yaml", ByteBuffer.wrap(buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null))))
+  zipFileWriter.uncompressedData("bundled-plugins.yaml", ByteBuffer.wrap(buildPluginContentReport(contentReport.bundledPlugins, buildPaths)))
+  zipFileWriter.uncompressedData("non-bundled-plugins.yaml", ByteBuffer.wrap(buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths)))
 }
 
 private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {

@@ -1274,11 +1274,11 @@ private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, s
       ZipArchiver(zipCreator).use { archiver ->
         if (Files.isDirectory(source)) {
           archiver.setRootDir(source, source.fileName.toString())
-          archiveDir(startDir = source, archiver = archiver, excludes = null, indexWriter = null)
+          archiveDir(startDir = source, addFile = { archiver.addFile(it) })
         }
         else {
           archiver.setRootDir(source.parent)
-          archiver.addFile(source, indexWriter = null)
+          archiver.addFile(source)
         }
       }
     }

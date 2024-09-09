@@ -6,7 +6,7 @@ import com.github.luben.zstd.ZstdDecompressCtx
 import io.netty.util.concurrent.FastThreadLocal
 
 // we cannot use Netty Recycler as we must close ZstdCompressCtx after use of pool
-internal class ZstdCompressContextPool {
+internal class ZstdCompressContextPool(private val level: Int = 9) {
   private val pool = object : FastThreadLocal<MutableList<ZstdCompressCtx>>() {
     override fun initialValue(): MutableList<ZstdCompressCtx> = ArrayList()
 
@@ -31,8 +31,10 @@ internal class ZstdCompressContextPool {
 
   private fun allocate(contentSize: Long): ZstdCompressCtx {
     val zstd = pool.get().removeLastOrNull() ?: ZstdCompressCtx()
-    zstd.setLevel(9)
-    zstd.setPledgedSrcSize(contentSize)
+    zstd.setLevel(level)
+    if (contentSize != -1L) {
+      zstd.setPledgedSrcSize(contentSize)
+    }
     zstd.setLong(27)
     return zstd
   }

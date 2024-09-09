@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.util.AsciiString
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -145,9 +144,8 @@ private suspend fun uploadFile(
   uncompressedBytes: LongAdder,
 ): Long {
   val result = httpConnection.upload(
-    path = AsciiString.of(urlPath),
+    path = urlPath,
     file = file,
-    sourceBlockSize = 4 * 1014 * 1024,
     zstdCompressContextPool = zstdCompressContextPool,
   )
   require(result.fileSize > 0)

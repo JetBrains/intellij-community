@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.ImmutableZipFile
@@ -46,7 +46,7 @@ private inline fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: In
     mappedBuffer = try {
       fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize.toLong())
     }
-    catch (e: UnsupportedOperationException) {
+    catch (_: UnsupportedOperationException) {
       // in memory fs
       val buffer = ByteBuffer.allocate(fileSize)
       while (buffer.hasRemaining()) {
@@ -72,7 +72,6 @@ private inline fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: In
   }
 }
 
-@PublishedApi
 internal inline fun readCentralDirectory(buffer: ByteBuffer, centralDirPosition: Int, centralDirSize: Int, entryProcessor: EntryProcessor) {
   var offset = centralDirPosition
 
@@ -127,29 +126,35 @@ internal inline fun readCentralDirectory(buffer: ByteBuffer, centralDirPosition:
 private const val STORED: Byte = 0
 private const val DEFLATED: Byte = 8
 
-fun getByteBuffer(buffer: ByteBuffer,
-                  compressedSize: Int,
-                  uncompressedSize: Int,
-                  headerOffset: Int,
-                  nameLengthInBytes: Int,
-                  method: Byte,
-                  byteBufferAllocator: ByteBufferAllocator): ByteBuffer {
+internal fun getByteBuffer(
+  buffer: ByteBuffer,
+  compressedSize: Int,
+  uncompressedSize: Int,
+  headerOffset: Int,
+  nameLengthInBytes: Int,
+  method: Byte,
+  byteBufferAllocator: ByteBufferAllocator,
+): ByteBuffer {
   if (uncompressedSize < 0) {
     throw IOException("no data")
   }
 
   when (method) {
     STORED -> {
-      return computeDataOffsetIfNeededAndReadInputBuffer(mappedBuffer = buffer,
-                                                         headerOffset = headerOffset,
-                                                         nameLengthInBytes = nameLengthInBytes,
-                                                         compressedSize = compressedSize)
+      return computeDataOffsetIfNeededAndReadInputBuffer(
+        mappedBuffer = buffer,
+        headerOffset = headerOffset,
+        nameLengthInBytes = nameLengthInBytes,
+        compressedSize = compressedSize,
+      )
     }
     DEFLATED -> {
-      val inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(mappedBuffer = buffer,
-                                                                    headerOffset = headerOffset,
-                                                                    nameLengthInBytes = nameLengthInBytes,
-                                                                    compressedSize = compressedSize)
+      val inputBuffer = computeDataOffsetIfNeededAndReadInputBuffer(
+        mappedBuffer = buffer,
+        headerOffset = headerOffset,
+        nameLengthInBytes = nameLengthInBytes,
+        compressedSize = compressedSize,
+      )
       val inflater = Inflater(true)
       inflater.setInput(inputBuffer)
       try {

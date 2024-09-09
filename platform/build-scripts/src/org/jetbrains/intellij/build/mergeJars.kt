@@ -47,6 +47,7 @@ internal suspend fun buildJar(
     ZipFileWriter(
       channel = outChannel,
       deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+      zipIndexWriter = ZipIndexWriter(indexWriter = packageIndexBuilder?.indexWriter)
     ).use { zipCreator ->
       val uniqueNames = HashMap<String, Path>()
 
@@ -73,7 +74,7 @@ internal suspend fun buildJar(
       }
 
       if (filesToMerge.isNotEmpty()) {
-        zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() }, indexWriter = packageIndexBuilder?.indexWriter)
+        zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() })
       }
 
       packageIndexBuilder?.writePackageIndex(zipCreator)
@@ -92,6 +93,7 @@ private suspend fun writeSource(
   compress: Boolean,
   filesToMerge: MutableList<CharSequence>,
 ) {
+  val indexWriter = packageIndexBuilder?.indexWriter
   when (source) {
     is DirSource -> {
       val archiver = ZipArchiver(zipCreator = zipCreator, fileAdded = { name, file ->
@@ -109,10 +111,10 @@ private suspend fun writeSource(
       })
       val normalizedDir = source.dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, source.prefix)
+      indexWriter
       archiveDir(
         startDir = normalizedDir,
-        archiver = archiver,
-        indexWriter = packageIndexBuilder?.indexWriter,
+        addFile = { archiver.addFile(it)},
         excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty)
       )
     }
@@ -126,9 +128,8 @@ private suspend fun writeSource(
       zipCreator.uncompressedData(
         nameString = source.relativePath,
         maxSize = source.data.size,
-        indexWriter = packageIndexBuilder?.indexWriter,
         dataWriter = {
-          it.put(source.data)
+          it.writeBytes(source.data)
         },
       )
     }
@@ -139,7 +140,7 @@ private suspend fun writeSource(
       }
 
       packageIndexBuilder?.addFile(source.relativePath)
-      zipCreator.file(file = source.file, nameString = source.relativePath, indexWriter = packageIndexBuilder?.indexWriter)
+      zipCreator.file(file = source.file, nameString = source.relativePath)
     }
 
     is ZipSource -> {
@@ -221,7 +222,7 @@ private suspend fun handleZipSource(
         zipCreator.compressedData(name, data)
       }
       else {
-        zipCreator.uncompressedData(nameString = name, data = data, indexWriter = packageIndexBuilder?.indexWriter)
+        zipCreator.uncompressedData(nameString = name, data = data)
       }
     }
 
@@ -255,7 +256,7 @@ private suspend fun handleZipSource(
           writeZipData(data)
         }
         else {
-          zipCreator.file(name, file, indexWriter = packageIndexBuilder?.indexWriter)
+          zipCreator.file(name, file)
           Files.delete(file)
         }
       }

@@ -121,15 +121,15 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
     .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
-      transformZipUsingTempFile(origin) { zipWriter ->
-        val packageIndexBuilder = PackageIndexBuilder()
+      val packageIndexBuilder = PackageIndexBuilder()
+      transformZipUsingTempFile(file = origin, indexWriter = packageIndexBuilder.indexWriter) { zipWriter ->
         readZipFile(origin) { name, dataSupplier ->
           packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {
-            zipWriter.file(name, entries.getValue(name), packageIndexBuilder.indexWriter)
+            zipWriter.file(name, entries.getValue(name))
           }
           else {
-            zipWriter.uncompressedData(name, dataSupplier(), packageIndexBuilder.indexWriter)
+            zipWriter.uncompressedData(name, dataSupplier())
           }
         }
         packageIndexBuilder.writePackageIndex(zipWriter)

@@ -41,8 +41,8 @@ import kotlin.io.path.listDirectoryEntries
 
 private val nettyMax = Runtime.getRuntime().availableProcessors() * 2
 internal val uploadParallelism = nettyMax.coerceIn(4, 32)
-// max 16 and not 32 as for upload because we write to disk (not read as upload)
-internal val downloadParallelism = nettyMax.coerceIn(4, 16)
+// max not 32 as for upload because we write to disk (not read as upload)
+internal val downloadParallelism = nettyMax.coerceIn(4, 24)
 
 private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 private const val SERVER_URL_PROPERTY = "intellij.build.compiled.classes.server.url"
@@ -122,7 +122,7 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
     try {
       zipDir.deleteRecursively()
     }
-    catch (ignore: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
     }
   }
   Files.createDirectories(zipDir)
@@ -148,7 +148,7 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
               continue
             }
           }
-          catch (ignore: FileSystemException) {
+          catch (_: FileSystemException) {
             continue
           }
 
@@ -163,11 +163,9 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
     }
   }
 
-  spanBuilder("build zip archives").use {
-    for (item in items) {
-      launch {
-        item.hash = packAndComputeHash(addDirEntriesMode = addDirEntriesMode, name = item.name, archive = item.archive, directory = item.output)
-      }
+  spanBuilder("build zip archives").use(Dispatchers.IO) {
+    items.forEachConcurrent { item ->
+      item.hash = packAndComputeHash(addDirEntriesMode = addDirEntriesMode, name = item.name, archive = item.archive, directory = item.output)
     }
   }
   return items
@@ -417,6 +415,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
   val start = System.nanoTime()
   withContext(Dispatchers.IO) {
     launch {
+      @Suppress("RemoveRedundantQualifierName")
       spanBuilder("remove stalled directories not present in metadata").setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
         removeStalledDirs(metadata, classOutput)
       }
@@ -489,7 +488,7 @@ private fun CoroutineScope.removeStalledDirs(
           }
         }
       }
-      catch (ignore: NoSuchFileException) {
+      catch (_: NoSuchFileException) {
       }
     }
   }

@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
+import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
 import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.copyFile
@@ -46,7 +47,7 @@ suspend fun uploadJpsCache(forceUpload: Boolean, context: CompilationContext) {
     s3Dir = jpsCacheS3Dir,
     authHeader = jpsCacheAuthHeader,
     uploadUrl = jpsCacheUploadUrl,
-    dataStorageRoot = context.compilationData.dataStorageRoot,
+    jpsDataDir = context.compilationData.dataStorageRoot.toAbsolutePath().normalize(),
     classOutDir = context.classesOutputDirectory,
     tempDir = context.paths.tempDir,
     messages = context.messages,
@@ -59,7 +60,7 @@ internal suspend fun uploadJpsCache(
   authHeader: CharSequence?,
   s3Dir: Path?,
   uploadUrl: URI,
-  dataStorageRoot: Path,
+  jpsDataDir: Path,
   classOutDir: Path,
   tempDir: Path,
   messages: BuildMessages,
@@ -69,7 +70,7 @@ internal suspend fun uploadJpsCache(
     Files.createDirectories(s3Dir)
   }
 
-  val sourceStateFile = dataStorageRoot.resolve(SOURCE_STATE_FILE_NAME)
+  val sourceStateFile = jpsDataDir.resolve(SOURCE_STATE_FILE_NAME)
   val sourceState = try {
     Files.newBufferedReader(sourceStateFile).use {
       BuildTargetSourcesState.readJson(JsonReader(it))
@@ -82,41 +83,59 @@ internal suspend fun uploadJpsCache(
   val start = System.nanoTime()
   val totalUploadedBytes = LongAdder()
   val uploadedOutputCount = LongAdder()
+  val s3Time = LongAdder()
   withHttp2ClientConnectionFactory(trustAll = uploadUrl.host == "127.0.0.1") { client ->
     client.connect(address = uploadUrl, authHeader = authHeader).use { connection ->
       val urlPathPrefix = uploadUrl.path
+      val zstdCompressContextPool = ZstdCompressContextPool()
       withContext(Dispatchers.IO) {
         launch {
-          spanBuilder("upload jps cache").use {
-            uploadJpsCaches(
+          spanBuilder("upload JPS data").use {
+            uploadJpsData(
               urlPathPrefix = urlPathPrefix,
               connection = connection,
-              s3Dir = s3Dir,
               forceUpload = forceUpload,
               commitHash = commitHash,
-              dataStorageRoot = dataStorageRoot,
-              tempDir = tempDir,
+              jpsDataDir = jpsDataDir,
+              zstdCompressContextPool = zstdCompressContextPool,
             )
+          }
+          if (s3Dir != null) {
+            spanBuilder("create JPS data archive for S3").use {
+              val start = System.nanoTime()
+              val zipFile = tempDir.resolve("$commitHash-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}.zip")
+              try {
+                zipWithCompression(targetFile = zipFile, dirs = mapOf(jpsDataDir to ""), createFileParentDirs = false)
+                moveFile(zipFile, s3Dir.resolve("caches/$commitHash"))
+              }
+              finally {
+                Files.deleteIfExists(zipFile)
+                s3Time.add(System.nanoTime() - start)
+              }
+            }
           }
         }
 
         spanBuilder("upload compilation outputs").use {
           val allCompilationOutputs = getAllCompilationOutputs(sourceState = sourceState, classOutDir = classOutDir)
-          val zipTempDir = Files.createTempDirectory(tempDir, "jps-cache-bytecode-")
+          val zipTempDir = if (s3Dir == null) null else Files.createTempDirectory(tempDir, "jps-cache-bytecode-")
           try {
-            uploadCompilationOutputs(
-              uploadedOutputCount = uploadedOutputCount,
-              totalUploadedBytes = totalUploadedBytes,
-              allCompilationOutputs = allCompilationOutputs,
-              urlPathPrefix = urlPathPrefix,
-              connection = connection,
-              s3Dir = s3Dir,
-              forcedUpload = forceUpload,
-              tempDir = zipTempDir,
-            )
+            allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
+              uploadCompilationOutput(
+                uploadedOutputCount = uploadedOutputCount,
+                totalUploadedBytes = totalUploadedBytes,
+                compilationOutput = compilationOutput,
+                urlPathPrefix = urlPathPrefix,
+                connection = connection,
+                s3Dir = s3Dir,
+                forcedUpload = forceUpload,
+                tempDir = zipTempDir,
+                zstdCompressContextPool = zstdCompressContextPool,
+              )
+            }
           }
           finally {
-            zipTempDir.deleteRecursively()
+            zipTempDir?.deleteRecursively()
           }
           messages.reportStatisticValue("Total outputs", allCompilationOutputs.size.toString())
         }
@@ -133,7 +152,9 @@ internal suspend fun uploadJpsCache(
     }
   }
 
-  messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString())
+  val s3ElapsedTime = s3Time.sum()
+  messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start - s3ElapsedTime).toString())
+  messages.reportStatisticValue("jps-cache:upload-s3:time", TimeUnit.NANOSECONDS.toMillis(s3ElapsedTime).toString())
   messages.reportStatisticValue("jps-cache:uploaded:count", (uploadedOutputCount.sum() + 1).toString())
   messages.reportStatisticValue("jps-cache:uploaded:bytes", totalUploadedBytes.sum().toString())
 
@@ -150,75 +171,60 @@ private suspend fun uploadToS3(s3Dir: Path) {
   }
 }
 
-private suspend fun uploadJpsCaches(
+private suspend fun uploadJpsData(
   urlPathPrefix: String,
   connection: Http2ClientConnection,
   commitHash: String,
   forceUpload: Boolean,
-  s3Dir: Path?,
-  dataStorageRoot: Path,
-  tempDir: Path,
+  jpsDataDir: Path,
+  zstdCompressContextPool: ZstdCompressContextPool,
 ) {
-  val zipFile = tempDir.resolve("$commitHash-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}.zip")
-  try {
-    val compressed by lazy {
-      zipWithCompression(zipFile, mapOf(dataStorageRoot to ""))
-      zipFile
-    }
-
-    val cachePath = "caches/$commitHash"
-    val urlPath = "$urlPathPrefix/$cachePath"
-    if (forceUpload || !checkExists(connection, urlPath, logIfExists = true)) {
-      connection.upload(path = urlPath, file = compressed)
-    }
-
-    if (s3Dir != null) {
-      moveFile(compressed, s3Dir.resolve(cachePath))
-    }
-  }
-  finally {
-    Files.deleteIfExists(zipFile)
+  val urlPath = "$urlPathPrefix/caches/$commitHash.zip.zstd"
+  if (forceUpload || !checkExists(connection = connection, urlPath = urlPath, logIfExists = true)) {
+    // Level 9 is optimal, the same as for compilation parts. Levels beyond 9 consume more time without a significant reduction in size
+    connection.upload(path = urlPath, file = jpsDataDir, zstdCompressContextPool = zstdCompressContextPool, isDir = true)
   }
 }
 
-private suspend fun uploadCompilationOutputs(
+private suspend fun uploadCompilationOutput(
   uploadedOutputCount: LongAdder,
-  allCompilationOutputs: List<CompilationOutput>,
+  compilationOutput: CompilationOutput,
   urlPathPrefix: String,
   connection: Http2ClientConnection,
   totalUploadedBytes: LongAdder,
   forcedUpload: Boolean,
-  tempDir: Path,
+  tempDir: Path?,
   s3Dir: Path?,
+  zstdCompressContextPool: ZstdCompressContextPool,
 ) {
-  allCompilationOutputs.forEachConcurrent(uploadParallelism) { compilationOutput ->
-    val outDir = compilationOutput.path
-    spanBuilder("upload output part")
-      .setAttribute("part", compilationOutput.remotePath)
-      .setAttribute("path", outDir.toString())
-      .use { span ->
-        if (Files.notExists(outDir)) {
-          span.addEvent("doesn't exist, was a respective module removed?")
-          return@use
-        }
-
-        val sourcePath = compilationOutput.remotePath
-        val zipFile = tempDir.resolve("${sourcePath.replace('/', '_')}.zip")
-        zipWithCompression(targetFile = zipFile, dirs = mapOf(outDir to ""), createFileParentDirs = false)
-
-        val urlPath = "$urlPathPrefix/$sourcePath"
-        if (forcedUpload || !checkExists(connection, urlPath)) {
-          spanBuilder("upload").setAttribute("urlPath", urlPath).setAttribute("path", sourcePath).use {
-            val result = connection.upload(path = urlPath, file = zipFile)
-            totalUploadedBytes.add(result.uploadedSize)
-          }
-          uploadedOutputCount.increment()
-        }
-
-        if (s3Dir != null) {
-          moveFile(zipFile, s3Dir.resolve(sourcePath))
-        }
+  val outDir = compilationOutput.path
+  val sourcePath = compilationOutput.remotePath
+  val urlPath = "$urlPathPrefix/$sourcePath.zip.zstd"
+  spanBuilder("upload output part")
+    .setAttribute("part", compilationOutput.remotePath)
+    .setAttribute("path", outDir.toString())
+    .setAttribute("urlPath", urlPath)
+    .use { span ->
+      if (Files.notExists(outDir)) {
+        span.addEvent("doesn't exist, was a respective module removed?")
+        return@use
       }
+
+      if (forcedUpload || !checkExists(connection, urlPath)) {
+        spanBuilder("upload").setAttribute("urlPath", urlPath).setAttribute("path", sourcePath).use {
+          val result = connection.upload(path = urlPath, file = outDir, isDir = true, zstdCompressContextPool = zstdCompressContextPool)
+          totalUploadedBytes.add(result.uploadedSize)
+        }
+        uploadedOutputCount.increment()
+      }
+    }
+
+  if (s3Dir != null) {
+    spanBuilder("create output part for S3").setAttribute("path", sourcePath).use {
+      val zipFile = tempDir!!.resolve("${sourcePath.replace('/', '_')}.zip")
+      zipWithCompression(targetFile = zipFile, dirs = mapOf(outDir to ""), createFileParentDirs = false)
+      moveFile(zipFile, s3Dir.resolve(sourcePath))
+    }
   }
 }
 

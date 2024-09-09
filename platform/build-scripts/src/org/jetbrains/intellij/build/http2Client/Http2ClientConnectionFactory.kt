@@ -90,12 +90,13 @@ internal suspend fun <T> withHttp2ClientConnectionFactory(
   }
 }
 
+private const val useNativeTransport = true
+
 private fun createHttp2ClientSessionFactory(
   useSsl: Boolean = true,
   trustAll: Boolean = false,
   coroutineScope: CoroutineScope,
 ): Http2ClientConnectionFactory {
-  val useNativeTransport = true
   val (ioFactory, socketChannel) = try {
     when {
       useNativeTransport && PlatformDependent.isOsx() -> KQueueIoHandler.newFactory() to KQueueSocketChannel::class.java

@@ -61,5 +61,6 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
   </component>
 </module>

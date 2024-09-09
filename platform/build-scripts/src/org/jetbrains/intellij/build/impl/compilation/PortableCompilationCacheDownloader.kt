@@ -19,9 +19,7 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.withTracer
 import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
 import java.net.URI
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 import kotlin.io.path.ExperimentalPathApi
@@ -98,17 +96,6 @@ internal suspend fun downloadJpsCache(
   return availableCommitDepth
 }
 
-private suspend fun downloadToFile(urlPath: String, file: Path, spanName: String, notFound: LongAdder, connection: Http2ClientConnection): Long {
-  return spanBuilder(spanName).setAttribute("urlPath", urlPath).setAttribute("path", file.toString()).use { span ->
-    val sizeOnDisk = connection.download(path = urlPath, file = file)
-    if (sizeOnDisk == -1L) {
-      span.addEvent("resource not found")
-      notFound.increment()
-    }
-    sizeOnDisk
-  }
-}
-
 private suspend fun prepareDownload(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection, lastCommits: List<String>): Pair<String, Int>? {
   val availableCachesKeys = getAvailableCachesKeys(urlPathPrefix = urlPathPrefix, gitUrl = gitUrl, connection = connection)
   val availableCommitDepth = lastCommits.indexOfFirst {
@@ -138,8 +125,22 @@ private suspend fun prepareDownload(urlPathPrefix: String, gitUrl: String, conne
 
 private suspend fun getAvailableCachesKeys(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection): Collection<String> {
   val commitHistoryUrl = "$urlPathPrefix/$COMMIT_HISTORY_JSON_FILE"
-  val json: Map<String, Set<String>> = connection.getJsonOrDefaultIfNotFound(path = commitHistoryUrl, defaultIfNotFound = emptyMap())
-  return if (json.isEmpty()) emptyList() else CommitHistory(json).commitsForRemote(gitUrl)
+  val data: Map<String, Set<String>> = connection.getJsonOrDefaultIfNotFound(path = commitHistoryUrl, defaultIfNotFound = emptyMap())
+  if (data.isEmpty()) {
+    return emptyList()
+  }
+
+  val result = data.get(gitUrl) ?: emptyList()
+  if (result.isEmpty()) {
+    Span.current().addEvent(
+      "no data for remote",
+      Attributes.of(
+        AttributeKey.stringKey("remote"), gitUrl,
+        AttributeKey.stringArrayKey("availableRemotes"), java.util.List.copyOf(data.keys),
+      ),
+    )
+  }
+  return result
 }
 
 private suspend fun doDownload(
@@ -152,14 +153,15 @@ private suspend fun doDownload(
   cacheDestination: Path,
 ): Int {
   return withContext(Dispatchers.IO) {
+    val zstdDecompressContextPool = ZstdDecompressContextPool()
     launch {
       downloadAndUnpackJpsCache(
         urlPathPrefix = urlPathPrefix,
         commitHash = lastCachedCommit,
-        notFound = notFound,
         totalBytes = totalDownloadedBytes,
         connection = connection,
         cacheDestination = cacheDestination,
+        zstdDecompressContextPool = zstdDecompressContextPool,
       )
     }
 
@@ -167,15 +169,14 @@ private suspend fun doDownload(
     val outputs = getAllCompilationOutputs(sourceState = BuildTargetSourcesState.readJson(JsonReader(json.reader())), classOutDir = classOutDir)
     spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
       outputs.forEachConcurrent(downloadParallelism) { output ->
-        spanBuilder("get and unpack output").setAttribute("part", output.remotePath).use {
-          downloadAndUnpackCompilationOutput(
-            urlPathPrefix = urlPathPrefix,
-            compilationOutput = output,
-            notFound = notFound,
-            totalDownloadedBytes = totalDownloadedBytes,
-            connection = connection,
-          )
-        }
+        downloadAndUnpackCompilationOutput(
+          urlPathPrefix = urlPathPrefix,
+          compilationOutput = output,
+          notFound = notFound,
+          totalDownloadedBytes = totalDownloadedBytes,
+          connection = connection,
+          zstdDecompressContextPool = zstdDecompressContextPool,
+        )
       }
     }
     outputs.size
@@ -185,32 +186,28 @@ private suspend fun doDownload(
 private suspend fun downloadAndUnpackJpsCache(
   urlPathPrefix: String,
   commitHash: String,
-  notFound: LongAdder,
   totalBytes: LongAdder,
   connection: Http2ClientConnection,
   cacheDestination: Path,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
 ) {
-  val cacheArchive = Files.createTempFile("cache", ".zip")
-  try {
-    val sizeOnDisk = downloadToFile(
-      urlPath = "$urlPathPrefix/caches/$commitHash",
-      file = cacheArchive,
-      spanName = "download jps cache",
-      notFound = notFound,
-      connection = connection,
-    )
-
-    require(sizeOnDisk > 0)
-    totalBytes.add(sizeOnDisk)
-    spanBuilder("unpack jps cache")
-      .setAttribute("archive", cacheArchive.toString())
-      .setAttribute("destination", cacheDestination.toString())
-      .use(Dispatchers.IO) {
-        unpackArchiveUsingNettyByteBufferPool(archiveFile = cacheArchive, outDir = cacheDestination, isCompressed = true)
-      }
-  }
-  finally {
-    Files.deleteIfExists(cacheArchive)
+  val urlPath = "$urlPathPrefix/caches/$commitHash.zip.zstd"
+  spanBuilder("download JPS Cache").setAttribute("urlPath", urlPath).setAttribute("outDir", cacheDestination.toString()).use { span ->
+    val downloaded = connection.download(
+      path = urlPath,
+      file = cacheDestination,
+      zstdDecompressContextPool = zstdDecompressContextPool,
+      digestFactory = null,
+      unzip = true,
+    ).size
+    if (downloaded == -1L) {
+      Span.current().addEvent("resource not found")
+      false
+    }
+    else {
+      totalBytes.add(downloaded)
+      true
+    }
   }
 }
 
@@ -220,41 +217,26 @@ private suspend fun downloadAndUnpackCompilationOutput(
   notFound: LongAdder,
   totalDownloadedBytes: LongAdder,
   connection: Http2ClientConnection,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
 ) {
-  val urlPath = "$urlPathPrefix/${compilationOutput.remotePath}"
-  val tempFile = compilationOutput.path.resolve(java.lang.Long.toUnsignedString(System.nanoTime(), Character.MAX_RADIX) + ".tmp.zip")
-  try {
-    val sizeOnDisk = downloadToFile(
-      urlPath = urlPath,
-      file = tempFile,
-      spanName = "download output",
-      notFound = notFound,
-      connection = connection,
-    )
-
-    if (sizeOnDisk <= 0) {
-      return
+  val urlPath = "$urlPathPrefix/${compilationOutput.remotePath}.zip.zstd"
+  spanBuilder("download output").setAttribute("urlPath", urlPath).setAttribute("outDir", compilationOutput.path.toString()).use { span ->
+    val downloaded = connection.download(
+      path = urlPath,
+      file = compilationOutput.path,
+      zstdDecompressContextPool = zstdDecompressContextPool,
+      unzip = true,
+      ignoreNotFound = true,
+    ).size
+    if (downloaded == -1L) {
+      // We assume that the error is logged by downloadToFile.
+      // In the future, we will implement stricter behavior.
+      // For now, the JPS cache reports non-existent compilation outputs, and we have to use such a workaround.
+      span.addEvent("resource not found")
+      notFound.increment()
     }
-
-    // We assume that the error is logged by downloadToFile.
-    // In the future, we will implement stricter behavior.
-    // For now, the JPS cache reports non-existent compilation outputs, and we have to use such a workaround.
-    totalDownloadedBytes.add(sizeOnDisk)
-
-    spanBuilder("unpack output")
-      .setAttribute("archive", tempFile.toString())
-      .setAttribute("destination", compilationOutput.path.toString())
-      .use {
-        unpackArchiveUsingNettyByteBufferPool(archiveFile = tempFile, outDir = compilationOutput.path, isCompressed = true)
-      }
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Exception) {
-    throw Exception("Unable to unpack $urlPath to ${compilationOutput.path}", e)
-  }
-  finally {
-    Files.deleteIfExists(tempFile)
+    else {
+      totalDownloadedBytes.add(downloaded)
+    }
   }
 }

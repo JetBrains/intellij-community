@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+import static com.intellij.util.lang.ImmutableZipFile.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE;
+
 @ApiStatus.Internal
 public final class HashMapZipFile implements ZipFile {
   private final ImmutableZipEntry[] nameMap;
@@ -168,9 +170,9 @@ public final class HashMapZipFile implements ZipFile {
     int prevEntryExpectedDataOffset = -1;
     int endOffset = centralDirPosition + centralDirSize;
     while (offset < endOffset) {
-      if (buffer.getInt(offset) != 33639248) {
-        throw new EOFException("Expected central directory size " + centralDirSize +
-                               " but only at " + offset + " no valid central directory file header signature");
+      if (buffer.getInt(offset) != CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE) {
+        throw new EOFException("No valid central directory file header signature present (expectedCentralDirectorySize=" + centralDirSize +
+                               ", expectedCentralDirectoryOffset=" + offset + ")");
       }
 
       int compressedSize = buffer.getInt(offset + 20);
