@@ -14,11 +14,11 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +42,11 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
   public @Nullable String getTemplateString(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     boolean isFinal = JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS;
+    boolean useVar = Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
+                     PsiUtil.isAvailable(JavaFeature.LVTI, file);
 
-    return (isFinal ? "final " : "") + "$" + TYPE_VAR + "$ $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
+    return (isFinal ? "final " : "") + (useVar ? PsiKeyword.VAR : "$" + TYPE_VAR + "$")+
+           " $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
   }
 
   @Override
