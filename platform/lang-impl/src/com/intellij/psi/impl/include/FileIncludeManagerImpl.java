@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -261,7 +260,6 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
       // todo: we need "url modification tracker" for VirtualFile
       List<Object> deps = new ArrayList<>(Arrays.asList(value));
       deps.add(psiFile);
-      deps.add(VirtualFileManager.getInstance());
 
       return CachedValueProvider.Result.create(value, deps);
     }
