@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.ai.InlinePrompt;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.hint.*;
@@ -155,7 +156,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if(popup == null) {
       popup = new IntentionPopup(project, file, editor, cachedIntentions);
     }
-    return showIntentionHint(project, file, editor, showExpanded, LightBulbUtil.getIcon(cachedIntentions), popup);
+    Icon inlinePromptIcon = InlinePrompt.getInlinePromptBulbIcon(project, editor);
+    Icon icon = inlinePromptIcon != null ? inlinePromptIcon : LightBulbUtil.getIcon(cachedIntentions);
+    return showIntentionHint(project, file, editor, showExpanded, icon, popup);
   }
 
   @RequiresEdt
