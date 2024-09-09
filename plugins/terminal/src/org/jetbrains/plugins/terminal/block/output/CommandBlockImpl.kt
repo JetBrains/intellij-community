@@ -39,7 +39,8 @@ internal val CommandBlock.withCommand: Boolean
 
 @get:ApiStatus.Internal
 val CommandBlock.withOutput: Boolean
-  get() = outputStartOffset < endOffset
+  // There is something after the command and block is not empty
+  get() = outputStartOffset <= endOffset && startOffset != endOffset
 
 internal val CommandBlock.textRange: TextRange
   get() = TextRange(startOffset, endOffset)
