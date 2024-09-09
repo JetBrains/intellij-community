@@ -36,10 +36,10 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun retrieveIntAsDp-3F_vd3o (Ljava/lang/String;Landroidx/compose/ui/unit/Dp;)F
 	public static synthetic fun retrieveIntAsDp-3F_vd3o$default (Ljava/lang/String;Landroidx/compose/ui/unit/Dp;ILjava/lang/Object;)F
 	public static final fun retrieveIntAsDpOrUnspecified (Ljava/lang/String;)F
-	public static final fun retrieveTextStyle (Ljava/lang/String;Ljava/lang/String;)Landroidx/compose/ui/text/TextStyle;
-	public static synthetic fun retrieveTextStyle$default (Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveTextStyle-WdJyH8Q (Ljava/lang/String;JJZIJ)Landroidx/compose/ui/text/TextStyle;
 	public static synthetic fun retrieveTextStyle-WdJyH8Q$default (Ljava/lang/String;JJZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
+	public static final fun retrieveTextStyle-tD9LlGs (Ljava/lang/String;Ljava/lang/String;JZIJ)Landroidx/compose/ui/text/TextStyle;
+	public static synthetic fun retrieveTextStyle-tD9LlGs$default (Ljava/lang/String;Ljava/lang/String;JZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun toComposeColor (Ljava/awt/Color;)J
 	public static final fun toComposeColorOrUnspecified (Ljava/awt/Color;)J
 	public static final fun toDpSize (Lcom/intellij/util/ui/JBDimension;)J

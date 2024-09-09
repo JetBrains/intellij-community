@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.Inter
 import org.jetbrains.jewel.intui.standalone.JetBrainsMono
+import org.jetbrains.jewel.ui.component.Typography
 
 public fun JewelTheme.Companion.createDefaultTextStyle(
     color: Color = Color.Unspecified,
@@ -45,7 +46,7 @@ public fun JewelTheme.Companion.createDefaultTextStyle(
     drawStyle: DrawStyle? = null,
     textAlign: TextAlign = TextAlign.Unspecified,
     textDirection: TextDirection = TextDirection.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
+    lineHeight: TextUnit = fontSize * Typography.DefaultLineHeightMultiplier,
     textIndent: TextIndent? = null,
     platformStyle: PlatformTextStyle? = null,
     lineHeightStyle: LineHeightStyle? = null,
@@ -99,7 +100,7 @@ public fun JewelTheme.Companion.createDefaultTextStyle(
     drawStyle: DrawStyle? = null,
     textAlign: TextAlign = TextAlign.Unspecified,
     textDirection: TextDirection = TextDirection.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
+    lineHeight: TextUnit = fontSize * Typography.DefaultLineHeightMultiplier,
     textIndent: TextIndent? = null,
     platformStyle: PlatformTextStyle? = null,
     lineHeightStyle: LineHeightStyle? = null,
@@ -153,7 +154,7 @@ public fun JewelTheme.Companion.createEditorTextStyle(
     drawStyle: DrawStyle? = null,
     textAlign: TextAlign = TextAlign.Unspecified,
     textDirection: TextDirection = TextDirection.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
+    lineHeight: TextUnit = fontSize * Typography.EditorLineHeightMultiplier,
     textIndent: TextIndent? = null,
     platformStyle: PlatformTextStyle? = null,
     lineHeightStyle: LineHeightStyle? = null,
@@ -207,7 +208,7 @@ public fun JewelTheme.Companion.createEditorTextStyle(
     drawStyle: DrawStyle? = null,
     textAlign: TextAlign = TextAlign.Unspecified,
     textDirection: TextDirection = TextDirection.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
+    lineHeight: TextUnit = fontSize * Typography.EditorLineHeightMultiplier,
     textIndent: TextIndent? = null,
     platformStyle: PlatformTextStyle? = null,
     lineHeightStyle: LineHeightStyle? = null,

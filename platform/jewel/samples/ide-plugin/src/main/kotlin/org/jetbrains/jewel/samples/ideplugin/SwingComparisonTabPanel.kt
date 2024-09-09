@@ -2,11 +2,13 @@ package org.jetbrains.jewel.samples.ideplugin
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -103,6 +105,49 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                 }
             }
             .layout(RowLayout.PARENT_GRID)
+
+        val longText = "WordWrapInsideWordsIsSupported:" + ("NoSpace".repeat(20) + " ").repeat(5) + "End"
+        row("Long text (Swing)") { text(longText, maxLineLength = 100) }
+        row("Long text (Compose)") {
+            compose {
+                BoxWithConstraints {
+                    Text(
+                        longText,
+                        modifier =
+                            Modifier.width(
+                                with(LocalDensity.current) {
+                                    // Guesstimate how wide this should be — we can't tell it to be
+                                    // "fill", as it crashes natively
+                                    JewelTheme.defaultTextStyle.fontSize.toDp() * 60
+                                }
+                            ),
+                    )
+                }
+            }
+        }
+
+        row("Titles (Swing)") {
+            text("This will wrap over a couple rows", maxLineLength = 30).component.font = JBFont.h1()
+        }
+        row("Titles (Compose)") {
+            compose {
+                BoxWithConstraints {
+                    val style = Typography.h1TextStyle()
+                    Text(
+                        "This will wrap over a couple rows",
+                        modifier =
+                            Modifier.width(
+                                with(LocalDensity.current) {
+                                    // Guesstimate how wide this should be — we can't tell it to be
+                                    // "fill", as it crashes natively
+                                    style.fontSize.toDp() * 10
+                                }
+                            ),
+                        style = style,
+                    )
+                }
+            }
+        }
     }
 
     private fun Panel.iconsRow() {

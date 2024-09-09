@@ -36,6 +36,7 @@ import com.intellij.util.ui.JBValue
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.UIManager
+import org.jetbrains.jewel.ui.component.Typography
 
 private val logger = Logger.getInstance("JewelBridge")
 
@@ -148,9 +149,19 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
     keysNotFound(keys.toList(), "Int")
 }
 
-public fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
+public fun retrieveTextStyle(
+    fontKey: String,
+    colorKey: String? = null,
+    lineHeight: TextUnit = TextUnit.Unspecified,
+    bold: Boolean = false,
+    fontStyle: FontStyle = FontStyle.Normal,
+    size: TextUnit = TextUnit.Unspecified,
+): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
-    return retrieveTextStyle(fontKey, color = baseColor)
+    val resolvedStyle = retrieveTextStyle(fontKey, color = baseColor, lineHeight, bold, fontStyle, size)
+    return resolvedStyle.copy(
+        lineHeight = lineHeight.takeOrElse { resolvedStyle.fontSize * Typography.DefaultLineHeightMultiplier }
+    )
 }
 
 @OptIn(ExperimentalTextApi::class)

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.NewUiValue
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.component.copyWithSize
 import org.jetbrains.jewel.ui.component.minus
 
 /**
@@ -29,7 +30,7 @@ public fun Typography.medium(): TextStyle =
     if (mediumAndSmallFontsAsRegular()) {
         labelTextStyle()
     } else {
-        labelTextStyle().copy(fontSize = labelTextSize() - 1.sp)
+        labelTextStyle().copyWithSize(fontSize = labelTextSize() - 1.sp)
     }
 
 /**
@@ -46,7 +47,7 @@ public fun Typography.small(): TextStyle =
     if (mediumAndSmallFontsAsRegular()) {
         labelTextStyle()
     } else {
-        labelTextStyle().copy(fontSize = labelTextSize() - 2.sp)
+        labelTextStyle().copyWithSize(fontSize = labelTextSize() - 2.sp)
     }
 
 // Copied from JBFont — current as of IJP 233.

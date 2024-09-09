@@ -16,6 +16,7 @@ import org.jetbrains.jewel.bridge.theme.createBridgeComponentStyling
 import org.jetbrains.jewel.bridge.theme.createBridgeThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.ui.ComponentStyling
+import org.jetbrains.jewel.ui.component.copyWithSize
 
 @Service(Level.APP)
 internal class SwingBridgeService(scope: CoroutineScope) {
@@ -55,7 +56,7 @@ internal class SwingBridgeService(scope: CoroutineScope) {
     internal data class BridgeThemeData(val themeDefinition: ThemeDefinition, val componentStyling: ComponentStyling) {
         companion object {
             val DEFAULT = run {
-                val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
+                val textStyle = TextStyle.Default.copyWithSize(fontSize = 13.sp)
                 val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
                 val themeDefinition =
                     createBridgeThemeDefinition(
