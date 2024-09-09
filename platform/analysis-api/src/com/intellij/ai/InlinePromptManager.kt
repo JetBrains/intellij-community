@@ -2,10 +2,12 @@
 @file:JvmName("InlinePrompt")
 package com.intellij.ai
 
+import com.intellij.ai.InlinePromptManager.Companion.getInstance
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.Icon
 
 /**
  * Manages the inline prompts shown in editors.
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * When we detect it, we start an inline prompt editing mode.
  * When we edit inline prompt, programming language features should not interfere with the prompt
  */
-@ApiStatus.Internal
+@Internal
 interface InlinePromptManager {
   companion object {
     fun getInstance(project: Project): InlinePromptManager = project.getService(InlinePromptManager::class.java)
@@ -26,6 +28,16 @@ interface InlinePromptManager {
    * @return true if the inline prompt is shown, false otherwise
    */
   fun isInlinePromptShown(editor: Editor): Boolean
+
+  /**
+   * Checks if inline prompt code is currently being generated in the specified editor.
+   *
+   * @param editor the editor in which the code generation status of the inline prompt is to be checked
+   * @return true if inline prompt code is being generated, false otherwise
+   */
+  fun isInlinePromptCodeGenerating(editor: Editor): Boolean
+
+  fun getBulbIcon(): Icon?
 }
 
 /**
@@ -39,5 +51,15 @@ interface InlinePromptManager {
 @JvmOverloads
 fun isInlinePromptShown(editor: Editor, project: Project? = editor.project): Boolean {
   if (project == null) return false
-  return InlinePromptManager.getInstance(project).isInlinePromptShown(editor)
+  return getInstance(project).isInlinePromptShown(editor)
+}
+
+/**
+ * @return the inline prompt bulb icon if an inline prompt is currently shown or is being generated in the specified editor.
+ */
+@Internal
+fun getInlinePromptBulbIcon(project: Project, editor: Editor): Icon? {
+  val inlinePromptManager = getInstance(project)
+  val isInlinePrompt = inlinePromptManager.isInlinePromptShown(editor) || inlinePromptManager.isInlinePromptCodeGenerating(editor)
+  return if (isInlinePrompt) inlinePromptManager.getBulbIcon() else null
 }
