@@ -363,7 +363,7 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.ai.InlinePromptManager"
+    <projectService serviceInterface="com.intellij.inlinePrompt.InlinePromptManager"
                     serviceImplementation="com.intellij.ai.EmptyInlinePromptManager"/>
 
     <applicationService

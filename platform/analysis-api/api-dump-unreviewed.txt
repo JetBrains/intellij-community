@@ -1,7 +1,3 @@
-f:com.intellij.ai.InlinePrompt
-- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor):Z
-- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
-- *bs:isInlinePromptShown$default(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,I,java.lang.Object):Z
 f:com.intellij.analysis.AnalysisBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
@@ -2250,6 +2246,10 @@ e:com.intellij.ide.scratch.ScratchFileService$Option
 f:com.intellij.ide.scratch.ScratchUtil
 - s:getRelativePath(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:isScratch(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.inlinePrompt.InlinePrompt
+- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor):Z
+- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
+- *bs:isInlinePromptShown$default(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,I,java.lang.Object):Z
 f:com.intellij.lang.BracePair
 - <init>(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType,Z):V
 - getLeftBraceType():com.intellij.psi.tree.IElementType
