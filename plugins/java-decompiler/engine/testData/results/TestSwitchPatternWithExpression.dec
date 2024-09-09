@@ -176,33 +176,12 @@ public class TestSwitchPatternWithExpression {
    }
 
    static record A(String a) implements I {
-      A(String a) {
-         this.a = a;
-      }
-
-      public String a() {
-         return this.a;// 5
-      }
    }
 
    static record B(String a) implements I {
-      B(String a) {
-         this.a = a;
-      }
-
-      public String a() {
-         return this.a;// 8
-      }
    }
 
    static record AA(I i) {
-      AA(I i) {
-         this.i = i;
-      }
-
-      public I i() {
-         return this.i;// 11
-      }
    }
 
    sealed interface I permits TestSwitchPatternWithExpression.A, TestSwitchPatternWithExpression.B {
@@ -506,67 +485,7 @@ class 'TestSwitchPatternWithExpression' {
    }
 }
 
-class 'TestSwitchPatternWithExpression$A' {
-   method '<init> (Ljava/lang/String;)V' {
-      4      179
-      5      179
-      6      179
-      7      179
-      8      179
-      9      180
-   }
-
-   method 'a ()Ljava/lang/String;' {
-      0      183
-      1      183
-      2      183
-      3      183
-      4      183
-   }
-}
-
-class 'TestSwitchPatternWithExpression$B' {
-   method '<init> (Ljava/lang/String;)V' {
-      4      189
-      5      189
-      6      189
-      7      189
-      8      189
-      9      190
-   }
-
-   method 'a ()Ljava/lang/String;' {
-      0      193
-      1      193
-      2      193
-      3      193
-      4      193
-   }
-}
-
-class 'TestSwitchPatternWithExpression$AA' {
-   method '<init> (LTestSwitchPatternWithExpression$I;)V' {
-      4      199
-      5      199
-      6      199
-      7      199
-      8      199
-      9      200
-   }
-
-   method 'i ()LTestSwitchPatternWithExpression$I;' {
-      0      203
-      1      203
-      2      203
-      3      203
-      4      203
-   }
-}
-
 Lines mapping:
-5 <-> 184
-8 <-> 194
-11 <-> 204
 15 <-> 3
 16 <-> 4
 19 <-> 17

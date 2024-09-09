@@ -1,0 +1,81 @@
+package pkg;
+
+public class TestCustomSyntheticRecords {
+   public static record CustomGetter(String a, String a22) {
+      public String a() {
+         return this.a + "1";// 9
+      }
+   }
+
+   public static record CustomCompactConstructor(String a, String a22) {
+      public CustomCompactConstructor {
+         if (a.equals("a")) {// 15
+            throw new AssertionError();// 16
+         }
+      }// 18
+   }
+
+   public static record CustomFullConstructor(String a, String a22) {
+      public CustomFullConstructor(String a, String a22) {
+         this.a = a;// 22
+         this.a22 = a;// 23
+      }// 24
+   }
+}
+
+class 'pkg/TestCustomSyntheticRecords$CustomGetter' {
+   method 'a ()Ljava/lang/String;' {
+      0      5
+      1      5
+      2      5
+      3      5
+      4      5
+      5      5
+      6      5
+      7      5
+      8      5
+      9      5
+   }
+}
+
+class 'pkg/TestCustomSyntheticRecords$CustomCompactConstructor' {
+   method '<init> (Ljava/lang/String;Ljava/lang/String;)V' {
+      4      11
+      5      11
+      6      11
+      7      11
+      8      11
+      9      11
+      a      11
+      14      12
+      1f      14
+   }
+}
+
+class 'pkg/TestCustomSyntheticRecords$CustomFullConstructor' {
+   method '<init> (Ljava/lang/String;Ljava/lang/String;)V' {
+      4      19
+      5      19
+      6      19
+      7      19
+      8      19
+      9      20
+      a      20
+      b      20
+      c      20
+      d      20
+      e      21
+   }
+}
+
+Lines mapping:
+9 <-> 6
+15 <-> 12
+16 <-> 13
+18 <-> 15
+22 <-> 20
+23 <-> 21
+24 <-> 22
+Not mapped:
+14
+21

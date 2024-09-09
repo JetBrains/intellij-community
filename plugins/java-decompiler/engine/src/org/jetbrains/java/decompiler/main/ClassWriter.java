@@ -35,6 +35,8 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS;
+
 public class ClassWriter {
   private final PoolInterceptor interceptor;
 
@@ -357,7 +359,7 @@ public class ClassWriter {
         if (name.equals(rec.getName()) && descriptor.equals("()" + rec.getDescriptor())) {
           if (code.countLines() == 1) {
             String str = code.toString().trim();
-            return str.startsWith("return this." + mt.getName() + ';');
+            return str.equals("return this." + mt.getName() + ';');
           } else {
             return false;
           }
@@ -755,12 +757,41 @@ public class ClassWriter {
             boolean[] found = new boolean[1];
             compact = methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
               if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-                AssignmentExprent assignment = (AssignmentExprent) exprent;
-                if (assignment.getLeft().type == Exprent.EXPRENT_FIELD && assignment.getRight().type != Exprent.EXPRENT_VAR) {
-                  return 1;
-                } else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+                AssignmentExprent assignment = (AssignmentExprent)exprent;
+                if (assignment.getLeft() != null && assignment.getRight() != null &&
+                    assignment.getLeft().type == Exprent.EXPRENT_FIELD &&
+                    assignment.getRight().type == Exprent.EXPRENT_VAR) {
+                  int index = -1;
+                  for (StructRecordComponent component : cl.getRecordComponents()) {
+                    index++;
+                    if (component.getName() != null && component.getName().equals(((FieldExprent)assignment.getLeft()).getName())) {
+                      break;
+                    }
+                  }
+                  if (index == -1) return 1;
+                  StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
+                  if (parameters == null) return 1;
+                  List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
+                  if (entries.size() <= index) return 1;
+                  StructMethodParametersAttribute.Entry entry = entries.get(index);
+                  if (entry.myName == null || !entry.myName.equals(((VarExprent)assignment.getRight()).getName())) {
+                    return 1;
+                  }
                   found[0] = true;
+
                   return 0;
+                }
+                else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+                  return 1;
+                }
+                //not really necessary, but it is safer
+                else if (assignment.getLeft() instanceof VarExprent varExprent) {
+                  StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
+                  if (parameters == null) return 1;
+                  List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
+                  if (entries.stream().anyMatch(entry -> entry.myName != null && entry.myName.equals(varExprent.getName()))) {
+                    return 1;
+                  }
                 }
               }
               return found[0] ? 1 : 0;
