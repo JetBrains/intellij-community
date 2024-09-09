@@ -842,6 +842,11 @@ public abstract class VcsVFSListener implements Disposable {
             myProcessor.clearAllPendingTasks();
           }
         }
+
+        @Override
+        public boolean isHeadless() {
+          return false;
+        }
       }.queue();
     }
   }
