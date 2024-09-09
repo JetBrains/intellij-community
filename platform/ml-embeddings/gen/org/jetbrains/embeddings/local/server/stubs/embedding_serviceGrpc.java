@@ -1,0 +1,458 @@
+package org.jetbrains.embeddings.local.server.stubs;
+
+import static io.grpc.MethodDescriptor.generateFullMethodName;
+
+/**
+ */
+@javax.annotation.Generated(
+    value = "by gRPC proto compiler (version 1.53.0)",
+    comments = "Source: embeddings.proto")
+@io.grpc.stub.annotations.GrpcGenerated
+public final class embedding_serviceGrpc {
+
+  private embedding_serviceGrpc() {}
+
+  public static final String SERVICE_NAME = "org.jetbrains.embeddings.local.server.stubs.embedding_service";
+
+  // Static method descriptors that strictly reflect the proto.
+  private static volatile io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> getEnsureVectorsPresentMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "ensure_vectors_present",
+      requestType = org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request.class,
+      responseType = org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> getEnsureVectorsPresentMethod() {
+    io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> getEnsureVectorsPresentMethod;
+    if ((getEnsureVectorsPresentMethod = embedding_serviceGrpc.getEnsureVectorsPresentMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getEnsureVectorsPresentMethod = embedding_serviceGrpc.getEnsureVectorsPresentMethod) == null) {
+          embedding_serviceGrpc.getEnsureVectorsPresentMethod = getEnsureVectorsPresentMethod =
+              io.grpc.MethodDescriptor.<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "ensure_vectors_present"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getEnsureVectorsPresentMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> getRemoveVectorsMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "remove_vectors",
+      requestType = org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request.class,
+      responseType = org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> getRemoveVectorsMethod() {
+    io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> getRemoveVectorsMethod;
+    if ((getRemoveVectorsMethod = embedding_serviceGrpc.getRemoveVectorsMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getRemoveVectorsMethod = embedding_serviceGrpc.getRemoveVectorsMethod) == null) {
+          embedding_serviceGrpc.getRemoveVectorsMethod = getRemoveVectorsMethod =
+              io.grpc.MethodDescriptor.<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "remove_vectors"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getRemoveVectorsMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> getSearchMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "search",
+      requestType = org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request.class,
+      responseType = org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> getSearchMethod() {
+    io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> getSearchMethod;
+    if ((getSearchMethod = embedding_serviceGrpc.getSearchMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getSearchMethod = embedding_serviceGrpc.getSearchMethod) == null) {
+          embedding_serviceGrpc.getSearchMethod = getSearchMethod =
+              io.grpc.MethodDescriptor.<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "search"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getSearchMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> getFinishIndexingSessionMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "finish_indexing_session",
+      requestType = org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request.class,
+      responseType = org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request,
+      org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> getFinishIndexingSessionMethod() {
+    io.grpc.MethodDescriptor<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> getFinishIndexingSessionMethod;
+    if ((getFinishIndexingSessionMethod = embedding_serviceGrpc.getFinishIndexingSessionMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getFinishIndexingSessionMethod = embedding_serviceGrpc.getFinishIndexingSessionMethod) == null) {
+          embedding_serviceGrpc.getFinishIndexingSessionMethod = getFinishIndexingSessionMethod =
+              io.grpc.MethodDescriptor.<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request, org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "finish_indexing_session"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getFinishIndexingSessionMethod;
+  }
+
+  /**
+   * Creates a new async stub that supports all call types for the service
+   */
+  public static embedding_serviceStub newStub(io.grpc.Channel channel) {
+    io.grpc.stub.AbstractStub.StubFactory<embedding_serviceStub> factory =
+      new io.grpc.stub.AbstractStub.StubFactory<embedding_serviceStub>() {
+        @java.lang.Override
+        public embedding_serviceStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+          return new embedding_serviceStub(channel, callOptions);
+        }
+      };
+    return embedding_serviceStub.newStub(factory, channel);
+  }
+
+  /**
+   * Creates a new blocking-style stub that supports unary and streaming output calls on the service
+   */
+  public static embedding_serviceBlockingStub newBlockingStub(
+      io.grpc.Channel channel) {
+    io.grpc.stub.AbstractStub.StubFactory<embedding_serviceBlockingStub> factory =
+      new io.grpc.stub.AbstractStub.StubFactory<embedding_serviceBlockingStub>() {
+        @java.lang.Override
+        public embedding_serviceBlockingStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+          return new embedding_serviceBlockingStub(channel, callOptions);
+        }
+      };
+    return embedding_serviceBlockingStub.newStub(factory, channel);
+  }
+
+  /**
+   * Creates a new ListenableFuture-style stub that supports unary calls on the service
+   */
+  public static embedding_serviceFutureStub newFutureStub(
+      io.grpc.Channel channel) {
+    io.grpc.stub.AbstractStub.StubFactory<embedding_serviceFutureStub> factory =
+      new io.grpc.stub.AbstractStub.StubFactory<embedding_serviceFutureStub>() {
+        @java.lang.Override
+        public embedding_serviceFutureStub newStub(io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+          return new embedding_serviceFutureStub(channel, callOptions);
+        }
+      };
+    return embedding_serviceFutureStub.newStub(factory, channel);
+  }
+
+  /**
+   */
+  public static abstract class embedding_serviceImplBase implements io.grpc.BindableService {
+
+    /**
+     */
+    public void ensureVectorsPresent(org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getEnsureVectorsPresentMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void removeVectors(org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getRemoveVectorsMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void search(org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getSearchMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void finishIndexingSession(org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getFinishIndexingSessionMethod(), responseObserver);
+    }
+
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
+      return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
+          .addMethod(
+            getEnsureVectorsPresentMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request,
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response>(
+                  this, METHODID_ENSURE_VECTORS_PRESENT)))
+          .addMethod(
+            getRemoveVectorsMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request,
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response>(
+                  this, METHODID_REMOVE_VECTORS)))
+          .addMethod(
+            getSearchMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request,
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response>(
+                  this, METHODID_SEARCH)))
+          .addMethod(
+            getFinishIndexingSessionMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request,
+                org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response>(
+                  this, METHODID_FINISH_INDEXING_SESSION)))
+          .build();
+    }
+  }
+
+  /**
+   */
+  public static final class embedding_serviceStub extends io.grpc.stub.AbstractAsyncStub<embedding_serviceStub> {
+    private embedding_serviceStub(
+        io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+      super(channel, callOptions);
+    }
+
+    @java.lang.Override
+    protected embedding_serviceStub build(
+        io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+      return new embedding_serviceStub(channel, callOptions);
+    }
+
+    /**
+     */
+    public void ensureVectorsPresent(org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getEnsureVectorsPresentMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void removeVectors(org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getRemoveVectorsMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void search(org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getSearchMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void finishIndexingSession(org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request request,
+        io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getFinishIndexingSessionMethod(), getCallOptions()), request, responseObserver);
+    }
+  }
+
+  /**
+   */
+  public static final class embedding_serviceBlockingStub extends io.grpc.stub.AbstractBlockingStub<embedding_serviceBlockingStub> {
+    private embedding_serviceBlockingStub(
+        io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+      super(channel, callOptions);
+    }
+
+    @java.lang.Override
+    protected embedding_serviceBlockingStub build(
+        io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+      return new embedding_serviceBlockingStub(channel, callOptions);
+    }
+
+    /**
+     */
+    public org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response ensureVectorsPresent(org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getEnsureVectorsPresentMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response removeVectors(org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getRemoveVectorsMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response search(org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getSearchMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response finishIndexingSession(org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getFinishIndexingSessionMethod(), getCallOptions(), request);
+    }
+  }
+
+  /**
+   */
+  public static final class embedding_serviceFutureStub extends io.grpc.stub.AbstractFutureStub<embedding_serviceFutureStub> {
+    private embedding_serviceFutureStub(
+        io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+      super(channel, callOptions);
+    }
+
+    @java.lang.Override
+    protected embedding_serviceFutureStub build(
+        io.grpc.Channel channel, io.grpc.CallOptions callOptions) {
+      return new embedding_serviceFutureStub(channel, callOptions);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> ensureVectorsPresent(
+        org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getEnsureVectorsPresentMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> removeVectors(
+        org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getRemoveVectorsMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> search(
+        org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getSearchMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> finishIndexingSession(
+        org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getFinishIndexingSessionMethod(), getCallOptions()), request);
+    }
+  }
+
+  private static final int METHODID_ENSURE_VECTORS_PRESENT = 0;
+  private static final int METHODID_REMOVE_VECTORS = 1;
+  private static final int METHODID_SEARCH = 2;
+  private static final int METHODID_FINISH_INDEXING_SESSION = 3;
+
+  private static final class MethodHandlers<Req, Resp> implements
+      io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
+      io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
+    private final embedding_serviceImplBase serviceImpl;
+    private final int methodId;
+
+    MethodHandlers(embedding_serviceImplBase serviceImpl, int methodId) {
+      this.serviceImpl = serviceImpl;
+      this.methodId = methodId;
+    }
+
+    @java.lang.Override
+    @java.lang.SuppressWarnings("unchecked")
+    public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        case METHODID_ENSURE_VECTORS_PRESENT:
+          serviceImpl.ensureVectorsPresent((org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request) request,
+              (io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response>) responseObserver);
+          break;
+        case METHODID_REMOVE_VECTORS:
+          serviceImpl.removeVectors((org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request) request,
+              (io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response>) responseObserver);
+          break;
+        case METHODID_SEARCH:
+          serviceImpl.search((org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request) request,
+              (io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response>) responseObserver);
+          break;
+        case METHODID_FINISH_INDEXING_SESSION:
+          serviceImpl.finishIndexingSession((org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request) request,
+              (io.grpc.stub.StreamObserver<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response>) responseObserver);
+          break;
+        default:
+          throw new AssertionError();
+      }
+    }
+
+    @java.lang.Override
+    @java.lang.SuppressWarnings("unchecked")
+    public io.grpc.stub.StreamObserver<Req> invoke(
+        io.grpc.stub.StreamObserver<Resp> responseObserver) {
+      switch (methodId) {
+        default:
+          throw new AssertionError();
+      }
+    }
+  }
+
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+              .addMethod(getEnsureVectorsPresentMethod())
+              .addMethod(getRemoveVectorsMethod())
+              .addMethod(getSearchMethod())
+              .addMethod(getFinishIndexingSessionMethod())
+              .build();
+        }
+      }
+    }
+    return result;
+  }
+}
