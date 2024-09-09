@@ -1476,6 +1476,16 @@
             <option name="FOREGROUND" value="7444D4"/>
           </value>
         </option>
+      <option name="INLINE_PROMPT_PROGRESS_DARK">
+        <value>
+          <option name="FOREGROUND" value="834DF0"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT_PROGRESS_LIGHT">
+        <value>
+          <option name="FOREGROUND" value="DCCBFB"/>
+        </value>
+      </option>
       <option name="XPATH.KEYWORD">
         <value>
           <option name="FOREGROUND" value="0000FF" />
@@ -2925,6 +2935,16 @@
       <option name="INLINE_PROMPT">
         <value>
           <option name="FOREGROUND" value="B589EC"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT_PROGRESS_DARK">
+        <value>
+          <option name="FOREGROUND" value="955AE0"/>
+        </value>
+      </option>
+      <option name="INLINE_PROMPT_PROGRESS_LIGHT">
+        <value>
+          <option name="FOREGROUND" value="D4B8F9"/>
         </value>
       </option>
     </attributes>
