@@ -7,7 +7,9 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -347,6 +349,35 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   @Override
   protected Location getLocation(SuspendContext context) {
     return ((SuspendContextImpl)context).getLocation();
+  }
+
+  @Override
+  public <R, T extends Value> R processCollectibleValue(
+    @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+    @NotNull Function<? super T, ? extends R> processor,
+    @NotNull VirtualMachineProxy proxy) throws EvaluateException {
+    int retries = 10;
+    while (true) {
+      T result = valueComputable.compute();
+      try {
+        return processor.apply(result);
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          if (proxy instanceof VirtualMachineProxyImpl proxyImpl) {
+            proxyImpl.suspend();
+            try {
+              return processor.apply(valueComputable.compute());
+            } finally {
+              proxyImpl.resume();
+            }
+          }
+          else {
+            throw oce;
+          }
+        }
+      }
+    }
   }
 
   // compilable version of array class for compiling evaluator

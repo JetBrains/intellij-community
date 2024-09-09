@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -131,12 +131,12 @@ public final class BatchEvaluator {
 
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
       DebuggerUtilsEx.setValuesNoCheck(argArray, values);
-      String value = DebuggerUtils.processCollectibleValue(
+      String value = DebuggerUtils.getInstance().processCollectibleValue(
         () -> ((DebugProcessImpl)debugProcess).invokeMethod(
           evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
           MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
-        result -> result instanceof StringReference ? ((StringReference)result).value() : null
-      );
+        result -> result instanceof StringReference ? ((StringReference)result).value() : null,
+        debugProcess.getVirtualMachineProxy());
       if (value != null) {
         byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {

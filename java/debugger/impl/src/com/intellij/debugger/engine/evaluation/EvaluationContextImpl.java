@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.EvaluatingComputable;
@@ -157,10 +157,10 @@ public final class EvaluationContextImpl implements EvaluationContext {
 
   @Override
   public <T extends Value> T computeAndKeep(@NotNull ThrowableComputable<T, EvaluateException> computable) throws EvaluateException {
-    return DebuggerUtils.processCollectibleValue(computable, value -> {
+    return DebuggerUtils.getInstance().processCollectibleValue(computable, value -> {
       keep(value);
       return value;
-    });
+    }, getDebugProcess().getVirtualMachineProxy());
   }
 
   public boolean isEvaluationPossible() {

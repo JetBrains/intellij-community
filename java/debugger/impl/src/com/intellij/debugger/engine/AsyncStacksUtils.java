@@ -103,11 +103,11 @@ public final class AsyncStacksUtils {
     VirtualMachineProxyImpl virtualMachineProxy = evalContext.getSuspendContext().getVirtualMachineProxy();
     List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
-    String value = DebuggerUtils.processCollectibleValue(
+    String value = DebuggerUtils.getInstance().processCollectibleValue(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
                                  args, ObjectReference.INVOKE_SINGLE_THREADED, true),
-      result -> result instanceof StringReference ? ((StringReference)result).value() : null
-    );
+      result -> result instanceof StringReference ? ((StringReference)result).value() : null,
+      process.getVirtualMachineProxy());
     if (value != null) {
       List<StackFrameItem> res = new ArrayList<>();
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());

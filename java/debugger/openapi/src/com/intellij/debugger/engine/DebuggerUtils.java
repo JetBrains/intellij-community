@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,6 +35,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +124,7 @@ public abstract class DebuggerUtils {
             JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
         Method finalToStringMethod = toStringMethod;
-        return processCollectibleValue(
+        return getInstance().processCollectibleValue(
           () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0),
           result -> {
             // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
@@ -131,8 +133,8 @@ public abstract class DebuggerUtils {
               return "null";
             }
             return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
-          }
-        );
+          },
+          debugProcess.getVirtualMachineProxy());
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
@@ -141,22 +143,11 @@ public abstract class DebuggerUtils {
     }
   }
 
-  public static <R, T extends Value> R processCollectibleValue(
+  @ApiStatus.Internal
+  public abstract <R, T extends Value> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
-    @NotNull Function<? super T, ? extends R> processor) throws EvaluateException {
-    int retries = 10;
-    while (true) {
-      T result = valueComputable.compute();
-      try {
-        return processor.apply(result);
-      }
-      catch (ObjectCollectedException oce) {
-        if (--retries < 0) {
-          throw oce;
-        }
-      }
-    }
-  }
+    @NotNull Function<? super T, ? extends R> processor,
+    @NotNull VirtualMachineProxy proxy) throws EvaluateException;
 
   public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
     throws EvaluateException {
