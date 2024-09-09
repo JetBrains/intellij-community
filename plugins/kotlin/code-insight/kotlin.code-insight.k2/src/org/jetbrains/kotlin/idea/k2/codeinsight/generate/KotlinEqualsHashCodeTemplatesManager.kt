@@ -15,6 +15,7 @@ import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.konan.isNative
 import java.io.IOException
 
 @State(name = "KotlinEqualsHashcodeTemplates", storages = [Storage("kotlinEqualsHashcodeTemplates.xml")], category = SettingsCategory.CODE)
@@ -39,6 +40,7 @@ class KotlinEqualsHashCodeTemplatesManager : EqualsHashCodeTemplatesManagerBase(
     private fun addPlatformVariables(map: MutableMap<String, PsiType>) {
         map.put("isCommon", PsiTypes.booleanType())
         map.put("isJs", PsiTypes.booleanType())
+        map.put("isNative", PsiTypes.booleanType())
     }
 
     override fun getHashCodeImplicitVars(project: Project): Map<String, PsiType> {

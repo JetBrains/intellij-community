@@ -64,7 +64,7 @@ if(this === ${paramName}) return true
 #if ($checkParameterWithInstanceof)
 if ($paramName !is $classname##
 #generateWildcards()) return false
-#elseif ($isCommon)
+#elseif ($isCommon || $isNative)
 if ($paramName == null || this::class != $paramName::class) return false
 #elseif ($isJs)
 if ($paramName == null || this::class.js != $paramName::class.js) return false
