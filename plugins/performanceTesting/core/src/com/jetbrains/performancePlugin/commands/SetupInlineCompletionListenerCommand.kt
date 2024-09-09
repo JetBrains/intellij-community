@@ -2,8 +2,10 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
+import com.intellij.codeInsight.inline.completion.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -11,6 +13,7 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import org.jetbrains.annotations.NonNls
+import kotlin.collections.mutableMapOf
 
 /**
  * InlineCompletionCommand is responsible for setting up an inline completion listener for the editor
@@ -22,6 +25,7 @@ class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCo
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "setupInlineCompletionListener"
     const val SPAN_NAME: @NonNls String = "inlineCompletion"
+    private val listeners: MutableMap<Editor, InlineCompletionEventListener> = mutableMapOf()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -29,8 +33,10 @@ class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCo
     val editor = readAction { FileEditorManager.getInstance(project).getSelectedTextEditor() ?: error("editor is null") }
     val handler = InlineCompletion.getHandlerOrNull(editor) ?: throw IllegalStateException("InlineCompletion handler is null")
     val currentOTContext = Context.current()
-
-    handler.addEventListener(object : InlineCompletionEventAdapter {
+    if (listeners.containsKey(editor)) {
+      handler.removeEventListener(listeners[editor]!!)
+    }
+    val l = object : InlineCompletionEventAdapter {
       private var spanShow: Span? = null
       private var spanHide: Span? = null
       override fun onRequest(event: InlineCompletionEventType.Request) {
@@ -55,6 +61,8 @@ class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCo
           spanHide = null
         }
       }
-    })
+    }
+    listeners[editor] = l
+    handler.addEventListener(l)
   }
 }
