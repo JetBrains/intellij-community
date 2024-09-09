@@ -2031,4 +2031,38 @@ public class Test {
     ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
     """.trimIndent())
   }
+
+  fun testMarkdownConstructsNoAffectedInLegacy() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /**         | Latin | Greek |
+     *          |-------|-------|
+     *          | a     | alpha |
+     *          | b     | beta  |
+     *          | c     | gamma |
+     *  
+     *  > Nice blockquote
+     *  - Single list item
+     *     + Sub element
+     *     * Another sub element
+     *  ---
+     *   # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+     */  
+    """.trimIndent(), """
+      /**
+       * | Latin | Greek | |-------|-------| | a     | alpha | | b     | beta  | | c     | gamma |
+       * <p>
+       * > Nice blockquote - Single list item + Sub element * Another sub element --- # Title, but I have a long text, so
+       * loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down
+       * for a game of Minecraft ?
+       */  
+    """.trimIndent())
+  }
 }

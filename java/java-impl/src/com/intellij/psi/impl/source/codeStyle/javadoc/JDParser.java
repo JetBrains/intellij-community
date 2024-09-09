@@ -602,7 +602,7 @@ public class JDParser {
           result.add(Pair.create(s1, marks[i]));
         }
         else {
-          if (isStartOfMarkdownConstruct(s1)) {
+          if (markdownComment && isStartOfMarkdownConstruct(s1)) {
             endParagraph(result, sb);
           }
 

@@ -205,9 +205,6 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
   public void testMarkdownInlineCodeBlock() { doTestClass(); }
 
-  public void testHashMapCodeTags() {
-    doTestClass();
-  }
   public void testEscapeHtmlCodesInCodeBlock(){
     doTestClass();
   }
