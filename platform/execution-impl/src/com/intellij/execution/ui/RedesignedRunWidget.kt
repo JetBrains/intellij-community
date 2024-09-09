@@ -22,8 +22,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook.getIconPosition
-import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook.paintIconImpl
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -56,11 +54,14 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Insets
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -105,7 +106,6 @@ private fun createRunActionToolbar(): ActionToolbar {
   toolbar.setMinimumButtonSize {
     JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
-  toolbar.setForceMinimumSize(true)
   toolbar.setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
   toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
@@ -496,6 +496,13 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
         font = JBUI.CurrentTheme.RunWidget.configurationSelectorFont()
       }
 
+      override fun getButtonRect(): Rectangle? = super.buttonRect.apply {
+        width -= getDownArrowIcon().iconWidth
+      }
+
+      override fun getMinimumSize(): Dimension = preferredSize.apply {
+        width = UIUtil.computeTextComponentMinimumSize(width, text, font?.let { getFontMetrics(it) }, 4)
+      }
     }.also {
       it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)

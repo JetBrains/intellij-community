@@ -5051,6 +5051,7 @@ f:com.intellij.util.ui.UIUtil
 - s:canDisplayFocusedState(java.awt.Component):Z
 - s:changeBackGround(java.awt.Component,java.awt.Color):V
 - s:colorToHex(java.awt.Color):java.lang.String
+- s:computeTextComponentMinimumSize(I,java.lang.String,java.awt.FontMetrics,I):I
 - s:configureNumericFormattedTextField(javax.swing.JFormattedTextField):V
 - s:convertToLabel(javax.swing.JEditorPane):V
 - s:createImage(I,I,I):java.awt.image.BufferedImage
