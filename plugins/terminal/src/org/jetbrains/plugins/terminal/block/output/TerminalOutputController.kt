@@ -126,13 +126,7 @@ internal class TerminalOutputController(
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    val contentUpdatesScheduler = runningCommandInteractivity?.contentUpdatesScheduler
-    if (contentUpdatesScheduler != null) {
-      contentUpdatesScheduler.finishUpdating()
-    }
-    else {
-      // todo runningCommandInteractivity might be not created yet
-    }
+    scheduleLastOutputUpdate()
 
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = outputModel.getActiveBlock() ?: error("No active block")
@@ -151,6 +145,31 @@ internal class TerminalOutputController(
 
       runningCommandContext = null
       nextBlockCanBeStartedQueue.poll()?.invoke()
+    }
+  }
+
+  private fun scheduleLastOutputUpdate() {
+    val contentUpdatesScheduler = runningCommandInteractivity?.contentUpdatesScheduler
+    if (contentUpdatesScheduler != null) {
+      contentUpdatesScheduler.finishUpdating()
+    }
+    else {
+      // There is no guarantee that command finish happen after contentUpdatesScheduler is installed on EDT.
+      // So, it is a fallback for this case.
+      // If the command finished so fast, then we consider all text buffer content as an output.
+      val (output, terminalWidth) = session.model.withContentLock {
+        ShellCommandOutputScraperImpl.scrapeOutput(session) to session.model.width
+      }
+      val partialOutput = PartialCommandOutput(
+        output.text,
+        output.styleRanges,
+        logicalLineIndex = 0,
+        terminalWidth,
+        wereChangesDiscarded = false,
+      )
+      invokeLater(editor.getDisposed(), ModalityState.any()) {
+        updateCommandOutput(partialOutput)
+      }
     }
   }
 
