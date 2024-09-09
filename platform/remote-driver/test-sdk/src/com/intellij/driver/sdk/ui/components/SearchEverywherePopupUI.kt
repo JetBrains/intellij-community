@@ -11,8 +11,8 @@ import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
 
 
-fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) },
-                                                                               SearchEverywherePopupUI::class.java)
+fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null, block: SearchEverywherePopupUI.() -> Unit = {}) = x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) },
+                                                                               SearchEverywherePopupUI::class.java).apply(block)
 
 class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
   val resultsList by lazy {
