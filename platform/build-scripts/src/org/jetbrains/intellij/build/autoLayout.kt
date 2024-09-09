@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.*
 
@@ -60,7 +61,7 @@ internal suspend fun computeModuleSourcesByContent(
   jarPackager: JarPackager,
   searchableOptionSet: SearchableOptionSetDescriptor?
 ) {
-  for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
+  for ((moduleName, loadingRule) in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
     // CWM plugin is overcomplicated without any valid reason - it must be refactored
     if (moduleName == "intellij.driver.backend.split" || !addedModules.add(moduleName)) {
       continue
@@ -70,7 +71,7 @@ internal suspend fun computeModuleSourcesByContent(
     val forTests = (context as? BuildContextImpl)?.jarPackagerDependencyHelper?.isTestPluginModule(moduleName) ?: false
     val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml", forTests)
                                     ?: error("$moduleName.xml not found in module $moduleName sources"))
-    val useSeparateJar = descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)
+    val useSeparateJar = (descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)) && loadingRule != RuntimeModuleLoadingRule.REQUIRED
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,

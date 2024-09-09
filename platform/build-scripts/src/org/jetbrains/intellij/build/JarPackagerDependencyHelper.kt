@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
@@ -76,7 +77,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return element.content!!
   }
 
-  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<String> {
+  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, RuntimeModuleLoadingRule>> {
     return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
   }
 
@@ -88,15 +89,21 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   // The x-include is not resolved. If the plugin.xml includes any files, the content from these included files will not be considered.
   fun readPluginIncompleteContentFromDescriptor(pluginModule: JpsModule): Sequence<String> {
     val pluginXml = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
-    return readPluginContentFromDescriptor(readXmlAsModel(pluginXml))
+    return readPluginContentFromDescriptor(readXmlAsModel(pluginXml)).map { it.first  }
   }
 
-  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<String> {
+  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, RuntimeModuleLoadingRule>> {
     return sequence {
       for (content in pluginDescriptor.children("content")) {
         for (module in content.children("module")) {
           val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
-          yield(moduleName)
+          val loadingRuleString = module.attributes.get("loading")
+          val loadingRule = when (loadingRuleString) {
+            "required" -> RuntimeModuleLoadingRule.REQUIRED
+            "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
+            else -> RuntimeModuleLoadingRule.OPTIONAL
+          }
+          yield(moduleName to loadingRule)
         }
       }
     }
