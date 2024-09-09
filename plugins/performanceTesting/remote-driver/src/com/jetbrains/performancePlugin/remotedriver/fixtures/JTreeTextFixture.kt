@@ -51,7 +51,7 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     return computeOnEdt {
       component.selectionPaths
     }?.map { path ->
-      path.path.map { cellReader.valueAt(component, it) ?: "" }.run {
+      path.path.map { computeOnEdt { cellReader.valueAt(component, it) } ?: "" }.run {
         if (component.isRootVisible) subList(1, size)
         else this
       }
