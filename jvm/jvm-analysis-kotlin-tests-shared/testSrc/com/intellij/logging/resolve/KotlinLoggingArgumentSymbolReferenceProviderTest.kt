@@ -634,4 +634,77 @@ abstract class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumen
       """.trimIndent())
     doTest(emptyMap())
   }
+
+  fun `test lazy init in init block`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.LogManager
+      import org.apache.logging.log4j.Logger
+      
+      class Initialization {
+          init {
+              log.debug("{<caret>}", 1)
+          }
+      
+          companion object {
+              private val log : Logger
+              init {
+                  log = LogManager.getLogger()
+              }
+          }
+      }
+    """.trimIndent())
+    doTest(mapOf(TextRange(1, 3) to "1"))
+  }
+
+  fun `test lazy init in init block with condition`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.LogManager
+      import org.apache.logging.log4j.Logger
+      
+      class StaticInitializerBuilder2 {
+        init {
+            log.log("{<caret>}", 1)
+        }
+  
+        companion object {
+            private val log: LogBuilder
+  
+            init {
+                if (1 == 1) {
+                    log = LogManager.getLogger().atDebug()
+                } else {
+                    log = LogManager.getFormatterLogger().atDebug()
+                }
+            }
+        }
+    }
+    """.trimIndent())
+    doTest(emptyMap())
+  }
+
+  fun `test lazy init in constructors`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.LogManager
+      import org.apache.logging.log4j.Logger
+      
+       internal class ConstructorInitializer {
+           private val log: Logger
+  
+           constructor() {
+               log = LogManager.getLogger()
+           }
+  
+           constructor(i) {
+               log = LogManager.getLogger()
+           }
+  
+           fun test() {
+             log.info("{<caret>} {}", 1, 2)
+           }
+       }
+    """.trimIndent())
+    doTest(mapOf(
+      TextRange(1, 3) to "1",
+      TextRange(4, 6) to "2",))
+  }
 }
