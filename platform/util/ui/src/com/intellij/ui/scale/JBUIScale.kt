@@ -40,7 +40,7 @@ object JBUIScale {
    * The user scale factor, see [ScaleType.USR_SCALE].
    */
   private val userScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
-    DEBUG_USER_SCALE_FACTOR.value ?: computeUserScaleFactor(if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else systemScaleFactor.value)
+    computeUserScaleFactor()
   }
 
   internal val userScale: Float
@@ -284,6 +284,10 @@ object JBUIScale {
     scale = computeUserScaleFactor(scale)
     setUserScaleFactorProperty(scale)
     return scale
+  }
+
+  private fun computeUserScaleFactor(): Float {
+    return DEBUG_USER_SCALE_FACTOR.value ?: computeUserScaleFactor(if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else systemScaleFactor.value)
   }
 
   private fun computeUserScaleFactor(value: Float): Float {
