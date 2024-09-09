@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -16,6 +17,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownMissingSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -167,12 +169,12 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     val rootProgressIndicator = resolveProgressIndicator()
 
     val namedSdk = sdkName?.let {
-      runReadAction {
+      ApplicationManager.getApplication().runReadAction(Computable {
         when (sdkType) {
           null -> ProjectJdkTable.getInstance().findJdk(sdkName)
           else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
         }
-      }
+      })
     }
 
     if (trySdk(namedSdk, rootProgressIndicator)) {
