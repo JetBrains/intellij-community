@@ -196,6 +196,6 @@ internal class RemoveExplicitTypeIntention :
       elementContext: Unit,
       updater: ModPsiUpdater,
     ) {
-        element.removeTypeReference()
+        element.removeDeclarationTypeReference()
     }
 }

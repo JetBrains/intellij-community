@@ -5,7 +5,10 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
-fun KtDeclaration.removeTypeReference() {
+/**
+ * Removes the explicitly declared type of this declaration if it exists.
+ */
+fun KtDeclaration.removeDeclarationTypeReference() {
     if (this is KtCallableDeclaration) {
         typeReference = null
     } else if (this is KtPropertyAccessor) {
