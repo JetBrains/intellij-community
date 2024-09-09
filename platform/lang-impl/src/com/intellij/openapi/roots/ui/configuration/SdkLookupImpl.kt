@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.google.common.annotations.VisibleForTesting
@@ -166,17 +166,17 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
   fun lookup() {
     val rootProgressIndicator = resolveProgressIndicator()
 
-    run {
-      val namedSdk = sdkName?.let {
-        runReadAction {
-          when (sdkType) {
-            null -> ProjectJdkTable.getInstance().findJdk(sdkName)
-            else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
-          }
+    val namedSdk = sdkName?.let {
+      runReadAction {
+        when (sdkType) {
+          null -> ProjectJdkTable.getInstance().findJdk(sdkName)
+          else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
         }
       }
+    }
 
-      if (trySdk(namedSdk, rootProgressIndicator)) return
+    if (trySdk(namedSdk, rootProgressIndicator)) {
+      return
     }
 
     for (sdk : Sdk? in SdkDownloadTracker.getInstance().findDownloadingSdks(sdkName)) {
