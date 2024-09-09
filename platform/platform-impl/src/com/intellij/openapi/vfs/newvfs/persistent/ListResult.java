@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.Application;
@@ -74,7 +74,7 @@ final class ListResult {
 
   @Contract(pure = true)
   @NotNull ListResult remove(@NotNull ChildInfo child) {
-    List<ChildInfo> newChildren = new ArrayList<>(children.size() + 1);
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() - 1);
     int id = child.getId();
     int toRemove = ObjectUtils.binarySearch(0, children.size(), mid -> Integer.compare(children.get(mid).getId(), id));
     if (toRemove < 0) {
@@ -88,6 +88,24 @@ final class ListResult {
       for (int j = toRemove + 1; j < children.size(); j++) {
         newChildren.add(children.get(j));
       }
+    }
+    return new ListResult(parentModStamp, newChildren, parentId);
+  }
+
+  @Contract(pure = true)
+  @NotNull ListResult remove(int childId) {
+    int toRemove = ObjectUtils.binarySearch(0, children.size(), mid -> Integer.compare(children.get(mid).getId(), childId));
+    if (toRemove < 0) {
+      // wow, the child is not there
+      return this;
+    }
+
+    List<ChildInfo> newChildren = new ArrayList<>(children.size() - 1);
+    for (int j = 0; j < toRemove; j++) {
+      newChildren.add(children.get(j));
+    }
+    for (int j = toRemove + 1; j < children.size(); j++) {
+      newChildren.add(children.get(j));
     }
     return new ListResult(parentModStamp, newChildren, parentId);
   }
