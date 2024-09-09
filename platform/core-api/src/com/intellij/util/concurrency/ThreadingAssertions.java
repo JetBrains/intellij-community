@@ -118,8 +118,16 @@ public final class ThreadingAssertions {
       throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
     }
     else if (isImplicitLockOnEDT()) {
-      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION_EXPLICIT));
+      reportImplicitRead();
     }
+  }
+
+  /**
+   * Reports message about implicit read to logger at error level
+   */
+  @Internal
+  public static void reportImplicitRead() {
+    getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -158,8 +166,16 @@ public final class ThreadingAssertions {
       throwWriteIntentReadAccess();
     }
     else if (isImplicitLockOnEDT()) {
-      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
+      reportImplicitWriteIntent();
     }
+  }
+
+  /**
+   * Reports message about implicit read to logger at error level
+   */
+  @Internal
+  public static void reportImplicitWriteIntent() {
+    getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
   }
 
   /**

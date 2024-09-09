@@ -109,11 +109,20 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   override fun isWriteIntentLocked(): Boolean {
     val ts = myState.get()
+    // check for implicit
+    if (ts.hasWriteIntent && ThreadingAssertions.isImplicitLockOnEDT()) {
+      ThreadingAssertions.reportImplicitWriteIntent()
+    }
     return ts.hasWrite || ts.hasWriteIntent
   }
 
   override fun isReadAccessAllowed(): Boolean {
-    return myState.get().hasPermit
+    val ts = myState.get()
+    // check for implicit
+    if (ts.hasWriteIntent && ThreadingAssertions.isImplicitLockOnEDT()) {
+      ThreadingAssertions.reportImplicitRead()
+    }
+    return ts.hasPermit
   }
 
   override fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*> {
