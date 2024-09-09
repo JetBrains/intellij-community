@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordH
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ThisKeywordHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
@@ -96,6 +97,7 @@ private class ResolveDependentCompletionKeywordHandlerProvider(
         ReturnKeywordHandler,
         BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
         BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
+        ActualKeywordHandler(basicContext),
         OverrideKeywordHandler(basicContext),
         ThisKeywordHandler(basicContext),
         SuperKeywordHandler,

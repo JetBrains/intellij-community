@@ -70,6 +70,8 @@ internal object Completions {
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 FirDeclarationFromOverridableMembersContributor(basicContext, priority = 1)
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                K2ActualDeclarationContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
                     .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
