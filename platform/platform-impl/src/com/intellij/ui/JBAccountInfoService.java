@@ -193,22 +193,25 @@ public interface JBAccountInfoService {
   }
 
   sealed interface LicenseListResult permits LicenseListResult.LicenseList,
-                                             LicenseListResult.LoginRequired,
                                              LicenseListResult.RequestFailed,
-                                             LicenseListResult.RequestDeclined {
+                                             LicenseListResult.RequestDeclined,
+                                             AuthRequired {
     record LicenseList(@NotNull List<@NotNull JbaLicense> licenses) implements LicenseListResult { }
-
-    /**
-     * Returned when the method returning the LicenseListResult is called while unauthenticated,
-     * or when the current auth credentials need to be revalidated by {@link #startLoginSession signing in} again.
-     */
-    enum LoginRequired implements LicenseListResult {
-      INSTANCE
-    }
-
     record RequestDeclined(@NotNull String errorCode, @NlsSafe @NotNull String message) implements LicenseListResult { }
-
     record RequestFailed(@NlsSafe @NotNull String errorMessage) implements LicenseListResult { }
+  }
+
+  /**
+   * Returned in cases the method returning it is called while unauthenticated,
+   * or when the current auth credentials have expired and need to be revalidated by {@link #startLoginSession signing in} again.
+   */
+  enum AuthRequired implements LicenseListResult {
+    INSTANCE;
+
+    @Override
+    public String toString() {
+      return "AuthRequired";
+    }
   }
 
   interface AuthStateListener extends EventListener {
