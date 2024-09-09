@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JpsUiDesignerConfigurationSerializationTest {
   @Test
   public void testLoad() {
-    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/ui-designer/jps-plugin/testData/uiDesigner", getClass());
+    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/ui-designer/jps-plugin/tests/testData/uiDesigner", getClass());
     JpsProject project = projectData.getProject();
     JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(project);
     assertNotNull(configuration);

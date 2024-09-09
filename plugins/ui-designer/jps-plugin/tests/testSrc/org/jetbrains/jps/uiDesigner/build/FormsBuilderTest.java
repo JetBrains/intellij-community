@@ -34,7 +34,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class FormsBuilderTest extends JpsBuildTestCase {
-  private static final String SIMPLE_FORM_PATH = "plugins/ui-designer/jps-plugin/testData/build/simple";
+  private static final String SIMPLE_FORM_PATH = "plugins/ui-designer/jps-plugin/tests/testData/build/simple";
 
   public void testSimple() {
     JpsModule m = addModule("m", copyToProject(SIMPLE_FORM_PATH, "src"));
@@ -98,7 +98,7 @@ public class FormsBuilderTest extends JpsBuildTestCase {
   }
 
   public void testDoNotCopyRuntimeClassesIfOnlyAlienFormFilesExist() {
-    JpsModule module = addModule("m", copyToProject("plugins/ui-designer/jps-plugin/testData/build/alienFormFile", "src"));
+    JpsModule module = addModule("m", copyToProject("plugins/ui-designer/jps-plugin/tests/testData/build/alienFormFile", "src"));
     buildAllModules().assertSuccessful();
     assertFalse(isRuntimeClassesCopied(module));
   }
