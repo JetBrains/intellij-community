@@ -351,6 +351,18 @@ public class ClassWriter {
           return str.startsWith("return this." + name + "<invokedynamic>(this");
         }
       }
+
+      // Default getters
+      for (StructRecordComponent rec : cl.getRecordComponents()) {
+        if (name.equals(rec.getName()) && descriptor.equals("()" + rec.getDescriptor())) {
+          if (code.countLines() == 1) {
+            String str = code.toString().trim();
+            return str.startsWith("return this." + mt.getName() + ';');
+          } else {
+            return false;
+          }
+        }
+      }
     }
     return false;
   }
@@ -679,7 +691,7 @@ public class ClassWriter {
       boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
       boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
       boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
-      boolean clInit = false, dInit = false;
+      boolean clInit = false, dInit = false, compact = false;
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, node);
 
@@ -732,6 +744,41 @@ public class ClassWriter {
           name = node.simpleName;
           init = true;
         }
+
+        if (cl.getRecordComponents() != null) {
+          StringBuilder buf = new StringBuilder("(");
+          for (StructRecordComponent rec : cl.getRecordComponents()) {
+            buf.append(rec.getDescriptor());
+          }
+          String desc = buf.append(")V").toString();
+          if (desc.equals(mt.getDescriptor())) {
+            boolean[] found = new boolean[1];
+            compact = methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
+              if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+                AssignmentExprent assignment = (AssignmentExprent) exprent;
+                if (assignment.getLeft().type == Exprent.EXPRENT_FIELD && assignment.getRight().type != Exprent.EXPRENT_VAR) {
+                  return 1;
+                } else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+                  found[0] = true;
+                  return 0;
+                }
+              }
+              return found[0] ? 1 : 0;
+            });
+            if (compact) {
+              methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
+                if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+                  AssignmentExprent assignment = (AssignmentExprent) exprent;
+                  if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+                    return 2;
+                  }
+                }
+                return 0;
+              });
+              hideMethod = methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> 1);
+            }
+          }
+        }
       }
       else if (CodeConstants.CLINIT_NAME.equals(name)) {
         name = "";
@@ -756,6 +803,7 @@ public class ClassWriter {
         }
 
         buffer.append(toValidJavaIdentifier(name));
+        if (!compact) {
         buffer.append('(');
 
         List<VarVersionPair> mask = methodWrapper.synthParameters;
@@ -839,6 +887,7 @@ public class ClassWriter {
             buffer.append(ExprProcessor.getCastTypeName(type, Collections.emptyList()));
           }
         }
+        }
       }
 
       tracer.incrementCurrentSourceLine(buffer.countLines(start_index_method));
@@ -872,7 +921,7 @@ public class ClassWriter {
             BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
-            hideMethod = code.length() == 0 &&
+            hideMethod |= code.length() == 0 &&
               (clInit || dInit || hideConstructor(node, !typeAnnotations.isEmpty(), init, throwsExceptions, paramCount, flags)) ||
               isSyntheticRecordMethod(cl, mt, code);
 
