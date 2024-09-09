@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -269,16 +268,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 override fun shouldInvokeMethodWithReflection(method: Method, args: List<Value?>): Boolean {
                     // invokeMethod in ExecutionContext already handles everything
                     return false
-                }
-
-                override fun isInstanceOf(value: Eval4JValue, targetType: Type): Boolean {
-                    val jdiValue = value.obj()
-                    if (jdiValue is Value) {
-                        return DebuggerUtils.instanceOf(jdiValue.type(), targetType.className)
-                    }
-                    else {
-                        return super.isInstanceOf(value, targetType)
-                    }
                 }
 
                 override fun loadType(classType: Type, classLoader: ClassLoaderReference?): ReferenceType {

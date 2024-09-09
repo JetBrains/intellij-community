@@ -103,17 +103,8 @@ open class JDIEval(
             "Can't check isInstanceOf() for non-object type $targetType"
         }
 
-        val clazz = loadClass(targetType)
-        return invokeMethod(
-            clazz,
-            MethodDescription(
-                CLASS_TYPE.internalName,
-                "isInstance",
-                "(Ljava/lang/Object;)Z",
-                false
-            ),
-            listOf(value)
-        ).boolean
+        val jdiValue = value.asJdiValue(vm) { OBJECT_TYPE } ?: return false
+        return DebuggerUtils.instanceOf(jdiValue.type(), targetType.className)
     }
 
     private fun Type.asReferenceType(classLoader: ClassLoaderReference? = this@JDIEval.defaultClassLoader): ReferenceType =

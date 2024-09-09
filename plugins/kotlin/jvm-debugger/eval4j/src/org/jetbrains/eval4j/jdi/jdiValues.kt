@@ -104,7 +104,6 @@ fun Value.asJdiValue(vm: VirtualMachine, expectedType: () -> Type): jdi_Value? {
         is FloatValue -> vm.mirrorOf(value)
         is DoubleValue -> vm.mirrorOf(value)
         is ObjectValue -> value as jdi_ObjectReference
-        is NewObjectValue -> this.obj() as jdi_ObjectReference
         else -> throw JDIFailureException("Unknown value: $this")
     }
 }
