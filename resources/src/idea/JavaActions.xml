@@ -373,9 +373,7 @@
          correctly labeled -->
     <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
 
-    <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
-      <add-to-group group-id="DebugReloadGroup" anchor="last"/>
-    </action>
+    <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
 
     <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
       <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
@@ -583,7 +581,7 @@
     <group id="EditorPopupMenuDebugJava">
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
-      <reference ref="Debugger.ReloadFile"/>
+      <reference ref="XDebugger.Hotswap.Modified.Files"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenuDebug" anchor="last"/>
     </group>
