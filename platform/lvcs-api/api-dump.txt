@@ -27,6 +27,7 @@ a:com.intellij.history.LocalHistory
 - <init>():V
 - a:getByteContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.history.FileRevisionTimestampComparator):B[]
 - sf:getInstance():com.intellij.history.LocalHistory
+- a:isEnabled():Z
 - a:isUnderControl(com.intellij.openapi.vfs.VirtualFile):Z
 - a:putEventLabel(com.intellij.openapi.project.Project,java.lang.String,com.intellij.history.ActivityId):com.intellij.history.Label
 - f:putSystemLabel(com.intellij.openapi.project.Project,java.lang.String):com.intellij.history.Label

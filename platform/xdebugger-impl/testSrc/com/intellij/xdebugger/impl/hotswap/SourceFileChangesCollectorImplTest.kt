@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
-import com.intellij.history.ActivityId
-import com.intellij.history.FileRevisionTimestampComparator
-import com.intellij.history.Label
-import com.intellij.history.LocalHistory
-import com.intellij.history.LocalHistoryAction
+import com.intellij.history.*
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -142,6 +138,8 @@ private class MockListener(private val scope: CoroutineScope, private val channe
 }
 
 private class MockLocalHistory(val bytes: ByteArray) : LocalHistory() {
+  override val isEnabled: Boolean = true
+
   override fun getByteContent(file: VirtualFile, condition: FileRevisionTimestampComparator): ByteArray? = bytes
   override fun startAction(name: @NlsContexts.Label String?, activityId: ActivityId?): LocalHistoryAction = LocalHistoryAction.NULL
   override fun putEventLabel(project: Project, name: String, activityId: ActivityId): Label = Label.NULL_INSTANCE

@@ -49,8 +49,10 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
   private var daysToKeep = getInt(DAYS_TO_KEEP)
 
-  var isDisabled: Boolean = false
-    private set
+  override val isEnabled: Boolean
+    get() = !isDisabled
+
+  private var isDisabled: Boolean = false
 
   var facade: LocalHistoryFacade? = null
     private set
