@@ -3,16 +3,14 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
-import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordReader;
 import com.intellij.openapi.vfs.newvfs.persistent.IPersistentFSRecordsStorage.RecordUpdater;
@@ -798,6 +796,113 @@ public final class FSRecordsImpl implements Closeable {
       fileHierarchyLock.unlock(minId);
     }
   }
+
+  void moveChildren(@NotNull VirtualFile parent,
+                    int fromParentId,
+                    int toParentId,
+                    int childToMoveId) {
+    assert fromParentId > 0 : fromParentId;
+    assert toParentId > 0 : toParentId;
+
+    checkNotClosed();
+
+    if (fromParentId == toParentId) {
+      return;
+    }
+
+    int minId = Math.min(fromParentId, toParentId);
+    int maxId = Math.max(fromParentId, toParentId);
+    fileHierarchyLock.lock(minId);
+    try {
+      fileHierarchyLock.lock(maxId);
+      try {
+        try {
+          ListResult firstParentChildren = list(fromParentId);
+          ListResult fromParentChildrenWithoutChildMoved = firstParentChildren.remove(childToMoveId);
+          if (fromParentChildrenWithoutChildMoved == firstParentChildren) {
+            //RC: this means childToMove doesn't present among fromParent's children. It seems natural to fail move
+            //    procedure in this case by throwing IllegalArgumentException, because there is definitely something
+            //    wrong with arguments supplied. But the legacy version of this code didn't fail -- it proceeds
+            //    with adding the childToMove to toParent's children, regardless of its current parent, if any.
+            //    This seems error-prone to me, because we could easily end up with childToMove being in 2 parents'
+            //    children lists -- so I decided to fail in this case:
+            throw new IllegalArgumentException(
+              "Can't move child(#" + childToMoveId + ") from parent(#" + fromParentId + ") to (#" + toParentId + "): " +
+              "child doesn't belong to parent(#" + fromParentId + "), " +
+              "child.parent(#" + connection.getRecords().getParent(childToMoveId) + ")");
+          }
+
+          ListResult toParentChildren = list(toParentId);
+
+          // check that names are not duplicated:
+          int childToMoveNameId = connection.getRecords().getNameId(childToMoveId);
+          ChildInfo alreadyExistingChild = findChild(parent, toParentChildren, childToMoveNameId);
+          if (alreadyExistingChild != null) {
+            //RC: Again, the legacy version of this code just silently returned, but I prefer to throw IAE, since this
+            //    is an error in params supplied, and it should be resolved
+            String childToMoveName = getNameByNameId(childToMoveNameId);
+            throw new IllegalArgumentException(
+              "Can't move child(#" + childToMoveId + ", name='" + childToMoveName + "') " +
+              "from parent(" + fromParentId + ") to (" + toParentId + "): " +
+              "toParent already has a child with same name -- " + alreadyExistingChild);
+          }
+
+          ListResult toParentChildrenUpdated = toParentChildren.insert(
+            new ChildInfoImpl(childToMoveId, childToMoveNameId, null, null, null)
+          );
+
+          connection.getRecords().setParent(childToMoveId, toParentId);
+          treeAccessor.doSaveChildren(fromParentId, fromParentChildrenWithoutChildMoved);
+          treeAccessor.doSaveChildren(toParentId, toParentChildrenUpdated);
+        }
+        catch (CancellationException e) {
+          // NewVirtualFileSystem.list methods can be interrupted now
+          throw e;
+        }
+        catch (IllegalArgumentException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          throw handleError(e);
+        }
+      }
+      finally {
+        fileHierarchyLock.unlock(maxId);
+      }
+    }
+    finally {
+      fileHierarchyLock.unlock(minId);
+    }
+  }
+
+  /**
+   * @param parent only used as a source of file names case-sensitivity
+   * @return child with given name, with case sensitivity given by parent
+   */
+  private @Nullable ChildInfo findChild(@NotNull VirtualFile parent,
+                                        @NotNull ListResult children,
+                                        int childNameId) {
+    if (children.children.isEmpty()) {
+      return null;
+    }
+
+    for (ChildInfo info : children.children) {
+      if (childNameId == info.getNameId()) {
+        return info;
+      }
+    }
+
+    String childName = getNameByNameId(childNameId);
+    if (!parent.isCaseSensitive()) {
+      for (ChildInfo info : children.children) {
+        if (Comparing.equal(childName, getNameByNameId(info.getNameId()), /* caseSensitive: */false)) {
+          return info;
+        }
+      }
+    }
+    return null;
+  }
+
 
   //========== symlink manipulation: ========================================
 

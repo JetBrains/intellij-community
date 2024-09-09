@@ -607,6 +607,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return foundChildRef.get();
   }
 
+  /**
+   * @param parent only used as a source of file names case-sensitivity
+   * @return child with given name, with case sensitivity given by parent
+   */
   private ChildInfo findExistingChildInfo(@NotNull VirtualFile parent,
                                           @NotNull String childName,
                                           @NotNull List<? extends ChildInfo> children) {
@@ -623,7 +627,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
-        if (Comparing.equal(childName, vfs.getNameByNameId(info.getNameId()), false)) {
+        if (Comparing.equal(childName, vfs.getNameByNameId(info.getNameId()),  /* caseSensitive: */ false)) {
           return info;
         }
       }
@@ -2315,31 +2319,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void executeMove(@NotNull VirtualFile file, @NotNull VirtualFile newParent) {
     clearIdCache();
 
-    int fileId = fileId(file);
+    int childToMoveId = fileId(file);
     int newParentId = fileId(newParent);
     VirtualFile oldParent = file.getParent();
     int oldParentId = fileId(oldParent);
 
-    VirtualFileSystemEntry virtualFileSystemEntry = (VirtualFileSystemEntry)file;
+    vfsPeer.moveChildren(newParent, oldParentId, newParentId, childToMoveId);
 
-    //TODO RC: there is significant difference between moveChildren() and this method -- moveChildren() seems like
-    //         more better protected from concurrent updates than this method, there the update is split into few (3)
-    //         independent updates
-    vfsPeer.update(oldParent, oldParentId, children -> children.remove(fileId));
-    vfsPeer.setParent(fileId, newParentId);
-
-    ChildInfo newChild = new ChildInfoImpl(fileId, virtualFileSystemEntry.getNameId(), null, null, null);
-    vfsPeer.update(newParent, newParentId, children -> {
-      // check that names are not duplicated:
-      ChildInfo duplicate = findExistingChildInfo(newParent, file.getName(), children.children);
-      if (duplicate != null) {
-        return children;
-      }
-      
-      return children.insert(newChild);
-    });
-
-    virtualFileSystemEntry.setParent(newParent);
+    ((VirtualFileSystemEntry)file).setParent(newParent);
   }
 
   @Override
