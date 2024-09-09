@@ -49,7 +49,8 @@
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType"/>
 
-    <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinClassRendererProvider"/>
+    <debugger.compoundRendererProvider id="KotlinClassRendererProvider"
+                                       implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinClassRendererProvider"/>
     <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory"/>
 
 
