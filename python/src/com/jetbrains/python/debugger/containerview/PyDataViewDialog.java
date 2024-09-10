@@ -31,7 +31,7 @@ public class PyDataViewDialog extends DialogWrapper {
 
     myMainPanel = new JPanel(new GridBagLayout());
     myDataViewerPanel = new PyDataViewerPanel(project, value.getFrameAccessor());
-    myDataViewerPanel.apply(value, false);
+    myDataViewerPanel.apply(value, false, /* commandSource = */ null);
     myDataViewerPanel.setPreferredSize(JBUI.size(TABLE_DEFAULT_WIDTH, TABLE_DEFAULT_HEIGHT));
 
     myMainPanel.add(myDataViewerPanel, createDataViewPanelConstraints());
