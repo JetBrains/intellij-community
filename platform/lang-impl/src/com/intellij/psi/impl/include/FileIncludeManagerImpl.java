@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.include;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,6 +33,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.*;
 
 /**
@@ -39,7 +44,10 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final PsiFileFactory myPsiFileFactory;
-
+  // We save PsiFiles involved in includes here. Otherwise, we'd have to reparse/recompute includes in plugin.xmls on each typing because
+  // - include graph is cached in the PsiFile userdata
+  // - these PsiFiles are subjects to gc because FileManagerImpl stores FileViewProviders by weak references, and nobody retains plugin.xml's PsiFile
+  private final Set<Reference<PsiFile>> cache = ConcurrentCollectionFactory.createConcurrentSet();
   private final IncludeCacheHolder myIncludedHolder = new IncludeCacheHolder("compile time includes", "runtime includes") {
     @Override
     protected VirtualFile[] computeFiles(final PsiFile file, final boolean compileTimeOnly) {
@@ -195,14 +203,14 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
 
     private final ParameterizedCachedValueProvider<VirtualFile[], PsiFile> COMPILE_TIME_PROVIDER = new IncludedFilesProvider(true) {
       @Override
-      protected VirtualFile[] computeFiles(PsiFile file, boolean compileTimeOnly) {
+      protected @NotNull VirtualFile @NotNull [] computeFiles(@NotNull PsiFile file, boolean compileTimeOnly) {
         return IncludeCacheHolder.this.computeFiles(file, compileTimeOnly);
       }
     };
 
     private final ParameterizedCachedValueProvider<VirtualFile[], PsiFile> RUNTIME_PROVIDER = new IncludedFilesProvider(false) {
       @Override
-      protected VirtualFile[] computeFiles(PsiFile file, boolean compileTimeOnly) {
+      protected @NotNull VirtualFile @NotNull [] computeFiles(@NotNull PsiFile file, boolean compileTimeOnly) {
         return IncludeCacheHolder.this.computeFiles(file, compileTimeOnly);
       }
     };
@@ -245,21 +253,32 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
 
   }
 
-  private abstract static class IncludedFilesProvider implements ParameterizedCachedValueProvider<VirtualFile[], PsiFile> {
+  private abstract class IncludedFilesProvider implements ParameterizedCachedValueProvider<VirtualFile[], PsiFile> {
     private final boolean myRuntimeOnly;
 
     IncludedFilesProvider(boolean runtimeOnly) {
       myRuntimeOnly = runtimeOnly;
     }
 
-    protected abstract VirtualFile[] computeFiles(PsiFile file, boolean compileTimeOnly);
+    protected abstract @NotNull VirtualFile @NotNull [] computeFiles(@NotNull PsiFile file, boolean compileTimeOnly);
 
     @Override
     public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile psiFile) {
       VirtualFile[] value = computeFiles(psiFile, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile
-      List<Object> deps = new ArrayList<>(Arrays.asList(value));
-      deps.add(psiFile);
+      List<Object> deps = new ArrayList<>(value.length +1);
+      for (VirtualFile file : value) {
+        PsiFile depPsiFile = psiFile.getManager().findFile(file);
+        if (depPsiFile != null) {
+          cache.add(new SoftReference<>(depPsiFile));
+        }
+        Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+        Object dep = document == null ? file : document;
+        deps.add(dep);
+      }
+      // do not add PsiFile as dependency because it will be translated to PSI_MOD_COUNT which fires too often, even for unrelated files
+      deps.add(psiFile.getFileDocument());
+      cache.add(new SoftReference<>(psiFile));
 
       return CachedValueProvider.Result.create(value, deps);
     }
