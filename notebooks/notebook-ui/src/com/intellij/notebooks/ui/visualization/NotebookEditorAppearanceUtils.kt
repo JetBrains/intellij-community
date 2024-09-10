@@ -17,4 +17,6 @@ object NotebookEditorAppearanceUtils {
     this.getUserData(JUPYTER_HISTORY_EDITOR_KEY) == true -> false
     else -> true
   }
+
+
 }
