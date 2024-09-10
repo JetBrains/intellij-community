@@ -652,6 +652,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                     runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionWithInlineClass.kt");
                 }
 
+                @TestMetadata("suspendFunctionsFromNonSuspendCode.kt")
+                public void testSuspendFunctionsFromNonSuspendCode() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsFromNonSuspendCode.kt");
+                }
+
                 @TestMetadata("suspendFunctionsWithContext.kt")
                 public void testSuspendFunctionsWithContext() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/coroutines/suspendFunctionsWithContext.kt");

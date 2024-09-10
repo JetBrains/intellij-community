@@ -19,7 +19,7 @@ suspend fun three(): Int {
     return 3
 }
 
-fun main(args: Array<String>) {
+suspend fun main(args: Array<String>) {
     // EXPRESSION: one() + two() + three()
     // RESULT: 6: I
     //Breakpoint!
