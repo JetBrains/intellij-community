@@ -74,4 +74,9 @@ public class LinkConstant extends PooledConstant {
            this.descriptor.equals(cn.descriptor) &&
            (this.type != CodeConstants.CONSTANT_NameAndType || this.className.equals(cn.className));
   }
+
+  @Override
+  public String toString() {
+	return (className == null ? "" : className + '.') + elementName + descriptor;
+  }
 }

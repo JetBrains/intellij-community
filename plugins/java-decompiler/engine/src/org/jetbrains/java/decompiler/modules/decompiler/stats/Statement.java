@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -819,7 +820,17 @@ public abstract class Statement implements IMatchable {
 
   // helper methods
   public String toString() {
-    return String.format("{%s}:%d", type, id);
+    return toString(0);
+  }
+
+  protected String toString(int indent) {
+    var buf = new StringBuilder();
+    buf.append(TextUtil.getIndentString(indent)).append(type).append(": ").append(id);
+    for (var stat : this.stats) {
+      buf.append(DecompilerContext.getNewLineSeparator());
+      buf.append(stat.toString(indent + 1));
+    }
+    return buf.toString();
   }
 
   //TODO: Cleanup/cache?

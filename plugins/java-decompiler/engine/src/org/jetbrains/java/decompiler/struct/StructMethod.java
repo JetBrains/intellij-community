@@ -277,7 +277,7 @@ public class StructMethod extends StructMember {
 
       i++;
 
-      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops, i - offset);
+      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops, i - offset, pool);
 
       instructions.addWithKey(instr, offset);
     }

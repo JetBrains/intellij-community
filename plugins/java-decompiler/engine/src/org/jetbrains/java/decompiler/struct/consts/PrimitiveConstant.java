@@ -49,4 +49,9 @@ public class PrimitiveConstant extends PooledConstant {
            this.isArray == cn.isArray &&
            this.value.equals(cn.value);
   }
+
+  @Override
+  public String toString() {
+	return value.toString();
+  }
 }

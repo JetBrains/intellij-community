@@ -195,6 +195,9 @@ public class ControlFlowGraph {
     VBStyleCollection<BasicBlock, Integer> colBlocks = createBasicBlocks(states, instrseq, mapInstrBlocks);
 
     blocks = colBlocks;
+    first = blocks.get(0);
+
+    last = new BasicBlock(++last_id);
 
     connectBlocks(colBlocks, mapInstrBlocks);
 
@@ -718,9 +721,9 @@ public class ControlFlowGraph {
 
   private void setFirstAndLastBlocks() {
 
-    first = blocks.get(0);
+    //first = blocks.get(0);
 
-    last = new BasicBlock(++last_id);
+    //last = new BasicBlock(++last_id);
 
     for (BasicBlock block : blocks) {
       if (block.getSuccessors().isEmpty()) {

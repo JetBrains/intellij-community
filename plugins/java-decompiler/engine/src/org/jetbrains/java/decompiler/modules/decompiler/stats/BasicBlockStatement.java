@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 public class BasicBlockStatement extends Statement {
   private final BasicBlock block;
@@ -67,5 +68,10 @@ public class BasicBlockStatement extends Statement {
     } else {
       return new StartEndPair(0, 0);
     }
+  }
+
+  @Override
+  protected String toString(int indent) {
+	return TextUtil.getIndentString(indent) + type + ": " + id + DecompilerContext.getNewLineSeparator() + block.getSeq().toString(indent + 1);
   }
 }
