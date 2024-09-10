@@ -326,7 +326,7 @@ public abstract class Exprent implements IMatchable {
     }
 
     List<Exprent> lstAllExprents = getAllExprents();
-    if (lstAllExprents == null || lstAllExprents.isEmpty()) {
+    if (lstAllExprents.isEmpty()) {
       return null;
     }
 

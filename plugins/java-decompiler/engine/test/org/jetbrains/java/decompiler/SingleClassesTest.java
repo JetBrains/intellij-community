@@ -249,5 +249,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testLambda() { doTest("pkg/TestLambda"); }
   @Test public void testCustomSyntheticRecords() { doTest("pkg/TestCustomSyntheticRecords"); }
   @Test public void testFinally() { doTest("pkg/TestFinally"); }
+  @Test public void testEnumInit() { doTest("pkg/TestEnumInit"); }
+  @Test public void testGenericInit() { doTest("pkg/TestInitGeneric"); }
 
 }

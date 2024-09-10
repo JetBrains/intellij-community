@@ -1,0 +1,111 @@
+package pkg;
+
+import java.util.List;
+
+public class TestInitGeneric<T> {
+   public static void main(String[] args) {
+   }// 10
+
+   public T test() {
+      return (T)null;// 13
+   }
+
+   class A<T> {
+      public T test() {
+         return (T)null;// 18
+      }
+   }
+
+   class B<L extends T> {
+      public L test() {
+         return (L)null;// 24
+      }
+
+      public <AA extends CharSequence> AA test2() {
+         return (AA)null;// 28
+      }
+   }
+
+   static class C<L extends CharSequence, K> {
+      public K test(List<? super L> list) {
+         return (K)null;// 34
+      }
+
+      public L test2(List<? extends L> list) {
+         L l = (L)(list.get(0));// 38
+         System.out.println(l);// 39
+         return l;// 40
+      }
+   }
+}
+
+class 'pkg/TestInitGeneric' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      6
+   }
+
+   method 'test ()Ljava/lang/Object;' {
+      0      9
+      1      9
+   }
+}
+
+class 'pkg/TestInitGeneric$A' {
+   method 'test ()Ljava/lang/Object;' {
+      0      14
+      1      14
+   }
+}
+
+class 'pkg/TestInitGeneric$B' {
+   method 'test ()Ljava/lang/Object;' {
+      0      20
+      1      20
+   }
+
+   method 'test2 ()Ljava/lang/CharSequence;' {
+      0      24
+      1      24
+   }
+}
+
+class 'pkg/TestInitGeneric$C' {
+   method 'test (Ljava/util/List;)Ljava/lang/Object;' {
+      0      30
+      1      30
+   }
+
+   method 'test2 (Ljava/util/List;)Ljava/lang/CharSequence;' {
+      0      34
+      1      34
+      2      34
+      3      34
+      4      34
+      5      34
+      6      34
+      7      34
+      8      34
+      9      34
+      a      34
+      b      35
+      c      35
+      d      35
+      e      35
+      f      35
+      10      35
+      11      35
+      12      36
+      13      36
+   }
+}
+
+Lines mapping:
+10 <-> 7
+13 <-> 10
+18 <-> 15
+24 <-> 21
+28 <-> 25
+34 <-> 31
+38 <-> 35
+39 <-> 36
+40 <-> 37
