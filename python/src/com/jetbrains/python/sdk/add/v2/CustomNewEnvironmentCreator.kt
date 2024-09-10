@@ -17,7 +17,6 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.installPipIfNeeded
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -50,17 +49,21 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
     savePathToExecutableToProperties()
 
     // todo think about better error handling
     val selectedBasePython = model.state.baseInterpreter.get()!!
     val homePath = model.installPythonIfNeeded(selectedBasePython)
 
-    val newSdk = setupEnvSdk(null,
-                             null,
+    val module = when (moduleOrProject) {
+      is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
+      is ModuleOrProject.ProjectOnly -> null
+    }
+    val newSdk = setupEnvSdk(moduleOrProject.project,
+                             module,
                              model.baseSdks,
-                             model.projectPath.value,
+                             model.projectPath.value.toString(),
                              homePath,
                              false)!!
     SdkConfigurationUtil.addSdk(newSdk)
@@ -128,7 +131,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
 
   internal abstract fun savePathToExecutableToProperties()
 
-  internal abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
+  protected abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
 
   internal abstract fun detectExecutable()
 }

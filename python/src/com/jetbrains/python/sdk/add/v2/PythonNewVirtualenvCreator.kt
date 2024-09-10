@@ -21,6 +21,7 @@ import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
@@ -183,11 +184,9 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
     // todo remove project path, or move to controller
-    val projectPath = model.projectPath.value
-    assert(projectPath.isNotBlank()) { "Project path can't be blank" }
-    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), Path.of(projectPath), model.state.baseInterpreter.get()!!).getOrThrow()
+    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), model.projectPath.value, model.state.baseInterpreter.get()!!).getOrThrow()
   }
 
   companion object {

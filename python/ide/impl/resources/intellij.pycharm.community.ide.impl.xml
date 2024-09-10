@@ -104,7 +104,7 @@
 
     <group id="WelcomeScreen.Platform.NewProject">
       <group id="WelcomeScreen.CreateDirectoryProject"
-              class="com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep"/>
+              class="com.intellij.pycharm.community.ide.impl.newProject.impl.PyV3NewProjectStepAction"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

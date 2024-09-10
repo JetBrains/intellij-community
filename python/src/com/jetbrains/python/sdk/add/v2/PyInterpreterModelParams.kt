@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -13,5 +14,5 @@ import kotlin.coroutines.CoroutineContext
 data class PyInterpreterModelParams(
   val scope: CoroutineScope,
   val uiContext: CoroutineContext,
-  val projectPathProperty: StateFlow<String>? = null,
+  val projectPathProperty: StateFlow<Path>? = null,
 )

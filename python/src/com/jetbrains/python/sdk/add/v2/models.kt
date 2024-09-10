@@ -12,6 +12,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.SystemProperties
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.psi.LanguageLevel
@@ -36,7 +37,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
   open val state = AddInterpreterState(propertyGraph)
   open val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
 
-  val projectPath = params.projectPathProperty ?: MutableStateFlow("") // todo how to populate?
+  val projectPath = params.projectPathProperty ?: MutableStateFlow(Path.of(SystemProperties.getUserHome())) // todo how to populate?
   internal val scope = params.scope
   internal val uiContext = params.uiContext
 
@@ -229,7 +230,7 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
 
   override fun suggestVenvPath(): String? {
     // todo should this be a coroutine?
-    return FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.value))
+    return FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.value.toString()))
   }
 }
 

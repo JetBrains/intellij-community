@@ -28,12 +28,13 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
-import com.jetbrains.python.newProject.PythonPromoProjectGenerator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProject.promotion.PromoProjectGenerator
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
@@ -44,16 +45,20 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.JPanel
 
+
+/**
+ * @deprecated Use [com.jetbrains.python.newProjectWizard]
+ */
+@Deprecated("use com.jetbrains.python.newProjectWizard")
 class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   projectGenerator: DirectoryProjectGenerator<T>,
   callback: AbstractNewProjectStep.AbstractCallback<T>,
-)
-  : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
+) : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
 
   private val propertyGraph = PropertyGraph()
   private val projectName = propertyGraph.property("")
   private val projectLocation = propertyGraph.property("")
-  private val projectLocationFlow = MutableStateFlow(projectLocation.get())
+  private val projectLocationFlow = MutableStateFlow(Path.of(SystemProperties.getUserHome()))
   private val locationHint = propertyGraph.property("").apply {
     dependsOn(projectName, ::updateHint)
     dependsOn(projectLocation, ::updateHint)
@@ -65,7 +70,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
 
   init {
     projectLocation.afterChange {
-      projectLocationFlow.value = projectLocation.get()
+      projectLocationFlow.value = Path.of(projectLocation.get())
     }
   }
 
@@ -103,7 +108,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
 
   override fun createBasePanel(): JPanel {
     val projectGenerator = myProjectGenerator
-    if (projectGenerator is PythonPromoProjectGenerator) {
+    if (projectGenerator is PromoProjectGenerator) {
       myCreateButton.isEnabled = false
       myLocationField = TextFieldWithBrowseButton()
       return projectGenerator.createPromoPanel()
@@ -208,6 +213,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   }
 
   override fun getSdk(): Sdk {
+    // It is here only for DS, not used in PyCharm
     return PyLazySdk("Uninitialized environment") { interpreterPanel?.getSdk() }
   }
 

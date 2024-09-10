@@ -9,7 +9,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.observable.util.or
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.ui.dsl.builder.AlignX
@@ -19,21 +19,28 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.file.Path
+
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null) {
+class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null) : PySdkCreator {
+
+  companion object {
+    private const val VENV_DIR = ".venv"
+  }
 
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
@@ -41,6 +48,8 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllow
       "When provided, onlyAllowedInterpreterTypes shouldn't be empty"
     }
   }
+
+  private val initMutex = Mutex()
 
   private var selectedMode = propertyGraph.property(this.allowedInterpreterTypes.first())
   private var _projectVenv = propertyGraph.booleanProperty(selectedMode, PROJECT_VENV)
@@ -53,7 +62,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllow
 
   private fun updateVenvLocationHint() {
     val get = selectedMode.get()
-    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.value + File.separator))
+    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.value.resolve(VENV_DIR).toString()))
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
@@ -63,13 +72,14 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllow
   fun buildPanel(outerPanel: Panel) {
     //presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
     model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-                                           Dispatchers.EDT + ModalityState.current().asContextElement(), projectPath))
+                                                                    Dispatchers.EDT + ModalityState.current().asContextElement(), projectPath))
     model.navigator.selectionMode = selectedMode
     //presenter.controller = model
 
-    custom = PythonAddCustomInterpreter(model)
+    custom = PythonAddCustomInterpreter(model, projectPath = projectPath)
 
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
+
 
 
     with(outerPanel) {
@@ -112,43 +122,46 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllow
         custom.buildPanel(this, validationRequestor)
       }.visibleIf(_custom)
     }
-
     selectedMode.afterChange { updateVenvLocationHint() }
   }
 
+
   fun onShown() {
-    if (!initialized) {
-      initialized = true
-      val modalityState = ModalityState.current().asContextElement()
-      model.scope.launch(Dispatchers.EDT + modalityState) {
-        model.initialize()
-        pythonBaseVersionComboBox.setItems(model.baseInterpreters)
-        custom.onShown()
-
-        updateVenvLocationHint()
+    val modalityState = ModalityState.current().asContextElement()
+    model.scope.launch(Dispatchers.EDT + modalityState) {
+      initMutex.withLock {
+        if (!initialized) {
+          model.initialize()
+          pythonBaseVersionComboBox.setItems(model.baseInterpreters)
+          custom.onShown()
+          updateVenvLocationHint()
+          model.navigator.restoreLastState(allowedInterpreterTypes)
+          initialized = true
+        }
       }
-
-      model.navigator.restoreLastState(allowedInterpreterTypes)
     }
   }
 
-  fun getSdk(): Sdk {
+  @Deprecated("Use one with module or project")
+  fun getSdk(): Sdk = getSdk(ModuleOrProject.ProjectOnly(ProjectManager.getInstance().defaultProject))
+
+  override fun getSdk(moduleOrProject: ModuleOrProject): Sdk {
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
-        val projectPath = Path.of(projectPath.value)
-        model.setupVirtualenv(projectPath.resolve(".venv"), // todo just keep venv path, all the rest is in the model
+        val projectPath = projectPath.value
+        model.setupVirtualenv(projectPath.resolve(VENV_DIR), // todo just keep venv path, all the rest is in the model
                               projectPath,
           //pythonBaseVersion.get()!!)
                               model.state.baseInterpreter.get()!!).getOrThrow()
       }
       BASE_CONDA -> model.selectCondaEnvironment(model.state.baseCondaEnv.get()!!.envIdentity)
-      CUSTOM -> custom.currentSdkManager.getOrCreateSdk()
+      CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)
     }
   }
 
 
-  fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
+  override fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
     PROJECT_VENV -> InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
                                               InterpreterTarget.LOCAL,
                                               false,

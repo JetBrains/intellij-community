@@ -3,13 +3,13 @@ package com.intellij.pycharm.community.ide.impl.newProject;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
-import com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep;
+import com.intellij.pycharm.community.ide.impl.newProject.impl.PyV3NewProjectStepAction;
 import org.jetbrains.annotations.NotNull;
 
-public class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
+public final class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
   @Override
   protected @NotNull AbstractNewProjectStep<?> createNewProjectStep() {
-    return new PyCharmNewProjectStep();
+    return new PyV3NewProjectStepAction();
   }
 
   @Override

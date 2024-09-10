@@ -45,7 +45,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    * Returns created SDK ready to use
    */
   @RequiresEdt
-  abstract fun getOrCreateSdk(): Sdk
+  abstract fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 

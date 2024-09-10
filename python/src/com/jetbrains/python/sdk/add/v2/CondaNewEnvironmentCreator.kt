@@ -12,13 +12,18 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import java.io.File
+import com.jetbrains.python.ui.flow.bindText
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import java.nio.file.Path
+import kotlin.io.path.name
 
-class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val projectPath: StateFlow<Path>?) : PythonNewEnvironmentCreator(model) {
 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
@@ -32,8 +37,11 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) 
           .component
       }
       row(message("sdk.create.custom.conda.env.name")) {
-        textField()
+        val envName = textField()
           .bindText(model.state.newCondaEnvName)
+        if (projectPath != null) {
+          envName.bindText(projectPath.map { it.name })
+        }
       }
 
       executableSelector(model.state.condaExecutable,
@@ -46,10 +54,10 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) 
   }
 
   override fun onShown() {
-    model.state.newCondaEnvName.set(model.projectPath.value.substringAfterLast(File.separator))
+    model.state.newCondaEnvName.set(model.projectPath.value.name)
   }
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
     return model.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.state.newCondaEnvName.get()))
   }
 
@@ -61,7 +69,7 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) 
                                      false,
                                      false,
                                      false,
-                                     //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                      false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }

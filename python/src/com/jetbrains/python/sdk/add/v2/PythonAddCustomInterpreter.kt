@@ -13,8 +13,10 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
+import kotlinx.coroutines.flow.StateFlow
+import java.nio.file.Path
 
-class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null) {
+class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, private val projectPath: StateFlow<Path>? = null) {
 
   private val propertyGraph = model.propertyGraph
   private val selectionMethod = propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
@@ -25,7 +27,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
 
   private val newInterpreterCreators = mapOf(
     VIRTUALENV to PythonNewVirtualenvCreator(model),
-    CONDA to CondaNewEnvironmentCreator(model),
+    CONDA to CondaNewEnvironmentCreator(model, projectPath),
     PIPENV to PipEnvNewEnvironmentCreator(model),
     POETRY to PoetryNewEnvironmentCreator(model, moduleOrProject),
   )

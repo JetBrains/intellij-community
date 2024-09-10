@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
-public class PyCharmNewProjectAction extends DumbAwareAction {
+public final class PyCharmNewProjectAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

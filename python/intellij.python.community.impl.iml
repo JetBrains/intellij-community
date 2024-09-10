@@ -151,5 +151,6 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
   </component>
 </module>

@@ -50,6 +50,10 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
+ */
+@Deprecated
 public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends ProjectSettingsStepBase<T> implements DumbAware {
   private boolean myInstallFramework;
   private @Nullable PyAddSdkGroupPanel myInterpreterPanel;
@@ -181,7 +185,7 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
 
     if (validationErrors.isEmpty()) {
       // Once can't create anything on immutable SDK
-      var sdk = (interpreterPanel != null) ?  interpreterPanel.getSdk() : null;
+      var sdk = (interpreterPanel != null) ? interpreterPanel.getSdk() : null;
       if (sdk != null && isImmutableSdk(sdk)) {
         validationErrors = List.of(
           PyBundle.message("python.unknown.project.synchronizer.this.interpreter.type.does.not.support.remote.project.creation"));
@@ -308,7 +312,8 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
     final Sdk preferredSdk = existingSdks.stream().findFirst().orElse(null);
 
     final String newProjectPath = getProjectLocation();
-    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(allExistingSdks, newProjectPath, preferredEnvironment);
+    final PyAddNewEnvironmentPanel newEnvironmentPanel =
+      new PyAddNewEnvironmentPanel(allExistingSdks, newProjectPath, preferredEnvironment);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
     PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?

@@ -26,7 +26,7 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
   private lateinit var mainPanel: PythonAddCustomInterpreter
   private lateinit var model: PythonLocalAddInterpreterModel
 
-  private val basePath = dialogPresenter.pathForVEnv.toString()
+  private val basePath = dialogPresenter.pathForVEnv
 
   init {
     title = PyBundle.message("python.sdk.add.python.interpreter.title")

@@ -43,6 +43,7 @@ import com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeColle
 import com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector.logWelcomeRunConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.psi.LanguageLevel
@@ -94,7 +95,7 @@ internal object PyWelcomeGenerator {
   }
 }
 
-private object PyWelcome {
+object PyWelcome {
   private val LOG = Logger.getInstance(PyWelcome::class.java)
 
   @CalledInAny
@@ -175,12 +176,14 @@ private object PyWelcome {
   }
 
   @CalledInAny
-  private fun expandProjectTree(project: Project,
-                                toolWindowManager: ToolWindowManager,
-                                baseDir: VirtualFile,
-                                module: Module?,
-                                file: VirtualFile?,
-                                point: ProjectViewPoint) {
+  private fun expandProjectTree(
+    project: Project,
+    toolWindowManager: ToolWindowManager,
+    baseDir: VirtualFile,
+    module: Module?,
+    file: VirtualFile?,
+    point: ProjectViewPoint,
+  ) {
     // the approach was taken from com.intellij.platform.PlatformProjectViewOpener
 
     val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
@@ -209,17 +212,13 @@ private object PyWelcome {
     }
   }
 
-  private fun prepareFile(project: Project, baseDir: VirtualFile): PsiFile? {
+  @RequiresWriteLock
+  fun prepareFile(project: Project, baseDir: VirtualFile): PsiFile {
     val file = kotlin.runCatching { baseDir.createChildData(this, "main.py") }
       .onFailure { PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NO_VFILE) }
       .getOrThrow()
 
-    val psiFile = PsiManager.getInstance(project).findFile(file)
-    if (psiFile == null) {
-      LOG.warn("Unable to get psi for $file")
-      PyWelcomeCollector.logWelcomeScript(project, ScriptResult.NO_PSI)
-      return null
-    }
+    val psiFile = PsiManager.getInstance(project).findFile(file) ?: error("File $file was just created, but not found in PSI")
 
     writeText(project, psiFile)?.also { line ->
       PyWelcomeCollector.logWelcomeScript(project, ScriptResult.CREATED)
@@ -278,10 +277,12 @@ private object PyWelcome {
     return breakpointLine
   }
 
-  private class ProjectViewListener(private val project: Project,
-                                    private val baseDir: VirtualFile,
-                                    private val module: Module?,
-                                    private val file: VirtualFile?) : ToolWindowManagerListener, Disposable {
+  private class ProjectViewListener(
+    private val project: Project,
+    private val baseDir: VirtualFile,
+    private val module: Module?,
+    private val file: VirtualFile?,
+  ) : ToolWindowManagerListener, Disposable {
 
     private var toolWindowRegistered = false
 

@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
@@ -94,7 +95,7 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
     //}
   }
 
-  override fun getOrCreateSdk(): Sdk {
+  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
     return model.selectCondaEnvironment(state.selectedCondaEnv.get()!!.envIdentity)
   }
 

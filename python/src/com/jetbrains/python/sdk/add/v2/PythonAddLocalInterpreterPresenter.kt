@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -38,7 +37,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
-    val sdk = withContext(Dispatchers.EDT) { writeIntentReadAction { addEnvironment.getOrCreateSdk () } }
+    val sdk = withContext(Dispatchers.EDT) { writeIntentReadAction { addEnvironment.getOrCreateSdk(moduleOrProject) } }
     moduleOrProject.project.pySdkService.persistSdk(sdk)
     _sdkShared.emit(sdk)
   }
