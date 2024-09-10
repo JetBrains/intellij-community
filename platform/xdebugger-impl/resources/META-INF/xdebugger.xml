@@ -24,6 +24,7 @@
     <extensionPoint name="xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
 
     <extensionPoint name="xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
+    <extensionPoint name="xdebugger.controlExceptionBreakpointSupport" interface="com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport" dynamic="true"/>
 
     <extensionPoint name="xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
   </extensionPoints>
@@ -144,6 +145,11 @@
     <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
                  description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
+
+    <intentionAction>
+      <language>UAST</language>
+      <className>com.intellij.xdebugger.impl.codeinsight.ControlExceptionBreakpointIntentionAction</className>
+    </intentionAction>
   </extensions>
 
   <actions>

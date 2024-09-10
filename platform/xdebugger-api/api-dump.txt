@@ -411,6 +411,12 @@ f:com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
 - sf:BY_TYPE:I
 - sf:DEFAULT:I
 - <init>():V
+com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport
+- a:findExceptionReference(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport$ExceptionReference
+com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport$ExceptionReference
+- a:createBreakpoint(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.XBreakpoint
+- a:findExistingBreakpoint(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.XBreakpoint
+- a:getDisplayName():java.lang.String
 e:com.intellij.xdebugger.evaluation.EvaluationMode
 - java.lang.Enum
 - sf:CODE_FRAGMENT:com.intellij.xdebugger.evaluation.EvaluationMode
