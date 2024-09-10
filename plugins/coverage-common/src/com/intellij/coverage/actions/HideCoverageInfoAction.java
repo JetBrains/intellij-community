@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -20,17 +19,6 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public class HideCoverageInfoAction extends IconWithTextAction {
-  @Nullable private final CoverageSuitesBundle myCoverageSuite;
-
-  public HideCoverageInfoAction() {
-    this(null);
-  }
-
-  public HideCoverageInfoAction(@Nullable CoverageSuitesBundle bundle) {
-    super(CoverageBundle.messagePointer("coverage.hide.coverage.action.name"),
-          CoverageBundle.messagePointer("coverage.hide.coverage.action.description"), null);
-    myCoverageSuite = bundle;
-  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -38,22 +26,17 @@ public class HideCoverageInfoAction extends IconWithTextAction {
     doAction(project);
   }
 
-  private void doAction(Project project) {
+  private static void doAction(Project project) {
     CoverageDataManager manager = CoverageDataManager.getInstance(project);
-    if (myCoverageSuite == null) {
-      for (CoverageSuitesBundle bundle : manager.activeSuites()) {
-        manager.closeSuitesBundle(bundle);
-      }
-    }
-    else {
-      manager.closeSuitesBundle(myCoverageSuite);
+    for (CoverageSuitesBundle bundle : manager.activeSuites()) {
+      manager.closeSuitesBundle(bundle);
     }
   }
 
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new LinkLabel(presentation.getText(), null) {
+    return new LinkLabel<>(CoverageBundle.message("coverage.hide.coverage.link.name"), null) {
       @Override
       public void doClick() {
         DataContext dataContext = DataManager.getInstance().getDataContext(this);
@@ -71,14 +54,9 @@ public class HideCoverageInfoAction extends IconWithTextAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
-    presentation.setVisible(e.isFromActionToolbar());
     final Project project = e.getProject();
-    if (project != null) {
-      Collection<CoverageSuitesBundle> activeSuites = CoverageDataManager.getInstance(project).activeSuites();
-      boolean enabled = myCoverageSuite == null ? !activeSuites.isEmpty() : activeSuites.contains(myCoverageSuite);
-      presentation.setEnabledAndVisible(enabled);
-    }
+    if (project == null) return;
+    Collection<CoverageSuitesBundle> activeSuites = CoverageDataManager.getInstance(project).activeSuites();
+    e.getPresentation().setEnabledAndVisible(!activeSuites.isEmpty());
   }
 }
