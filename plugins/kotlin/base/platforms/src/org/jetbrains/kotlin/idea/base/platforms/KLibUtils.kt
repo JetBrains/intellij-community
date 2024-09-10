@@ -29,9 +29,7 @@ fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Bo
     // The virtual file for a library packed in a ZIP file will have path like "/some/path/to/the/file.klib!/",
     // and therefore will be recognized by VFS as a directory (isDirectory == true).
     // So, first, let's check the file type and file extension.
-    if (!isKLibRootCandidate() &&
-        !nameSequence.endsWith("jar") // TODO: KTIJ-30828 Workaround for kotlin-stdlib-common.jar that is effectively klib
-    ) {
+    if (!isKLibRootCandidate()) {
         return false
     }
 
