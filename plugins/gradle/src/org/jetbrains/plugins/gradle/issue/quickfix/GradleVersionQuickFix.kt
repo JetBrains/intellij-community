@@ -25,10 +25,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.io.createParentDirectories
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
@@ -41,6 +43,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
+import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -63,9 +66,9 @@ class GradleVersionQuickFix(
       .launch {
         runBatchChange(project) {
           updateOrCreateWrapper(project)
+          showWrapperPropertiesFile(project)
           resetProjectDistributionType(project)
           runWrapperTask(project)
-          showWrapperPropertiesFile(project, projectPath, gradleVersion.version)
           if (requestImport) {
             delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
             val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
@@ -81,22 +84,32 @@ class GradleVersionQuickFix(
     linkedProjectSettings.distributionType = DistributionType.DEFAULT_WRAPPED
   }
 
-  private fun updateOrCreateWrapper(project: Project) {
+  private suspend fun updateOrCreateWrapper(project: Project) {
     try {
-      tryUpdateOrCreateWrapper()
+      updateOrCreateWrapper()
     }
-    catch (e: Exception) {
+    catch (e: IOException) {
       LOG.warn(e)
-      val title = GradleBundle.message("gradle.version.quick.fix.error")
-      val message = GradleBundle.message("gradle.version.quick.fix.error.description", ShowLogAction.getActionName())
-      val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
-        .apply {
-          isBalloonNotification = true
-          balloonGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Wrapper Update")
-          setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
-        }
-      ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
+      showUnableToCreateWrapperNotification(project)
       throw e
+    }
+  }
+
+  private fun showUnableToCreateWrapperNotification(project: Project) {
+    val title = GradleBundle.message("gradle.version.quick.fix.error")
+    val message = GradleBundle.message("gradle.version.quick.fix.error.description", ShowLogAction.getActionName())
+    val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
+      .apply {
+        isBalloonNotification = true
+        balloonGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Wrapper Update")
+        setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
+      }
+    ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
+  }
+
+  private suspend fun showWrapperPropertiesFile(project: Project) {
+    withContext(Dispatchers.IO) {
+      showWrapperPropertiesFile(project, projectPath, gradleVersion.version)
     }
   }
 
@@ -105,17 +118,19 @@ class GradleVersionQuickFix(
    * The fallback is necessary because if the `wrapper` task fails for some unknown reason, the next interaction with Gradle will download
    * the correct Gradle version.
    */
-  private fun tryUpdateOrCreateWrapper() {
-    var wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
-    val wrapperConfiguration = getWrapperConfiguration(wrapperPropertiesPath, gradleVersion)
+  private suspend fun updateOrCreateWrapper() {
+    withContext(Dispatchers.IO) {
+      var wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
+      val wrapperConfiguration = getWrapperConfiguration(wrapperPropertiesPath, gradleVersion)
 
-    if (wrapperPropertiesPath == null) {
-      wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
-      wrapperPropertiesPath.createParentDirectories().createFile()
+      if (wrapperPropertiesPath == null) {
+        wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
+        wrapperPropertiesPath.createParentDirectories().createFile()
+      }
+
+      GradleUtil.writeWrapperConfiguration(wrapperPropertiesPath, wrapperConfiguration)
+      LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesPath))
     }
-
-    GradleUtil.writeWrapperConfiguration(wrapperPropertiesPath, wrapperConfiguration)
-    LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesPath))
   }
 
   /**
