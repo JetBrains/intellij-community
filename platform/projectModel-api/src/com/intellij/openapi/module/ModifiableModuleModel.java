@@ -26,7 +26,18 @@ public interface ModifiableModuleModel {
    */
   Module @NotNull [] getModules();
 
-  @NotNull Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
+  /**
+   * Creates a module of the specified type at the specified path and adds it to the project
+   * to which the module manager is related. {@link #commit()} must be called to
+   * bring the changes in effect.
+   *
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name
+   *                     without extension.
+   * @param moduleTypeId the ID of the module type to create.
+   * @return the module instance.
+   * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
+   */
+  @NotNull Module newModule(@NotNull String filePath, @NotNull String moduleTypeId) throws ModuleWithNameAlreadyExists;
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
@@ -36,8 +47,9 @@ public interface ModifiableModuleModel {
    * @param file         path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
+   * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
-  default @NotNull Module newModule(@NotNull Path file, @NotNull String moduleTypeId) {
+  default @NotNull Module newModule(@NotNull Path file, @NotNull String moduleTypeId) throws ModuleWithNameAlreadyExists {
     return newModule(file.toAbsolutePath().normalize().toString().replace(File.separatorChar, '/'), moduleTypeId);
   }
 
@@ -139,7 +151,7 @@ public interface ModifiableModuleModel {
   String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
   /**
-   * Returns {@code true} if at least one of the modules has an explicitly specified module group. Note that explicit module groups are 
+   * Returns {@code true} if at least one of the modules has an explicitly specified module group. Note that explicit module groups are
    * replaced by automatic grouping, so this method is left for compatibility with some old projects only.
    */
   @ApiStatus.Internal
@@ -147,8 +159,8 @@ public interface ModifiableModuleModel {
 
   /**
    * Set or remove explicit module group for {@code module}.
-   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules 
-   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names 
+   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules
+   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names
    * must be prepended to the module name, separated by dots, instead.
    */
   @Deprecated
