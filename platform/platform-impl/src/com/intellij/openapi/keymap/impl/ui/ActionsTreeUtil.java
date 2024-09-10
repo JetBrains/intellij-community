@@ -269,6 +269,16 @@ public final class ActionsTreeUtil {
                                   boolean forceAsPopup,
                                   Predicate<? super AnAction> filtered,
                                   boolean normalizeSeparators) {
+    GroupPopupMode popupMode = forceAsPopup ? GroupPopupMode.FORCE_POPUP : GroupPopupMode.DEFAULT;
+    return createGroup(actionGroup, groupName, icon, popupMode, filtered, normalizeSeparators);
+  }
+
+  private static Group createGroup(ActionGroup actionGroup,
+                                   @NlsActions.ActionText String groupName,
+                                   @Nullable Supplier<? extends @Nullable Icon> icon,
+                                   GroupPopupMode popupMode,
+                                   Predicate<? super AnAction> filtered,
+                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
     AnAction[] children = getActions(actionGroup, actionManager);
@@ -277,21 +287,29 @@ public final class ActionsTreeUtil {
         LOG.error(groupName + " contains null actions");
         continue;
       }
-      addActionImpl(group, action, actionManager, forceAsPopup, filtered, normalizeSeparators);
+      addActionImpl(group, action, actionManager, popupMode, filtered, normalizeSeparators);
     }
     if (normalizeSeparators) group.normalizeSeparators();
     return group;
   }
 
-  private static void addActionImpl(Group group,
-                                    AnAction action,
-                                    ActionManager actionManager,
-                                    boolean forceAsPopup,
-                                    Predicate<? super AnAction> filtered,
+  private static void addActionImpl(@NotNull Group group,
+                                    @NotNull AnAction action,
+                                    @NotNull ActionManager actionManager,
+                                    @NotNull GroupPopupMode popupMode,
+                                    @Nullable Predicate<? super AnAction> filtered,
                                     boolean normalizeSeparators) {
     if (action instanceof ActionGroup childGroup) {
-      Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
-      if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText())) {
+      boolean addAsPopup;
+      if (popupMode == GroupPopupMode.FORCE_POPUP) {
+        addAsPopup = true;
+      }
+      else {
+        addAsPopup = childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText());
+      }
+
+      Group subGroup = createGroup(childGroup, getName(action), null, popupMode, filtered, normalizeSeparators);
+      if (addAsPopup) {
         if (subGroup.getSize() > 0 || actionMatchesFilter(filtered, childGroup)) {
           group.addGroup(subGroup);
         }
@@ -823,6 +841,8 @@ public final class ActionsTreeUtil {
                                              @NotNull String actionId) {
     return filtered == null || filtered.test(actionManager.getActionOrStub(actionId));
   }
+
+  private enum GroupPopupMode {FORCE_POPUP, DEFAULT}
 
   public static @Nls String getMainMenuTitle() {
     return KeyMapBundle.message("main.menu.action.title");
