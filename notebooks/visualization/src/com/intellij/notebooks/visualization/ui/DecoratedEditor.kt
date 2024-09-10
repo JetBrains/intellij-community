@@ -202,12 +202,16 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
   }
 
   override fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
-    editor.setMode(NotebookEditorMode.COMMAND)
     mousePressed(clickedCell, ctrlPressed, shiftPressed)
   }
 
-  @Suppress("ConvertArgumentToSet")
   private fun mousePressed(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
+    editor.setMode(NotebookEditorMode.COMMAND)
+    updateSelectionAfterClick(clickedCell, ctrlPressed, shiftPressed)
+  }
+
+  @Suppress("ConvertArgumentToSet")
+  private fun updateSelectionAfterClick(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
     val model = editor.cellSelectionModel!!
     when {
       ctrlPressed -> {
