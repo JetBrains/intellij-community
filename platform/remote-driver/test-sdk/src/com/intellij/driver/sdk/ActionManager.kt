@@ -38,10 +38,13 @@ interface ShortcutSet {
 interface Shortcut
 
 @Remote(value = "com.intellij.openapi.util.ActionCallback")
-interface ActionCallback
+interface ActionCallback {
+  fun isRejected(): Boolean
+  fun getError(): String
+}
 
 fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, rdTarget: RdTarget? = null) {
-  withContext(OnDispatcher.EDT) {
+  val actionCallback = withContext(OnDispatcher.EDT) {
     val target = rdTarget ?: if (isRemoteIdeMode) RdTarget.FRONTEND else RdTarget.DEFAULT
     val actionManager = service<ActionManager>(target)
     val action = actionManager.getAction(actionId)
@@ -50,6 +53,11 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
     }
     else {
       actionManager.tryToExecute(action, null, component, null, now)
+    }
+  }
+  withContext(OnDispatcher.DEFAULT) {
+    if (actionCallback.isRejected()) {
+      throw RuntimeException("Action $actionId was rejected with error: ${actionCallback.getError()}")
     }
   }
 }
