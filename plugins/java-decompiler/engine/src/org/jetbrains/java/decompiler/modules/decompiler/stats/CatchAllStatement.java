@@ -85,6 +85,10 @@ public final class CatchAllStatement extends Statement {
             return null;
           }
 
+          if (DecHelper.invalidHeadMerge(head)) {
+            return null;
+          }
+
           if (DecHelper.checkStatementExceptions(Arrays.asList(head, exc))) {
             return new CatchAllStatement(head, exc);
           }

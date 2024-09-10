@@ -129,6 +129,10 @@ public final class CatchStatement extends Statement {
           }
         }
 
+        if (DecHelper.invalidHeadMerge(head)) {
+          return null;
+        }
+
         if (DecHelper.checkStatementExceptions(lst)) {
           return new CatchStatement(head, next, setHandlers);
         }

@@ -192,6 +192,26 @@ public final class DecHelper {
     return setHandlers;
   }
 
+  public static boolean invalidHeadMerge(Statement head) {
+    // Don't build a trycatch around a loop-head if statement, as we know that DoStatement should be built first.
+    // Since CatchStatement's isHead is run after DoStatement's, we can assume that a loop was not able to be built.
+    Statement ifhead = findIfHead(head);
+
+    return ifhead != null && head.getContinueSet().contains(ifhead.getFirst());
+  }
+
+  private static Statement findIfHead(Statement head) {
+    while (head != null && head.type != Statement.StatementType.IF) {
+      if (head.type != Statement.StatementType.SEQUENCE) {
+        return null;
+      }
+
+      head = head.getFirst();
+    }
+
+    return head;
+  }
+
   public static List<Exprent> copyExprentList(List<? extends Exprent> lst) {
     List<Exprent> ret = new ArrayList<>();
     for (Exprent expr : lst) {
