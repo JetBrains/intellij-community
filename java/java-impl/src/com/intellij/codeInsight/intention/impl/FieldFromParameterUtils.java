@@ -269,21 +269,29 @@ public final class FieldFromParameterUtils {
     return isAvailable(myParameter, type, targetClass, true);
   }
 
-  public static boolean isAvailable(@NotNull PsiParameter myParameter,
+  public static boolean isAvailable(@NotNull PsiParameter parameter,
                                     @Nullable PsiType type,
                                     @Nullable PsiClass targetClass,
                                     boolean findIndirectAssignments) {
-    if (!myParameter.isValid() ||
-        !BaseIntentionAction.canModify(myParameter) ||
-        !(myParameter.getDeclarationScope() instanceof PsiMethod method)) {
+    if (!parameter.isValid() ||
+        !BaseIntentionAction.canModify(parameter) ||
+        !(parameter.getDeclarationScope() instanceof PsiMethod method)) {
       return false;
     }
+    if (type == null || targetClass == null || !type.isValid()) {
+      return false;
+    }
+    PsiField existingField = targetClass.findFieldByName(parameter.getName(), true);
+    if (existingField != null) {
+      if (!existingField.getType().isAssignableFrom(type) ||
+          method.hasModifierProperty(PsiModifier.STATIC) != existingField.hasModifierProperty(PsiModifier.STATIC) ||
+          existingField.hasModifierProperty(PsiModifier.FINAL) && !method.isConstructor()) {
+        return false;
+      }
+    }
     return method.getBody() != null &&
-           type != null &&
-           type.isValid() &&
-           targetClass != null &&
            !targetClass.isInterface() &&
            (!targetClass.isRecord() || method.hasModifierProperty(PsiModifier.STATIC)) &&
-           getParameterAssignedToField(myParameter, findIndirectAssignments) == null;
+           getParameterAssignedToField(parameter, findIndirectAssignments) == null;
   }
 }
