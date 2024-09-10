@@ -32,7 +32,7 @@ public class GrLightTypeParameterList extends LightElement implements GrTypePara
   }
 
   @Override
-  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
     //noinspection SuspiciousMethodCalls
     return myTypeParameters.indexOf(typeParameter);
   }

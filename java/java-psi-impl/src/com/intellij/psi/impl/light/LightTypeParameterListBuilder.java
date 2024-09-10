@@ -62,7 +62,7 @@ public class LightTypeParameterListBuilder extends LightElement implements PsiTy
   }
 
   @Override
-  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
     return myParameters.indexOf(typeParameter);
   }
 

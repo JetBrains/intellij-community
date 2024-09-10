@@ -34,5 +34,5 @@ public interface PsiTypeParameterList extends PsiElement {
    * @param typeParameter the parameter to find.
    * @return the index of the parameter.
    */
-  int getTypeParameterIndex (PsiTypeParameter typeParameter);
+  int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter);
 }

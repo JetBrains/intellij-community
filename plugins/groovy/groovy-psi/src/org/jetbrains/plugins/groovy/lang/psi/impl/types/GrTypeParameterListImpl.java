@@ -45,7 +45,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
     final GrTypeParameter[] typeParameters = getTypeParameters();
     for (int i = 0; i < typeParameters.length; i++) {
       if (typeParameters[i].equals(typeParameter)) return i;
