@@ -439,16 +439,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.getPersistentModCount();
   }
 
-  /** @return `nameId` > 0 */
-  private int writeRecordFields(int fileId,
-                                int parentId,
-                                @NotNull CharSequence name,
-                                @NotNull FileAttributes attributes) {
-    assert fileId > 0 : fileId;
-    assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
-    return vfsPeer.updateRecordFields(fileId, parentId, attributes, name.toString(), /* cleanAttributeRef: */ true);
-  }
-
   /** @return `nameId` > 0 if write was actually done, -1 if write was bypassed */
   private int writeRootFields(int rootId,
                               @NotNull String name,
@@ -1513,7 +1503,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
     vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive));
-    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> { });
+    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {});
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
@@ -2142,15 +2132,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                              @NotNull Pair<@NotNull FileAttributes, String> childData,
                                              @NotNull NewVirtualFileSystem fs,
                                              @NotNull ChildInfo @Nullable [] children) {
-    FileAttributes attributes = childData.first;
+    assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
 
-    int childId = vfsPeer.createRecord();
-    int nameId = writeRecordFields(childId, parentId, name, attributes);
+    FileAttributes attributes = childData.first;
+    String symLinkTarget = childData.second;
+
+    //TODO RC: .updateRecordFields(id=0, ...) also creates a new record, so .createRecord() could be dropped
+    int newChildId = vfsPeer.createRecord();
+    int nameId = vfsPeer.updateRecordFields(newChildId, parentId, attributes, name.toString(), /* cleanAttributeRef: */ true);
 
     if (attributes.isDirectory()) {
-      vfsPeer.loadDirectoryData(childId, parentFile, name, fs);
+      vfsPeer.loadDirectoryData(newChildId, parentFile, name, fs);
     }
-    return new ChildInfoImpl(childId, nameId, attributes, children, childData.second);
+
+    return new ChildInfoImpl(newChildId, nameId, attributes, children, symLinkTarget);
   }
 
   /** @deprecated use instance {@link PersistentFSImpl#moveChildren(int, int)} instead */
@@ -2168,8 +2163,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     vfsPeer.moveChildren(fromParentId, toParentId);
   }
 
-  // return File attributes, symlink target
-  // null when file not found
+  /** @return <File attributes, symlink target> cortege, or null when the file not found */
   private static @Nullable Pair<@NotNull FileAttributes, String> getChildData(@NotNull NewVirtualFileSystem fs,
                                                                               @NotNull VirtualFile parent,
                                                                               @NotNull String name,
