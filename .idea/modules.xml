@@ -185,6 +185,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/logcat/intellij.android.logcat.tests.iml" filepath="$PROJECT_DIR$/android/logcat/intellij.android.logcat.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/memory-usage/intellij.android.memory-usage.iml" filepath="$PROJECT_DIR$/android/memory-usage/intellij.android.memory-usage.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/ml-api/intellij.android.ml-api.iml" filepath="$PROJECT_DIR$/android/ml-api/intellij.android.ml-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/ml-api/intellij.android.ml-api-tests.iml" filepath="$PROJECT_DIR$/android/ml-api/intellij.android.ml-api-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.tests.iml" filepath="$PROJECT_DIR$/android/mlkit/intellij.android.mlkit.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/motion-editor/intellij.android.motion-editor.iml" filepath="$PROJECT_DIR$/android/motion-editor/intellij.android.motion-editor.iml" />
