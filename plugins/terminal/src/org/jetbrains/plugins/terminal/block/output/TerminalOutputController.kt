@@ -299,7 +299,11 @@ internal class TerminalOutputController(
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
-    if (output.text.isNotBlank() && output.text.trim() != "%") {
+    val outputText = if (block.withOutput) {
+      editor.document.charsSequence.subSequence(block.outputStartOffset, block.endOffset)
+    }
+    else ""
+    if (outputText.isNotBlank() && outputText.trim() != "%") {
       blocksDecorator.installDecoration(block)
     }
 
