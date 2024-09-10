@@ -3,12 +3,12 @@ package com.intellij.codeInspection.tests.kotlin;
 
 import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_BLOCKING_ANNOTATIONS;
 import static com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection.DEFAULT_NONBLOCKING_ANNOTATIONS;
 
-public abstract class KotlinBlockingCallDetectionTest extends JavaCodeInsightFixtureTestCase implements KotlinPluginModeProvider {
+public abstract class KotlinBlockingCallDetectionTest extends JavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

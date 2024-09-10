@@ -4,12 +4,12 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-abstract class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(), ExpectedPluginModeProvider {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
 
   fun testSimple() {

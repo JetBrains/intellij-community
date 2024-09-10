@@ -9,10 +9,10 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import java.io.File
 
-abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase(), ExpectedPluginModeProvider {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : AssertJProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)

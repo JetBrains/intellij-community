@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.internal.testFramework.SystemGetPropertyInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinSystemGetPropertyInspectionTest : SystemGetPropertyInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
           fun foo() {

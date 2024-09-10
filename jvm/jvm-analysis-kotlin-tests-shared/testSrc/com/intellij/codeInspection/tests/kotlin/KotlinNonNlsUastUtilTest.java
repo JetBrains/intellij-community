@@ -9,7 +9,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 import org.jetbrains.uast.ULiteralExpression;
 import org.junit.Assume;
 
@@ -20,7 +20,7 @@ import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 import static com.intellij.jvm.analysis.internal.testFramework.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
-public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase implements KotlinPluginModeProvider {
+public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

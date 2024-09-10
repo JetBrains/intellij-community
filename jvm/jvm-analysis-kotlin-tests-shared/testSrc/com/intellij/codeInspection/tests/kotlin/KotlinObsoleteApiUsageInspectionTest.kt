@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.internal.testFramework.ObsoleteApiUsageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test direct usage`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class B {

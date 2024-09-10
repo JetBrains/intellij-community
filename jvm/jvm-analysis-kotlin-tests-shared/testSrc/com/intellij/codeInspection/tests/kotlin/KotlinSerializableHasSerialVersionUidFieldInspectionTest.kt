@@ -4,9 +4,9 @@ import com.intellij.jvm.analysis.internal.testFramework.SerializableHasSerialVer
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.io.Serializable

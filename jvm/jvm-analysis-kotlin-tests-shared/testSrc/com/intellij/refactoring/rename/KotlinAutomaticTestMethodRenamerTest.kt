@@ -3,9 +3,9 @@ package com.intellij.refactoring.rename
 
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.testFramework.AutomaticTestMethodRenamerTestBase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinAutomaticTestMethodRenamerTest : AutomaticTestMethodRenamerTestBase(), KotlinPluginModeProvider {
+abstract class KotlinAutomaticTestMethodRenamerTest : AutomaticTestMethodRenamerTestBase(), ExpectedPluginModeProvider {
     override fun getBasePath(): String = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/refactoring/renameTestMethod"
 
     fun testTestMethod() = doTest("ClassTest.kt")

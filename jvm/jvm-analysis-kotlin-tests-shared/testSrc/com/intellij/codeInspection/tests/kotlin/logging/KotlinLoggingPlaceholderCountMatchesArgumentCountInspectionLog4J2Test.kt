@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test log4j2 with text variables`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
           import org.apache.logging.log4j.LogManager

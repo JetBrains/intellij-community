@@ -11,10 +11,10 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 @TestDataPath("/testData/codeInspection/overrideOnly")
-abstract class KotlinOverrideOnlyInspectionTest : JvmInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinOverrideOnlyInspectionTest : JvmInspectionTestBase(), ExpectedPluginModeProvider {
   override val inspection: InspectionProfileEntry = OverrideOnlyInspection()
 
   override fun getProjectDescriptor() = object : ProjectDescriptor(LanguageLevel.HIGHEST) {

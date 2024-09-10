@@ -10,10 +10,10 @@ import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import java.io.File
 
-abstract class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase(), ExpectedPluginModeProvider {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : TestFrameworkDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)

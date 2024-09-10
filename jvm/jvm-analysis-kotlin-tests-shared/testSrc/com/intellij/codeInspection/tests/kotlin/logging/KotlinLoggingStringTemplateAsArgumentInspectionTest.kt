@@ -5,12 +5,12 @@ import com.intellij.codeInspection.logging.LoggingUtil
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingStringTemplateAsArgumentInspectionTestBase
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 private const val INSPECTION_PATH = "/codeInspection/logging/stringTemplateAsArgument"
 
 @TestDataPath("\$CONTENT_ROOT/testData$INSPECTION_PATH")
-abstract class KotlinLoggingStringTemplateAsArgumentInspectionTest : LoggingStringTemplateAsArgumentInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLoggingStringTemplateAsArgumentInspectionTest : LoggingStringTemplateAsArgumentInspectionTestBase(), ExpectedPluginModeProvider {
   override val inspection: LoggingStringTemplateAsArgumentInspection = LoggingStringTemplateAsArgumentInspection().apply {
     myLimitLevelType = LoggingUtil.LimitLevelType.ALL
   }

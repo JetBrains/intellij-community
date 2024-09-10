@@ -3,9 +3,9 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.jvm.analysis.internal.testFramework.MigrationTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.migration.MigrationMapEntry
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinMigrationTest : MigrationTestBase(), KotlinPluginModeProvider {
+abstract class KotlinMigrationTest : MigrationTestBase(), ExpectedPluginModeProvider {
   fun `test package`() {
     migrationTest(JvmLanguage.KOTLIN, before = """
       package p1

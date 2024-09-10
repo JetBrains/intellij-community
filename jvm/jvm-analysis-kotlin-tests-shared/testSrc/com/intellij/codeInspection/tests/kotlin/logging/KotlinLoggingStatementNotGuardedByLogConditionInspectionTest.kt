@@ -3,9 +3,9 @@ package com.intellij.codeInspection.tests.kotlin.logging
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingStatementNotGuardedByLogConditionInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatementNotGuardedByLogConditionInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatementNotGuardedByLogConditionInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test slf4j`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.slf4j.Logger

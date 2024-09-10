@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.internal.testFramework.MustAlreadyBeRemovedApiInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinMustAlreadyBeRemovedApiInspectionTest : MustAlreadyBeRemovedApiInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinMustAlreadyBeRemovedApiInspectionTest : MustAlreadyBeRemovedApiInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test APIs must have been removed`() {
     inspection.currentVersion = "3.0"
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

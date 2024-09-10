@@ -2,9 +2,9 @@ package com.intellij.logging.resolve
 
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingArgumentSymbolReferenceProviderTestBase
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolReferenceProviderTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolReferenceProviderTestBase(), ExpectedPluginModeProvider {
   fun `test log4j2 info`() {
     myFixture.configureByText("Logging.kt", """
       import org.apache.logging.log4j.*

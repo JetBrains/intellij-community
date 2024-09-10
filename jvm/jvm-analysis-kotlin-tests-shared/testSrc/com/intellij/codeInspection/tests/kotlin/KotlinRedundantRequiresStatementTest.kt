@@ -10,10 +10,10 @@ import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import java.io.File
 
-abstract class KotlinRedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase(), KotlinPluginModeProvider {
+abstract class KotlinRedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
   fun testStdlib() {
     val mainText = """
         package org.example.main

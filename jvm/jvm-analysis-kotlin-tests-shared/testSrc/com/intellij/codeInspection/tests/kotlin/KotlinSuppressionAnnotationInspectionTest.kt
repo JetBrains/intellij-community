@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.internal.testFramework.SuppressionAnnotationInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinSuppressionAnnotationInspectionTest : SuppressionAnnotationInspectionTestBase(), ExpectedPluginModeProvider {
 
   fun `test highlighting`() {
     inspection.myAllowedSuppressions.add("FreeSpeech")

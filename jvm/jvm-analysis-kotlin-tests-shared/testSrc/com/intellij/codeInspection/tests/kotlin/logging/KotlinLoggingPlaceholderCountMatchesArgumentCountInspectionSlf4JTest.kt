@@ -3,9 +3,9 @@ package com.intellij.codeInspection.tests.kotlin.logging
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionSlf4JTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test slf4j disable slf4jToLog4J2Type`() {
     inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

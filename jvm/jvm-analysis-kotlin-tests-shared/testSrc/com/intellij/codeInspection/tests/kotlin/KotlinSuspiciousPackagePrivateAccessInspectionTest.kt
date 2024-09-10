@@ -3,10 +3,10 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.siyeh.ig.dependency.SuspiciousPackagePrivateAccessInspectionTestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInspection/suspiciousPackagePrivateAccess")
-abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateAccessInspectionTestCase("kt"), KotlinPluginModeProvider {
+abstract class KotlinSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateAccessInspectionTestCase("kt"), ExpectedPluginModeProvider {
   fun testAccessingPackagePrivateMembers() {
     doTestWithDependency()
   }

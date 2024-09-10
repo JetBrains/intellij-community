@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.test
 
 import com.intellij.jvm.analysis.internal.testFramework.test.TestFailedLineInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test non qualified call`() {
     doTest(
       lang = JvmLanguage.KOTLIN,

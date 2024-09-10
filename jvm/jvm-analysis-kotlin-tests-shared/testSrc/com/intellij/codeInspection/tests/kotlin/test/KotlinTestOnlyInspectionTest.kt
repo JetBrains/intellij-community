@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.test
 
 import com.intellij.jvm.analysis.internal.testFramework.test.TestOnlyInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test @TestOnly on use-site targets`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test

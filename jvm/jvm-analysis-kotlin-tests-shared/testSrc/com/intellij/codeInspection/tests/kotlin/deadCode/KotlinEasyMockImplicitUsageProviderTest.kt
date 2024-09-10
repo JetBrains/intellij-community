@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.deadCode
 
 import com.intellij.jvm.analysis.internal.testFramework.deadCode.EasyMockImplicitUsageProviderTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinEasyMockImplicitUsageProviderTest : EasyMockImplicitUsageProviderTestBase(), KotlinPluginModeProvider {
+abstract class KotlinEasyMockImplicitUsageProviderTest : EasyMockImplicitUsageProviderTestBase(), ExpectedPluginModeProvider {
   fun `test implicit usage for mocked field`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MyEasyMockTest {

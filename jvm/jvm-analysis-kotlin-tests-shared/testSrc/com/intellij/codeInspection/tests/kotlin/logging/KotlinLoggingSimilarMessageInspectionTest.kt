@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingSimilarMessageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionTestBase(), ExpectedPluginModeProvider {
 
   fun `test equals log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

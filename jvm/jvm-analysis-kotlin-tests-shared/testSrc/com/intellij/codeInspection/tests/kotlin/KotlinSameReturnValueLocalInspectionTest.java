@@ -3,9 +3,9 @@ package com.intellij.codeInspection.tests.kotlin;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
 
-public abstract class KotlinSameReturnValueLocalInspectionTest extends LightJavaCodeInsightFixtureTestCase implements KotlinPluginModeProvider {
+public abstract class KotlinSameReturnValueLocalInspectionTest extends LightJavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
 
   @Override
   protected String getTestDataPath() {

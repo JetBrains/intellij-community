@@ -10,10 +10,10 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 @TestDataPath("/testData/codeInspection/nonExtendableApiUsage")
-abstract class KotlinNonExtendableApiUsageInspectionTest : JvmInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinNonExtendableApiUsageInspectionTest : JvmInspectionTestBase(), ExpectedPluginModeProvider {
   override val inspection = NonExtendableApiUsageInspection()
 
   override fun getProjectDescriptor() = object : ProjectDescriptor(LanguageLevel.HIGHEST) {

@@ -3,9 +3,9 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

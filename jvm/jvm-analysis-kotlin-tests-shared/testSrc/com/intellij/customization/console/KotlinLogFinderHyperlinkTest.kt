@@ -4,10 +4,10 @@ import com.intellij.jvm.analysis.internal.testFramework.internal.LogFinderHyperl
 import com.intellij.jvm.analysis.internal.testFramework.internal.LogItem
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils
 import com.intellij.openapi.editor.LogicalPosition
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
 @Suppress("ConvertToStringTemplate")
-abstract class KotlinLogFinderHyperlinkTest : LogFinderHyperlinkTestBase(), KotlinPluginModeProvider {
+abstract class KotlinLogFinderHyperlinkTest : LogFinderHyperlinkTestBase(), ExpectedPluginModeProvider {
   fun testSimpleLog4j2() {
     LoggingTestUtils.addLog4J(myFixture)
     checkColumnFinderKotlin(

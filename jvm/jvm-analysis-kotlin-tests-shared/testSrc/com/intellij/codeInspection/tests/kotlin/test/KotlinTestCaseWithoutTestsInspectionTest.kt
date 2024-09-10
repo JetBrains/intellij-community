@@ -2,9 +2,9 @@ package com.intellij.codeInspection.tests.kotlin.test
 
 import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithoutTestsInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 
-abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase(), KotlinPluginModeProvider {
+abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase(), ExpectedPluginModeProvider {
   fun `test case without test methods`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class <warning descr="Test class 'TestCaseWithNoTestMethods' has no tests">TestCaseWithNoTestMethods</warning> : junit.framework.TestCase() {

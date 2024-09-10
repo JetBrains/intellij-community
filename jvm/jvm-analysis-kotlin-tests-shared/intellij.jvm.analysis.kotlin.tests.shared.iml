@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.java.impl.inspections" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" exported="" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" exported="" scope="TEST" />
   </component>
 </module>
