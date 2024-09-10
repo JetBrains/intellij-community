@@ -61,7 +61,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
 
     val ideaModuleInfo: IdeaModuleInfo = moduleInfo as IdeaModuleInfo
 
-    open val directRegularDependencies: List<KaModule>
+    val directRegularDependencies: List<KaModule>
         get() {
             _directRegularDependencies?.let { return it }
 
@@ -77,7 +77,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
         ideaModuleInfo.dependenciesWithoutSelf().mapTo(ArrayList()) { it.toKaModule() }
             .also { it.trimToSize() }
 
-    open val directDependsOnDependencies: List<KaModule>
+    val directDependsOnDependencies: List<KaModule>
         get() {
             _directDependsOnDependencies?.let { return it }
 
@@ -104,7 +104,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
             }
         }
 
-    open val directFriendDependencies: List<KaModule>
+    val directFriendDependencies: List<KaModule>
         get() {
             _directFriendDependencies?.let { return it }
 
