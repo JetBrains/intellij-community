@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -125,7 +126,7 @@ class CodeInliner(
             receiver?.let {
                 analyze(it) {
                     val type = it.expressionType
-                    type to (type?.nullability == KaTypeNullability.NULLABLE)
+                    type to (type?.nullability == KaTypeNullability.NULLABLE || type is KaFlexibleType && type.upperBound.nullability == KaTypeNullability.NULLABLE)
                 }
             }
 

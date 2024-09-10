@@ -954,6 +954,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/companionWithSuperType.kt");
             }
 
+            @TestMetadata("flexibleType.kt")
+            public void testFlexibleType() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/flexibleType.kt");
+            }
+
             @TestMetadata("functionalPropertyWithReceiver.kt")
             public void testFunctionalPropertyWithReceiver() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/functionalPropertyWithReceiver.kt");
