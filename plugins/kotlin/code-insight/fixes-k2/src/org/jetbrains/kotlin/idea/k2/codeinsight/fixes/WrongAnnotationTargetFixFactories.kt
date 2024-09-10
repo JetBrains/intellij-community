@@ -19,7 +19,7 @@ internal object WrongAnnotationTargetFixFactories {
             it.isNotEmpty()
         } ?: return@ModCommandBased emptyList()
 
-        listOfNotNull(
+        listOf(
             AddAnnotationUseSiteTargetFix(diagnostic.psi, applicableUseSiteTargets)
         )
     }
