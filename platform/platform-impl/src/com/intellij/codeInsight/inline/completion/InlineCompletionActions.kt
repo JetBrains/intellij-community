@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
@@ -82,8 +83,57 @@ abstract class CancellationKeyInlineCompletionHandler(val originalHandler: Edito
 class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) :
   CancellationKeyInlineCompletionHandler(originalHandler, FinishType.ESCAPE_PRESSED)
 
-class BackSpaceInlineCompletionHandler(originalHandler: EditorActionHandler) :
-  CancellationKeyInlineCompletionHandler(originalHandler, FinishType.BACKSPACE_PRESSED)
+class BackSpaceInlineCompletionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+
+  private fun invokeOriginalHandler(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    if (originalHandler.isEnabled(editor, caret, dataContext)) {
+      originalHandler.execute(editor, caret, dataContext)
+    }
+  }
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return originalHandler.isEnabled(editor, caret, dataContext)
+  }
+
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    val handler = InlineCompletion.getHandlerOrNull(editor)
+    val session = InlineCompletionSession.getOrNull(editor)
+    if (handler == null) {
+      invokeOriginalHandler(editor, caret, dataContext)
+      return
+    }
+
+    fun fallback(invokeOriginalHandler: Boolean = true) {
+      if (session != null) {
+        handler.hide(session.context, FinishType.BACKSPACE_PRESSED)
+      }
+      if (invokeOriginalHandler) {
+        invokeOriginalHandler(editor, caret, dataContext)
+      }
+    }
+
+    val initialCaretOffset = editor.caretModel.offset
+    if (editor.caretModel.caretCount != 1 || editor.selectionModel.selectedText != null || initialCaretOffset == 0) {
+      fallback(invokeOriginalHandler = true)
+      return
+    }
+    val initialTextLength = editor.document.textLength
+    val removedCandidate = editor.document.getText(TextRange.from(initialCaretOffset - 1, 1))
+    handler.withIgnoringCaretMovement {
+      handler.withIgnoringDocumentChanges {
+        invokeOriginalHandler(editor, caret, dataContext)
+      }
+    }
+    val finalCaretOffset = editor.caretModel.offset
+    val finalTextLength = editor.document.textLength
+    if (initialCaretOffset != finalCaretOffset + 1 || initialTextLength != finalTextLength + 1) {
+      fallback(invokeOriginalHandler = false)
+      return
+    }
+    val event = InlineCompletionEvent.Backspace(editor, removedCandidate)
+    handler.invokeEvent(event)
+  }
+}
 
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {

@@ -47,7 +47,7 @@ interface InlineCompletionSuggestionUpdateManager {
   @RequiresEdt
   @RequiresBlockingContext
   fun updateWhileNoVariants(event: InlineCompletionEvent): Boolean {
-    return event !is InlineCompletionEvent.DocumentChange
+    return event !is InlineCompletionEvent.DocumentChange && event !is InlineCompletionEvent.Backspace
   }
 
   /**
@@ -81,6 +81,9 @@ interface InlineCompletionSuggestionUpdateManager {
         is InlineCompletionEvent.InlineLookupEvent -> {
           onLookupEvent(event, variant)
         }
+        is InlineCompletionEvent.Backspace -> {
+          onBackspace(event, variant)
+        }
         is InlineCompletionEvent.InsertNextWord -> {
           ignoreDocumentAndCaretChanges(event.editor) {
             onInsertNextWord(event, variant)
@@ -106,6 +109,11 @@ interface InlineCompletionSuggestionUpdateManager {
     @RequiresEdt
     @RequiresBlockingContext
     fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
+
+    @ApiStatus.Experimental
+    @RequiresEdt
+    @RequiresBlockingContext
+    fun onBackspace(event: InlineCompletionEvent.Backspace, variant: InlineCompletionVariant.Snapshot): UpdateResult = Invalidated
 
     @ApiStatus.Experimental
     @RequiresEdt
@@ -149,6 +157,11 @@ interface InlineCompletionSuggestionUpdateManager {
       }
       val truncated = truncateFirstSymbol(variant.elements) ?: return Invalidated
       return Changed(variant.copy(elements = truncated))
+    }
+
+    @ApiStatus.Experimental
+    override fun onBackspace(event: InlineCompletionEvent.Backspace, variant: InlineCompletionVariant.Snapshot): UpdateResult {
+      return Invalidated
     }
 
     @ApiStatus.Experimental

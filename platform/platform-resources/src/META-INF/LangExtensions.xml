@@ -1580,7 +1580,7 @@
     <editorActionHandler
       id="inline.completion.backspace" action="EditorBackSpace"
       implementationClass="com.intellij.codeInsight.inline.completion.BackSpaceInlineCompletionHandler"
-      order="before hide-hints"/>
+      order="first"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
     <actionPromoter id="InlineCompletionPromoter"
                     implementation="com.intellij.codeInsight.inline.completion.InlineCompletionActionsPromoter"

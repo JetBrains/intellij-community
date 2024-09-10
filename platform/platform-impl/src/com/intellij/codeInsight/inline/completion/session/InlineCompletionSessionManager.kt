@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.DefaultInlineCompletionOvertyper
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
@@ -20,7 +21,7 @@ internal abstract class InlineCompletionSessionManager {
    * @see updateSession
    */
   @RequiresEdt
-  protected abstract fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult)
+  protected abstract fun onUpdate(session: InlineCompletionSession, event: InlineCompletionEvent?, result: UpdateSessionResult)
 
   @RequiresEdt
   fun sessionCreated(newSession: InlineCompletionSession) {
@@ -39,7 +40,7 @@ internal abstract class InlineCompletionSessionManager {
    */
   @RequiresEdt
   fun invalidate() {
-    currentSession?.let { session -> onUpdate(session, UpdateSessionResult.Invalidated) }
+    currentSession?.let { session -> onUpdate(session, event = null, UpdateSessionResult.Invalidated) }
   }
 
   /**
@@ -62,16 +63,18 @@ internal abstract class InlineCompletionSessionManager {
       return false
     }
     if (session.provider.restartOn(request.event)) {
-      invalidate(session)
+      invalidate(session, request.event)
       return false
     }
 
     val result = updateSession(session, request)
-    onUpdate(session, result)
+    onUpdate(session, request.event, result)
     return result != UpdateSessionResult.Invalidated
   }
 
-  private fun invalidate(session: InlineCompletionSession) = onUpdate(session, UpdateSessionResult.Invalidated)
+  private fun invalidate(session: InlineCompletionSession, event: InlineCompletionEvent) {
+    onUpdate(session, event, UpdateSessionResult.Invalidated)
+  }
 
   private fun updateSession(session: InlineCompletionSession, request: InlineCompletionRequest): UpdateSessionResult {
     session.context.expectedStartOffset = request.endOffset

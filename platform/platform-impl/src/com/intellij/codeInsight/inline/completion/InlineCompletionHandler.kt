@@ -404,12 +404,19 @@ class InlineCompletionHandler(
 
   private fun createSessionManager(): InlineCompletionSessionManager {
     return object : InlineCompletionSessionManager() {
-      override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
+      override fun onUpdate(session: InlineCompletionSession, event: InlineCompletionEvent?, result: UpdateSessionResult) {
         ThreadingAssertions.assertEventDispatchThread()
         when (result) {
-          UpdateSessionResult.Invalidated -> hide(session.context, FinishType.INVALIDATED)
+          UpdateSessionResult.Invalidated -> hide(session.context, event.getInvalidationFinishType())
           UpdateSessionResult.Emptied -> hide(session.context, FinishType.TYPED)
           UpdateSessionResult.Succeeded -> Unit
+        }
+      }
+
+      private fun InlineCompletionEvent?.getInvalidationFinishType(): FinishType {
+        return when (this) {
+          is InlineCompletionEvent.Backspace -> FinishType.BACKSPACE_PRESSED
+          else -> FinishType.INVALIDATED
         }
       }
     }
