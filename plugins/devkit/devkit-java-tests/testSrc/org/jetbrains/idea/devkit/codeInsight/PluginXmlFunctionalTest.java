@@ -753,8 +753,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     doHighlightingTest("ValuesMaxLengths.xml");
   }
 
-  public void testValuesRequired() {
-    doHighlightingTest("ValuesRequired.xml");
+  public void testValuesRequiredOrInvalid() {
+    doHighlightingTest("ValuesRequiredOrInvalid.xml");
   }
 
   public void testValuesTemplateTexts() {

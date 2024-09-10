@@ -329,6 +329,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     checkMaxLength(ideaPlugin.getUrl(), 255, holder);
+    checkValidWebsite(ideaPlugin.getUrl(), holder);
 
     checkMaxLength(ideaPlugin.getId(), 255, holder);
 
@@ -775,7 +776,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     else {
       if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
           module != null && !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
-          highlightInternal(extension, holder);
+        highlightInternal(extension, holder);
       }
     }
   }
@@ -891,6 +892,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder); // used in old template
     checkTemplateText(vendor.getUrl(), "https://www.yourcompany.com", holder);
     checkMaxLength(vendor.getUrl(), 255, holder);
+    checkValidWebsite(vendor.getUrl(), holder);
 
     checkTemplateText(vendor.getEmail(), "support@yourcompany.com", holder);
     checkMaxLength(vendor.getEmail(), 255, holder);
@@ -1179,6 +1181,18 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (StringUtil.isEmptyOrSpaces(value) || value.length() < MINIMAL_DESCRIPTION_LENGTH) {
       holder.createProblem(domValue,
                            DevKitBundle.message("inspections.plugin.xml.value.must.have.minimum.length", MINIMAL_DESCRIPTION_LENGTH));
+    }
+  }
+
+  private static void checkValidWebsite(@NotNull GenericDomValue<String> domValue,
+                                        DomElementAnnotationHolder holder) {
+    if (!DomUtil.hasXml(domValue)) return;
+
+    String url = domValue.getStringValue();
+    if (StringUtil.isEmptyOrSpaces(url) ||
+        !url.startsWith("https://") ||
+        !url.startsWith("http://")) {
+      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.value.must.be.https.or.http.link.to.website"));
     }
   }
 
