@@ -678,7 +678,9 @@ public final class HighlightControlFlowUtil {
                                          @NotNull PsiExpression expression,
                                          @NotNull  PsiReferenceExpression reference,
                                          @NotNull PsiFile containingFile) {
-    if (variable.hasInitializer()) return false;
+    if (variable.hasInitializer()) {
+      return variable instanceof PsiField field && !PsiAugmentProvider.canTrustFieldInitializer(field);
+    }
     if (variable instanceof PsiParameter) return false;
     PsiElement scope = getElementVariableReferencedFrom(variable, expression);
     if (variable instanceof PsiField field) {
