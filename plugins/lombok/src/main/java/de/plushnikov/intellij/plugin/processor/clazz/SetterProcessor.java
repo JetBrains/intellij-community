@@ -70,8 +70,8 @@ public final class SetterProcessor extends AbstractClassProcessor {
   private static void validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation,
                                                     @NotNull PsiClass psiClass,
                                                     @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addErrorMessage("inspection.message.s.only.supported.on.class.or.field.type", psiAnnotation.getQualifiedName());
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
+      builder.addErrorMessage("inspection.message.setter.only.supported.on.class.or.field.type");
       builder.markFailed();
     }
   }

@@ -71,7 +71,7 @@ public final class GetterProcessor extends AbstractClassProcessor {
   }
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.getter.only.supported.on.class.enum.or.field.type");
       builder.markFailed();
     }
