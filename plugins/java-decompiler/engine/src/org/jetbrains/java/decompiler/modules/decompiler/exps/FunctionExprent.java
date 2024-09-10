@@ -425,8 +425,9 @@ public class FunctionExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    return new ArrayList<>(lstOperands);
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
+    lst.addAll(this.lstOperands);
+    return lst;
   }
 
   @Override

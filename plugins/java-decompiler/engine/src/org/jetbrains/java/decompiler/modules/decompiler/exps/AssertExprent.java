@@ -17,6 +17,12 @@ public class AssertExprent extends Exprent {
   }
 
   @Override
+  protected List<Exprent> getAllExprents(List<Exprent> list) {
+    list.addAll(this.parameters);
+    return list;
+  }
+
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buffer = new TextBuffer();
 

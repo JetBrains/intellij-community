@@ -27,6 +27,13 @@ public class AnnotationExprent extends Exprent {
   }
 
   @Override
+  protected List<Exprent> getAllExprents(List<Exprent> list) {
+    list.addAll(this.parValues);
+
+    return list;
+  }
+
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buffer = new TextBuffer();
 

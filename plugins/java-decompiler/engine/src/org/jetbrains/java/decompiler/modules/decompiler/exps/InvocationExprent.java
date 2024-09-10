@@ -228,8 +228,7 @@ public class InvocationExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
     if (instance != null) {
       lst.add(instance);
     }

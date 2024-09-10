@@ -29,7 +29,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class VarExprent extends Exprent {
@@ -85,8 +88,8 @@ public class VarExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    return new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
+    return lst;
   }
 
   @Override

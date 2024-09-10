@@ -192,8 +192,8 @@ public class ConstExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    return new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> list) {
+    return list;
   }
 
   @Override
