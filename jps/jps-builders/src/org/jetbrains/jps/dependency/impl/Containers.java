@@ -168,10 +168,8 @@ public final class Containers {
 
   private static class GraphDataExternalizer<T> implements DataExternalizer<T> {
     private final Externalizer<T> myExternalizer;
-    @Nullable
-    private final Enumerator myEnumerator;
-    @Nullable
-    private final Function<Object, Object> myObjectInterner;
+    private final @Nullable Enumerator myEnumerator;
+    private final @Nullable Function<Object, Object> myObjectInterner;
 
     GraphDataExternalizer(Externalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<Object, Object> objectInterner) {
       myExternalizer = externalizer;

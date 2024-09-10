@@ -150,8 +150,7 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
   }
   ;
 
-  @Nullable
-  private final Class<?> dataType;
+  private final @Nullable Class<?> dataType;
 
   JvmProtoMemberValueExternalizer(@Nullable Class<?> dataType) {
     this.dataType = dataType;

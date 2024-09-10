@@ -81,8 +81,7 @@ public final class Utils {
     return getNodes(new JvmNodeReferenceID(name), JvmModule.class);
   }
 
-  @Nullable
-  public String getNodeName(ReferenceID id) {
+  public @Nullable String getNodeName(ReferenceID id) {
     if (id instanceof JvmNodeReferenceID) {
       return ((JvmNodeReferenceID)id).getNodeName();
     }
@@ -195,18 +194,15 @@ public final class Utils {
     return recurse(classId, this::allDirectSupertypes, false);
   }
 
-  @NotNull
-  public Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
+  public @NotNull Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
     return recurse(from, this::directSubclasses, true);
   }
 
-  @NotNull
-  public Iterable<ReferenceID> allSubclasses(ReferenceID from) {
+  public @NotNull Iterable<ReferenceID> allSubclasses(ReferenceID from) {
     return recurse(from, this::directSubclasses, false);
   }
 
-  @NotNull
-  public Iterable<ReferenceID> directSubclasses(ReferenceID from) {
+  public @NotNull Iterable<ReferenceID> directSubclasses(ReferenceID from) {
     if (myDeltaDirectSubclasses != null) {
       BooleanFunction<ReferenceID> subClassFilter = sub -> {
         if (myIsNodeDeleted.test(sub)) {
@@ -387,8 +383,7 @@ public final class Utils {
     };
   }
 
-  @Nullable
-  public Boolean isSubtypeOf(final TypeRepr who, final TypeRepr whom) {
+  public @Nullable Boolean isSubtypeOf(final TypeRepr who, final TypeRepr whom) {
     if (who.equals(whom)) {
       return Boolean.TRUE;
     }

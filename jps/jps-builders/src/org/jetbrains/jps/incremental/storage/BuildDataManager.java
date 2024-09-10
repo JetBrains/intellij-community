@@ -151,8 +151,7 @@ public final class BuildDataManager {
     return myMappings;
   }
 
-  @Nullable
-  public GraphConfiguration getDependencyGraph() {
+  public @Nullable GraphConfiguration getDependencyGraph() {
     synchronized (myGraphManagementLock) {
       DependencyGraph depGraph = myDepGraph;
       return depGraph == null? null : new GraphConfiguration() {

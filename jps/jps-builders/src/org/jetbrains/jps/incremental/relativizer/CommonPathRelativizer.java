@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -11,8 +11,7 @@ class CommonPathRelativizer implements PathRelativizer {
   /**
    * can be null when myPath is null, or it is impossible to detect the sensitivity of the file system
    */
-  @Nullable
-  private final Boolean myIsCaseSensitive;
+  private final @Nullable Boolean myIsCaseSensitive;
 
   CommonPathRelativizer(@Nullable String path, @NotNull String identifier) {
     this(path, identifier, null);

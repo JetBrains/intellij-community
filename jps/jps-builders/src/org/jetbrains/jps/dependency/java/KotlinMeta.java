@@ -30,8 +30,8 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
   private final int @NotNull [] myVersion;
   private final String @NotNull [] myData1;
   private final String @NotNull [] myData2;
-  @NotNull private final String myExtraString;
-  @NotNull private final String myPackageName;
+  private final @NotNull String myExtraString;
+  private final @NotNull String myPackageName;
   private final int myExtraInt;
 
   public KotlinMeta(int kind, int @Nullable [] version, String @Nullable [] data1,  String @Nullable [] data2, @Nullable String extraString, @Nullable String packageName, int extraInt) {
@@ -92,18 +92,15 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return myData2;
   }
 
-  @NotNull
-  public String getExtraString() {
+  public @NotNull String getExtraString() {
     return myExtraString;
   }
 
-  @NotNull
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return myPackageName;
   }
 
-  @NotNull
-  public Integer getExtraInt() {
+  public @NotNull Integer getExtraInt() {
     return myExtraInt;
   }
 
@@ -173,14 +170,12 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container instanceof KmClass? Attributes.getVisibility((KmClass)container) : Visibility.PUBLIC;
   }
 
-  @Nullable
-  public Modality getContainerModality() {
+  public @Nullable Modality getContainerModality() {
     KmDeclarationContainer container = getDeclarationContainer();
     return container instanceof KmClass? Attributes.getModality((KmClass)container) : null;
   }
 
-  @Nullable
-  public KmDeclarationContainer getDeclarationContainer() {
+  public @Nullable KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
     if (clsMeta instanceof KotlinClassMetadata.Class) {
       return ((KotlinClassMetadata.Class)clsMeta).getKmClass();

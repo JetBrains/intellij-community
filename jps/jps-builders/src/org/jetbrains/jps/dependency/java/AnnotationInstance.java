@@ -31,8 +31,7 @@ public abstract class AnnotationInstance implements ExternalizableGraphElement {
     JvmProtoMemberValueExternalizer.write(out, contentHash);
   }
 
-  @NotNull
-  public TypeRepr.ClassType getAnnotationClass() {
+  public @NotNull TypeRepr.ClassType getAnnotationClass() {
     return annotationClass;
   }
 

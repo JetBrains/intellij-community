@@ -18,7 +18,7 @@ import java.util.List;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   protected final Object dataLock = new Object();
-  private @NotNull final PersistentMapBuilder<Key, T> mapBuilder;
+  private final @NotNull PersistentMapBuilder<Key, T> mapBuilder;
   private @NotNull PersistentMapImpl<Key, T> map;
   private final boolean isCompressed;
 

@@ -98,8 +98,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return getPackageName(getName());
   }
 
-  @NotNull
-  public static String getPackageName(@NotNull String jvmClassName) {
+  public static @NotNull String getPackageName(@NotNull String jvmClassName) {
     int index = jvmClassName.lastIndexOf('/');
     return index >= 0? jvmClassName.substring(0, index) : "";
   }
@@ -161,8 +160,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return myAnnotationTargets;
   }
 
-  @Nullable
-  public RetentionPolicy getRetentionPolicy() {
+  public @Nullable RetentionPolicy getRetentionPolicy() {
     return myRetentionPolicy;
   }
 
