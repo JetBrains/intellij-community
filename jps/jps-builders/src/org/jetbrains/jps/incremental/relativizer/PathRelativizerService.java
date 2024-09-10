@@ -140,6 +140,6 @@ public final class PathRelativizerService {
     if (url == null || url.isEmpty()) {
       return null;
     }
-    return JpsPathUtil.urlToFile(url).getAbsolutePath();
+    return Path.of(JpsPathUtil.urlToPath(url)).toAbsolutePath().toString();
   }
 }
