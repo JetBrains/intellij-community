@@ -5,11 +5,11 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.gitlab.arturbosch.detekt.Detekt
-import java.lang.reflect.Field
-import java.net.URLClassLoader
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.BaseKotlinCompile
+import java.lang.reflect.Field
+import java.net.URLClassLoader
 
 private val defaultOutputDir: Provider<Directory> = layout.buildDirectory.dir("generated/iconKeys")
 
@@ -149,7 +149,7 @@ open class IconKeysGeneratorTask : DefaultTask() {
 
                 if (field.annotations.any { it.annotationClass == java.lang.Deprecated::class }) {
                     logger.lifecycle("Ignoring deprecated field: $fieldName")
-                    return
+                    return@forEach
                 }
 
                 val icon = field.get(sourceClass)
