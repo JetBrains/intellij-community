@@ -69,13 +69,15 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   override fun getRootProvider(): RootProvider = this
 
   override fun getUrls(rootType: OrderRootType): Array<String> {
-    return sdkEntityBuilder.roots.filter { it.type.name == rootType.customName }
+    val customName = rootType.customName
+    return sdkEntityBuilder.roots.filter { it.type.name == customName }
       .map { it.url.url }
       .toTypedArray()
   }
 
   override fun getFiles(rootType: OrderRootType): Array<VirtualFile> {
-    return sdkEntityBuilder.roots.filter { it.type.name == rootType.customName }
+    val customName = rootType.customName
+    return sdkEntityBuilder.roots.filter { it.type.name == customName }
       .mapNotNull { it.url.virtualFile }
       .toTypedArray()
   }
