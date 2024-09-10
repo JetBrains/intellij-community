@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.kotlinForwardDeclarationsWorkspaceEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
+import org.jetbrains.kotlin.idea.base.projectStructure.util.createAtomicReferenceFieldUpdaterForProperty
 import org.jetbrains.kotlin.idea.base.util.minus
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -141,35 +142,27 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
 
     companion object {
         @JvmStatic
-        private val directRegularDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
-            AtomicReferenceFieldUpdater.newUpdater(
-                KtModuleByModuleInfoBase::class.java,
-                List::class.java,
-                KtModuleByModuleInfoBase::_directRegularDependencies.name
+        private val directRegularDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase, List<KaModule>?> =
+            createAtomicReferenceFieldUpdaterForProperty(
+                KtModuleByModuleInfoBase::_directRegularDependencies
             )
 
         @JvmStatic
-        private val directFriendDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
-            AtomicReferenceFieldUpdater.newUpdater(
-                KtModuleByModuleInfoBase::class.java,
-                List::class.java,
-                KtModuleByModuleInfoBase::_directFriendDependencies.name
+        private val directFriendDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase, List<KaModule>?> =
+            createAtomicReferenceFieldUpdaterForProperty(
+                KtModuleByModuleInfoBase::_directFriendDependencies
             )
 
         @JvmStatic
-        private val directDependsOnDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
-            AtomicReferenceFieldUpdater.newUpdater(
-                KtModuleByModuleInfoBase::class.java,
-                List::class.java,
-                KtModuleByModuleInfoBase::_directDependsOnDependencies.name
+        private val directDependsOnDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase, List<KaModule>?> =
+            createAtomicReferenceFieldUpdaterForProperty(
+                KtModuleByModuleInfoBase::_directDependsOnDependencies
             )
 
         @JvmStatic
-        private val transitiveDependsOnDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase?, List<*>?> =
-            AtomicReferenceFieldUpdater.newUpdater(
-                KtModuleByModuleInfoBase::class.java,
-                List::class.java,
-                KtModuleByModuleInfoBase::_transitiveDependsOnDependencies.name
+        private val transitiveDependsOnDependenciesUpdater: AtomicReferenceFieldUpdater<KtModuleByModuleInfoBase, List<KaModule>?> =
+            createAtomicReferenceFieldUpdaterForProperty(
+                KtModuleByModuleInfoBase::_transitiveDependsOnDependencies
             )
     }
 }
@@ -322,11 +315,9 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
 
     companion object {
         @JvmStatic
-        private val librarySourcesUpdater: AtomicReferenceFieldUpdater<KtLibraryModuleByModuleInfo?, KaLibrarySourceModule?> =
-            AtomicReferenceFieldUpdater.newUpdater(
-                KtLibraryModuleByModuleInfo::class.java,
-                KaLibrarySourceModule::class.java,
-                KtLibraryModuleByModuleInfo::_librarySources.name
+        private val librarySourcesUpdater: AtomicReferenceFieldUpdater<KtLibraryModuleByModuleInfo, KaLibrarySourceModule?> =
+            createAtomicReferenceFieldUpdaterForProperty(
+                KtLibraryModuleByModuleInfo::_librarySources
             )
     }
 }
@@ -432,11 +423,9 @@ open class KtLibrarySourceModuleByModuleInfo(
 
     companion object {
         @JvmStatic
-        private val binaryLibraryUpdater: AtomicReferenceFieldUpdater<KtLibrarySourceModuleByModuleInfo?, KaLibraryModule?> =
-            AtomicReferenceFieldUpdater.newUpdater(
-                KtLibrarySourceModuleByModuleInfo::class.java,
-                KaLibraryModule::class.java,
-                KtLibrarySourceModuleByModuleInfo::_binaryLibrary.name
+        private val binaryLibraryUpdater: AtomicReferenceFieldUpdater<KtLibrarySourceModuleByModuleInfo, KaLibraryModule?> =
+            createAtomicReferenceFieldUpdaterForProperty(
+                KtLibrarySourceModuleByModuleInfo::_binaryLibrary
             )
     }
 }
