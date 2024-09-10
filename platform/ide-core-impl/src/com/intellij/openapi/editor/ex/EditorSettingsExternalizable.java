@@ -96,7 +96,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
-    public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = false;
+    public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
