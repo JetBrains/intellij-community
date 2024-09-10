@@ -29,6 +29,8 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import java.io.FileOutputStream
+import java.io.PrintStream
 import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -77,9 +79,32 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   override suspend fun runTests(additionalJvmOptions: List<String>,
-                                additionalSystemProperties: Map<String, String>,
-                                defaultMainModule: String?,
-                                rootExcludeCondition: ((Path) -> Boolean)?) {
+               additionalSystemProperties: Map<String, String>,
+               defaultMainModule: String?,
+               rootExcludeCondition: ((Path) -> Boolean)?) {
+    if (TeamCityHelper.isUnderTeamCity) {
+      val outputFile = Files.createTempFile("testBuildOutput", ".txt").apply { Files.delete(this) }.toFile()
+      val outputStream = System.out
+      PrintStream(FileOutputStream(outputFile)).use {
+        System.setOut(it)
+        context.messages.startWritingFileToBuildLog(outputFile.absolutePath)
+        try {
+          runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
+        }
+        finally {
+          System.setOut(outputStream)
+        }
+      }
+    }
+    else {
+      runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
+    }
+  }
+
+  private suspend fun runTestsImpl(additionalJvmOptions: List<String>,
+                                   additionalSystemProperties: Map<String, String>,
+                                   defaultMainModule: String?,
+                                   rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
@@ -1045,14 +1070,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.messages.info("Starting tests on runtime $runtime")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
-    if(TeamCityHelper.isUnderTeamCity) {
-      val outputFile = Files.createTempFile("testOutput", ".txt").apply { Files.delete(this) }.toFile()
-      builder.redirectOutput(outputFile)
-      builder.redirectError(ProcessBuilder.Redirect.INHERIT)
-      context.messages.startWritingFileToBuildLog(outputFile.absolutePath)
-    } else {
-      builder.inheritIO()
-    }
+    builder.inheritIO()
     val exitCode = builder.start().waitFor()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
       context.messages.error("Tests failed with exit code $exitCode")
