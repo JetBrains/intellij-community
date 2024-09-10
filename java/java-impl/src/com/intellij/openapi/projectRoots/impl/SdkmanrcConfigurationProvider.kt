@@ -68,7 +68,8 @@ class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanRel
     val properties = Properties().apply {
       load(text.byteInputStream())
     }
-    return SdkmanReleaseData.parse(properties.getProperty("java"))
+    val java = properties.getProperty("java") ?: return null
+    return SdkmanReleaseData.parse(java)
   }
 
   override fun matchAgainstSdk(releaseData: SdkmanReleaseData, sdk: Sdk): Boolean {
