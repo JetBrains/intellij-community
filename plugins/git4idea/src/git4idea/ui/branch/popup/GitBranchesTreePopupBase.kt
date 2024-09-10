@@ -41,7 +41,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitVcs
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
@@ -126,7 +126,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     installBranchSettingsListener()
     setDataProvider(EdtNoGetDataProvider { sink ->
       sink[POPUP_KEY] = this@GitBranchesTreePopupBase
-      sink[GitBranchActionsUtil.REPOSITORIES_KEY] = treeStep.repositories
+      sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
     })
   }
 

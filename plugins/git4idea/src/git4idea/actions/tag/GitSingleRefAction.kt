@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsActions
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -26,8 +26,8 @@ abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsAc
   final override fun update(e: AnActionEvent) {
     val project = e.project
     val repositories = getAffectedRepositories(e)
-    val branches = e.getData(GitBranchActionsUtil.BRANCHES_KEY)
-    val tags = e.getData(GitBranchActionsUtil.TAGS_KEY)
+    val branches = e.getData(GitBranchActionsDataKeys.BRANCHES)
+    val tags = e.getData(GitBranchActionsDataKeys.TAGS)
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(project, repositories, branches, tags)
 
     DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories, GitBundle.message("action.not.possible.in.fresh.repo.generic"))
@@ -39,8 +39,8 @@ abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsAc
 
   final override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val branches = e.getData(GitBranchActionsUtil.BRANCHES_KEY)
-    val tags = e.getData(GitBranchActionsUtil.TAGS_KEY)
+    val branches = e.getData(GitBranchActionsDataKeys.BRANCHES)
+    val tags = e.getData(GitBranchActionsDataKeys.TAGS)
     val ref = getRef(branches, tags) ?: return
     val repositories = getAffectedRepositories(e)
 

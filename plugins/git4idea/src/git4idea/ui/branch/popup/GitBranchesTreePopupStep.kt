@@ -22,7 +22,7 @@ import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.GitVcs
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -192,15 +192,14 @@ class GitBranchesTreePopupStep(
       CustomizedDataContext.withSnapshot(
         DataManager.getInstance().getDataContext(component)) { sink ->
         sink[CommonDataKeys.PROJECT] = project
-        sink[GitBranchActionsUtil.REPOSITORIES_KEY] = repositories
-        sink[GitBranchActionsUtil.SELECTED_REPO_KEY] = selectedRepository
+        sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
+        sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository
         if (reference is GitBranch) {
-          sink[GitBranchActionsUtil.BRANCHES_KEY] = listOf(reference)
+          sink[GitBranchActionsDataKeys.BRANCHES] = listOf(reference)
         }
         else if (reference is GitTag) {
-          sink[GitBranchActionsUtil.TAGS_KEY] = listOf(reference)
+          sink[GitBranchActionsDataKeys.TAGS] = listOf(reference)
         }
-        sink[GitBranchActionsUtil.BRANCHES_KEY] = (reference as? GitBranch)?.let(::listOf)
       }
   }
 }

@@ -17,7 +17,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 import git4idea.GitUtil
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
@@ -68,7 +68,7 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
       super.update(e)
     }
 
-    val repositories = e.getData(GitBranchActionsUtil.REPOSITORIES_KEY)
+    val repositories = e.getData(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES)
 
     e.presentation.isEnabledAndVisible = projectExist && repositories.orEmpty().size > 1
   }
