@@ -16,7 +16,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.IjentExecApi
+import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.IjentPosixInfo
+import com.intellij.platform.ijent.IjentTunnelsPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -525,7 +528,9 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
   override fun executeProcessBuilder(exe: String): EelExecApi.ExecuteProcessBuilder =
-    MockIjentApiExecuteProcessBuilder(adapter.apply { exePath = exe }, rootUser)
+    MockIjentApiExecuteProcessBuilder(adapter.apply { exePath = exe }, rootUser, this)
+
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult = executeResultMock
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
 }
@@ -535,6 +540,7 @@ private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET
 private class MockIjentApiExecuteProcessBuilder(
   private val adapter: GeneralCommandLine,
   rootUser: Boolean,
+  override val api: MockIjentExecApi,
 ) : EelExecApi.ExecuteProcessBuilder {
   init {
     if (rootUser) {
@@ -562,7 +568,11 @@ private class MockIjentApiExecuteProcessBuilder(
     adapter.setWorkDirectory(workingDirectory)
   }
 
-  override suspend fun execute(): EelExecApi.ExecuteProcessResult = executeResultMock
+  override val exe: String get() = adapter.exePath
+  override val args: List<String> get() = adapter.parametersList.list
+  override val env: Map<String, String> get() = adapter.environment
+  override val pty: EelExecApi.Pty? = null
+  override val workingDirectory: String? = adapter.workingDirectory?.toString()
 }
 
 private val executeResultMock by lazy {

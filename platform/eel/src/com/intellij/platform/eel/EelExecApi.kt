@@ -5,7 +5,6 @@ package com.intellij.platform.eel
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
  */
 interface EelExecApi {
-  // TODO Extract into a separate interface, like IjentFileSystemApi.Arguments
   /**
    * Starts a process on a local or remote machine.
    * stdin, stdout and stderr of the process are always forwarded, if there are.
@@ -22,6 +21,16 @@ interface EelExecApi {
    */
   fun executeProcessBuilder(exe: String): ExecuteProcessBuilder
 
+
+  /**
+   * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
+   *
+   * The instance of the [ExecuteProcessBuilder] _may_ become invalid after this call.
+   *
+   * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
+   */
+  suspend fun execute(builder: ExecuteProcessBuilder): ExecuteProcessResult
+
   /** Docs: [executeProcessBuilder] */
   interface ExecuteProcessBuilder {
     fun args(args: List<String>): ExecuteProcessBuilder
@@ -29,14 +38,16 @@ interface EelExecApi {
     fun pty(pty: Pty?): ExecuteProcessBuilder
     fun workingDirectory(workingDirectory: String?): ExecuteProcessBuilder
 
-    /**
-     * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
-     *
-     * The instance of the [ExecuteProcessBuilder] _may_ become invalid after this call.
-     *
-     * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
-     */
-    suspend fun execute(): ExecuteProcessResult
+
+    // TODO: Use path
+    val exe: String
+    val args: List<String>
+    val env: Map<String, String>
+    val pty: Pty?
+    val workingDirectory: String?
+
+    // API that created this builder
+    val api: EelExecApi
   }
 
   /**
@@ -63,3 +74,8 @@ fun EelExecApi.executeProcessBuilder(exe: String, arg1: String, vararg args: Str
 
 fun EelExecApi.ExecuteProcessBuilder.args(first: String, vararg other: String): EelExecApi.ExecuteProcessBuilder =
   args(listOf(first, *other))
+
+/**
+ * See [EelExecApi.execute]
+ */
+suspend fun EelExecApi.ExecuteProcessBuilder.execute(): EelExecApi.ExecuteProcessResult = api.execute(this)

@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.execute
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
