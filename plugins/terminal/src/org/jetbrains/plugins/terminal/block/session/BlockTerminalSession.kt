@@ -43,7 +43,10 @@ internal class BlockTerminalSession(
   internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
   /**
-   * Wrapper for future. Holds
+   * This stream sends input to the terminal.
+   * It ensures that any data sent to the terminal is properly
+   * handled even if the terminal's output stream
+   * isn't immediately available at the time of the request.
    */
   internal val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
 
