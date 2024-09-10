@@ -15,8 +15,10 @@ import com.intellij.codeInsight.intention.impl.preview.PreviewHandler;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.DynamicPlugins;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.internal.statistic.IntentionFUSCollector;
@@ -551,10 +553,19 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myIconLabel.setIcon(myHighlightedIcon);
       setBorder(LightBulbUtil.createActiveBorder(myEditor));
 
-      String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
-        ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+      AnAction showActionsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(showActionsAction);
       if (!acceleratorsText.isEmpty()) {
-        myIconLabel.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
+        if (UISettings.isIdeHelpTooltipEnabled()) {
+          HelpTooltip.dispose(myIconLabel);
+          new HelpTooltip()
+            .setTitle(showActionsAction.getTemplateText())
+            .setShortcut(acceleratorsText)
+            .installOn(myIconLabel);
+        }
+        else {
+          myIconLabel.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
+        }
       }
     }
   }
