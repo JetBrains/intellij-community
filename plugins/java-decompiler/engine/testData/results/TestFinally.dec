@@ -24,8 +24,6 @@ public class TestFinally {
    }// 30
 
    public class A<B> {
-      public A(final TestFinally this$0) {
-      }// 8
    }
 }
 
@@ -80,14 +78,7 @@ class 'pkg/TestFinally' {
    }
 }
 
-class 'pkg/TestFinally$A' {
-   method '<init> (Lpkg/TestFinally;)V' {
-      4      27
-   }
-}
-
 Lines mapping:
-8 <-> 28
 13 <-> 8
 15 <-> 9
 16 <-> 10

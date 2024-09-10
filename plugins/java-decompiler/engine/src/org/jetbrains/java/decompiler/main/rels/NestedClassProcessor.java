@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -256,7 +257,6 @@ public class NestedClassProcessor {
   private static void computeLocalVarsAndDefinitions(ClassNode node) {
     // class name -> constructor descriptor -> var to field link
     Map<String, Map<String, List<VarFieldPair>>> mapVarMasks = new HashMap<>();
-
     int clTypes = 0;
 
     for (ClassNode nd : node.nested) {
@@ -409,12 +409,17 @@ public class NestedClassProcessor {
         var attr = wrapper.methodStruct.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
         if (attr != null) {
           for (var param : attr.getEntries()) {
-            mask.add((param.myAccessFlags & (CodeConstants.ACC_SYNTHETIC | CodeConstants.ACC_MANDATED)) == 0 ? null : new VarVersionPair(-1, 0));
+            mask.add((param.myAccessFlags & (CodeConstants.ACC_SYNTHETIC | CodeConstants.ACC_MANDATED)) == 0 &&
+                     !groovyClosure(nestedNode) ? null : new VarVersionPair(-1, 0));
           }
         } else {
           for (VarFieldPair pair : entry.getValue()) {
             VarVersionPair ver = pair != null && !pair.fieldKey.isEmpty() ? pair.varPair : null;
-            if (ver == null && mask.isEmpty() && nestedNode.type == ClassNode.CLASS_MEMBER && !ExprUtil.isStatic(nestedNode.classStruct)) {
+            if (ver == null && mask.isEmpty() &&
+                nestedNode.type == ClassNode.CLASS_MEMBER &&
+                !ExprUtil.isStatic(nestedNode.classStruct) &&
+                (nestedNode.classStruct.getAccessFlags() & CodeConstants.ACC_ENUM) == 0 &&  //!enum
+                !groovyClosure(nestedNode)) {
               ver = new VarVersionPair(-1, 0); // non-static inners always have 'Outer.this'
             }
             mask.add(ver);
@@ -423,6 +428,17 @@ public class NestedClassProcessor {
         wrapper.synthParameters = mask;
       }
     }
+  }
+
+  private static boolean groovyClosure(@Nullable ClassNode node) {
+    if (node == null) {
+      return false;
+    }
+    if (node.simpleName == null || !node.simpleName.startsWith("_closure")) return false;
+    StructClass struct = node.classStruct;
+    if (struct == null) return false;
+    if (struct.superClass == null || !struct.superClass.value.equals("groovy/lang/Closure")) return false;
+    return true;
   }
 
   private static void insertLocalVars(ClassNode parent, ClassNode child) {
