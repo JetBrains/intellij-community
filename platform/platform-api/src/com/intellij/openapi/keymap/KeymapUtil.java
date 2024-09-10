@@ -287,7 +287,8 @@ public final class KeymapUtil {
     return toolTipText;
   }
 
-  public static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+  /** @return text representation of the keymap modifiers, like Ctrl+Shift */
+  public static @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     return ourDefaultKeymapTextContext.getModifiersText(KeymapTextContext.mapNewModifiers(modifiers), false);
   }
 
