@@ -23,7 +23,6 @@ object DirectKotlinClassInheritorsSearch {
         val searchScope: SearchScope,
         val includeAnonymous: Boolean = true,
         val includeLocal: Boolean = true,
-        val searchOnlyInKotlin: Boolean = false,
     ) : com.intellij.model.search.SearchParameters<PsiElement> {
         override fun getProject(): Project {
             return runReadAction { ktClass.project }

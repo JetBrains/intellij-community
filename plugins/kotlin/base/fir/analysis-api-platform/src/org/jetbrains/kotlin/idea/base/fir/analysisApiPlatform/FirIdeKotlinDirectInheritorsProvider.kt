@@ -31,7 +31,6 @@ class FirIdeKotlinDirectInheritorsProvider : KotlinDirectInheritorsProvider {
             ktClass = ktClass,
             searchScope = kotlinOnlyScope,
             includeLocal = includeLocalInheritors,
-            searchOnlyInKotlin = true,
         )
 
         return DirectKotlinClassInheritorsSearch.search(searchParameters).filterIsInstance<KtClassOrObject>().toList()
