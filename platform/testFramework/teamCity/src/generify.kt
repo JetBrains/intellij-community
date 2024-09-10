@@ -24,6 +24,7 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
 /**
  * Simplifies test grouping by replacing numbers, hashes, hex numbers with predefined constant values <ID>, <HASH>, <HEX>
  *  Eg:
+ *  /mnt/build/temp35321324432 => <FILE>
  *  text@3ba5aac, text => text<ID>, text
  *  some-text.db451f59 => some-text.<HASH>
  *  0x01 => <HEX>
@@ -31,11 +32,17 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
  **/
 fun generifyErrorMessage(originalMessage: String): String {
   return originalMessage
+    .generifyFileNames()
     .generifyID()
     .generifyHash()
     .generifyHexadecimal()
     .generifyHexCode()
     .generifyNumber()
+}
+
+fun String.generifyFileNames(): String {
+  val regex = "([A-Z]:)?([/\\\\][ a-zA-Z0-9_.-]+)+".toRegex()
+  return replace(regex,"<FILE>")
 }
 
 /** text@3ba5aac, text => text<ID>, text */
