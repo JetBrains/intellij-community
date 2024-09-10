@@ -3,6 +3,7 @@ package com.intellij.notebooks.visualization.context
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.ide.IdeEventQueue
 import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -24,8 +25,14 @@ object NotebookDataContextUtils {
         return mouseEditorOffset
     }
 
+    if (contextComponent!=null) {
+      val calculatedLine = getRespectiveLineNumberInEditor(noteEditor, contextComponent)
+      if (calculatedLine!=null)
+        return calculatedLine
+    }
 
-
+    if (ApplicationManager.getApplication().isUnitTestMode)
+      return null
     val point = editor.contentComponent.mousePosition ?: return null
     val logicalPosition = editor.xyToLogicalPosition(point)
     return logicalPosition.line
@@ -52,11 +59,7 @@ object NotebookDataContextUtils {
     return noteEditor
   }
 
-  fun getCaretLine(editor: EditorImpl): Int {
-    return editor.caretModel.logicalPosition.line
-  }
-
-  fun getRespectiveLineNumberInEditor(editor: Editor, component: Component): Int? {
+  private fun getRespectiveLineNumberInEditor(editor: Editor, component: Component): Int? {
     val point = SwingUtilities.convertPoint(component, 0, component.height, editor.contentComponent)
     val documentLineCount = editor.document.lineCount
 
@@ -77,7 +80,7 @@ object NotebookDataContextUtils {
     return editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
   }
 
-  fun hasFocusedSearchReplaceComponent(editor: Editor, contextComponent: Component): Boolean {
+  fun hasFocusedSearchReplaceComponent(editor: Editor, contextComponent: Component?): Boolean {
     val searchReplaceComponent = editor.headerComponent.asSafely<SearchReplaceComponent>() ?: return false
     return contextComponent === searchReplaceComponent.searchTextComponent ||
            contextComponent === searchReplaceComponent.replaceTextComponent

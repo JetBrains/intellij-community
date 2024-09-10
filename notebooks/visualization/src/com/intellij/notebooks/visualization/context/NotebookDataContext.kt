@@ -12,7 +12,7 @@ object NotebookDataContext {
 
   val DataContext.notebookEditor: EditorImpl?
     get() {
-      val component = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) ?: return null
+      val component = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
       val editor = getData(PlatformCoreDataKeys.EDITOR)
       val noteEditor = NotebookDataContextUtils.getCurrentEditor(editor, component) ?: return null
       if (NotebookDataContextUtils.hasFocusedSearchReplaceComponent(noteEditor, component))
