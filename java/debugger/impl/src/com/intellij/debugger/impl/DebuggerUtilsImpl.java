@@ -547,6 +547,19 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 
+  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
+                                                   @NotNull ObjectReference value,
+                                                   @NotNull String methodName,
+                                                   @Nullable String signature) throws EvaluateException {
+    ReferenceType type = value.referenceType();
+    Method method = findMethod(type, methodName, signature);
+    if (method != null) {
+      return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, Collections.emptyList());
+    }
+    LOG.error("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
+    return null;
+  }
+
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext, Class<?> cls, String methodName, List<Value> arguments)
     throws EvaluateException {
     ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext);

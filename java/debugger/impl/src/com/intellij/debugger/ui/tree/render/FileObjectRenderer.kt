@@ -1,27 +1,51 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.ui.tree.render;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.ui.tree.render
 
-import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.debugger.JavaDebuggerBundle.message
+import com.intellij.debugger.engine.FullValueEvaluatorProvider
+import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.settings.NodeRendererSettings
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
+import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.xdebugger.frame.XFullValueEvaluator
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
 
-public final class FileObjectRenderer extends CompoundRendererProvider {
-  @Override
-  protected String getName() {
-    return "File";
-  }
+class FileObjectRenderer : CompoundRendererProvider() {
+  override fun getName(): String = "File"
 
-  @Override
-  protected ChildrenRenderer getChildrenRenderer() {
-    return NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null);
-  }
+  override fun getChildrenRenderer(): ChildrenRenderer = NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null)
 
-  @Override
-  protected String getClassName() {
-    return "java.io.File";
-  }
+  override fun getClassName(): String = "java.io.File"
 
-  @Override
-  protected boolean isEnabled() {
-    return Registry.is("debugger.renderers.file");
+  override fun isEnabled(): Boolean = `is`("debugger.renderers.file")
+
+  override fun getFullValueEvaluatorProvider(): FullValueEvaluatorProvider? {
+    return object : FullValueEvaluatorProvider {
+      override fun getFullValueEvaluator(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptorImpl): XFullValueEvaluator? {
+        val isFile = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, valueDescriptor.value as ObjectReference, "isFile", "()Z")
+        if ((isFile as? BooleanValue)?.value() == true) {
+          return object : JavaValue.JavaFullValueEvaluator(message("message.node.navigate"), evaluationContext) {
+            override fun isShowValuePopup(): Boolean = false
+
+            override fun evaluate(callback: XFullValueEvaluationCallback) {
+              val path = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, valueDescriptor.value as ObjectReference, "getAbsolutePath", "()Ljava/lang/String;")
+              if (path is StringReference) {
+                callback.evaluated("")
+                val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.value()) ?: return
+                DebuggerUIUtil.invokeLater { PsiNavigationSupport.getInstance().createNavigatable(evaluationContext.project, vFile, -1).navigate(true) }
+              }
+            }
+          }
+        }
+        return null
+      }
+    }
   }
 }
