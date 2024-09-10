@@ -93,12 +93,13 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     final PsiMethod methodPrototype = generateMethodPrototype(method, parameters);
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
-    final PsiMethod existingMethod = containingClass.findMethodBySignature(methodPrototype, false);
-    if (existingMethod != null) {
-      updater.moveCaretTo(existingMethod.getTextOffset());
-      updater.message(JavaBundle.message("default.param.value.warning",
-                                         existingMethod.isConstructor() ? 0 : 1));
-      return;
+    for (PsiMethod existingMethod : containingClass.findMethodsByName(method.getName(), false)) {
+      if (MethodSignatureUtil.areParametersErasureEqual(existingMethod, methodPrototype)) {
+        updater.moveCaretTo(existingMethod.getTextOffset());
+        updater.message(JavaBundle.message("default.param.value.warning",
+                                           existingMethod.isConstructor() ? 0 : 1));
+        return;
+      }
     }
 
     final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
