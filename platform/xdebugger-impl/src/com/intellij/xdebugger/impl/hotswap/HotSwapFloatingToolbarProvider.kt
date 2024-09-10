@@ -195,18 +195,17 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
             }
             return@launch
           }
-          HotSwapVisibleStatus.NO_CHANGES -> HotSwapButtonAction.HIDE
-          HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
-          HotSwapVisibleStatus.SESSION_COMPLETED, HotSwapVisibleStatus.HIDDEN, null -> HotSwapButtonAction.HIDE_NOW
-        }
-        if (action == HotSwapButtonAction.SHOW) {
-          hotSwapAction.status = HotSwapButtonStatus.READY
-          updateActions()
-        }
-        when (action) {
-          HotSwapButtonAction.SHOW -> component.scheduleShow()
-          HotSwapButtonAction.HIDE -> component.scheduleHide()
-          HotSwapButtonAction.HIDE_NOW -> component.hideImmediately()
+          HotSwapVisibleStatus.NO_CHANGES -> {
+            component.scheduleHide()
+          }
+          HotSwapVisibleStatus.CHANGES_READY -> {
+            hotSwapAction.status = HotSwapButtonStatus.READY
+            updateActions()
+            component.scheduleShow()
+          }
+          HotSwapVisibleStatus.SESSION_COMPLETED, HotSwapVisibleStatus.HIDDEN, null -> {
+            component.hideImmediately()
+          }
         }
       }
     }
@@ -222,10 +221,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     private const val SHOWING_TIME_MS = 500
     private const val HIDING_TIME_MS = 500
   }
-}
-
-private enum class HotSwapButtonAction {
-  SHOW, HIDE, HIDE_NOW
 }
 
 private class HideAction : AnAction() {
