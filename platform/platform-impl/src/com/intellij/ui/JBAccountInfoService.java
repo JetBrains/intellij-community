@@ -182,7 +182,7 @@ public interface JBAccountInfoService {
 
   record JbaLicense(
     @NlsSafe @NotNull String licenseId,
-    @NotNull JBAData jbaUser,
+    @NotNull String jbaUserId,
     @NotNull LicenseKind licenseKind,
     @NotNull LicenseeType licenseeType,
     @NlsSafe @NotNull String licensedTo,
