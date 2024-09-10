@@ -144,6 +144,7 @@ mod tests {
         check_env_variable(&test, &env, "INTELLIJ_ORIGINAL_ENV_FONTCONFIG_PATH", "/some/existing/path".to_string());
     }
 
+    #[cfg(target_os = "linux")]
     fn check_env_variable(test: &TestEnvironment, env: &HashMap<&str, &str>, variable_name: &str, expected_value: String) {
         let remote_dev_command = &["printEnvVar", variable_name];
         let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(env).with_args(remote_dev_command));
