@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.ide.gdpr.EndUserAgreement;
+import com.intellij.ide.gdpr.Version;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -111,6 +113,16 @@ public interface JBAccountInfoService {
    */
   @NotNull CompletableFuture<@NotNull LicenseListResult> issueTrialLicense(@NotNull String productCode, @NotNull List<String> consentOptions);
 
+  /**
+   * Records the accepted version of the specified EUA document, and responds whether a newer version of the document is available.
+   * <p>
+   * The returned future never completes exceptionally, other than because of cancellation that
+   * may happen in case of remote dev when the controlling client handling the request is disconnected.
+   */
+  @NotNull CompletableFuture<@NotNull AgreementAcceptanceResult> recordAgreementAcceptance(@NotNull String productCode,
+                                                                                           @NotNull String documentName,
+                                                                                           @NotNull Version acceptedVersion);
+
   static @Nullable JBAccountInfoService getInstance() {
     if (AppMode.isRemoteDevHost()) {
       // see BackendJbaInfoServiceImpl
@@ -201,11 +213,18 @@ public interface JBAccountInfoService {
     record RequestFailed(@NlsSafe @NotNull String errorMessage) implements LicenseListResult { }
   }
 
+  sealed interface AgreementAcceptanceResult permits AgreementAcceptanceResult.AckAccepted,
+                                                     AgreementAcceptanceResult.RequestFailed,
+                                                     AuthRequired {
+    record AckAccepted(@Nullable EndUserAgreement.Document newerDocument) implements AgreementAcceptanceResult { }
+    record RequestFailed(@NlsSafe @NotNull String errorMessage) implements AgreementAcceptanceResult { }
+  }
+
   /**
    * Returned in cases the method returning it is called while unauthenticated,
    * or when the current auth credentials have expired and need to be revalidated by {@link #startLoginSession signing in} again.
    */
-  enum AuthRequired implements LicenseListResult {
+  enum AuthRequired implements LicenseListResult, AgreementAcceptanceResult {
     INSTANCE;
 
     @Override
