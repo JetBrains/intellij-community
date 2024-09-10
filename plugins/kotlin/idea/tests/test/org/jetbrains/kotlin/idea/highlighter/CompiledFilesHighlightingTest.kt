@@ -82,8 +82,9 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         expectedDuplicatedHighlighting: Boolean = false,
         openFileAction: (VirtualFile) -> VirtualFile = { it }
     ) {
+        val libraryExtension = libraryFile.extension
         val libraryVirtualFile =
-            if (libraryFile.extension == "jar") {
+            if (libraryExtension == "jar" || libraryExtension == "klib") {
                 StandardFileSystems.jar().findFileByPath(libraryFile.absolutePath + URLUtil.JAR_SEPARATOR)
             } else {
                 VirtualFileManager.getInstance().findFileByNioPath(libraryFile.toPath())
