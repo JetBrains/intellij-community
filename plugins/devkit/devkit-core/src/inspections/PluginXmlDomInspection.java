@@ -888,7 +888,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(vendor, 255, holder);
 
     //noinspection HttpUrlsUsage
-    checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder);
+    checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder); // used in old template
+    checkTemplateText(vendor.getUrl(), "https://www.yourcompany.com", holder);
     checkMaxLength(vendor.getUrl(), 255, holder);
 
     checkTemplateText(vendor.getEmail(), "support@yourcompany.com", holder);
