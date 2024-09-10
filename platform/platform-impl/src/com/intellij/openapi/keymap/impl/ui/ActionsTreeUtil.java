@@ -161,7 +161,7 @@ public final class ActionsTreeUtil {
       if (isNonExecutableActionGroup(actionId, action)) {
         continue;
       }
-      if (filtered == null || filtered.value(action)) {
+      if (actionMatchesFilter(filtered, action)) {
         pluginGroup.addActionId(actionId);
       }
     }
@@ -198,7 +198,7 @@ public final class ActionsTreeUtil {
         }
       }
 
-      return filter == null || filter.value(action);
+      return actionMatchesFilter(filter, action);
     };
   }
 
@@ -280,7 +280,7 @@ public final class ActionsTreeUtil {
       if (action instanceof ActionGroup childGroup) {
         Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
         if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText())) {
-          if (subGroup.getSize() > 0 || filtered == null || filtered.test(childGroup)) {
+          if (subGroup.getSize() > 0 || actionMatchesFilter(filtered, childGroup)) {
             group.addGroup(subGroup);
           }
         }
@@ -289,16 +289,14 @@ public final class ActionsTreeUtil {
         }
       }
       else if (action instanceof Separator) {
-        if (filtered == null || filtered.test(action)) {
+        if (actionMatchesFilter(filtered, action)) {
           group.addSeparator();
         }
       }
       else {
         String id = actionManager.getId(action);
-        if (id != null) {
-          if (filtered == null || filtered.test(action)) {
-            group.addActionId(id);
-          }
+        if (id != null && actionMatchesFilter(filtered, action)) {
+          group.addActionId(id);
         }
       }
     }
@@ -410,7 +408,7 @@ public final class ActionsTreeUtil {
         if (actionId == null) {
           continue;
         }
-        if (filtered == null || filtered.test(editorAction)) {
+        if (actionMatchesFilter(filtered, editorAction)) {
           ids.add(actionId);
         }
       }
@@ -427,7 +425,7 @@ public final class ActionsTreeUtil {
     ids.sort(null);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, (Supplier<? extends Icon>)null);
     for (String id : ids) {
-      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
+      if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);
       }
     }
@@ -440,7 +438,7 @@ public final class ActionsTreeUtil {
     ids.sort(null);
     Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
     for (String id : ids) {
-      if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
+      if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);
       }
     }
@@ -453,9 +451,10 @@ public final class ActionsTreeUtil {
                                              QuickList @NotNull[] quickLists) {
     Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
+    ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"));
     for (QuickList quickList : quickLists) {
-      if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId())) ||
+      if (filtered != null && actionMatchesFilter(filtered, actionManager, quickList.getActionId()) ||
           SearchUtil.INSTANCE.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null, SearchableOptionsRegistrar.getInstance()) ||
           filtered == null && StringUtil.isEmpty(filter)) {
         group.addQuickList(quickList);
@@ -525,7 +524,7 @@ public final class ActionsTreeUtil {
     for (String id : ContainerUtil.sorted(result, Comparator.comparing(o -> getTextToCompare(o)))) {
       AnAction actionOrStub = actionManager.getActionOrStub(id);
       if (actionOrStub == null || isSearchable(actionOrStub)) {
-        if (filtered == null || filtered.value(actionOrStub)) {
+        if (actionMatchesFilter(filtered, actionOrStub)) {
           group.addActionId(id);
         }
       }
@@ -744,12 +743,12 @@ public final class ActionsTreeUtil {
       }
     }
     else if (action instanceof Separator) {
-      if (group instanceof Group && (filtered == null || filtered.value(action))) {
+      if (group instanceof Group && actionMatchesFilter(filtered, action)) {
         ((Group)group).addSeparator();
       }
     }
     else {
-      if (filtered == null || filtered.value(action)) {
+      if (actionMatchesFilter(filtered, action)) {
         String id = actionManager.getId(action);
         if (id != null) group.addActionId(id);
       }
@@ -804,6 +803,16 @@ public final class ActionsTreeUtil {
     catch (Throwable e) {
       return AnAction.EMPTY_ARRAY;
     }
+  }
+
+  private static boolean actionMatchesFilter(@Nullable Predicate<? super AnAction> filtered, AnAction action) {
+    return filtered == null || filtered.test(action);
+  }
+
+  private static boolean actionMatchesFilter(@Nullable Predicate<? super AnAction> filtered,
+                                             @NotNull ActionManager actionManager,
+                                             @NotNull String actionId) {
+    return filtered == null || filtered.test(actionManager.getActionOrStub(actionId));
   }
 
   public static @Nls String getMainMenuTitle() {
