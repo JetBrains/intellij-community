@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture
  * Allows operating with `CompletableFuture<TerminalOutputStream>` as if it was just `TerminalOutputStream`.
  * If the future is not resolved, then uses `thenAccept` to postpone the execution.
  */
-class FutureTerminalOutputStream(
+internal class FutureTerminalOutputStream(
   private val future: CompletableFuture<out TerminalOutputStream?>,
 ) : TerminalOutputStream {
 
