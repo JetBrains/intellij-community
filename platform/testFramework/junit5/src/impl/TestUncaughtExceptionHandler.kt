@@ -4,7 +4,8 @@ package com.intellij.testFramework.junit5.impl
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.fail
-import org.opentest4j.MultipleFailuresError
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 
 @TestOnly
 internal class TestUncaughtExceptionHandler : Thread.UncaughtExceptionHandler {
@@ -16,11 +17,18 @@ internal class TestUncaughtExceptionHandler : Thread.UncaughtExceptionHandler {
   }
 
   fun assertAllExceptionAreCaught() {
-    val e = when (uncaughtExceptions.size) {
-      0 -> return
-      1 -> uncaughtExceptions[0]
-      else -> MultipleFailuresError(null, uncaughtExceptions)
+    if (uncaughtExceptions.isEmpty()) return
+
+    val bStream = ByteArrayOutputStream()
+
+    PrintStream(bStream).use { stream ->
+      uncaughtExceptions.forEachIndexed { index, throwable ->
+        stream.println("${index + 1}) ")
+        throwable.printStackTrace(stream)
+      }
+
+      fail("${uncaughtExceptions.size} uncaught exceptions:${System.lineSeparator()}" +
+           bStream.toString())
     }
-    fail("Uncaught exceptions", e)
   }
 }
