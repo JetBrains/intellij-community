@@ -3,6 +3,7 @@ package com.intellij.platform.eel
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelTunnelsApi.Connection
+import com.intellij.platform.eel.impl.IpProtocolPreferenceImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
