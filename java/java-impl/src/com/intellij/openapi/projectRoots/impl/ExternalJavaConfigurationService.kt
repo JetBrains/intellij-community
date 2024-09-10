@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.execution.wsl.WslPath
 import com.intellij.java.JavaBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -13,10 +14,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.JdkFinder
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -92,6 +95,8 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   fun <T> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
     val fileName = configProvider.getConfigurationFile(project).name
 
+    val wsl =  SystemInfo.isWindows && project.guessProjectDir()?.let { WslPath.isWslUncPath(it.path) } == true
+
     // Match against the project SDK
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     if (projectSdk != null && configProvider.matchAgainstSdk(releaseData, projectSdk)) {
@@ -103,6 +108,8 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
     // Match against the project JDK table
     val jdks = ProjectJdkTable.getInstance().allJdks
     for (jdk in jdks) {
+      val path = jdk.homePath ?: continue
+      if (SystemInfo.isWindows && wsl != WslPath.isWslUncPath(path)) continue
       if (configProvider.matchAgainstSdk(releaseData, jdk)) {
         LOG.info("[$fileName] $releaseData - Candidate found: ${jdk.versionString}")
         return JdkCandidate.Jdk(releaseData, jdk, false)
@@ -111,7 +118,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
 
     // Match against JdkFinder
     JdkFinder.getInstance().suggestHomePaths().forEach { path ->
-      if (configProvider.matchAgainstPath(releaseData, path)) {
+      if (configProvider.matchAgainstPath(releaseData, path) && (!SystemInfo.isWindows || wsl == WslPath.isWslUncPath(path))) {
         LOG.info("[$fileName] $releaseData - Candidate found to register")
         return JdkCandidate.Path(releaseData, path)
       }
