@@ -147,7 +147,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         }
       }));
     }
-    invokeProcessQueueToTriggerEvictedListener(map);
     return map;
   }
 
