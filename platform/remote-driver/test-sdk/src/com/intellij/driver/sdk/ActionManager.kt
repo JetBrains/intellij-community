@@ -19,8 +19,23 @@ interface ActionManager {
                    now: Boolean): ActionCallback
 }
 
+@Remote("com.intellij.openapi.actionSystem.ex.ActionUtil")
+interface ActionUtils {
+  fun getActions(component: Component): List<AnAction>
+}
+
 @Remote(value = "com.intellij.openapi.actionSystem.AnAction")
-interface AnAction
+interface AnAction {
+  fun getShortcutSet(): ShortcutSet
+}
+
+@Remote("com.intellij.openapi.actionSystem.ShortcutSet")
+interface ShortcutSet {
+  fun getShortcuts(): Array<Shortcut>
+}
+
+@Remote("com.intellij.openapi.actionSystem.Shortcut")
+interface Shortcut
 
 @Remote(value = "com.intellij.openapi.util.ActionCallback")
 interface ActionCallback
