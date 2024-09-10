@@ -60,15 +60,15 @@ interface NotebookCellLines {
 
     fun getCellRange(editor: Editor): TextRange {
       val document = editor.document
-      val startOffset = document.getLineNumber(document.getLineStartOffset(lines.first))
-      val endOffset = document.getLineNumber(document.getLineEndOffset(lines.last))
+      val startOffset = document.getLineStartOffset(lines.first)
+      val endOffset = document.getLineEndOffset(lines.last)
       return TextRange(startOffset, endOffset)
     }
 
     fun getContentRange(editor: Editor): TextRange {
-      val contentLines = this.contentLines
-      val startOffset = editor.document.getLineStartOffset(contentLines.first)
-      val endOffset = editor.document.getLineEndOffset(contentLines.last)
+      val document = editor.document
+      val startOffset = document.getLineStartOffset(contentLines.first)
+      val endOffset = document.getLineEndOffset(contentLines.last)
       return TextRange(startOffset, endOffset)
     }
 

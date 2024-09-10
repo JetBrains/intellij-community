@@ -25,7 +25,7 @@ object NotebookDataContextUtils {
         return mouseEditorOffset
     }
 
-    if (contextComponent!=null) {
+    if (contextComponent != null && editor.contentComponent != contextComponent) {
       val calculatedLine = getRespectiveLineNumberInEditor(noteEditor, contextComponent)
       if (calculatedLine!=null)
         return calculatedLine
