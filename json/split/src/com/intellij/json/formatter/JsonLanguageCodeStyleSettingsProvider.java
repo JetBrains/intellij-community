@@ -8,9 +8,7 @@ import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAc
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -134,5 +132,10 @@ public final class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       );
     }
     return null;
+  }
+
+  @Override
+  public @NotNull CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+    return new JsonCodeStyleSettings(settings);
   }
 }
