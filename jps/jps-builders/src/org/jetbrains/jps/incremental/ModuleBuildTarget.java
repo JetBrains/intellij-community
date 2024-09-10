@@ -182,7 +182,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
     List<JavaSourceRootDescriptor> roots = projectDescriptor.getBuildRootIndex().getTargetRoots(this, null);
     for (JavaSourceRootDescriptor root : roots) {
-      String path = relativizer.toRelative(root.rootFile.toString());
+      String path = relativizer.toRelative(root.rootFile);
       if (logBuilder != null) {
         logBuilder.append(path).append('\n');
       }
@@ -270,7 +270,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
     Collection<Path> roots = enumerator.classes().getPaths();
     for (Path file : roots) {
-      String path = relativizer.toRelative(file.toAbsolutePath().normalize().toString());
+      String path = relativizer.toRelative(file);
       getContentHash(file, hash);
       if (logBuilder != null) {
         logBuilder.append(path);
