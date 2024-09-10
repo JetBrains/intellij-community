@@ -21,16 +21,12 @@ class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   internal val nioFs: IjentNioFileSystem,
   cachedAttributes: BasicFileAttributes?,
-) : Path, BasicFileAttributesHolder2.Impl() {
+) : Path, BasicFileAttributesHolder2.Impl(cachedAttributes) {
   private val isWindows
     get() = when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> false
       is IjentFileSystemWindowsApi -> true
     }
-
-  init {
-    myCachedAttributes = WeakReference(cachedAttributes)
-  }
 
   override fun getFileSystem(): IjentNioFileSystem = nioFs
 

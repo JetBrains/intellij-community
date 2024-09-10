@@ -2,23 +2,14 @@
 package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
-import java.lang.ref.WeakReference
 import java.net.URI
-import java.nio.file.LinkOption
-import java.nio.file.Path
-import java.nio.file.WatchEvent
-import java.nio.file.WatchKey
-import java.nio.file.WatchService
+import java.nio.file.*
 
 class IjentWslNioPath(
   private val fileSystem: IjentWslNioFileSystem,
   val delegate: Path,
   cachedAttributes: IjentNioPosixFileAttributesWithDosAdapter?,
-) : Path, BasicFileAttributesHolder2.Impl() {
-  init {
-    myCachedAttributes = WeakReference(cachedAttributes)
-  }
-
+) : Path, BasicFileAttributesHolder2.Impl(cachedAttributes) {
   override fun getFileSystem(): IjentWslNioFileSystem = fileSystem
 
   override fun isAbsolute(): Boolean = delegate.isAbsolute

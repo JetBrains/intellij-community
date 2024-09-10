@@ -39,7 +39,11 @@ public interface BasicFileAttributesHolder2 extends BasicFileAttributesHolder {
      * however strange the original works, this implementation should work the same.
      * </p>
      */
-    protected volatile @NotNull WeakReference<@Nullable BasicFileAttributes> myCachedAttributes = new WeakReference<>(null);
+    protected final @NotNull WeakReference<@Nullable BasicFileAttributes> myCachedAttributes;
+
+    protected Impl(@Nullable BasicFileAttributes attributes) {
+      myCachedAttributes = new WeakReference<>(attributes);
+    }
 
     @Override
     public BasicFileAttributes get() {
