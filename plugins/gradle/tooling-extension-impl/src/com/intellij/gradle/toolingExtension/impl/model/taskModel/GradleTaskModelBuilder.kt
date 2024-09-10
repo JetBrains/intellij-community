@@ -28,7 +28,7 @@ class GradleTaskModelBuilder : AbstractModelBuilderService() {
     // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
     // This is tested by GradleTaskListIntegrationTest.testSyncWithGradleTaskListSkipped().
     val skipTasks = try {
-      java.lang.String.valueOf(project.providers.gradleProperty("idea.gradle.do.not.build.tasks")).trim().toBoolean()
+      java.lang.String.valueOf(project.properties["idea.gradle.do.not.build.tasks"]).trim().toBoolean()
     } catch (ignored: Throwable) {
       false
     }
