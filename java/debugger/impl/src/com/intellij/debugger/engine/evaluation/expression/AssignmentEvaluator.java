@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -44,7 +44,7 @@ public class AssignmentEvaluator implements Evaluator {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       try {
-        ReferenceType referenceType = context.getDebugProcess().loadClass(context, e.className(), context.getClassLoader());
+        ReferenceType referenceType = context.getDebugProcess().loadClass(context, e, context.getClassLoader());
         if (referenceType != null) {
           assign(modifier, right, context);
         }

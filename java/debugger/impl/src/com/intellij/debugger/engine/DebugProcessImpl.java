@@ -87,10 +87,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import com.jetbrains.jdi.ClassLoaderReferenceImpl;
-import com.jetbrains.jdi.MethodImpl;
-import com.jetbrains.jdi.VirtualMachineImpl;
-import com.jetbrains.jdi.VirtualMachineManagerImpl;
+import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -1215,7 +1212,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           ReferenceType loadedClass = null;
           try {
             if (myEvaluationContext.isAutoLoadClasses()) {
-              loadedClass = loadClass(myEvaluationContext, e.className(), myEvaluationContext.getClassLoader());
+              loadedClass = loadClass(myEvaluationContext, e, myEvaluationContext.getClassLoader());
             }
           }
           catch (Exception ignored) {
@@ -1718,7 +1715,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return buffer.toString();
   }
 
-  @SuppressWarnings({"SpellCheckingInspection"})
+  public ReferenceType loadClass(EvaluationContextImpl evaluationContext,
+                                 ClassNotLoadedException exception,
+                                 ClassLoaderReference classLoader)
+    throws ClassNotLoadedException, EvaluateException, IncompatibleThreadStateException, InvocationException, InvalidTypeException {
+    if (exception instanceof ExactClassNotLoadedException ex) {
+      classLoader = ex.getClassLoader();
+    }
+    return loadClass(evaluationContext, exception.className(), classLoader);
+  }
+
   public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
@@ -1734,13 +1740,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
     args.add(DebuggerUtilsEx.mirrorOfString(qName, virtualMachine, evaluationContext));
     if (classLoader != null) {
-      //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
       forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
       args.add(virtualMachine.mirrorOf(true));
       args.add(classLoader);
     }
     else {
-      //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
     }
     if (forNameMethod == null) {

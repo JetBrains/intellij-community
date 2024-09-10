@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.engine.evaluation.expression;
 
@@ -99,7 +99,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     catch (ClassNotLoadedException ex) {
       final ReferenceType referenceType;
       try {
-        referenceType = context.isAutoLoadClasses() ? debugProcess.loadClass(context, ex.className(), type.classLoader()) : null;
+        referenceType = context.isAutoLoadClasses() ? debugProcess.loadClass(context, ex, type.classLoader()) : null;
       }
       catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);

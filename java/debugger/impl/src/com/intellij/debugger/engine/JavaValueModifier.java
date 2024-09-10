@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -179,7 +179,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
       final ReferenceType refType;
       try {
         refType = evaluationContext.getDebugProcess().loadClass(evaluationContext,
-                                                                ex.className(),
+                                                                ex,
                                                                 setValueRunnable.getClassLoader(evaluationContext));
         if (refType != null) {
           //try again
