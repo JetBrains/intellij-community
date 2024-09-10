@@ -167,8 +167,10 @@ class EditorNotificationsImpl(private val project: Project,
 
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (file.isValid) {
-        doUpdateNotifications(file)
+      writeIntentReadAction {
+        if (file.isValid) {
+          doUpdateNotifications(file)
+        }
       }
     }
   }
