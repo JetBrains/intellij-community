@@ -182,6 +182,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   /**
    * 🌲
    * see KTIJ-30761
+   * @see org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator
    */
   protected fun enableKotlinPluginK2ByDefault() {
     additionalVmOptions += "-Didea.kotlin.plugin.use.k2=true"
