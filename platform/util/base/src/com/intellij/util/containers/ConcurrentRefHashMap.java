@@ -351,22 +351,21 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean remove(@NotNull Object key, @NotNull Object value) {
-    //noinspection unchecked
-    boolean removed = myMap.remove(createKeyReference((K)key), value);
+    boolean removed = myMap.remove(createHardKey(key), value);
     processQueue();
     return removed;
   }
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    boolean replaced = myMap.replace(createKeyReference(key), oldValue, newValue);
+    boolean replaced = myMap.replace(createHardKey(key), oldValue, newValue);
     processQueue();
     return replaced;
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    V replaced = myMap.replace(createKeyReference(key), value);
+    V replaced = myMap.replace(createHardKey(key), value);
     processQueue();
     return replaced;
   }

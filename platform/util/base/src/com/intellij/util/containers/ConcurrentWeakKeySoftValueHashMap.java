@@ -341,10 +341,9 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    KeyReference<K, V> oldKeyReference = createKeyReference(key, oldValue);
-    ValueReference<K, V> oldValueReference = oldKeyReference.getValueReference();
-    KeyReference<K, V> newKeyReference = createKeyReference(key, newValue);
-    ValueReference<K, V> newValueReference = newKeyReference.getValueReference();
+    KeyReference<K, V> oldKeyReference = createHardKey(key);
+    ValueReference<K, V> oldValueReference = createValueReference(oldValue, myValueQueue);
+    ValueReference<K, V> newValueReference = createValueReference(newValue, myValueQueue);
 
     boolean replaced = myMap.replace(oldKeyReference, oldValueReference, newValueReference);
     processQueues();
@@ -353,8 +352,8 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    KeyReference<K, V> keyReference = createKeyReference(key, value);
-    ValueReference<K, V> valueReference = keyReference.getValueReference();
+    KeyReference<K, V> keyReference = createHardKey(key);
+    ValueReference<K, V> valueReference = createValueReference(value, myValueQueue);
     ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
     V prev = result == null ? null : result.get();
     processQueues();
