@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
-import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
+import org.jetbrains.jps.incremental.storage.PathStringDescriptors;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public final class ArtifactOutputToSourceMapping
   private final PathRelativizerService myRelativizer;
 
   public ArtifactOutputToSourceMapping(File storePath, PathRelativizerService relativizer) throws IOException {
-    super(storePath, PathStringDescriptor.INSTANCE, new SourcePathListExternalizer());
+    super(storePath, PathStringDescriptors.createPathStringDescriptor(), new SourcePathListExternalizer());
     myRelativizer = relativizer;
   }
 

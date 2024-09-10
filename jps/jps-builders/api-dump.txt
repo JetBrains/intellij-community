@@ -2692,7 +2692,7 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - <init>(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - appendData(java.lang.String,java.lang.String):V
 - appendData(java.lang.String,java.util.Collection):V
-- getKeys():java.util.Collection
+- getKeys():java.util.List
 - getKeysIterator():java.util.Iterator
 - getState(java.lang.String):java.util.Collection
 - getStateIterator(java.lang.String):java.util.Iterator

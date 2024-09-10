@@ -19,7 +19,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   private final PathRelativizerService relativizer;
 
   public OneToManyPathsMapping(File storePath, PathRelativizerService relativizer) throws IOException {
-    super(storePath, PathStringDescriptor.INSTANCE, new PathCollectionExternalizer());
+    super(storePath, PathStringDescriptors.createPathStringDescriptor(), new PathCollectionExternalizer());
     this.relativizer = relativizer;
   }
 

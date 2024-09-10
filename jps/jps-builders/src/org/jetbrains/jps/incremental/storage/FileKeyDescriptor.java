@@ -4,7 +4,6 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -12,8 +11,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 
-@ApiStatus.Internal
-public final class FileKeyDescriptor implements KeyDescriptor<File> {
+final class FileKeyDescriptor implements KeyDescriptor<File> {
   @Override
   public void save(@NotNull DataOutput out, File value) throws IOException {
     IOUtil.writeUTF(out, value.getPath());

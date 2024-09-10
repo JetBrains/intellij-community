@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.util.ArrayUtil
 import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentMapBuilder
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.FSOperations
@@ -139,10 +137,4 @@ private object StateExternalizer : DataExternalizer<Array<HashStampPerTarget>> {
       HashStampPerTarget(targetId = id, hash = hash, timestamp = timestamp)
     }
   }
-}
-
-private object JpsCachePathStringDescriptor : EnumeratorStringDescriptor() {
-  override fun getHashCode(value: String): Int = Hashing.komihash5_0().hashCharsToInt(value)
-
-  override fun isEqual(val1: String, val2: String) = val1 == val2
 }
