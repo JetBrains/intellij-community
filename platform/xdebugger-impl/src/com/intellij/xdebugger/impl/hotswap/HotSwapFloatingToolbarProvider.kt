@@ -47,22 +47,25 @@ private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAva
 internal class HotSwapModifiedFilesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val session = findSessionIfReady(project) ?: return
+    val session = findSession(project) ?: return
+    if (!session.hasChanges) return
     HotSwapStatistics.logHotSwapCalled(project, HotSwapStatistics.HotSwapSource.RELOAD_MODIFIED_ACTION)
     HotSwapWithRebuildAction.performHotSwap(e.dataContext, session)
   }
 
   override fun update(e: AnActionEvent) {
+    val session = findSession(e.project)
+    e.presentation.isEnabled = session?.hasChanges == true
     e.presentation.isVisible = Registry.`is`("debugger.hotswap.floating.toolbar")
-    e.presentation.isEnabled = findSessionIfReady(e.project) != null
+    if (e.place != ActionPlaces.MAIN_MENU) {
+      e.presentation.isVisible = e.presentation.isVisible && session != null
+    }
     e.presentation.icon = hotSwapIcon
   }
 
-  private fun findSessionIfReady(project: Project?): HotSwapSession<*>? {
+  private fun findSession(project: Project?): HotSwapSession<*>? {
     if (project == null) return null
-    val session = HotSwapSessionManager.getInstance(project).currentSession ?: return null
-    if (session.currentStatus != HotSwapVisibleStatus.CHANGES_READY) return null
-    return session
+    return HotSwapSessionManager.getInstance(project).currentSession
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

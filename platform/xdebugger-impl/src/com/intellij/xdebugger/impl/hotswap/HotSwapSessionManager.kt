@@ -118,6 +118,9 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
   @Volatile
   internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
 
+  internal val hasChanges: Boolean
+    get() = currentStatus == HotSwapVisibleStatus.CHANGES_READY
+
   private fun setStatus(status: HotSwapVisibleStatus, fireUpdate: Boolean = true) {
     // No further updates after the session is complete
     if (currentStatus == HotSwapVisibleStatus.SESSION_COMPLETED) return
