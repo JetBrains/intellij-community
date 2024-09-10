@@ -16,15 +16,11 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.RunCanceledByUserException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -50,8 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.IndicatedProcessOutputListener
-import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
@@ -64,14 +58,12 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
@@ -135,18 +127,22 @@ fun detectSystemWideSdks(
                                          { it.homePath }).reversed())
 }
 
-private fun PythonSdkFlavor<*>.detectSdks(module: Module?,
-                                          context: UserDataHolder,
-                                          targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
-                                          existingPaths: HashSet<TargetAndPath>): List<PyDetectedSdk> =
+private fun PythonSdkFlavor<*>.detectSdks(
+  module: Module?,
+  context: UserDataHolder,
+  targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
+  existingPaths: HashSet<TargetAndPath>,
+): List<PyDetectedSdk> =
   detectSdkPaths(module, context, targetModuleSitsOn, existingPaths)
     .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
 
 
-internal fun PythonSdkFlavor<*>.detectSdkPaths(module: Module?,
-                                              context: UserDataHolder,
-                                              targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
-                                              existingPaths: HashSet<TargetAndPath>): List<String> =
+internal fun PythonSdkFlavor<*>.detectSdkPaths(
+  module: Module?,
+  context: UserDataHolder,
+  targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
+  existingPaths: HashSet<TargetAndPath>,
+): List<String> =
   suggestLocalHomePaths(module, context)
     .mapNotNull {
       // If a module sits on target, this target maps its path.
@@ -565,44 +561,10 @@ val Sdk.sdkSeemsValid: Boolean
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
 
-/**
- * Used for CoroutineScope in com.jetbrains.python.sdk
- */
-@Service(Service.Level.PROJECT)
-class PythonSdkRunCommandService(val cs: CoroutineScope)
-
-fun runCommand(executable: Path, projectPath: Path?,  @NlsContexts.DialogMessage errorMessage: String, vararg args: String): String {
-  val command = listOf(executable.absolutePathString()) + args
-  val commandLine = GeneralCommandLine(command).withWorkingDirectory(projectPath)
-  val handler = CapturingProcessHandler(commandLine)
-  val indicator = ProgressManager.getInstance().progressIndicator
-  val result = with(handler) {
-    when {
-      indicator != null -> {
-        addProcessListener(IndicatedProcessOutputListener(indicator))
-        runProcessWithProgressIndicator(indicator)
-      }
-      else ->
-        runProcess()
-    }
-  }
-  return with(result) {
-    when {
-      isCancelled ->
-        throw RunCanceledByUserException()
-      exitCode != 0 ->
-        throw PyExecutionException(errorMessage, executable.pathString,
-                                   args.asList(),
-                                   stdout, stderr, exitCode, emptyList())
-      else -> stdout.trim()
-    }
-  }
-}
-
 inline fun <reified T : PythonSdkAdditionalData> setCorrectTypeSdk(sdk: Sdk, additionalDataClass: Class<T>, value: Boolean) {
   val oldData = sdk.sdkAdditionalData
   val newData = if (value) {
-    when(oldData) {
+    when (oldData) {
       is PythonSdkAdditionalData -> additionalDataClass.getDeclaredConstructors().first { it.parameterCount == 1 }.newInstance(oldData) as T
       else -> additionalDataClass.getDeclaredConstructor().newInstance()
     }

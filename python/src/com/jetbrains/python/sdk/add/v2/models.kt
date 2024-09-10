@@ -157,7 +157,7 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     detectPipEnvExecutable()
   }
 
-  suspend fun detectPoetryExecutable() {
+  fun detectPoetryExecutable() {
     // todo this is local case, fix for targets
     val savedPath = PropertiesComponent.getInstance().poetryPath
     if (savedPath != null) {
@@ -174,7 +174,7 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     }
   }
 
-  suspend fun detectPipEnvExecutable() {
+  fun detectPipEnvExecutable() {
     // todo this is local case, fix for targets
     val savedPath = PropertiesComponent.getInstance().pipEnvPath
     if (savedPath != null) {

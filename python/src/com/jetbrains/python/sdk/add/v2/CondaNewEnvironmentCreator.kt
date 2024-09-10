@@ -38,8 +38,8 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) 
 
       executableSelector(model.state.condaExecutable,
                          validationRequestor,
-                         message("sdk.create.conda.executable.path"),
-                         message("sdk.create.conda.missing.text"),
+                         message("sdk.create.custom.venv.executable.path", "conda"),
+                         message("sdk.create.custom.venv.missing.text", "conda"),
                          createInstallCondaFix(model))
         .displayLoaderWhen(model.condaEnvironmentsLoading, scope = model.scope, uiContext = model.uiContext)
     }

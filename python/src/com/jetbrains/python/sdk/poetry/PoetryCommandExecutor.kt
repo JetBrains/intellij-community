@@ -97,8 +97,7 @@ fun runPoetry(projectPath: Path?, vararg args: String): String {
                    ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry",
                                                  emptyList(), ProcessOutput())
 
-  @Suppress("DialogTitleCapitalization")
-  return runCommand(executable, projectPath, PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"), *args)
+  return runCommand(executable, projectPath, PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"), *args)
 }
 
 /**
@@ -133,12 +132,11 @@ private fun runCommand(projectPath: Path, command: String, vararg args: String):
     runProcess()
   }
   return with(result) {
-    @Suppress("DialogTitleCapitalization")
     when {
       isCancelled ->
         throw RunCanceledByUserException()
       exitCode != 0 ->
-        throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"), command,
+        throw PyExecutionException(PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"), command,
                                    args.asList(),
                                    stdout, stderr, exitCode, emptyList())
       else -> stdout
@@ -154,7 +152,7 @@ internal fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe 
         runPoetry(sdk, *args.toTypedArray())
       }
       catch (e: ExecutionException) {
-        showSdkExecutionException(sdk, e, PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"))
+        showSdkExecutionException(sdk, e, PyBundle.message("sdk.create.custom.venv.run.error.message", "poetry"))
       }
       finally {
         PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)

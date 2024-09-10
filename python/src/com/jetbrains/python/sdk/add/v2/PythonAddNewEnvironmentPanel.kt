@@ -92,8 +92,8 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<String>, onlyAllow
       rowsRange {
         executableSelector(model.state.condaExecutable,
                            validationRequestor,
-                           message("sdk.create.conda.executable.path"),
-                           message("sdk.create.conda.missing.text"),
+                           message("sdk.create.custom.venv.executable.path", "conda"),
+                           message("sdk.create.custom.venv.missing.text", "conda"),
                            createInstallCondaFix(model))
         //.displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)

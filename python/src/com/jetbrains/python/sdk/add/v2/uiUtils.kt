@@ -423,7 +423,7 @@ fun Panel.executableSelector(
                                         inline = true)
       .align(Align.FILL)
       .component
-  }.visibleIf(executable.equalsTo(UNKNOWN_EXECUTABLE))
+  }.visibleIf(executable.equalsTo(UNKNOWN_EXECUTABLE)).visibleIf(executable.equalsTo(""))
 
   row(labelText) {
     textFieldCell = textFieldWithBrowseButton()
@@ -451,7 +451,7 @@ fun Panel.executableSelector(
 }
 
 internal fun createInstallCondaFix(model: PythonAddInterpreterModel): ActionLink {
-  return ActionLink(message("sdk.create.conda.install.fix")) {
+  return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     model.scope.launch(model.uiContext) {
