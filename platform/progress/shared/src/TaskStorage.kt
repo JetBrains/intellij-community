@@ -2,7 +2,9 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.asEntity
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
 import fleet.kernel.withEntities
@@ -24,11 +26,13 @@ abstract class TaskStorage {
    * @return The created [TaskInfoEntity].
    */
   suspend fun addTask(
+    project: Project,
     title: String,
     cancellation: TaskCancellation,
   ): TaskInfoEntity = withKernel {
     createTaskInfoEntity {
       TaskInfoEntity.new {
+        it[TaskInfoEntity.ProjectEntityType] = project.asEntity()
         it[TaskInfoEntity.Title] = title
         it[TaskInfoEntity.TaskCancellationType] = cancellation
         it[TaskInfoEntity.ProgressStateType] = null

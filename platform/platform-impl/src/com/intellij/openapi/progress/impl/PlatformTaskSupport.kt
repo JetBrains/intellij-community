@@ -89,7 +89,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val taskStorage = TaskStorage.getInstance()
 
     val pipe = cs.createProgressPipe()
-    val taskInfoEntity = taskStorage.addTask(title, cancellation)
+    val taskInfoEntity = taskStorage.addTask(project, title, cancellation)
 
     try {
       cs.subscribeToTask(taskInfoEntity, context, pipe).use {

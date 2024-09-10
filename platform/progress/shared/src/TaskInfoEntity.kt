@@ -1,18 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
+import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.RefFlags
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.project.asProjectOrNull
+import com.intellij.platform.project.asProject
 
 /**
  * Represents the information of a task in the system.
  */
 @ApiStatus.Internal
 data class TaskInfoEntity(override val eid: EID) : Entity {
+  /**
+   * Project entity associated with a task.
+   * To retrieve an instance of a project from the entity use [asProjectOrNull] or [asProject]
+   */
+  val projectEntity: ProjectEntity by ProjectEntityType
+
   /**
    * Human-readable title of a task, which is used to display the task in UI
    */
@@ -69,6 +79,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
     var TaskCancellationType = requiredValue("taskCancellation", TaskCancellation.serializer())
     var ProgressStateType = optionalValue("progressState", ProgressState.serializer())
     var TaskStatusType = requiredValue("taskStatus", TaskStatus.serializer())
+    val ProjectEntityType = requiredRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
   }
 }
 
