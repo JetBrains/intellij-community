@@ -24,8 +24,8 @@ internal class NavBarPopupItemComponent(
     val fg: Color? = if (ExperimentalUI.isNewUI()) {
       when {
         selected -> JBUI.CurrentTheme.StatusBar.Breadcrumbs.SELECTION_FOREGROUND
-        floating -> JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_FOREGROUND
-        else -> JBUI.CurrentTheme.List.foreground(false, true)
+        floating -> attributes.fgColor ?: JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_FOREGROUND
+        else -> attributes.fgColor ?: JBUI.CurrentTheme.List.foreground(false, true)
       }
     }
     else {
