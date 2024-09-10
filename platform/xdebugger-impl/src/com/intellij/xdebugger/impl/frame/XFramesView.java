@@ -408,8 +408,10 @@ public final class XFramesView extends XDebugView {
 
     if (event == SessionEvent.BEFORE_RESUME) {
       if (DebuggerUIUtil.freezePaintingToReduceFlickering(myFramesList.getParent())) {
-        myScrollPane.getHorizontalScrollBar().setValue(0);
-        myScrollPane.getVerticalScrollBar().setValue(0);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          myScrollPane.getHorizontalScrollBar().setValue(0);
+          myScrollPane.getVerticalScrollBar().setValue(0);
+        });
       }
       return;
     }
