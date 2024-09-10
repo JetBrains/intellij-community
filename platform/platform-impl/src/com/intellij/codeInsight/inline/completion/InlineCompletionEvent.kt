@@ -100,9 +100,13 @@ interface InlineCompletionEvent {
    * * Only one character is removed
    *
    * More or fewer cases may be supported in the future.
+   *
+   * It is triggered after the backspace is processed.
+   *
+   * **Note**: for now, it's impossible to update a session with this event. Inline Completion will be hidden once a backspace is pressed.
    */
   @ApiStatus.Experimental
-  class Backspace internal constructor(val editor: Editor, @ApiStatus.Experimental val removedText: String) : InlineCompletionEvent {
+  class Backspace internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val project = editor.project ?: return null
       val caretModel = editor.caretModel

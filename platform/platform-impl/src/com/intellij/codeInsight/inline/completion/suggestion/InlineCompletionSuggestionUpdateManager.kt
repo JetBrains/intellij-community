@@ -159,7 +159,11 @@ interface InlineCompletionSuggestionUpdateManager {
       return Changed(variant.copy(elements = truncated))
     }
 
+    /**
+     * For now, it's not used. The session is going to be removed and re-started anyway.
+     */
     @ApiStatus.Experimental
+    @ApiStatus.NonExtendable
     override fun onBackspace(event: InlineCompletionEvent.Backspace, variant: InlineCompletionVariant.Snapshot): UpdateResult {
       return Invalidated
     }

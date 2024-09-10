@@ -7,7 +7,6 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSin
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
-import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.Changed
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import org.junit.Test
@@ -20,23 +19,21 @@ internal class InlineCompletionBackspaceTest : InlineCompletionTestCase() {
   @Test
   fun `test backspace with inline completion`() = myFixture.testInlineCompletion {
     init(PlainTextFileType.INSTANCE, "first  <caret>")
-    val provider = MyProvider("second", triggerOnBackspace = true, updateOnBackspace = true)
+    val provider = MyProvider("second", triggerOnBackspace = true)
     InlineCompletionHandler.registerTestHandler(provider, testRootDisposable)
     backSpace()
     delay()
     assertInlineRender("second")
+    typeChar('s')
+    assertInlineRender("econd")
     backSpace()
-    backSpace()
-    assertInlineRender("t second")
-    insert()
-    assertInlineHidden()
-    assertFileContent("first second<caret>")
+    delay() // a new session is started
+    assertInlineRender("second")
   }
 
   private class MyProvider(
     private val suggestion: String,
     private val triggerOnBackspace: Boolean,
-    private val updateOnBackspace: Boolean
   ) : InlineCompletionProvider {
 
     override val id: InlineCompletionProviderID = InlineCompletionProviderID("MyProvider")
@@ -53,11 +50,7 @@ internal class InlineCompletionBackspaceTest : InlineCompletionTestCase() {
 
     override val suggestionUpdateManager = object : InlineCompletionSuggestionUpdateManager.Default() {
       override fun onBackspace(event: InlineCompletionEvent.Backspace, variant: InlineCompletionVariant.Snapshot): UpdateResult {
-        if (!updateOnBackspace) return super.onBackspace(event, variant)
-        val currentSuggestion = variant.elements.single().text
-        return Changed(
-          snapshot = variant.copy(elements = listOf(InlineCompletionGrayTextElement(event.removedText + currentSuggestion)))
-        )
+        error("Impossible to update a session when backspace is pressed")
       }
     }
   }
