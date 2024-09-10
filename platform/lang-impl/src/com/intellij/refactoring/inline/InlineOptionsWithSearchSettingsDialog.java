@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -69,6 +69,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     gbc.gridy = 1;
     gbc.gridx = 0;
     panel.add(myCbSearchInComments, gbc);
+    gbc.insets.left = JBUIScale.scale(UIUtil.DEFAULT_HGAP);
     gbc.gridx = 1;
     panel.add(myCbSearchTextOccurences, gbc);
     final ActionListener actionListener = new ActionListener() {
