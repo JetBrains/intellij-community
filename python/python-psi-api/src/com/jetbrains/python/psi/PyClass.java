@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -221,7 +222,9 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
    *
    * @see #getClassAttributesInherited(TypeEvalContext)
    */
-  List<PyTargetExpression> getClassAttributes();
+  default List<PyTargetExpression> getClassAttributes() {
+    return Collections.emptyList();
+  }
 
   /**
    * Returns all class attributes this class class contains, including inherited one.
@@ -307,7 +310,9 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
    * @return the list of names or null.
    */
   @Nullable
-  List<String> getOwnSlots();
+  default List<String> getOwnSlots() {
+    return null;
+  }
 
   /**
    * Process all declarations appearing at the syntactic level of this class' body, in particular class attributes, both

@@ -48,7 +48,9 @@ public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner,
   PyClass findTopLevelClass(@NonNls @NotNull String name);
 
   @Nullable
-  PyTargetExpression findTopLevelAttribute(@NotNull String name);
+  default PyTargetExpression findTopLevelAttribute(@NotNull String name) {
+    return null;
+  }
 
   @NotNull
   List<PyTypeAliasStatement> getTypeAliasStatements();
