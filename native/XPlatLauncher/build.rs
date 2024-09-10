@@ -248,7 +248,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
         "wbemuuid",
         "winmm",
         "ws2_32",
-        "WindowsApp",
+        //"WindowsApp" - do not add, it is not needed for Win32 apps and brings in ugly umbrella libs
     ];
 
     // Link each of the standard libraries
