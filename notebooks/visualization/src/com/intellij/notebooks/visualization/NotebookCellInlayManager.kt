@@ -295,7 +295,7 @@ class NotebookCellInlayManager private constructor(
       inputFactories: List<NotebookCellInlayController.InputFactory> = listOf(),
       cellExtensionFactories: List<CellExtensionFactory> = listOf(),
       parentScope: CoroutineScope,
-    ) {
+    ) : NotebookCellInlayManager {
       EditorEmbeddedComponentContainer(editor as EditorEx)
       val notebookCellInlayManager = NotebookCellInlayManager(
         editor,
@@ -307,8 +307,10 @@ class NotebookCellInlayManager private constructor(
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, editor.disposable)
       notebookCellInlayManager.initialize()
+      return notebookCellInlayManager
     }
 
+    /** NotebookCellInlayManager exist only on Front in RemoteDev. */
     fun get(editor: Editor): NotebookCellInlayManager? {
       return CELL_INLAY_MANAGER_KEY.get(editor)
     }
