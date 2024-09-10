@@ -4,13 +4,6 @@
 
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
-//noinspection GrUnresolvedAccess
-String debuggerId = DEBUGGER_ID
-//noinspection GrUnresolvedAccess
-String processParameters = PROCESS_PARAMETERS
-//noinspection GrUnresolvedAccess
-List<String> processOptions = PROCESS_OPTIONS
-
 gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
   //noinspection GroovyAssignabilityCheck
   def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
@@ -27,6 +20,13 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
   matchedTasks.each { task ->
     def moduleDir = task.project.projectDir.path
     task.doFirst {
+      if (!GradleDebuggerUtil.isDebuggerEnabled()) {
+        return
+      }
+      String debuggerId = GradleDebuggerUtil.getDebuggerId()
+      String processParameters = GradleDebuggerUtil.getProcessParameters()
+      List<String> processOptions = GradleDebuggerUtil.getProcessOptions()
+
       def options = task as JavaForkOptions
       def debugPort = ForkedDebuggerHelper.setupDebugger(debuggerId, task.path, processParameters, moduleDir)
       def jvmArgs = options.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
@@ -35,7 +35,10 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
       options.jvmArgs = jvmArgs
     }
     task.doLast {
-      ForkedDebuggerHelper.signalizeFinish(debuggerId, task.path)
+      if (GradleDebuggerUtil.isDebuggerEnabled()) {
+        String debuggerId = GradleDebuggerUtil.getDebuggerId()
+        ForkedDebuggerHelper.signalizeFinish(debuggerId, task.path)
+      }
     }
   }
 }

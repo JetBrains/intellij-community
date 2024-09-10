@@ -132,16 +132,12 @@ fun loadCommonTasksUtilsScript():String {
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle")
 }
 
-fun loadJvmDebugInitScript(
-  debuggerId: String,
-  parameters: String,
-  jvmArgs: List<String>
-): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", mapOf(
-      "DEBUGGER_ID" to debuggerId.toGroovyStringLiteral(),
-      "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral(),
-      "PROCESS_OPTIONS" to jvmArgs.toGroovyListLiteral { toGroovyStringLiteral() }
-    ))
+fun loadCommonDebuggerUtilsScript():String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleDebuggerUtil.gradle")
+}
+
+fun loadJvmDebugInitScript(): String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
 }
 
 private val JUNIT_3_COMPARISON_FAILURE = listOf("junit.framework.ComparisonFailure")

@@ -799,6 +799,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     @NotNull Map<String, String> parameters
   ) {
     initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
+    initScriptConsumer.consume(GradleInitScriptUtil.loadCommonDebuggerUtilsScript());
 
     String dispatchPort = parameters.get(DEBUG_DISPATCH_PORT_KEY);
     Map<String, String> environment = new HashMap<>();

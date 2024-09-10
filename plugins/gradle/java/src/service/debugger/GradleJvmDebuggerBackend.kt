@@ -12,9 +12,13 @@ import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUN
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
+import java.util.*
 
 class GradleJvmDebuggerBackend : DebuggerBackendExtension {
+
   override fun id() = "Gradle JVM"
+
+  override fun isAlwaysAttached(): Boolean = true
 
   override fun debugConfigurationSettings(project: Project,
                                           processName: String,
@@ -32,10 +36,27 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   }
 
   override fun initializationCode(project: Project?, dispatchPort: String?, parameters: String): List<String> {
+    return loadJvmDebugInitScript().split("\n")
+  }
+
+  override fun executionEnvironmentVariables(project: Project?, dispatchPort: String?, parameters: String): Map<String, String> {
+    // no debugging required, as a result, no need to provide any environment
+    if (dispatchPort == null) {
+      return emptyMap()
+    }
     val javaParameters = JavaParameters()
     RemoteConnectionBuilder.addDebuggerAgent(javaParameters, project, false)
     val jvmArgs = javaParameters.vmParametersList.list.filterNot { it.startsWith("-agentlib:jdwp=") }
-    val initScript = loadJvmDebugInitScript(id(), parameters, jvmArgs)
-    return initScript.split("\n")
+    return mapOf(
+      "DEBUGGER_ID" to id(),
+      "PROCESS_PARAMETERS" to parameters,
+      "PROCESS_OPTIONS" to jvmArgs.asJvmArgsEnvString()
+    )
+  }
+
+  private fun List<String>.asJvmArgsEnvString(): String {
+    val joiner = StringJoiner(", ")
+    forEach { env -> joiner.add(env) }
+    return joiner.toString()
   }
 }
