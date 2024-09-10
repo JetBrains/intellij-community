@@ -206,7 +206,8 @@ public class JavaHomeFinderBasic {
     try (Stream<Path> files = Files.list(folder)) {
       files.forEach(candidate -> {
         for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-          scanFolder(adjusted, false, result);
+          try { scanFolder(adjusted, false, result); }
+          catch (IllegalStateException ignored) {}
         }
       });
     }
