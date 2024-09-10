@@ -95,7 +95,7 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
 
 #[cfg(target_os = "windows")]
 fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
-        fs_remove(dest)?;
+    fs_remove(dest)?;
 
     trace!("Downloading {src} to {dest:?}");
     let mut response = client.get(src).send()?.error_for_status()?;
