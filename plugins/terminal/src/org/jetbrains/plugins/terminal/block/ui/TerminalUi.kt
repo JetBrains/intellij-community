@@ -19,11 +19,13 @@ internal object TerminalUi {
   const val blockTopInset = 6
   const val blockBottomInset = 6
   const val blockLeftInset = 15
+  const val blockLeftBorderInset = 12
   const val blockRightInset = 12
   const val cornerToBlockInset = 7
   const val commandToOutputInset = 0
   const val blockArc = 8
   const val blocksGap = 0
+  const val blockSeparatorRightOffset = 8
 
   const val exitCodeRightInset = 8
   const val exitCodeTextIconGap = 4

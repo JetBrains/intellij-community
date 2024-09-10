@@ -64,8 +64,6 @@ interface TerminalOutputModel {
 
   fun addListener(listener: TerminalOutputModelListener, disposable: Disposable? = null)
 
-  fun isErrorBlock(block: CommandBlock): Boolean = getBlockInfo(block).let { it != null && it.exitCode != 0 }
-
   companion object {
     val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
   }
@@ -93,4 +91,8 @@ internal fun TerminalOutputModel.getBlockBounds(block: CommandBlock): Rectangle 
   val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset
   val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockInset
   return Rectangle(0, topY, width, bottomY - topY)
+}
+
+internal fun TerminalOutputModel.isErrorBlock(block: CommandBlock): Boolean {
+  return getBlockInfo(block).let { it != null && it.exitCode != 0 }
 }

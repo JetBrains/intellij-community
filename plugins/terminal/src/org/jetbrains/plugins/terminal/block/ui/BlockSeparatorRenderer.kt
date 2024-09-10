@@ -12,14 +12,15 @@ import java.awt.Graphics
  */
 internal class BlockSeparatorRenderer : CustomHighlighterRenderer {
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
-    if (editor.inlayModel.getBlockElementsInRange(highlighter.endOffset, editor.document.textLength).size < 2) {
+    if (highlighter.endOffset == editor.document.textLength) {
       return
     }
 
     val visibleArea = editor.scrollingModel.visibleArea
+    val rightX = visibleArea.width - JBUI.scale(TerminalUi.blockSeparatorRightOffset)
     val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + JBUI.scale(TerminalUi.blockBottomInset + 1)
 
     g.color = TerminalUi.promptSeparatorColor(editor)
-    g.drawLine(0, bottomY, visibleArea.width - JBUI.scale(8), bottomY)
+    g.drawLine(0, bottomY, rightX, bottomY)
   }
 }

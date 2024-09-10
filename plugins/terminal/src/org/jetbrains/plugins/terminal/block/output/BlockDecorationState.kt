@@ -34,26 +34,14 @@ internal class DefaultBlockDecorationState : BlockDecorationState {
 
 internal open class SelectedBlockDecorationState : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(BlockTerminalColors.SELECTED_BLOCK_BACKGROUND)
-  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(backgroundKey = BlockTerminalColors.SELECTED_BLOCK_BACKGROUND,
-                                                                                         strokeBackgroundKey = BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR,
-                                                                                         strokeWidth = 0)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = BlockTerminalColors.SELECTED_BLOCK_BACKGROUND,
-                                                                                    strokeBackgroundKey = BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR,
-                                                                                    strokeWidth = 0)
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(backgroundKey = BlockTerminalColors.SELECTED_BLOCK_BACKGROUND)
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = BlockTerminalColors.SELECTED_BLOCK_BACKGROUND)
 }
 
 internal open class InactiveSelectedBlockDecorationState : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND)
-  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(
-    backgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND,
-    strokeBackgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_STROKE_COLOR,
-    strokeWidth = 0
-  )
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(
-    backgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND,
-    strokeBackgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_STROKE_COLOR,
-    strokeWidth = 0
-  )
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(backgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND)
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND)
 }
 
 internal class SelectedErrorBlockDecorationState : SelectedBlockDecorationState() {
@@ -63,12 +51,8 @@ internal class SelectedErrorBlockDecorationState : SelectedBlockDecorationState(
 
 internal open class HoveredBlockDecorationState(gradientCache: GradientTextureCache) : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(gradientCache = gradientCache)
-  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache = gradientCache,
-                                                                                         strokeBackgroundKey = BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR,
-                                                                                         strokeWidth = 0)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_START,
-                                                                                    strokeBackgroundKey = BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR,
-                                                                                    strokeWidth = 0)
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache = gradientCache)
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_START)
 }
 
 internal class HoveredErrorBlockDecorationState(gradientCache: GradientTextureCache) : HoveredBlockDecorationState(gradientCache) {

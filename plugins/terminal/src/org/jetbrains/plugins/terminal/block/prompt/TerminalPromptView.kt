@@ -98,7 +98,7 @@ internal class TerminalPromptView(
     promptPanel = TerminalPromptPanel(editorTextField, toolbar.component)
 
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
-                                         TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
+                                         TerminalUi.blockLeftBorderInset + TerminalUi.cornerToBlockInset,
                                          TerminalUi.promptBottomInset,
                                          0)
     val outerBorder = object : CustomLineBorder(TerminalUi.promptSeparatorColor(editor),
