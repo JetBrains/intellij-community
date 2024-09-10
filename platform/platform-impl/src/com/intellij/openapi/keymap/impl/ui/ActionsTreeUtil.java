@@ -37,10 +37,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -304,6 +301,9 @@ public final class ActionsTreeUtil {
       if (popupMode == GroupPopupMode.FORCE_POPUP) {
         addAsPopup = true;
       }
+      else if (popupMode == GroupPopupMode.FORCE_NON_POPUP) {
+        addAsPopup = false;
+      }
       else {
         addAsPopup = childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText());
       }
@@ -530,7 +530,7 @@ public final class ActionsTreeUtil {
 
     Group group = new Group(KeyMapBundle.message("other.group.title"), null, () -> AllIcons.Nodes.KeymapOther);
     for (AnAction action : getActions("Other.KeymapGroup")) {
-      addAction(group, action, actionManager, filtered, false, false);
+      addAction(group, action, actionManager, filtered, false);
     }
 
     Set<String> groupIds = group.initIds();
@@ -738,48 +738,14 @@ public final class ActionsTreeUtil {
   }
 
   public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered, boolean forceNonPopup) {
-    addAction(group, action, ActionManager.getInstance(), filtered, forceNonPopup, false);
+    addAction(group, action, ActionManager.getInstance(), filtered, forceNonPopup);
   }
 
+  @ApiStatus.Internal
   public static void addAction(KeymapGroup group, AnAction action, ActionManager actionManager,
-                               Condition<? super AnAction> filtered, boolean forceNonPopup, boolean skipUnnamedGroups) {
-    if (action instanceof ActionGroup) {
-      if (forceNonPopup || skipUnnamedGroups) {
-        Presentation presentation = getTemplatePresentation(action);
-        String text = presentation.getText();
-        boolean skip = forceNonPopup || StringUtil.isEmpty(text);
-        KeymapGroup tgtGroup;
-        if (skip) {
-          tgtGroup = group;
-        }
-        else {
-          tgtGroup = new Group(text, actionManager.getId(action), presentation.getIcon());
-          group.addGroup(tgtGroup);
-        }
-        AnAction[] actions = getActions((ActionGroup)action, actionManager);
-        for (AnAction childAction : actions) {
-          addAction(tgtGroup, childAction, actionManager, filtered, forceNonPopup, skipUnnamedGroups);
-        }
-        ((Group)tgtGroup).normalizeSeparators();
-      }
-      else {
-        Group subGroup = createGroup((ActionGroup)action, false, filtered);
-        if (subGroup.getSize() > 0) {
-          group.addGroup(subGroup);
-        }
-      }
-    }
-    else if (action instanceof Separator) {
-      if (group instanceof Group && actionMatchesFilter(filtered, action)) {
-        ((Group)group).addSeparator();
-      }
-    }
-    else {
-      if (actionMatchesFilter(filtered, action)) {
-        String id = actionManager.getId(action);
-        if (id != null) group.addActionId(id);
-      }
-    }
+                               Condition<? super AnAction> filtered, boolean forceNonPopup) {
+    GroupPopupMode popupMode = forceNonPopup ? GroupPopupMode.FORCE_NON_POPUP : GroupPopupMode.DEFAULT;
+    addActionImpl((Group)group, action, actionManager, popupMode, filtered, true);
   }
 
   private static boolean isSearchable(@NotNull AnAction action) {
@@ -842,7 +808,14 @@ public final class ActionsTreeUtil {
     return filtered == null || filtered.test(actionManager.getActionOrStub(actionId));
   }
 
-  private enum GroupPopupMode {FORCE_POPUP, DEFAULT}
+  private enum GroupPopupMode {
+    FORCE_POPUP,
+    FORCE_NON_POPUP,
+    /**
+     * Add 'group' node for action groups that have presentation. Otherwise add its actions in-place into parent node.
+     */
+    DEFAULT
+  }
 
   public static @Nls String getMainMenuTitle() {
     return KeyMapBundle.message("main.menu.action.title");

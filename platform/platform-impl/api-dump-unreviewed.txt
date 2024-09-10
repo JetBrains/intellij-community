@@ -13707,7 +13707,6 @@ f:com.intellij.openapi.keymap.impl.ui.ActionsTree
 - selectAction(java.lang.String):V
 - setBaseFilter(com.intellij.openapi.util.Condition):V
 f:com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
-- s:addAction(com.intellij.openapi.keymap.KeymapGroup,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.ActionManager,com.intellij.openapi.util.Condition,Z,Z):V
 - s:addAction(com.intellij.openapi.keymap.KeymapGroup,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.util.Condition):V
 - s:addAction(com.intellij.openapi.keymap.KeymapGroup,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.util.Condition,Z):V
 - s:createCorrectedGroup(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,java.util.List,java.util.List):com.intellij.openapi.keymap.impl.ui.Group
