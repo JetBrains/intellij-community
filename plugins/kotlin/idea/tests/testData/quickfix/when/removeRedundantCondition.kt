@@ -5,7 +5,7 @@ fun println(i: Int) {}
 
 fun main() {
     when (foo()) {
-        <caret>null, 1 -> println(1)
+        /*1*/<caret>null/*2*/,/*3*/ 1 -> println(1)
         else -> println(0)
     }
 }
