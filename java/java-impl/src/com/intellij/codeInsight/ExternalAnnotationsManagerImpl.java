@@ -730,7 +730,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       if (!entries.isEmpty()) {
         for (OrderEntry entry : entries) {
           if (!(entry instanceof ModuleOrderEntry)) {
-            if (!AnnotationOrderRootType.getUrls(entry).isEmpty()) {
+            if (AnnotationOrderRootType.hasUrls(entry)) {
               return AnnotationPlace.EXTERNAL;
             }
             break;
@@ -899,7 +899,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     if (hasAnyAnnotationsRoots()) {
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
       for (OrderEntry entry : fileIndex.getOrderEntriesForFile(file)) {
-        if (!(entry instanceof ModuleOrderEntry) && !AnnotationOrderRootType.getUrls(entry).isEmpty()) {
+        if (!(entry instanceof ModuleOrderEntry) && AnnotationOrderRootType.hasUrls(entry)) {
           return true;
         }
       }

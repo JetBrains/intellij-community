@@ -299,7 +299,6 @@ c:com.intellij.openapi.roots.AnnotationOrderRootType
 - sf:ANNOTATIONS_ID:java.lang.String
 - s:getFiles(com.intellij.openapi.roots.OrderEntry):com.intellij.openapi.vfs.VirtualFile[]
 - s:getInstance():com.intellij.openapi.roots.OrderRootType
-- s:getUrls(com.intellij.openapi.roots.OrderEntry):java.util.List
 - skipWriteIfEmpty():Z
 c:com.intellij.openapi.roots.JavaSyntheticLibrary
 - com.intellij.openapi.roots.SyntheticLibrary
