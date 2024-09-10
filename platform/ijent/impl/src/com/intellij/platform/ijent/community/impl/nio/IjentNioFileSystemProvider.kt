@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
@@ -180,23 +181,34 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = dir.nioFs
 
     return fsBlocking {
-      val children = nioFs.ijentFs
-        .listDirectoryWithAttrs(ensurePathIsAbsolute(dir.ijentPath), IjentFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
-        .getOrThrowFileSystemException()
-
-      val nioPathList = children.asSequence()
-        .map { (childName, childStat) ->
-          val childIjentPath = dir.ijentPath.getChild(childName).getOrThrow()
-          val childAttrs = when (childStat) {
-            is IjentPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
-            is IjentWindowsFileInfo -> TODO()
-          }
-          IjentNioPath(childIjentPath, nioFs, childAttrs)
+      val notFilteredPaths =
+        if (pathFilter is FetchAttributesFilter) {
+          nioFs.ijentFs
+            .listDirectoryWithAttrs(ensurePathIsAbsolute(dir.ijentPath), IjentFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
+            .getOrThrowFileSystemException()
+            .asSequence()
+            .map { (childName, childStat) ->
+              val childIjentPath = dir.ijentPath.getChild(childName).getOrThrow()
+              val childAttrs = when (childStat) {
+                is IjentPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
+                is IjentWindowsFileInfo -> TODO()
+              }
+              IjentNioPath(childIjentPath, nioFs, childAttrs)
+            }
         }
-        .filter { nioPath ->
-          pathFilter?.accept(nioPath) != false
+        else {
+          nioFs.ijentFs
+            .listDirectory(ensurePathIsAbsolute(dir.ijentPath))
+            .getOrThrowFileSystemException()
+            .asSequence()
+            .map { childName ->
+              val childIjentPath = dir.ijentPath.getChild(childName).getOrThrow()
+              IjentNioPath(childIjentPath, nioFs, null)
+            }
         }
-        .toMutableList()
+      val nioPathList = notFilteredPaths.filterTo(mutableListOf()) { nioPath ->
+        pathFilter?.accept(nioPath) != false
+      }
 
       object : DirectoryStream<Path> {
         // The compiler doesn't (didn't?) allow to relax types here.

@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public final class PlatformNioHelper {
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "InstanceofIncompatibleInterface"})
   public static void visitDirectory(@NotNull Path directory, @Nullable Set<String> filter, @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer)
   throws IOException, SecurityException {
-    try (var dirStream = Files.newDirectoryStream(directory)) {
+    try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
       for (var path : dirStream) {
         if (filter != null && !filter.contains(path.getFileName().toString())) {
           continue;

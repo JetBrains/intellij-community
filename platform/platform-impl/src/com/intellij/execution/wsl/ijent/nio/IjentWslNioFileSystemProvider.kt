@@ -6,6 +6,8 @@ import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -315,11 +317,9 @@ class IjentWslNioFileSystemProvider(
           lastDirectory = lastDirectory.parent
         }
 
-        // TODO Add BasicFileAttributesHolder, it gives a huge speed up.
-        //val stat =
-        //  source.asSafely<BasicFileAttributesHolder>()?.get()
-        //  ?: source.readAttributes(LinkOption.NOFOLLOW_LINKS)
-        val stat = source.readAttributes<BasicFileAttributes>(LinkOption.NOFOLLOW_LINKS)
+        val stat =
+          BasicFileAttributesHolder2.getAttributesFromHolder(source)
+          ?: source.readAttributes(LinkOption.NOFOLLOW_LINKS)
 
         // WindowsPath doesn't support resolve() from paths of different class.
         val target = source.relativeTo(sourceRoot).fold(targetRoot) { parent, file ->
@@ -337,7 +337,7 @@ class IjentWslNioFileSystemProvider(
                 throw err
               }
             }
-            Files.newDirectoryStream(source).use { children ->
+            source.fileSystem.provider().newDirectoryStream(source, FetchAttributesFilter.ACCEPT_ALL).use { children ->
               sourceStack.addAll(children.toList().asReversed())
             }
           }

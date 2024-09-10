@@ -6,10 +6,14 @@ import org.jetbrains.annotations.Nullable;
 import sun.nio.fs.BasicFileAttributesHolder;
 
 import java.lang.ref.WeakReference;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 /**
  * This interface allows not adding `--add-exports` to modules where some class implements {@link BasicFileAttributesHolder}.
+ *
+ * Also, this interface defines some hacks and helper methods related to {@link BasicFileAttributesHolder}.
  */
 public interface BasicFileAttributesHolder2 extends BasicFileAttributesHolder {
   /**
@@ -46,5 +50,31 @@ public interface BasicFileAttributesHolder2 extends BasicFileAttributesHolder {
     public void invalidate() {
       myCachedAttributes.clear();
     }
+  }
+
+  static @Nullable BasicFileAttributes getAttributesFromHolder(@NotNull Path path) {
+    if (path instanceof BasicFileAttributesHolder bafh) {
+      return bafh.get();
+    }
+    return null;
+  }
+
+  /**
+   * A marker interface for {@link java.nio.file.spi.FileSystemProvider#newDirectoryStream}
+   * that advises the file system to fetch file attributes and fill {@link BasicFileAttributesHolder}, if it's supported.
+   * <p>
+   * Unlike many other methods in {@code FileSystemProvider}, {@code newDirectoryStream} doesn't accept a set of options.
+   * The easiest way to provide additional information to the method is through the filter argument.
+   * </p>
+   * A file system provider should support this feature explicitly.
+   * This interface has no effect on default filesystems from JDK:
+   * <ul>
+   *   <li>In the default file system on Windows, file attributes are always fetched, regardless of the filter argument.</li>
+   *   <li>In the default file system on Posix, file attributes are never fetched.</li>
+   * </ul>
+   */
+  @FunctionalInterface
+  interface FetchAttributesFilter extends DirectoryStream.Filter<Path> {
+    FetchAttributesFilter ACCEPT_ALL = path -> true;
   }
 }
