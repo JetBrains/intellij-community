@@ -31,7 +31,7 @@ class FileObjectRenderer : CompoundRendererProvider() {
       override fun getFullValueEvaluator(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptorImpl): XFullValueEvaluator? {
         val isFile = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, valueDescriptor.value as ObjectReference, "isFile", "()Z")
         if ((isFile as? BooleanValue)?.value() == true) {
-          return object : JavaValue.JavaFullValueEvaluator(message("message.node.navigate"), evaluationContext) {
+          return object : JavaValue.JavaFullValueEvaluator(message("message.node.open"), evaluationContext) {
             override fun isShowValuePopup(): Boolean = false
 
             override fun evaluate(callback: XFullValueEvaluationCallback) {
