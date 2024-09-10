@@ -852,9 +852,8 @@ public class ClassWriter {
         //if (init && !isEnum && ((node.access & CodeConstants.ACC_STATIC) == 0) && node.type == ClassNode.CLASS_MEMBER)
         //    index++;
         for (int i = methodWrapper.varproc.getFirstParameterPosition(); i < md.params.length; i++) {
-          VarType parameterType =
-            hasDescriptor && descriptor.parameterTypes.size() > paramCount ? descriptor.parameterTypes.get(paramCount) : md.params[i];
           if (mask == null || mask.get(i) == null) {
+            VarType parameterType = hasDescriptor && !descriptor.parameterTypes.isEmpty() ? descriptor.parameterTypes.get(paramCount) : md.params[i];
             if (paramCount > 0) {
               buffer.append(", ");
             }
@@ -898,7 +897,7 @@ public class ClassWriter {
             paramCount++;
           }
 
-          index += parameterType.getStackSize();
+          index += md.params[i].getStackSize();
         }
 
         buffer.append(')');
@@ -1181,13 +1180,13 @@ public class ClassWriter {
 
     StructClass cl = node.getWrapper().getClassStruct();
 
-	  int classAccessFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
+    int classAccessFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
     boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
     // default constructor requires same accessibility flags. Exception: enum constructor which is always private
     if (!isEnum && ((classAccessFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
-  	  return false;
-  	}
+      return false;
+    }
 
     int count = 0;
     for (StructMethod mt : cl.getMethods()) {

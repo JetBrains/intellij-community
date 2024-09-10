@@ -78,7 +78,7 @@ public class NestedClassProcessor {
 
         if (child.type == ClassNode.CLASS_LOCAL && child.enclosingMethod != null) {
           MethodWrapper enclosingMethodWrapper = node.getWrapper().getMethods().getWithKey(child.enclosingMethod);
-          if(enclosingMethodWrapper != null) { // e.g. in case of switch-on-enum. FIXME: some proper handling of multiple enclosing classes 
+          if(enclosingMethodWrapper != null) { // e.g. in case of switch-on-enum. FIXME: some proper handling of multiple enclosing classes
             setLocalClassDefinition(enclosingMethodWrapper, child);
           }
         }
@@ -403,12 +403,24 @@ public class NestedClassProcessor {
       // set resulting constructor signatures
       for (Entry<String, List<VarFieldPair>> entry : enclosing.getValue().entrySet()) {
         mergeListSignatures(entry.getValue(), interPairMask, false);
+        var wrapper = nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey());
 
         List<VarVersionPair> mask = new ArrayList<>(entry.getValue().size());
-        for (VarFieldPair pair : entry.getValue()) {
-          mask.add(pair != null && !pair.fieldKey.isEmpty() ? pair.varPair : null);
+        var attr = wrapper.methodStruct.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
+        if (attr != null) {
+          for (var param : attr.getEntries()) {
+            mask.add((param.myAccessFlags & (CodeConstants.ACC_SYNTHETIC | CodeConstants.ACC_MANDATED)) == 0 ? null : new VarVersionPair(-1, 0));
+          }
+        } else {
+          for (VarFieldPair pair : entry.getValue()) {
+            VarVersionPair ver = pair != null && !pair.fieldKey.isEmpty() ? pair.varPair : null;
+            if (ver == null && mask.isEmpty() && nestedNode.type == ClassNode.CLASS_MEMBER && !ExprUtil.isStatic(nestedNode.classStruct)) {
+              ver = new VarVersionPair(-1, 0); // non-static inners always have 'Outer.this'
+            }
+            mask.add(ver);
+          }
         }
-        nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey()).synthParameters = mask;
+        wrapper.synthParameters = mask;
       }
     }
   }
@@ -964,6 +976,11 @@ public class NestedClassProcessor {
     @Override
     public int hashCode() {
       return fieldKey.hashCode() + varPair.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "VarFieldPair[fieldKey=" + fieldKey + ", varPair=" + varPair + "]";
     }
   }
 

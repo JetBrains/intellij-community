@@ -46,7 +46,7 @@ public final class ExprUtil {
     return mask;
   }
 
-  private static boolean isStatic(StructClass struct) {
+  public static boolean isStatic(StructClass struct) {
     if (struct.hasModifier(CodeConstants.ACC_STATIC))
       return true;
     if (struct.hasAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES)) {
