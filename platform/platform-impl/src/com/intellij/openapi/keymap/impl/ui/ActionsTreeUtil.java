@@ -277,31 +277,40 @@ public final class ActionsTreeUtil {
         LOG.error(groupName + " contains null actions");
         continue;
       }
-      if (action instanceof ActionGroup childGroup) {
-        Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
-        if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText())) {
-          if (subGroup.getSize() > 0 || actionMatchesFilter(filtered, childGroup)) {
-            group.addGroup(subGroup);
-          }
-        }
-        else {
-          group.addAll(subGroup);
-        }
-      }
-      else if (action instanceof Separator) {
-        if (actionMatchesFilter(filtered, action)) {
-          group.addSeparator();
-        }
-      }
-      else {
-        String id = actionManager.getId(action);
-        if (id != null && actionMatchesFilter(filtered, action)) {
-          group.addActionId(id);
-        }
-      }
+      addActionImpl(group, action, actionManager, forceAsPopup, filtered, normalizeSeparators);
     }
     if (normalizeSeparators) group.normalizeSeparators();
     return group;
+  }
+
+  private static void addActionImpl(Group group,
+                                    AnAction action,
+                                    ActionManager actionManager,
+                                    boolean forceAsPopup,
+                                    Predicate<? super AnAction> filtered,
+                                    boolean normalizeSeparators) {
+    if (action instanceof ActionGroup childGroup) {
+      Group subGroup = createGroup(childGroup, getName(action), null, forceAsPopup, filtered, normalizeSeparators);
+      if (forceAsPopup || childGroup.isPopup() || !Strings.isEmpty(getTemplatePresentation(childGroup).getText())) {
+        if (subGroup.getSize() > 0 || actionMatchesFilter(filtered, childGroup)) {
+          group.addGroup(subGroup);
+        }
+      }
+      else {
+        group.addAll(subGroup);
+      }
+    }
+    else if (action instanceof Separator) {
+      if (actionMatchesFilter(filtered, action)) {
+        group.addSeparator();
+      }
+    }
+    else {
+      String id = actionManager.getId(action);
+      if (id != null && actionMatchesFilter(filtered, action)) {
+        group.addActionId(id);
+      }
+    }
   }
 
   public static @NotNull Group createCorrectedGroup(@NotNull ActionGroup actionGroup,
