@@ -527,53 +527,23 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 }
 
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
-  override fun executeProcessBuilder(exe: String): EelExecApi.ExecuteProcessBuilder =
-    MockIjentApiExecuteProcessBuilder(adapter.apply { exePath = exe }, rootUser, this)
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult = executeResultMock
+
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult = executeResultMock.also {
+    adapter.exePath = builder.exe
+    if (rootUser) {
+      adapter.putUserData(TEST_ROOT_USER_SET, true)
+    }
+    adapter.addParameters(builder.args)
+    adapter.setWorkDirectory(builder.workingDirectory)
+    adapter.environment.putAll(builder.env)
+  }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
 }
 
 private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET") }
 
-private class MockIjentApiExecuteProcessBuilder(
-  private val adapter: GeneralCommandLine,
-  rootUser: Boolean,
-  override val api: MockIjentExecApi,
-) : EelExecApi.ExecuteProcessBuilder {
-  init {
-    if (rootUser) {
-      adapter.putUserData(TEST_ROOT_USER_SET, true)
-    }
-  }
-
-  override fun args(args: List<String>): EelExecApi.ExecuteProcessBuilder = apply {
-    adapter.parametersList.run {
-      clearAll()
-      addAll(args)
-    }
-  }
-
-  override fun env(env: Map<String, String>): EelExecApi.ExecuteProcessBuilder = apply {
-    adapter.environment.run {
-      clear()
-      putAll(env)
-    }
-  }
-
-  override fun pty(pty: EelExecApi.Pty?): EelExecApi.ExecuteProcessBuilder = this
-
-  override fun workingDirectory(workingDirectory: String?): EelExecApi.ExecuteProcessBuilder = apply {
-    adapter.setWorkDirectory(workingDirectory)
-  }
-
-  override val exe: String get() = adapter.exePath
-  override val args: List<String> get() = adapter.parametersList.list
-  override val env: Map<String, String> get() = adapter.environment
-  override val pty: EelExecApi.Pty? = null
-  override val workingDirectory: String? = adapter.workingDirectory?.toString()
-}
 
 private val executeResultMock by lazy {
   EelExecApi.ExecuteProcessResult.Failure(errno = 12345, message = "mock result ${Ksuid.generate()}")

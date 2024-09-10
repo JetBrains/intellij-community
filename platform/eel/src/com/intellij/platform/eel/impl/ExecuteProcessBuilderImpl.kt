@@ -3,7 +3,7 @@ package com.intellij.platform.eel.impl
 
 import com.intellij.platform.eel.EelExecApi
 
-class ExecuteProcessBuilderImpl(override val exe: String, override val api:EelExecApi) : EelExecApi.ExecuteProcessBuilder {
+data class ExecuteProcessBuilderImpl(override val exe: String) : EelExecApi.ExecuteProcessBuilder {
   init {
     require(exe.isNotEmpty()) { "Executable must be specified" }
   }
