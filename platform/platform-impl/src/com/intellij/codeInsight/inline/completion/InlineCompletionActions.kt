@@ -54,6 +54,7 @@ abstract class SwitchInlineCompletionVariantAction protected constructor(
   }
 }
 
+@ApiStatus.Internal
 abstract class CancellationKeyInlineCompletionHandler(val originalHandler: EditorActionHandler,
                                                       val finishType: FinishType) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
