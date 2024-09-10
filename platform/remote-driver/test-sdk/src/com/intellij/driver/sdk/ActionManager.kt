@@ -6,6 +6,7 @@ import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.openapi.diagnostic.fileLogger
 import java.awt.event.InputEvent
 
 @Remote(value = "com.intellij.openapi.actionSystem.ActionManager")
@@ -52,6 +53,7 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
       throw IllegalStateException("Action $actionId was not found")
     }
     else {
+      fileLogger().info("Invoking action $actionId on $target")
       actionManager.tryToExecute(action, null, component, null, now)
     }
   }
