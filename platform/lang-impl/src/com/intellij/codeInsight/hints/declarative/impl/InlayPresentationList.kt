@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
-import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFontSize
+import com.intellij.codeInsight.hints.declarative.HintMarginPadding
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
@@ -13,7 +15,6 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LightweightHint
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -31,28 +32,16 @@ import java.awt.geom.Rectangle2D
  */
 @ApiStatus.Internal
 class InlayPresentationList(
-  private var state: TinyTree<Any?>,
-  @TestOnly var hintFormat: HintFormat,
-  @TestOnly var isDisabled: Boolean,
-  var payloads: Map<String, InlayActionPayload>? = null,
-  private val providerClass: Class<*>,
-  @NlsContexts.HintText private val tooltip: String?,
-  internal val sourceId: String,
+  @ApiStatus.Internal var model: InlayData
 ) {
-  companion object {
-    private val MARGIN_PADDING_BY_FORMAT = enumMapOf<HintMarginPadding, Pair<Int, Int>>().apply {
-      put(HintMarginPadding.OnlyPadding, 0 to 7)
-      put(HintMarginPadding.MarginAndSmallerPadding, 2 to 6)
-    }
-    private const val ARC_WIDTH = 8
-    private const val ARC_HEIGHT = 8
-    private const val BACKGROUND_ALPHA: Float = 0.55f
-  }
-
-  private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
+  private var entries: Array<InlayPresentationEntry> = model.tree.buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
   private var size: Float = Float.MAX_VALUE
   private var fontName: String = ""
+
+  private fun TinyTree<Any?>.buildPresentationEntries(): Array<InlayPresentationEntry> {
+    return PresentationEntryBuilder(this, model.providerClass).buildPresentationEntries()
+  }
 
   private fun computePartialSums(textMetrics: InlayTextMetrics): IntArray {
     var widthSoFar = 0
@@ -84,7 +73,7 @@ class InlayPresentationList(
     }
   }
 
-  private val marginAndPadding: Pair<Int, Int> = MARGIN_PADDING_BY_FORMAT[hintFormat.horizontalMarginPadding]!!
+  private val marginAndPadding: Pair<Int, Int> = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!
   private fun getTextWidth(storage: InlayTextMetricsStorage): Int = getPartialWidthSums(storage).lastOrNull() ?: 0
   private fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
     val (_, padding) = marginAndPadding
@@ -114,18 +103,17 @@ class InlayPresentationList(
   }
 
   fun handleHover(e: EditorMouseEvent): LightweightHint? {
+    val tooltip = model.tooltip
     return if (tooltip == null) null
     else PresentationFactory(e.editor).showTooltip(e.mouseEvent, tooltip)
   }
 
   @RequiresEdt
-  fun updateState(state: TinyTree<Any?>, disabled: Boolean, hintFormat: HintFormat) {
-    updateStateTree(state, this.state, 0, 0)
-    this.state = state
-    this.entries = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
+  fun updateModel(newModel: InlayData) {
+    updateStateTree(newModel.tree, this.model.tree, 0, 0)
+    this.model = newModel
+    this.entries = newModel.tree.buildPresentationEntries()
     this._partialWidthSums = null
-    this.isDisabled = disabled
-    this.hintFormat = hintFormat
   }
 
   private fun updateStateTree(treeToUpdate: TinyTree<Any?>,
@@ -153,18 +141,19 @@ class InlayPresentationList(
   }
 
   fun toggleTreeState(parentIndexToSwitch: Byte) {
-    when (val payload = state.getBytePayload(parentIndexToSwitch)) {
+    val tree = model.tree
+    when (val payload = tree.getBytePayload(parentIndexToSwitch)) {
       InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_COLLAPSED_TAG, InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_COLLAPSED_TAG -> {
-        state.setBytePayload(InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_EXPANDED_TAG, parentIndexToSwitch)
+        tree.setBytePayload(InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_EXPANDED_TAG, parentIndexToSwitch)
       }
       InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_EXPANDED_TAG, InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_EXPANDED_TAG -> {
-        state.setBytePayload(InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_COLLAPSED_TAG, parentIndexToSwitch)
+        tree.setBytePayload(InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_COLLAPSED_TAG, parentIndexToSwitch)
       }
       else -> {
         error("Unexpected payload: $payload")
       }
     }
-    updateState(state, isDisabled, hintFormat)
+    updateModel(this.model)
   }
 
   fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int = getFullWidth(textMetricsStorage)
@@ -175,6 +164,7 @@ class InlayPresentationList(
     var xOffset = 0
     val metrics = getMetrics(storage)
     val gap =  if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
+    val hintFormat = model.hintFormat
     val attrKey = when (hintFormat.colorKind) {
       HintColorKind.Default -> DefaultLanguageHighlighterColors.INLAY_DEFAULT
       HintColorKind.Parameter -> DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT
@@ -207,7 +197,7 @@ class InlayPresentationList(
           attrs
         }
         g.withTranslated(xOffset, 0) {
-          entry.render(g, metrics, finalAttrs, isDisabled, gap, targetRegion.height.toInt(), editor)
+          entry.render(g, metrics, finalAttrs, model.disabled, gap, targetRegion.height.toInt(), editor)
         }
         xOffset += entry.computeWidth(metrics)
       }
@@ -215,7 +205,7 @@ class InlayPresentationList(
   }
 
   private fun getMetrics(fontMetricsStorage: InlayTextMetricsStorage): InlayTextMetrics =
-    fontMetricsStorage.getFontMetrics(small = hintFormat.fontSize == HintFontSize.ABitSmallerThanInEditor)
+    fontMetricsStorage.getFontMetrics(small = model.hintFormat.fontSize == HintFontSize.ABitSmallerThanInEditor)
 
   @TestOnly
   fun getEntries(): Array<InlayPresentationEntry> {
@@ -226,18 +216,12 @@ class InlayPresentationList(
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return null
     return entry.clickArea
   }
-
-  internal fun toInlayData(position: InlayPosition, providerId: String): InlayData {
-    return InlayData(
-      position,
-      tooltip,
-      hintFormat,
-      state,
-      providerId,
-      isDisabled,
-      payloads?.map { (name, action) -> InlayPayload(name, action) },
-      providerClass,
-      sourceId,
-    )
-  }
 }
+
+private val MARGIN_PADDING_BY_FORMAT = enumMapOf<HintMarginPadding, Pair<Int, Int>>().apply {
+  put(HintMarginPadding.OnlyPadding, 0 to 7)
+  put(HintMarginPadding.MarginAndSmallerPadding, 2 to 6)
+}
+private const val ARC_WIDTH = 8
+private const val ARC_HEIGHT = 8
+private const val BACKGROUND_ALPHA: Float = 0.55f

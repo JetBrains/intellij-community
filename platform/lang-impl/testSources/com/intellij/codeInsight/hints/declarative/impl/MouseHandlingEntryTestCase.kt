@@ -175,7 +175,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val state = buildState {
       initialStateBuilder()
     }
-    val presentationList = InlayPresentationList(state, HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    val presentationList = InlayPresentationList(createInlayData(state, HintFormat.default))
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
     val editor = myFixture.editor
@@ -195,7 +195,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val newState = buildState {
       updatedStateBuilder()
     }
-    presentationList.updateState(newState, false, HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground))
+    presentationList.updateModel(createInlayData(newState, HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground)))
     val updatedStateEntries = presentationList.getEntries().toList()
     assertEquals(afterUpdateText, toText(updatedStateEntries))
   }
@@ -253,7 +253,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText("test.txt", "my text")
     val root = PresentationTreeBuilderImpl.createRoot()
     b(root)
-    val presentationList = InlayPresentationList(root.complete(), HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    val presentationList = InlayPresentationList(createInlayData(root.complete()))
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
     val entry = beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!
@@ -266,5 +266,17 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
 
   private fun toText(entries: List<InlayPresentationEntry>): String {
     return entries.joinToString(separator = "|") { (it as TextInlayPresentationEntry).text }
+  }
+
+  private fun createInlayData(tree: TinyTree<Any?>, hintFormat: HintFormat = HintFormat.default): InlayData {
+    return InlayData(InlineInlayPosition(0, true),
+                     null,
+                     hintFormat,
+                     tree,
+                     "dummyProvider",
+                     false,
+                     null,
+                     javaClass,
+                     DeclarativeInlayHintsPass.passSourceId)
   }
 }

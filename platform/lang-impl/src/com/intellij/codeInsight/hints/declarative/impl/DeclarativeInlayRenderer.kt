@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -25,21 +24,24 @@ import java.awt.geom.Rectangle2D
 
 @ApiStatus.Internal
 class DeclarativeInlayRenderer(
-  @TestOnly
-  val presentationList: InlayPresentationList,
+  model: InlayData,
   private val fontMetricsStorage: InlayTextMetricsStorage,
   val providerId: String,
-  private val position: InlayPosition,
+  private val sourceId: String,
 ) : EditorCustomElementRenderer {
   private var inlay: Inlay<DeclarativeInlayRenderer>? = null
+
+  @TestOnly
+  val presentationList: InlayPresentationList = InlayPresentationList(model)
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     return presentationList.getWidthInPixels(fontMetricsStorage)
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
-  fun updateState(newState: TinyTree<Any?>, disabled: Boolean, hintFormat: HintFormat) {
-    presentationList.updateState(newState, disabled, hintFormat)
+  fun updateModel(newModel: InlayData) {
+    presentationList.updateModel(newModel)
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
@@ -70,7 +72,7 @@ class DeclarativeInlayRenderer(
       .add(CommonDataKeys.EDITOR, e.editor)
       .add(InlayHintsProvider.PROVIDER_ID, providerId)
       .add(InlayHintsProvider.PROVIDER_NAME, providerName)
-      .add(InlayHintsProvider.INLAY_PAYLOADS, presentationList.payloads)
+      .add(InlayHintsProvider.INLAY_PAYLOADS, presentationList.model.payloads?.associate { it.payloadName to it.payload })
       .build()
     popupMenu.setDataContext {
       dataContext
@@ -94,14 +96,15 @@ class DeclarativeInlayRenderer(
 
   internal fun toInlayData(): InlayData {
     val inlay = this.inlay!! // null cannot be here because this method is called only on the renderer got from the inlay instance
-    val pos = when (position) {
+    val position = presentationList.model.position
+    val updatedPos = when (position) {
       // important to store position based on the inlay offset, not the renderer one
       // the latter does not receive updates from the inlay model when the document is changed
       is InlineInlayPosition -> InlineInlayPosition(inlay.offset, position.relatedToPrevious, position.priority)
       is EndOfLinePosition -> EndOfLinePosition(inlay.editor.document.getLineNumber(inlay.offset))
     }
-    return presentationList.toInlayData(pos, providerId)
+    return presentationList.model.copy(position = updatedPos)
   }
 
-  internal fun getSourceId(): String = presentationList.sourceId
+  internal fun getSourceId(): String = presentationList.model.sourceId
 }

@@ -121,6 +121,28 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
     ), entries)
   }
 
+  // IJPL-160830
+  @Test
+  fun testInlayTooltipIsUpdatedWhenInlayIsReused() {
+    myFixture.configureByText("test.txt", "content")
+    val provider = StoredHintsProvider()
+    val providerInfo = InlayProviderPassInfo(provider, "test.inlay.provider", emptyMap())
+
+    fun addAndCheckInlayWithTooltip(tooltip: String?) {
+      provider.hintAdder = {
+        addPresentation(InlineInlayPosition(2, true), hintFormat = HintFormat.default, tooltip = tooltip) {
+          text("text")
+        }
+      }
+      collectAndApplyPass(createPass(providerInfo, false))
+      assertEquals(tooltip, getInlays().single().renderer.presentationList.model.tooltip)
+    }
+
+    addAndCheckInlayWithTooltip("1")
+    // the hint is inserted at the same offset, and so the underlying editor inlay should be reused, and it's renderer updated
+    addAndCheckInlayWithTooltip("2")
+  }
+
   private fun createPass(providerInfo: InlayProviderPassInfo, isProviderDisabled: Boolean=false): DeclarativeInlayHintsPass {
     return ActionUtil.underModalProgress(project, "") {
       DeclarativeInlayHintsPass(myFixture.file, myFixture.editor, listOf(providerInfo), isProviderDisabled, isProviderDisabled)
@@ -139,14 +161,14 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
     }
 
     collectAndApplyPass(createPass(providerInfo, false))
-    assertFalse(getInlays().single().renderer.presentationList.isDisabled)
+    assertFalse(getInlays().single().renderer.presentationList.model.disabled)
     provider.hintAdder = {
       addPresentation(InlineInlayPosition(2, true, priority = 1), hasBackground = true) {
         text("1")
       }
     }
     collectAndApplyPass(createPass(providerInfo, true))
-    assertTrue(getInlays().single().renderer.presentationList.isDisabled)
+    assertTrue(getInlays().single().renderer.presentationList.model.disabled)
   }
 
   private fun getInlays(): List<Inlay<out DeclarativeInlayRenderer>> {
