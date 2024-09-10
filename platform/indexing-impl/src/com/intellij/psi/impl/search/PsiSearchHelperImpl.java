@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
@@ -47,6 +46,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndex.AllKeysQuery;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -1257,27 +1257,35 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean computeQueries(@NotNull GlobalSearchScope scope,
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull TextIndexQuery @NotNull [] textIndexQueries) {
-    Collection<FileBasedIndex.AllKeysQuery<?, ?>> queries = ContainerUtil.concat(textIndexQueries, q -> q.toFileBasedIndexQueries());
+    Collection<AllKeysQuery<?, ?>> queries = ContainerUtil.concat(textIndexQueries, q -> q.toFileBasedIndexQueries());
     return FileBasedIndex.getInstance().processFilesContainingAllKeys(queries, scope, processor);
   }
 
   @ApiStatus.Internal
   public static final class TextIndexQuery {
+    /** Initial search terms, before conversion into idIndexEntries/trigrams */
+    private final @NotNull Collection<String> myInitialWords;
+
+    //Alternative lookup variants: idEntries and trigrams are generated from myInitialWords, and represent 2 different ways
+    // to lookup the words -- via IdIndex and Trigram.Index accordingly
     private final @NotNull Set<IdIndexEntry> myIdIndexEntries;
     private final @NotNull Set<Integer> myTrigrams;
+
+    /** {@link UsageSearchContext search context} as a bitmask (makes sense only for IdIndex lookup) */
     private final @Nullable Short myContext;
-    private final boolean myUseOnlyWeakHashToSearch;
-    private final @NotNull Collection<String> myInitialWords;
+
+    /** true == 'use IdIndex only' -- which is the default option anyway */
+    private final boolean myUseOnlyWordHashToSearch;
 
     private TextIndexQuery(@NotNull Set<IdIndexEntry> idIndexEntries,
                            @NotNull Set<Integer> trigrams,
                            @Nullable Short context,
-                           boolean useOnlyWeakHashToSearch,
+                           boolean useOnlyWordHashToSearch,
                            @NotNull Collection<String> initialWords) {
       myIdIndexEntries = idIndexEntries;
       myTrigrams = trigrams;
       myContext = context;
-      myUseOnlyWeakHashToSearch = useOnlyWeakHashToSearch;
+      myUseOnlyWordHashToSearch = useOnlyWordHashToSearch;
       myInitialWords = initialWords;
     }
 
@@ -1295,6 +1303,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (o == null || getClass() != o.getClass()) return false;
       TextIndexQuery query = (TextIndexQuery)o;
       return myIdIndexEntries.equals(query.myIdIndexEntries) &&
+             //TODO RC: why myUseOnlyWeakHashToSearch is not included (same question for hashCode)?
              myTrigrams.equals(query.myTrigrams) &&
              Objects.equals(myContext, query.myContext);
     }
@@ -1304,31 +1313,30 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return Objects.hash(myIdIndexEntries, myTrigrams, myContext);
     }
 
-    public @NotNull List<FileBasedIndex.AllKeysQuery<?, ?>> toFileBasedIndexQueries() {
+    public @NotNull List<AllKeysQuery<?, ?>> toFileBasedIndexQueries() {
       Condition<Integer> contextCondition = myContext == null ? null : matchContextCondition(myContext);
 
-      FileBasedIndex.AllKeysQuery<IdIndexEntry, Integer> idIndexQuery =
-        new FileBasedIndex.AllKeysQuery<>(IdIndex.NAME, myIdIndexEntries, contextCondition);
+      var idIndexQuery = new AllKeysQuery<>(IdIndex.NAME, myIdIndexEntries, contextCondition);
 
-      if (myUseOnlyWeakHashToSearch || myTrigrams.isEmpty()) {
+      if (myUseOnlyWordHashToSearch || myTrigrams.isEmpty()) {
         // short words don't produce trigrams
         return Collections.singletonList(idIndexQuery);
       }
 
+      //Currently useStrongerHash is true => we are always using IdIndex:
       if (IdIndexEntry.useStrongerHash()) {
         return Collections.singletonList(idIndexQuery);
       }
 
-      FileBasedIndex.AllKeysQuery<Integer, Void> trigramIndexQuery =
-        new FileBasedIndex.AllKeysQuery<>(TrigramIndex.INDEX_ID, myTrigrams, null);
+      var trigramIndexQuery = new AllKeysQuery<>(TrigramIndex.INDEX_ID, myTrigrams, null);
       return Arrays.asList(idIndexQuery, trigramIndexQuery);
     }
 
     private static @NotNull TextIndexQuery fromWord(@NotNull String word,
                                                     boolean caseSensitively,
-                                                    boolean useOnlyWeakHashToSearch,
+                                                    boolean useOnlyWordHashToSearch,
                                                     @Nullable Short context) {
-      return fromWords(Collections.singleton(word), caseSensitively, useOnlyWeakHashToSearch, context);
+      return fromWords(Collections.singleton(word), caseSensitively, useOnlyWordHashToSearch, context);
     }
 
     public static @NotNull TextIndexQuery fromWord(@NotNull String word, boolean caseSensitively, @Nullable Short context) {
@@ -1337,10 +1345,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     public static @NotNull TextIndexQuery fromWords(@NotNull Collection<String> words,
                                                     boolean caseSensitively,
-                                                    boolean useOnlyWeakHashToSearch, @Nullable Short context) {
+                                                    boolean useOnlyWordHashToSearch,
+                                                    @Nullable Short context) {
       Set<IdIndexEntry> keys = CollectionFactory.createSmallMemoryFootprintSet(ContainerUtil.flatMap(words, w -> getWordEntries(w, caseSensitively)));
       IntSet trigrams;
-      if (!useOnlyWeakHashToSearch) {
+      if (!useOnlyWordHashToSearch) {
         trigrams = new IntOpenHashSet();
         for (String word : words) {
           trigrams.addAll(TrigramBuilder.getTrigrams(word));
@@ -1350,7 +1359,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         trigrams = IntSets.EMPTY_SET;
       }
 
-      return new TextIndexQuery(keys, trigrams, context, useOnlyWeakHashToSearch, words);
+      return new TextIndexQuery(keys, trigrams, context, useOnlyWordHashToSearch, words);
     }
 
     private static @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
