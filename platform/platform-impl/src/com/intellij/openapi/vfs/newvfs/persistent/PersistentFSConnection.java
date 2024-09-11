@@ -21,11 +21,9 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ThreadSafeThrottler;
-import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
-import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.VFSContentStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -55,9 +53,6 @@ import static java.util.concurrent.TimeUnit.*;
 @ApiStatus.Internal
 public final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
-
-  static final int RESERVED_ATTR_ID = DataEnumerator.NULL_ID;
-  static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
   /**
    * After how many errors ('corruptions') insist on restarting IDE? I.e. we schedule
@@ -531,15 +526,6 @@ public final class PersistentFSConnection {
   private static final class VFSCorruptedException extends Exception {
     VFSCorruptedException(final String message, final Throwable cause) {
       super(message, cause);
-    }
-  }
-
-  static final class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
-    boolean attrPageRequested;
-
-    @Override
-    public int calculateCapacity(int requiredLength) {   // 20% for growth
-      return Math.max(attrPageRequested ? 8 : 32, Math.min((int)(requiredLength * 1.2), (requiredLength / 1024 + 1) * 1024));
     }
   }
 }

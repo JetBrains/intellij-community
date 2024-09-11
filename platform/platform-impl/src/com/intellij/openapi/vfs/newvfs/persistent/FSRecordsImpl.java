@@ -1307,7 +1307,7 @@ public final class FSRecordsImpl implements Closeable {
   <R> R readRecordFields(int fileId, @NotNull RecordReader<R> reader) {
     checkNotClosed();
 
-    PersistentFSRecordsStorage fileRecords = connection.getRecords();
+    IPersistentFSRecordsStorage fileRecords = connection.getRecords();
     long lockStamp = fileRecordLock.lockForRead(fileId);
     try {
       return fileRecords.readRecord(fileId, reader);
@@ -1323,7 +1323,7 @@ public final class FSRecordsImpl implements Closeable {
   <R> R readRecordFieldsOptimistic(int fileId, @NotNull RecordReader<R> reader) {
     checkNotClosed();
 
-    PersistentFSRecordsStorage fileRecords = connection.getRecords();
+    IPersistentFSRecordsStorage fileRecords = connection.getRecords();
 
     StampedLock lock = fileRecordLock.lockFor(fileId);
     long lockStamp = lock.tryOptimisticRead();
