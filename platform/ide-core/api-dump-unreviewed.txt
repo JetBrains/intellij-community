@@ -693,7 +693,6 @@ c:com.intellij.notification.Notification
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener):V
 - addAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.notification.Notification
 - addActions(java.util.Collection):com.intellij.notification.Notification
-- f:addActions(java.util.List):V
 - f:assertHasTitleOrContent():V
 - configureDoNotAskOption(java.lang.String,java.lang.String):V
 - expire():V

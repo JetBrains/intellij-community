@@ -17,7 +17,6 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
   fun main(args: Array<String>) {
     val options = BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    //  options.buildStepsToSkip << BuildOptions.SVGICONS_PREBUILD_STEP
     options.buildStepsToSkip += listOf(
       BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
       BuildOptions.SOURCES_ARCHIVE_STEP,
@@ -34,8 +33,8 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
     // when IDEA CE is updated from IDEA, a UE sources project should be loaded from IDEA UE directory
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: COMMUNITY_ROOT.communityRoot
     runBlocking(Dispatchers.Default) {
-      createBuildTasks(context = createCommunityBuildContext(options = options, projectHome = projectHome))
-        .buildUnpackedDistribution(targetDirectory = options.outRootDir!!.resolve(distOutputRelativePath), includeBinAndRuntime = false)
+      createBuildTasks(createCommunityBuildContext(options, projectHome))
+        .buildUnpackedDistribution(options.outRootDir!!.resolve(distOutputRelativePath), includeBinAndRuntime = false)
     }
   }
 }

@@ -1,23 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.help.WebHelpProvider;
-import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
-import com.intellij.util.Url;
-import kotlin.jvm.functions.Function1;
-import org.apache.http.client.utils.URIBuilder;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URISyntaxException;
+import java.util.Map;
 
 public class HelpManagerImpl extends HelpManager {
   private static final ExtensionPointName<WebHelpProvider>
@@ -48,25 +42,19 @@ public class HelpManagerImpl extends HelpManager {
       return null;
     }
 
-    Function1<String, Url> urlSupplier = ExternalProductResourceUrls.getInstance().getHelpPageUrl();
+    var urlSupplier = ExternalProductResourceUrls.getInstance().getHelpPageUrl();
     if (urlSupplier == null) return null;
-    String url = IdeUrlTrackingParametersProvider.getInstance().augmentUrl(urlSupplier.invoke(id).toExternalForm());
-    return addKeymapToUrl(url);
-  }
+    var url = urlSupplier.invoke(id);
 
-  private static @NotNull String addKeymapToUrl(@NotNull String originalUrl) {
-    Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
-    // if the user has a custom keymap, we need to show the predefined keymap it was inherited from
-    if (activeKeymap.canModify())
+    var activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
+    if (activeKeymap.canModify()) {
+      // if the user has a custom keymap, we need to show the predefined keymap it was inherited from
       activeKeymap = activeKeymap.getParent();
-    try {
-      return new URIBuilder(originalUrl)
-        .setParameter("keymap", activeKeymap.getName())
-        .build().toString();
     }
-    catch (URISyntaxException e) {
-      Logger.getInstance(HelpManagerImpl.class).warn(originalUrl, e);
-      return originalUrl;
+    if (activeKeymap != null) {
+      url = url.addParameters(Map.of("keymap", activeKeymap.getName()));
     }
+
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url.toExternalForm());
   }
 }
