@@ -151,8 +151,6 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: P
       append(interpreter.sdk.versionString!!)
       append(" " + interpreter.homePath, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
-    is InterpreterSeparator -> return
-    else -> error("Unknown PythonSelectableInterpreter type")
   }
 }
 
@@ -160,7 +158,6 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: P
 class PythonSdkComboBoxListCellRenderer : ColoredListCellRenderer<Any>() {
 
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean): Component {
-    if (value is InterpreterSeparator) return TitledSeparator(value.text).apply { setLabelFocusable(false) }
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
   }
 

@@ -235,7 +235,7 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
 }
 
 // todo does it need target configuration
-abstract class PythonSelectableInterpreter {
+sealed class PythonSelectableInterpreter {
   abstract val homePath: String
   abstract val languageLevel: LanguageLevel
   override fun toString(): String =
@@ -253,10 +253,6 @@ class ManuallyAddedSelectableInterpreter(override val homePath: String, override
 class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
   override val homePath: String = ""
   override val languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
-}
-
-class InterpreterSeparator(val text: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter() {
-  override val homePath: String = ""
 }
 
 
