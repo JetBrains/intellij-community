@@ -28,21 +28,21 @@ public final class PersistentFSContentAccessor {
   @Nullable
   InputStream readContent(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    int contentId = connection.getRecords().getContentRecordId(fileId);
+    int contentId = connection.records().getContentRecordId(fileId);
     if (contentId == 0) return null;
     return readContentByContentId(contentId);
   }
 
   @NotNull
   InputStream readContentByContentId(int contentId) throws IOException {
-    return connection.getContents().readStream(contentId);
+    return connection.contents().readStream(contentId);
   }
 
   void writeContent(int fileId,
                     @NotNull ByteArraySequence content,
                     boolean fixedSizeHint) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    PersistentFSRecordsStorage records = connection.getRecords();
+    PersistentFSRecordsStorage records = connection.records();
 
     int contentRecordId = writeContentRecord(content);
 
@@ -56,16 +56,16 @@ public final class PersistentFSContentAccessor {
    * & storing new record.
    */
   int writeContentRecord(@NotNull ByteArraySequence content) throws IOException, ContentTooBigException {
-    return connection.getContents().storeRecord(content);
+    return connection.contents().storeRecord(content);
   }
 
   @ApiStatus.Obsolete
   byte @Nullable [] getContentHash(int fileId) throws IOException {
-    int contentId = connection.getRecords().getContentRecordId(fileId);
+    int contentId = connection.records().getContentRecordId(fileId);
     if (contentId <= NULL_ID) {
       return null;
     }
-    return connection.getContents().contentHash(contentId);
+    return connection.contents().contentHash(contentId);
   }
 
   private static @NotNull MessageDigest contentHashDigest() {
@@ -127,7 +127,7 @@ public final class PersistentFSContentAccessor {
    * it entirely
    */
   int acquireContentRecord(int fileId) throws IOException {
-    return connection.getRecords().getContentRecordId(fileId);
+    return connection.records().getContentRecordId(fileId);
   }
 
   void deleteContent(int fileId) throws IOException {

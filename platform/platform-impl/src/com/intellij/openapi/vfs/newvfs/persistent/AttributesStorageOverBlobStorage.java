@@ -80,14 +80,14 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                                       int fileId,
                                                       @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+    int attributeRecordId = connection.records().getAttributeRecordId(fileId);
     if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return null;
     }
     else if (attributeRecordId < NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
     }
-    int encodedAttributeId = connection.getAttributeId(attribute.getId());
+    int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
 
     byte[] attributeValueBytes = readAttributeValue(
       attributeRecordId,
@@ -99,7 +99,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     }
     return new AttributeInputStream(
       new UnsyncByteArrayInputStream(attributeValueBytes),
-      connection.getEnumeratedAttributes()
+      connection.attributesEnumerator()
     );
   }
 
@@ -108,14 +108,14 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                 @NotNull FileAttribute attribute,
                                 @NotNull ByteBufferReader<R> reader) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+    int attributeRecordId = connection.records().getAttributeRecordId(fileId);
     if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return null;
     }
     if (attributeRecordId < 0) {
       throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
     }
-    int encodedAttributeId = connection.getAttributeId(attribute.getId());
+    int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
 
     return readAttributeValue(
       attributeRecordId,
@@ -130,11 +130,11 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                   int fileId,
                                   @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+    int attributeRecordId = connection.records().getAttributeRecordId(fileId);
     if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return false;
     }
-    int encodedAttributeId = connection.getAttributeId(attribute.getId());
+    int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
 
     return hasAttribute(attributeRecordId, fileId, encodedAttributeId);
   }
@@ -148,7 +148,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     //          a DataOutputStream
     return new AttributeOutputStreamImpl(
       new WritesAccumulatingOutputStream(connection, fileId, attribute),
-      connection.getEnumeratedAttributes()
+      connection.attributesEnumerator()
     );
   }
 
@@ -157,7 +157,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
 
-    PersistentFSRecordsStorage records = connection.getRecords();
+    PersistentFSRecordsStorage records = connection.records();
     int attributeRecordId = records.getAttributeRecordId(fileId);
     deleteAttributes(attributeRecordId, fileId);
 
@@ -739,8 +739,8 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
       int attributeValueSize = size();
       checkAttributeValueSize(attribute, attributeValueSize);
 
-      PersistentFSRecordsStorage records = connection.getRecords();
-      int encodedAttributeId = connection.getAttributeId(attribute.getId());
+      PersistentFSRecordsStorage records = connection.records();
+      int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
       int attributesRecordId = records.getAttributeRecordId(fileId);
 
       int updatedAttributesRecordId = updateAttribute(

@@ -40,7 +40,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
         "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
-    PersistentFSRecordsStorage records = connection.getRecords();
+    PersistentFSRecordsStorage records = connection.records();
 
     //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
     //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be
@@ -93,7 +93,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
       int count = DataInputOutputUtil.readINT(buffer);
       int[] result = ArrayUtil.newIntArray(count);
       int prevId = fileId;
-      int maxID = connection.getRecords().maxAllocatedID();
+      int maxID = connection.records().maxAllocatedID();
       for (int i = 0; i < count; i++) {
         prevId = result[i] = DataInputOutputUtil.readINT(buffer) + prevId;
         checkChildIdValid(fileId, prevId, i, maxID);

@@ -61,7 +61,7 @@ public class VFSChildrenUpdateBenchmark {
                                   int maxDepth) throws IOException {
       foldersIds.add(folderId);
       boolean leafLevel = (depth == maxDepth);
-      PersistentFSRecordsStorage records = vfs.connection().getRecords();
+      PersistentFSRecordsStorage records = vfs.connection().records();
       ArrayList<ChildInfo> childrenInfos = new ArrayList<>();
       for (int i = 0; i < CHILDREN_COUNT; i++) {
         int childId = vfs.createRecord();

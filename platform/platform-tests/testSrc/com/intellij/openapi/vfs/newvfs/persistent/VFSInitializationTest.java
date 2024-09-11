@@ -43,7 +43,7 @@ public class VFSInitializationTest {
     final int recordsCountBeforeClose;
     final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     try {
-      final PersistentFSRecordsStorage records = connection.getRecords();
+      final PersistentFSRecordsStorage records = connection.records();
       assertEquals(
         "connection.records.version == tryInit(version)",
         records.getVersion(),
@@ -61,7 +61,7 @@ public class VFSInitializationTest {
     try {
       assertEquals(
         "VFS should not be rebuild -- it should successfully load persisted version from disk",
-        reopenedConnection.getRecords().recordsCount(),
+        reopenedConnection.records().recordsCount(),
         recordsCountBeforeClose
       );
     }
@@ -79,7 +79,7 @@ public class VFSInitializationTest {
     final long fsRecordsCreationTimestampBeforeDisconnect;
     final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     try {
-      final PersistentFSRecordsStorage records = connection.getRecords();
+      final PersistentFSRecordsStorage records = connection.records();
       assertEquals(
         "connection.records.version == tryInit(version)",
         records.getVersion(),
@@ -100,7 +100,7 @@ public class VFSInitializationTest {
     try {
       assertEquals(
         "VFS should NOT be rebuild -- reopened VFS should have creation timestamp of VFS before disconnect",
-        reopenedConnection.getRecords().getTimestamp(),
+        reopenedConnection.records().getTimestamp(),
         fsRecordsCreationTimestampBeforeDisconnect
       );
     }
@@ -117,7 +117,7 @@ public class VFSInitializationTest {
     assertEquals(
       "connection.records.version == tryInit(version)",
       version,
-      connection.getRecords().getVersion()
+      connection.records().getVersion()
     );
     disconnect(connection);
 
@@ -150,7 +150,7 @@ public class VFSInitializationTest {
       /*version: */ 1
     );
     PersistentFSConnection connection = initializationResult.connection;
-    final Path corruptionMarkerFile = connection.getPersistentFSPaths().getCorruptionMarkerFile();
+    final Path corruptionMarkerFile = connection.paths().getCorruptionMarkerFile();
     try {
       connection.scheduleVFSRebuild(
         corruptionReason,
@@ -333,7 +333,7 @@ public class VFSInitializationTest {
     final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     try {
       assertTrue("records must report 'closedProperly' since connection was properly disconnect()-ed",
-                   reopenedConnection.getRecords().wasClosedProperly());
+                   reopenedConnection.records().wasClosedProperly());
     }
     finally {
       PersistentFSConnector.disconnect(reopenedConnection);
@@ -348,7 +348,7 @@ public class VFSInitializationTest {
     final PersistentFSConnection connection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
     connection.force(); //persist VFS initial state
     try {
-      final PersistentFSRecordsStorage records = connection.getRecords();
+      final PersistentFSRecordsStorage records = connection.records();
       records.force();
 
       //do NOT call connection.close() -- just reopen the connection:
@@ -421,7 +421,7 @@ public class VFSInitializationTest {
 
   private static void createRecords(final PersistentFSConnection connection,
                                     final int nRecords) throws IOException {
-    final PersistentFSRecordsStorage records = connection.getRecords();
+    final PersistentFSRecordsStorage records = connection.records();
     for (int i = 0; i < nRecords; i++) {
       records.allocateRecord();
     }

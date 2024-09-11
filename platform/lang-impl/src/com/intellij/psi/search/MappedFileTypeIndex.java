@@ -659,7 +659,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
         boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
-        int maxAllocatedID = FSRecords.getInstance().connection().getRecords().maxAllocatedID();
+        int maxAllocatedID = FSRecords.getInstance().connection().records().maxAllocatedID();
         for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
           if (isCheckCanceledNeeded) {
             ProgressManager.checkCanceled();

@@ -224,9 +224,9 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
   private suspend fun verifyFileRecords(checkForOrphanRecords: Boolean): VFSHealthCheckReport.FileRecordsReport {
     val connection = impl.connection()
-    val fileRecords = connection.records
-    val namesEnumerator = connection.names
-    val contentsStorage = connection.contents
+    val fileRecords = connection.records()
+    val namesEnumerator = connection.names()
+    val contentsStorage = connection.contents()
 
     val maxAllocatedID = fileRecords.maxAllocatedID()
 
@@ -272,7 +272,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 
             var attributesAreResolvable: Boolean
             try {
-              connection.attributes.checkAttributeRecordSanity(fileId, attributeRecordId)
+              connection.attributes().checkAttributeRecordSanity(fileId, attributeRecordId)
               attributesAreResolvable = true
             }
             catch (t: Throwable) {
@@ -409,7 +409,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
       try {
         readAction {
           val rootIds = impl.treeAccessor().listRoots()
-          val records = impl.connection().records
+          val records = impl.connection().records()
           val maxAllocatedID = records.maxAllocatedID()
           rootsCount = rootIds.size
 
@@ -440,7 +440,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
   }
 
   private fun verifyNamesEnumerator(): VFSHealthCheckReport.NamesEnumeratorReport {
-    val namesEnumerator = impl.connection().names
+    val namesEnumerator = impl.connection().names()
     val report = VFSHealthCheckReport.NamesEnumeratorReport()
     try {
       namesEnumerator.forEach { id, name ->
@@ -480,7 +480,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val report = VFSHealthCheckReport.ContentEnumeratorReport(0, 0)
 
     val connection = impl.connection()
-    val contentsStorage = connection.contents
+    val contentsStorage = connection.contents()
     val contentRecordsIterator = contentsStorage.createRecordIdIterator()
     while (contentRecordsIterator.hasNextId()) {
       report.contentRecordsChecked ++

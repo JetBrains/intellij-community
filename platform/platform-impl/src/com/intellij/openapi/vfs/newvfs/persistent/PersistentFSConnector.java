@@ -71,7 +71,7 @@ final class PersistentFSConnector {
           RECOVERERS
         );
         //heuristics: just created VFS contains only 1 record (=super-root):
-        boolean justCreated = connection.getRecords().recordsCount() == 1
+        boolean justCreated = connection.records().recordsCount() == 1
                               && connection.isDirty();
 
         return new VFSInitializationResult(

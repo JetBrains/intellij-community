@@ -91,7 +91,7 @@ public class VFSInitializationBenchmark {
     if (cachesDir != null) {
       PersistentFSConnection connection = initVFS(cachesDir, version);
       context.connectionToClose = connection;
-      int maxAllocatedID = connection.getRecords().maxAllocatedID();
+      int maxAllocatedID = connection.records().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
     }
   }
@@ -105,10 +105,10 @@ public class VFSInitializationBenchmark {
       context.connectionToClose = connection;
       
       Supplier<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
-        connection.getRecords()
+        connection.records()
       );
 
-      int maxAllocatedID = connection.getRecords().maxAllocatedID();
+      int maxAllocatedID = connection.records().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
 
       //wait for index to fill up:
@@ -124,11 +124,11 @@ public class VFSInitializationBenchmark {
       PersistentFSConnection connection = initVFS(cachesDir, version);
       context.connectionToClose = connection;
 
-      int maxAllocatedID = connection.getRecords().maxAllocatedID();
+      int maxAllocatedID = connection.records().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
 
       //force name-to-id index loading:
-      connection.getNames().tryEnumerate("abc");
+      connection.names().tryEnumerate("abc");
     }
   }
 

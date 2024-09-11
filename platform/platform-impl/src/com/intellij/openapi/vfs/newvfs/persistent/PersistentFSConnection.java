@@ -21,6 +21,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ThreadSafeThrottler;
+import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
@@ -112,11 +113,11 @@ public final class PersistentFSConnection {
     recoveryInfo = info;
   }
 
-  @NotNull SimpleStringPersistentEnumerator getEnumeratedAttributes() {
+  @NotNull DataEnumerator<String> attributesEnumerator() {
     return enumeratedAttributes;
   }
 
-  int getAttributeId(@NotNull String attributeId) {
+  int enumerateAttributeId(@NotNull String attributeId) {
     int enumeratedAttributeId = enumeratedAttributes.enumerate(attributeId);
     if (enumeratedAttributeId > VFSAttributesStorage.MAX_ATTRIBUTE_ID) {
       throw new IllegalStateException(
@@ -128,30 +129,30 @@ public final class PersistentFSConnection {
     return enumeratedAttributeId;
   }
 
-  @NotNull VFSContentStorage getContents() {
+  @NotNull VFSContentStorage contents() {
     return contentStorage;
   }
 
-  @NotNull VFSAttributesStorage getAttributes() {
+  @NotNull VFSAttributesStorage attributes() {
     return attributesStorage;
   }
 
   @VisibleForTesting
-  public @NotNull ScannableDataEnumeratorEx<String> getNames() {
+  public @NotNull ScannableDataEnumeratorEx<String> names() {
     return namesEnumerator;
   }
 
-  public @NotNull PersistentFSRecordsStorage getRecords() {
+  public @NotNull PersistentFSRecordsStorage records() {
     return records;
   }
 
-  @NotNull IntList getFreeRecords() {
+  @NotNull IntList freeRecords() {
     synchronized (freeRecords) {
       return new IntArrayList(freeRecords.getValue());
     }
   }
 
-  long getTimestamp() throws IOException {
+  long creationTimestamp() throws IOException {
     return records.getTimestamp();
   }
 
@@ -171,7 +172,7 @@ public final class PersistentFSConnection {
   }
 
   @TestOnly
-  int getPersistentModCount() {
+  int persistentModCount() {
     return records.getGlobalModCount();
   }
 
@@ -210,7 +211,7 @@ public final class PersistentFSConnection {
   }
 
 
-  public @NotNull PersistentFSPaths getPersistentFSPaths() {
+  public @NotNull PersistentFSPaths paths() {
     return persistentFSPaths;
   }
 

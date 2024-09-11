@@ -74,7 +74,7 @@ public class FSRecordsImplTest {
 
     assertEquals(
       uniqueContentsCount,
-      vfs.connection().getContents().getRecordsCount(),
+      vfs.connection().contents().getRecordsCount(),
       "Only " + uniqueContentsCount + " unique contents should be stored"
     );
   }

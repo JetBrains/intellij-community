@@ -21,7 +21,7 @@ public final class PersistentFSAttributeAccessor {
 
   PersistentFSAttributeAccessor(@NotNull PersistentFSConnection connection) {
     this.connection = connection;
-    attributesStorage = connection.getAttributes();
+    attributesStorage = connection.attributes();
   }
 
   public boolean hasAttributePage(int fileId,

@@ -56,11 +56,11 @@ public final class PersistentFSRecordAccessor {
       newFreeRecords.add(id);
     }
     // important! Do not add fileId to free list until restart
-    connection.getRecords().setFlags(id, FREE_RECORD_FLAG);
+    connection.records().setFlags(id, FREE_RECORD_FLAG);
   }
 
   public int createRecord(Iterable<FileIdIndexedStorage> fileIdIndexedStorages) throws IOException {
-    PersistentFSRecordsStorage records = connection.getRecords();
+    PersistentFSRecordsStorage records = connection.records();
     if (!FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
       int newRecordId = records.allocateRecord();
 
@@ -151,7 +151,7 @@ public final class PersistentFSRecordAccessor {
 
   public boolean isDeleted(int id) throws IOException {
     //TODO RC: why first condition is not enough? How could recordId be in freeRecords, if it doesn't have FREE_RECORD flag on it?
-    final int flags = connection.getRecords().getFlags(id);
+    final int flags = connection.records().getFlags(id);
     return hasDeletedFlag(flags) || newFreeRecords.contains(id);
   }
 
