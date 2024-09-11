@@ -218,6 +218,10 @@ internal class TerminalOutputController(
       outputModel.putHighlightings(block, highlightings)
 
       editor.document.deleteString(trimStartOffset, block.endOffset)
+
+      // We have to rerun the highlighters because deletion of the last line might cancel highlighting results applying.
+      // TODO: can we rerun highlighting only on part of the block?
+      hyperlinkHighlighter.highlightHyperlinks(block)
     }
   }
 
@@ -325,6 +329,7 @@ internal class TerminalOutputController(
     // Which is prohibited in the bulk mode.
     outputModel.trimOutput()
 
+    // TODO: can we run highlighters only on the changed part of the block?
     hyperlinkHighlighter.highlightHyperlinks(block)
 
     // Install decorations lazily, only if there is some text.
