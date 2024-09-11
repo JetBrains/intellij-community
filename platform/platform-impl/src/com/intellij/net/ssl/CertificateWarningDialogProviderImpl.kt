@@ -12,6 +12,7 @@ private class CertificateWarningDialogProviderImpl : CertificateWarningDialogPro
     manager: ConfirmingTrustManager.MutableTrustManager,
     remoteHost: String?, authType: String, selectedCertificates: MutableSet<X509Certificate>,
   ): CertificateWarningDialog {
+    selectedCertificates.add(certificates.first())
     return CertificateWarningDialog(certificates, remoteHost, manager, authType, selectedCertificates)
   }
 }
