@@ -492,8 +492,8 @@ impl LauncherRunResult {
 impl Debug for LauncherRunResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "\n** exit code: {:?} ({:?})\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
-            self.exit_status.code(), self.exit_status, self.stderr, self.stdout))
+            "\n** exit status: {} (code: {:?})\n** stderr: <<<{}>>>\n** stdout: <<<{}>>>",
+            self.exit_status, self.exit_status.code(), self.stderr, self.stdout))
     }
 }
 
