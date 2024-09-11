@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 import java.io.File
+import kotlin.system.measureTimeMillis
 
 interface FilePathChange {
   val beforePath: FilePath?
@@ -79,13 +80,13 @@ object RefreshVFsSynchronously {
   }
 
   private fun markDirtyAndRefresh(isRecursive: Boolean, files: Collection<VirtualFile>) {
-    val start = System.currentTimeMillis()
-    runWithProgressText {
-      markDirtyAndRefresh(false, isRecursive, false, *files.toTypedArray())
+    val time = measureTimeMillis {
+      runWithProgressText {
+        markDirtyAndRefresh(false, isRecursive, false, *files.toTypedArray())
+      }
     }
-    val end = System.currentTimeMillis()
     if (TIME_LOG.isDebugEnabled) {
-      TIME_LOG.debug("VFS refresh took ${end - start}ms, ${files.size} files, isRecursive=$isRecursive")
+      TIME_LOG.debug("VFS refresh took ${time}ms, ${files.size} files, isRecursive=$isRecursive")
     }
   }
 
