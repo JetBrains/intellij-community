@@ -25,13 +25,14 @@ private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
 class BuiltInHelpManager : HelpManager() {
 
   override fun invokeHelp(helpId: String?) {
-    logWillOpenHelpId(helpId)
+
+    val helpIdToUse = helpId ?: "top"
+    logWillOpenHelpId(helpIdToUse)
 
     try {
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
-        if (helpId != null) URLEncoder.encode(
-          helpId, StandardCharsets.UTF_8)
-        else "top"
+        URLEncoder.encode(
+          helpIdToUse, StandardCharsets.UTF_8)
       }"
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
@@ -70,7 +71,7 @@ class BuiltInHelpManager : HelpManager() {
 
         url = "${baseUrl}help/$productWebPath/$productVersion/?${
           URLEncoder.encode(
-            helpId, StandardCharsets.UTF_8)
+            helpIdToUse, StandardCharsets.UTF_8)
         }"
 
         if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
@@ -95,10 +96,10 @@ class BuiltInHelpManager : HelpManager() {
 
     }
     catch (e: URISyntaxException) {
-      LOG.error("Help id '$helpId' produced an invalid URL.", e)
+      LOG.error("Help id '$helpIdToUse' produced an invalid URL.", e)
     }
     catch (e: IOException) {
-      LOG.error("Cannot load help for '$helpId'.", e)
+      LOG.error("Cannot load help for '$helpIdToUse'.", e)
     }
   }
 }
