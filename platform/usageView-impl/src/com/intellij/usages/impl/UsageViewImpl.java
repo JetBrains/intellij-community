@@ -121,8 +121,11 @@ public class UsageViewImpl implements UsageViewEx {
 
   public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
     if (o1 == o2) return 0;
-    if (o1 == NullUsage.INSTANCE || o1 == null) return -1;
-    if (o2 == NullUsage.INSTANCE || o2 == null) return 1;
+    if (o1 == null) return -1;
+    if (o2 == null) return 1;
+    if (o1 == NullUsage.INSTANCE) return -1;
+    if (o2 == NullUsage.INSTANCE) return 1;
+
     int c = compareByFileAndOffset(o1, o2);
     if (c != 0) return c;
     return o1.toString().compareTo(o2.toString());
