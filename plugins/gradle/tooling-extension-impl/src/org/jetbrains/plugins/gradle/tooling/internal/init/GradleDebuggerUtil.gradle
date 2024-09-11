@@ -3,7 +3,7 @@
 class GradleDebuggerUtil {
 
   static Boolean isDebuggerEnabled() {
-    String enabled = Objects.requireNonNullElse(System.getenv("DEBUGGER_ENABLED"), "false")
+    String enabled = requireNonNullElse(System.getenv("DEBUGGER_ENABLED"), "false")
     return Boolean.parseBoolean(enabled)
   }
 
@@ -16,7 +16,11 @@ class GradleDebuggerUtil {
   }
 
   static List<String> getProcessOptions() {
-    String options = Objects.requireNonNullElse(System.getenv("PROCESS_OPTIONS"), "")
+    String options = requireNonNullElse(System.getenv("PROCESS_OPTIONS"), "")
     return options.split(", ")
+  }
+
+  private static <T> T requireNonNullElse(T object, T fallback) {
+    return (object != null) ? object : Objects.requireNonNull(fallback, "The fallback value must not be null!")
   }
 }
