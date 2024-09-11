@@ -20,9 +20,10 @@ import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-@Suppress("unused")
+private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
+
 class BuiltInHelpManager : HelpManager() {
-  private val LOG = Logger.getInstance(javaClass)
+
   override fun invokeHelp(helpId: String?) {
     logWillOpenHelpId(helpId)
 
