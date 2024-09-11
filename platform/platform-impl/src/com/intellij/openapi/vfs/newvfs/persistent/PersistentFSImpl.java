@@ -65,6 +65,7 @@ import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -74,6 +75,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
+
+  private static final int READ_ACCESS_CHECK_NONE = 0;
+  private static final int READ_ACCESS_CHECK_REQUIRE_RA_SOFT = 1;
+  private static final int READ_ACCESS_CHECK_REQUIRE_RA_HARD = 2;
+  private static final int READ_ACCESS_CHECK_REQUIRE_NO_RA = 3;
+  private static final int READ_ACCESS_CHECK_KIND = getIntProperty("vfs.read-access-check-kind", READ_ACCESS_CHECK_NONE);
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
@@ -277,20 +284,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public boolean wereChildrenAccessed(@NotNull VirtualFile dir) {
-    //TODO RC: ThreadingAssertions.assertReadAccess(); ?
+    checkReadAccess();
     return vfsPeer.wereChildrenAccessed(fileId(dir));
   }
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    //TODO RC: ThreadingAssertions.assertReadAccess();
+    checkReadAccess();
+
     List<? extends ChildInfo> children = listAll(file);
     return ContainerUtil.map2Array(children, String.class, id -> id.getName().toString());
   }
 
   @Override
   public String @NotNull [] listPersisted(@NotNull VirtualFile parent) {
-    //TODO RC: ThreadingAssertions.assertReadAccess();
+    checkReadAccess();
+
     int[] childrenIds = vfsPeer.listIds(fileId(parent));
     String[] names = ArrayUtil.newStringArray(childrenIds.length);
     for (int i = 0; i < childrenIds.length; i++) {
@@ -303,7 +312,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   @ApiStatus.Internal
   public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
-    //TODO RC: ThreadingAssertions.assertReadAccess();
+    checkReadAccess();
+
     int id = fileId(file);
     return areChildrenCached(id)
            ? vfsPeer.list(id).children
@@ -393,28 +403,32 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
-    //TODO RC: ThreadingAssertions.assertReadAccess();
+    checkReadAccess();
 
     return vfsPeer.readAttribute(fileId(file), att);
   }
 
   @Override
-  public @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
+  public @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file,
+                                                       @NotNull FileAttribute attribute) {
     //TODO RC: ThreadingAssertions.assertWriteAccess();
 
-    return vfsPeer.writeAttribute(fileId(file), att);
+    return vfsPeer.writeAttribute(fileId(file), attribute);
   }
 
   private @NotNull InputStream readContentById(int contentId) {
     return vfsPeer.readContentById(contentId);
   }
 
-  private @NotNull OutputStream writeContent(@NotNull VirtualFile file, boolean contentOfFixedSize) {
+  private @NotNull OutputStream writeContent(@NotNull VirtualFile file,
+                                             boolean contentOfFixedSize) {
+    ThreadingAssertions.assertWriteAccess();
     return vfsPeer.writeContent(fileId(file), contentOfFixedSize);
   }
 
   @Override
   public int storeUnlinkedContent(byte @NotNull [] bytes) throws ContentTooBigException {
+    //TODO RC: ThreadingAssertions.assertWriteAccess();
     return vfsPeer.writeContentRecord(new ByteArraySequence(bytes));
   }
 
@@ -519,8 +533,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
-    //TODO RC: ThreadingAssertions.assertWriteAccess();
+  public void setWritable(@NotNull VirtualFile file,
+                          boolean writableFlag) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
 
     getFileSystem(file).setWritable(file, writableFlag);
     boolean oldWritable = isWritable(file);
@@ -531,8 +546,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   @ApiStatus.Internal
-  public ChildInfo findChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem fs) {
-    //TODO RC: ThreadingAssertions.assertReadAccess() should be here, but quite a lot of callsites call this method outside RA now
+  public ChildInfo findChildInfo(@NotNull VirtualFile parent,
+                                 @NotNull String childName,
+                                 @NotNull NewVirtualFileSystem fs) {
+    checkReadAccess();
 
     int parentId = fileId(parent);
     Ref<ChildInfo> foundChildRef = new Ref<>();
@@ -660,8 +677,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile parent, @NotNull String name)
-    throws IOException {
+  public @NotNull VirtualFile copyFile(Object requestor,
+                                       @NotNull VirtualFile file,
+                                       @NotNull VirtualFile parent,
+                                       @NotNull String name) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(file).copyFile(requestor, file, parent, name);
     processEvent(new VFileCopyEvent(requestor, file, parent, name));
 
@@ -673,7 +694,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor,
+                                                   @NotNull VirtualFile parent,
+                                                   @NotNull String dir) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(parent).createChildDirectory(requestor, parent, dir);
 
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, ChildInfo.EMPTY_ARRAY));
@@ -690,7 +715,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor,
+                                              @NotNull VirtualFile parent,
+                                              @NotNull String name) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(parent).createChildFile(requestor, parent, name);
     processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, null));
     VFileEvent caseSensitivityEvent = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, name);
@@ -723,6 +752,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     NewVirtualFileSystem fs = getFileSystem(file);
     fs.deleteFile(requestor, file);
     if (!fs.exists(file)) {
@@ -731,7 +762,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException {
+  public void renameFile(Object requestor,
+                         @NotNull VirtualFile file,
+                         @NotNull String newName) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(file).renameFile(requestor, file, newName);
     String oldName = file.getName();
     if (!newName.equals(oldName)) {
@@ -751,6 +786,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   /** {@inheritDoc} */
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException {
+    checkReadAccess();
 
     int fileId = fileId(file);
 
@@ -814,8 +850,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
+    checkReadAccess();
 
-    int fileId = ((VirtualFileWithId)file).getId();
+    int fileId = fileId(file);
     NewVirtualFileSystem fs = getFileSystem(file);
 
     final class Result {
@@ -865,7 +902,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     else {
       contentStream = vfsPeer.readContentById(result.contentRecordId);
     }
-
 
     return contentStream;
   }
@@ -1023,6 +1059,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void processEvent(@NotNull VFileEvent event) {
     ThreadingAssertions.assertWriteAccess();
+
     if (!event.isValid()) return;
 
     List<VFileEvent> outValidatedEvents = new ArrayList<>();
@@ -2409,6 +2446,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            (isHidden ? Flags.IS_HIDDEN : 0) |
            (isChildrenCaseSensitivityCached ? Flags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
            (areChildrenCaseSensitive ? Flags.CHILDREN_CASE_SENSITIVE : 0);
+  }
+
+  private static void checkReadAccess() {
+    switch (READ_ACCESS_CHECK_KIND) {
+      case READ_ACCESS_CHECK_REQUIRE_RA_SOFT:
+        ThreadingAssertions.softAssertReadAccess();
+        break;
+      case READ_ACCESS_CHECK_REQUIRE_RA_HARD:
+        ThreadingAssertions.assertReadAccess();
+        break;
+      case READ_ACCESS_CHECK_REQUIRE_NO_RA:
+        ThreadingAssertions.assertNoReadAccess();
+        break;
+
+      case READ_ACCESS_CHECK_NONE:
+      default:
+        //no check
+    }
   }
 
   private void setupOTelMonitoring(@NotNull Meter meter) {

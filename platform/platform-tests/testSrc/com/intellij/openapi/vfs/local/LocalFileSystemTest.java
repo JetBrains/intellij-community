@@ -556,7 +556,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(2, topDir.getChildren().length);
 
     try {
-      sourceFile.copy(this, parentDir, ".");
+      WriteAction.runAndWait(() -> sourceFile.copy(this, parentDir, ".") );
       fail("Copying a file into a '.' path should have failed");
     }
     catch (IOException ignored) {
