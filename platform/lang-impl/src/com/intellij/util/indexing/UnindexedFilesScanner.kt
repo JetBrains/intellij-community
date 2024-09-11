@@ -511,14 +511,16 @@ class UnindexedFilesScanner @JvmOverloads constructor(
     }
 
     val diagnosticDumper = IndexDiagnosticDumper.getInstance()
-    diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
+    diagnosticDumper.onScanningStarted(scanningHistory)
     try {
-      ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
-      try {
-        block()
-      }
-      finally {
-        ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(myProject)
+      getInstance().getTracer(Indexes).spanBuilder("InternalSpanForScanningDiagnostic").use {
+        ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
+        try {
+          block()
+        }
+        finally {
+          ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(myProject)
+        }
       }
     }
     catch (e: Throwable) {
@@ -526,7 +528,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
       throw e
     }
     finally {
-      diagnosticDumper.onScanningFinished(scanningHistory) //todo[lene] 1
+      diagnosticDumper.onScanningFinished(scanningHistory)
     }
   }
 
