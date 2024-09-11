@@ -1,8 +1,19 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
+import com.intellij.notebooks.visualization.NotebookCellInlayController
+import com.intellij.notebooks.visualization.NotebookCellInlayManager
+import com.intellij.notebooks.visualization.NotebookIntervalPointer
+import com.intellij.notebooks.visualization.UpdateContext
+import com.intellij.notebooks.visualization.execution.ExecutionEvent
+import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
+import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.*
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -11,14 +22,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
-import com.intellij.notebooks.visualization.NotebookCellInlayController
-import com.intellij.notebooks.visualization.NotebookCellInlayManager
-import com.intellij.notebooks.visualization.NotebookIntervalPointer
-import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.execution.ExecutionEvent
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.observable.properties.AtomicProperty
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
@@ -115,6 +118,8 @@ class EditorCell(
 
   val mode = AtomicProperty<NotebookEditorMode>(NotebookEditorMode.COMMAND)
 
+  val outputs = AtomicProperty<List<NotebookOutputDataKey>>(getOutputs())
+
   override fun dispose() {
     cleanupExtensions()
     view?.let { disposeView(it) }
@@ -178,7 +183,19 @@ class EditorCell(
   }
 
   fun updateOutputs() {
-    view?.updateOutputs()
+    val outputDataKeys = getOutputs()
+    updateOutputs(outputDataKeys)
+  }
+
+  private fun getOutputs(): List<NotebookOutputDataKey> =
+    NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
+       .mapNotNull { it.extract(editor as EditorImpl, interval) }
+       .firstOrNull()
+       ?.takeIf { it.isNotEmpty() }
+     ?: emptyList()
+
+  private fun updateOutputs(newOutputs: List<NotebookOutputDataKey>) = runInEdt {
+    outputs.set(newOutputs)
   }
 
   fun onExecutionEvent(event: ExecutionEvent) {

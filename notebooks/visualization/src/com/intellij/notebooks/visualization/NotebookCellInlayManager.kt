@@ -74,12 +74,15 @@ class NotebookCellInlayManager private constructor(
       val newCtx = UpdateContext(force)
       updateCtx = newCtx
       try {
+        JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()
         val r = keepScrollingPositionWhile(editor) {
           val r = block(newCtx)
+          updateCtx = null
           newCtx.applyUpdates(editor)
           r
         }
         inlaysChanged()
+        JupyterBoundsChangeHandler.get(editor)?.performPostponed()
         r
       }
       finally {
@@ -259,14 +262,6 @@ class NotebookCellInlayManager private constructor(
         it.initView()
       }
     }
-
-    JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()
-    _cells.forEach {
-      it.view?.postInitInlays()
-    }
-
-    inlaysChanged()
-    JupyterBoundsChangeHandler.get(editor)?.performPostponed()
   }
 
   private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval, coroutineScope) { cell ->

@@ -1,6 +1,19 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.visualization.SwingClientProperty
+import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory
+import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
+import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactoryGetter
+import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
+import com.intellij.notebooks.visualization.outputs.OUTPUT_LISTENER
+import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
+import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
+import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
+import com.intellij.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
+import com.intellij.notebooks.visualization.use
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -11,17 +24,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.asSafely
-import com.intellij.notebooks.ui.visualization.notebookAppearance
-import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.SwingClientProperty
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.outputs.*
-import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
-import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
-import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
-import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
-import com.intellij.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
-import com.intellij.notebooks.visualization.use
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -30,7 +33,7 @@ import javax.swing.JComponent
 
 class EditorCellOutputs(
   private val editor: EditorImpl,
-  private val interval: () -> NotebookCellLines.Interval,
+  private val cell: EditorCell,
   private val onInlayDisposed: (EditorCellOutputs) -> Unit = {},
 ) : EditorCellViewComponent(), Disposable {
 
@@ -64,7 +67,7 @@ class EditorCellOutputs(
   }
 
   private val outerComponent = SurroundingComponent.create(editor, innerComponent).also {
-    DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it, interval))
+    DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it, { cell.interval }))
   }
 
   internal var inlay: Inlay<*>? = null
@@ -81,11 +84,10 @@ class EditorCellOutputs(
     }
 
   init {
+    cell.outputs.afterChange(this) { keys ->
+      updateData(keys)
+    }
     update()
-  }
-
-  override fun dispose() {
-    super.dispose()
   }
 
   override fun calculateBounds(): Rectangle {
@@ -93,21 +95,14 @@ class EditorCellOutputs(
   }
 
   fun update() {
-    val outputDataKeys =
-      NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
-        .mapNotNull { it.extract(editor, interval()) }
-        .firstOrNull()
-        ?.takeIf { it.isNotEmpty() }
-      ?: emptyList()
-
-    updateData(outputDataKeys)
+    updateData(cell.outputs.get())
     recreateInlayIfNecessary()
     onViewportChange()
   }
 
   private fun recreateInlayIfNecessary() {
     if (outputs.isNotEmpty()) {
-      val expectedOffset = computeInlayOffset(editor.document, interval().lines)
+      val expectedOffset = computeInlayOffset(editor.document, cell.interval.lines)
       val currentInlay = inlay
       if (currentInlay != null) {
         if (currentInlay.offset != expectedOffset) {
@@ -127,6 +122,7 @@ class EditorCellOutputs(
     }
   }
 
+  @RequiresEdt
   private fun updateData(newDataKeys: List<NotebookOutputDataKey>): Boolean {
     val newDataKeyIterator = newDataKeys.iterator()
     val oldComponentsWithFactories = getComponentsWithFactories().iterator()
@@ -174,6 +170,7 @@ class EditorCellOutputs(
   private fun removeOutput(idx: Int) {
     innerComponent.remove(idx)
     val outputComponent = _outputs.removeAt(idx)
+    Disposer.dispose(outputComponent)
     remove(outputComponent)
   }
 
@@ -191,7 +188,7 @@ class EditorCellOutputs(
     factory: NotebookOutputComponentFactory<*, K>,
     outputDataKey: K,
   ): NotebookOutputComponentFactory.CreatedComponent<*>? {
-    val lines = interval().lines
+    val lines = cell.interval.lines
     ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).beforeOutputCreated(editor, lines.last)
     val result = try {
       factory.createComponent(editor, outputDataKey)
@@ -238,7 +235,7 @@ class EditorCellOutputs(
     isRelatedToPrecedingText = true,
     showAbove = false,
     priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
-    offset = computeInlayOffset(editor.document, interval().lines),
+    offset = computeInlayOffset(editor.document, cell.interval.lines),
   ).also { inlay ->
     Disposer.register(this, inlay)
     Disposer.register(inlay) {

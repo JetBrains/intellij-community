@@ -88,16 +88,14 @@ class EditorCellView(
   init {
     recreateControllers()
     updateSelection(false)
+    updateOutputs()
+    updateControllers()
   }
 
   private fun createEditorCellInput() =
     EditorCellInput(editor, getInputFactories().firstOrNull { it.supports(editor, cell) } ?: fallbackInputFactory, cell).also {
       add(it)
     }
-
-  fun postInitInlays() {
-    updateControllers()
-  }
 
   override fun dispose() {
     super.dispose()
@@ -115,6 +113,7 @@ class EditorCellView(
 
   fun update(updateContext: UpdateContext) {
     input.update()
+    updateOutputs()
     recreateControllers()
     updateControllers()
     updateCellFolding(updateContext)
@@ -132,7 +131,6 @@ class EditorCellView(
         DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component) { interval })
       }
     }
-    updateOutputs()
     updateCellHighlight()
   }
 
@@ -155,10 +153,10 @@ class EditorCellView(
     input.updateInput()
   }
 
-  internal fun updateOutputs() {
+  private fun updateOutputs() {
     if (hasOutputs()) {
       if (outputs == null) {
-        outputs = EditorCellOutputs(editor, { interval }).also {
+        outputs = EditorCellOutputs(editor, cell).also {
           add(it)
         }
         updateCellHighlight()

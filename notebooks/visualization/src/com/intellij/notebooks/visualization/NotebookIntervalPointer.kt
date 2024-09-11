@@ -54,6 +54,8 @@ interface NotebookIntervalPointerFactory {
    */
   val changeListeners: EventDispatcher<ChangeListener>
 
+  fun onUpdated(event: NotebookIntervalPointersEvent)
+
   companion object {
     internal val key = Key.create<NotebookIntervalPointerFactory>(NotebookIntervalPointerFactory::class.java.name)
 
@@ -87,3 +89,6 @@ interface NotebookIntervalPointerFactory {
   /** swap two pointers */
   data class Swap(val firstOrdinal: Int, val secondOrdinal: Int) : Change
 }
+
+val Document.notebookIntervalPointerFactory
+  get() = NotebookIntervalPointerFactory.Companion.key.get(this)

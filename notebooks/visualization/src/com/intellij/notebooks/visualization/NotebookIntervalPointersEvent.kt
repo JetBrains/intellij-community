@@ -4,17 +4,12 @@ package com.intellij.notebooks.visualization
  * passed to [NotebookIntervalPointerFactory.ChangeListener] in next cases:
  * * Underlying document is changed. (in such case cellLinesEvent != null)
  * * Someone explicitly swapped two pointers or invalidated them by calling [NotebookIntervalPointerFactory.modifyPointers]
- * * one of upper changes was reverted or redone. See corresponding [EventSource]
+ * * one of upper changes was reverted or redone.
  *
  * Changes represented as list of trivial changes. [Change]
  * Intervals which was just moved are not mentioned in changes. For example, when inserting code before them.
  */
-data class NotebookIntervalPointersEvent(val changes: List<Change>,
-                                         val cellLinesEvent: NotebookCellLinesEvent?,
-                                         val source: EventSource) {
-  enum class EventSource {
-    ACTION, UNDO_ACTION, REDO_ACTION
-  }
+data class NotebookIntervalPointersEvent(val changes: List<Change>) {
 
 
   data class PointerSnapshot(val pointer: NotebookIntervalPointer, val interval: NotebookCellLines.Interval)
