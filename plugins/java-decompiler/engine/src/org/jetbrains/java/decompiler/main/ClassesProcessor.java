@@ -88,6 +88,31 @@ public class ClassesProcessor {
               rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
               rec.accessFlags = entry.accessFlags;
 
+              // nested class type
+              if (entry.innerName != null) {
+                if (entry.simpleName == null) {
+                  rec.type = ClassNode.CLASS_ANONYMOUS;
+                }
+                else {
+                  StructClass in = context.getClass(entry.innerName);
+                  if (in == null) { // A referenced library that was not added to the context, make assumptions
+                      rec.type = ClassNode.CLASS_MEMBER;
+                  }
+                  else {
+                    StructEnclosingMethodAttribute attr = in.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
+                    if (attr != null && attr.getMethodName() != null) {
+                      rec.type = ClassNode.CLASS_LOCAL;
+                    }
+                    else {
+                      rec.type = ClassNode.CLASS_MEMBER;
+                    }
+                  }
+                }
+              }
+              else { // This should never happen as inner_class and outer_class are NOT optional, make assumptions
+                rec.type = ClassNode.CLASS_MEMBER;
+              }
+
               // enclosing class
               String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
               if (enclClassName == null || innerName.equals(enclClassName)) {
