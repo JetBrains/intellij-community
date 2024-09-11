@@ -152,7 +152,7 @@ internal class TerminalOutputController(
 
   private fun scheduleLastOutputUpdate() {
     val contentUpdatesScheduler = runningCommandInteractivity?.contentUpdatesScheduler
-    if (contentUpdatesScheduler != null) {
+    val lastOutput: PartialCommandOutput? = if (contentUpdatesScheduler?.finished == false) {
       contentUpdatesScheduler.finishUpdating()
     }
     else {
@@ -162,15 +162,18 @@ internal class TerminalOutputController(
       val (output, terminalWidth) = session.model.withContentLock {
         ShellCommandOutputScraperImpl.scrapeOutput(session) to session.model.width
       }
-      val partialOutput = PartialCommandOutput(
+      PartialCommandOutput(
         output.text,
         output.styleRanges,
         logicalLineIndex = 0,
         terminalWidth,
         wereChangesDiscarded = false,
       )
+    }
+
+    if (lastOutput != null) {
       invokeLater(editor.getDisposed(), ModalityState.any()) {
-        updateCommandOutput(partialOutput)
+        updateCommandOutput(lastOutput)
       }
     }
   }

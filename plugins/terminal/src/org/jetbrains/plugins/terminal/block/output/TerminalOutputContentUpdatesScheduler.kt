@@ -28,6 +28,9 @@ internal class TerminalOutputContentUpdatesScheduler(
   private var trackerDisposable: Disposable = Disposer.newDisposable()
   private var updatingJob: Job? = null
 
+  var finished: Boolean = false
+    private set
+
   fun startUpdating() = textBuffer.withLock {
     val tracker = TerminalOutputChangesTracker(textBuffer, shellIntegration, trackerDisposable)
     changesTracker = tracker
@@ -59,12 +62,12 @@ internal class TerminalOutputContentUpdatesScheduler(
     }
   }
 
-  fun finishUpdating() = textBuffer.withLock {
+  fun finishUpdating(): PartialCommandOutput? = textBuffer.withLock {
     val tracker = changesTracker ?: error("Finish updating called before start updating")
     changesTracker = null
     updatingJob?.cancel()
+    finished = true
 
-    val partialChange = tracker.collectChangedOutputOrNull() ?: return@withLock
-    scheduleChangeApplying(partialChange)
+    tracker.collectChangedOutputOrNull()
   }
 }
