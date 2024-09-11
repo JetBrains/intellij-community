@@ -1216,7 +1216,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.assignment-compiler-plugin"),
     jetbrainsLibrary("kotlinc.compose-compiler-plugin"),
-    jetbrainsLibrary("kotlinc.js-plain-objects-compiler-plugin"),
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
