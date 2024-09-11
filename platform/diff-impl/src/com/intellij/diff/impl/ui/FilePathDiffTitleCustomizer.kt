@@ -18,13 +18,13 @@ import javax.swing.JPanel
 class FilePathDiffTitleCustomizer(
   private val displayedPath: String,
   private val fullPath: @NlsSafe String = displayedPath,
-  private val label: JComponent? = null,
+  private val revisionLabel: RevisionLabel? = null,
 ) : DiffEditorTitleCustomizer {
   override fun getLabel(): JComponent {
     val revisionWithPath = JPanel(GridBagLayout())
 
-    if (label != null) {
-      revisionWithPath.add(label, GridBagConstraints().apply {
+    revisionLabel?.createComponent()?.let {
+      revisionWithPath.add(it, GridBagConstraints().apply {
         fill = GridBagConstraints.BOTH
         weightx = 0.0
         gridx = 0
@@ -38,6 +38,10 @@ class FilePathDiffTitleCustomizer(
       gridx = 1
     })
     return revisionWithPath
+  }
+
+  data class RevisionLabel(private val revision: @NlsSafe String, private val copiable: Boolean) {
+    fun createComponent() = JBLabel(revision).setCopyable(copiable)
   }
 }
 
