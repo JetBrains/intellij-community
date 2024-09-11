@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.fir.testGenerator
 
@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTe
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
+import org.jetbrains.kotlin.idea.fir.search.AbstractBuiltInsResolveScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
@@ -438,6 +439,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractScopeEnlargerTest> {
             model("search/scopeEnlarger", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractBuiltInsResolveScopeEnlargerTest> {
+            model("search/builtInsScopeEnlarger", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractK2MultiModuleHighlightingTest> {
