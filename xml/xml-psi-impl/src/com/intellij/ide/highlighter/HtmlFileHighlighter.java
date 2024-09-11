@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -52,8 +53,12 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
 
     ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    registerAdditionalHighlighters(ourMap);
-    EMBEDDED_HIGHLIGHTERS.addExtensionPointListener(new XmlFileHighlighter.EmbeddedTokenHighlighterExtensionPointListener(ourMap), null);
+    Cancellation.computeInNonCancelableSection(() -> {
+      // PCE in static initializer breaks class initialization
+      registerAdditionalHighlighters(ourMap);
+      EMBEDDED_HIGHLIGHTERS.addExtensionPointListener(new XmlFileHighlighter.EmbeddedTokenHighlighterExtensionPointListener(ourMap), null);
+      return null;
+    });
   }
 
   @Override
