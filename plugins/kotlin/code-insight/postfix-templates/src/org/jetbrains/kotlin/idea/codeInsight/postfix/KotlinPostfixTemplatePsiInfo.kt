@@ -6,8 +6,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -37,7 +39,7 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     }
 
     @RequiresReadLock
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun negateExpression(element: KtElement, factory: KtPsiFactory): PsiElement {
         fun replaceChild(parent: PsiElement, old: PsiElement, newText: String): KtExpression {
             val parentText = parent.text
@@ -87,10 +89,12 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             val calleeExpression = element.calleeExpression
             if (calleeExpression is KtNameReferenceExpression) {
                 allowAnalysisOnEdt {
-                    analyze(element) {
-                        val mappedCallableId = resolveToMappedCallableId(element)
-                        if (mappedCallableId != null) {
-                            return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
+                    allowAnalysisFromWriteAction {
+                        analyze(element) {
+                            val mappedCallableId = resolveToMappedCallableId(element)
+                            if (mappedCallableId != null) {
+                                return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
+                            }
                         }
                     }
                 }
