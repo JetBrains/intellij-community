@@ -26,7 +26,9 @@ import org.jetbrains.plugins.terminal.block.ui.executeInBulk
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.*
+import kotlin.math.max
 
 /**
  * Designed as a part of MVC pattern.
@@ -173,6 +175,27 @@ internal class TerminalOutputController(
     }
   }
 
+  /**
+   * Refines command output by dropping the trailing `\n` to avoid showing the last empty line in the command block.
+   * Also, trims tailing whitespaces in case of Zsh: they are added to show '%' character at the end of the
+   * last line without a newline.
+   * Zsh adds the whitespaces after command finish and before calling `precmd` hook, so IDE cannot
+   * identify correctly where command output ends exactly => trim tailing whitespaces as a workaround.
+
+   * See `PROMPT_CR` and `PROMPT_SP` Zsh options, both are enabled by default:
+   * https://zsh.sourceforge.io/Doc/Release/Options.html#Prompting
+   *
+   * Roughly, Zsh prints the following after each command and before prompt:
+   * 1. `PROMPT_EOL_MARK` (by default, '%' for a normal user or a '#' for root)
+   * 2. `$COLUMNS - 1` spaces
+   * 3. \r
+   * 4. A single space
+   * 5. \r
+   * https://github.com/zsh-users/zsh/blob/57248b88830ce56adc243a40c7773fb3825cab34/Src/utils.c#L1533-L1555
+   *
+   * Another workaround here is to add `unsetopt PROMPT_CR PROMPT_SP` to command-block-support.zsh,
+   * but it will remove '%' mark on unterminated lines which can be unexpected for users.
+   */
   private fun trimLastEmptyLine(block: CommandBlock) {
     // Return if there is no output or block is empty
     if (!block.withOutput) return
@@ -180,13 +203,21 @@ internal class TerminalOutputController(
     // Count line break after the command as part of the output
     val outputStartOffset = block.outputStartOffset - if (block.withPrompt || block.withCommand) 1 else 0
     val outputText = editor.document.charsSequence.subSequence(outputStartOffset, block.endOffset)
-    val lastLineStart = outputText.lastIndexOf('\n').takeIf { it != -1 } ?: 0
-    if (outputText.subSequence(lastLineStart, outputText.length).isBlank()) {
+
+    // Line break should always be present because we add it after the command text.
+    val lastNewLineInd = outputText.lastIndexOf('\n')
+    val lastLine = outputText.subSequence(lastNewLineInd + 1, outputText.length)
+    val outputEndsWithNewline = lastLine.isEmpty()
+    val outputEndsWithWhitespacesForZsh = session.shellIntegration.shellType == ShellType.ZSH && lastLine.isBlank()
+
+    if (outputEndsWithNewline || outputEndsWithWhitespacesForZsh) {
+      val trimStartOffset = outputStartOffset + max(0, lastNewLineInd)
+
       val highlightings = outputModel.getHighlightings(block)
-        .filter { it.endOffset <= outputStartOffset + lastLineStart }
+        .filter { it.endOffset <= trimStartOffset }
       outputModel.putHighlightings(block, highlightings)
 
-      editor.document.deleteString(outputStartOffset + lastLineStart, block.endOffset)
+      editor.document.deleteString(trimStartOffset, block.endOffset)
     }
   }
 
