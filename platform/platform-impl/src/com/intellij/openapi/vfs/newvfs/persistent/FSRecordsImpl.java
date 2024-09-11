@@ -797,7 +797,12 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  void moveChildren(@NotNull VirtualFile parent,
+  /**
+   * @param caseSensitivityAccessor must return true if a directory is case-sensitive, false otherwise
+   *                                Supplier instead of just value because getting case-sensitivity may be costly (may require
+   *                                access an underlying FS), but it is not always necessary, so better make it lazy
+   */
+  void moveChildren(@NotNull Supplier<Boolean> caseSensitivityAccessor,
                     int fromParentId,
                     int toParentId,
                     int childToMoveId) {
@@ -836,7 +841,7 @@ public final class FSRecordsImpl implements Closeable {
 
           // check that names are not duplicated:
           int childToMoveNameId = connection.getRecords().getNameId(childToMoveId);
-          ChildInfo alreadyExistingChild = findChild(parent, toParentChildren, childToMoveNameId);
+          ChildInfo alreadyExistingChild = findChild(caseSensitivityAccessor, toParentChildren, childToMoveNameId);
           if (alreadyExistingChild != null) {
             //RC: Again, the legacy version of this code just silently returned, but I prefer to throw IAE, since this
             //    is an error in params supplied, and it should be resolved
@@ -876,24 +881,29 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   /**
-   * @param parent only used as a source of file names case-sensitivity
-   * @return child with given name, with case sensitivity given by parent
+   * @param caseSensitivityAccessor must return true if a directory is case-sensitive, false otherwise
+   *                                Supplier instead of just value because getting case-sensitivity may be costly (may require access an underlying FS),
+   *                                but it is not always necessary, so better make it lazy
+   * @return child from a children list, with a name given by childNameId, with case sensitivity given by parent
    */
-  private @Nullable ChildInfo findChild(@NotNull VirtualFile parent,
+  private @Nullable ChildInfo findChild(@NotNull Supplier<Boolean> caseSensitivityAccessor,
                                         @NotNull ListResult children,
                                         int childNameId) {
     if (children.children.isEmpty()) {
       return null;
     }
 
+    //fast path: lookup by nameId, which is an equivalent of case-sensitive name comparison:
     for (ChildInfo info : children.children) {
       if (childNameId == info.getNameId()) {
         return info;
       }
     }
 
-    String childName = getNameByNameId(childNameId);
-    if (!parent.isCaseSensitive()) {
+    //if directory is !case-sensitive -- repeat lookup, now by actual name, with case-insensitive comparison:
+    boolean caseSensitive = caseSensitivityAccessor.get();
+    if (!caseSensitive) {
+      String childName = getNameByNameId(childNameId);
       for (ChildInfo info : children.children) {
         if (Comparing.equal(childName, getNameByNameId(info.getNameId()), /* caseSensitive: */false)) {
           return info;

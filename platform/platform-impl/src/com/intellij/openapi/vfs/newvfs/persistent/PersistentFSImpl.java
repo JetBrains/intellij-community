@@ -599,7 +599,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   /**
    * @param parent only used as a source of file names case-sensitivity
-   * @return child with given name, with case sensitivity given by parent
+   * @return child from children list, with a given childName, with case sensitivity given by parent
    */
   private ChildInfo findExistingChildInfo(@NotNull VirtualFile parent,
                                           @NotNull String childName,
@@ -607,7 +607,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (children.isEmpty()) {
       return null;
     }
-    // fast path, check that some child has the same `nameId` as a given name - to avoid an overhead on retrieving names of non-cached children
+
+    // fast path: lookup child by nameId, which is equivalent to case-sensitive name comparison:
     FSRecordsImpl vfs = vfsPeer;
     int nameId = vfs.getNameId(childName);
     for (ChildInfo info : children) {
@@ -615,6 +616,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return info;
       }
     }
+
+    //if parent is !case-sensitive -- repeat lookup, now by actual name, with case-insensitive comparison:
     if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
         if (Comparing.equal(childName, vfs.getNameByNameId(info.getNameId()),  /* caseSensitive: */ false)) {
@@ -2318,7 +2321,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     VirtualFile oldParent = file.getParent();
     int oldParentId = fileId(oldParent);
 
-    vfsPeer.moveChildren(newParent, oldParentId, newParentId, childToMoveId);
+    vfsPeer.moveChildren(newParent::isCaseSensitive, oldParentId, newParentId, childToMoveId);
 
     ((VirtualFileSystemEntry)file).setParent(newParent);
   }
