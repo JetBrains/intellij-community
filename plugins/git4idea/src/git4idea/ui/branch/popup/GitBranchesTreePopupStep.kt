@@ -26,6 +26,7 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.*
@@ -99,7 +100,7 @@ class GitBranchesTreePopupStep(
     val reference = selectedValue as? GitReference ?: refUnderRepository?.ref
 
     if (reference != null) {
-      val actionGroup = ActionManager.getInstance().getAction(BRANCH_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
+      val actionGroup = ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
       return createActionStep(actionGroup, project, selectedRepository,
                               refUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, reference)
     }

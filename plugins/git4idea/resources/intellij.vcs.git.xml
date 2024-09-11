@@ -233,7 +233,7 @@
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <separator/>
-      <action class="git4idea.actions.branch.GitRenameBranchAction"/>
+      <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
       <action class="git4idea.actions.branch.GitDeleteBranchAction"/>
     </group>
 

@@ -14,7 +14,8 @@ import git4idea.ui.branch.GitBranchPopupActions.*
 
 internal class GitMergeRefAction : GitSingleRefAction<GitReference>(GitBundle.messagePointer("branches.merge.into.current")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitReference, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
+
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
     GitBrancher.getInstance(project).merge(reference, deleteOnMerge(reference, project), repositories)
   }

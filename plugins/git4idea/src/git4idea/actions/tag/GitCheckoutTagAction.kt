@@ -10,7 +10,7 @@ import git4idea.repo.GitRepository
 
 internal class GitCheckoutTagAction() : GitSingleTagAction(GitBundle.messagePointer("branches.checkout")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitTag, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitTag) {
     GitBrancher.getInstance(project).checkout(reference.fullName, false, repositories, null)

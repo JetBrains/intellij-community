@@ -25,5 +25,8 @@ object GitBranchActionsDataKeys {
   val BRANCHES = DataKey.create<List<GitBranch>>("Git.Branches")
 
   @JvmField
+  val USE_CURRENT_BRANCH = DataKey.create<Boolean>("Git.Branches.UseCurrent")
+
+  @JvmField
   val TAGS = DataKey.create<List<GitTag>>("Git.Tags")
 }

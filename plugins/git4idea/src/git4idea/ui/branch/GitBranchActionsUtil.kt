@@ -28,6 +28,8 @@ import git4idea.update.GitUpdateExecutionProcess
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+const val GIT_SINGLE_REF_ACTION_GROUP = "Git.Branch"
+
 @JvmOverloads
 internal fun createOrCheckoutNewBranch(project: Project,
                                        repositories: List<GitRepository>,

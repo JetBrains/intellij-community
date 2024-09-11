@@ -80,41 +80,6 @@ internal object BranchesDashboardActions {
       arrayOf(ShowArbitraryBranchesDiffAction(), ShowArbitraryBranchesFileDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
   }
 
-  class CurrentBranchActions(project: Project,
-                             repositories: List<GitRepository>,
-                             branch: GitLocalBranch,
-                             selectedRepository: GitRepository)
-    : GitBranchPopupActions.CurrentBranchActions(project, repositories, branch, selectedRepository) {
-
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      val children = arrayListOf<AnAction>(*super.getChildren(e))
-      if (myRepositories.diverged()) {
-        children.add(1, CheckoutAction(myProject, myRepositories, myBranchName))
-      }
-      return children.toTypedArray()
-    }
-  }
-
-  class LocalBranchActions(project: Project,
-                           repositories: List<GitRepository>,
-                           branch: GitLocalBranch,
-                           selectedRepository: GitRepository)
-    : GitBranchPopupActions.LocalBranchActions(project, repositories, branch, selectedRepository) {
-
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
-  }
-
-  class RemoteBranchActions(project: Project,
-                            repositories: List<GitRepository>,
-                            branch: GitRemoteBranch,
-                            selectedRepository: GitRepository)
-    : GitBranchPopupActions.RemoteBranchActions(project, repositories, branch, selectedRepository) {
-
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
-  }
-
   class GroupActions : ActionGroup(), DumbAware {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
@@ -147,18 +112,11 @@ internal object BranchesDashboardActions {
         return MultipleLocalBranchActions()
       }
 
-      val branchInfo = selectedBranches.singleOrNull()
+      val selectedBranch = selectedBranches.singleOrNull()
       val headSelected = e.getData(GIT_BRANCH_FILTERS).orEmpty().contains(HEAD)
-      if (branchInfo != null && !headSelected) {
-        val selectedRepositories = getSelectedRepositories(branchInfo, selectionPaths).toList().ifEmpty(branchInfo::repositories)
-        val selectedRepository = selectedRepositories.singleOrNull() ?: guessRepo
 
-        val branch = branchInfo.branch
-        return when {
-          branchInfo.isCurrent -> CurrentBranchActions(project, selectedRepositories, branch as GitLocalBranch, selectedRepository)
-          branchInfo.isLocal -> LocalBranchActions(project, selectedRepositories, branch as GitLocalBranch, selectedRepository)
-          else -> RemoteBranchActions(project, selectedRepositories, branch as GitRemoteBranch, selectedRepository)
-        }
+      if ((selectedBranch != null && !headSelected) || (headSelected && selectedBranches.isEmpty())) {
+        return ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup
       }
 
       val selectedRemotes = e.getData(GIT_BRANCH_REMOTES).orEmpty()
@@ -176,14 +134,9 @@ internal object BranchesDashboardActions {
 
       val currentBranch = guessRepo.currentBranch
       if (headSelected && currentBranch != null && selectedBranchNodes.size == 2) {
-        val selectedBranch = selectedBranches.singleOrNull()
         if (selectedBranch != null && !selectedBranch.isCurrent) {
           return HeadAndBranchActions(currentBranch, guessRepo, selectedBranch)
         }
-      }
-
-      if (currentBranch != null && headSelected) {
-        return CurrentBranchActions(project, listOf(guessRepo), currentBranch, guessRepo)
       }
 
       return null

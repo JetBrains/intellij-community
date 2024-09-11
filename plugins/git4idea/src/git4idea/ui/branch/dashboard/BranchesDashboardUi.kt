@@ -51,6 +51,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import com.intellij.vcs.ui.ProgressStripe
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.repo.GitRepository
@@ -282,6 +283,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   inner class BranchesTreePanel : BorderLayoutPanel(), UiDataProvider, QuickActionProvider {
     override fun uiDataSnapshot(sink: DataSink) {
+      snapshotBranchActionsKeys(sink)
+
       sink[SELECTED_ITEMS] = filteringTree.component.selectionPaths
       sink[GIT_BRANCHES] = filteringTree.getSelectedBranches()
       sink[GIT_BRANCH_FILTERS] = filteringTree.getSelectedBranchFilters()
@@ -290,6 +293,29 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       sink[BRANCHES_UI_CONTROLLER] = uiController
       sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logUi.properties
       sink[QuickActionProvider.KEY] = this
+    }
+
+    private fun snapshotBranchActionsKeys(sink: DataSink) {
+      val selectedBranches = filteringTree.getSelectedBranches()
+      if (selectedBranches.isEmpty()) {
+        if (filteringTree.getSelectedBranchFilters().singleOrNull() == VcsLogUtil.HEAD) {
+          sink[GitBranchActionsDataKeys.USE_CURRENT_BRANCH] = true
+        }
+      }
+      else {
+        sink[GitBranchActionsDataKeys.BRANCHES] = selectedBranches.map { it.branch }
+      }
+
+      val selectedBranch = selectedBranches.singleOrNull()
+      if (selectedBranch != null) {
+        val selectedRepositories =
+          BranchesTreeComponent.getSelectedRepositories(selectedBranch, filteringTree.component.selectionPaths)
+            .toList()
+            .ifEmpty(selectedBranch::repositories)
+
+        sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = selectedRepositories
+        sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepositories.singleOrNull()
+      }
     }
 
     override fun getActions(originalProvider: Boolean): List<AnAction> {

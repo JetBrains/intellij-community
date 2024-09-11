@@ -11,7 +11,7 @@ import git4idea.ui.branch.GitBranchPopupActions.*
 
 class GitRebaseBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.rebase.current.onto.selected")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     with(e.presentation) {

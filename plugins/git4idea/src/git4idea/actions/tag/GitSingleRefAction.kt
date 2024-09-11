@@ -2,22 +2,27 @@
 package git4idea.actions.tag
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
-import git4idea.GitBranch
+import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.actions.branch.GitBranchActionsDataKeys
-import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
+import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import java.util.function.Supplier
+import kotlin.reflect.KClass
+import kotlin.reflect.safeCast
 
 abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsActions.ActionText String>) : DumbAwareAction(dynamicText) {
-  open val disabledForCurrent: Boolean = false
+  @Suppress("UNCHECKED_CAST")
+  protected open val refClass: KClass<T> = GitReference::class as KClass<T>
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -25,24 +30,21 @@ abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsAc
 
   final override fun update(e: AnActionEvent) {
     val project = e.project
-    val repositories = getAffectedRepositories(e)
-    val branches = e.getData(GitBranchActionsDataKeys.BRANCHES)
-    val tags = e.getData(GitBranchActionsDataKeys.TAGS)
-    e.presentation.isEnabledAndVisible = isEnabledAndVisible(project, repositories, branches, tags)
+    val repositories = GitBranchActionsUtil.getAffectedRepositories(e)
+    val ref = getRef(e, repositories)
+    e.presentation.isEnabledAndVisible = isEnabledAndVisible(project, repositories, ref)
 
     DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories, GitBundle.message("action.not.possible.in.fresh.repo.generic"))
 
     if (e.presentation.isEnabledAndVisible) {
-      updateIfEnabledAndVisible(e, project!!, repositories, getRef(branches, tags)!!)
+      updateIfEnabledAndVisible(e, project!!, repositories, ref!!)
     }
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val branches = e.getData(GitBranchActionsDataKeys.BRANCHES)
-    val tags = e.getData(GitBranchActionsDataKeys.TAGS)
-    val ref = getRef(branches, tags) ?: return
-    val repositories = getAffectedRepositories(e)
+    val repositories = GitBranchActionsUtil.getAffectedRepositories(e)
+    val ref = getRef(e, repositories) ?: return
 
     actionPerformed(e, project, repositories, ref)
   }
@@ -51,29 +53,34 @@ abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsAc
 
   open fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: T) {}
 
-  protected open fun isDisabledForRef(ref: T): Boolean = false
+  protected open fun isEnabledForRef(ref: T, repositories: List<GitRepository>): Boolean = true
 
-  @Suppress("UNCHECKED_CAST")
-  protected open fun getRef(branches: List<GitBranch>?, tags: List<GitTag>?): T? {
-    return (tags?.singleOrNull() ?: branches?.singleOrNull()) as? T
+  private fun getRef(e: AnActionEvent, repositories: List<GitRepository>): T? {
+    val explicitRefFromCtx = e.getData(GitBranchActionsDataKeys.BRANCHES)?.singleOrNull() ?: e.getData(GitBranchActionsDataKeys.TAGS)?.singleOrNull()
+    val ref = when {
+      explicitRefFromCtx != null -> explicitRefFromCtx
+      e.getData(GitBranchActionsDataKeys.USE_CURRENT_BRANCH) == true -> repositories.singleOrNull()?.currentBranch
+      else -> null
+    }
+
+    return refClass.safeCast(ref)
   }
 
-  private fun isEnabledAndVisible(project: Project?, repositories: List<GitRepository>?, branches: List<GitBranch>?, tags: List<GitTag>?): Boolean {
-    if (project == null) return false
-    if (repositories.isNullOrEmpty()) return false
-    val ref = getRef(branches, tags) ?: return false
+  private fun isEnabledAndVisible(project: Project?, repositories: List<GitRepository>?, ref: T?): Boolean =
+    if (project == null || repositories.isNullOrEmpty() || ref == null) false
+    else isEnabledForRef(ref, repositories)
 
-    if (isDisabledForRef(ref)) {
-      return false
+  companion object {
+    internal fun isCurrentRefInAnyRepo(ref: GitReference, repositories: List<GitRepository>) = repositories.any {
+      when(ref) {
+        is GitLocalBranch -> it.currentBranch == ref
+        is GitTag -> it.state == Repository.State.DETACHED && GitRefUtil.getCurrentReference(it) == ref
+        else -> false
+      }
     }
-    if (disabledForCurrent) {
-      if (repositories.any { it.currentBranch == ref }) return false
-    }
-
-    return true
   }
 }
 
 internal abstract class GitSingleTagAction(dynamicText: Supplier<@NlsActions.ActionText String>) : GitSingleRefAction<GitTag>(dynamicText) {
-  override fun getRef(branches: List<GitBranch>?, tags: List<GitTag>?): GitTag? = tags?.singleOrNull()
+  override val refClass = GitTag::class
 }

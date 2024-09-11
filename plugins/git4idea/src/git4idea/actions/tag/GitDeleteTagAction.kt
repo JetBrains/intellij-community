@@ -3,6 +3,7 @@ package git4idea.actions.tag
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import git4idea.GitBranch
 import git4idea.GitTag
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
@@ -10,7 +11,7 @@ import git4idea.repo.GitRepository
 
 internal class GitDeleteTagAction : GitSingleTagAction(GitBundle.messagePointer("branches.action.delete")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitTag, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitTag) {
     GitBrancher.getInstance(project).deleteTag(reference.name, repositories)

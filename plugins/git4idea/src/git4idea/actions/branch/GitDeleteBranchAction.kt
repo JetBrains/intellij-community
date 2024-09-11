@@ -12,7 +12,7 @@ import git4idea.repo.GitRepository
 class GitDeleteBranchAction
   : GitSingleBranchAction(GitBundle.messagePointer("branches.action.delete")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     if (branch.isRemote) {

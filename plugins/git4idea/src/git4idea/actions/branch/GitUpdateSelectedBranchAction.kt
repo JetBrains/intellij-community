@@ -15,7 +15,6 @@ import git4idea.ui.branch.isTrackingInfosExist
 import git4idea.ui.branch.updateBranches
 import java.util.*
 
-//TODO: incoming/outgoing
 class GitUpdateSelectedBranchAction
   : GitSingleBranchAction(GitBundle.messagePointer("branches.update")) {
 
