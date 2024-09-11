@@ -3,6 +3,7 @@ package git4idea.index.vfs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -23,6 +24,7 @@ import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.util.*
+import kotlin.Throws
 
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
@@ -30,6 +32,10 @@ class GitIndexVirtualFile(private val project: Project,
                           @Volatile internal var hash: Hash?,
                           @Volatile internal var length: Long,
                           @Volatile internal var isExecutable: Boolean) : VirtualFile(), VirtualFilePathWrapper {
+  init {
+    putUserData(FileDocumentManagerBase.TRACK_NON_PHYSICAL, true)
+  }
+
   @Volatile
   private var modificationStamp = LocalTimeCounter.currentTime()
 

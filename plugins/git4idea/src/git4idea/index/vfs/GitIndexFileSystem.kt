@@ -1,17 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileListener
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.VirtualFileFilteringListener
 import git4idea.i18n.GitBundle
 import java.util.concurrent.ConcurrentHashMap
 
 private const val PROTOCOL = "gitIndexFs"
 
-class GitIndexFileSystem : VirtualFileSystem() {
+class GitIndexFileSystem : VirtualFileSystem(), NonPhysicalFileSystem {
   private val listenerWrappers: MutableMap<VirtualFileListener, VirtualFileListener> = ConcurrentHashMap()
 
   override fun getProtocol(): String = PROTOCOL
