@@ -68,5 +68,6 @@
     <orderEntry type="library" name="kotlin-tooling-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
+    <orderEntry type="module" module-name="kotlin.formatter.minimal" />
   </component>
 </module>
