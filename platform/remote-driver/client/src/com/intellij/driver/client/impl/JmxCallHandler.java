@@ -107,7 +107,7 @@ public class JmxCallHandler implements InvocationHandler {
       throw new RuntimeException("There is no @JmxName annotation for " + clazz);
     }
 
-    if ("".equals(jmxName.value())) {
+    if (jmxName.value().isEmpty()) {
       throw new RuntimeException("JmxName.value is empty for " + clazz);
     }
 
