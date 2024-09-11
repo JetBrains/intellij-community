@@ -22,9 +22,9 @@ final class ExcludePolicyDescriptor {
   private final String[] excludedRootUrls;
   final @NotNull Set<VirtualFile> excludedFromSdkRoots;
 
-  static @NotNull ExcludePolicyDescriptor create(@NotNull DirectoryIndexExcludePolicy policy,
-                                                 @NotNull Set<? extends Sdk> sdks,
-                                                 @NotNull Set<? extends VirtualFile> sdkRoots) {
+  private static @NotNull ExcludePolicyDescriptor create(@NotNull DirectoryIndexExcludePolicy policy,
+                                                         @NotNull Set<? extends Sdk> sdks,
+                                                         @NotNull Set<? extends VirtualFile> sdkRoots) {
     String[] excludedRootUrls = policy.getExcludeUrlsForProject();
     if (excludedRootUrls.length == 0) excludedRootUrls = ArrayUtil.EMPTY_STRING_ARRAY;
     Function<Sdk, List<VirtualFile>> strategy = policy.getExcludeSdkRootsStrategy();
@@ -56,9 +56,7 @@ final class ExcludePolicyDescriptor {
   }
 
   public @NotNull Set<VirtualFile> getExcludedRoots() {
-    return Set.copyOf(ContainerUtil.mapNotNull(excludedRootUrls, url -> {
-      return VirtualFileManager.getInstance().findFileByUrl(url);
-    }));
+    return Set.copyOf(ContainerUtil.mapNotNull(excludedRootUrls, url -> VirtualFileManager.getInstance().findFileByUrl(url)));
   }
 
   @Override
@@ -92,7 +90,7 @@ final class ExcludePolicyDescriptor {
            '}';
   }
 
-  public static @NotNull List<ExcludePolicyDescriptor> collectDescriptors(@NotNull Project project) {
+  static @NotNull List<ExcludePolicyDescriptor> collectDescriptors(@NotNull Project project) {
     Set<Sdk> sdks = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       Sdk sdk = ModuleRootManager.getInstance(module).getSdk();

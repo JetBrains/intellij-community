@@ -82,12 +82,12 @@ public final class LibraryScopeCache {
 
     LibraryOrderEntry lib = null;
     for (OrderEntry entry : orderEntries) {
-      if (entry instanceof JdkOrderEntry) {
-        return getScopeForSdk((JdkOrderEntry)entry);
+      if (entry instanceof JdkOrderEntry jdkOrderEntry) {
+        return getScopeForSdk(jdkOrderEntry);
       }
 
-      if (entry instanceof LibraryOrderEntry) {
-        lib = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
+        lib = libraryOrderEntry;
         modulesLibraryUsedIn.add(entry.getOwnerModule());
       }
       else if (entry instanceof ModuleOrderEntry) {

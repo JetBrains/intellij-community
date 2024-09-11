@@ -44,7 +44,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
 
-  public DirectoryIndexImpl(@NotNull Project project) {
+  DirectoryIndexImpl(@NotNull Project project) {
     myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
     myProject = project;
     myConnection = project.getMessageBus().connect();
@@ -109,7 +109,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
   }
 
-  RootIndex getRootIndex() {
+  private RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
