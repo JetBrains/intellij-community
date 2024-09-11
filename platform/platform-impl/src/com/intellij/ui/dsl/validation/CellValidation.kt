@@ -24,6 +24,10 @@ interface CellValidation<out T> {
 
   fun enabledIf(property: ObservableProperty<Boolean>)
 
+  /**
+   * Rule applied when user clicks OK button (might be a little bit heavier than [addInputRule])
+   * [condition] returns `true` in case of error
+   */
   fun addApplyRule(@NlsContexts.DialogMessage message: String, level: Level = Level.ERROR, condition: () -> Boolean)
 
   /**
@@ -31,6 +35,10 @@ interface CellValidation<out T> {
    */
   fun addApplyRule(validation: () -> ValidationInfo?)
 
+  /**
+   * Rule applied on each input (must be lightweight unlike [addApplyRule])
+   * [condition] returns `true` in case of error
+   */
   fun addInputRule(@NlsContexts.DialogMessage message: String, level: Level = Level.ERROR, condition: () -> Boolean)
 
   /**
