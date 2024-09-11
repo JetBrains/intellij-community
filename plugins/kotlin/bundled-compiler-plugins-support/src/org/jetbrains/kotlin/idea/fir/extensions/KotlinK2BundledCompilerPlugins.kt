@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.extensions
 
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
+import org.jetbrains.kotlinx.jspo.compiler.cli.JsPlainObjectsComponentRegistrar
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.allopen.AllOpenComponentRegistrar
 import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
@@ -46,6 +47,10 @@ enum class KotlinK2BundledCompilerPlugins(
 
     COMPOSE_COMPILER_PLUGIN(
         ComposePluginRegistrar::class
+    ),
+
+    JS_PLAIN_OBJECTS_COMPILER_PLUGIN(
+        JsPlainObjectsComponentRegistrar::class
     ),
 
     NO_ARG_COMPILER_PLUGIN(

@@ -60,6 +60,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.assignment-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.scripting-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.compose-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.js-plain-objects-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
 
         if (!isCommunity) {
