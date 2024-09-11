@@ -46,7 +46,7 @@ public final class DefaultPatchBaseVersionProvider {
                                            @NotNull String versionId,
                                            @NotNull VirtualFile file,
                                            @NotNull FilePath pathBeforeRename,
-                                           @NotNull Processor<? super String> processor) throws VcsException {
+                                           @NotNull Processor<? super @NotNull String> processor) throws VcsException {
     runWithModalProgressIfNeeded(project, message("progress.text.loading.patch.base.revision"), () -> {
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
       if (vcs == null) return;
@@ -54,14 +54,11 @@ public final class DefaultPatchBaseVersionProvider {
       final VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
       if (historyProvider == null) return;
 
-      String content = loadContentByRevisionId(versionId, file, pathBeforeRename, vcs);
+      String contentByRevisionId = loadContentByRevisionId(versionId, file, pathBeforeRename, vcs);
+      String content = contentByRevisionId != null ? contentByRevisionId : findContentInFileHistory(versionId, file, pathBeforeRename, vcs);
       if (content != null) {
         processor.process(content);
-        return; // do not try to look for other revisions if we have found it, but it did not pass
       }
-
-      content = findContentInFileHistory(versionId, file, pathBeforeRename, vcs);
-      processor.process(content);
     });
   }
 
