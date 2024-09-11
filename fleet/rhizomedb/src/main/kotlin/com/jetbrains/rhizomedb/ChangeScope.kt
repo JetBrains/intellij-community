@@ -119,7 +119,7 @@ interface ChangeScope {
    * */
   operator fun <E : Entity, V : Any> E.set(
     attribute: Attributes<E>.Required<V>,
-    value: V
+    value: V,
   ): Unit = context.run {
     @Suppress("UNCHECKED_CAST")
     add(eid, attribute.attr as Attribute<Any>, attribute.toIndexValue(value))
@@ -133,7 +133,7 @@ interface ChangeScope {
    * */
   operator fun <E : Entity, V : Any> E.set(
     attribute: Attributes<E>.Optional<V>,
-    value: V?
+    value: V?,
   ): Unit = context.run {
     when {
       value == null ->
@@ -241,15 +241,24 @@ interface ChangeScope {
 
   fun <E : Entity, V : Any> EntityType<E>.upsert(attribute: EntityAttribute<E, V>, value: V, builder: EntityBuilder<E>): E =
     let { entityType ->
-      entity(attribute, value)?.apply { update(builder) } ?: entityType.new(builder)
+      entity(attribute, value)?.apply { update(builder) } ?: entityType.new {
+        when (attribute) {
+          is Attributes<E>.Many<V> -> it[attribute] = setOf(value)
+          is Attributes<E>.Optional<V> -> it[attribute] = value
+          is Attributes<E>.Required<V> -> it[attribute] = value
+        }
+        builder.build(it)
+      }
     }
 
   /**
    * Support for legacy entity definitions
    * */
-  fun <T : LegacyEntity> new(c: KClass<T>,
-                             part: Part = defaultPart,
-                             constructor: T.() -> Unit = {}): T =
+  fun <T : LegacyEntity> new(
+    c: KClass<T>,
+    part: Part = defaultPart,
+    constructor: T.() -> Unit = {},
+  ): T =
     withDefaultPart(part) {
       context.new(c, constructor)
     }
