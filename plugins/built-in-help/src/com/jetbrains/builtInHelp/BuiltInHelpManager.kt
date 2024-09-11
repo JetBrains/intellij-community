@@ -13,6 +13,7 @@ import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.io.IOException
+import java.lang.String.*
 import java.net.InetAddress
 import java.net.URI
 import java.net.URISyntaxException
@@ -66,7 +67,10 @@ class BuiltInHelpManager : HelpManager() {
 
         if (!baseUrl.endsWith("/")) baseUrl += "/"
 
-        url = "${baseUrl}help/$productWebPath/$productVersion/?$helpId"
+        url = "${baseUrl}help/$productWebPath/$productVersion/?${
+          URLEncoder.encode(
+            helpId, StandardCharsets.UTF_8)
+        }"
 
         if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
           val productCode = info.build.productCode
@@ -76,7 +80,7 @@ class BuiltInHelpManager : HelpManager() {
         }
       }
 
-      val browserName = java.lang.String.valueOf(
+      val browserName = valueOf(
         Utils.getStoredValue(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
 
       val browser = WebBrowserManager.getInstance().findBrowserById(browserName)
