@@ -1593,10 +1593,14 @@ f:com.intellij.openapi.client.ClientSessionsUtil
 *f:com.intellij.openapi.client.ClientSystemInfo
 - *sf:Companion:com.intellij.openapi.client.ClientSystemInfo$Companion
 - f:getMacClient():java.lang.Boolean
+- f:getWindowsClient():java.lang.Boolean
 - sf:isMac():Z
+- sf:isWindows():Z
 - f:setMacClient(java.lang.Boolean):V
+- f:setWindowsClient(java.lang.Boolean):V
 *f:com.intellij.openapi.client.ClientSystemInfo$Companion
 - f:isMac():Z
+- f:isWindows():Z
 f:com.intellij.openapi.command.ActionsKt
 - sf:executeCommand(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,kotlin.jvm.functions.Function0):V
 - bs:executeCommand$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,kotlin.jvm.functions.Function0,I,java.lang.Object):V
