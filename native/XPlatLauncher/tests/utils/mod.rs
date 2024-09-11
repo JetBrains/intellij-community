@@ -4,7 +4,7 @@ use std::{env, fs, thread, time};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::fs::{File, OpenOptions};
-use std::io::{BufReader, Read, Write};
+use std::io::{Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::Once;
@@ -512,7 +512,7 @@ pub fn run_launcher(run_spec: &LauncherRunSpec) -> LauncherRunResult {
 }
 
 pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> LauncherRunResult {
-    match run_launcher_impl(test_env, run_spec) {
+    match run_launcher_with_retries(test_env, run_spec) {
         Ok(result) => {
             if run_spec.assert_status {
                 assert!(result.exit_status.success(), "The exit status of the launcher is not successful: {:?}", result);
@@ -523,6 +523,38 @@ pub fn run_launcher_ext(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) 
             panic!("Failed to get launcher run result: {:?}", e)
         }
     }
+}
+
+#[cfg(target_family = "windows")]
+fn run_launcher_with_retries(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
+    run_launcher_impl(test_env, run_spec)
+}
+
+#[cfg(target_family = "unix")]
+fn run_launcher_with_retries(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
+    use std::os::unix::process::ExitStatusExt;
+
+    // on macOS, the test process is inexplicably killed sometimes
+    let mut retries = 3;
+    let mut run_result = run_launcher_impl(test_env, run_spec);
+    loop {
+        if let Ok(result) = &run_result {
+            if let Some(signal) = result.exit_status.signal() {
+                if signal == libc::SIGKILL {
+                    debug!("test process killed; retrying...");
+                    retries -= 1;
+                    if retries == 0 {
+                        panic!("The test process was killed 3 times in a row; giving up. Last result: {:?}", run_result);
+                    }
+                    thread::sleep(time::Duration::from_secs(1));
+                    run_result = run_launcher_impl(test_env, run_spec);
+                    continue;
+                }
+            }
+        }
+        break;
+    }
+    run_result
 }
 
 fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> Result<LauncherRunResult> {
@@ -617,12 +649,8 @@ fn read_output_file(path: &Path) -> Result<String> {
 }
 
 fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParameters> {
-    let file = File::open(path)?;
-    let mut reader = BufReader::new(file);
-    let mut text = String::new();
-    reader.read_to_string(&mut text)?;
-    let dump: IntellijMainDumpedLaunchParameters = serde_json::from_str(&text)?;
-    Ok(dump)
+    let text = fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&text)?)
 }
 
 pub fn test_runtime_selection(result: LauncherRunResult, expected_rt: PathBuf) {
