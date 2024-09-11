@@ -66,7 +66,9 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
             val sourceCode = VirtualFileScriptSource(script.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
 
-            val javaHomePath = script.javaHome?.let { Path.of(it) }
+            val javaProjectSdk = ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.sdkType is JavaSdkType }
+
+            val javaHomePath = (javaProjectSdk?.homePath ?: script.javaHome)?.let { Path.of(it) }
 
             val configuration = definition.compilationConfiguration.with {
                 javaHomePath?.let {
@@ -87,10 +89,9 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
             newClasses.addAll(toVfsRoots(configurationWrapper.dependenciesClassPath))
             newSources.addAll(toVfsRoots(configurationWrapper.dependenciesSources))
 
-            val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-            if (projectSdk != null && projectSdk.sdkType is JavaSdkType) {
-                projectSdk.homePath?.let { path ->
-                    sdks.computeIfAbsent(Path.of(path)) { projectSdk  }
+            if (javaProjectSdk != null) {
+                javaProjectSdk.homePath?.let { path ->
+                    sdks.computeIfAbsent(Path.of(path)) { javaProjectSdk  }
                 }
             } else if (javaHomePath != null) {
                 sdks.computeIfAbsent(javaHomePath) {
