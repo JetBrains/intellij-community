@@ -17,12 +17,14 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaVersionConverter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,7 @@ public final class UserDefinedJsonSchemaConfiguration {
   private @Nls String name;
   private @Nullable @Nls String generatedName;
   public String relativePathToSchema;
+  @OptionTag(converter = JsonSchemaVersionConverter.class)
   public @NotNull JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
   public List<Item> patterns = new SmartList<>();
