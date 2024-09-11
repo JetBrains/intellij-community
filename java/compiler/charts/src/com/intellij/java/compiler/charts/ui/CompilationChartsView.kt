@@ -35,7 +35,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     scroll.setViewportView(diagrams)
 
-    val panel = ActionPanel(project, vm, diagrams)
+    val panel = ActionPanel(project, vm, scroll.viewport)
     addToTop(panel)
     addToCenter(scroll)
 
