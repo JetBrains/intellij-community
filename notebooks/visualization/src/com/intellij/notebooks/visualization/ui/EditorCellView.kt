@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -86,6 +87,9 @@ class EditorCellView(
     }
 
   init {
+    cell.source.afterChange(this) {
+      updateInput()
+    }
     recreateControllers()
     updateSelection(false)
     updateOutputs()
@@ -148,12 +152,12 @@ class EditorCellView(
     controllersToDispose.forEach { disposeController(it) }
   }
 
-  fun updateInput() {
+  private fun updateInput() = runInEdt {
     updateCellHighlight()
     input.updateInput()
   }
 
-  private fun updateOutputs() {
+  private fun updateOutputs() = runInEdt {
     if (hasOutputs()) {
       if (outputs == null) {
         outputs = EditorCellOutputs(editor, cell).also {

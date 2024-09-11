@@ -17,11 +17,9 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
-import kotlinx.coroutines.CoroutineScope
 import com.intellij.notebooks.ui.editor.actions.command.mode.NOTEBOOK_EDITOR_MODE
 import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorModeListener
@@ -38,9 +36,7 @@ class NotebookCellInlayManager private constructor(
   private val shouldCheckInlayOffsets: Boolean,
   private val inputFactories: List<NotebookCellInlayController.InputFactory>,
   private val cellExtensionFactories: List<CellExtensionFactory>,
-  parentScope: CoroutineScope,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener, NotebookEditorModeListener {
-  private val coroutineScope = parentScope.childScope("NotebookCellInlayManager")
 
   private val notebookCellLines = NotebookCellLines.get(editor)
 
@@ -264,7 +260,7 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval, coroutineScope) { cell ->
+  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval) { cell ->
     EditorCellView(editor, notebookCellLines, cell, this).also { Disposer.register(cell, it) }
   }.also {
     cellExtensionFactories.forEach { factory ->
@@ -289,15 +285,13 @@ class NotebookCellInlayManager private constructor(
       shouldCheckInlayOffsets: Boolean,
       inputFactories: List<NotebookCellInlayController.InputFactory> = listOf(),
       cellExtensionFactories: List<CellExtensionFactory> = listOf(),
-      parentScope: CoroutineScope,
     ) : NotebookCellInlayManager {
       EditorEmbeddedComponentContainer(editor as EditorEx)
       val notebookCellInlayManager = NotebookCellInlayManager(
         editor,
         shouldCheckInlayOffsets,
         inputFactories,
-        cellExtensionFactories,
-        parentScope
+        cellExtensionFactories
       ).also { Disposer.register(editor.disposable, it) }
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, editor.disposable)

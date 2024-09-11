@@ -15,13 +15,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.*
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
@@ -31,14 +24,10 @@ class EditorCell(
   private val editor: EditorEx,
   val manager: NotebookCellInlayManager,
   var intervalPointer: NotebookIntervalPointer,
-  parentScope: CoroutineScope,
   private val viewFactory: (EditorCell) -> EditorCellView,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
-  private val coroutineScope = parentScope.childScope("EditorCell")
-
-  private val _source = MutableStateFlow<String>(getSource())
-  val source = _source.asStateFlow()
+  val source = AtomicProperty<String>(getSource())
 
   private fun getSource(): String {
     val document = editor.document
@@ -123,7 +112,6 @@ class EditorCell(
   override fun dispose() {
     cleanupExtensions()
     view?.let { disposeView(it) }
-    coroutineScope.cancel()
   }
 
   private fun cleanupExtensions() {
@@ -143,10 +131,7 @@ class EditorCell(
   }
 
   fun updateInput() {
-    coroutineScope.launch(Dispatchers.Main) {
-      _source.emit(getSource())
-    }
-    view?.updateInput()
+    source.set(getSource())
   }
 
   fun onViewportChange() {
