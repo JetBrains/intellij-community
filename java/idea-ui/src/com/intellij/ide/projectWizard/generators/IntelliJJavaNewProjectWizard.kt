@@ -47,7 +47,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   private class AssetsStep(
     private val parent: Step
-  ) : AssetsJavaNewProjectWizardStep(parent) {
+  ) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
       outputDirectory = parent.contentRoot
@@ -63,7 +63,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override fun setupProject(project: Project) {
       if (parent.generateOnboardingTips) {
-        prepareOnboardingTips(project)
+        prepareJavaSampleOnboardingTips(project)
       }
       super.setupProject(project)
     }
