@@ -32,11 +32,14 @@ import java.util.Set;
  * picked up by ArtifactView.
  */
 @ApiStatus.Internal
-public class ExperimentalAuxiliaryArtifactResolver extends AuxiliaryArtifactResolver {
+public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactResolver {
 
-  public ExperimentalAuxiliaryArtifactResolver(@NotNull Project project,
-                                               @NotNull GradleDependencyDownloadPolicy policy) {
-    super(project, policy);
+  private final @NotNull Project project;
+  private final @NotNull GradleDependencyDownloadPolicy policy;
+
+  public ExperimentalAuxiliaryArtifactResolver(@NotNull Project project, @NotNull GradleDependencyDownloadPolicy policy) {
+    this.project = project;
+    this.policy = policy;
   }
 
   @Override
