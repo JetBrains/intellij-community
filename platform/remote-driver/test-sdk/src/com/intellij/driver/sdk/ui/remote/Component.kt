@@ -30,6 +30,7 @@ interface Window: Component {
   fun isFocused(): Boolean
   fun dispose()
   fun requestFocus()
+  fun toFront()
 }
 
 @Remote("java.awt.Color")
