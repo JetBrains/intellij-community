@@ -37,7 +37,7 @@ internal object ConvertClassToKClassFixFactories {
         if (!expectedType.isKClass()) return null
 
         val expressionType = dotQualifiedExpression.expressionType ?: return null
-        if (!expressionType.isJClass()) return null
+        if (!expressionType.isJavaClass()) return null
 
         val children = dotQualifiedExpression.children
         if (children.size != 2) return null
@@ -54,5 +54,5 @@ internal object ConvertClassToKClassFixFactories {
     private fun KaType.isKClass(): Boolean = isClassType(StandardClassIds.KClass)
 
     context(KaSession)
-    private fun KaType.isJClass(): Boolean = isClassType(ClassId.fromString("java/lang/Class"))
+    private fun KaType.isJavaClass(): Boolean = isClassType(ClassId.fromString("java/lang/Class"))
 }
