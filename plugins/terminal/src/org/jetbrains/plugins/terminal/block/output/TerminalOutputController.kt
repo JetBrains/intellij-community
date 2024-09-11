@@ -387,7 +387,7 @@ internal class TerminalOutputController(
       Disposer.register(disposable) {
         scope.cancel()
       }
-      val collector = TerminalOutputContentUpdatesScheduler(session.model.textBuffer, scope) { output ->
+      val collector = TerminalOutputContentUpdatesScheduler(session.model.textBuffer, session.shellIntegration, scope) { output ->
         updateCommandOutput(output)
       }
       collector.startUpdating()

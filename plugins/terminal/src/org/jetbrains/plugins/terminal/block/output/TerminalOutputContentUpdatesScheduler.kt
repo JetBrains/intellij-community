@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 
 /**
  * Tracks the changes of the terminal output and schedules [applyUpdate] calls when something is changed.
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.with
  */
 internal class TerminalOutputContentUpdatesScheduler(
   private val textBuffer: TerminalTextBuffer,
+  private val shellIntegration: ShellIntegration,
   private val coroutineScope: CoroutineScope,
   private val applyUpdate: (PartialCommandOutput) -> Unit,
 ) {
@@ -27,7 +29,7 @@ internal class TerminalOutputContentUpdatesScheduler(
   private var updatingJob: Job? = null
 
   fun startUpdating() = textBuffer.withLock {
-    val tracker = TerminalOutputChangesTracker(textBuffer, trackerDisposable)
+    val tracker = TerminalOutputChangesTracker(textBuffer, shellIntegration, trackerDisposable)
     changesTracker = tracker
 
     val job = coroutineScope.launch {

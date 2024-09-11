@@ -7,11 +7,10 @@ import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
 import kotlinx.coroutines.CompletableDeferred
-import org.jetbrains.plugins.terminal.block.session.StyleRange
+import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
+import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
-import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
@@ -24,6 +23,7 @@ import kotlin.math.min
  */
 internal class TerminalOutputChangesTracker(
   private val textBuffer: TerminalTextBuffer,
+  private val shellIntegration: ShellIntegration,
   parentDisposable: Disposable,
 ) {
   /**
@@ -151,7 +151,11 @@ internal class TerminalOutputChangesTracker(
       startLine--
     }
 
-    val (text, styles) = collectChangedLines(startLine)
+    val output: StyledCommandOutput = ShellCommandOutputScraperImpl.scrapeOutput(
+      textBuffer,
+      shellIntegration.commandBlockIntegration?.commandEndMarker,
+      startLine
+    )
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
     val logicalLineIndex = getLogicalLineIndex(startLine) + discardedLogicalLinesCount
     val anyDiscarded = wereChangesDiscarded
@@ -160,20 +164,7 @@ internal class TerminalOutputChangesTracker(
     wasAnyLineChanged = false
     wereChangesDiscarded = false
 
-    return PartialCommandOutput(text, styles, logicalLineIndex, textBuffer.width, anyDiscarded)
-  }
-
-  private fun collectChangedLines(startLine: Int): Pair<String, List<StyleRange>> {
-    val stringCollector = DropTrailingNewLinesStringCollector(SimpleStringCollector())
-    val styles: MutableList<StyleRange> = mutableListOf()
-    val styleCollectingOutputBuilder = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
-    for (index in startLine until textBuffer.screenLinesCount) {
-      val line = textBuffer.getLine(index)
-      styleCollectingOutputBuilder.addLine(line)
-    }
-
-    val text = stringCollector.buildText()
-    return text to styles
+    return PartialCommandOutput(output.text, output.styleRanges, logicalLineIndex, textBuffer.width, anyDiscarded)
   }
 
   /**

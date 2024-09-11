@@ -7,12 +7,7 @@ import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
-import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.CommandEndMarkerListeningStringCollector
-import org.jetbrains.plugins.terminal.block.session.scraper.TerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.*
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
@@ -73,7 +68,11 @@ internal class ShellCommandOutputScraperImpl(
       return scrapeOutput(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker)
     }
 
-    fun scrapeOutput(textBuffer: TerminalTextBuffer, commandEndMarker: String? = null): StyledCommandOutput {
+    fun scrapeOutput(
+      textBuffer: TerminalTextBuffer,
+      commandEndMarker: String? = null,
+      startLine: Int = -textBuffer.historyLinesCount,
+    ): StyledCommandOutput {
       var commandEndMarkerFound = false
       val stringCollector: StringCollector = CommandEndMarkerListeningStringCollector(
         DropTrailingNewLinesStringCollector(SimpleStringCollector()),
@@ -85,7 +84,7 @@ internal class ShellCommandOutputScraperImpl(
       val styles: MutableList<StyleRange> = mutableListOf()
       val styleCollectingOutputBuilder: TerminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
       val terminalLinesCollector: TerminalLinesCollector = styleCollectingOutputBuilder
-      textBuffer.collectLines(terminalLinesCollector)
+      textBuffer.collectLines(terminalLinesCollector, startLine)
       return StyledCommandOutput(stringCollector.buildText(), commandEndMarkerFound, styles)
     }
   }
@@ -163,11 +162,12 @@ private fun trimToLength(styleRange: StyleRange, newLength: Int): StyleRange? {
 
 internal fun TerminalTextBuffer.collectLines(
   terminalLinesCollector: TerminalLinesCollector,
+  startLine: Int = -historyLinesCount,
 ) {
-  if (!isUsingAlternateBuffer) {
-    terminalLinesCollector.addLines(historyBuffer)
+  val adjustedStartLine = if (isUsingAlternateBuffer) max(0, startLine) else startLine
+  for (ind in adjustedStartLine until screenLinesCount) {
+    terminalLinesCollector.addLine(getLine(ind))
   }
-  terminalLinesCollector.addLines(screenBuffer)
   terminalLinesCollector.flush()
 }
 
