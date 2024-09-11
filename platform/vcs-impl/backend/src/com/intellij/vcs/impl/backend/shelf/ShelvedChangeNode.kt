@@ -1,73 +1,64 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
+import com.intellij.util.PathUtil
+import org.jetbrains.annotations.Nls
+import java.awt.Color
 
-import java.awt.*;
+internal class ShelvedChangeNode(
+  shelvedChange: ShelvedWrapper,
+  filePath: FilePath,
+  additionalText: @Nls String?
+) : ChangesBrowserNode<ShelvedWrapper?>(shelvedChange), Comparable<ShelvedChangeNode?> {
+  private val myShelvedChange: ShelvedWrapper
+  private val myFilePath: FilePath
+  private val myAdditionalText: @Nls String?
 
-import static com.intellij.util.FontUtil.spaceAndThinSpace;
-
-class ShelvedChangeNode extends ChangesBrowserNode<ShelvedWrapper> implements Comparable<ShelvedChangeNode> {
-
-  private final @NotNull ShelvedWrapper myShelvedChange;
-  private final @NotNull FilePath myFilePath;
-  private final @Nullable @Nls String myAdditionalText;
-
-  protected ShelvedChangeNode(@NotNull ShelvedWrapper shelvedChange,
-                              @NotNull FilePath filePath,
-                              @Nullable @Nls String additionalText) {
-    super(shelvedChange);
-    myShelvedChange = shelvedChange;
-    myFilePath = filePath;
-    myAdditionalText = additionalText;
+  init {
+    myShelvedChange = shelvedChange
+    myFilePath = filePath
+    myAdditionalText = additionalText
   }
 
-  @Override
-  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    String path = myShelvedChange.getRequestName();
-    String directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), VcsBundle.message("shelve.default.path.rendering"));
-    String fileName = StringUtil.defaultIfEmpty(PathUtil.getFileName(path), path);
+  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    val path = myShelvedChange.getRequestName()
+    val directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), VcsBundle.message("shelve.default.path.rendering"))
+    val fileName = StringUtil.defaultIfEmpty(PathUtil.getFileName(path), path)
 
-    renderer.append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, myShelvedChange.getFileStatus().getColor()));
+    renderer.append(fileName, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, myShelvedChange.getFileStatus().getColor()))
     if (myAdditionalText != null) {
-      renderer.append(spaceAndThinSpace() + myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(FontUtil.spaceAndThinSpace() + myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
     if (renderer.isShowFlatten()) {
-      renderer.append(spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderer.append(FontUtil.spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
-    renderer.setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
+    renderer.setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon())
   }
 
-  @Override
-  public String getTextPresentation() {
-    return PathUtil.getFileName(myShelvedChange.getRequestName());
+  override fun getTextPresentation(): String {
+    return PathUtil.getFileName(myShelvedChange.getRequestName())
   }
 
-  @Override
-  protected boolean isFile() {
-    return true;
+  override fun isFile(): Boolean {
+    return true
   }
 
-  @Override
-  public int compareTo(@NotNull ShelvedChangeNode o) {
-    return compareFilePaths(myFilePath, o.myFilePath);
+  override fun compareTo(o: ShelvedChangeNode): Int {
+    return compareFilePaths(myFilePath, o.myFilePath)
   }
 
-  @Override
-  public @Nullable Color getBackgroundColor(@NotNull Project project) {
-    return getBackgroundColorFor(project, myFilePath);
+  override fun getBackgroundColor(project: Project): Color? {
+    return getBackgroundColorFor(project, myFilePath)
   }
 }

@@ -1,91 +1,94 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf;
 
-import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
-import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor;
-import com.intellij.openapi.vcs.changes.shelf.*;
-import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.util.DiffPlaces
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
+import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
+import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapperDiffRequestProducer
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.util.Function
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.tree.TreeUtil
+import javax.swing.tree.DefaultMutableTreeNode
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.Set;
+internal class ShelvedPreviewProcessor(project: Project, tree: ShelfTree, isInEditor: Boolean) : TreeHandlerDiffRequestProcessor(
+  DiffPlaces.SHELVE_VIEW, tree, ShelveTreeDiffPreviewHandler.Companion.INSTANCE), DiffPreviewUpdateProcessor {
+  private val myIsInEditor: Boolean
 
-class ShelvedPreviewProcessor extends TreeHandlerDiffRequestProcessor implements DiffPreviewUpdateProcessor {
-  private final boolean myIsInEditor;
+  private val myPreloader: PatchesPreloader
 
-  private final @NotNull DiffShelvedChangesActionProvider.PatchesPreloader myPreloader;
+  init {
+    myIsInEditor = isInEditor
+    myPreloader = PatchesPreloader(project)
 
-  ShelvedPreviewProcessor(@NotNull Project project, @NotNull ShelvedChangesViewManager.ShelfTree tree, boolean isInEditor) {
-    super(DiffPlaces.SHELVE_VIEW, tree, ShelveTreeDiffPreviewHandler.INSTANCE);
-    myIsInEditor = isInEditor;
-    myPreloader = new DiffShelvedChangesActionProvider.PatchesPreloader(project);
+    putContextUserData<PatchesPreloader?>(PatchesPreloader.SHELF_PRELOADER, myPreloader)
 
-    putContextUserData(DiffShelvedChangesActionProvider.PatchesPreloader.SHELF_PRELOADER, myPreloader);
-
-    new TreeHandlerChangesTreeTracker(tree, this, ShelveTreeDiffPreviewHandler.INSTANCE, !isInEditor).track();
+    TreeHandlerChangesTreeTracker(tree, this, ShelveTreeDiffPreviewHandler.Companion.INSTANCE, !isInEditor).track()
   }
 
   @RequiresEdt
-  @Override
-  public void clear() {
-    setCurrentChange(null);
-    dropCaches();
+  override fun clear() {
+    setCurrentChange(null)
+    dropCaches()
   }
 
-  @Override
-  protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
-    return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents);
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
+    return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  @Override
-  protected @Nullable DiffRequest loadRequestFast(@NotNull DiffRequestProducer provider) {
-    if (provider instanceof ShelvedWrapperDiffRequestProducer) {
-      ShelvedChange shelvedChange = ((ShelvedWrapperDiffRequestProducer)provider).getWrapper().getShelvedChange();
-      if (shelvedChange != null && myPreloader.isPatchFileChanged(shelvedChange.getPatchPath())) return null;
+  override fun loadRequestFast(provider: DiffRequestProducer): DiffRequest? {
+    if (provider is ShelvedWrapperDiffRequestProducer) {
+      val shelvedChange = provider.getWrapper().getShelvedChange()
+      if (shelvedChange != null && myPreloader.isPatchFileChanged(shelvedChange.getPatchPath())) return null
     }
 
-    return super.loadRequestFast(provider);
+    return super.loadRequestFast(provider)
   }
 
-  private static class ShelveTreeDiffPreviewHandler extends ChangesTreeDiffPreviewHandler {
-    public static final ShelveTreeDiffPreviewHandler INSTANCE = new ShelveTreeDiffPreviewHandler();
-
-    @Override
-    public @NotNull Iterable<? extends Wrapper> iterateSelectedChanges(@NotNull ChangesTree tree) {
-      return VcsTreeModelData.selected(tree).iterateUserObjects(ShelvedWrapper.class);
+  private class ShelveTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+    public override fun iterateSelectedChanges(tree: ChangesTree): Iterable<out Wrapper?> {
+      return VcsTreeModelData.selected(tree).iterateUserObjects<ShelvedWrapper?>(ShelvedWrapper::class.java)
     }
 
-    @Override
-    public @NotNull Iterable<? extends Wrapper> iterateAllChanges(@NotNull ChangesTree tree) {
-      Set<ShelvedChangeList> changeLists =
-        VcsTreeModelData.selected(tree).iterateUserObjects(ShelvedWrapper.class)
-          .map(wrapper -> wrapper.getChangeList())
-          .toSet();
+    public override fun iterateAllChanges(tree: ChangesTree): Iterable<out Wrapper?> {
+      val changeLists =
+        VcsTreeModelData.selected(tree).iterateUserObjects<ShelvedWrapper?>(ShelvedWrapper::class.java)
+          .map<ShelvedChangeList>(Function { wrapper: ShelvedWrapper? -> wrapper!!.getChangeList() })
+          .toSet()
 
       return VcsTreeModelData.all(tree).iterateRawNodes()
-        .filter(node -> node instanceof ShelvedListNode && changeLists.contains(((ShelvedListNode)node).getList()))
-        .flatMap(node -> VcsTreeModelData.allUnder(node).iterateUserObjects(ShelvedWrapper.class));
+        .filter(Condition { node: ChangesBrowserNode<*>? -> node is ShelvedListNode && changeLists.contains(node.getList()) })
+        .flatMap<ShelvedWrapper?>(Function { node: ChangesBrowserNode<*>? ->
+          VcsTreeModelData.allUnder(node!!).iterateUserObjects<ShelvedWrapper?>(ShelvedWrapper::class.java)
+        })
     }
 
-    @Override
-    public void selectChange(@NotNull ChangesTree tree, @NotNull ChangeViewDiffRequestProcessor.Wrapper change) {
-      if (change instanceof ShelvedWrapper) {
-        DefaultMutableTreeNode root = tree.getRoot();
-        DefaultMutableTreeNode changelistNode = TreeUtil.findNodeWithObject(root, ((ShelvedWrapper)change).getChangeList());
-        if (changelistNode == null) return;
+    public override fun selectChange(tree: ChangesTree, change: Wrapper) {
+      if (change is ShelvedWrapper) {
+        val root: DefaultMutableTreeNode = tree.getRoot()
+        val changelistNode = TreeUtil.findNodeWithObject(root, change.getChangeList())
+        if (changelistNode == null) return
 
-        DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(changelistNode, change);
-        if (node == null) return;
-        TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
+        val node = TreeUtil.findNodeWithObject(changelistNode, change)
+        if (node == null) return
+        TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
       }
+    }
+
+    companion object {
+      val INSTANCE: ShelveTreeDiffPreviewHandler = ShelveTreeDiffPreviewHandler()
     }
   }
 }
