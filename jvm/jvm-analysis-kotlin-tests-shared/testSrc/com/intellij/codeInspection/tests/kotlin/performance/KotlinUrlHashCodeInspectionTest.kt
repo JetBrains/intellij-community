@@ -3,8 +3,13 @@ package com.intellij.codeInspection.tests.kotlin.performance
 import com.intellij.jvm.analysis.internal.testFramework.performance.UrlHashCodeInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
+
   fun `test url hashcode call`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL

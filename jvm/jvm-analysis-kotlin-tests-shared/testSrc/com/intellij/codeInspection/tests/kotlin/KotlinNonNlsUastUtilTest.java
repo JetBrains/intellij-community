@@ -10,6 +10,7 @@ import com.intellij.util.PathUtil;
 import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 import org.jetbrains.uast.ULiteralExpression;
 import org.junit.Assume;
 
@@ -23,7 +24,7 @@ import static com.intellij.jvm.analysis.internal.testFramework.JvmAnalysisTestsU
 public abstract class KotlinNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), super::setUp);
     Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
   }
 

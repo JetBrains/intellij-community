@@ -3,8 +3,13 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.jvm.analysis.internal.testFramework.ObsoleteApiUsageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
+
   fun `test direct usage`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class B {

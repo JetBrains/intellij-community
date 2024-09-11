@@ -11,9 +11,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 abstract class KotlinRedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
+
   fun testStdlib() {
     val mainText = """
         package org.example.main

@@ -4,6 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 
 public abstract class KotlinSameReturnValueLocalInspectionTest extends LightJavaCodeInsightFixtureTestCase implements ExpectedPluginModeProvider {
 
@@ -14,7 +15,7 @@ public abstract class KotlinSameReturnValueLocalInspectionTest extends LightJava
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, getTestRootDisposable(), super::setUp);
     myFixture.enableInspections(new SameReturnValueInspection().getSharedLocalInspectionTool());
   }
 

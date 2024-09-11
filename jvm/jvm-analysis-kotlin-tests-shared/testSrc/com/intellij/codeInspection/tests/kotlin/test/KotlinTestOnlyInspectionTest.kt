@@ -3,8 +3,13 @@ package com.intellij.codeInspection.tests.kotlin.test
 import com.intellij.jvm.analysis.internal.testFramework.test.TestOnlyInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
+
   fun `test @TestOnly on use-site targets`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       package test

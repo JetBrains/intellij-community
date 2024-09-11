@@ -3,8 +3,12 @@ package com.intellij.codeInspection.tests.kotlin.logging
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingSimilarMessageInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionTestBase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
 
   fun `test equals log4j2`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

@@ -4,8 +4,13 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinMarkedForRemovalInspectionTest : JvmInspectionTestBase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
+
   fun `test highlighted as deprecated for removal`() {
     myFixture.addClass("""
       package test;
