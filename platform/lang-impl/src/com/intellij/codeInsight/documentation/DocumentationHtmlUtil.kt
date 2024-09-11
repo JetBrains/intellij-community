@@ -10,10 +10,10 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
-import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jsoup.nodes.*
+import org.jsoup.select.QueryParser
 import java.util.*
 import java.util.function.Function
 import javax.swing.Icon
@@ -107,7 +107,7 @@ object DocumentationHtmlUtil {
 
   @JvmStatic
   internal fun removeEmptySections(document: Document) {
-    document.select(".$CLASS_SECTIONS").forEach { sections ->
+    document.select(sectionsClassQuery).forEach { sections ->
       if (sections.childNodes().all { node -> node is Comment || node is TextNode && node.isBlank }) {
         sections.remove()
       }
@@ -116,8 +116,8 @@ object DocumentationHtmlUtil {
 
   @JvmStatic
   internal fun addExternalLinkIcons(document: Document) {
-    document.select("a").forEach { a ->
-      if (a.attribute("href")?.value?.startsWith("http") == true) {
+    document.select(aElementQuery).forEach { a ->
+      if (a.attribute("href")?.value?.startsWith("http") == true && a.select(externalLinkIconQuery).isEmpty()) {
         Element("icon").attr("src", "AllIcons.Ide.External_link_arrow")
           .appendTo(a)
       }
@@ -142,6 +142,10 @@ object DocumentationHtmlUtil {
       }
     }
   }
+
+  private val sectionsClassQuery = QueryParser.parse(".$CLASS_SECTIONS")
+  private val aElementQuery = QueryParser.parse("a")
+  private val externalLinkIconQuery = QueryParser.parse("icon[src=AllIcons.Ide.External_link_arrow]")
 
   private fun isBlockElement(node: Node): Boolean {
     if (node is Element) {
