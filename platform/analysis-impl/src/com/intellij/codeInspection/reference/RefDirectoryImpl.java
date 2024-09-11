@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   private volatile RefModule myRefModule; // it's guaranteed that getModule() used after initialize()
-  protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
+  RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
   }
 
