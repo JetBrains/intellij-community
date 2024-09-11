@@ -266,11 +266,9 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   private @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
-    return DiffTitleFilePathCustomizer.getTitleCustomizers(myProject,
-                                                           RevisionWithTitle.create(myChange.getBeforeRevision(), (String)myChangeContext.get(
-                                                             DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE)),
-                                                           RevisionWithTitle.create(myChange.getAfterRevision(), (String)myChangeContext.get(
-                                                             DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE))
+    return DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, myChange,
+                                                           (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
+                                                           (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
     );
   }
 

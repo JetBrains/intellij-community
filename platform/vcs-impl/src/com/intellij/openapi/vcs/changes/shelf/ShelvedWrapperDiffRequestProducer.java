@@ -116,10 +116,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     DiffRequest request = createTextShelveRequest(title, patch, contextFilePath, leftTitle, rightTitle, commitContext);
 
     Change change = shelvedChange.getChange();
-    List<DiffEditorTitleCustomizer> titleCustomizers =
-      DiffTitleFilePathCustomizer.getTitleCustomizers(myProject,
-                                                      RevisionWithTitle.create(change.getBeforeRevision(), leftTitle),
-                                                      RevisionWithTitle.create(change.getAfterRevision(), rightTitle));
+    List<DiffEditorTitleCustomizer> titleCustomizers = DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, change, leftTitle, rightTitle);
     return DiffUtil.addTitleCustomizers(request, titleCustomizers);
   }
 

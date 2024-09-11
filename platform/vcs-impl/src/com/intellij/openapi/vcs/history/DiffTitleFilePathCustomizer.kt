@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
 /**
@@ -30,6 +30,10 @@ object DiffTitleFilePathCustomizer {
     getTitleCustomizer(beforeRevision, project),
     getTitleCustomizer(afterRevision, project, showPath = beforeRevision == null || beforeRevision.revision.file != afterRevision?.revision?.file),
   )
+
+  @JvmStatic
+  fun getTitleCustomizers(project: Project?, change: Change, tileBefore: String?, titleAfter: String?): List<DiffEditorTitleCustomizer> =
+    getTitleCustomizers(project, RevisionWithTitle.create(change.beforeRevision, tileBefore), RevisionWithTitle.create(change.afterRevision, titleAfter))
 
   @JvmStatic
   fun getTitleCustomizers(beforeFilePath: String?, afterFilePath: String?): List<DiffEditorTitleCustomizer> = listOf(

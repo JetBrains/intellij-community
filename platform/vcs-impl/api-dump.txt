@@ -3345,7 +3345,6 @@ f:com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory
 - s:createBadMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.changes.patch.AppliedTextPatch,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - s:createConflictDiffRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.diff.impl.patch.TextFilePatch,java.lang.String,com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts,java.lang.String):com.intellij.diff.requests.DiffRequest
 - s:createDiffRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.lang.String,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-- s:createDiffRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List):com.intellij.diff.requests.DiffRequest
 - s:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.lang.String,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - s:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 c:com.intellij.openapi.vcs.changes.patch.PatchFileType
@@ -5945,6 +5944,7 @@ f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
 - sf:EMPTY_CUSTOMIZER:com.intellij.diff.DiffEditorTitleCustomizer
 - sf:INSTANCE:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
 - sf:getTitleCustomizer(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.String):com.intellij.diff.DiffEditorTitleCustomizer
+- sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.lang.String,java.lang.String):java.util.List
 - sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
 - sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
 - sf:getTitleCustomizers(java.lang.String,java.lang.String):java.util.List

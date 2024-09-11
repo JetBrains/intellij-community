@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.chains.DiffRequestProducerException;
@@ -27,8 +28,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffRequest;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
@@ -77,37 +80,35 @@ public final class PatchDiffRequestFactory {
       String baseContent = texts.getBase();
       String patchedContent = texts.getPatched();
 
-      return createDiffRequest(project, file, Arrays.asList(localContent, baseContent, patchedContent), null,
+      return createDiffRequest(project, file, Arrays.asList(localContent, baseContent, patchedContent),
                                Arrays.asList(DiffBundle.message("merge.version.title.current"), DiffBundle.message("merge.version.title.base"),
                                              afterTitle));
     }
   }
 
   @NotNull
-  public static DiffRequest createDiffRequest(@Nullable Project project,
-                                              @Nullable VirtualFile file,
-                                              @NotNull List<String> contents,
-                                              @Nullable @NlsContexts.DialogTitle String windowTitle,
-                                              @NotNull List<@NlsContexts.Label String> titles) {
+  private static DiffRequest createDiffRequest(@Nullable Project project,
+                                               @NotNull VirtualFile file,
+                                               @NotNull List<String> contents,
+                                               @NotNull List<@NlsContexts.Label String> titles) {
     assert contents.size() == 3;
     assert titles.size() == 3;
-
-    if (windowTitle == null) windowTitle = getPatchTitle(file);
 
     String localTitle = StringUtil.notNullize(titles.get(0), VcsBundle.message("patch.apply.conflict.local.version"));
     String baseTitle = StringUtil.notNullize(titles.get(1), DiffBundle.message("merge.version.title.base"));
     String patchedTitle = StringUtil.notNullize(titles.get(2), VcsBundle.message("patch.apply.conflict.patched.version"));
 
-    FileType fileType = file != null ? file.getFileType() : null;
+    FileType fileType = file.getFileType();
 
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    DocumentContent localContent = file != null ? contentFactory.createDocument(project, file) : null;
+    DocumentContent localContent = contentFactory.createDocument(project, file);
     if (localContent == null) localContent = contentFactory.create(project, contents.get(0), fileType);
     DocumentContent baseContent = contentFactory.create(project, contents.get(1), fileType);
     DocumentContent patchedContent = contentFactory.create(project, contents.get(2), fileType);
 
-    return new SimpleDiffRequest(windowTitle, localContent, baseContent, patchedContent,
-                                 localTitle, baseTitle, patchedTitle);
+    SimpleDiffRequest request = new SimpleDiffRequest(null, localContent, baseContent, patchedContent,
+                                                      localTitle, baseTitle, patchedTitle);
+    return DiffUtil.addTitleCustomizers(request, get3WayDiffCustomizers(project, file, baseTitle));
   }
 
   @NotNull
@@ -126,7 +127,18 @@ public final class PatchDiffRequestFactory {
 
     DocumentContent resultContent = DiffContentFactory.getInstance().createDocument(project, file);
     if (resultContent == null) resultContent = DiffContentFactory.getInstance().create(project, localContent, file);
-    return new ApplyPatchDiffRequest(resultContent, textPatch, localContent, windowTitle, localTitle, resultTitle, patchTitle);
+    DiffRequest request =
+      new ApplyPatchDiffRequest(resultContent, textPatch, localContent, windowTitle, localTitle, resultTitle, patchTitle);
+
+    return DiffUtil.addTitleCustomizers(request, get3WayDiffCustomizers(project, file, resultTitle));
+  }
+
+  private static @NotNull List<DiffEditorTitleCustomizer> get3WayDiffCustomizers(Project project, VirtualFile file, String centerTitle) {
+    return Arrays.asList(
+      DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER,
+      DiffTitleFilePathCustomizer.getTitleCustomizer(project, VcsUtil.getFilePath(file), centerTitle),
+      DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER
+    );
   }
 
   @NotNull
