@@ -48,7 +48,7 @@ final class SyntheticLibraryDescriptor {
                                      @NotNull Set<VirtualFile> sourceRoots,
                                      @NotNull Set<VirtualFile> binaryRoots,
                                      @NotNull Set<VirtualFile> excludedRoots,
-                                     @Nullable Condition<VirtualFile> excludeFileCondition) {
+                                     @Nullable Condition<? super VirtualFile> excludeFileCondition) {
     this.provider = provider;
     this.providerClass = provider.getClass();
     this.comparisonId = library.getComparisonId();

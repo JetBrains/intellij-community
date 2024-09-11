@@ -148,7 +148,7 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
           continue;
         }
 
-        Condition<VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
+        Condition<? super VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
         if (excludeFileCondition == null || !excludeFileCondition.value(vFile)) {
           return library;
         }
