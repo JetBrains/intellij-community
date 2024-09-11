@@ -129,22 +129,22 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
       val sourceHashAndName = sourceHashes[destRecord.fileLowerCase]
 
       if (sourceHashAndName != null) {
-        if (sourceHashAndName.hash == destRecord.hash) {
-          sourceHashes.remove(destRecord.fileLowerCase)
-        } else {
-          destFilesToRemove.add(destRecord.file)
+        if (sourceHashAndName.hash != destRecord.hash) {
+          filesToCopy.add(sourceHashAndName.file)
         }
-      } else {
-        if (!retainUnmatchedFiles) {
-          destFilesToRemove.add(destRecord.file)
-        }
+        sourceHashes.remove(destRecord.fileLowerCase)
+      } else if (!retainUnmatchedFiles) {
+        destFilesToRemove.add(destRecord.file)
       }
     }
 
+    // Add remaining files from source that don't exist in dest
     filesToCopy.addAll(sourceHashes.values.map { it.file })
-    copyFilesInParallel(filesToCopy)
 
-    if (!retainUnmatchedFiles) { dest.removeFiles(destFilesToRemove) }
+    copyFilesInParallel(filesToCopy)
+    if (!retainUnmatchedFiles) {
+      dest.removeFiles(destFilesToRemove)
+    }
 
     syncLinks(sourceSyncData.links, destSyncData.links)
     syncStubs(sourceSyncData.stubs, destSyncData.stubs)
