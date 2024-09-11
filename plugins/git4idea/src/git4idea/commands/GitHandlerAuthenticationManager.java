@@ -223,9 +223,13 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private boolean shouldUseBatchScript(@NotNull GitExecutable executable) {
     if (!SystemInfo.isWindows) return false;
     if (!executable.isLocal()) return false;
-    if (Registry.is("git.use.shell.script.on.windows") &&
-        GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion)) {
-      return isCustomSshExecutableConfigured();
+
+    String optionValue = Registry.get("git.windows.callback.script.type").asString();
+    if ("bat".equals(optionValue)) return true;
+    if ("sh".equals(optionValue)) return false;
+
+    if (GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion)) {
+      return isCustomSshExecutableConfigured(); // OpenSSH.exe may not support shell scripts
     }
     return true;
   }

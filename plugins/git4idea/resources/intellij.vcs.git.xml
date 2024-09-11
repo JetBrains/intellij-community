@@ -565,8 +565,8 @@
                               Set to -2 to start as many threads, as there are repositories in the project.\n
                               Set to -3 to start as many threads, as there are repositories, but not more than 2 * number of cores.\n
                               By default, SSH supports up to 10 multiplexed connections, thus number of threads will be limited by 10 despite this value."/>
-    <registryKey key="git.use.shell.script.on.windows" defaultValue="true"
-                 description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS."/>
+    <registryKey key="git.windows.callback.script.type" defaultValue="auto"
+                 description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS. Allowed values are: 'sh', 'bat', 'auto'"/>
     <registryKey key="git.use.setsid.for.native.ssh" defaultValue="true"
                  description="Wrap 'git' process with 'setsid' for remote operations.
                               This fixes issue with SSH_ASKPASS if IDE is executed from terminal or under DM/WM that pass system TTY from Xorg to GUI applications. IDEA-201054"/>
