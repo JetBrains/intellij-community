@@ -247,6 +247,7 @@ object KotlinPluginBuilder {
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
     "kotlinc.compose-compiler-plugin",
+    "kotlinc.js-plain-objects-compiler-plugin",
   )
 
   fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
