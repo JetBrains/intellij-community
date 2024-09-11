@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
+import com.jetbrains.extensions.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
@@ -272,18 +273,18 @@ internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associ
 
 fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Result<Sdk> {
   if (!sdkSeemsValid) {
-    return Result.failure(Throwable("sdk is not valid"))
+    return failure("sdk is not valid")
   }
 
   val homePath = this.homePath
   if (homePath == null) {
     // e.g. directory is not there anymore
-    return Result.failure(Throwable("homePath is null"))
+    return failure("homePath is null")
   }
 
   val homeDir = this.homeDirectory
   if (homeDir == null) {
-    return Result.failure(Throwable("homeDir is null"))
+    return failure("homeDir is null")
   }
 
   val suggestedName = if (doAssociate) {

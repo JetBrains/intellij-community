@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyEnvTestSettings
+import com.jetbrains.extensions.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.VirtualEnvReader
@@ -42,7 +43,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
            VirtualEnvReader.Instance.findPythonInPythonRoot(envDir)
           ?: error("Can't find python binary in $envDir"), envDir)) // This is a misconfiguration, hence an error
       }
-    ?: Result.failure(Throwable("No python found. See ${PyEnvTestSettings::class} class for more info"))
+    ?: failure("No python found. See ${PyEnvTestSettings::class} class for more info")
 
 
   protected abstract suspend fun pythonPathToEnvironment(pythonBinary: PathToPythonBinary, envDir: Path): Pair<T, AutoCloseable>

@@ -29,6 +29,7 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.jetbrains.extensions.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
@@ -59,7 +60,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     val data = askForEnvData(module, existingSdks, source)
     if (data == null) {
-      return Result.failure(Throwable("askForEnvData is null"))
+      return failure("askForEnvData is null")
     }
 
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = data
