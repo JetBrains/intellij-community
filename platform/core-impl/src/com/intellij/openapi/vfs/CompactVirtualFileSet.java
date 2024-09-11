@@ -116,9 +116,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public boolean add(@NotNull VirtualFile file) {
-    if (frozen) {
-      throw new UnsupportedOperationException();
-    }
+    assertNotFrozen();
     boolean added;
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
@@ -171,9 +169,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public boolean remove(Object o) {
-    if (frozen) {
-      throw new IllegalStateException();
-    }
+    assertNotFrozen();
 
     if (weirdFiles.remove(o)) {
       return true;
@@ -193,6 +189,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public void clear() {
+    assertNotFrozen();
     weirdFiles.clear();
     idSet = null;
     fileIds = null;
@@ -251,9 +248,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public boolean retainAll(@NotNull Collection<?> c) {
-    if (frozen) {
-      throw new IllegalStateException();
-    }
+    assertNotFrozen();
     if (c instanceof CompactVirtualFileSet) {
       boolean modified = false;
       IntSet specifiedIdSet = ((CompactVirtualFileSet)c).idSet;
@@ -300,11 +295,15 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     }
   }
 
+  private void assertNotFrozen() {
+    if (frozen) {
+      throw new IllegalStateException("Must not mutate the set after freeze() was called");
+    }
+  }
+
   @Override
   public boolean addAll(@NotNull Collection<? extends VirtualFile> c) {
-    if (frozen) {
-      throw new IllegalStateException();
-    }
+    assertNotFrozen();
     if (c instanceof CompactVirtualFileSet) {
       boolean modified = false;
       CompactVirtualFileSet setToAdd = (CompactVirtualFileSet)c;

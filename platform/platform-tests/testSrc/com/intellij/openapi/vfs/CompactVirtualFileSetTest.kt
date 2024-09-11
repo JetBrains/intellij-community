@@ -3,8 +3,7 @@ package com.intellij.openapi.vfs
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
@@ -231,6 +230,15 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     return set as CompactVirtualFileSet
   }
 
-  private fun createFile(): VirtualFile =
-    tempDir.newVirtualFile("file${counter.incrementAndGet()}.txt")
+  private fun createFile(): VirtualFile = tempDir.newVirtualFile("file${counter.incrementAndGet()}.txt")
+
+  @Test
+  fun testFrozenMustNotBeModifiable() {
+    val set = VfsUtilCore.createCompactVirtualFileSet().freezed()
+    assertThrows(IllegalStateException::class.java) { set.clear() }
+    assertThrows(IllegalStateException::class.java) { set.add(createFile()) }
+    assertThrows(IllegalStateException::class.java) { set.remove(createFile()) }
+    assertThrows(IllegalStateException::class.java) { set.addAll(listOf(createFile (), createFile())) }
+    assertThrows(IllegalStateException::class.java) { set.retainAll(listOf(createFile (), createFile())) }
+  }
 }
