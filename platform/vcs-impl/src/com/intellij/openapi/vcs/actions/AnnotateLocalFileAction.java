@@ -84,7 +84,7 @@ public final class AnnotateLocalFileAction {
     }
     else {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null && !Objects.equals(editor.getVirtualFile(), selectedFile)) {
+      if (editor != null && !VcsAnnotateUtil.isEditorForFile(editor, selectedFile)) {
         editor = null;
       }
 
