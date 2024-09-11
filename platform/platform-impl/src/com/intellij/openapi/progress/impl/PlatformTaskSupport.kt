@@ -27,13 +27,22 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.LocalProjectEntity
+import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.asProjectOrNull
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
+import com.jetbrains.rhizomedb.entities
+import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
+import fleet.kernel.rete.first
+import fleet.kernel.rete.queryNotNull
+import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -41,6 +50,7 @@ import java.awt.*
 import java.io.Closeable
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
+import kotlin.collections.singleOrNull
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -60,6 +70,54 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   private val isRhizomeProgressEnabled
     get() = Registry.`is`("rhizome.progress")
+
+  init {
+    cs.launch {
+      withContext(KernelService.instance.kernelCoroutineContext.await()) {
+        collectActiveTasks()
+      }
+    }
+  }
+
+  private suspend fun collectActiveTasks() {
+    activeTasks.collect { task ->
+      if (!isRhizomeProgressEnabled) return@collect
+
+      cs.launch {
+        withKernel {
+          tryWithEntities(task) {
+            val project = task.projectEntity.waitForProject()
+            showIndicator(
+              project,
+              taskCancellingIndicator(this, task),
+              taskInfo(task.title, task.cancellation),
+              task.updates.asValuesFlow()
+            )
+          }
+        }
+      }
+    }
+  }
+
+  private suspend fun ProjectEntity.waitForProject(): Project {
+    val project = asProjectOrNull()
+    if (project != null) return project
+
+    /*
+    Some tasks are created very early on project opening (e.g., updating indexes)
+    It might happen that `TaskInfoEntity` is received earlier than a corresponding project on fronted is opened,
+    because `PlatformTaskSupport` is an application level service.
+    In this case, we should wait till `LocalProjectEntity` is created (which means that the project is open).
+
+    This is a temporary solution, ideally the status bar should subscribe on `TaskInfoEntity`.
+    This way we won't have to wait for `LocalProjectEntity`
+    because we can be sure that a project is already created (status bar belongs to a project)
+    */
+    val localProjectEntity = queryNotNull {
+      entities(LocalProjectEntity.ProjectEntityValue, this).singleOrNull()
+    }
+    return localProjectEntity.first().project
+  }
 
   private suspend fun progressStarted(title: @ProgressTitle String, cancellation: TaskCancellation, updates: Flow<ProgressState>) {
     val context = coroutineContext
@@ -143,7 +201,8 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   ): T = coroutineScope {
     val taskJob = coroutineContext.job
     val pipe = cs.createProgressPipe()
-    val showIndicatorJob = cs.showIndicator(project, taskJob, taskInfo(title, cancellation), pipe.progressUpdates())
+    val indicator = coroutineCancellingIndicator(taskJob)
+    val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
     try {
       progressStarted(title, cancellation, pipe.progressUpdates())
       pipe.collectProgressUpdates(action)
@@ -249,14 +308,13 @@ private val progressManagerTracer by lazy {
 
 private fun CoroutineScope.showIndicator(
   project: Project,
-  taskJob: Job,
+  indicator: ProgressIndicatorEx,
   taskInfo: TaskInfo,
   stateFlow: Flow<ProgressState>,
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     withContext(progressManagerTracer.span("Progress: ${taskInfo.title}")) {
-      val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
       withContext(Dispatchers.EDT) {
         val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
         try {
@@ -278,6 +336,19 @@ private fun CoroutineScope.showIndicator(
       }
     }
   }
+}
+
+private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity): ProgressIndicatorEx {
+  val indicator = ProgressIndicatorBase()
+  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+    override fun cancel() {
+      cs.launch {
+        TaskManager.cancelTask(taskInfo)
+      }
+      super.cancel()
+    }
+  })
+  return indicator
 }
 
 /**
