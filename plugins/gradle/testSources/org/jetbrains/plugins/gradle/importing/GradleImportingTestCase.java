@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
@@ -75,10 +75,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -119,6 +116,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
     WriteAction.runAndWait(this::configureJdkTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
+    applyGradleVmOptions();
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestDisposable());
     setRegistryPropertyForTest("unknown.sdk.auto", "false");
@@ -159,6 +157,29 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     for (Sdk jdk : jdks) {
       ProjectJdkTable.getInstance().addJdk(jdk);
     }
+  }
+
+  protected void configureGradleVmOptions(@NotNull Set<String> options) {
+
+  }
+
+  private @NotNull Set<String> getGradleVmOptions() {
+    Set<String> options = new HashSet<>();
+    configureGradleVmOptions(options);
+    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
+      options.add("-Dorg.gradle.warning.mode=fail");
+    }
+    return options;
+  }
+
+  private void applyGradleVmOptions() {
+    GradleSystemSettings settings = GradleSystemSettings.getInstance();
+    String defaultVmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
+
+    Set<String> requiredVmOptions = getGradleVmOptions();
+    String effectiveVmOptions = String.format("%s %s", defaultVmOptions, Strings.join(requiredVmOptions, " ")).trim();
+
+    settings.setGradleVmOptions(effectiveVmOptions);
   }
 
   private Sdk createJdkFromJavaHome() {
@@ -308,9 +329,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       },
       () -> {
         deprecationError.set(null);
-        if (isGradleAtLeast("7.0")) {
-          GradleSystemSettings.getInstance().setGradleVmOptions("");
-        }
+        GradleSystemSettings.getInstance().setGradleVmOptions("");
       },
       () -> Disposer.dispose(getTestDisposable()),
       () -> super.tearDown()
@@ -367,16 +386,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
-    }
-    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
-      String failOnWarning = "-Dorg.gradle.warning.mode=fail";
-      String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
-      if (StringUtil.isEmpty(originalVmOptions)) {
-        GradleSystemSettings.getInstance().setGradleVmOptions(failOnWarning);
-      }
-      else {
-        GradleSystemSettings.getInstance().setGradleVmOptions("%s %s".formatted(originalVmOptions, failOnWarning));
-      }
     }
     super.importProject(config, skipIndexing);
     handleDeprecationError(deprecationError.get());
@@ -545,7 +554,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void enableGradleDebugWithSuspend() {
-    GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+    GradleSystemSettings settings = GradleSystemSettings.getInstance();
+    String options = String.format("%s %s",
+                                   Objects.requireNonNullElse(settings.getGradleVmOptions(), ""),
+                                   "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
+    );
+    settings.setGradleVmOptions(options);
   }
 
   protected Boolean isWarningsAllowed() {

@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assert
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -212,10 +211,13 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
         context.gradleJdkPath = File(findJdkPath())
+    }
 
-        // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
-        GradleSystemSettings.getInstance().gradleVmOptions =
-            "-XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
+    override fun configureGradleVmOptions(options: MutableSet<String>) {
+        super.configureGradleVmOptions(options)
+        options.add("-XX:MaxMetaspaceSize=1024m")
+        options.add("-XX:+HeapDumpOnOutOfMemoryError")
+        options.add("-XX:HeapDumpPath=${System.getProperty("user.dir")}")
     }
 
     override fun setUpFixtures() {

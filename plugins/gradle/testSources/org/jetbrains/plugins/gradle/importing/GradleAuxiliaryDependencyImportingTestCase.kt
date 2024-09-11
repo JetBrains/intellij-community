@@ -32,16 +32,19 @@ abstract class GradleAuxiliaryDependencyImportingTestCase : GradleImportingTestC
       .deleteRecursively()
 
     val gradleSystemSettings = GradleSystemSettings.getInstance()
-    gradleSystemSettings.gradleVmOptions = null
     gradleSystemSettings.isDownloadSources = settings.ideaDownloadSourcesValue
+  }
+
+  override fun configureGradleVmOptions(options: MutableSet<String>) {
+    super.configureGradleVmOptions(options)
     if (settings.forceDownloadSourcesFlagValue != null) {
-      gradleSystemSettings.gradleVmOptions = "-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceDownloadSourcesFlagValue}"
+      options.add("-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceDownloadSourcesFlagValue}")
     }
   }
 
   override fun tearDown() {
     runAll(
-      { GradleSystemSettings.getInstance().apply { isDownloadSources = false; gradleVmOptions = null } },
+      { GradleSystemSettings.getInstance().apply { isDownloadSources = false } },
       { super.tearDown() }
     )
   }

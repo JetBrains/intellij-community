@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assume
 
 class ExperimentalGradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDependencyImportingTest() {
@@ -16,12 +15,10 @@ class ExperimentalGradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDepend
       isGradleOlderThan("7.3")
     )
     super.setUp()
-    val gradleSettings = GradleSystemSettings.getInstance()
-    if (gradleSettings.gradleVmOptions == null) {
-      gradleSettings.gradleVmOptions = EXPERIMENTAL_RESOLVER_PROPERTY_KEY
-    }
-    else {
-      gradleSettings.gradleVmOptions += " $EXPERIMENTAL_RESOLVER_PROPERTY_KEY"
-    }
+  }
+
+  override fun configureGradleVmOptions(options: MutableSet<String>) {
+    super.configureGradleVmOptions(options)
+    options.add(EXPERIMENTAL_RESOLVER_PROPERTY_KEY)
   }
 }
