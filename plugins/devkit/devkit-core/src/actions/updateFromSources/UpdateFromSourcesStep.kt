@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
@@ -25,14 +23,12 @@ internal class UpdateFromSourcesStep: StepOption {
       onSuccess()
       return
     }
-    updateFromSources(project, ::beforeRestart, { Notification("Update from Sources", it, NotificationType.ERROR) }, true)
+    updateFromSources(project, ::beforeRestart, restartAutomatically = true)
   }
 
   override fun isAvailable(project: Project) = IntelliJProjectUtil.isIntelliJPlatformProject(project)
 
-  override fun getDetailsComponent(project: Project): JComponent {
-    return panel {
-      optionsPanel(project, UpdateFromSourcesSettings.getState()).apply { childComponent.setMinimumAndPreferredWidth(-1) }
-    }
+  override fun getDetailsComponent(project: Project): JComponent = panel {
+    optionsPanel(project, UpdateFromSourcesSettings.getState()).apply { childComponent.setMinimumAndPreferredWidth(-1) }
   }
 }
