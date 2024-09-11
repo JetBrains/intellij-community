@@ -24,7 +24,7 @@ object ApplicabilityRange {
 
     inline fun <E : PsiElement> multiple(
         element: E,
-        function: (E) -> List<PsiElement?>,
-    ): List<TextRange> = function(element).mapNotNull { it?.textRangeIn(element) }
+        function: (E) -> List<PsiElement>,
+    ): List<TextRange> = function(element).map { it.textRangeIn(element) }
 }
 

@@ -62,12 +62,13 @@ internal class UseExpressionBodyInspection :
         return ApplicabilityRange.multiple(element) { declaration: KtDeclarationWithBody ->
             val bodyBlockExpression = declaration.bodyBlockExpression
             val toHighlightElement = bodyBlockExpression?.statements?.singleOrNull()?.toHighlight()
-
-            if (toHighlightElement == null) {
+            val rangeElements = if (toHighlightElement == null) {
                 listOf(bodyBlockExpression)
             } else {
                 listOf(toHighlightElement, bodyBlockExpression.lBrace)
             }
+
+            rangeElements.filterNotNull()
         }
     }
 
