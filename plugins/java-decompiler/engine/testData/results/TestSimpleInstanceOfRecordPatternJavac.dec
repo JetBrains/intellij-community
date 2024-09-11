@@ -115,6 +115,13 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }
 
    static record R(Object o) {
+      R(Object o) {
+         this.o = o;
+      }
+
+      public Object o() {
+         return this.o;// 113
+      }
    }
 }
 
@@ -564,6 +571,25 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
    }
 }
 
+class 'pkg/TestSimpleInstanceOfRecordPatternJavac$R' {
+   method '<init> (Ljava/lang/Object;)V' {
+      4      118
+      5      118
+      6      118
+      7      118
+      8      118
+      9      119
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      0      122
+      1      122
+      2      122
+      3      122
+      4      122
+   }
+}
+
 Lines mapping:
 6 <-> 5
 9 <-> 13
@@ -622,6 +648,7 @@ Lines mapping:
 106 <-> 109
 108 <-> 109
 110 <-> 110
+113 <-> 123
 Not mapped:
 13
 25

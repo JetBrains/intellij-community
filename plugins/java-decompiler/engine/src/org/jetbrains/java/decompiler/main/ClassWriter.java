@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -29,6 +30,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -354,12 +356,18 @@ public class ClassWriter {
         }
       }
 
+      boolean hideConstructorAndGetters = DecompilerContext.getOption(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS);
+      if (!hideConstructorAndGetters) return false;
       // Default getters
       for (StructRecordComponent rec : cl.getRecordComponents()) {
         if (name.equals(rec.getName()) && descriptor.equals("()" + rec.getDescriptor())) {
           if (code.countLines() == 1) {
             String str = code.toString().trim();
-            return str.equals("return this." + mt.getName() + ';');
+            Set<AnnotationExprent> methodAnnotations = collectAllAnnotations(mt);
+            Set<AnnotationExprent> fieldAnnotations = collectAllAnnotations(rec);
+            if (fieldAnnotations.containsAll(methodAnnotations)) {
+              return str.equals("return this." + mt.getName() + ';');
+            }
           } else {
             return false;
           }
@@ -367,6 +375,27 @@ public class ClassWriter {
       }
     }
     return false;
+  }
+
+  @NotNull
+  private static Set<AnnotationExprent> collectAllAnnotations(@Nullable StructMember mt) {
+    Set<AnnotationExprent> result = new HashSet<>();
+    if (mt == null) {
+      return result;
+    }
+    for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.ANNOTATION_ATTRIBUTES) {
+      StructAnnotationAttribute attribute = (StructAnnotationAttribute)mt.getAttribute(key);
+      if (attribute != null) {
+        for (AnnotationExprent annotation : attribute.getAnnotations()) {
+          if (mt.memberAnnCollidesWithTypeAnnotation(annotation)) continue;
+          result.add(annotation);
+        }
+      }
+    }
+    for (TypeAnnotation annotation : TypeAnnotation.listFrom(mt)) {
+      result.add(annotation.getAnnotationExpr());
+    }
+    return result;
   }
 
   private void writeClassDefinition(ClassNode node, TextBuffer buffer, int indent) {
@@ -755,7 +784,8 @@ public class ClassWriter {
           String desc = buf.append(")V").toString();
           if (desc.equals(mt.getDescriptor())) {
             boolean[] found = new boolean[1];
-            compact = methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
+            boolean hideConstructorAndGetters = DecompilerContext.getOption(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS);
+            compact = hideConstructorAndGetters && methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
               if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
                 AssignmentExprent assignment = (AssignmentExprent)exprent;
                 if (assignment.getLeft() != null && assignment.getRight() != null &&
@@ -777,6 +807,10 @@ public class ClassWriter {
                   if (entry.myName == null || !entry.myName.equals(((VarExprent)assignment.getRight()).getName())) {
                     return 1;
                   }
+                  Set<AnnotationExprent> recordComponentAnnotations = collectAllAnnotations(cl.getRecordComponents().get(index));
+                  VarType parameterType = descriptor != null ? descriptor.parameterTypes.get(index) : md.params[index];
+                  List<AnnotationExprent> paramAnnotations = collectParameterAnnotations(mt, parameterType, index);
+                  if (!recordComponentAnnotations.containsAll(paramAnnotations)) return 1;
                   found[0] = true;
 
                   return 0;
@@ -879,6 +913,11 @@ public class ClassWriter {
             if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
                 DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
               typeName = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT, TypeAnnotationWriteHelper.create(typeParamAnnotations));
+            }
+            //workaround to send to usages
+            VarType type = methodWrapper.varproc.getVarType(pair);
+            if (parameterType instanceof GenericType && (type == null || type.equals(VarType.VARTYPE_OBJECT))) {
+              methodWrapper.varproc.setVarType(pair, parameterType);
             }
             buffer.append(typeName);
             if (isVarArg) {
@@ -990,6 +1029,25 @@ public class ClassWriter {
     //tracer.setCurrentSourceLine(buffer.countLines(start_index_method));
 
     return !hideMethod;
+  }
+
+  @NotNull
+  private static List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
+    List<AnnotationExprent> result = new ArrayList<>();
+    if (mt == null || type == null) return result;
+    for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
+      StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
+      if (attribute != null) {
+        List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
+        if (param < annotations.size()) {
+          for (AnnotationExprent annotation : annotations.get(param)) {
+            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, type, param)) continue;
+            result.add(annotation);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   private static boolean isVarArgRecord(StructClass cl) {
@@ -1280,18 +1338,10 @@ public class ClassWriter {
   }
 
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, @NotNull Type type, int param) {
-    for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
-      StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
-      if (attribute != null) {
-        List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
-        if (param < annotations.size()) {
-          for (AnnotationExprent annotation : annotations.get(param)) {
-            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, type, param)) continue;
-            String text = annotation.toJava(-1, BytecodeMappingTracer.DUMMY).toString();
-            buffer.append(text).append(' ');
-          }
-        }
-      }
+    List<AnnotationExprent> exprents = collectParameterAnnotations(mt, type, param);
+    for (AnnotationExprent annotation : exprents) {
+      String text = annotation.toJava(-1, BytecodeMappingTracer.DUMMY).toString();
+      buffer.append(text).append(' ');
     }
   }
 

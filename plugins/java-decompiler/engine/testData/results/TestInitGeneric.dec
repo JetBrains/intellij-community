@@ -7,28 +7,28 @@ public class TestInitGeneric<T> {
    }// 10
 
    public T test() {
-      return (T)null;// 13
+      return null;// 13
    }
 
    class A<T> {
       public T test() {
-         return (T)null;// 18
+         return null;// 18
       }
    }
 
    class B<L extends T> {
       public L test() {
-         return (L)null;// 24
+         return null;// 24
       }
 
       public <AA extends CharSequence> AA test2() {
-         return (AA)null;// 28
+         return null;// 28
       }
    }
 
    static class C<L extends CharSequence, K> {
       public K test(List<? super L> list) {
-         return (K)null;// 34
+         return null;// 34
       }
 
       public L test2(List<? extends L> list) {

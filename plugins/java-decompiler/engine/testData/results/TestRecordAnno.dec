@@ -1,5 +1,52 @@
 package records;
 
 public record TestRecordAnno(@RC @TA int x, int y) {
+   public TestRecordAnno(@TA int x, @P int y) {
+      this.x = x;
+      this.y = y;
+   }
+
+   public @TA int x() {
+      return this.x;
+   }
+
+   @M
+   public int y() {
+      return this.y;// 5
+   }
 }
 
+class 'records/TestRecordAnno' {
+   method '<init> (II)V' {
+      4      4
+      5      4
+      6      4
+      7      4
+      8      4
+      9      5
+      a      5
+      b      5
+      c      5
+      d      5
+      e      6
+   }
+
+   method 'x ()I' {
+      0      9
+      1      9
+      2      9
+      3      9
+      4      9
+   }
+
+   method 'y ()I' {
+      0      14
+      1      14
+      2      14
+      3      14
+      4      14
+   }
+}
+
+Lines mapping:
+5 <-> 15

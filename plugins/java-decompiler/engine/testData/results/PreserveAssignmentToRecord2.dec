@@ -7,6 +7,10 @@ public record PreserveAssignmentToRecord2(int x) {
       this.x = 1;// 7
       System.out.println("1");// 8
    }// 9
+
+   public int x() {
+      return this.x;// 3
+   }
 }
 
 class 'org/example/PreserveAssignmentToRecord2' {
@@ -26,9 +30,18 @@ class 'org/example/PreserveAssignmentToRecord2' {
       10      7
       11      8
    }
+
+   method 'x ()I' {
+      0      11
+      1      11
+      2      11
+      3      11
+      4      11
+   }
 }
 
 Lines mapping:
+3 <-> 12
 7 <-> 7
 8 <-> 8
 9 <-> 9

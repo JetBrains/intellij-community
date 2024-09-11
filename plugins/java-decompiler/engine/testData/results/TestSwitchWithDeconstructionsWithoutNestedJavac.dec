@@ -79,6 +79,18 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
    }// 64
 
    static record R1(Object o, Object o2) {
+      R1(Object o, Object o2) {
+         this.o = o;
+         this.o2 = o2;
+      }
+
+      public Object o() {
+         return this.o;
+      }
+
+      public Object o2() {
+         return this.o2;// 8
+      }
    }
 }
 
@@ -394,8 +406,41 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
    }
 }
 
+class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac$R1' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      4      82
+      5      82
+      6      82
+      7      82
+      8      82
+      9      83
+      a      83
+      b      83
+      c      83
+      d      83
+      e      84
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      0      87
+      1      87
+      2      87
+      3      87
+      4      87
+   }
+
+   method 'o2 ()Ljava/lang/Object;' {
+      0      91
+      1      91
+      2      91
+      3      91
+      4      91
+   }
+}
+
 Lines mapping:
 6 <-> 5
+8 <-> 92
 13 <-> 8
 14 <-> 20
 15 <-> 10

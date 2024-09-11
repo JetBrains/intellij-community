@@ -5,6 +5,14 @@ public record PreserveAssignmentToRecord(int x, int y) {
       this.x = 52122221;// 5
       this.y = 52122223;// 6
    }// 7
+
+   public int x() {
+      return this.x;
+   }
+
+   public int y() {
+      return this.y;// 3
+   }
 }
 
 class 'org/example/PreserveAssignmentToRecord' {
@@ -23,9 +31,26 @@ class 'org/example/PreserveAssignmentToRecord' {
       f      5
       10      6
    }
+
+   method 'x ()I' {
+      0      9
+      1      9
+      2      9
+      3      9
+      4      9
+   }
+
+   method 'y ()I' {
+      0      13
+      1      13
+      2      13
+      3      13
+      4      13
+   }
 }
 
 Lines mapping:
+3 <-> 14
 5 <-> 5
 6 <-> 6
 7 <-> 7

@@ -245,6 +245,8 @@ private fun getOptions(): Map<String, Any> {
     IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
     IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "1",
     IFernflowerPreferences.CONVERT_RECORD_PATTERN to "1",
+    IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS to "0", //must be 0. Otherwise there are problems with mirroring
+    IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE to "0", //must be 0. Otherwise it doesn't work in idea
     //IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0"
   )
 }

@@ -199,7 +199,7 @@ public class o {
    public <E extends Enum<E>> E a(Class<E> var1) {
       try {
          if (this.a == null) {
-            return (E)null;
+            return null;
          }
       } catch (Exception var4) {
          throw var4;
@@ -216,7 +216,7 @@ public class o {
       try {
          return (E)Enum.valueOf(var1, String.valueOf(this.a));
       } catch (Exception var3) {
-         return (E)null;
+         return null;
       }
    }
 

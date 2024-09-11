@@ -42,7 +42,7 @@ public class b<K, V> {
    }
 
    public void a(V var1) {
-      this.e = (V)var1;
+      this.e = var1;
    }
 
    public b(K var1, V var2, long var3, long var5) {
@@ -51,12 +51,12 @@ public class b<K, V> {
       this.a = new ah();
       this.b = 0L;
       this.c = 0L;
-      this.d = (K)var1;
+      this.d = var1;
       this.f = var3;
       this.g = var5;
       this.c = System.currentTimeMillis();
       this.b = this.c;
-      this.e = (V)var2;
+      this.e = var2;
       if (ap.c != 0) {
          boolean var10000;
          label18: {

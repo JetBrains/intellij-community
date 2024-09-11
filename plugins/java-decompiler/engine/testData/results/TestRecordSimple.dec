@@ -1,5 +1,51 @@
 package records;
 
 public record TestRecordSimple(int x, int y) {
+   public TestRecordSimple(int x, int y) {
+      this.x = x;
+      this.y = y;
+   }
+
+   public int x() {
+      return this.x;
+   }
+
+   public int y() {
+      return this.y;// 3
+   }
 }
 
+class 'records/TestRecordSimple' {
+   method '<init> (II)V' {
+      4      4
+      5      4
+      6      4
+      7      4
+      8      4
+      9      5
+      a      5
+      b      5
+      c      5
+      d      5
+      e      6
+   }
+
+   method 'x ()I' {
+      0      9
+      1      9
+      2      9
+      3      9
+      4      9
+   }
+
+   method 'y ()I' {
+      0      13
+      1      13
+      2      13
+      3      13
+      4      13
+   }
+}
+
+Lines mapping:
+3 <-> 14

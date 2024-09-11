@@ -2,17 +2,37 @@ package pkg;
 
 public class TestCustomSyntheticRecords {
    public static record CustomGetter(String a, String a22) {
+      public CustomGetter(String a, String a22) {
+         this.a = a;
+         this.a22 = a22;
+      }
+
       public String a() {
          return this.a + "1";// 9
+      }
+
+      public String a22() {
+         return this.a22;// 6
       }
    }
 
    public static record CustomCompactConstructor(String a, String a22) {
-      public CustomCompactConstructor {
+      public CustomCompactConstructor(String a, String a22) {
          if (a.equals("a")) {// 15
             throw new AssertionError();// 16
+         } else {
+            this.a = a;// 14
+            this.a22 = a22;
          }
       }// 18
+
+      public String a() {
+         return this.a;
+      }
+
+      public String a22() {
+         return this.a22;// 13
+      }
    }
 
    public static record CustomFullConstructor(String a, String a22) {
@@ -20,62 +40,137 @@ public class TestCustomSyntheticRecords {
          this.a = a;// 22
          this.a22 = a;// 23
       }// 24
+
+      public String a() {
+         return this.a;
+      }
+
+      public String a22() {
+         return this.a22;// 20
+      }
    }
 }
 
 class 'pkg/TestCustomSyntheticRecords$CustomGetter' {
-   method 'a ()Ljava/lang/String;' {
-      0      5
-      1      5
-      2      5
-      3      5
+   method '<init> (Ljava/lang/String;Ljava/lang/String;)V' {
       4      5
       5      5
       6      5
       7      5
       8      5
-      9      5
+      9      6
+      a      6
+      b      6
+      c      6
+      d      6
+      e      7
+   }
+
+   method 'a ()Ljava/lang/String;' {
+      0      10
+      1      10
+      2      10
+      3      10
+      4      10
+      5      10
+      6      10
+      7      10
+      8      10
+      9      10
+   }
+
+   method 'a22 ()Ljava/lang/String;' {
+      0      14
+      1      14
+      2      14
+      3      14
+      4      14
    }
 }
 
 class 'pkg/TestCustomSyntheticRecords$CustomCompactConstructor' {
    method '<init> (Ljava/lang/String;Ljava/lang/String;)V' {
-      4      11
-      5      11
-      6      11
-      7      11
-      8      11
-      9      11
-      a      11
-      14      12
-      1f      14
+      4      20
+      5      20
+      6      20
+      7      20
+      8      20
+      9      20
+      a      20
+      14      21
+      15      23
+      16      23
+      17      23
+      18      23
+      19      23
+      1a      24
+      1b      24
+      1c      24
+      1d      24
+      1e      24
+      1f      26
+   }
+
+   method 'a ()Ljava/lang/String;' {
+      0      29
+      1      29
+      2      29
+      3      29
+      4      29
+   }
+
+   method 'a22 ()Ljava/lang/String;' {
+      0      33
+      1      33
+      2      33
+      3      33
+      4      33
    }
 }
 
 class 'pkg/TestCustomSyntheticRecords$CustomFullConstructor' {
    method '<init> (Ljava/lang/String;Ljava/lang/String;)V' {
-      4      19
-      5      19
-      6      19
-      7      19
-      8      19
-      9      20
-      a      20
-      b      20
-      c      20
-      d      20
-      e      21
+      4      39
+      5      39
+      6      39
+      7      39
+      8      39
+      9      40
+      a      40
+      b      40
+      c      40
+      d      40
+      e      41
+   }
+
+   method 'a ()Ljava/lang/String;' {
+      0      44
+      1      44
+      2      44
+      3      44
+      4      44
+   }
+
+   method 'a22 ()Ljava/lang/String;' {
+      0      48
+      1      48
+      2      48
+      3      48
+      4      48
    }
 }
 
 Lines mapping:
-9 <-> 6
-15 <-> 12
-16 <-> 13
-18 <-> 15
-22 <-> 20
-23 <-> 21
-24 <-> 22
+6 <-> 15
+9 <-> 11
+13 <-> 34
+14 <-> 24
+15 <-> 21
+16 <-> 22
+18 <-> 27
+20 <-> 49
+22 <-> 40
+23 <-> 41
+24 <-> 42
 Not mapped:
-14
 21

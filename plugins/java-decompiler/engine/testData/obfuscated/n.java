@@ -15,12 +15,12 @@ public class n<F, S> {
    }
 
    public n(F var1) {
-      this.a = (F)var1;
+      this.a = var1;
    }
 
    public n(F var1, S var2) {
-      this.a = (F)var1;
-      this.b = (S)var2;
+      this.a = var1;
+      this.b = var2;
    }
 
    public F a() {
@@ -28,7 +28,7 @@ public class n<F, S> {
    }
 
    public void a(F var1) {
-      this.a = (F)var1;
+      this.a = var1;
    }
 
    public S b() {
@@ -36,7 +36,7 @@ public class n<F, S> {
    }
 
    public void b(S var1) {
-      this.b = (S)var1;
+      this.b = var1;
    }
 
    public boolean equals(Object param1) {

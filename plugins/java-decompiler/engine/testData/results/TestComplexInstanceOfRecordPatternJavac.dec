@@ -54,9 +54,28 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 41
 
    static record R(Object o) {
+      R(Object o) {
+         this.o = o;
+      }
+
+      public Object o() {
+         return this.o;// 53
+      }
    }
 
    static record R2(Object o1, Object o2) {
+      R2(Object o1, Object o2) {
+         this.o1 = o1;
+         this.o2 = o2;
+      }
+
+      public Object o1() {
+         return this.o1;
+      }
+
+      public Object o2() {
+         return this.o2;// 56
+      }
    }
 }
 
@@ -313,6 +332,57 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
    }
 }
 
+class 'pkg/TestComplexInstanceOfRecordPatternJavac$R' {
+   method '<init> (Ljava/lang/Object;)V' {
+      4      57
+      5      57
+      6      57
+      7      57
+      8      57
+      9      58
+   }
+
+   method 'o ()Ljava/lang/Object;' {
+      0      61
+      1      61
+      2      61
+      3      61
+      4      61
+   }
+}
+
+class 'pkg/TestComplexInstanceOfRecordPatternJavac$R2' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      4      67
+      5      67
+      6      67
+      7      67
+      8      67
+      9      68
+      a      68
+      b      68
+      c      68
+      d      68
+      e      69
+   }
+
+   method 'o1 ()Ljava/lang/Object;' {
+      0      72
+      1      72
+      2      72
+      3      72
+      4      72
+   }
+
+   method 'o2 ()Ljava/lang/Object;' {
+      0      76
+      1      76
+      2      76
+      3      76
+      4      76
+   }
+}
+
 Lines mapping:
 6 <-> 5
 9 <-> 14
@@ -338,6 +408,8 @@ Lines mapping:
 46 <-> 48
 47 <-> 49
 50 <-> 53
+53 <-> 62
+56 <-> 77
 Not mapped:
 14
 22
