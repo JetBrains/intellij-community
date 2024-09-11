@@ -29,7 +29,7 @@ class InlineClassDeprecatedFix(
 
     override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation = Presentation.of(text)
 
-    override fun getFamilyName() = KotlinBundle.message("replace.modifier")
+    override fun getFamilyName(): String = KotlinBundle.message("replace.modifier")
 
     override fun invoke(
         actionContext: ActionContext,

@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 sealed class AddElseBranchFix<T : KtExpression>(element: T) : KotlinPsiOnlyQuickFixAction<T>(element) {
-    override fun getFamilyName() = KotlinBundle.message("fix.add.else.branch.when")
-    override fun getText() = familyName
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.else.branch.when")
+    override fun getText(): String = familyName
 
     abstract override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean
 

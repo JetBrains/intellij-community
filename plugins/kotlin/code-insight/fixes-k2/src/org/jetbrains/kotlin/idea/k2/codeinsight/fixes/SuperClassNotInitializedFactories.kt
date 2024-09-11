@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -89,6 +88,6 @@ internal object SuperClassNotInitializedFactories {
             }
         }
 
-        override fun getFamilyName() = KotlinBundle.message("change.to.constructor.invocation")
+        override fun getFamilyName(): String = KotlinBundle.message("change.to.constructor.invocation")
     }
 }

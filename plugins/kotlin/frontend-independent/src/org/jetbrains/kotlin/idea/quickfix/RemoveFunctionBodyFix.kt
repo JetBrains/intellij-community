@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 
 class RemoveFunctionBodyFix(element: KtFunction) : PsiUpdateModCommandAction<KtFunction>(element) {
-    override fun getFamilyName() = KotlinBundle.message("remove.function.body")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.function.body")
 
     override fun invoke(
         actionContext: ActionContext,

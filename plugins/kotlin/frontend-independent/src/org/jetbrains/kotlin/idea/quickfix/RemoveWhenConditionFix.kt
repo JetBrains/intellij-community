@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class RemoveWhenConditionFix private constructor(element: KtWhenCondition) : PsiUpdateModCommandAction<KtWhenCondition>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("remove.condition")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.condition")
 
     override fun invoke(
         actionContext: ActionContext,

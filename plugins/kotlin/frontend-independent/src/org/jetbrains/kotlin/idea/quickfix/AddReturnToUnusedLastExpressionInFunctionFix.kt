@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class AddReturnToUnusedLastExpressionInFunctionFix(element: KtElement) : KotlinQuickFixAction<KtElement>(element) {
 
-    override fun getText() = KotlinBundle.message("fix.add.return.before.expression")
-    override fun getFamilyName() = text
+    override fun getText(): String = KotlinBundle.message("fix.add.return.before.expression")
+    override fun getFamilyName(): String = text
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null
 

@@ -20,5 +20,5 @@ class RemoveNoConstructorFix(element: KtSuperTypeCallEntry) : PsiUpdateModComman
         element.replaced(superTypeEntry)
     }
 
-    override fun getFamilyName() = KotlinBundle.message("remove.constructor.call")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.constructor.call")
 }

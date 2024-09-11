@@ -22,9 +22,9 @@ class ReplaceInfixOrOperatorCallFix(
     private val binaryOperatorName: String = ""
 ) : KotlinPsiOnlyQuickFixAction<KtExpression>(element) {
 
-    override fun getText() = KotlinBundle.message("replace.with.safe.call")
+    override fun getText(): String = KotlinBundle.message("replace.with.safe.call")
 
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

@@ -19,13 +19,13 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 class RemoveWhenBranchFix(
     element: KtWhenEntry,
 ) : KotlinCrossLanguageQuickFixAction<KtWhenEntry>(element) {
-    override fun getFamilyName() = if (runReadAction { element?.isElse } == true) {
+    override fun getFamilyName(): String = if (runReadAction { element?.isElse } == true) {
         KotlinBundle.message("remove.else.branch")
     } else {
         KotlinBundle.message("remove.branch")
     }
 
-    override fun getText() = familyName
+    override fun getText(): String = familyName
 
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
         element?.delete()

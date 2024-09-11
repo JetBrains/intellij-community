@@ -44,7 +44,7 @@ class InlineTypeParameterFix(
         }
     }
 
-    override fun getFamilyName() = KotlinBundle.message("inline.type.parameter")
+    override fun getFamilyName(): String = KotlinBundle.message("inline.type.parameter")
 }
 
 data class InlineTypeParameterContext(

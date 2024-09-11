@@ -15,7 +15,7 @@ class ConvertLateinitPropertyToNotNullDelegateFix(
     private val type: String
 ) : PsiUpdateModCommandAction<KtProperty>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("convert.to.notnull.delegate")
+    override fun getFamilyName(): String = KotlinBundle.message("convert.to.notnull.delegate")
 
     override fun invoke(
         actionContext: ActionContext,

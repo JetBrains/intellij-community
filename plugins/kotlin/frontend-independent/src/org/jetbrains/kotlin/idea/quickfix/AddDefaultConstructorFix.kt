@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.createPrimaryConstructorIfAbsent
 
 class AddDefaultConstructorFix(element: KtClass) : PsiUpdateModCommandAction<KtClass>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("fix.add.default.constructor")
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.default.constructor")
 
     override fun invoke(
         actionContext: ActionContext,

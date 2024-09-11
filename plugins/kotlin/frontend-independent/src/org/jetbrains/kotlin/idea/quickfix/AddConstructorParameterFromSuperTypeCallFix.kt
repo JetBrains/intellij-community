@@ -17,7 +17,7 @@ class AddConstructorParameterFromSuperTypeCallFix(
     private val parameterName: String,
     private val parameterTypeSourceCode: String
 ) : PsiUpdateModCommandAction<KtValueArgumentList>(element) {
-    override fun getFamilyName() = KotlinBundle.message("fix.add.constructor.parameter", parameterName)
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.constructor.parameter", parameterName)
 
     override fun invoke(
         context: ActionContext,

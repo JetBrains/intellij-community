@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 class AddSpreadOperatorForArrayAsVarargAfterSamFix(
     element: PsiElement,
 ) : PsiUpdateModCommandAction<PsiElement>(element) {
-    override fun getFamilyName() = KotlinBundle.message("fix.add.spread.operator.after.sam")
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.spread.operator.after.sam")
 
     override fun invoke(
         context: ActionContext,

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
 
 class MoveTypeAliasToTopLevelFix(element: KtTypeAlias) : PsiUpdateModCommandAction<KtTypeAlias>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("fix.move.typealias.to.top.level")
+    override fun getFamilyName(): String = KotlinBundle.message("fix.move.typealias.to.top.level")
 
     override fun invoke(
         actionContext: ActionContext,

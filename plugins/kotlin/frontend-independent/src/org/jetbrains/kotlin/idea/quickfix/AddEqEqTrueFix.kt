@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class AddEqEqTrueFix(expression: KtExpression) : PsiUpdateModCommandAction<KtExpression>(expression) {
 
-    override fun getFamilyName() = KotlinBundle.message("fix.add.eq.eq.true")
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.eq.eq.true")
 
     override fun invoke(
         actionContext: ActionContext,

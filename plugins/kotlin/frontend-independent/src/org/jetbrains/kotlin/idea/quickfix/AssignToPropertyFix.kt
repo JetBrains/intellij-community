@@ -15,7 +15,7 @@ class AssignToPropertyFix(
     private val hasSingleImplicitReceiver: Boolean,
 ) : PsiUpdateModCommandAction<KtNameReferenceExpression>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("fix.assign.to.property")
+    override fun getFamilyName(): String = KotlinBundle.message("fix.assign.to.property")
 
     override fun invoke(
         context: ActionContext,

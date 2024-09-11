@@ -33,7 +33,7 @@ open class AddModifierFix(
         return KotlinBundle.message("fix.add.modifier.text.generic", modifier.value)
     }
 
-    override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.family")
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.modifier.family")
 
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? {
         return element?.containingFile

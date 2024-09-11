@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class MoveReceiverAnnotationFix private constructor(element: KtAnnotationEntry) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("move.annotation.to.receiver.type")
+    override fun getFamilyName(): String = KotlinBundle.message("move.annotation.to.receiver.type")
 
     override fun invoke(
         actionContext: ActionContext,

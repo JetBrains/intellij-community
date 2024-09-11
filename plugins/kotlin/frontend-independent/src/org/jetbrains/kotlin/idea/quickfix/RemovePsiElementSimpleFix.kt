@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @Nls private val text: String) :
     KotlinPsiOnlyQuickFixAction<PsiElement>(element) {
-    override fun getFamilyName() = KotlinBundle.message("remove.element")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.element")
 
-    override fun getText() = text
+    override fun getText(): String = text
 
     public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         element?.delete()

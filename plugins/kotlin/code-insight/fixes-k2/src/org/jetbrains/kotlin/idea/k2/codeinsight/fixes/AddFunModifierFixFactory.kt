@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -67,7 +66,7 @@ internal object AddFunModifierFixFactory {
             replaceSamConstructorCall(referrerCall)
         }
 
-        override fun getFamilyName() = KotlinBundle.message("add.fun.modifier.to.0", elementName)
+        override fun getFamilyName(): String = KotlinBundle.message("add.fun.modifier.to.0", elementName)
     }
 }
 

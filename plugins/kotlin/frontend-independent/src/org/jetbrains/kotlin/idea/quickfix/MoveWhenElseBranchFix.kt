@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 class MoveWhenElseBranchFix private constructor(element: KtWhenExpression) : PsiUpdateModCommandAction<KtWhenExpression>(element) {
-    override fun getFamilyName() = KotlinBundle.message("move.else.branch.to.the.end")
+    override fun getFamilyName(): String = KotlinBundle.message("move.else.branch.to.the.end")
 
     override fun invoke(
         actionContext: ActionContext,

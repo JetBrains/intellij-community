@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 
 class RemoveDefaultParameterValueFix(element: KtParameter) : PsiUpdateModCommandAction<KtParameter>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("remove.default.parameter.value")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.default.parameter.value")
 
     override fun invoke(
         actionContext: ActionContext,

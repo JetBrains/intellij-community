@@ -20,7 +20,7 @@ class ConvertClassToKClassFix(
         return Presentation.of(actionName)
     }
 
-    override fun getFamilyName() = KotlinBundle.message("remove.conversion.from.kclass.to.class")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.conversion.from.kclass.to.class")
 
     override fun invoke(
         context: ActionContext,

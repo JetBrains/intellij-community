@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class RemoveSupertypeFix(element: KtSuperTypeListEntry) : PsiUpdateModCommandAction<KtSuperTypeListEntry>(element) {
-    override fun getFamilyName() = KotlinBundle.message("remove.supertype")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.supertype")
 
     override fun invoke(
         actionContext: ActionContext,

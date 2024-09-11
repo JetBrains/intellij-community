@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 
 class RemoveIsFromIsEnumEntryFix(element: KtWhenConditionIsPattern) : PsiUpdateModCommandAction<KtWhenConditionIsPattern>(element) {
 
-    override fun getFamilyName() = KotlinBundle.message("remove.expression", "is")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.expression", "is")
 
     override fun invoke(
         actionContext: ActionContext,

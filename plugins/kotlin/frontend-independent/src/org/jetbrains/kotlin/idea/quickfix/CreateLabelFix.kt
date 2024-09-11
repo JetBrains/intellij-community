@@ -29,9 +29,9 @@ sealed class CreateLabelFix(
             labelReferenceExpression.getContainingLambdas().toList()
     }
 
-    override fun getFamilyName() = KotlinBundle.message("create.label")
+    override fun getFamilyName(): String = KotlinBundle.message("create.label")
 
-    override fun getText() = KotlinBundle.message("create.label.0", element?.getReferencedName() ?: "")
+    override fun getText(): String = KotlinBundle.message("create.label.0", element?.getReferencedName() ?: "")
 
     abstract val chooserTitle: String
 

@@ -100,8 +100,8 @@ class WrongPrimitiveLiteralFix(element: KtExpression, private val primitiveLiter
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = isAvailable(primitiveLiteral)
 
-    override fun getFamilyName() = KotlinBundle.message("change.to.correct.primitive.type")
-    override fun getText() = KotlinBundle.message("change.to.0", primitiveLiteral.fixedExpression)
+    override fun getFamilyName(): String = KotlinBundle.message("change.to.correct.primitive.type")
+    override fun getText(): String = KotlinBundle.message("change.to.0", primitiveLiteral.fixedExpression)
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

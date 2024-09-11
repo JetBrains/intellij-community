@@ -23,7 +23,7 @@ class ReplaceProtectedToPublishedApiCallFix(
     private val isVar: Boolean,
     private val isPublishedMemberAlreadyExists: Boolean
 ) : PsiUpdateModCommandAction<KtElement>(element) {
-    override fun getFamilyName() = KotlinBundle.message("replace.with.publishedapi.bridge.call")
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.publishedapi.bridge.call")
 
     private val String.newName: String
         get() = "access\$$this"

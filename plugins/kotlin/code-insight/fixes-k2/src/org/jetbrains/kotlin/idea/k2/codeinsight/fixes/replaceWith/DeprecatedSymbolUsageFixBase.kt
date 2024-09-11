@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -29,24 +29,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacement
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.psi.KtArrayAccessExpression
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
-import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNullableType
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtUserType
-import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
 object DeprecationFixFactory {
@@ -104,8 +87,8 @@ class DeprecatedSymbolUsageFix(
     element: KtReferenceExpression,
     replaceWith: ReplaceWithData
 ) : DeprecatedSymbolUsageFixBase(element, replaceWith), HighPriorityAction {
-    override fun getFamilyName() = KotlinBundle.message("replace.deprecated.symbol.usage")
-    override fun getText() = KotlinBundle.message("replace.with.0", replaceWith.pattern)
+    override fun getFamilyName(): String = KotlinBundle.message("replace.deprecated.symbol.usage")
+    override fun getText(): String = KotlinBundle.message("replace.with.0", replaceWith.pattern)
 
     override fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?) {
         val element = element ?: return

@@ -19,7 +19,7 @@ class WrongLongSuffixFix(element: KtConstantExpression) : PsiUpdateModCommandAct
         return Presentation.of(KotlinBundle.message("change.to.0", corrected))
     }
 
-    override fun getFamilyName() = KotlinBundle.message("change.to.correct.long.suffix.l")
+    override fun getFamilyName(): String = KotlinBundle.message("change.to.correct.long.suffix.l")
 
     override fun invoke(
         actionContext: ActionContext,

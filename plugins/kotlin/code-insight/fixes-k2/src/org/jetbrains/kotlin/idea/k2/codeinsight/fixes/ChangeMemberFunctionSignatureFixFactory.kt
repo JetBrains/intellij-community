@@ -2,12 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModChooseAction
-import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModCommandAction
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.*
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -16,15 +11,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaSingleTypeParameterSymbolRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.name
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -43,7 +30,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeParameterList
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
-import java.util.BitSet
+import java.util.*
 
 object ChangeMemberFunctionSignatureFixFactory {
     val nothingToOverrideFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NothingToOverride ->
@@ -240,7 +227,7 @@ object ChangeMemberFunctionSignatureFixFactory {
             return Presentation.of(text)
         }
 
-        override fun getFamilyName() = KotlinBundle.message("fix.change.signature.function.family")
+        override fun getFamilyName(): String = KotlinBundle.message("fix.change.signature.function.family")
 
         override fun invoke(
             actionContext: ActionContext, element: KtNamedFunction, elementContext: Signature, updater: ModPsiUpdater
