@@ -34,6 +34,7 @@ import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.text.DateFormat
 import javax.net.ssl.X509ExtendedTrustManager
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JTextPane
 import javax.swing.JTree
@@ -199,7 +200,10 @@ internal class CertificateWarningDialog(
     certificatesTree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
     certificatesTree.isRootVisible = false
 
-    certificatesTree.border = RoundedLineBorder(JBColor.border(), 10)
+    certificatesTree.border = BorderFactory.createCompoundBorder(
+      RoundedLineBorder(JBColor.border(), 10),
+      JBUI.Borders.empty(3)
+    )
     certificatesTree.addTreeSelectionListener(object : TreeSelectionListener {
       override fun valueChanged(e: TreeSelectionEvent?) {
         val lastPathComponent = e?.path?.lastPathComponent as? DefaultMutableTreeNode
