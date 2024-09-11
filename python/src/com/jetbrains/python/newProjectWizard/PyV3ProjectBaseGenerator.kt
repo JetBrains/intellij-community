@@ -2,6 +2,7 @@
 package com.jetbrains.python.newProjectWizard
 
 import com.intellij.facet.ui.ValidationResult
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -13,9 +14,13 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.Result
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
+import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 
@@ -29,6 +34,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
+  private val errorSink: ErrorSink = ShowingMessageErrorSync,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
   private val baseSettings = PyV3BaseProjectSettings()
   private val projectPathFlow = MutableStateFlow(Path.of(SystemProperties.getUserHome()))
@@ -36,7 +42,13 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
     coroutineScope.launch {
-      typeSpecificSettings.generateProject(module, baseDir, settings.generateAndGetSdk(module, baseDir))
+      val sdk = settings.generateAndGetSdk(module, baseDir).getOrElse {
+        withContext(Dispatchers.EDT) {
+          errorSink.emit(it.localizedMessage)
+        }
+        throw it
+      }
+      typeSpecificSettings.generateProject(module, baseDir, sdk)
     }
   }
 

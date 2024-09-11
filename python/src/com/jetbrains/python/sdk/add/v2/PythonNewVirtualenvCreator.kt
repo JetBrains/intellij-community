@@ -1,26 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.newProjectWizard.validateProjectPathAndGetPath
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
@@ -32,6 +30,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
   private lateinit var versionComboBox: PythonInterpreterComboBox
@@ -77,16 +76,22 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
           .component
       }
       row(message("sdk.create.custom.location")) {
+        // TODO" Extract this logic to the presenter or view model, do not touch nio from EDT, cover with test
         textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(message("sdk.create.custom.venv.location.browse.title")))
           .bindText(model.state.venvPath)
           .whenTextChangedFromUi { locationModified = true }
           .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(model.state.venvPath))
           .cellValidation { textField ->
-            addInputRule("") {
-              val pathExists = textField.isVisible && textField.doesPathExist()
+            addInputRule {
+              if (!textField.isVisible) return@addInputRule null // We are hidden, hence valid
+              locationValidationFailed.set(false)
+              val locationPath = when (val path = validateProjectPathAndGetPath(textField.text)) {
+                is com.jetbrains.python.Result.Failure -> return@addInputRule ValidationInfo(path.error) // Path is invalid
+                is com.jetbrains.python.Result.Success -> path.result
+              }
+              val pathExists = locationPath.exists()
               locationValidationFailed.set(pathExists)
               if (pathExists) {
-                val locationPath = Paths.get(textField.text)
                 if (locationPath.resolve(pythonInVenvPath).exists()) {
                   val typedName = locationPath.last().toString()
                   suggestedVenvName = suggestVenvName(typedName)
@@ -99,12 +104,14 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
                   locationValidationMessage.set(message("sdk.create.custom.venv.folder.not.empty"))
                   suggestedVenvName = ".venv"
                   suggestedLocation = locationPath
+                  val suggestedPath = (if (locationPath.isDirectory()) locationPath else locationPath.parent).resolve(suggestedVenvName)
                   firstFixLink.text = message("sdk.create.custom.venv.use.different.venv.link",
-                                              Paths.get("..", locationPath.last().toString(), suggestedVenvName))
+                                              suggestedPath)
                   secondFixLink.isVisible = false
                 }
               }
-              pathExists
+              // Path exists means error
+              if (pathExists) ValidationInfo(locationValidationMessage.get()) else null
             }
           }
           .align(Align.FILL)
@@ -184,49 +191,15 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> =
     // todo remove project path, or move to controller
-    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), model.projectPath.value, model.state.baseInterpreter.get()!!).getOrThrow()
-  }
-
-  companion object {
-
-
-    /**
-     * Checks if [this] field's text points to an existing file or directory. Calls [Path.exists] from EDT with care to avoid freezing the
-     * UI.
-     *
-     * In case of Windows machine, this method skips testing UNC paths on existence (except WSL paths) to prevent [Path.exists] checking the
-     * network resources. Such checks might freeze the UI for several seconds when performed from EDT. The freezes reveal themselves when
-     * a user starts typing a WSL path with `\\w` and continues symbol by symbol (`\\ws`, `\\wsl`, etc.) all the way to the root WSL path.
-     *
-     * @see [Path.exists]
-     */
-    @RequiresBackgroundThread(generateAssertion = false)
-    private fun TextFieldWithBrowseButton.doesPathExist(): Boolean =
-      text.let { probablyIncompletePath ->
-        if (SystemInfo.isWindows && OSAgnosticPathUtil.isUncPath(probablyIncompletePath)) {
-          val parseWindowsUncPath = parseWindowsUncPath(probablyIncompletePath)
-          if (parseWindowsUncPath?.linuxPath?.isNotBlank() == true) {
-            probablyIncompletePath.safeCheckCorrespondingPathExist()
-          }
-          else {
-            false
-          }
-        }
-        else {
-          probablyIncompletePath.safeCheckCorrespondingPathExist()
-        }
-      }
-
-    private fun String.safeCheckCorrespondingPathExist() =
-      try {
-        Paths.get(this).exists()
-      }
-      catch (e: InvalidPathException) {
-        false
-      }
-  }
+    try {
+      val venvPath = Path.of(model.state.venvPath.get())
+      model.setupVirtualenv(venvPath, model.projectPath.value)
+    }
+    catch (e: InvalidPathException) {
+      Result.failure(e)
+    }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
     //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()

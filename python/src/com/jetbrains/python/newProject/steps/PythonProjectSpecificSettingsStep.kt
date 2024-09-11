@@ -38,6 +38,7 @@ import com.jetbrains.python.newProject.promotion.PromoProjectGenerator
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 import java.nio.file.InvalidPathException
@@ -121,7 +122,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
 
     // Instead of setting this type as default, we limit types to it
     val onlyAllowedInterpreterTypes = projectGenerator.preferredEnvironmentType?.let { setOf(it) }
-    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocationFlow, onlyAllowedInterpreterTypes).also { interpreterPanel = it }
+    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocationFlow, onlyAllowedInterpreterTypes, errorSink = ShowingMessageErrorSync).also { interpreterPanel = it }
 
     mainPanel = panel {
       row(message("new.project.name")) {

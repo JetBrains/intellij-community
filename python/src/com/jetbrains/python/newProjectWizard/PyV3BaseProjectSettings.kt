@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.PySdkCreator
@@ -22,7 +23,7 @@ import kotlinx.coroutines.*
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   lateinit var sdkCreator: PySdkCreator
 
-  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile): Sdk = coroutineScope {
+  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile): Result<Sdk> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(CoroutineName("Generating git") + Dispatchers.IO) {
@@ -31,9 +32,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
         }
       }
     }
-    val (sdk, statistics) = withContext(Dispatchers.EDT) {
-      Pair(sdkCreator.getSdk(ModuleOrProject.ModuleAndProject(module)), sdkCreator.createStatisticsInfo())
-    }
+    val (sdk: Sdk, statistics: InterpreterStatisticsInfo?) = getSdkAndInterpreter(module).getOrElse { return@coroutineScope Result.failure(it) }
     sdk.setAssociationToModule(module)
     module.pythonSdk = sdk
     if (statistics != null) {
@@ -42,7 +41,12 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
                                    this::class.java,
                                    emptyList())
     }
-    return@coroutineScope sdk
+    return@coroutineScope Result.success(sdk)
+  }
+
+  private suspend fun getSdkAndInterpreter(module: Module): Result<Pair<Sdk, InterpreterStatisticsInfo?>> = withContext(Dispatchers.EDT) {
+    val sdk: Sdk = sdkCreator.getSdk(ModuleOrProject.ModuleAndProject(module)).getOrElse { return@withContext Result.failure(it) }
+    return@withContext Result.success(Pair<Sdk, InterpreterStatisticsInfo?>(sdk, sdkCreator.createStatisticsInfo()))
   }
 
 

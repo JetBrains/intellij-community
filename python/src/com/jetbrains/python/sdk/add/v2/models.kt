@@ -11,8 +11,12 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
+import com.jetbrains.extensions.failure
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.psi.LanguageLevel
@@ -23,6 +27,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
 import com.jetbrains.python.sdk.poetry.poetryPath
+import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.nio.file.Path
@@ -97,21 +102,26 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     }
   }
 
-  suspend fun detectCondaEnvironments() {
+  /**
+   * Returns error or `null` if no error
+   */
+  suspend fun detectCondaEnvironments(): @NlsSafe String? =
     withContext(Dispatchers.IO) {
       val commandExecutor = targetEnvironmentConfiguration.toExecutor()
-      val environments = PyCondaEnv.getEnvs(commandExecutor, state.condaExecutable.get()).getOrLogException(LOG) ?: emptyList()
+      val fullCondaPathOnTarget = state.condaExecutable.get()
+      if (fullCondaPathOnTarget.isBlank()) return@withContext message("python.sdk.conda.no.exec")
+      val environments = PyCondaEnv.getEnvs(commandExecutor, fullCondaPathOnTarget).getOrElse { return@withContext it.localizedMessage }
       val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 
       withContext(uiContext) {
         condaEnvironments.value = environments
         state.baseCondaEnv.set(baseConda)
       }
+      return@withContext null
     }
-  }
 
 
-  suspend fun initInterpreterList() {
+  private suspend fun initInterpreterList() {
     withContext(Dispatchers.IO) {
       val existingSdks = PyConfigurableInterpreterList.getInstance(null).getModel().sdks.toList()
       val allValidSdks = ProjectSpecificSettingsStep.getValidPythonSdks(existingSdks)
@@ -182,10 +192,9 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
       state.pipenvExecutable.set(savedPath)
     }
     else {
-      val modalityState = ModalityState.current().asContextElement()
       scope.launch(Dispatchers.IO) {
         val detectedExecutable = com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable()
-        withContext(Dispatchers.EDT + modalityState) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           detectedExecutable?.let { state.pipenvExecutable.set(it.path) }
         }
       }
@@ -259,8 +268,18 @@ class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectab
 open class AddInterpreterState(propertyGraph: PropertyGraph) {
   val selectedInterpreter: ObservableMutableProperty<PythonSelectableInterpreter?> = propertyGraph.property(null)
   val condaExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
+
+  /**
+   * Use [PythonAddInterpreterModel.getBaseCondaOrError]
+   */
   val selectedCondaEnv: ObservableMutableProperty<PyCondaEnv?> = propertyGraph.property(null)
+
+  /**
+   * Use [PythonAddInterpreterModel.getBaseCondaOrError]
+   */
   val baseCondaEnv: ObservableMutableProperty<PyCondaEnv?> = propertyGraph.property(null)
+
+
 }
 
 class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(propertyGraph) {
@@ -282,4 +301,18 @@ val PythonAddInterpreterModel.baseSdks
 
 fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSelectableInterpreter? {
   return allInterpreters.value.asSequence().find { it.homePath == path }
+}
+
+internal suspend fun PythonAddInterpreterModel.detectCondaEnvironmentsOrError(errorSink: ErrorSink) {
+  detectCondaEnvironments()?.let {
+    errorSink.emit(it)
+  }
+}
+
+internal suspend fun PythonAddInterpreterModel.getBaseCondaOrError(): Result<PyCondaEnv> {
+  var baseConda = state.baseCondaEnv.get()
+  if (baseConda != null) return Result.success(baseConda)
+  detectCondaEnvironments()?.let { return failure(it) }
+  baseConda = state.baseCondaEnv.get()
+  return if (baseConda != null) Result.success(baseConda) else failure(PyBundle.message("python.sdk.conda.no.base.env.error"))
 }

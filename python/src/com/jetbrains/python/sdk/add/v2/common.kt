@@ -15,11 +15,13 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.LOGGER
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -43,17 +45,15 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
   /**
    * Returns created SDK ready to use
+   *
+   * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  @RequiresEdt
-  abstract fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk
+  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk>
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
 abstract class PythonNewEnvironmentCreator(override val model: PythonMutableTargetAddInterpreterModel) : PythonAddEnvironment(model)
 abstract class PythonExistingEnvironmentConfigurator(model: PythonAddInterpreterModel) : PythonAddEnvironment(model)
-
-
-
 
 
 enum class PythonSupportedEnvironmentManagers(val nameKey: String, val icon: Icon) {
@@ -109,7 +109,7 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
 }
 
 
-internal fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter, existingSdks: List<Sdk>, targetConfig: TargetEnvironmentConfiguration? = null): Sdk? {
+internal suspend fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter, existingSdks: List<Sdk>, targetConfig: TargetEnvironmentConfiguration? = null): Sdk? {
   if (interpreter is ExistingSelectableInterpreter) return interpreter.sdk
 
   val homeDir = interpreter.homePath.virtualFileOnTarget(targetConfig) ?: return null // todo handle
@@ -119,6 +119,6 @@ internal fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter, existi
                                              false,
                                              null, // todo create additional data for target
                                              null) ?: return null
-  SdkConfigurationUtil.addSdk(newSdk)
+  addSdk(newSdk)
   return newSdk
 }

@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.target.PythonLanguageRuntimeType
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import java.util.function.Consumer
 
 fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<AnAction> {
@@ -63,7 +64,7 @@ private class AddLocalInterpreterAction(
 ) : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     if (Registry.`is`("python.unified.interpreter.configuration")) {
-      val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject).apply {
+      val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink =  ShowingMessageErrorSync).apply {
         // Model provides flow, but we need to call Consumer
         sdkCreatedFlow.oneShotConsumer(onSdkCreated)
       }

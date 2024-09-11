@@ -7,7 +7,10 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.ui.validation.and
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.layout.predicate
@@ -18,11 +21,13 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import kotlinx.coroutines.*
+import com.jetbrains.python.util.ErrorSink
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
-@OptIn(FlowPreview::class)
-class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
+class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
@@ -31,7 +36,7 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
                          validationRequestor,
                          message("sdk.create.custom.venv.executable.path", "conda"),
                          message("sdk.create.custom.venv.missing.text", "conda"),
-                         createInstallCondaFix(model))
+                         createInstallCondaFix(model, errorSink))
         .displayLoaderWhen(model.condaEnvironmentsLoading, scope = model.scope, uiContext = model.uiContext)
 
       row(message("sdk.create.custom.env.creation.type")) {
@@ -41,6 +46,11 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
           .bindItem(state.selectedCondaEnv)
           .displayLoaderWhen(model.condaEnvironmentsLoading, makeTemporaryEditable = true,
                              scope = model.scope, uiContext = model.uiContext)
+
+          .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(state.condaExecutable))
+          .validationOnInput {
+            return@validationOnInput if (it.isVisible && it.selectedItem == null) ValidationInfo(message("python.sdk.conda.no.env.selected.error")) else null
+          }
           .component
 
         link(message("sdk.create.custom.conda.refresh.envs"), action = { onReloadCondaEnvironments() })
@@ -52,7 +62,7 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
   private fun onReloadCondaEnvironments() {
     model.scope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
       model.condaEnvironmentsLoading.value = true
-      model.detectCondaEnvironments()
+      model.detectCondaEnvironmentsOrError(errorSink)
       model.condaEnvironmentsLoading.value = false
     }
   }
@@ -95,9 +105,8 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
     //}
   }
 
-  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
-    return model.selectCondaEnvironment(state.selectedCondaEnv.get()!!.envIdentity)
-  }
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> =
+    model.selectCondaEnvironment(base = false)
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
     //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
@@ -109,7 +118,7 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
                                      false,
                                      false,
                                      true,
-                                     //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                      false,
                                      InterpreterCreationMode.CUSTOM)
   }

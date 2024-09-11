@@ -12,6 +12,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -44,19 +45,22 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
     }
   }
 
-  override fun createCenterPanel(): JComponent = panel {
-    model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-                                                                    // At this moment dialog is not displayed, so there is no modality state
-                                                                    // The whole idea of context passing is doubtful
-                                                                    Dispatchers.EDT + ModalityState.any().asContextElement(), MutableStateFlow(basePath)))
-    model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
-    mainPanel = PythonAddCustomInterpreter(model)
-    mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
+  override fun createCenterPanel(): JComponent {
+    val errorSink = ShowingMessageErrorSync
+    return panel {
+      model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
+        // At this moment dialog is not displayed, so there is no modality state
+        // The whole idea of context passing is doubtful
+                                                                      Dispatchers.EDT + ModalityState.any().asContextElement(), MutableStateFlow(basePath)))
+      model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
+      mainPanel = PythonAddCustomInterpreter(model, errorSink = errorSink)
+      mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
 
-  }.apply {
-    model.scope.launch(model.uiContext) {
-      model.initialize()
-      mainPanel.onShown()
+    }.apply {
+      model.scope.launch(model.uiContext) {
+        model.initialize()
+        mainPanel.onShown()
+      }
     }
   }
 }

@@ -32,9 +32,9 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pyth
     comboBox.setItems(model.allInterpreters)
   }
 
-  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
     // todo error handling, nullability issues
-    return setupSdkIfDetected(model.state.selectedInterpreter.get()!!, model.existingSdks)!!
+    return Result.success(setupSdkIfDetected(model.state.selectedInterpreter.get()!!, model.existingSdks)!!)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

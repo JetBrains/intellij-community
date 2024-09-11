@@ -11,6 +11,7 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.sdk.add.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import java.nio.file.Path
@@ -24,7 +25,7 @@ internal class Py3VUI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
   specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
   allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
 ) {
-  private val sdkPanel = PythonAddNewEnvironmentPanel(projectPath, allowedInterpreterTypes)
+  private val sdkPanel = PythonAddNewEnvironmentPanel(projectPath, allowedInterpreterTypes, ShowingMessageErrorSync)
 
   private val _mainPanel = panel {
     val checkBoxRow = row {

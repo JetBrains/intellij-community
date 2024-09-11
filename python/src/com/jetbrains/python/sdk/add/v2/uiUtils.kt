@@ -36,6 +36,7 @@ import com.jetbrains.python.sdk.conda.CondaInstallManager
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.SharedFlow
@@ -447,14 +448,14 @@ fun Panel.executableSelector(
   return textFieldCell!!
 }
 
-internal fun createInstallCondaFix(model: PythonAddInterpreterModel): ActionLink {
+internal fun createInstallCondaFix(model: PythonAddInterpreterModel, errorSink: ErrorSink): ActionLink {
   return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     model.scope.launch(model.uiContext) {
       model.condaEnvironmentsLoading.value = true
       model.detectCondaExecutable()
-      model.detectCondaEnvironments()
+      model.detectCondaEnvironmentsOrError(errorSink)
       model.condaEnvironmentsLoading.value = false
     }
   }

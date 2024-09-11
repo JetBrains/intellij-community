@@ -7,8 +7,10 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 
 interface PySdkCreator {
-  @RequiresEdt
-  fun getSdk(moduleOrProject: ModuleOrProject): Sdk
+  /**
+   * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
+   */
+  suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Sdk>
 
   @RequiresEdt
   fun createStatisticsInfo(): InterpreterStatisticsInfo? = null

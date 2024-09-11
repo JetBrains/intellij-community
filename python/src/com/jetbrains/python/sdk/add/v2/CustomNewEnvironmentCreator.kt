@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -49,7 +48,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
-  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
     savePathToExecutableToProperties()
 
     // todo think about better error handling
@@ -66,8 +65,8 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              model.projectPath.value.toString(),
                              homePath,
                              false)!!
-    SdkConfigurationUtil.addSdk(newSdk)
-    return newSdk
+    addSdk(newSdk)
+    return Result.success(newSdk)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =

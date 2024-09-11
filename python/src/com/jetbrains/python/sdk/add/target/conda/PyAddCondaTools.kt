@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.jetbrains.extensions.failure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -112,7 +113,7 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
   val process = PyCondaEnv.createEnv(this, newCondaEnvInfo).getOrElse { return Result.failure(it) }
   val error = ProcessHandlerReader(process).runProcessAndGetError(uiContext, reporter)
 
-  return error?.let { Result.failure(Exception(it)) }
+  return error?.let { failure(it) }
          ?: Result.success(
            createCondaSdkFromExistingEnv(newCondaEnvInfo.toIdentity(), existingSdks, project)).apply {
            onSuccess {

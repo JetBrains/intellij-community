@@ -18,12 +18,13 @@ import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.flow.bindText
+import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import java.nio.file.Path
 import kotlin.io.path.name
 
-class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val projectPath: StateFlow<Path>?) : PythonNewEnvironmentCreator(model) {
+class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val projectPath: StateFlow<Path>?, private val errorSink:ErrorSink) : PythonNewEnvironmentCreator(model) {
 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
@@ -48,7 +49,7 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, 
                          validationRequestor,
                          message("sdk.create.custom.venv.executable.path", "conda"),
                          message("sdk.create.custom.venv.missing.text", "conda"),
-                         createInstallCondaFix(model))
+                         createInstallCondaFix(model, errorSink))
         .displayLoaderWhen(model.condaEnvironmentsLoading, scope = model.scope, uiContext = model.uiContext)
     }
   }
@@ -57,7 +58,7 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, 
     model.state.newCondaEnvName.set(model.projectPath.value.name)
   }
 
-  override fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Sdk {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
     return model.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.state.newCondaEnvName.get()))
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -9,9 +10,12 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.observable.util.or
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
@@ -25,6 +29,8 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -36,7 +42,7 @@ import java.nio.file.Path
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null) : PySdkCreator {
+class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
 
   companion object {
     private const val VENV_DIR = ".venv"
@@ -76,7 +82,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
     model.navigator.selectionMode = selectedMode
     //presenter.controller = model
 
-    custom = PythonAddCustomInterpreter(model, projectPath = projectPath)
+    custom = PythonAddCustomInterpreter(model, projectPath = projectPath, errorSink = ShowingMessageErrorSync)
 
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
@@ -104,7 +110,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
                            validationRequestor,
                            message("sdk.create.custom.venv.executable.path", "conda"),
                            message("sdk.create.custom.venv.missing.text", "conda"),
-                           createInstallCondaFix(model))
+                           createInstallCondaFix(model, errorSink))
         //.displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)
 
@@ -143,19 +149,29 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
   }
 
   @Deprecated("Use one with module or project")
-  fun getSdk(): Sdk = getSdk(ModuleOrProject.ProjectOnly(ProjectManager.getInstance().defaultProject))
+  fun getSdk(): Sdk {
+    val moduleOrProject = ModuleOrProject.ProjectOnly(ProjectManager.getInstance().defaultProject)
+    return if (ApplicationManager.getApplication().isDispatchThread) {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "...") {
+        getSdk(moduleOrProject)
+      }
+    }
+    else {
+      runBlockingCancellable { getSdk(moduleOrProject) }
+    }.getOrThrow()
+  }
 
-  override fun getSdk(moduleOrProject: ModuleOrProject): Sdk {
+  override suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
         val projectPath = projectPath.value
         model.setupVirtualenv(projectPath.resolve(VENV_DIR), // todo just keep venv path, all the rest is in the model
-                              projectPath,
+                              projectPath
           //pythonBaseVersion.get()!!)
-                              model.state.baseInterpreter.get()!!).getOrThrow()
+        )
       }
-      BASE_CONDA -> model.selectCondaEnvironment(model.state.baseCondaEnv.get()!!.envIdentity)
+      BASE_CONDA -> model.selectCondaEnvironment(base = true)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)
     }
   }

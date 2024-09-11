@@ -6,10 +6,9 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -27,23 +26,22 @@ internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
   PyCondaCommand(state.condaExecutable.get().convertToPathOnTarget(targetEnvironmentConfiguration),
                  targetConfig = targetEnvironmentConfiguration)
 
-@RequiresEdt
-internal fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Sdk {
+suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Result<Sdk> {
   val project = ProjectManager.getInstance().defaultProject
-  val existingSdks = this@createCondaEnvironment.existingSdks
-  val sdk = runWithModalProgressBlocking(ModalTaskOwner.guess(),
-                                         PyBundle.message("sdk.create.custom.conda.create.progress"),
-                                         TaskCancellation.nonCancellable()) {
+
+  val sdk = withModalProgress(ModalTaskOwner.guess(),
+                              PyBundle.message("sdk.create.custom.conda.create.progress"),
+                              TaskCancellation.nonCancellable()) {
     createCondaCommand()
       .createCondaSdkAlongWithNewEnv(request,
                                      Dispatchers.EDT,
                                      existingSdks,
-                                     project).getOrThrow()
-  }
+                                     project)
+  }.getOrElse { return Result.failure(it) }
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-  SdkConfigurationUtil.addSdk(sdk)
-  return sdk
+  addSdk(sdk)
+  return Result.success(sdk)
 }
 
 
