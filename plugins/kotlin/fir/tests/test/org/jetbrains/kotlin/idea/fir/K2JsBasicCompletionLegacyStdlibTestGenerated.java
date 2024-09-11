@@ -1891,6 +1891,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/override/AfterVarKeyword.kt");
             }
 
+            @TestMetadata("ContextReceiver.kt")
+            public void testContextReceiver() throws Exception {
+                runTest("../../completion/testData/basic/common/override/ContextReceiver.kt");
+            }
+
             @TestMetadata("Generics.kt")
             public void testGenerics() throws Exception {
                 runTest("../../completion/testData/basic/common/override/Generics.kt");
@@ -1904,6 +1909,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             @TestMetadata("InConstructorParameters2.kt")
             public void testInConstructorParameters2() throws Exception {
                 runTest("../../completion/testData/basic/common/override/InConstructorParameters2.kt");
+            }
+
+            @TestMetadata("MethodNameMatch.kt")
+            public void testMethodNameMatch() throws Exception {
+                runTest("../../completion/testData/basic/common/override/MethodNameMatch.kt");
             }
 
             @TestMetadata("NoOverrideAfterFunKeyword.kt")

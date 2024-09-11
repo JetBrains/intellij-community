@@ -11,15 +11,19 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
@@ -27,6 +31,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionCo
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.lookups.renderVerbose
 import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -99,12 +104,13 @@ internal class OverrideKeywordHandler(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         declaration: KtCallableDeclaration?,
         classOrObject: KtClassOrObject,
         isConstructorParameter: Boolean,
-        project: Project
+        project: Project,
     ): OverridesCompletionLookupElementDecorator {
         val symbolPointer = member.memberInfo.symbolPointer
         val memberSymbol = symbolPointer.restoreSymbol()
@@ -112,16 +118,12 @@ internal class OverrideKeywordHandler(
         check(memberSymbol is KaNamedSymbol)
         check(classOrObject !is KtEnumEntry)
 
-        val text = getSymbolTextForLookupElement(memberSymbol)
         val baseIcon = getBaseIcon(memberSymbol)
         val isImplement = memberSymbol.modality == KaSymbolModality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
-        val isSuspendFunction = (memberSymbol as? KaNamedFunctionSymbol)?.isSuspend == true
 
         val containingSymbol = memberSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
-        val baseClassName = containingSymbol?.name?.asString()
-        val baseClassIcon = member.memberInfo.containingSymbolIcon
 
         val baseLookupElement = KotlinFirLookupElementFactory.createLookupElement(
             symbol = memberSymbol,
@@ -130,15 +132,18 @@ internal class OverrideKeywordHandler(
 
         val classOrObjectPointer = classOrObject.createSmartPointer()
         return OverridesCompletionLookupElementDecorator(
-            baseLookupElement,
-            declaration,
-            text,
-            isImplement,
-            icon,
-            baseClassName,
-            baseClassIcon,
-            isConstructorParameter,
-            isSuspendFunction,
+            lookupElement = baseLookupElement,
+            declaration = declaration,
+            text = "override " + memberSymbol.render(TextRenderer),
+            tailText = memberSymbol.contextReceivers
+                .takeUnless { it.isEmpty() }
+                ?.joinToString(prefix = " for ") { it.type.renderVerbose() }, // TODO could be a different DeclarationRenderer rendering only tail text information
+            isImplement = isImplement,
+            icon = icon,
+            baseClassName = containingSymbol?.name?.asString(),
+            baseClassIcon = member.memberInfo.containingSymbolIcon,
+            isConstructorParameter = isConstructorParameter,
+            isSuspend = (memberSymbol as? KaNamedFunctionSymbol)?.isSuspend == true,
             generateMember = {
                 generateMemberInNewAnalysisSession(classOrObjectPointer.element!!, member, project)
             },
@@ -146,17 +151,6 @@ internal class OverrideKeywordHandler(
                 shortenReferencesInRange(element.containingKtFile, element.textRange)
             }
         )
-    }
-
-    context(KaSession)
-    @OptIn(KaExperimentalApi::class)
-    private fun getSymbolTextForLookupElement(memberSymbol: KaCallableSymbol): String = buildString {
-        append(KtTokens.OVERRIDE_KEYWORD.value)
-            .append(" ")
-            .append(memberSymbol.render(renderingOptionsForLookupElementRendering))
-        if (memberSymbol is KaNamedFunctionSymbol) {
-            append(" {...}")
-        }
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -179,18 +173,55 @@ internal class OverrideKeywordHandler(
             )
         }
     }
+}
 
-    companion object {
-        @KaExperimentalApi
-        private val renderingOptionsForLookupElementRendering =
-            KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-                annotationRenderer = annotationRenderer.with {
-                    annotationFilter = KaRendererAnnotationsFilter.NONE
-                }
-                modifiersRenderer = modifiersRenderer.with {
-                    keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS) }
+@KaExperimentalApi
+private val TextRenderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+    annotationRenderer = annotationRenderer.with {
+        annotationFilter = KaRendererAnnotationsFilter.NONE
+    }
+
+    modifiersRenderer = modifiersRenderer.with {
+        keywordsRenderer = keywordsRenderer.with {
+            keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
+        }
+    }
+
+    typeRenderer = typeRenderer.with {
+        contextReceiversRenderer = KaContextReceiversRenderer {
+            contextReceiverListRenderer = object : KaContextReceiverListRenderer {
+
+                override fun renderContextReceivers(
+                    analysisSession: KaSession,
+                    owner: KaContextReceiversOwner,
+                    contextReceiversRenderer: KaContextReceiversRenderer,
+                    typeRenderer: KaTypeRenderer,
+                    printer: PrettyPrinter,
+                ) {
                 }
             }
+
+            contextReceiverLabelRenderer = object : KaContextReceiverLabelRenderer {
+
+                override fun renderLabel(
+                    analysisSession: KaSession,
+                    contextReceiver: KaContextReceiver,
+                    contextReceiversRenderer: KaContextReceiversRenderer,
+                    printer: PrettyPrinter,
+                ) {
+                }
+            }
+        }
+    }
+
+    functionLikeBodyRenderer = object : KaFunctionLikeBodyRenderer {
+        override fun renderBody(
+            analysisSession: KaSession,
+            symbol: KaFunctionSymbol,
+            printer: PrettyPrinter,
+        ) = printer {
+            append(" {...}")
+        }
     }
 }
 

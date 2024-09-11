@@ -1891,6 +1891,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/override/AfterVarKeyword.kt");
             }
 
+            @TestMetadata("ContextReceiver.kt")
+            public void testContextReceiver() throws Exception {
+                runTest("../testData/basic/common/override/ContextReceiver.kt");
+            }
+
             @TestMetadata("Generics.kt")
             public void testGenerics() throws Exception {
                 runTest("../testData/basic/common/override/Generics.kt");
@@ -1904,6 +1909,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("InConstructorParameters2.kt")
             public void testInConstructorParameters2() throws Exception {
                 runTest("../testData/basic/common/override/InConstructorParameters2.kt");
+            }
+
+            @TestMetadata("MethodNameMatch.kt")
+            public void testMethodNameMatch() throws Exception {
+                runTest("../testData/basic/common/override/MethodNameMatch.kt");
             }
 
             @TestMetadata("NoOverrideAfterFunKeyword.kt")
