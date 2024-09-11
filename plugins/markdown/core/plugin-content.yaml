@@ -15,9 +15,6 @@
   - name: intellij.markdown.compose.preview
     libraries:
       jetbrains-jewel-markdown-laf-bridge-styling:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-markdown-ide-laf-bridge-styling-242/0.22.1/jewel-markdown-ide-laf-bridge-styling-242-0.22.1.jar
-        size: 28782
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-markdown-core-242/0.22.1/jewel-markdown-core-242-0.22.1.jar
-        size: 296453
-      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark/0.22.0/commonmark-0.22.0.jar
-        size: 193845
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-markdown-ide-laf-bridge-styling-242/0/jewel-markdown-ide-laf-bridge-styling-242-0.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-markdown-core-242/0/jewel-markdown-core-242-0.jar
+      - name: $MAVEN_REPOSITORY$/org/commonmark/commonmark/0/commonmark-0.jar

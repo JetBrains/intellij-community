@@ -3,26 +3,19 @@
   - name: intellij.searchEverywhereMl.ranking.core
     libraries:
       find-action-model:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.0.0/find-action-model-231.0.0.jar
-        size: 236768
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231/find-action-model-231.jar
       find-action-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/243.0.1/find-action-model-243.0.1.jar
-        size: 401889
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/243/find-action-model-243.jar
       find-file-model:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.1.1/find-file-model-232.1.1.jar
-        size: 70478
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232/find-file-model-232.jar
       find-file-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/243.0.1/find-file-model-243.0.1.jar
-        size: 526417
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/243/find-file-model-243.jar
       find-classes-model:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.0.0/find-classes-model-231.0.0.jar
-        size: 146583
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231/find-classes-model-231.jar
       find-classes-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/243.0.1/find-classes-model-243.0.1.jar
-        size: 1166068
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/243/find-classes-model-243.jar
       find-all-model-experimental:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232.1.1/find-all-model-232.1.1.jar
-        size: 188471
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232/find-all-model-232.jar
 - name: lib/searchEverywhereMl.jar
   modules:
   - name: intellij.searchEverywhereMl

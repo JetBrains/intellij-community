@@ -3,8 +3,7 @@
   - name: intellij.turboComplete.languages.kotlin
     libraries:
       completion-performance-kotlin:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0.0.9/performance-kotlin-0.0.9.jar
-        size: 343946
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0/performance-kotlin-0.jar
 - name: lib/turboComplete.jar
   modules:
   - name: intellij.turboComplete
