@@ -711,6 +711,7 @@ f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - s:isIntentionPreviewActive():Z
 - s:isPreviewElement(com.intellij.psi.PsiElement):Z
 - s:prepareElementForWrite(com.intellij.psi.PsiElement):Z
+- s:toPreviewElementIfPreviewFile(com.intellij.psi.PsiFile,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - s:write(com.intellij.util.ThrowableRunnable):V
 - s:writeAndCompute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 e:com.intellij.codeInsight.lookup.AutoCompletionPolicy
