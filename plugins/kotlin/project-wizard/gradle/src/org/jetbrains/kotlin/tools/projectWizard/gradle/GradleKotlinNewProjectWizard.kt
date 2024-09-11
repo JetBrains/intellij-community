@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -45,8 +46,9 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompat
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
+import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import java.nio.file.Path
@@ -270,7 +272,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
         private fun createKotlinContentRoots() {
             val directories = listOf(
                 "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
@@ -298,7 +300,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override fun setupProject(project: Project) {
             if (shouldAddOnboardingTips()) {
-                prepareOnboardingTips(project)
+                prepareKotlinSampleOnboardingTips(project)
             }
             super.setupProject(project)
         }

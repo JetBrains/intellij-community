@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -31,8 +32,9 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
 import org.jetbrains.kotlin.tools.projectWizard.addMultiPlatformLink
-import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
+import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
+import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 import java.nio.file.Path
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -130,7 +132,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
         private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
 
@@ -158,7 +160,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
         override fun setupProject(project: Project) {
             if (shouldAddOnboardingTips()) {
-                prepareOnboardingTips(project)
+                prepareKotlinSampleOnboardingTips(project)
             }
             super.setupProject(project)
         }
