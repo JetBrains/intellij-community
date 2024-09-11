@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -116,10 +117,12 @@ public final class SdkConfigurationUtil {
     };
   }
 
+  @RequiresBlockingContext
   public static void addSdk(final @NotNull Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
   }
 
+  @RequiresBlockingContext
   public static void removeSdk(@NotNull Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
   }
