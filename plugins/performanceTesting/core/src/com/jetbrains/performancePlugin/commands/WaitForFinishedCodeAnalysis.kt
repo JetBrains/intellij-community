@@ -114,11 +114,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
       else {
         //Printing additional information to get information why highlighting was stuck
-        sessions.forEach {
-          val editor = it.key.editor
-          printCodeAnalyzerStatistic(editor)
-          printFileStatusMapInfo(editor)
-        }
+        printStatistic()
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }},\n" +
                  "files ${filesYetToStartHighlighting.keys.joinToString(separator = ",\n") { it.name }}")
       }
@@ -170,6 +166,8 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
     catch (_: CompletionException) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
+      printStatistic()
+
       LOG.error(errorText)
       if (throws) {
         throw TimeoutException(errorText)
@@ -327,7 +325,15 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  private fun printCodeAnalyzerStatistic(editor: Editor) {
+  internal fun printStatistic() {
+    sessions.forEach {
+      val editor = it.key.editor
+      printCodeAnalyzerStatistic(editor)
+      printFileStatusMapInfo(editor)
+    }
+  }
+
+  internal fun printCodeAnalyzerStatistic(editor: Editor) {
     //Status can't be retrieved from EDT
     if (EDT.isCurrentThreadEdt()) return
     try {
