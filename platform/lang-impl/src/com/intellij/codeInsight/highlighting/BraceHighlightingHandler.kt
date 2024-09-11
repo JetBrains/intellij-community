@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.LightweightHint
 import com.intellij.util.Alarm
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.CharArrayUtil
@@ -162,7 +163,9 @@ class BraceHighlightingHandler internal constructor(
 
     alarm.cancelAllRequests()
 
-    var context = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile)
+    var context = SlowOperations.knownIssue("IJPL-162400").use {
+      BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile)
+    }
     if (context != null) {
       doHighlight(context.currentBraceOffset, context.isCaretAfterBrace)
       offset = context.currentBraceOffset
@@ -179,7 +182,9 @@ class BraceHighlightingHandler internal constructor(
       // Try to find matched brace backwards.
       val backwardNonSpaceEndOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ") + 1
       if (backwardNonSpaceEndOffset in 1..<offset) {
-        context = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile, backwardNonSpaceEndOffset)
+        context = SlowOperations.knownIssue("IJPL-162400").use {
+          BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile, backwardNonSpaceEndOffset)
+        }
         if (context != null) {
           doHighlight(offset = context.currentBraceOffset, isAdjustedPosition = true)
           offset = context.currentBraceOffset
@@ -201,7 +206,9 @@ class BraceHighlightingHandler internal constructor(
     }
 
     if (codeInsightSettings.HIGHLIGHT_SCOPE) {
-      highlightScope(offset)
+      SlowOperations.knownIssue("IJPL-162400").use {
+        highlightScope(offset)
+      }
     }
   }
 

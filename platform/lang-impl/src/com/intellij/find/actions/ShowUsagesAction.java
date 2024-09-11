@@ -527,7 +527,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     AtomicBoolean manuallyResized = new AtomicBoolean();
     Ref<UsageNode> preselectedRow = new Ref<>();
 
-    Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
+    Predicate<? super Usage> originUsageCheck;
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162330")) {
+      originUsageCheck = originUsageCheck(parameters.editor);
+    }
     ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
     ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
 

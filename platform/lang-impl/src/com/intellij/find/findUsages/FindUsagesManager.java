@@ -163,10 +163,13 @@ public final class FindUsagesManager {
 
   public @Nullable FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
     for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-353115, EA-841437")) {
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
         if (!factory.canFindUsages(element)) continue;
       }
-      FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
+      FindUsagesHandler handler;
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
+        handler = factory.createFindUsagesHandler(element, operationMode);
+      }
       if (handler == FindUsagesHandler.NULL_HANDLER) return null;
       if (handler != null) {
         return handler;
@@ -220,7 +223,9 @@ public final class FindUsagesManager {
 
     clearFindingNextUsageInFile();
 
-    startFindUsages(findUsagesOptions, handler, scopeFile, editor);
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162399")) {
+      startFindUsages(findUsagesOptions, handler, scopeFile, editor);
+    }
   }
 
   public void startFindUsages(@NotNull PsiElement psiElement, @NotNull FindUsagesOptions findUsagesOptions) {
