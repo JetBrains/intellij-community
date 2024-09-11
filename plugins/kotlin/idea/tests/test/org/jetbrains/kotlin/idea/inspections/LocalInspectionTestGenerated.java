@@ -9871,6 +9871,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantExplicitType/string.kt");
         }
 
+        @TestMetadata("stringWrongRange.kt")
+        public void testStringWrongRange() throws Exception {
+            runTest("testData/inspectionsLocal/redundantExplicitType/stringWrongRange.kt");
+        }
+
         @TestMetadata("top.kt")
         public void testTop() throws Exception {
             runTest("testData/inspectionsLocal/redundantExplicitType/top.kt");

@@ -4517,6 +4517,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantExplicitType/string.kt");
         }
 
+        @TestMetadata("stringWrongRange.kt")
+        public void testStringWrongRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantExplicitType/stringWrongRange.kt");
+        }
+
         @TestMetadata("top.kt")
         public void testTop() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantExplicitType/top.kt");
