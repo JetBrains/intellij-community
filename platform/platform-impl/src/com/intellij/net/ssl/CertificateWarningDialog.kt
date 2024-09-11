@@ -164,6 +164,9 @@ internal class CertificateWarningDialog(
             val userObject = node?.userObject as? X509Certificate ?: return
             if (node.isChecked) selectedCerts.add(userObject)
             else selectedCerts.remove(userObject)
+            if (isDetailsShown) {
+              isOKActionEnabled = selectedCerts.isNotEmpty()
+            }
           }
         }
         checkboxTree
