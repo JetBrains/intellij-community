@@ -24,9 +24,10 @@ class InlineTypeParameterFix(
     ) {
         val parameterListOwner = element.getStrictParentOfType<KtTypeParameterListOwner>() ?: return
         val parameterList = parameterListOwner.typeParameterList ?: return
-        val (parameter, bound, constraint) = prepareInlinedTypeParameterContext(element, parameterList) ?: return
+        val (parameter, bound, constraint) = prepareInlineTypeParameterContext(element, parameterList) ?: return
 
-        typeReferencesToInline.mapNotNull { it.element }.map(updater::getWritable).forEach { it.replace(bound) }
+        val writableTypeReferences = typeReferencesToInline.mapNotNull { it.element }.map(updater::getWritable)
+        writableTypeReferences.forEach { it.replace(bound) }
 
         if (parameterList.parameters.size == 1) {
             parameterList.delete()
@@ -46,27 +47,27 @@ class InlineTypeParameterFix(
     override fun getFamilyName() = KotlinBundle.message("inline.type.parameter")
 }
 
-data class InlinedTypeParameterContext(
+data class InlineTypeParameterContext(
     val parameter: KtTypeParameter,
     val bound: KtTypeReference,
     val constraint: KtElement?,
 )
 
-fun prepareInlinedTypeParameterContext(
+fun prepareInlineTypeParameterContext(
     element: KtTypeReference,
-    parameterList: KtTypeParameterList
-): InlinedTypeParameterContext? {
+    parameterList: KtTypeParameterList,
+): InlineTypeParameterContext? {
     return when (val parent = element.parent) {
         is KtTypeParameter -> {
             val bound = parent.extendsBound ?: return null
-            InlinedTypeParameterContext(parent, bound, null)
+            InlineTypeParameterContext(parent, bound, constraint = null)
         }
 
         is KtTypeConstraint -> {
             val subjectTypeParameterName = parent.subjectTypeParameterName?.text ?: return null
             val parameter = parameterList.parameters.firstOrNull { it.name == subjectTypeParameterName } ?: return null
             val bound = parent.boundTypeReference ?: return null
-            InlinedTypeParameterContext(parameter, bound, parent)
+            InlineTypeParameterContext(parameter, bound, constraint = parent)
         }
 
         else -> null
