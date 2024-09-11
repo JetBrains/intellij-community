@@ -49,39 +49,35 @@ class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
      *
      * To avoid that, we sacrifice some possible performance, but make sure that the [analyze] call is properly finished instead.
      */
-    override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
-        val eagerlyComputedImportFixes = createImportFixesForExpressionLazy(expression).toList()
-
-        return eagerlyComputedImportFixes.asSequence()
-    }
-
     @OptIn(KaExperimentalApi::class)
-    private fun createImportFixesForExpressionLazy(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
+    override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
         val file = expression.containingKtFile
 
-        val diagnostics = analyze(expression) {
-            if (file.hasUnresolvedImportWhichCanImport(expression)) return@analyze emptyList()
+        analyze(expression) {
+            if (file.hasUnresolvedImportWhichCanImport(expression)) {
+                return emptySequence()
+            }
 
-            expression
+            val diagnostics = expression
                 .diagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
                 .filter { it.severity == KaSeverity.ERROR && expression.textRange in it.psi.textRange }
-        }
 
-        val quickFixService = KotlinQuickFixService.getInstance()
+            val quickFixService = KotlinQuickFixService.getInstance()
 
-        return diagnostics
-            .asSequence()
-            .flatMap {
-                analyze(expression) {
-                    quickFixService.getImportQuickFixesFor(it)
-                }
-            }.filter { importFix ->
-                analyze(expression) {
-                    val element = importFix.element
-                    // Obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
-                    element != null && !file.hasUnresolvedImportWhichCanImport(element)
+            val importFixes = buildList {
+                for (diagnostic in diagnostics) {
+                    for (importFix in quickFixService.getImportQuickFixesFor(diagnostic)) {
+                        val element = importFix.element
+                        // Obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
+                        if (element != null && !file.hasUnresolvedImportWhichCanImport(element)) {
+                            add(importFix)
+                        }
+                    }
                 }
             }
+
+            return importFixes.asSequence()
+        }
     }
 }
 
