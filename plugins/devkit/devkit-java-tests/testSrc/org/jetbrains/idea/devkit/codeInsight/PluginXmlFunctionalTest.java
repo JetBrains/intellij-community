@@ -531,10 +531,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   public void testPluginAttributes() {
     myFixture.addFileToProject("com/intellij/package-info.java",
                                "package com.intellij;");
-    myFixture.testHighlighting(true,
-                               true,
-                               true,
-                               "pluginAttributes.xml");
+    doHighlightingTest("pluginAttributes.xml");
   }
 
   public void testPluginWith99InUntilBuild() {

@@ -1190,8 +1190,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     String url = domValue.getStringValue();
     if (StringUtil.isEmptyOrSpaces(url) ||
-        !url.startsWith("https://") ||
-        !url.startsWith("http://")) {
+        (!url.startsWith("https://") && !url.startsWith("http://"))) {
       holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.value.must.be.https.or.http.link.to.website"));
     }
   }
