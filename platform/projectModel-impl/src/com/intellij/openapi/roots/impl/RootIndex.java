@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSet;
+import com.intellij.openapi.vfs.VirtualFileSetFactory;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.Function;
@@ -331,7 +333,7 @@ class RootIndex {
       myProject = project;
       myRootInfo = rootInfo;
       myAllRoots = rootInfo.getAllRoots();
-      int cacheSize = Math.max(25, myAllRoots.size() / 100 * 2);
+      int cacheSize = Math.max(100, myAllRoots.size() / 3);
       myCache = new SynchronizedSLRUCache<>(cacheSize, cacheSize) {
         @NotNull
         @Override
@@ -572,8 +574,8 @@ class RootIndex {
     @NotNull private final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
 
     @NotNull
-    Set<VirtualFile> getAllRoots() {
-      Set<VirtualFile> result = new LinkedHashSet<>();
+    private Set<VirtualFile> getAllRoots() {
+      VirtualFileSet result = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());
       result.addAll(contentRootOfUnloaded.keySet());
@@ -581,7 +583,7 @@ class RootIndex {
       result.addAll(excludedFromModule.keySet());
       result.addAll(excludedFromProject);
       result.addAll(excludedFromSdkRoots);
-      return result;
+      return result.freezed();
     }
 
     /**
@@ -714,10 +716,10 @@ class RootIndex {
 
     @NotNull
     private Set<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
-                                                             @Nullable VirtualFile libraryClassRoot,
-                                                             @Nullable VirtualFile librarySourceRoot,
-                                                             @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                                                             @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+                                                   @Nullable VirtualFile libraryClassRoot,
+                                                   @Nullable VirtualFile librarySourceRoot,
+                                                   @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                                   @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       Set<OrderEntry> orderEntries = new LinkedHashSet<>();
       for (VirtualFile root : hierarchy) {
         if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {
