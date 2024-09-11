@@ -656,7 +656,7 @@ class ApplyPatchViewer implements Disposable {
     @NotNull
     @Override
     protected List<ApplyPatchChange> getChanges() {
-      return getCurrentSide().select(myResultChanges, myPatchChanges);
+      return ContainerUtil.filter(getCurrentSide().select(myResultChanges, myPatchChanges), it -> !it.isResolved());
     }
 
     @NotNull
