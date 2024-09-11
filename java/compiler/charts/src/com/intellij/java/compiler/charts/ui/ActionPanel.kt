@@ -106,7 +106,14 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     })
 
     // legend
-    val actionGroup = DefaultActionGroup(listOf(CompilationChartsStatsActionHolder(vm), Separator(), ScrollToEndAction(vm)))
+    val actionGroup = DefaultActionGroup(listOf(
+      CompilationChartsStatsActionHolder(vm),
+      Separator(),
+      ZoomResetAction(vm),
+      ZoomOutAction(vm),
+      ZoomInAction(vm),
+      ScrollToEndAction(vm))
+    )
     val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_NAME, actionGroup, true).apply {
       targetComponent = this@ActionPanel
     }
@@ -140,6 +147,31 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     CompilationChartsBundle.message("charts.scroll.to.end.action.description"),
     AllIcons.Actions.Forward) {
     override fun actionPerformed(e: AnActionEvent) = vm.requestScrollToEnd()
+  }
+
+  private class ZoomInAction(private val vm: CompilationChartsViewModel) : DumbAwareAction(
+    CompilationChartsBundle.message("charts.zoom.in.action.title"),
+    CompilationChartsBundle.message("charts.zoom.in.action.description"),
+    AllIcons.Graph.ZoomIn
+  ) {
+    override fun actionPerformed(e: AnActionEvent) = vm.requestZoomChange(CompilationChartsViewModel.ZoomEvent.In())
+  }
+
+  private class ZoomOutAction(private val vm: CompilationChartsViewModel) : DumbAwareAction(
+    CompilationChartsBundle.message("charts.zoom.out.action.title"),
+    CompilationChartsBundle.message("charts.zoom.out.action.description"),
+    AllIcons.Graph.ZoomOut
+  ) {
+    override fun actionPerformed(e: AnActionEvent) = vm.requestZoomChange(CompilationChartsViewModel.ZoomEvent.Out())
+  }
+
+
+  private class ZoomResetAction(private val vm: CompilationChartsViewModel) : DumbAwareAction(
+    CompilationChartsBundle.message("charts.zoom.reset.action.title"),
+    CompilationChartsBundle.message("charts.zoom.reset.action.description"),
+    AllIcons.Graph.ActualZoom
+  ) {
+    override fun actionPerformed(e: AnActionEvent) = vm.requestZoomChange(CompilationChartsViewModel.ZoomEvent.Reset)
   }
 
   private class CompilationChartsStatsActionHolder(private val vm: CompilationChartsViewModel) : DumbAwareAction(), CustomComponentAction {

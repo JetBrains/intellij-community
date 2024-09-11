@@ -79,6 +79,26 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
     vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
       rightAdhesionScrollBarListener.scrollToEnd()
     }
+
+    vm.zoomEvent.advise(vm.lifetime) { zoomType ->
+      when (zoomType) {
+        is CompilationChartsViewModel.ZoomEvent.In -> {
+          rightAdhesionScrollBarListener.disableShouldScroll()
+          zoom.increase(scroll.viewport)
+          rightAdhesionScrollBarListener.scheduleUpdateShouldScroll()
+        }
+        is CompilationChartsViewModel.ZoomEvent.Out -> {
+          rightAdhesionScrollBarListener.disableShouldScroll()
+          zoom.decrease(scroll.viewport)
+          rightAdhesionScrollBarListener.scheduleUpdateShouldScroll()
+        }
+        is CompilationChartsViewModel.ZoomEvent.Reset -> {
+          zoom.reset(scroll.viewport)
+          rightAdhesionScrollBarListener.scheduleUpdateShouldScroll()
+        }
+      }
+      diagrams.smartDraw(true, false)
+    }
   }
 }
 

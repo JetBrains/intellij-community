@@ -18,8 +18,11 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   val cpuMemory: RdProperty<CpuMemoryStatisticsType> = RdProperty(CpuMemoryStatisticsType.MEMORY)
   val filter: RdProperty<Filter> = RdProperty(Filter())
   val scrollToEndEvent: RdProperty<ScrollToEndEvent> = RdProperty(ScrollToEndEvent())
+  val zoomEvent: RdProperty<ZoomEvent> = RdProperty(ZoomEvent.Reset)
 
   fun requestScrollToEnd() = scrollToEndEvent.set(ScrollToEndEvent())
+
+  fun requestZoomChange(event: ZoomEvent) = zoomEvent.set(event)
 
   fun started(values: List<StartTarget>) {
     values.forEach { value ->
@@ -105,6 +108,12 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   }
 
   class ScrollToEndEvent
+
+  sealed class ZoomEvent {
+    class In : ZoomEvent()
+    class Out : ZoomEvent()
+    data object Reset: ZoomEvent()
+  }
 
   enum class CpuMemoryStatisticsType {
     CPU {

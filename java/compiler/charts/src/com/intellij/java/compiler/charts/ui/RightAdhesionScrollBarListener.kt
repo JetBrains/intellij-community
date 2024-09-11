@@ -31,7 +31,7 @@ internal class RightAdhesionScrollBarListener(private val viewport: JViewport) :
     }
   }
 
-  private fun scheduleUpdateShouldScroll() {
+  internal fun scheduleUpdateShouldScroll() {
     updateShouldScrollTask?.cancel(false)
     updateShouldScrollTask = executor.schedule(::updateShouldScroll, 100, TimeUnit.MILLISECONDS)
   }
@@ -46,8 +46,12 @@ internal class RightAdhesionScrollBarListener(private val viewport: JViewport) :
     shouldScroll = viewport.viewPosition.x + viewport.width + additionalValue >= viewport.viewSize.width
   }
 
-  fun scrollToEnd() {
+  internal fun scrollToEnd() {
     shouldScroll = true
     adjustHorizontalScrollToRightIfNeeded()
+  }
+
+  internal fun disableShouldScroll() {
+    shouldScroll = false
   }
 }
