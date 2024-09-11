@@ -205,14 +205,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     myMlService = SearchEverywhereMlService.getInstance();
 
-    if (Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")) {
-      myListFactory =
-        (myMlService != null && !myMlService.getShouldAllTabPrioritizeRecentFiles()) ?
-        new MixedListFactory(true) : new MixedListFactory();
-    }
-    else {
-      myListFactory = new GroupedListFactory();
-    }
+    myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
+                    ? new MixedListFactory()
+                    : new GroupedListFactory();
 
     if (myMlService != null) {
       myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));

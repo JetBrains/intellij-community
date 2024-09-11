@@ -30,10 +30,6 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   internal val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
-  override val shouldAllTabPrioritizeRecentFiles: Boolean
-    get() = experiment.getExperimentForTab(
-      SearchEverywhereTabWithMlRanking.ALL) != SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION
-
 
   override fun isEnabled(): Boolean {
     val settings = service<SearchEverywhereMlSettings>()
@@ -48,7 +44,6 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
         tab == SearchEverywhereTabWithMlRanking.CLASSES && PlatformUtils.isPyCharm() && PlatformUtils.isIntelliJ()
       }
       SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL -> true
-      SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION -> true
       else -> false
     }
   }
@@ -139,7 +134,6 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     else {
       return settings.isSortingByMlEnabled(tab)
              || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
-             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_RECENT_FILES_PRIORITIZATION
     }
   }
 
