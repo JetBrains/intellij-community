@@ -776,7 +776,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     elif dim == -1:
         df = df[roffset: roffset + rows]
     else:
-        df.iloc[roffset: roffset + rows]
+        df = df.iloc[roffset: roffset + rows]
 
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
