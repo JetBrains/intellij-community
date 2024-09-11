@@ -66,7 +66,7 @@ class EditorCellOutput internal constructor(
   }
 
   override fun calculateBounds(): Rectangle {
-    val allCellOutputs = parent as? com.intellij.notebooks.visualization.ui.EditorCellOutputs ?: return Rectangle(0, 0, 0, 0)
+    val allCellOutputs = parent as? EditorCellOutputs ?: return Rectangle(0, 0, 0, 0)
 
     //Need validate because swing component can be invalid on update
     allCellOutputs.innerComponent.validate()

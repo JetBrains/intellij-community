@@ -31,8 +31,8 @@ import javax.swing.JComponent
 class EditorCellOutputs(
   private val editor: EditorImpl,
   private val interval: () -> NotebookCellLines.Interval,
-  private val onInlayDisposed: (com.intellij.notebooks.visualization.ui.EditorCellOutputs) -> Unit = {},
-) : com.intellij.notebooks.visualization.ui.EditorCellViewComponent(), Disposable {
+  private val onInlayDisposed: (EditorCellOutputs) -> Unit = {},
+) : EditorCellViewComponent(), Disposable {
 
   var foldingsVisible: Boolean = false
     set(value) {
@@ -50,8 +50,8 @@ class EditorCellOutputs(
       }
     }
 
-  private val _outputs = mutableListOf<com.intellij.notebooks.visualization.ui.EditorCellOutput>()
-  val outputs: List<com.intellij.notebooks.visualization.ui.EditorCellOutput>
+  private val _outputs = mutableListOf<EditorCellOutput>()
+  val outputs: List<EditorCellOutput>
     get() = _outputs
 
   internal val innerComponent = InnerComponent().also {
@@ -248,7 +248,7 @@ class EditorCellOutputs(
     document.getLineEndOffset(lines.last)
 
   private fun addIntoInnerComponent(newComponent: NotebookOutputComponentFactory.CreatedComponent<*>, pos: Int = -1) {
-    lateinit var outputComponent: com.intellij.notebooks.visualization.ui.EditorCellOutput
+    lateinit var outputComponent: EditorCellOutput
     val collapsingComponent = object : CollapsingComponent(
       editor,
       newComponent.component,
@@ -256,7 +256,7 @@ class EditorCellOutputs(
       newComponent.collapsedTextSupplier,
     ), UiDataProvider {
       override fun uiDataSnapshot(sink: DataSink) {
-        sink[com.intellij.notebooks.visualization.ui.NOTEBOOK_CELL_OUTPUT_DATA_KEY] = outputComponent
+        sink[NOTEBOOK_CELL_OUTPUT_DATA_KEY] = outputComponent
       }
     }
 
@@ -266,7 +266,7 @@ class EditorCellOutputs(
       pos,
     )
 
-    outputComponent = com.intellij.notebooks.visualization.ui.EditorCellOutput(editor, collapsingComponent, newComponent.disposable).apply {
+    outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable).apply {
       folding.visible = foldingsVisible
       folding.selected = foldingsSelected
     }
