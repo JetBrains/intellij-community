@@ -796,7 +796,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void updateContentId(int fileId,
                                int newContentRecordId,
-                               int newContentLength) throws IOException {
+                               int newContentLength) {
     vfsPeer.updateRecordFields(fileId, record -> {
       //MAYBE RC: should we keep MUST_RELOAD_CONTENT if newContentRecordId == 0?
       record.removeFlags(Flags.MUST_RELOAD_LENGTH | Flags.MUST_RELOAD_CONTENT);
@@ -2260,7 +2260,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   public static void setOfflineByDefault(@NotNull VirtualFile file, boolean offlineByDefaultFlag) {
-    ((PersistentFSImpl)PersistentFS.getInstance()).offlineByDefault(file, offlineByDefaultFlag);
+    ((PersistentFSImpl)getInstance()).offlineByDefault(file, offlineByDefaultFlag);
   }
 
   @ApiStatus.Experimental

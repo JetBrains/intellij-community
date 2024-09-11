@@ -46,8 +46,8 @@ public class VFSInitializationTest {
       final PersistentFSRecordsStorage records = connection.records();
       assertEquals(
         "connection.records.version == tryInit(version)",
-        records.getVersion(),
-        version
+        version,
+        records.getVersion()
       );
       //create few dummy records -- so we could check them exist after reopen:
       createRecords(connection, 3);
@@ -82,8 +82,8 @@ public class VFSInitializationTest {
       final PersistentFSRecordsStorage records = connection.records();
       assertEquals(
         "connection.records.version == tryInit(version)",
-        records.getVersion(),
-        version
+        version,
+        records.getVersion()
       );
       //create few dummy records
       createRecords(connection, 3);
@@ -132,8 +132,8 @@ public class VFSInitializationTest {
     catch (VFSInitException e) {
       assertEquals(
         "rebuildCause must be IMPL_VERSION_MISMATCH",
-        e.category(),
-        IMPL_VERSION_MISMATCH
+        IMPL_VERSION_MISMATCH,
+        e.category()
       );
     }
   }

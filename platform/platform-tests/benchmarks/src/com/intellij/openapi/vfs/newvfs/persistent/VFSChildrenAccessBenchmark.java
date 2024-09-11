@@ -47,7 +47,6 @@ public class VFSChildrenAccessBenchmark {
 
     public PersistentFSTreeAccessor treeAccessor;
 
-    @SuppressWarnings("SSBasedInspection")
     private final IntArrayList foldersIds = new IntArrayList();
 
     protected abstract PersistentFSTreeAccessor createTreeAccessor(FSRecordsImpl vfs) throws IOException;

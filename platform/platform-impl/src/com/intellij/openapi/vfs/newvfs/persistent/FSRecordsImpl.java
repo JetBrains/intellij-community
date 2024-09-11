@@ -1397,7 +1397,7 @@ public final class FSRecordsImpl implements Closeable {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
           long lockStamp = lock.writeLock();
           try {
             super.close();

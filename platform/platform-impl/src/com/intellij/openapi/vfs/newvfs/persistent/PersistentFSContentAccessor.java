@@ -130,7 +130,7 @@ public final class PersistentFSContentAccessor {
     return connection.records().getContentRecordId(fileId);
   }
 
-  void deleteContent(int fileId) throws IOException {
+  void deleteContent(int fileId) {
     //nothing: content records kept forever
   }
 

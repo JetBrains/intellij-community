@@ -229,7 +229,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   private MappedFileStorageHelper(@NotNull MMappedFileStorage storage,
                                   int bytesPerRow,
                                   @NotNull IntSupplier maxRowsSupplier,
-                                  boolean checkFileIdsBelowMax) throws IOException {
+                                  boolean checkFileIdsBelowMax) {
     if (storage.pageSize() % bytesPerRow != 0) {
       throw new IllegalArgumentException(
         "bytesPerRow(=" + bytesPerRow + ") is not aligned with pageSize(=" + storage.pageSize() + "): rows must be page-aligned");

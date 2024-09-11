@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.CHILDREN_CACHED
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.IS_DIRECTORY
@@ -666,7 +667,7 @@ fun main(args: Array<String>) {
   }
 
   val log = configureLogger()
-  runBlocking {
+  runBlockingCancellable {
     val checkupReport = VFSHealthChecker(records, log).checkHealth(checkForOrphanRecords = true)
     println(checkupReport)
   }
