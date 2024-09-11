@@ -3,6 +3,7 @@
 
 package com.intellij.ide.projectWizard.generators
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
@@ -26,6 +27,10 @@ object AssetsOnboardingTips {
 
   fun shouldRenderOnboardingTips(): Boolean {
     return Registry.`is`("doc.onboarding.tips.render")
+  }
+
+  fun proposeToGenerateOnboardingTipsByDefault(): Boolean {
+    return RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty()
   }
 }
 
