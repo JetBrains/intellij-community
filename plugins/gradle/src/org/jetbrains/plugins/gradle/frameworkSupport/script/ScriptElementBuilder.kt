@@ -36,6 +36,7 @@ interface ScriptElementBuilder {
 
   fun assignIfNotNull(name: String, expression: Expression?): AssignElement?
   fun assignIfNotNull(name: String, value: String?): AssignElement?
+  fun assignIfNotNull(name: String, value: Boolean?): AssignElement?
 
   fun plusAssign(name: String, value: Expression): PlusAssignElement
   fun plusAssign(name: String, value: String): PlusAssignElement

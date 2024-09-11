@@ -18,12 +18,8 @@ open class GradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDependencyImp
       withPrefix {
         if (settings.isIdeaPluginRequired()) {
           call("idea.module") {
-            settings.pluginDownloadSourcesValue?.run {
-              assign("downloadSources", this)
-            }
-            settings.pluginDownloadJavadocValue?.run {
-              assign("downloadJavadoc", this)
-            }
+            assignIfNotNull("downloadSources", settings.pluginDownloadSourcesValue)
+            assignIfNotNull("downloadJavadoc", settings.pluginDownloadJavadocValue)
           }
         }
       }
@@ -53,12 +49,8 @@ open class GradleAuxiliaryDependencyImportingTest : GradleAuxiliaryDependencyImp
       withPrefix {
         if (settings.isIdeaPluginRequired()) {
           call("idea.module") {
-            settings.pluginDownloadSourcesValue?.run {
-              assign("downloadSources", this)
-            }
-            settings.pluginDownloadJavadocValue?.run {
-              assign("downloadJavadoc", this)
-            }
+            assignIfNotNull("downloadSources", settings.pluginDownloadSourcesValue)
+            assignIfNotNull("downloadJavadoc", settings.pluginDownloadJavadocValue)
           }
         }
       }
