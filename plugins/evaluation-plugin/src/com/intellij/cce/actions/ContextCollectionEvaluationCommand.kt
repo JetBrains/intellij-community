@@ -81,7 +81,7 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
               }.sortedBy { it.name }
               val strategy = config.strategy as CompletionContextCollectionStrategy
               val sampled = files.shuffled(Random(strategy.samplingSeed)).take(strategy.samplesCount).sortedBy { it.name }
-              generateActions(workspace, language, sampled, evaluationRootInfo, filesLimit = null, progress)
+              generateActions(workspace, language, sampled, evaluationRootInfo, progress)
               return workspace
             }
           }

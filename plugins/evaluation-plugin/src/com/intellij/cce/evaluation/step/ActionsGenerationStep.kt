@@ -40,12 +40,26 @@ open class ActionsGenerationStep(
     val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
       FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, config.actions.ignoreFileNames, language)
     }
-    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, config.interpret.filesLimit, progress)
+    generateActions(
+      workspace,
+      language,
+      filesForEvaluation,
+      evaluationRootInfo,
+      progress,
+      filesLimit = config.interpret.filesLimit ?: Int.MAX_VALUE,
+      sessionsLimit = config.interpret.sessionsLimit ?: Int.MAX_VALUE,)
     return workspace
   }
 
-  protected fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              evaluationRootInfo: EvaluationRootInfo, filesLimit: Int?, indicator: Progress) {
+  protected fun generateActions(
+    workspace: EvaluationWorkspace,
+    languageName: String,
+    files: Collection<VirtualFile>,
+    evaluationRootInfo: EvaluationRootInfo,
+    indicator: Progress,
+    filesLimit: Int = Int.MAX_VALUE,
+    sessionsLimit: Int = Int.MAX_VALUE,
+  ) {
     val actionsGenerator = ActionsGenerator(processor)
     val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
 
@@ -54,12 +68,16 @@ open class ActionsGenerationStep(
     var totalFiles = 0
     val actionsSummarizer = ActionsSummarizer()
     for ((i, file) in files.sortedBy { it.name }.withIndex()) {
-      if (filesLimit != null && totalFiles > filesLimit) {
-        LOG.info("Generating actions is canceled by files limit ($totalFiles). Done: $i/${files.size}. With error: ${errors.size}")
+      if (totalSessions >= sessionsLimit) {
+        LOG.warn("Generating actions is canceled by sessions limit ($totalSessions).  With error: ${errors.size}")
+        break
+      }
+      if (totalFiles >= filesLimit) {
+        LOG.warn("Generating actions is canceled by files limit ($totalFiles). Done: $i/${files.size}. With error: ${errors.size}")
         break
       }
       if (indicator.isCanceled()) {
-        LOG.info("Generating actions is canceled by user. Done: $i/${files.size}. With error: ${errors.size}")
+        LOG.warn("Generating actions is canceled by user. Done: $i/${files.size}. With error: ${errors.size}")
         break
       }
       LOG.info("Start generating actions for file ${file.path}. Done: $i/${files.size}. With error: ${errors.size}")
@@ -75,7 +93,7 @@ open class ActionsGenerationStep(
           else -> throw IllegalStateException("Parent psi and offset are null.")
         }
         val codeFragment = codeFragmentBuilder.build(file, rootVisitor, featureName)
-        val fileActions = actionsGenerator.generate(codeFragment)
+        val fileActions = actionsGenerator.generate(codeFragment, sessionLimit = sessionsLimit - totalSessions)
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
         totalSessions += fileActions.sessionsCount
