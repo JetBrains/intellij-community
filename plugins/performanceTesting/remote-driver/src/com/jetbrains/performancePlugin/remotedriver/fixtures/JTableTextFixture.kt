@@ -6,11 +6,12 @@ import org.assertj.swing.core.Robot
 import org.assertj.swing.data.TableCell.row
 import org.assertj.swing.driver.BasicJTableCellReader
 import org.assertj.swing.fixture.JTableFixture
+import java.awt.Dimension
 import javax.swing.JTable
 
 class JTableTextFixture(robot: Robot, component: JTable) : JTableFixture(robot, component) {
   init {
-    replaceCellReader(BasicJTableCellReader(TextCellRendererReader()))
+    replaceCellReader(BasicJTableCellReader(TextCellRendererReader(Dimension(component.width, 100))))
   }
 
   fun collectItems(): StringTable {
