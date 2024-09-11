@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import kotlin.Pair;
 import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
@@ -37,7 +38,7 @@ public class Field {
   private boolean myEmptyValueAllowed;
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
-
+  private Pair<String, List<String>> myRequiredSiblingValues;
   private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
   /**
@@ -74,6 +75,15 @@ public class Field {
   public @NotNull Field withDefaultRelation(@NotNull Relation relation) {
     myOverriddenDefaultRelation = relation;
     return this;
+  }
+
+  public @NotNull Field withRequiredSibling(String key, List<String> values) {
+    myRequiredSiblingValues = new Pair<>(key, values);
+    return this;
+  }
+
+  public Pair<String, List<String>> getRequiredSibling() {
+    return myRequiredSiblingValues;
   }
 
   public Field withRelationSpecificType(@NotNull Relation relation, @NotNull YamlMetaType specificType) {
