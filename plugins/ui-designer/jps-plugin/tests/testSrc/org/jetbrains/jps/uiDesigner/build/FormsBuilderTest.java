@@ -85,11 +85,12 @@ public class FormsBuilderTest extends JpsBuildTestCase {
     buildAllModules().assertSuccessful();
     assertInstrumented(m, "xxx/MyForm.class");
 
-    change(getAbsolutePath("src/xxx/Constants.java"), "package xxx;\n" +
-                                                      "\n" +
-                                                      "public class Constants {\n" +
-                                                      "  public static int CONST = 10;\n" +
-                                                      "}");
+    change(getAbsolutePath("src/xxx/Constants.java"), """
+      package xxx;
+      
+      public class Constants {
+        public static int CONST = 10;
+      }""");
     buildAllModules().assertSuccessful();
     assertCompiled(JavaBuilder.BUILDER_ID, "src/xxx/MyForm.java", "src/xxx/Constants.java");
     assertCompiled(FormsInstrumenter.BUILDER_NAME, "src/xxx/MyForm.form");
