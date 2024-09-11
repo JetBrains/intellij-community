@@ -3,7 +3,7 @@
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
-  <depends>com.intellij.java</depends>
+  <!--<depends>com.intellij.java</depends>-->
 
   <description><![CDATA[
       <p>Visualizes chains of operations on Java streams.</p>

@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.psi.impl;
 
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -20,7 +20,8 @@ public final class DebuggerPositionResolverImpl implements DebuggerPositionResol
     int offset = position.getOffset();
     final VirtualFile file = position.getFile();
     if (file.isValid() && 0 <= offset && offset < file.getLength()) {
-      return DebuggerUtilsEx.findElementAt(PsiManager.getInstance(session.getProject()).findFile(file), offset);
+      @Nullable PsiFile psiFile = PsiManager.getInstance(session.getProject()).findFile(file);
+      return psiFile != null ? psiFile.findElementAt(offset) : null;
     }
 
     return null;
