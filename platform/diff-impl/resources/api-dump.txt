@@ -639,9 +639,16 @@ a:com.intellij.diff.impl.DiffWindowBase
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer
 - com.intellij.diff.DiffEditorTitleCustomizer
-- <init>(java.lang.String,java.lang.String,javax.swing.JComponent):V
-- b:<init>(java.lang.String,java.lang.String,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer$RevisionLabel):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer$RevisionLabel,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - getLabel():javax.swing.JComponent
+f:com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer$RevisionLabel
+- <init>(java.lang.String,Z):V
+- f:copy(java.lang.String,Z):com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer$RevisionLabel
+- bs:copy$default(com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer$RevisionLabel,java.lang.String,Z,I,java.lang.Object):com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer$RevisionLabel
+- f:createComponent():com.intellij.ui.components.JBLabel
+- equals(java.lang.Object):Z
+- hashCode():I
 com.intellij.diff.lang.DiffIgnoredRangeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z

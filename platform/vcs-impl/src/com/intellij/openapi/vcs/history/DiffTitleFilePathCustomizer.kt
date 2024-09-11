@@ -11,13 +11,15 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
 /**
  * @see [DiffUtil.addTitleCustomizers]
  */
 object DiffTitleFilePathCustomizer {
-  private val EMPTY_CUSTOMIZER = DiffEditorTitleCustomizer { null }
+  @JvmField
+  val EMPTY_CUSTOMIZER = DiffEditorTitleCustomizer { null }
 
   @JvmStatic
   fun getTitleCustomizers(
@@ -46,6 +48,15 @@ object DiffTitleFilePathCustomizer {
     getTitleCustomizer(centerRevision, project),
     getTitleCustomizer(afterRevision, project, showPath = centerRevision == null || centerRevision.revision.file != afterRevision?.revision?.file),
   )
+
+  @JvmStatic
+  fun getTitleCustomizer(project: Project?, filePath: FilePath, title: String?): DiffEditorTitleCustomizer {
+    return FilePathDiffTitleCustomizer(
+      displayedPath = getRelativeOrFullPath(project, filePath),
+      fullPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(filePath.path)),
+      revisionLabel = title?.let { FilePathDiffTitleCustomizer.RevisionLabel(title, copiable = false) }
+    )
+  }
 
   private fun getTitleCustomizer(
     revisionWithTitle: RevisionWithTitle?,
