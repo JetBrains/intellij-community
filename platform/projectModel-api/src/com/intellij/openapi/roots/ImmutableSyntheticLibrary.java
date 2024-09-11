@@ -29,7 +29,7 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     myBinaryRoots = List.copyOf(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
-    hashCode = Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
+    hashCode = 31 * (31 * sourceRoots.hashCode() + binaryRoots.hashCode()) + excludedRoots.hashCode();
   }
 
   @Override
