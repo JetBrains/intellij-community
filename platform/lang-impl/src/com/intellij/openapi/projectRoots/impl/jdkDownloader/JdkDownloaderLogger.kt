@@ -11,9 +11,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 internal object JdkDownloaderLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 5)
-
-  private val DOWNLOAD: EventId1<Boolean> = GROUP.registerEvent("download", EventFields.Boolean("success"))
+  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 6)
 
   private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
                                                                          EventFields.String("product", JdkVersionDetector.VENDORS),
@@ -30,17 +28,12 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
     WrongProtocol, WSLIssue, FileDoesNotExist, RuntimeException, IncorrectFileSize, ChecksumMismatch, ExtractionFailed, Cancelled,
   }
 
-  fun logDownload(success: Boolean) {
-    DOWNLOAD.log(success)
-  }
+  @Deprecated(message = "Use logDownload(JdkItem) instead")
+  fun logDownload(success: Boolean) {}
 
-  fun logDownload(success: Boolean, item: JdkItem) {
-    DOWNLOAD.log(success)
-
-    if (success) {
-      val variant = item.detectVariant()
-      DOWNLOADED_SDK.log(variant.displayName, item.jdkMajorVersion)
-    }
+  fun logDownload(item: JdkItem) {
+    val variant = item.detectVariant()
+    DOWNLOADED_SDK.log(variant.displayName, item.jdkMajorVersion)
   }
 
   fun logFailed(failure: DownloadFailure) {

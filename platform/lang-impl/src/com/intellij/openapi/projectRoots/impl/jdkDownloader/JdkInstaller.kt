@@ -233,14 +233,17 @@ abstract class JdkInstallerBase {
 
     val targetDir = request.installDir
     val url = Urls.parse(item.url, false) ?: error("Cannot parse download URL: ${item.url}")
+    var logFailed = false
     if (!url.scheme.equals("https", ignoreCase = true)) {
       JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.WrongProtocol)
+      logFailed = true
       error("URL must use https:// protocol, but was: $url")
     }
 
     val wslDistribution = wslDistributionFromPath(targetDir)
     if (wslDistribution != null && item.os != "linux") {
       JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.WSLIssue)
+      logFailed = true
       error("Cannot install non-linux JDK into WSL environment to $targetDir from $item")
     }
 
@@ -254,18 +257,21 @@ abstract class JdkInstallerBase {
 
         if (!downloadFile.isRegularFile()) {
           JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.FileDoesNotExist)
+          logFailed = true
           throw RuntimeException("Downloaded file does not exist: $downloadFile")
         }
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
         JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.RuntimeException)
+        logFailed = true
         throw RuntimeException("Failed to download ${item.fullPresentationText} from $url. ${t.message}", t)
       }
 
       val sizeDiff = runCatching { Files.size(downloadFile) - item.archiveSize }.getOrNull()
       if (sizeDiff != 0L) {
         JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.IncorrectFileSize)
+        logFailed = true
         throw RuntimeException("The downloaded ${item.fullPresentationText} has incorrect file size,\n" +
                                "the difference is ${sizeDiff?.absoluteValue ?: "unknown" } bytes.\n" +
                                "Check your internet connection and try again later")
@@ -298,18 +304,18 @@ abstract class JdkInstallerBase {
         }
 
         runCatching { writeMarkerFile(request) }
-        JdkDownloaderLogger.logDownload(true, item)
+        JdkDownloaderLogger.logDownload(item)
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
         JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.ExtractionFailed)
+        logFailed = true
         throw RuntimeException("Failed to extract ${item.fullPresentationText}. ${t.message}", t)
       }
     }
     catch (t: Throwable) {
-      //if we were cancelled in the middle or failed, let's clean up
-      JdkDownloaderLogger.logDownload(false)
-      JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.Cancelled)
+      // Cleanup
+      if (!logFailed) JdkDownloaderLogger.logFailed(JdkDownloaderLogger.DownloadFailure.Cancelled)
       targetDir.delete()
       markerFile(targetDir)?.delete()
       throw t
