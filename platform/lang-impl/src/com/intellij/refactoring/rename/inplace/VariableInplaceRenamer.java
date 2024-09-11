@@ -15,6 +15,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModUpdateFileText;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -54,6 +55,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -528,7 +530,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (mySnapshot != null) {
               WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> mySnapshot.apply(myInsertedName));
             }
-            performRefactoringRename(myInsertedName, myMarkAction);
+            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162114
+              performRefactoringRename(myInsertedName, myMarkAction);
+            }
           }
           else {
             problem.showUI();

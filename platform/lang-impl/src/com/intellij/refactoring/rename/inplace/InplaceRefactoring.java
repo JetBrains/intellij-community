@@ -18,6 +18,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -69,6 +70,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.NotNullList;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
@@ -217,7 +219,7 @@ public abstract class InplaceRefactoring {
 
     List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
-    try {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162116
       return buildTemplateAndStart(references, stringUsages, scope, containingFile);
     }
     catch (Throwable e) {

@@ -1396,7 +1396,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
       Disposer.register(myDisposable, myHighlighterDisposable);
       highlighter.setEditor(this);
-      highlighter.setText(document.getImmutableCharSequence());
+
+      try (AccessToken ignored = SlowOperations.knownIssue("IJPL-162348")) {
+        highlighter.setText(document.getImmutableCharSequence());
+      }
       if (!(highlighter instanceof EmptyEditorHighlighter)) {
         EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
       }
