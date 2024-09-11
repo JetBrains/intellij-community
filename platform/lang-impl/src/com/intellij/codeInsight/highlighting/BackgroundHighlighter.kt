@@ -51,7 +51,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Executor
 
 private val SELECTION_HIGHLIGHTS = Key<SelectionHighlights>("SELECTION_HIGHLIGHTS")
-private data class SelectionHighlights(val text: String, val highlighters: Collection<RangeHighlighter>)
+private class SelectionHighlights(val text: String, val highlighters: Collection<RangeHighlighter>)
 
 private class HighlightIdentifiersKey
 private class HighlightSelectionKey
