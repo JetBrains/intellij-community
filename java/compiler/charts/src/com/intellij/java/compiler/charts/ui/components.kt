@@ -34,7 +34,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
   private lateinit var block: ModuleBlock
   private lateinit var background: ModuleBackground
 
-  internal lateinit var clip: Rectangle2D
+  internal lateinit var bracket: Rectangle2D
 
   fun block(init: ModuleBlock.() -> Unit) {
     block = ModuleBlock().apply(init)
@@ -58,33 +58,33 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
 
   override fun width(settings: ChartSettings): Int {
     model.addAll(state.model.getAndClean())
-    var start = clip.x + clip.width
-    var end = clip.x
+    var start = bracket.x + bracket.width
+    var end = bracket.x
 
     model.list().forEachIndexed { thread, events ->
       events.forEach { event ->
-        if (inViewport(event.start.target.time,
-                       event.finish?.target?.time,
-                       settings, zoom, clip)) {
+        if (compareWithViewport(event.start.target.time,
+                                event.finish?.target?.time,
+                                settings, zoom, bracket) == 0) {
           val rect = getRectangle(event, thread, settings)
           start = min(rect.x, start)
           end = max(rect.x + rect.width, end)
         }
       }
     }
-    return if (start < end) (end - clip.x).roundToInt() else 0
+    return if (start < end) (end - bracket.x).roundToInt() else 0
   }
 
-  override fun height(): Double = clip.height
+  override fun height(): Double = bracket.height
   fun rows(): Int = model.list().size
 
   override fun background(g2d: ChartGraphics, settings: ChartSettings) {
     model.addAll(state.model.getAndClean())
     g2d.withColor(settings.background) {
-      fill(clip)
+      fill(bracket)
     }
     model.list().forEachIndexed { thread, _ ->
-      val cell = Rectangle2D.Double(clip.x, height * thread + clip.y, clip.width, height)
+      val cell = Rectangle2D.Double(bracket.x, height * thread + bracket.y, bracket.width, height)
       g2d.withColor(background.color(thread)) {
         fill(cell)
       }
@@ -103,12 +103,12 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
     settings: ChartSettings,
   ) {
     data.list().forEachIndexed { thread, events ->
-      events.forEach{event ->
-        if(state.filter.test(event.key) &&
-           inViewport(event.start.target.time,
-                      event.finish?.target?.time,
-                      settings, zoom, clip) &&
-           !isSmall(event, state)) {
+      events.forEach { event ->
+        if (state.filter.test(event.key) &&
+            compareWithViewport(event.start.target.time,
+                                event.finish?.target?.time,
+                                settings, zoom, bracket) == 0 &&
+            !isSmall(event, state)) {
 
 
           val rect = getRectangle(event, thread, settings)
@@ -211,7 +211,7 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
   lateinit var format: (StatisticData) -> String
   lateinit var color: UsageColor
 
-  internal lateinit var clip: Rectangle2D
+  internal lateinit var bracket: Rectangle2D
 
   fun color(init: UsageColor.() -> Unit) {
     color = UsageColor().apply(init)
@@ -225,10 +225,10 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
   override fun background(g2d: ChartGraphics, settings: ChartSettings) {
     model.addAll(state.model.getAndClean())
     g2d.withColor(settings.background) {
-      fill(clip)
+      fill(bracket)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(clip.x, clip.y, clip.width, clip.y))
+      draw(Line2D.Double(bracket.x, bracket.y, bracket.width, bracket.y))
     }
   }
 
@@ -242,8 +242,8 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     g2d.withColor(color.background) {
       fill(path)
     }
-    g2d.withStroke(BasicStroke(USAGE_BORDER)) {
-      withColor(color.border) {
+    g2d.withColor(color.border) {
+      g2d.withStroke(BasicStroke(USAGE_BORDER)) {
         draw(border)
       }
     }
@@ -251,8 +251,8 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
 
   fun drawPoint(g2d: ChartGraphics, data: StatisticData, settings: ChartSettings) {
     val border = 5
-    val height = clip.height - border
-    val y0 = clip.y + height + border
+    val height = bracket.height - border
+    val y0 = bracket.y + height + border
 
     val radius = 4
     val (x, y) = getXY(data, settings, y0, height)
@@ -273,20 +273,30 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     model.addAll(state.model.getAndClean())
     if (model.isEmpty()) return 0
     val (end, _) = getXY(model.last(), settings, 0.0, 0.0)
-    return (end - clip.x).roundToInt()
+    return (end - bracket.x).roundToInt()
   }
 
-  override fun height(): Double = clip.height
+  override fun height(): Double = bracket.height
 
   private fun filterData(data: NavigableSet<StatisticData>, settings: ChartSettings): NavigableSet<StatisticData> {
-    val filtered: NavigableSet<StatisticData> = data.asSequence()
-      .filter { statistic -> inViewport(statistic.time, statistic.time, settings, zoom, clip) }
-      .toCollection(TreeSet())
-    if (filtered.isEmpty()) return filtered
-
-    (0..5).forEach { i ->
-      data.lower(filtered.first())?.let { first -> filtered.add(first) }
-      data.higher(filtered.last())?.let { last -> filtered.add(last) }
+    val filtered = TreeSet<StatisticData>()
+    var before: StatisticData? = null
+    var after: StatisticData? = null
+    for (statistic in data) {
+      when(compareWithViewport(statistic.time, statistic.time, settings, zoom, bracket)) {
+        0 -> filtered.add(statistic)
+        -1 -> before = statistic
+        1 -> after = statistic
+      }
+      if (after != null) break
+    }
+    if (before != null) filtered.add(before)
+    if (after != null) filtered.add(after)
+    if (filtered.isNotEmpty()) {
+      (0..4).forEach { i ->
+        data.lower(filtered.first())?.let { first -> filtered.add(first) }
+        data.higher(filtered.last())?.let { last -> filtered.add(last) }
+      }
     }
     return filtered
   }
@@ -317,8 +327,8 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     if (data.isEmpty()) return null
     val neighborhood = DoubleArray(8) { Double.NaN }
     val border = 5
-    val height = clip.height - border
-    val y0 = clip.y + height + border
+    val height = bracket.height - border
+    val y0 = bracket.y + height + border
     val path = Path2D.Double()
 
     val (x0, data0) = getXY(data.first(), settings, y0, height)
@@ -357,14 +367,14 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
   var height: Double = 0.0
   var padding: Int = 2
 
-  internal lateinit var clip: Rectangle2D
+  internal lateinit var bracket: Rectangle2D
 
   override fun background(g2d: ChartGraphics, settings: ChartSettings) {
     g2d.withColor(settings.background) {
-      fill(clip)
+      fill(bracket)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(clip.x, clip.y, clip.x + clip.width, clip.y))
+      draw(Line2D.Double(bracket.x, bracket.y, bracket.x + bracket.width, bracket.y))
     }
   }
 
@@ -372,18 +382,18 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
     g2d.withAntialiasing {
       val size = UIUtil.getFontSize(settings.font.size) + padding
 
-      val from = (clip.x.roundToInt() / distance) * distance
-      val to = from + clip.width.roundToInt() + clip.x.roundToInt() % distance
+      val from = (bracket.x.roundToInt() / distance) * distance
+      val to = from + bracket.width.roundToInt() + bracket.x.roundToInt() % distance
 
       withColor(COLOR_LINE) {
         for (x in from..to step distance) {
           // big axis
-          withStroke(BasicStroke(1.5F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, stroke, 0.0f)) {
-            draw(Line2D.Double(x.toDouble(), 0.0, x.toDouble(), clip.y))
+          withStroke(BasicStroke(1.5F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, this@ChartAxis.stroke, 0.0f)) {
+            draw(Line2D.Double(x.toDouble(), 0.0, x.toDouble(), bracket.y))
           }
           for (x1 in x..x + distance step distance / count) {
             // additional axis
-            draw(Line2D.Double(x1.toDouble(), clip.y, x1.toDouble(), clip.y + (size / 2)))
+            draw(Line2D.Double(x1.toDouble(), bracket.y, x1.toDouble(), bracket.y + (size / 2)))
           }
         }
       }
@@ -397,12 +407,12 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
         withFont(UIUtil.getLabelFont(settings.font.size)) {
           for (x in from..to step distance) {
             val time = Formats.formatDuration((TimeUnit.NANOSECONDS.toMillis(zoom.toDuration(x)) / trim) * trim)
-            drawString(time, x + padding, (clip.y + size).roundToInt())
+            drawString(time, x + padding, (bracket.y + size).roundToInt())
           }
         }
       }
     }
   }
 
-  override fun height(): Double = clip.height
+  override fun height(): Double = bracket.height
 }

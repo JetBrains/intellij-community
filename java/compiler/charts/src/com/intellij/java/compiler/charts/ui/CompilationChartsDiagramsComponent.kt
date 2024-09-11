@@ -9,13 +9,11 @@ import com.intellij.java.compiler.charts.ui.CompilationChartsModuleInfo.Compilat
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.Magnificator
 import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentSkipListSet
@@ -41,12 +39,14 @@ class CompilationChartsDiagramsComponent(
   var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   val statistic: Statistic = Statistic()
   var cpuMemory = MEMORY
+  var offset: Int = 0
   private val usageInfo: CompilationChartsUsageInfo
   private val charts: Charts
   private val images: MutableMap<Int, BufferedImage> = HashMap()
   private val imageRequestCount: MutableMap<Int, Int> = HashMap()
   private var colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme()
   private var flush: Boolean = true
+
 
   private val focusableEmptyButton = JButton().apply {
     preferredSize = Dimension(0, 0)
@@ -76,7 +76,7 @@ class CompilationChartsDiagramsComponent(
     add(focusableEmptyButton, BorderLayout.NORTH)
     addMouseWheelListener { e ->
       if (e.isControlDown) {
-        zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
+        zoom.adjust(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
         smartDraw(true, false)
       }
       else {
@@ -124,6 +124,9 @@ class CompilationChartsDiagramsComponent(
     usageInfo = CompilationChartsUsageInfo(this, charts, zoom)
     addMouseMotionListener(usageInfo)
 
+    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, object : Magnificator {
+      override fun magnify(magnification: Double, at: Point): Point = zoom.adjust(viewport, at.x, magnification)
+    })
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
       .scheduleWithFixedDelay({ smartDraw() }, 0, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -145,8 +148,8 @@ class CompilationChartsDiagramsComponent(
       cleanCache()
       colorScheme = currentGlobalScheme
     }
-    revalidate()
-    repaint()
+    viewport.revalidate()
+    viewport.repaint()
   }
 
   override fun paintComponent(g2d: Graphics) {
@@ -163,18 +166,20 @@ class CompilationChartsDiagramsComponent(
       }
     }
 
-    buffered(ChartGraphics(g2d, 0, 0)) { img ->
-      charts.draw(img) { width, height ->
-        val size = Dimension(width.roundToInt(), height.roundToInt())
-        if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
-          this@CompilationChartsDiagramsComponent.preferredSize = size
-          this@CompilationChartsDiagramsComponent.revalidate()
-        }
-        img.setupRenderingHints()
-      }
-      flush = true
+    buffered(ChartGraphics(g2d, offset, 0)) { img ->
+      charts.draw(img.withRenderingHints()) { width, height -> resizeViewport(width, height) }
     }
+
     usageInfo.draw(ChartGraphics(g2d, 0, 0))
+    flush = true
+  }
+
+  private fun resizeViewport(width: Double, height: Double) {
+    val size = Dimension(width.roundToInt(), height.roundToInt())
+    if (size != preferredSize) {
+      preferredSize = size
+      revalidate()
+    }
   }
 
   internal fun setFocus() {

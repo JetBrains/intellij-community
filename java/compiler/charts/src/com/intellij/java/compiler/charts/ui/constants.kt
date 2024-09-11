@@ -40,12 +40,6 @@ const val AXIS_DISTANCE_PX: Int = 250
 const val AXIS_MARKERS_COUNT: Int = 10
 const val AXIS_TEXT_PADDING: Int = 2
 
-const val MIN_ZOOM_SECONDS = 0.2
-const val MAX_ZOOM_SECONDS = 1_000.0
-
-const val MAX_WIDTH = 10_000.0
-
-const val ZOOM_CACHING_DELAY = 50
 const val BUFFERED_IMAGE_WIDTH_PX = 512
 const val IMAGE_CACHE_ACTIVATION_COUNT = 8
 const val REFRESH_TIMEOUT_SECONDS = 1L

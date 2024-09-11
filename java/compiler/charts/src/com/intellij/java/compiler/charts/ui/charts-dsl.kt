@@ -48,7 +48,7 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
 
   fun draw(g2d: ChartGraphics, init: Charts.(Double, Double) -> Unit) {
     init(max(zoom.toPixels(MaxSize(progress, settings).width), width().toDouble()),
-         axis.clip.run { y + height })
+         axis.bracket.run { y + height })
 
     val components = listOf(progress, usage, axis)
     components.forEach { it.background(g2d, settings) }
@@ -74,17 +74,17 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
 
   fun clips(area: Rectangle2D.Double) {
     val size = MaxSize(progress, settings)
-    progress.clip = Rectangle2D.Double(area.x,
+    progress.bracket = Rectangle2D.Double(area.x,
                                        0.0,
                                        area.width,
                                        size.height)
-    usage.clip = Rectangle2D.Double(area.x,
+    usage.bracket = Rectangle2D.Double(area.x,
                                     size.height,
-                                    progress.clip.width,
-                                    max(progress.height * 3, area.height - progress.clip.height - axis.height))
-    axis.clip = Rectangle2D.Double(area.x,
-                                   progress.clip.height + usage.clip.height,
-                                   progress.clip.width,
+                                    progress.bracket.width,
+                                    max(progress.height * 3, area.height - progress.bracket.height - axis.height))
+    axis.bracket = Rectangle2D.Double(area.x,
+                                   progress.bracket.height + usage.bracket.height,
+                                   progress.bracket.width,
                                    axis.height)
   }
 }
@@ -198,8 +198,8 @@ class CompilationChartsModuleInfo(private val vm: CompilationChartsViewModel, pr
 
     override fun mouseMoved(e: MouseEvent) {
       val point = e.point
-      if (point.y >= charts.usage.clip.y &&
-          point.y <= charts.usage.clip.y + charts.usage.clip.height) {
+      if (point.y >= charts.usage.bracket.y &&
+          point.y <= charts.usage.bracket.y + charts.usage.bracket.height) {
         statistic = search(point)
         if (statistic != null) {
           component.smartDraw(false, false)

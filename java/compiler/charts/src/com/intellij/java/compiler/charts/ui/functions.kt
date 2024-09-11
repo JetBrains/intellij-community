@@ -81,14 +81,13 @@ else
 
 private fun Double.orZero() = if (this.isNaN()) 0.0 else this
 
-internal fun inViewport(startTime: Long?, finishTime: Long?, settings: ChartSettings, zoom: Zoom, viewport: Rectangle2D): Boolean {
-  if (startTime == null) return false
+internal fun compareWithViewport(startTime: Long, finishTime: Long?, settings: ChartSettings, zoom: Zoom, viewport: Rectangle2D): Int {
   val x0 = viewport.x
   val x1 = x0 + viewport.width
   val startPixel = zoom.toPixels(startTime - settings.duration.from)
-  if (startPixel > x1) return false
-  if (finishTime == null) return true
+  if (startPixel > x1) return 1
+  if (finishTime == null) return 0
   val finishPixel = zoom.toPixels(finishTime - settings.duration.from)
-  if (finishPixel < x0) return false
-  return true
+  if (finishPixel < x0) return -1
+  return 0
 }

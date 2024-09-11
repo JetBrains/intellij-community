@@ -8609,6 +8609,7 @@ c:com.intellij.ui.components.ZoomingDelegate
 - isActive():Z
 - magnificationFinished(D):V
 - magnificationStarted(java.awt.Point):V
+- ps:magnificationToScale(D):D
 - magnify(D):V
 - paint(java.awt.Graphics):V
 - p:scrollTo(I,I):V

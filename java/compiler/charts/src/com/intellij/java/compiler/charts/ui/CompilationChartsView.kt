@@ -17,7 +17,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
     val zoom = Zoom()
 
     val scroll = object : JBScrollPane() {
-      override fun createViewport(): JViewport = CompilationChartsViewport(zoom)
+      override fun createViewport(): JViewport = CompilationChartsViewport()
     }.apply {
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
