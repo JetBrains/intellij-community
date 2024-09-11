@@ -336,7 +336,6 @@ public final class FSRecordsImpl implements Closeable {
 
   /** Lock to protect individual file-records updates */
   private final FileRecordLock fileRecordLock = new FileRecordLock();
-  private final PerFileIdLock fileHierarchyLock = new PerFileIdLock();
 
   //TODO RC: why to have it both here, and also in PersistentFSConnection? Mb one place is enough?
   private volatile boolean closed = false;
@@ -720,7 +719,7 @@ public final class FSRecordsImpl implements Closeable {
 
     checkNotClosed();
 
-    fileHierarchyLock.lock(parentId);
+    fileRecordLock.lockForHierarchyUpdate(parentId);
     try {
       ListResult children = list(parentId);
       ListResult modifiedChildren = childrenConvertor.apply(children);
@@ -743,7 +742,7 @@ public final class FSRecordsImpl implements Closeable {
       throw handleError(e);
     }
     finally {
-      fileHierarchyLock.unlock(parentId);
+      fileRecordLock.unlockForHierarchyUpdate(parentId);
     }
   }
 
@@ -760,9 +759,9 @@ public final class FSRecordsImpl implements Closeable {
 
     int minId = Math.min(fromParentId, toParentId);
     int maxId = Math.max(fromParentId, toParentId);
-    fileHierarchyLock.lock(minId);
+    fileRecordLock.lockForHierarchyUpdate(minId);
     try {
-      fileHierarchyLock.lock(maxId);
+      fileRecordLock.lockForHierarchyUpdate(maxId);
       try {
         try {
           ListResult childrenToMove = list(fromParentId);
@@ -789,11 +788,11 @@ public final class FSRecordsImpl implements Closeable {
         }
       }
       finally {
-        fileHierarchyLock.unlock(maxId);
+        fileRecordLock.unlockForHierarchyUpdate(maxId);
       }
     }
     finally {
-      fileHierarchyLock.unlock(minId);
+      fileRecordLock.unlockForHierarchyUpdate(minId);
     }
   }
 
@@ -817,9 +816,9 @@ public final class FSRecordsImpl implements Closeable {
 
     int minId = Math.min(fromParentId, toParentId);
     int maxId = Math.max(fromParentId, toParentId);
-    fileHierarchyLock.lock(minId);
+    fileRecordLock.lockForHierarchyUpdate(minId);
     try {
-      fileHierarchyLock.lock(maxId);
+      fileRecordLock.lockForHierarchyUpdate(maxId);
       try {
         try {
           ListResult firstParentChildren = list(fromParentId);
@@ -872,11 +871,11 @@ public final class FSRecordsImpl implements Closeable {
         }
       }
       finally {
-        fileHierarchyLock.unlock(maxId);
+        fileRecordLock.unlockForHierarchyUpdate(maxId);
       }
     }
     finally {
-      fileHierarchyLock.unlock(minId);
+      fileRecordLock.unlockForHierarchyUpdate(minId);
     }
   }
 

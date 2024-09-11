@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
-import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +34,6 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.testFramework.utils.vfs.CheckVFSHealthRule;
-import com.intellij.testFramework.utils.vfs.SkipVFSHealthCheck;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -667,7 +665,6 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  @SkipVFSHealthCheck
   public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
     PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
     Application application = ApplicationManager.getApplication();
@@ -980,7 +977,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     events.clear();
   }
 
-  @IJIgnore(issue = "IJPL-149673")
+  //@IJIgnore(issue = "IJPL-149673")
   @Test
   public void testChildMove() throws IOException {
     final File firstDirIoFile = tempDirectory.newDirectory("dir1");
