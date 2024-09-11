@@ -129,6 +129,13 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
       layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
 
+      // Move kotlinx-coroutines-guava to core, making it accessible to the Android plugin.
+      // Note: we could bundle kotlinx-coroutines-guava in the Android plugin separately, but that's risky because (1) the library
+      // version should be consistent with the coroutines library in the platform, and (2) kotlinx-coroutines-guava is used in some
+      // platform modules, leading to duplicated classes on the runtime classpath in some situations (depending on classloader configuration).
+      // For precedent, see IntelliJ commit https://github.com/JetBrains/intellij-community/commit/bb6d3cf0ac.
+      layout.withProjectLibrary("kotlinx-coroutines-guava")
+
       // b/358035533: plexus-utils is used by maven-resolver-provider from core, thus plexus-utils must be in core too.
       // This is consistent with the layout of IntelliJ IDEA CE 2024.2.
       layout.withProjectLibrary("plexus-utils")
