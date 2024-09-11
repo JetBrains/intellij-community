@@ -15,6 +15,7 @@ import com.intellij.ui.*
 import com.intellij.ui.CheckboxTree.CheckboxTreeCellRenderer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -79,7 +80,7 @@ internal class CertificateWarningDialog(
   }
 
   override fun createCenterPanel(): JComponent? {
-    return panel {
+    val panel = panel {
       row {
         var error: String? = null
         certificates.forEach {
@@ -120,10 +121,13 @@ internal class CertificateWarningDialog(
             isDetailsShown = true
             updateDetails()
           }
+          pack()
         }
       }
     }.withMinimumWidth(JBUIScale.scale(400))
       .withPreferredWidth(JBUIScale.scale(600))
+
+    return JBScrollPane(panel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
   }
 
   override fun doOKAction() {
