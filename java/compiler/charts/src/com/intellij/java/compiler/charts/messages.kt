@@ -33,6 +33,6 @@ data class CpuMemoryStatistics(
   val heapMax: Long,
   val nonHeapUsed: Long,
   val nonHeapMax: Long,
-  val cpu: Long,
+  val cpu: Double,
   val time: Long,
 )
