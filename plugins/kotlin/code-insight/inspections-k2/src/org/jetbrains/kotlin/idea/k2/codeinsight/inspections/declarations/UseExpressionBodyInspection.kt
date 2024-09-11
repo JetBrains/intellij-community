@@ -50,25 +50,26 @@ internal class UseExpressionBodyInspection :
 
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = element.isConvertableToExpressionBody()
 
-    override fun getApplicableRanges(element: KtDeclarationWithBody): List<TextRange> =
-        ApplicabilityRange.multiple(element) { declaration: KtDeclarationWithBody ->
+    override fun getApplicableRanges(element: KtDeclarationWithBody): List<TextRange> {
+        fun KtExpression.toHighlight(): PsiElement? = when (this) {
+            is KtReturnExpression -> returnKeyword
+            is KtCallExpression -> calleeExpression
+            is KtQualifiedExpression -> selectorExpression?.toHighlight()
+            is KtObjectLiteralExpression -> objectDeclaration.getObjectKeyword()
+            else -> this
+        }
+
+        return ApplicabilityRange.multiple(element) { declaration: KtDeclarationWithBody ->
             val bodyBlockExpression = declaration.bodyBlockExpression
-
-            fun KtExpression.toHighlight(): PsiElement? = when (this) {
-                is KtReturnExpression -> returnKeyword
-                is KtCallExpression -> calleeExpression
-                is KtQualifiedExpression -> selectorExpression?.toHighlight()
-                is KtObjectLiteralExpression -> objectDeclaration.getObjectKeyword()
-                else -> this
-            }
-
             val toHighlightElement = bodyBlockExpression?.statements?.singleOrNull()?.toHighlight()
+
             if (toHighlightElement == null) {
                 listOf(bodyBlockExpression)
             } else {
                 listOf(toHighlightElement, bodyBlockExpression.lBrace)
             }
         }
+    }
 
     override fun getProblemHighlightType(
         element: KtDeclarationWithBody, context: Context
@@ -89,9 +90,10 @@ internal class UseExpressionBodyInspection :
     context(KaSession)
     private fun KtDeclarationWithBody.findValueStatement(): KtExpression? {
         val statements = bodyBlockExpression?.statements
-        if (statements == null || statements.isEmpty()) {
+        if (statements.isNullOrEmpty()) {
             return KtPsiFactory(project).createExpression("Unit")
         }
+
         val statement = statements.singleOrNull() ?: return null
         when (statement) {
             is KtReturnExpression -> {
