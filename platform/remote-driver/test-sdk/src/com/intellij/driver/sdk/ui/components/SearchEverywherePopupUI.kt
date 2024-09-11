@@ -25,13 +25,11 @@ class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
 
   fun invokeSelectAction() {
-    val searchEveryWhereUiComponent = x { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
-    val selectAction = driver.utility(ActionUtils::class).getActions(searchEveryWhereUiComponent.component).singleOrNull {
-      it.getShortcutSet().getShortcuts().singleOrNull()?.toString() == "[pressed ENTER]"
-    } ?: error("'Select searcheverywhere item' action was not found")
-    driver.withContext(OnDispatcher.EDT) {
-      service(ActionManager::class).tryToExecute(selectAction, null, null, null, true)
-    }
+    invokeActionWithShortcut("[pressed ENTER]")
+  }
+
+  fun invokeOpenInRightSplitAction() {
+    invokeActionWithShortcut("[shift pressed ENTER]")
   }
 
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
@@ -42,6 +40,16 @@ class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
         if (exactMatch) hasText(text) else hasSubtext(text)
       }
       enter()
+    }
+  }
+
+  private fun invokeActionWithShortcut(shortcut: String) {
+    val searchEveryWhereUiComponent = x { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
+    val action = driver.utility(ActionUtils::class).getActions(searchEveryWhereUiComponent.component).singleOrNull {
+      it.getShortcutSet().getShortcuts().singleOrNull()?.toString() == shortcut
+    } ?: error("'Action with shortcut '$shortcut' was not found")
+    driver.withContext(OnDispatcher.EDT) {
+      service(ActionManager::class).tryToExecute(action, null, null, null, true)
     }
   }
 }
