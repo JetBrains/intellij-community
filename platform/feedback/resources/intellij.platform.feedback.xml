@@ -38,8 +38,6 @@
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
-
-    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.twnames.TwNamesSurvey"/>
   </extensions>
 
   <applicationListeners>
@@ -59,8 +57,6 @@
               internal="true"/>
       <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
               class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
-      <action id="com.intellij.platform.feedback.twnames.TwNamesFeedbackShowAction"
-              class="com.intellij.platform.feedback.twnames.TwNamesFeedbackShowAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 
