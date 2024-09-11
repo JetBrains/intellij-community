@@ -287,11 +287,18 @@ public final class JavaDfaValueFactory {
    * @return true if variable initializer should be ignored by analysis
    */
   public static boolean ignoreInitializer(PsiVariable variable) {
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiTypes.booleanType())) {
-      // Skip boolean constant fields as they usually used as control knobs to modify program logic
-      // it's better to analyze both true and false values even if it's predefined
-      PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
-      return initializer != null && initializer.getValue() instanceof Boolean;
+    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL)) {
+      if (variable.getClass().getName().equals("org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForProperty")) {
+        // Kotlin light fields may report default value as initializer, which is wrong. See KT-71407
+        return true;
+      }
+      if (variable.getType().equals(PsiTypes.booleanType())) {
+        // Skip boolean constant fields as they usually used as control knobs to modify program logic
+        // it's better to analyze both true and false values even if it's predefined
+        PsiLiteralExpression initializer =
+          tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
+        return initializer != null && initializer.getValue() instanceof Boolean;
+      }
     }
     return false;
   }
