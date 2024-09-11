@@ -925,6 +925,7 @@ a:com.intellij.openapi.project.ex.ProjectManagerEx
 f:com.intellij.openapi.project.ex.ProjectManagerEx$Companion
 - f:getIS_CHILD_PROCESS():Z
 - f:getInstanceEx():com.intellij.openapi.project.ex.ProjectManagerEx
+- f:getInstanceExAsync(kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstanceExIfCreated():com.intellij.openapi.project.ex.ProjectManagerEx
 - *f:isChildProcessPath(java.nio.file.Path):Z
 e:com.intellij.openapi.project.ex.ProjectManagerEx$PerProjectState

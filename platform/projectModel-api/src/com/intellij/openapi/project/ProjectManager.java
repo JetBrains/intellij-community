@@ -21,7 +21,8 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   /**
-   * @return {@code ProjectManager} instance
+   * @return {@code ProjectManager} instance.
+   * For coroutines, see <pre>ProjectManagerEx</pre>
    */
   @RequiresBlockingContext
   public static ProjectManager getInstance() {
