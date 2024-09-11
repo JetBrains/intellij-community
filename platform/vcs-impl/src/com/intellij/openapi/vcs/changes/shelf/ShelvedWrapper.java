@@ -98,7 +98,7 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return ChangesUtil.getFilePath(myShelvedChange.getChange()).getName();
   }
 
-  String getBeforePath() {
+  public String getBeforePath() {
     return myShelvedChange != null ? myShelvedChange.getBeforePath() : Objects.requireNonNull(myBinaryFile).BEFORE_PATH;
   }
 
@@ -117,7 +117,8 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return myShelvedChange != null ? myShelvedChange.getFileStatus() : Objects.requireNonNull(myBinaryFile).getFileStatus();
   }
 
-  Change getChangeWithLocal(@NotNull Project project) {
+  @ApiStatus.Internal
+  public Change getChangeWithLocal(@NotNull Project project) {
     return myShelvedChange != null ? myShelvedChange.getChange() : Objects.requireNonNull(myBinaryFile).createChange(project);
   }
 

@@ -9,35 +9,22 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.*;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.TreeSpeedSearch;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.map2Array;
-
-import com.intellij.ide.DeleteProvider
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChange
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.HELP_ID
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.SHELVED_CHANGES_TREE
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTreeModel
@@ -45,42 +32,29 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.pom.Navigatable
-import com.intellij.pom.NavigatableAdapter
-import com.intellij.ui.TreeSpeedSearch
-import com.intellij.util.Function
-import com.intellij.util.containers.ContainerUtil
-import java.util.ArrayList
-import java.util.function.Consumer
-import java.util.function.Supplier
-import javax.swing.tree.TreePath
+import com.intellij.util.containers.toArray
+import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 
-internal class ShelfTree private constructor(project: Project) : AsyncChangesTree(project, false, false, false) {
-  private val myDeleteProvider: DeleteProvider = MyShelveDeleteProvider(myProject, this)
-  private val myAsyncTreeModel: ShelfTreeAsyncModel
+@ApiStatus.Internal
+class ShelfTree internal constructor(project: Project) : AsyncChangesTree(project, false, false, false) {
+  override val changesTreeModel: AsyncChangesTreeModel = ShelfTreeAsyncModel(project, scope)
+  private val deleteProvider: DeleteProvider = ShelveDeleteProvider(myProject, this)
 
   init {
-    myAsyncTreeModel = ShelfTreeAsyncModel(project, scope)
-
     TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER)
-    setKeepTreeState(true)
-  }
-
-  override fun getChangesTreeModel(): AsyncChangesTreeModel {
-    return myAsyncTreeModel
+    isKeepTreeState = true
   }
 
   override fun isPathEditable(path: TreePath): Boolean {
-    return isEditable() && getSelectionCount() == 1 && path.getLastPathComponent() is ShelvedListNode
+    return isEditable && selectionCount == 1 && path.lastPathComponent is ShelvedListNode
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
     val groupingSupport = ChangesGroupingSupport(myProject, this, false)
     installGroupingSupport(this, groupingSupport,
-                           Supplier { ShelveChangesManager.getInstance(myProject).getGrouping() },
-                           Consumer { newGrouping: MutableCollection<String?>? ->
-                             ShelveChangesManager.getInstance(myProject).setGrouping(newGrouping!!)
-                           })
+                           { ShelveChangesManager.getInstance(myProject).grouping },
+                           { ShelveChangesManager.getInstance(myProject).grouping = it })
     return groupingSupport
   }
 
@@ -90,46 +64,41 @@ internal class ShelfTree private constructor(project: Project) : AsyncChangesTre
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
-    sink.set<ChangesTree>(ShelvedChangesViewManager.SHELVED_CHANGES_TREE, this)
-    sink.set<T>(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY, ArrayList<Any?>(
-      ShelvedChangesViewManager.getSelectedLists(this, { l -> !l.isRecycled() && !l.isDeleted() })))
-    sink.set<T>(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY, ArrayList<Any?>(
-      ShelvedChangesViewManager.getSelectedLists(this, { l -> l.isRecycled() && !l.isDeleted() })))
-    sink.set<T>(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY,
-                ArrayList<Any?>(ShelvedChangesViewManager.getSelectedLists(this, { l -> l.isDeleted() })))
-    sink.set<MutableList<ShelvedChange?>>(ShelvedChangesViewManager.SHELVED_CHANGE_KEY,
-                                          VcsTreeModelData.selected(this).iterateUserObjects<ShelvedWrapper?>(ShelvedWrapper::class.java)
-                                            .filterMap<ShelvedChange?>(Function { s: ShelvedWrapper? -> s!!.getShelvedChange() })
-                                            .toList())
-    sink.set<MutableList<ShelvedBinaryFile?>>(ShelvedChangesViewManager.SHELVED_BINARY_FILE_KEY,
-                                              VcsTreeModelData.selected(this).iterateUserObjects<ShelvedWrapper?>(
-                                                ShelvedWrapper::class.java)
-                                                .filterMap<ShelvedBinaryFile?>(Function { s: ShelvedWrapper? -> s!!.getBinaryFile() })
-                                                .toList())
+    sink[SHELVED_CHANGES_TREE] = this
+    sink[ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY] = getSelectedLists { !it.isRecycled && !it.isDeleted }.toList()
+    sink[ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY] = getSelectedLists { it.isRecycled && !it.isDeleted }.toList()
+    sink[ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY] = getSelectedLists { it.isDeleted }.toList()
+    sink[ShelvedChangesViewManager.SHELVED_CHANGE_KEY] = VcsTreeModelData.selected(this)
+      .iterateUserObjects(ShelvedWrapper::class.java)
+      .filterMap { it.shelvedChange }
+      .toList()
+    sink[ShelvedChangesViewManager.SHELVED_BINARY_FILE_KEY] = VcsTreeModelData.selected(this)
+      .iterateUserObjects(ShelvedWrapper::class.java)
+      .filterMap { it.binaryFile }
+      .toList()
     if (!isEditing()) {
-      sink.set<DeleteProvider>(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider)
+      sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
     }
-    val shelvedChanges = VcsTreeModelData.selected(this).userObjects<ShelvedWrapper?>(ShelvedWrapper::class.java)
+    val shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper::class.java)
     if (!shelvedChanges.isEmpty()) {
-      sink.set<Array<Change?>>(VcsDataKeys.CHANGES, ContainerUtil.map2Array<ShelvedWrapper?, Change?>(shelvedChanges, Change::class.java,
-                                                                                                      Function { s: ShelvedWrapper? ->
-                                                                                                        s.getChangeWithLocal(myProject)
-                                                                                                      }))
+      sink[VcsDataKeys.CHANGES] = shelvedChanges.map {
+        it.getChangeWithLocal(myProject)
+      }.toTypedArray()
     }
     sink.set<Array<Navigatable?>>(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatables(shelvedChanges)
       .toArray<Navigatable?>(Navigatable.EMPTY_NAVIGATABLE_ARRAY))
-    sink.set<String>(PlatformCoreDataKeys.HELP_ID, ShelvedChangesViewManager.HELP_ID)
+    sink.set<String>(PlatformCoreDataKeys.HELP_ID, HELP_ID)
   }
 
   private fun getNavigatables(shelvedChanges: MutableList<ShelvedWrapper>): MutableList<Navigatable?> {
     val navigatables = ArrayList<Navigatable?>()
     for (shelvedChange in shelvedChanges) {
-      if (shelvedChange.getBeforePath() != null && FileStatus.ADDED != shelvedChange.getFileStatus()) {
+      if (shelvedChange.beforePath != null && FileStatus.ADDED != shelvedChange.fileStatus) {
         val navigatable: NavigatableAdapter = object : NavigatableAdapter() {
           override fun navigate(requestFocus: Boolean) {
             val vf = shelvedChange.getBeforeVFUnderProject(myProject)
             if (vf != null) {
-              NavigatableAdapter.navigate(myProject, vf, true)
+              navigate(myProject, vf, true)
             }
           }
         }
@@ -139,8 +108,39 @@ internal class ShelfTree private constructor(project: Project) : AsyncChangesTre
     return navigatables
   }
 
+  private fun getSelectedLists(
+    condition: (ShelvedChangeList) -> Boolean,
+  ): Set<ShelvedChangeList> {
+    return selectionPaths?.mapNotNull { TreeUtil.findObjectInPath(it, ShelvedChangeList::class.java) }
+             ?.filter { condition(it) }?.toSet() ?: emptySet()
+  }
+
+
+  fun getSelectedChangesOrAll(dataContext: DataContext): ListSelection<ShelvedWrapper> {
+    val tree = dataContext.getData<ChangesTree>(SHELVED_CHANGES_TREE) ?: return ListSelection.empty<ShelvedWrapper>()
+
+    val wrappers = ListSelection.createAt<ShelvedWrapper>(
+      VcsTreeModelData.selected(tree).userObjects<ShelvedWrapper>(ShelvedWrapper::class.java), 0)
+
+    if (wrappers.getList().size == 1) {
+      // return all changes for selected changelist
+      val changeList = getSelectedLists { true }.firstOrNull()
+      if (changeList != null) {
+        val changeListNode = TreeUtil.findNodeWithObject(tree.root, changeList) as ChangesBrowserNode<*>?
+        if (changeListNode != null) {
+          val allWrappers = changeListNode.getAllObjectsUnder<ShelvedWrapper>(ShelvedWrapper::class.java)
+          if (allWrappers.size > 1) {
+            val toSelect = wrappers.list.first()
+            return ListSelection.create<ShelvedWrapper>(allWrappers, toSelect)
+          }
+        }
+      }
+    }
+    return wrappers.asExplicitSelection()
+  }
+
   fun invalidateDataAndRefresh(onRefreshed: Runnable?) {
-    myAsyncTreeModel.invalidateData()
+    (changesTreeModel as? ShelfTreeAsyncModel)?.invalidateData()
     requestRefresh(onRefreshed)
   }
 }

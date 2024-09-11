@@ -9,26 +9,22 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.util.ui.tree.TreeUtil
 
-internal class ShelveDeleteProvider private constructor(project: Project, tree: ShelfTree) : DeleteProvider {
-  private val myProject: Project
-  private val myTree: ShelfTree
+import org.jetbrains.annotations.ApiStatus
 
-  init {
-    myProject = project
-    myTree = tree
-  }
+@ApiStatus.Internal
+internal class ShelveDeleteProvider(val project: Project, private val tree: ShelfTree) : DeleteProvider {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
   override fun deleteElement(dataContext: DataContext) {
-    val shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType<ShelvedChangeList?>(myTree, ShelvedChangeList::class.java)
+    val shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType<ShelvedChangeList?>(tree, ShelvedChangeList::class.java)
     val shelvedListsFromChanges = ShelvedChangesViewManager.getShelvedLists(dataContext)
     val selectedChanges = ShelvedChangesViewManager.getShelveChanges(dataContext)
     val selectedBinaryChanges = ShelvedChangesViewManager.getBinaryShelveChanges(dataContext)
 
-    ShelvedChangesViewManager.deleteShelves(myProject, shelvedListsToDelete, shelvedListsFromChanges, selectedChanges,
+    ShelvedChangesViewManager.deleteShelves(project, shelvedListsToDelete, shelvedListsFromChanges, selectedChanges,
                                             selectedBinaryChanges)
   }
 

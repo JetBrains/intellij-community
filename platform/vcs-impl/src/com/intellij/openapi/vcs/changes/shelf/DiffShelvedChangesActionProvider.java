@@ -209,14 +209,15 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     }
   }
 
-  static final class PatchesPreloader {
+  @ApiStatus.Internal
+  public final static class PatchesPreloader {
     public static final Key<PatchesPreloader> SHELF_PRELOADER = Key.create("DiffShelvedChangesActionProvider.PatchesPreloader");
 
     private final Project myProject;
     private final SoftHardCacheMap<Path, PatchInfo> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
     private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
-    PatchesPreloader(final Project project) {
+    public PatchesPreloader(final Project project) {
       myProject = project;
     }
 

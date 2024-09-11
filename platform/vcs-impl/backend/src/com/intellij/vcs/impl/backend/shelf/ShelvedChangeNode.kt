@@ -13,41 +13,31 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 internal class ShelvedChangeNode(
-  shelvedChange: ShelvedWrapper,
-  filePath: FilePath,
-  additionalText: @Nls String?
-) : ChangesBrowserNode<ShelvedWrapper?>(shelvedChange), Comparable<ShelvedChangeNode?> {
-  private val myShelvedChange: ShelvedWrapper
-  private val myFilePath: FilePath
-  private val myAdditionalText: @Nls String?
-
-  init {
-    myShelvedChange = shelvedChange
-    myFilePath = filePath
-    myAdditionalText = additionalText
-  }
+  private val shelvedChange: ShelvedWrapper,
+  private val filePath: FilePath,
+  private val additionalText: String?,
+) : ChangesBrowserNode<ShelvedWrapper>(shelvedChange), Comparable<ShelvedChangeNode> {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    val path = myShelvedChange.getRequestName()
+    val path = shelvedChange.requestName
     val directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), VcsBundle.message("shelve.default.path.rendering"))
     val fileName = StringUtil.defaultIfEmpty(PathUtil.getFileName(path), path)
 
-    renderer.append(fileName, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, myShelvedChange.getFileStatus().getColor()))
-    if (myAdditionalText != null) {
-      renderer.append(FontUtil.spaceAndThinSpace() + myAdditionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    renderer.append(fileName, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, shelvedChange.fileStatus.getColor()))
+    if (additionalText != null) {
+      renderer.append(FontUtil.spaceAndThinSpace() + additionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
-    if (renderer.isShowFlatten()) {
+    if (renderer.isShowFlatten) {
       renderer.append(FontUtil.spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
     renderer.setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon())
   }
 
   override fun getTextPresentation(): String {
-    return PathUtil.getFileName(myShelvedChange.getRequestName())
+    return PathUtil.getFileName(shelvedChange.requestName)
   }
 
   override fun isFile(): Boolean {
@@ -55,10 +45,11 @@ internal class ShelvedChangeNode(
   }
 
   override fun compareTo(o: ShelvedChangeNode): Int {
-    return compareFilePaths(myFilePath, o.myFilePath)
+    return compareFilePaths(filePath, o.filePath)
   }
 
+
   override fun getBackgroundColor(project: Project): Color? {
-    return getBackgroundColorFor(project, myFilePath)
+    return getBackgroundColorFor(project, filePath)
   }
 }

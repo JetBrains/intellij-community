@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf;
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -11,22 +10,13 @@ import com.intellij.util.FontUtil
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 
-internal class ShelvedListNode(list: ShelvedChangeList) : ChangesBrowserNode<ShelvedChangeList?>(list) {
-  private val myList: ShelvedChangeList
-
-  init {
-    myList = list
-  }
-
-  fun getList(): ShelvedChangeList {
-    return myList
-  }
+internal class ShelvedListNode(val changeList: ShelvedChangeList) : ChangesBrowserNode<ShelvedChangeList>(changeList) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    var listName = myList.getDescription()
-    if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name")
+    var listName = changeList.description
+    if (listName.isBlank()) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name")
 
-    if (myList.isRecycled() || myList.isDeleted()) {
+    if (changeList.isRecycled || changeList.isDeleted) {
       renderer.appendTextWithIssueLinks(listName, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES)
     }
     else {
@@ -34,16 +24,16 @@ internal class ShelvedListNode(list: ShelvedChangeList) : ChangesBrowserNode<She
     }
 
     appendCount(renderer)
-    val date = DateFormatUtil.formatPrettyDateTime(myList.getDate())
-    renderer.append(", " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    val date = DateFormatUtil.formatPrettyDateTime(changeList.date)
+    renderer.append(", $date", SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
-    val loadingError = myList.getChangesLoadingError()
+    val loadingError = changeList.changesLoadingError
     if (loadingError != null) {
       renderer.append(FontUtil.spaceAndThinSpace() + loadingError, SimpleTextAttributes.ERROR_ATTRIBUTES)
     }
   }
 
-  override fun getTextPresentation(): @Nls String? {
+  override fun getTextPresentation(): String? {
     return getUserObject().toString()
   }
 }

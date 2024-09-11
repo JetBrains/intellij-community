@@ -2,46 +2,33 @@
 package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.getInstance
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TwoStepAsyncChangesTreeModel
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Consumer
 import javax.swing.tree.DefaultTreeModel
 
-internal class ShelfTreeAsyncModel @ApiStatus.Internal constructor(
-  project: Project,
-  scope: CoroutineScope
-) : TwoStepAsyncChangesTreeModel<MutableList<ShelvedChangeList?>?>(
-  scope) {
-  private val myProject: Project
+@ApiStatus.Internal
+internal class ShelfTreeAsyncModel(val project: Project, scope: CoroutineScope)
+  : TwoStepAsyncChangesTreeModel<MutableList<ShelvedChangeList>>(scope) {
 
-  init {
-    myProject = project
+  override fun fetchData(): MutableList<ShelvedChangeList> {
+    val lists = ShelveChangesManager.getInstance(project).allLists
+    lists.forEach{ it.loadChangesIfNeeded(project) }
+    return ContainerUtil.sorted<ShelvedChangeList, ShelvedChangeList>(lists, ChangelistComparator)
   }
 
-  public override fun fetchData(): MutableList<ShelvedChangeList?> {
-    val lists = ShelveChangesManager.getInstance(myProject).getAllLists()
-    lists.forEach(Consumer { l: ShelvedChangeList? -> l!!.loadChangesIfNeeded(myProject) })
-    return ContainerUtil.sorted(lists, ShelvedChangesViewManager.ChangelistComparator.getInstance())
-  }
-
-  public override fun buildTreeModelSync(
-    changeLists: MutableList<ShelvedChangeList?>,
-    grouping: ChangesGroupingPolicyFactory
+  override fun buildTreeModelSync(
+    changeLists: MutableList<ShelvedChangeList>,
+    grouping: ChangesGroupingPolicyFactory,
   ): DefaultTreeModel {
-    val showRecycled = ShelveChangesManager.getInstance(myProject).isShowRecycled()
-    val modelBuilder = ShelvedTreeModelBuilder(myProject, grouping)
-    modelBuilder.setShelvedLists(ContainerUtil.filter<ShelvedChangeList?>(changeLists,
-                                                                          Condition { l: ShelvedChangeList? -> !l!!.isDeleted() && (showRecycled || !l.isRecycled()) }))
-    modelBuilder.setDeletedShelvedLists(
-      ContainerUtil.filter<ShelvedChangeList?>(changeLists, Condition { obj: ShelvedChangeList? -> obj!!.isDeleted() }))
+    val showRecycled = ShelveChangesManager.getInstance(project).isShowRecycled
+    val modelBuilder = ShelvedTreeModelBuilder(project, grouping)
+    modelBuilder.setShelvedLists(changeLists.filter { it.isDeleted && (showRecycled || it.isRecycled) })
+    modelBuilder.setDeletedShelvedLists(changeLists.filter { it.isDeleted })
     return modelBuilder.build()
   }
 }

@@ -441,10 +441,11 @@ public class ShelvedChangesViewManager implements Disposable {
     deleteShelves(project, shelvedListsToDelete, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
-  private static void deleteShelves(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
-                                    @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
-                                    @NotNull List<ShelvedChange> selectedChanges,
-                                    @NotNull List<ShelvedBinaryFile> selectedBinaryChanges) {
+  @ApiStatus.Internal
+  public static void deleteShelves(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                   @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
+                                   @NotNull List<ShelvedChange> selectedChanges,
+                                   @NotNull List<ShelvedBinaryFile> selectedBinaryChanges) {
     List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, selectedChanges);
     List<ShelvedBinaryFile> binariesToDelete = getBinariesNotInLists(shelvedListsToDelete, selectedBinaryChanges);
 
