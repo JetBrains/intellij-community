@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
@@ -87,7 +88,9 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
       lastEventFlushFuture?.cancel(false)
       // call flush() instead of logLastEvent() directly so that logLastEvent is executed on the logExecutor thread and not on scheduled executor pool thread
-      lastEventFlushFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(this::flush, eventMergeTimeoutMs, TimeUnit.MILLISECONDS)
+      resetThreadContext().use {
+        lastEventFlushFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(this::flush, eventMergeTimeoutMs, TimeUnit.MILLISECONDS)
+      }
     }
   }
 
