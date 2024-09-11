@@ -104,10 +104,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
           sessionData.state = SessionData.State.RUNNING;
           final Channel channel = sessionData.channel;
           if (channel != null && channel.isActive()) {
-            // context is already captured inside ContextAwareBuilderMessageHandler
-            try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-              sessionData.handler.buildStarted(preloadedSessionId);
-            }
+            sessionData.handler.buildStarted(preloadedSessionId);
             channel.writeAndFlush(CmdlineProtoUtil.toMessage(preloadedSessionId, params));
             succeeded = true;
           }
@@ -255,22 +252,30 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
       @Override
       public void buildStarted(@NotNull UUID sessionId) {
-        myCapturedContext.runInChildContext(() -> myDelegate.buildStarted(sessionId));
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myCapturedContext.runInChildContext(() -> myDelegate.buildStarted(sessionId));
+        }
       }
 
       @Override
       public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
-        myCapturedContext.runInChildContext(() -> myDelegate.handleBuildMessage(channel, sessionId, msg));
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myCapturedContext.runInChildContext(() -> myDelegate.handleBuildMessage(channel, sessionId, msg));
+        }
       }
 
       @Override
       public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        myCapturedContext.runInChildContext(() -> myDelegate.handleFailure(sessionId, failure));
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myCapturedContext.runInChildContext(() -> myDelegate.handleFailure(sessionId, failure));
+        }
       }
 
       @Override
       public void sessionTerminated(@NotNull UUID sessionId) {
-        myCapturedContext.runInChildContext(() -> myDelegate.sessionTerminated(sessionId));
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myCapturedContext.runInChildContext(() -> myDelegate.sessionTerminated(sessionId));
+        }
       }
     }
   }
