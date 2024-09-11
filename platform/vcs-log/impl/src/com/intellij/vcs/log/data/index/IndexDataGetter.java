@@ -237,7 +237,7 @@ public final class IndexDataGetter {
                       @NotNull IntConsumer consumer) throws IOException {
     if (candidates == null) {
       myIndexStorageBackend.processMessages((commit, message) -> {
-        if (message != null && condition.test(message)) {
+        if (condition.test(message)) {
           consumer.accept(commit);
         }
         return true;
