@@ -45,32 +45,3 @@ open class NewProjectWizardDirectoryGeneratorAdapter<T : Any>(val wizard: Genera
     }
   }
 }
-
-/**
- * A wizard-enabled project settings step that you should use for your [projectGenerator] in your
- * [AbstractNewProjectStep.Customization.createProjectSpecificSettingsStep] to provide the project wizard UI and actions.
- */
-class NewProjectWizardProjectSettingsStep<T : Any>(private val projectGenerator: NewProjectWizardDirectoryGeneratorAdapter<T>)
-  : ProjectSettingsStepBase<T>(projectGenerator, null) {
-
-  init {
-    myCallback = AbstractNewProjectStep.AbstractCallback()
-  }
-
-  override fun createAndFillContentPanel(): JPanel =
-    JPanel(VerticalFlowLayout()).apply {
-      add(peer.component)
-    }
-
-  override fun registerValidators() {}
-
-  override fun getProjectLocation(): String =
-    projectGenerator.panel.step.context.projectFileDirectory
-
-  override fun getActionButton(): JButton =
-    super.getActionButton().apply {
-      addActionListener {
-        projectGenerator.panel.apply()
-      }
-    }
-}
