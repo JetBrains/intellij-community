@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion.Companion.klibManifestProperties
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.platform.*
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.WasmPlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.wasm.WasmPlatformWithTarget
 import org.jetbrains.kotlin.platform.wasm.WasmTarget
-import java.io.IOException
 import java.util.*
 
 @ApiStatus.Internal
@@ -57,7 +57,7 @@ private fun checkKlibComponent(
     targetPlatform: TargetPlatform,
     requestedBuiltInsPlatform: BuiltInsPlatform
 ): Boolean {
-    val manifestProperties = manifestProperties(componentFile) ?: return false
+    val manifestProperties = klibManifestProperties(componentFile) ?: return false
 
     if (!manifestProperties.containsKey(KLIB_PROPERTY_UNIQUE_NAME)) return false
 
@@ -93,16 +93,6 @@ private fun checkKlibWasmTarget(manifestProperties: Properties, targetPlatform: 
     val parsedWasmTarget = manifestProperties.getProperty(KLIB_PROPERTY_WASM_TARGETS) ?: return wasmTarget == WasmTarget.JS
 
     return wasmTarget == WasmTarget.fromName(parsedWasmTarget)
-}
-
-private fun manifestProperties(componentFile: VirtualFile): Properties? {
-    val manifestFile = componentFile.findChild(KLIB_MANIFEST_FILE_NAME)?.takeIf { !it.isDirectory } ?: return null
-
-    return try {
-        manifestFile.inputStream.use { Properties().apply { load(it) } }
-    } catch (_: IOException) {
-        return null
-    }
 }
 
 private fun TargetPlatform.toBuiltInsPlatform() = when {
