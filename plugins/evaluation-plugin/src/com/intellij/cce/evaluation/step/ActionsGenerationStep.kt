@@ -23,6 +23,7 @@ import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import kotlin.random.Random
 
 open class ActionsGenerationStep(
   protected val config: Config,
@@ -67,7 +68,7 @@ open class ActionsGenerationStep(
     var totalSessions = 0
     var totalFiles = 0
     val actionsSummarizer = ActionsSummarizer()
-    for ((i, file) in files.sortedBy { it.name }.withIndex()) {
+    for ((i, file) in files.shuffled(FILES_RANDOM).withIndex()) {
       if (totalSessions >= sessionsLimit) {
         LOG.warn("Generating actions is canceled by sessions limit. Sessions=$totalSessions, sessionsLimit=$sessionsLimit.  With error: ${errors.size}")
         break
@@ -181,3 +182,5 @@ open class ActionsGenerationStep(
     private fun TokenProperties.java(): JvmProperties? = PropertyAdapters.Jvm.adapt(this)
   }
 }
+
+private val FILES_RANDOM = Random(42)
