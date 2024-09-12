@@ -14,6 +14,6 @@ internal class KernelApplicationInitializedListener : ApplicationInitializedList
 
   override suspend fun execute() {
     val service = ApplicationManager.getApplication().serviceAsync<KernelService>()
-    service.kernelCoroutineContext.join()
+    service.kernelCoroutineScope.join()
   }
 }

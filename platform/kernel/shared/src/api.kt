@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel
 
+import com.intellij.platform.kernel.util.kernelCoroutineContext
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Entry point to operations which work with the kernel.
@@ -14,13 +14,10 @@ import kotlin.coroutines.CoroutineContext
  * i.e., once the kernel is added to all coroutines by default.
  */
 suspend fun <T> withKernel(action: suspend CoroutineScope.() -> T): T {
-  val kernelContext = kernelCoroutineContext()
-  return withContext(kernelContext, action)
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun kernelCoroutineContext(): CoroutineContext {
-  return KernelService.instance
-    .kernelCoroutineContext
-    .getCompleted()
+  val kernelScope = KernelService.instance.kernelCoroutineScope.await()
+  val kernelContext = kernelScope.coroutineContext.kernelCoroutineContext()
+  return withContext(kernelContext) {
+    attachAsChildTo(kernelScope)
+    action()
+  }
 }

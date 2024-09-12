@@ -15,19 +15,18 @@ import fleet.kernel.transactor
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
 @Service
-private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope) {
+private class RemoteKernelScopeHolder {
 
   suspend fun createRemoteKernel(): RemoteKernel {
     val kernelService = KernelService.instance
-    val kernelCoroutineContext = kernelService.kernelCoroutineContext.await()
+    val kernelScope = kernelService.kernelCoroutineScope.await()
+    val kernelCoroutineContext = kernelScope.coroutineContext.kernelCoroutineContext()
     return RemoteKernelImpl(
       kernelCoroutineContext.transactor,
-      coroutineScope.childScope("RemoteKernelScope", kernelCoroutineContext),
+      kernelScope.childScope("RemoteKernelScope", kernelCoroutineContext),
       CommonInstructionSet.decoder(),
       KernelRpcSerialization,
     )
@@ -46,7 +45,7 @@ internal class RemoteKernelProvider : RemoteApiProvider {
 
 internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelService {
 
-  override val kernelCoroutineContext: CompletableDeferred<CoroutineContext> = CompletableDeferred()
+  override val kernelCoroutineScope: CompletableDeferred<CoroutineScope> = CompletableDeferred()
 
   init {
     coroutineScope.launch {
@@ -55,7 +54,7 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
           initWorkspaceClock()
         }
         handleEntityTypes(transactor(), this)
-        kernelCoroutineContext.complete(currentCoroutineContext().kernelCoroutineContext())
+        kernelCoroutineScope.complete(this)
         updateDbInTheEventDispatchThread()
       }
     }

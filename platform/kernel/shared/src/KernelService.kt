@@ -2,15 +2,15 @@
 package com.intellij.platform.kernel
 
 import com.intellij.openapi.application.ApplicationManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Don't use directly. Use [withKernel] instead.
  */
 interface KernelService {
 
-  val kernelCoroutineContext: Deferred<CoroutineContext>
+  val kernelCoroutineScope: Deferred<CoroutineScope>
 
   companion object {
 
