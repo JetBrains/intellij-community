@@ -1,4 +1,7 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava">
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>kotlin.gradle.gradle-java</id>
+  <vendor>JetBrains</vendor>
+
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.gradle.gradle-tooling"/>
@@ -8,12 +11,14 @@
     <module name="kotlin.base.external-build-system"/>
   </dependencies>
 
+  <xi:include href="kotlin.gradle.gradle-java.k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
+  <xi:include href="kotlin.gradle.gradle-java.k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
+
   <projectListeners>
     <listener
             class="org.jetbrains.kotlin.idea.gradleJava.scripting.ProjectGradleSettingsListener"
             topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
   </projectListeners>
-
 
   <extensionPoints>
     <extensionPoint
@@ -121,9 +126,6 @@
 
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
 
-    <scriptDefinitionContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor" order="first"/>
-
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource"/>
     <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource"/>
     <scriptReloadActionAvailability implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptReloadActionAvailability"/>
 

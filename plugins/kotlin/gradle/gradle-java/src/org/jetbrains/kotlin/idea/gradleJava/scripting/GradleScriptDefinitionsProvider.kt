@@ -4,36 +4,36 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.ErrorGradleScriptDefinition
-import org.jetbrains.kotlin.idea.gradleJava.getFullDefinitionsClasspath
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
-import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.WithoutScriptModels
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.invariantSeparatorsPathString
 
-class GradleScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionSourceAsContributor {
+class GradleScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     companion object {
-        fun getDefinitions(project: Project, workingDir: String, gradleHome: String?, javaHome: String?): List<ScriptDefinition>? {
-            val contributor = ScriptDefinitionContributor.EP_NAME.getExtensions(project)
+        fun getInstance(project: Project): GradleScriptDefinitionsContributor? =
+            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
                 .filterIsInstance<GradleScriptDefinitionsContributor>()
                 .singleOrNull()
 
+        fun getDefinitions(project: Project, workingDir: String, gradleHome: String?, javaHome: String?): List<ScriptDefinition>? {
+            val contributor = getInstance(project)
+
             if (contributor == null) {
                 scriptingInfoLog(
-                    "cannot find gradle script definitions contributor in ScriptDefinitionContributor.EP_NAME list: " +
+                    "cannot find gradle script definitions contributor in SCRIPT_DEFINITIONS_SOURCES list: " +
                             "workingDir=$workingDir gradleHome=$gradleHome"
                 )
                 return null
@@ -66,9 +66,6 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
     init {
         subscribeToGradleSettingChanges()
     }
-
-    @Deprecated("migrating to new configuration refinement: drop usages")
-    override val id: String = "Gradle Kotlin DSL"
 
     internal data class LightGradleBuildRoot(val workingDir: String, val gradleHome: String?, val javaHome: String?)
 

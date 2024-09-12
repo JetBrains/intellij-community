@@ -13,6 +13,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.File
 import java.nio.file.Files
@@ -62,7 +63,7 @@ fun loadDefinitionsFromTemplatesByPaths(
     val classpath = adjustClasspath(templateClasspath + additionalResolverClasspath)
     scriptingInfoLog("Loading script definitions: classes = $templateClassNames, classpath = ${classpath}")
 
-    val baseLoader = ScriptDefinitionContributor::class.java.classLoader
+    val baseLoader = ScriptDefinitionsSource::class.java.classLoader
     val loader = if (classpath.isEmpty())
         baseLoader
     else

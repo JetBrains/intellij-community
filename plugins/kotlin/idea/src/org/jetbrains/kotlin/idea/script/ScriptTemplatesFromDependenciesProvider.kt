@@ -12,12 +12,13 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
 import java.nio.file.Path
@@ -28,13 +29,13 @@ import kotlin.concurrent.withLock
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
-class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionSourceAsContributor {
-
-    @Deprecated("migrating to new configuration refinement: drop usages")
-    override val id = "ScriptTemplatesFromDependenciesProvider"
-
-    @Deprecated("migrating to new configuration refinement: drop usages")
-    override fun isReady(): Boolean = _definitions != null
+class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionsSource {
+    companion object {
+        fun getInstance(project: Project): ScriptTemplatesFromDependenciesProvider? =
+            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
+                .filterIsInstance<ScriptTemplatesFromDependenciesProvider>()
+                .singleOrNull()
+    }
 
     override val definitions: Sequence<ScriptDefinition>
         get() {

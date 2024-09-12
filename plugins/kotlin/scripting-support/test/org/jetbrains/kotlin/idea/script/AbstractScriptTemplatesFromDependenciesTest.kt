@@ -19,12 +19,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.addDependency
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
@@ -91,7 +86,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
 
         checkRoots(fileText, roots)
 
-        val provider = ScriptDefinitionContributor.find<ScriptTemplatesFromDependenciesProvider>(project)
+        val provider = ScriptTemplatesFromDependenciesProvider.getInstance(project)
             ?: error("Cannot find ScriptTemplatesFromDependenciesProvider")
 
         val (templates, classpath) = provider.getTemplateClassPath(roots.toList())

@@ -28,15 +28,11 @@ import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 
-class BundledScriptDefinitionContributor(val project: Project) : ScriptDefinitionContributor {
+class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
     private val myLegacyBundledIdeScriptDefinition = LegacyBundledIdeScriptDefinition(project)
 
-    @Deprecated("migrating to new configuration refinement: use ScriptDefinitionsSource instead")
-    override fun getDefinitions() = listOf(myLegacyBundledIdeScriptDefinition)
-
-    @Deprecated("migrating to new configuration refinement: drop usages")
-    override val id: String
-        get() = "StandardKotlinScript"
+    override val definitions: Sequence<ScriptDefinition>
+        get() = sequenceOf(myLegacyBundledIdeScriptDefinition).map { ScriptDefinition.FromLegacy(defaultJvmScriptingHostConfiguration, it) }
 }
 
 class LegacyBundledIdeScriptDefinition internal constructor(project: Project) : KotlinScriptDefinition(ScriptTemplateWithArgs::class) {

@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JdkUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -77,7 +76,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
 
         if (KotlinPluginModeProvider.isK1Mode()) {
             @Suppress("DEPRECATION")
-            ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(
+            GradleScriptDefinitionsContributor.getInstance(project)?.reloadIfNeeded(
                 sync.workingDir, sync.gradleHome, sync.javaHome
             )
         }

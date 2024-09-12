@@ -192,6 +192,7 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
   "org.jetbrains.plugins.kotlin.jupyter",
   "com.intellij.kmm",
   "com.jetbrains.kotlin.ocswift",
+  "kotlin.gradle.gradle-java"
 ))
 
 private fun readRootElementChild(

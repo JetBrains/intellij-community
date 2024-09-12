@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
 import kotlin.script.dependencies.Environment
@@ -12,9 +12,7 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 
-class CustomScriptTemplateProvider(val environment: Environment) : ScriptDefinitionSourceAsContributor {
-
-    override val id = "Test"
+class CustomScriptTemplateProvider(val environment: Environment) : ScriptDefinitionsSource {
 
     override val definitions: Sequence<ScriptDefinition>
         get() = loadDefinitionsFromTemplates(
@@ -27,10 +25,7 @@ class CustomScriptTemplateProvider(val environment: Environment) : ScriptDefinit
 
 }
 
-class FromTextTemplateProvider(val environment: Environment) : ScriptDefinitionSourceAsContributor {
-
-    override val id = "Test"
-
+class FromTextTemplateProvider(val environment: Environment) : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
         get() = loadDefinitionsFromTemplates(
             templateClassNames = listOf("org.jetbrains.kotlin.idea.script.Template"),

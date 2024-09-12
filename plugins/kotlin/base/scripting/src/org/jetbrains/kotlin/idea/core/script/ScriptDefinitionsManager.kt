@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.script.ScriptTemplatesProvider
 import org.jetbrains.kotlin.scripting.definitions.*
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
@@ -38,7 +37,6 @@ import kotlin.script.experimental.host.toScriptSource
  * provides its own definitions list, the resulting one is partitioned. Partitions in their turn are sorted.
  * E.g. if definition sources are ordered as (A, B, C), their definitions might look as ((A-def-1, A-def-2), (B-def), (C-def)).
  *
- * [ScriptDefinitionsSource]s are registered via extension points either as [ScriptTemplatesProviderAdapter] or [ScriptDefinitionContributor].
  * Their order is crucial because it affects definition search algo.
  *
  * In rare exceptional cases, the resulting definitions' order might be inaccurate and doesn't accommodate the user's needs.
@@ -171,7 +169,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     override fun getDefaultDefinition(): ScriptDefinition {
         val bundledScriptDefinitionContributor = getBundledScriptDefinitionContributor()
             ?: error("BundledScriptDefinitionContributor must be registered in plugin.xml")
-        return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), bundledScriptDefinitionContributor.getDefinitions().last())
+        return bundledScriptDefinitionContributor.definitions.last()
     }
 
     // This function is aimed to fix locks acquisition order.
@@ -287,12 +285,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     // FOR TESTS ONLY: we introduce a possibility to cut dependencies over inheritance
 
     protected open fun getSources(): List<ScriptDefinitionsSource> {
-        @Suppress("DEPRECATION")
-        val fromDeprecatedEP = project.extensionArea.getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensionList
-            .map { ScriptTemplatesProviderAdapter(it).asSource() }
-        val fromNewEp = ScriptDefinitionContributor.EP_NAME.getPoint(project).extensionList
-            .map { it.asSource() }
-        return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
+        val fromNewEp = SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
+        return fromNewEp.dropLast(1) + fromNewEp.last()
     }
 
     protected open fun getKotlinScriptingSettings(): KotlinScriptingSettings = KotlinScriptingSettings.getInstance(project)
@@ -315,7 +309,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     }
 
     protected open fun getBundledScriptDefinitionContributor() =
-        ScriptDefinitionContributor.find<BundledScriptDefinitionContributor>(project)
+        SCRIPT_DEFINITIONS_SOURCES.findExtension(BundledScriptDefinitionSource::class.java, project)
 
     protected open fun executeUnderReadLock(block: () -> Unit) = runReadAction { block() }
 
