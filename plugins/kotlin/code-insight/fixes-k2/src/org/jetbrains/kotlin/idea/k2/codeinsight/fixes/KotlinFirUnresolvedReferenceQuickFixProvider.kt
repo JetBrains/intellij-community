@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.psi.KtElement
@@ -13,8 +15,11 @@ import org.jetbrains.kotlin.psi.KtElement
 class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val ktElement = reference.element as? KtElement ?: return
-        for (action in AddDependencyQuickFixHelper.createQuickFix(ktElement)) {
-            registrar.register(action)
+
+        if(ktElement.module?.isMultiPlatformModule != true) {
+            for (action in AddDependencyQuickFixHelper.createQuickFix(ktElement)) {
+                registrar.register(action)
+            }
         }
 
         analyze(ktElement) {
