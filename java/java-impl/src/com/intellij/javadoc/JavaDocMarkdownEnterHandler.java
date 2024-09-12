@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
@@ -24,6 +25,16 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
                                 EditorActionHandler originalHandler) {
     if (!(file instanceof PsiJavaFile) || !file.isValid()) return Result.Continue;
 
+    return preProcessEnterImpl(file, editor, caretOffset, caretAdvance, dataContext, originalHandler);
+  }
+
+  @ApiStatus.Internal
+  static Result preProcessEnterImpl(@NotNull PsiFile file,
+                                           @NotNull Editor editor,
+                                           @NotNull Ref<Integer> caretOffset,
+                                           @NotNull Ref<Integer> caretAdvance,
+                                           @NotNull DataContext dataContext,
+                                           EditorActionHandler originalHandler) {
     PsiElement caretElement = file.findElementAt(caretOffset.get());
     if (caretElement == null) return Result.Continue;
 
@@ -35,7 +46,6 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
       if (StringUtil.countChars(whitespaces, '\n', 0, end, false) > 0) {
         return Result.Continue;
       }
-      
       caretElement = caretElement.getPrevSibling();
     }
 
