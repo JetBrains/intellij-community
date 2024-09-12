@@ -26,8 +26,10 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 
-internal class WorkspaceFileIndexDataImpl(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
-                                          private val project: Project, parentDisposable: Disposable): WorkspaceFileIndexData, Disposable {
+internal class WorkspaceFileIndexDataImpl(
+  private val contributorList: List<WorkspaceFileIndexContributor<*>>,
+  private val project: Project, parentDisposable: Disposable
+): WorkspaceFileIndexData, Disposable {
   private val contributors = contributorList.filter { it.storageKind == EntityStorageKind.MAIN }.groupBy { it.entityClass }
   private val contributorsForUnloaded = contributorList.filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
