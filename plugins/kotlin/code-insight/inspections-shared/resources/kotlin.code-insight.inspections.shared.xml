@@ -334,6 +334,10 @@
 
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinCoroutinesQuickFixProvider"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinTestLibraryQuickFixProvider"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.InfixCallToOrdinaryInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.code.migration"

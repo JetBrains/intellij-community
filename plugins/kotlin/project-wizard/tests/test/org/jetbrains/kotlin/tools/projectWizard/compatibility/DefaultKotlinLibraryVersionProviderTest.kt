@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.compatibility
 
-import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
+import org.jetbrains.kotlin.idea.facet.setLanguageAndApiVersionInKotlinFacet
+import org.jetbrains.kotlin.idea.test.createFacet
 
 class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
     private lateinit var provider: DefaultKotlinLibraryVersionProvider
@@ -11,46 +13,35 @@ class DefaultKotlinLibraryVersionProviderTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         provider = DefaultKotlinLibraryVersionProvider()
+        module.createFacet(useProjectSettings = false)
     }
 
-    private fun getCoroutinesVersion(kotlinVersion: KotlinVersion): ExternalLibraryDescriptor? {
+    private fun getCoroutinesVersion(version: LanguageVersion): String? {
         val groupId = "org.jetbrains.kotlinx"
         val artifactId = "kotlinx-coroutines-core"
-        val descriptor = provider.getVersion(groupId, artifactId, kotlinVersion)
-        if (descriptor != null) {
-            assertEquals(groupId, descriptor.libraryGroupId)
-            assertEquals(artifactId, descriptor.libraryArtifactId)
-            assertNotNull(descriptor.preferredVersion)
-            assertEquals(descriptor.preferredVersion, descriptor.minVersion)
-            assertEquals(descriptor.preferredVersion, descriptor.maxVersion)
-        }
-        return descriptor
+
+        myFixture.module.setLanguageAndApiVersionInKotlinFacet(version.toString(), version.toString())
+
+        return provider.getVersion(myFixture.module, groupId, artifactId)
     }
 
     fun testDefaultVersionProviderRegistered() {
-        assertTrue(KotlinLibraryVersionProvider.Companion.EP_NAME.extensionList.any { it is DefaultKotlinLibraryVersionProvider })
+        assertTrue(KotlinLibraryVersionProvider.EP_NAME.extensionList.any { it is DefaultKotlinLibraryVersionProvider })
     }
 
     fun testKnownVersion() {
-        val returnedVersion = getCoroutinesVersion(KotlinVersion(1, 9))
+        val returnedVersion = getCoroutinesVersion(LanguageVersion.KOTLIN_1_9)
         assertNotNull(returnedVersion)
     }
 
-    fun testPatchedKotlinVersion() {
-        val returnedVersion = getCoroutinesVersion(KotlinVersion(1, 9, 23))
-        val nonPatchedVersion = getCoroutinesVersion(KotlinVersion(1, 9))
-        assertNotNull(returnedVersion?.preferredVersion)
-        assertEquals(returnedVersion?.preferredVersion, nonPatchedVersion?.preferredVersion)
-    }
-
     fun testUnknownKotlin() {
-        assertNull(getCoroutinesVersion(KotlinVersion(0, 3)))
+        assertNull(getCoroutinesVersion(LanguageVersion.KOTLIN_1_0))
     }
 
     fun testSpecificCoroutinesVersions() {
         // Here we test that versions for old Kotlin versions (which will not receive new updates)
         // return the correct exact values
-        assertEquals("1.6.4", getCoroutinesVersion(KotlinVersion(1, 6))?.preferredVersion)
-        assertEquals("1.5.2", getCoroutinesVersion(KotlinVersion(1, 5))?.preferredVersion)
+        assertEquals("1.6.4", getCoroutinesVersion(LanguageVersion.KOTLIN_1_6))
+        assertEquals("1.5.2", getCoroutinesVersion(LanguageVersion.KOTLIN_1_5))
     }
 }

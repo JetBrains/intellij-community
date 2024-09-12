@@ -53,4 +53,18 @@ class GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     @Test
     @PluginTargetVersions(pluginVersion = "1.5.31+")
     fun testCreateActualForGranularSourceSetTarget() = doMultiFileQuickFixTest()
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0+")
+    fun testAddKotlinTestLibraryJvm() = doMultiFileQuickFixTest(
+        ignoreChangesInBuildScriptFiles = false,
+        additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+    )
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.31+")
+    fun testAddKotlinTestLibraryKmp() = doMultiFileQuickFixTest(
+        ignoreChangesInBuildScriptFiles = false,
+        additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+    )
 }

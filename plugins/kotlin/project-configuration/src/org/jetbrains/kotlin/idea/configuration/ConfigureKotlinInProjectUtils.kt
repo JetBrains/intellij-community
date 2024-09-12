@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.*
@@ -103,10 +104,19 @@ const val KOTLIN_GROUP_ID = "org.jetbrains.kotlin"
 fun isRepositoryConfigured(repositoriesBlockText: String): Boolean =
     repositoriesBlockText.contains(MAVEN_CENTRAL) || repositoriesBlockText.contains(JCENTER)
 
+@Deprecated("Use 'toGradleCompileScope(Module) instead")
 fun DependencyScope.toGradleCompileScope(isAndroidModule: Boolean) = when (this) {
     DependencyScope.COMPILE -> "implementation"
     // TODO: We should add testCompile or androidTestCompile
     DependencyScope.TEST -> if (isAndroidModule) "implementation" else "testImplementation"
+    DependencyScope.RUNTIME -> "runtime"
+    DependencyScope.PROVIDED -> "implementation"
+    else -> "implementation"
+}
+
+fun DependencyScope.toGradleCompileScope(targetModule: Module? = null) = when (this) {
+    DependencyScope.COMPILE -> "implementation"
+    DependencyScope.TEST -> if (targetModule?.isMultiPlatformModule == true) "implementation" else "testImplementation"
     DependencyScope.RUNTIME -> "runtime"
     DependencyScope.PROVIDED -> "implementation"
     else -> "implementation"

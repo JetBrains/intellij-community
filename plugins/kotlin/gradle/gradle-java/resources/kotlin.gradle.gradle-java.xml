@@ -41,6 +41,10 @@
     <kotlinBuildSystemFacade implementation="org.jetbrains.kotlin.idea.gradleJava.KotlinGradleBuildSystemFacade"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <libraryVersionProvider implementation="org.jetbrains.kotlin.idea.gradleJava.KotlinGradlePluginLibraryVersionProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
 
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinMPPSourceSetsFrameworkSupportProvider"/>

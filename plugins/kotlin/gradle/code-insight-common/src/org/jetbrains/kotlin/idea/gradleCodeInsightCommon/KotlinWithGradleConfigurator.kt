@@ -153,7 +153,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     }
 
     private fun Project.isGradleSyncPending(module: Module): Boolean {
-        return KotlinProjectConfigurationService.getInstance(this).isSyncPending(module)
+        return KotlinProjectConfigurationService.getInstance(this).isSyncDesired(module)
     }
 
     private fun Project.isGradleSyncInProgress(): Boolean {
