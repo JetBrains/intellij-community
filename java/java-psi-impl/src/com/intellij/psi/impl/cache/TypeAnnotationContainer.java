@@ -94,17 +94,7 @@ public class TypeAnnotationContainer {
    */
   public TypeAnnotationProvider getProvider(PsiElement parent) {
     if (isEmpty()) return TypeAnnotationProvider.EMPTY;
-    return () -> {
-      List<PsiAnnotation> result = new ArrayList<>();
-      for (TypeAnnotationEntry entry : myList) {
-        if (entry.myPath.length == 0) {
-          PsiAnnotation anno = parent instanceof PsiCompiledElement ? new ClsTypeAnnotationImpl(parent, entry.myText) :
-                               JavaPsiFacade.getElementFactory(parent.getProject()).createAnnotationFromText(entry.myText, parent);
-          result.add(anno);
-        }
-      }
-      return result.toArray(PsiAnnotation.EMPTY_ARRAY);
-    };
+    return new TypeAnnotationContainerProvider(parent, ObjectUtils.tryCast(parent, PsiAnnotationOwner.class));
   }
 
   /**
@@ -340,10 +330,12 @@ public class TypeAnnotationContainer {
     private final NotNullLazyValue<ClsJavaCodeReferenceElementImpl> myReferenceElement;
     private final NotNullLazyValue<ClsAnnotationParameterListImpl> myParameterList;
     private final PsiElement myParent;
+    private final @Nullable PsiAnnotationOwner myOwner;
     private final String myText;
 
-    ClsTypeAnnotationImpl(PsiElement parent, String text) {
+    ClsTypeAnnotationImpl(PsiElement parent, @Nullable PsiAnnotationOwner owner, String text) {
       myParent = parent;
+      myOwner = owner;
       myText = text;
       myReferenceElement = NotNullLazyValue.atomicLazy(() -> {
         int index = myText.indexOf('(');
@@ -391,7 +383,7 @@ public class TypeAnnotationContainer {
 
     @Override
     public @Nullable PsiAnnotationOwner getOwner() {
-      return ObjectUtils.tryCast(myParent, PsiAnnotationOwner.class);
+      return myOwner;
     }
 
     @Override
@@ -430,6 +422,34 @@ public class TypeAnnotationContainer {
       else {
         visitor.visitElement(this);
       }
+    }
+  }
+
+  private class TypeAnnotationContainerProvider implements TypeAnnotationProvider {
+    private final PsiElement myParent;
+    private final @Nullable PsiAnnotationOwner myOwner;
+
+    private TypeAnnotationContainerProvider(PsiElement parent, @Nullable PsiAnnotationOwner owner) { 
+      myParent = parent;
+      myOwner = owner;
+    }
+
+    @Override
+    public @NotNull TypeAnnotationProvider withOwner(@NotNull PsiAnnotationOwner owner) {
+      return new TypeAnnotationContainerProvider(myParent, owner);
+    }
+
+    @Override
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
+      List<PsiAnnotation> result = new ArrayList<>();
+      for (TypeAnnotationEntry entry : myList) {
+        if (entry.myPath.length == 0) {
+          PsiAnnotation anno = myParent instanceof PsiCompiledElement ? new ClsTypeAnnotationImpl(myParent, myOwner, entry.myText) :
+                               JavaPsiFacade.getElementFactory(myParent.getProject()).createAnnotationFromText(entry.myText, myParent);
+          result.add(anno);
+        }
+      }
+      return result.toArray(PsiAnnotation.EMPTY_ARRAY);
     }
   }
 }

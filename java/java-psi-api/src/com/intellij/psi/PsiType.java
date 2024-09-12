@@ -85,7 +85,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
 
     try {
       PsiType copy = (PsiType)clone();
-      copy.myAnnotationProvider = provider;
+      copy.myAnnotationProvider = provider.withOwner(copy);
       return copy;
     }
     catch (CloneNotSupportedException e) {
