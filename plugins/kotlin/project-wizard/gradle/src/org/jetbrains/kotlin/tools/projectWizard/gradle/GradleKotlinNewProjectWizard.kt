@@ -28,7 +28,6 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.util.io.createDirectories
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
@@ -51,7 +50,6 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
-import java.nio.file.Path
 
 private class GradleKotlinModuleBuilder : AbstractGradleModuleBuilder()
 
@@ -276,24 +274,15 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
     }
 
     private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
-        private fun createKotlinContentRoots() {
-            val directories = listOf(
-                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
-                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
-                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
-                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
-            )
-            directories.forEach {
-                Path.of(it).createDirectories()
-            }
-        }
-
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
                 addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
             }
-            createKotlinContentRoots()
+            addEmptyDirectoryAsset(SRC_MAIN_KOTLIN_PATH)
+            addEmptyDirectoryAsset(SRC_MAIN_RESOURCES_PATH)
+            addEmptyDirectoryAsset(SRC_TEST_KOTLIN_PATH)
+            addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
             if (parent.addSampleCode) {
                 if (parent.generateOnboardingTips) {
                     prepareKotlinSampleOnboardingTips(project)
