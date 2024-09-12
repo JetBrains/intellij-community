@@ -6,8 +6,10 @@ import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
@@ -30,10 +32,14 @@ class BuiltInHelpManager : HelpManager() {
     logWillOpenHelpId(helpIdToUse)
 
     try {
+      val manager = KeymapManager.getInstance()
+      val activeKeymap = if (manager == null) null else KeymapManager.getInstance().activeKeymap
+
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
         URLEncoder.encode(
           helpIdToUse, StandardCharsets.UTF_8)
-      }"
+      }${if (activeKeymap != null) "&keymap=${activeKeymap}" else ""}"
+
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
 
@@ -77,7 +83,7 @@ class BuiltInHelpManager : HelpManager() {
         if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
           val productCode = info.build.productCode
           if (!StringUtil.isEmpty(productCode)) {
-            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion"
+            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion${if (activeKeymap != null) "&keymap=${activeKeymap}" else ""}"
           }
         }
       }
