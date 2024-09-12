@@ -282,8 +282,13 @@ public class VarVersionsProcessor {
           VarExprent newVar = (VarExprent)expr;
           Integer newVarIndex = mapVarPaar.get(new VarVersionPair(newVar));
           if (newVarIndex != null) {
+            String name = newVar.getProcessor().getAssignedVarName(new VarVersionPair(newVar.getIndex(), 0));
             newVar.setIndex(newVarIndex);
             newVar.setVersion(0);
+            if (name != null && newVar.getLVT() == null && newVar.getProcessor().getVarName(newVar.getVarVersionPair()) == null) {
+              newVar.getProcessor().setAssignedVarName(newVar.getVarVersionPair(), name);
+              newVar.getProcessor().setVarName(newVar.getVarVersionPair(), name);
+            }
           }
         }
         else if (expr.type == Exprent.EXPRENT_CONST) {

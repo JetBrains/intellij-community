@@ -6,10 +6,10 @@ public class TestFinally {
    public void test(List<A<String>> a) {
       try {
          this.testThrow();// 13
-      } catch (Exception var12) {// 15
-         var12.printStackTrace();// 16
-      } catch (Throwable var13) {// 17
-         throw new RuntimeException(var13);// 18
+      } catch (Exception e) {// 15
+         e.printStackTrace();// 16
+      } catch (Throwable e) {// 17
+         throw new RuntimeException(e);// 18
       } finally {
          for(A<String> s : a) {// 21
             String a2 = s.toString();// 22

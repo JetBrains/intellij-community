@@ -1,23 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.java.decompiler.decompiler.modules.decompiler;
+package org.jetbrains.java.decompiler.modules.decompiler;
 
-import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
-import org.jetbrains.java.decompiler.modules.decompiler.SimplifyExprentsHelper;
-import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructMethod;
 
 import java.util.*;
 
 public final class EliminateLoopsHelper {
 
-  public static boolean eliminateLoops(Statement root, StructClass cl) {
+  public static boolean eliminateLoops(RootStatement root, StructMethod mt, StructClass cl) {
 
     boolean ret = eliminateLoopsRec(root);
 
     if(ret) {
       SequenceHelper.condenseSequences(root);
+      StackVarsProcessor.simplifyStackVars(root, mt, cl);
 
       Set<Integer> setReorderedIfs = new HashSet<>();
 
@@ -73,6 +74,21 @@ public final class EliminateLoopsHelper {
     Statement loopcontent = loop.getFirst();
 
     boolean firstok = loopcontent.getAllSuccessorEdges().isEmpty();
+    if (loopcontent.type == Statement.StatementType.SWITCH &&
+        loopcontent instanceof SwitchStatement switchStatement &&
+        switchStatement.getHeadExprent() != null &&
+        SwitchPatternHelper.isBootstrapSwitch(switchStatement.getHeadExprent())) {
+      Set<StatEdge> allEdges = new HashSet<>();
+      for (Statement statement : switchStatement.getCaseStatements()) {
+        allEdges.addAll(statement.getAllSuccessorEdges());
+      }
+      Statement finalParentloop = parentloop;
+      if (allEdges.stream()
+            .anyMatch(edge -> edge.getType() == StatEdge.EdgeType.BREAK &&
+                              edge.closure == finalParentloop)) {
+        return false;
+      }
+    }
     if (!firstok) {
       StatEdge edge = loopcontent.getAllSuccessorEdges().get(0);
       firstok = (edge.closure == loop && edge.getType() == StatEdge.EdgeType.BREAK);

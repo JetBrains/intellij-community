@@ -12,12 +12,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopTy
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.*;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
@@ -95,7 +93,16 @@ public class StackVarsProcessor {
 
     for (Exprent expr : lst) {
       if (expr.type == Exprent.EXPRENT_VAR) {
-        ((VarExprent)expr).setVersion(0);
+        VarExprent varExprent = (VarExprent)expr;
+        VarVersionPair previousPair = varExprent.getVarVersionPair();
+        String name = varExprent.getProcessor().getVarName(previousPair);
+        String assignedName = varExprent.getProcessor().getAssignedVarName(previousPair);
+        varExprent.setVersion(0);
+        String name0 = varExprent.getProcessor().getVarName(varExprent.getVarVersionPair());
+        String assignedName0 = varExprent.getProcessor().getAssignedVarName(varExprent.getVarVersionPair());
+        if (name == null && name0 == null && assignedName != null && assignedName0 == null) {
+          varExprent.getProcessor().setAssignedVarName(varExprent.getVarVersionPair(), assignedName);
+        }
       }
     }
   }
@@ -396,6 +403,23 @@ public class StackVarsProcessor {
     }
 
     if (!notdom && !vernotreplaced) {
+      if (left.getLVT() != null && right.type == Exprent.EXPRENT_VAR &&
+          right instanceof VarExprent rightVarExprent &&
+          rightVarExprent.getLVT() == null) {
+        //try to save at least name
+        VarProcessor processor = rightVarExprent.getProcessor();
+        String name = processor.getVarName(rightVarExprent.getVarVersionPair());
+        String name0 = processor.getVarName(new VarVersionPair(rightVarExprent.getIndex(), 0));
+        StructLocalVariableTableAttribute.LocalVariable lvt = processor.getVarLVT(rightVarExprent.getVarVersionPair());
+        StructLocalVariableTableAttribute.LocalVariable lvt0 = processor.getVarLVT(new VarVersionPair(rightVarExprent.getIndex(), 0));
+        if (name == null &&
+            name0 == null &&
+            lvt0 == null &&
+            lvt == null &&
+            processor.getAssignedVarName(rightVarExprent.getVarVersionPair()) == null) {
+          processor.setAssignedVarName(rightVarExprent.getVarVersionPair(), left.getName());
+        }
+      }
       // remove assignment
       lstExprents.remove(index);
       return new int[]{index, 1};

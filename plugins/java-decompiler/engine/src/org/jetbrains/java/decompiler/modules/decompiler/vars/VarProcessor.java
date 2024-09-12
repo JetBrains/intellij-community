@@ -33,6 +33,7 @@ public class VarProcessor {
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
   private Map<VarVersionPair, String> mapVarNames = new HashMap<>();
+  private final Map<VarVersionPair, String> mapPurgedAssignmentNames = new HashMap<>();
   private final Map<VarVersionPair, LocalVariable> mapVarLVTs = new HashMap<>();
   private VarVersionsProcessor varVersions;
   private final Map<VarVersionPair, String> thisVars = new HashMap<>();
@@ -69,7 +70,8 @@ public class VarProcessor {
     Map<Integer, VarVersionPair> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
 
     List<VarVersionPair> listVars = new ArrayList<>(mapVarNames.keySet());
-    listVars.sort(Comparator.comparingInt(o -> o.var));
+    listVars.sort(Comparator.<VarVersionPair>comparingInt(o -> mapPurgedAssignmentNames.containsKey(o) ? 0 : 1)
+                    .thenComparingInt(o -> o.var));
 
     Map<String, Integer> mapNames = new HashMap<>();
 
@@ -86,10 +88,11 @@ public class VarProcessor {
         }
       }
 
+
       Integer counter = mapNames.get(name);
       mapNames.put(name, counter == null ? counter = 0 : ++counter);
 
-      if (counter > 0 && !lvtName) {
+      if (counter > 0 && !lvtName && !mapPurgedAssignmentNames.containsKey(pair)) {
         name += String.valueOf(counter);
       }
 
@@ -108,7 +111,8 @@ public class VarProcessor {
   public void refreshVarNames(VarNamesCollector vc) {
     Map<VarVersionPair, String> tempVarNames = new HashMap<>(mapVarNames);
     for (Entry<VarVersionPair, String> ent : tempVarNames.entrySet()) {
-      mapVarNames.put(ent.getKey(), vc.getFreeName(ent.getValue()));
+      mapVarNames.put(ent.getKey(), mapPurgedAssignmentNames.containsKey(ent.getKey()) ?
+                                    ent.getValue() : vc.getFreeName(ent.getValue()));
     }
   }
 
@@ -132,6 +136,18 @@ public class VarProcessor {
 
   public void setVarName(VarVersionPair pair, String name) {
     mapVarNames.put(pair, name);
+  }
+
+  public String getAssignedVarName(VarVersionPair pair) {
+    return mapPurgedAssignmentNames.get(pair);
+  }
+
+  public void setAssignedVarName(VarVersionPair pair, String name) {
+    if (name == null) {
+      mapPurgedAssignmentNames.remove(pair);
+      return;
+    }
+    mapPurgedAssignmentNames.put(pair, name);
   }
 
   public Collection<String> getVarNames() {

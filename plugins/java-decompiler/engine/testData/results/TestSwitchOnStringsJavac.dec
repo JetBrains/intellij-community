@@ -99,8 +99,8 @@ public class TestSwitchOnStringsJavac {
                            if (this.s.length() == 1) {// 120
                               System.out.println(this.s);// 121
                            }
-                        } catch (NullPointerException var5) {// 123
-                           System.out.println(var5.getMessage());// 124
+                        } catch (NullPointerException e) {// 123
+                           System.out.println(e.getMessage());// 124
                         }
                      }
 

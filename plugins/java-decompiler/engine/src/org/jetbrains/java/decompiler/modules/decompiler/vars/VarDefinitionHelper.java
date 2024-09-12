@@ -109,7 +109,16 @@ public class VarDefinitionHelper {
       if (lstVars != null) {
         for (VarExprent var : lstVars) {
           implDefVars.add(var.getIndex());
-          varproc.setVarName(new VarVersionPair(var), vc.getFreeName(var.getIndex()));
+          VarVersionPair pair = new VarVersionPair(var);
+          String name = varproc.getAssignedVarName(pair);
+          if (varproc.getVarName(pair) == null) {
+            if (name != null) {
+              varproc.setVarName(pair, name);
+            }
+            else {
+              varproc.setVarName(pair, vc.getFreeName(var.getIndex()));
+            }
+          }
           var.setDefinition(true);
         }
       }
@@ -132,7 +141,15 @@ public class VarDefinitionHelper {
         continue;
       }
 
-      varproc.setVarName(new VarVersionPair(index.intValue(), 0), vc.getFreeName(index));
+
+      VarVersionPair pair = new VarVersionPair(index.intValue(), 0);
+      String name = varproc.getAssignedVarName(pair);
+      if (name != null) {
+        varproc.setVarName(pair, name);
+      }
+      else {
+        varproc.setVarName(pair, vc.getFreeName(index));
+      }
 
       // special case for
       if (stat.type == StatementType.DO) {

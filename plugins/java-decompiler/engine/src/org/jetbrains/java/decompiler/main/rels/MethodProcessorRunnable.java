@@ -4,7 +4,6 @@ package org.jetbrains.java.decompiler.main.rels;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
-import org.jetbrains.java.decompiler.decompiler.modules.decompiler.EliminateLoopsHelper;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -183,7 +182,7 @@ public class MethodProcessorRunnable implements Runnable {
       LabelHelper.cleanUpEdges(root);
 
       while (true) {
-        if (EliminateLoopsHelper.eliminateLoops(root, cl)) {
+        if (EliminateLoopsHelper.eliminateLoops(root, mt, cl)) {
           continue;
         }
 
