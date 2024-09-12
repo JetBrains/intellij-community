@@ -44,13 +44,21 @@ internal class TerminalOutputChangesTracker(
    * True initially, because we consider all Text Buffer content as changed at the moment of initialization.
    * Guarded by the TerminalTextBuffer lock.
    */
-  private var wasAnyLineChanged: Boolean = true
+  private var isAnyLineChanged: Boolean = true
 
   /**
    * Whether some lines were discarded from the history before being collected.
+   *
+   * For example, imagine that the history capacity of the Text Buffer is 5000 lines.
+   * And we have 1000 changed lines, we collect them and now [lastChangedVisualLine] is 1000.
+   * Then 6000 lines are added to the buffer.
+   * We have to drop 2000 lines from the history because of 5000 lines limit.
+   * And now [lastChangedVisualLine] is 0, and we dropped 1000 not yet collected lines.
+   * In this case this property will be true to indicate that for the next output collection.
+   *
    * Guarded by the TerminalTextBuffer lock.
    */
-  private var wereChangesDiscarded: Boolean = false
+  private var isChangesDiscarded: Boolean = false
 
   private val changeListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
@@ -59,7 +67,7 @@ internal class TerminalOutputChangesTracker(
       override fun linesChanged(fromIndex: Int) {
         val line = textBuffer.historyLinesCount + fromIndex
         lastChangedVisualLine = min(lastChangedVisualLine, line)
-        wasAnyLineChanged = true
+        isAnyLineChanged = true
 
         for (listener in changeListeners) {
           listener()
@@ -72,7 +80,7 @@ internal class TerminalOutputChangesTracker(
         }
         else {
           lastChangedVisualLine = 0
-          wereChangesDiscarded = true
+          isChangesDiscarded = true
         }
 
         for (line in lines) {
@@ -88,8 +96,8 @@ internal class TerminalOutputChangesTracker(
         // and it is not tracked now, so it may bring the inconsistency if we omit it.
         // Todo: consider tracking of the discarded lines in case of resizing to not replace everything.
         lastChangedVisualLine = 0
-        wasAnyLineChanged = true
-        wereChangesDiscarded = true
+        isAnyLineChanged = true
+        isChangesDiscarded = true
       }
     }
 
@@ -105,7 +113,7 @@ internal class TerminalOutputChangesTracker(
    */
   suspend fun collectChangedOutputOrWait(): PartialCommandOutput {
     val deferred = textBuffer.withLock {
-      if (wasAnyLineChanged) {
+      if (isAnyLineChanged) {
         CompletableDeferred(collectOutput())
       }
       else getChangedOutputDeferred()
@@ -119,7 +127,7 @@ internal class TerminalOutputChangesTracker(
    */
   fun collectChangedOutputOrNull(): PartialCommandOutput? {
     return textBuffer.withLock {
-      if (wasAnyLineChanged) {
+      if (isAnyLineChanged) {
         collectOutput()
       }
       else null
@@ -127,11 +135,11 @@ internal class TerminalOutputChangesTracker(
   }
 
   private fun getChangedOutputDeferred(): CompletableDeferred<PartialCommandOutput> {
-    assert(!wasAnyLineChanged) { "Something was changed already, no need to wait for next change" }
+    check(!isAnyLineChanged) { "Something was changed already, no need to wait for next change" }
 
     val deferred = CompletableDeferred<PartialCommandOutput>()
     val listener: () -> Unit = {
-      assert(wasAnyLineChanged) { "Nothing was changed, but change event fired" }
+      check(isAnyLineChanged) { "Nothing was changed, but change event fired" }
       deferred.complete(collectOutput())
     }
     deferred.invokeOnCompletion {
@@ -158,11 +166,11 @@ internal class TerminalOutputChangesTracker(
     )
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
     val logicalLineIndex = getLogicalLineIndex(startLine) + discardedLogicalLinesCount
-    val anyDiscarded = wereChangesDiscarded
+    val anyDiscarded = isChangesDiscarded
 
     lastChangedVisualLine = textBuffer.historyLinesCount
-    wasAnyLineChanged = false
-    wereChangesDiscarded = false
+    isAnyLineChanged = false
+    isChangesDiscarded = false
 
     return PartialCommandOutput(output.text, output.styleRanges, logicalLineIndex, textBuffer.width, anyDiscarded)
   }
