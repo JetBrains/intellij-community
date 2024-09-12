@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -1212,15 +1212,25 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiExpression qualifier = methodExpr.getQualifierExpression();
       Evaluator objectEvaluator;
       JVMName contextClass = null;
+      JVMName signature = null;
 
       if (psiMethod != null) {
+        signature = JVMNameUtil.getJVMSignature(psiMethod);
         if (AnnotationUtil.isAnnotated(psiMethod, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
           throw new EvaluateRuntimeException(new UnsupportedExpressionException(
             JavaDebuggerBundle.message("evaluation.error.signature.polymorphic.call.evaluation.not.supported")));
         }
 
         PsiClass methodPsiClass = psiMethod.getContainingClass();
-        contextClass = JVMNameUtil.getJVMQualifiedName(methodPsiClass);
+        if (PsiUtil.isArrayClass(methodPsiClass)) {
+          contextClass = JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_LANG_OBJECT);
+          if ("clone".equals(psiMethod.getName())) {
+            signature = null;
+          }
+        }
+        else {
+          contextClass = JVMNameUtil.getJVMQualifiedName(methodPsiClass);
+        }
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           objectEvaluator = new TypeEvaluator(contextClass);
         }
@@ -1289,9 +1299,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         mustBeVararg = psiMethod.isVarArgs();
       }
 
-      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(),
-                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators,
-                                     mustBeVararg);
+      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), signature,
+                                     argumentEvaluators, mustBeVararg);
     }
 
     @Override
