@@ -32,8 +32,23 @@ public class MultiRoutingFileSystemBackendBenchmark {
   }
 
   @Benchmark
+  public void positiveMatchMatchWithoutPrefixAndWithRegularSlashes(BenchmarkState state) {
+    state.myFileSystem.getBackend("//wsl.localhost/Ubuntu-22.04/");
+  }
+
+  @Benchmark
+  public void positiveMatchMatchWithoutPrefixAndWithRegularSlashesAndLongPath(BenchmarkState state) {
+    state.myFileSystem.getBackend("//wsl.localhost/Ubuntu-22.04/home/user/IntellijProjects/intellij/community/out/classes/production/com/intellij/openapi/util/io/NioFilesTest.class");
+  }
+
+  @Benchmark
   public void positiveMatchMatchWithoutPrefixAndWithBackslashes(BenchmarkState state) {
     state.myFileSystem.getBackend("\\\\wsl.localhost\\Ubuntu-22.04\\");
+  }
+
+  @Benchmark
+  public void positiveMatchMatchWithoutPrefixAndWithBackslashesAndLongPath(BenchmarkState state) {
+    state.myFileSystem.getBackend("\\\\wsl.localhost\\Ubuntu-22.04\\home\\user\\IntellijProjects\\intellij\\community\\out\\classes\\production\\com\\intellij\\openapi\\util\\io\\NioFilesTest.class");
   }
 
   @Benchmark
