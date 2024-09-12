@@ -455,6 +455,8 @@ open class IdeDocumentHistoryImpl(
 
   final override fun getBackPlaces(): List<PlaceInfo> = java.util.List.copyOf(backPlaces)
 
+  final override fun getForwardPlaces(): List<PlaceInfo> = java.util.List.copyOf(forwardPlaces)
+
   final override fun getChangePlaces(): List<PlaceInfo> = java.util.List.copyOf(changePlaces)
 
   final override fun removeBackPlace(placeInfo: PlaceInfo) {

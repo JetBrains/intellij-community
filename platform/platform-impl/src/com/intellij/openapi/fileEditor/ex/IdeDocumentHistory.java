@@ -36,6 +36,8 @@ public abstract class IdeDocumentHistory {
   public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getChangePlaces();
   @ApiStatus.Internal
   public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getBackPlaces();
+  @ApiStatus.Internal
+  public abstract List<IdeDocumentHistoryImpl.PlaceInfo> getForwardPlaces();
 
   @ApiStatus.Internal
   public abstract void removeChangePlace(@NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo);
