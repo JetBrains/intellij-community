@@ -19,6 +19,7 @@ import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -42,7 +43,7 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
   public @NotNull AuxiliaryConfigurationArtifacts resolve(@NotNull Configuration configuration) {
     List<Class<? extends Artifact>> artifactTypes = getRequiredArtifactTypes();
     if (artifactTypes.isEmpty()) {
-      return new AuxiliaryConfigurationArtifacts(Collections.emptyMap());
+      return new AuxiliaryConfigurationArtifacts(Collections.emptyMap(), Collections.emptyMap());
     }
     List<ComponentIdentifier> components = new ArrayList<>();
     for (Collection<ResolvedArtifact> artifacts : resolvedArtifacts.values()) {
@@ -53,7 +54,7 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
       }
     }
     if (components.isEmpty()) {
-      return new AuxiliaryConfigurationArtifacts(Collections.emptyMap());
+      return new AuxiliaryConfigurationArtifacts(Collections.emptyMap(), Collections.emptyMap());
     }
     Set<ComponentArtifactsResult> componentResults = getDependencyHandler(configuration)
       .createArtifactResolutionQuery()
@@ -61,8 +62,7 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
       .withArtifacts(JvmLibrary.class, artifactTypes)
       .execute()
       .getResolvedComponents();
-    Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> artifacts = classify(componentResults);
-    return new AuxiliaryConfigurationArtifacts(artifacts);
+    return classify(componentResults);
   }
 
   private @NotNull List<Class<? extends Artifact>> getRequiredArtifactTypes() {
@@ -82,24 +82,17 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
     return isBuildScriptConfiguration ? buildscript.getDependencies() : project.getDependencies();
   }
 
-  private static @NotNull Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> classify(
+  private static @NotNull AuxiliaryConfigurationArtifacts classify(
     @NotNull Set<ComponentArtifactsResult> components
   ) {
-    Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> result = new HashMap<>();
+    Map<ComponentIdentifier, Set<File>> sources = new HashMap<>();
+    Map<ComponentIdentifier, Set<File>> javadocs = new HashMap<>();
     for (ComponentArtifactsResult component : components) {
-      Map<Class<? extends Artifact>, Set<File>> classified = getArtifactTypeMap(component);
-      result.put(component.getId(), classified);
+      ComponentIdentifier componentId = component.getId();
+      putIfNotNull(sources, componentId, getResolvedAuxiliaryArtifactFiles(component, SourcesArtifact.class));
+      putIfNotNull(javadocs, componentId, getResolvedAuxiliaryArtifactFiles(component, JavadocArtifact.class));
     }
-    return result;
-  }
-
-  private static @NotNull Map<Class<? extends Artifact>, Set<File>> getArtifactTypeMap(
-    @NotNull ComponentArtifactsResult component
-  ) {
-    Map<Class<? extends Artifact>, Set<File>> types = new HashMap<>(2);
-    types.put(SourcesArtifact.class, getResolvedAuxiliaryArtifactFiles(component, SourcesArtifact.class));
-    types.put(JavadocArtifact.class, getResolvedAuxiliaryArtifactFiles(component, JavadocArtifact.class));
-    return types;
+    return new AuxiliaryConfigurationArtifacts(sources, javadocs);
   }
 
   private static @NotNull Set<File> getResolvedAuxiliaryArtifactFiles(
@@ -111,5 +104,11 @@ public class LegacyAuxiliaryArtifactResolver implements AuxiliaryArtifactResolve
       .map(ResolvedArtifactResult.class::cast)
       .map(ResolvedArtifactResult::getFile)
       .collect(Collectors.toSet());
+  }
+
+  private static <K, V> void putIfNotNull(@NotNull Map<K, V> target, @NotNull K key, @Nullable V value) {
+    if (value != null) {
+      target.put(key, value);
+    }
   }
 }

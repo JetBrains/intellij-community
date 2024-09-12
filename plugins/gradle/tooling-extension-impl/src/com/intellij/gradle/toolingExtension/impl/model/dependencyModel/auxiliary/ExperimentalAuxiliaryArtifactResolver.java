@@ -11,20 +11,14 @@ import org.gradle.api.attributes.Bundling;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.DocsType;
 import org.gradle.api.attributes.Usage;
-import org.gradle.api.component.Artifact;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
-import org.gradle.language.base.artifact.SourcesArtifact;
-import org.gradle.language.java.artifact.JavadocArtifact;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Can be used only since Gradle 7.3.
@@ -48,39 +42,29 @@ public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactR
     boolean downloadSources = policy.isDownloadSources();
     boolean downloadJavadoc = policy.isDownloadJavadoc();
     if (!(downloadSources || downloadJavadoc)) {
-      return new AuxiliaryConfigurationArtifacts(Collections.emptyMap());
+      return new AuxiliaryConfigurationArtifacts(Collections.emptyMap(), Collections.emptyMap());
     }
-    Set<ResolvedArtifactResult> javadocs = Collections.emptySet();
+    Map<ComponentIdentifier, Set<File>> javadocs = Collections.emptyMap();
     if (downloadJavadoc) {
-      javadocs = resolve(configuration, DocsType.JAVADOC);
+      Set<ResolvedArtifactResult> artifacts = resolve(configuration, DocsType.JAVADOC);
+      javadocs = classify(artifacts);
     }
-    Set<ResolvedArtifactResult> sources = Collections.emptySet();
+    Map<ComponentIdentifier, Set<File>> sources = Collections.emptyMap();
     if (downloadSources) {
-      sources = resolve(configuration, DocsType.SOURCES);
+      Set<ResolvedArtifactResult> artifacts = resolve(configuration, DocsType.SOURCES);
+      sources = classify(artifacts);
     }
-    Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> classifiedArtifacts = classify(sources, javadocs);
-    return new AuxiliaryConfigurationArtifacts(classifiedArtifacts);
+    return new AuxiliaryConfigurationArtifacts(sources, javadocs);
   }
 
-  private static @NotNull Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> classify(
-    @NotNull Set<ResolvedArtifactResult> sources,
-    @NotNull Set<ResolvedArtifactResult> javadocs
-  ) {
-    Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> result = new HashMap<>();
-    for (ResolvedArtifactResult source : sources) {
-      ComponentArtifactIdentifier identifier = source.getId();
+  private static @NotNull Map<ComponentIdentifier, Set<File>> classify(@NotNull Set<ResolvedArtifactResult> artifacts) {
+    Map<ComponentIdentifier, Set<File>> result = new HashMap<>();
+    for (ResolvedArtifactResult artifact : artifacts) {
+      ComponentArtifactIdentifier identifier = artifact.getId();
       if (identifier instanceof ModuleComponentArtifactIdentifier) {
-        File file = source.getFile();
-        result.computeIfAbsent(identifier.getComponentIdentifier(), ignore -> new HashMap<>(2))
-          .put(SourcesArtifact.class, Collections.singleton(file));
-      }
-    }
-    for (ResolvedArtifactResult javadoc : javadocs) {
-      ComponentArtifactIdentifier identifier = javadoc.getId();
-      if (identifier instanceof ModuleComponentArtifactIdentifier) {
-        File file = javadoc.getFile();
-        result.computeIfAbsent(identifier.getComponentIdentifier(), ignore -> new HashMap<>(2))
-          .put(JavadocArtifact.class, Collections.singleton(file));
+        File file = artifact.getFile();
+        result.computeIfAbsent(identifier.getComponentIdentifier(), __ -> new HashSet<>())
+          .add(file);
       }
     }
     return result;

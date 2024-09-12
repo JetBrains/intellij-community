@@ -3,6 +3,8 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliar
 
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.component.Artifact;
+import org.gradle.language.base.artifact.SourcesArtifact;
+import org.gradle.language.java.artifact.JavadocArtifact;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,25 +21,38 @@ public class AuxiliaryConfigurationArtifacts {
 
   private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
 
-  private final @NotNull Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> libraryArtifacts;
+  private final @NotNull Map<ComponentIdentifier, Set<File>> sources;
+  private final @NotNull Map<ComponentIdentifier, Set<File>> javadocs;
 
-  public AuxiliaryConfigurationArtifacts(@NotNull Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> libraryArtifacts) {
-    this.libraryArtifacts = libraryArtifacts;
+  public AuxiliaryConfigurationArtifacts(@NotNull Map<ComponentIdentifier, Set<File>> sources,
+                                         @NotNull Map<ComponentIdentifier, Set<File>> javadocs
+  ) {
+    this.sources = sources;
+    this.javadocs = javadocs;
   }
 
   public @Nullable File getArtifact(@NotNull ComponentIdentifier identifier,
                                     @NotNull File artifactFile,
                                     @NotNull Class<? extends Artifact> artifactType
   ) {
-    Map<Class<? extends Artifact>, Set<File>> artifacts = libraryArtifacts.get(identifier);
-    if (artifacts == null) {
-      return null;
-    }
-    Set<File> files = artifacts.get(artifactType);
+    Map<ComponentIdentifier, Set<File>> artifactSource = chooseArtifactSource(artifactType);
+    Set<File> files = artifactSource.get(identifier);
     if (files == null) {
       return null;
     }
     return chooseAuxiliaryArtifactFile(artifactFile, files);
+  }
+
+  private @NotNull Map<ComponentIdentifier, Set<File>> chooseArtifactSource(@NotNull Class<? extends Artifact> artifactType) {
+    if (SourcesArtifact.class == artifactType) {
+      return sources;
+    }
+    else if (JavadocArtifact.class == artifactType) {
+      return javadocs;
+    }
+    else {
+      throw new IllegalArgumentException("Unexpected artifact type was requested: " + artifactType.getCanonicalName());
+    }
   }
 
   /**
