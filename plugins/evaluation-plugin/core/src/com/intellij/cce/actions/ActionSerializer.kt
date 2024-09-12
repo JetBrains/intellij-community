@@ -20,3 +20,15 @@ object ActionSerializer {
     return gson.fromJson(json, FakeFileActions::class.java).sessionsCount
   }
 }
+
+object ActionArraySerializer {
+  private val gson = GsonBuilder()
+    .registerTypeAdapter(Action::class.java, Action.JsonAdapter)
+    .registerTypeAdapter(TokenProperties::class.java, TokenProperties.JsonAdapter)
+    .setPrettyPrinting()
+    .create()
+
+  fun serialize(actions: Array<FileActions>): String = gson.toJson(actions)
+
+  fun deserialize(json: String): Array<FileActions> = gson.fromJson(json, Array<FileActions>::class.java)
+}

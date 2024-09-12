@@ -6,6 +6,9 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.fus.FusLogsSaver
 import com.intellij.cce.workspace.storages.*
+import com.intellij.cce.workspace.storages.storage.ActionsStorage
+import com.intellij.cce.workspace.storages.storage.ActionsStorageFactory
+import com.intellij.cce.workspace.storages.storage.getActionsStorageTypeFromEnv
 import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -42,7 +45,7 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
 
   val sessionsStorage: CompositeSessionsStorage = CompositeSessionsStorage(sessionsDir.toString())
 
-  val actionsStorage: ActionsStorage = ActionsStorage(actionsDir.toString())
+  val actionsStorage: ActionsStorage = ActionsStorageFactory.create(actionsDir.toString(), getActionsStorageTypeFromEnv())
 
   val errorsStorage: FileErrorsStorage = FileErrorsStorage(errorsDir.toString())
 

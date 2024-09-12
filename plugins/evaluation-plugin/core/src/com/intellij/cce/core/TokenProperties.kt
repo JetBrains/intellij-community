@@ -134,6 +134,18 @@ class SimpleTokenProperties private constructor(
 
   override fun withFeatures(features: Set<String>): TokenProperties =
     SimpleTokenProperties(tokenType, location, this.features.apply { addAll(features) }, additional)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SimpleTokenProperties) return false
+
+    if (tokenType != other.tokenType) return false
+    if (location != other.location) return false
+    if (features != other.features) return false
+    if (additional != other.additional) return false
+
+    return true
+  }
 }
 
 class DocumentationProperties(val docComment: String, val startOffset: Int, val endOffset: Int, val docStartOffset: Int, val docEndOffset: Int, val nameIdentifierOffset: Int) : TokenProperties {
