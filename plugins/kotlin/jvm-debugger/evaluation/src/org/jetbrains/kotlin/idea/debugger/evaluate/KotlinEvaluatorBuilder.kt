@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.BitUtil
 import com.sun.jdi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -250,7 +251,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
 
                 override fun jdiInvokeMethod(obj: ObjectReference, method: Method, args: List<Value?>, policy: Int): Value? {
-                    return context.invokeMethod(obj, method, args, ObjectReference.INVOKE_NONVIRTUAL)
+                    var invocationOptions = 0
+                    if (BitUtil.isSet(policy, ObjectReference.INVOKE_NONVIRTUAL)) {
+                        invocationOptions = ObjectReference.INVOKE_NONVIRTUAL
+                    }
+                    return context.invokeMethod(obj, method, args, invocationOptions)
                 }
 
                 override fun jdiNewInstance(clazz: ClassType, ctor: Method, args: List<Value?>, policy: Int): Value {
