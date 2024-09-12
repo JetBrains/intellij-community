@@ -42,6 +42,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesMatcherWrapper
+import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import git4idea.ui.branch.tree.createIncomingLabel
 import git4idea.ui.branch.tree.createOutgoingLabel
@@ -80,8 +81,9 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   private inner class BranchTreeCellRenderer(private val project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
-    private val colorManager = getColorManager(project)
     private val branchManager = project.service<GitBranchManager>()
+
+    private val iconProvider = GitBranchesTreeIconProvider(project)
 
     private val incomingLabel = createIncomingLabel()
     private val outgoingLabel = createOutgoingLabel()
@@ -99,17 +101,17 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val descriptor = value.getNodeDescriptor()
 
       val branchInfo = descriptor.branchInfo
-      val isBranchNode = descriptor.type == NodeType.BRANCH
-      val isGroupNode = descriptor.type == NodeType.GROUP_NODE
-      val isRepositoryNode = descriptor.type == NodeType.GROUP_REPOSITORY_NODE
-
-      icon = when {
-        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
-        isBranchNode && branchInfo != null && branchInfo.isCurrent -> DvcsImplIcons.CurrentBranchLabel
-        isBranchNode && branchInfo != null && branchInfo.isFavorite -> AllIcons.Nodes.Favorite
-        isBranchNode -> AllIcons.Vcs.BranchNode
-        isGroupNode -> PlatformIcons.FOLDER_ICON
-        isRepositoryNode -> getRepositoryIcon(descriptor.repository!!, colorManager)
+      icon = when(descriptor.type) {
+        NodeType.BRANCH -> branchInfo?.let {
+          iconProvider.forRef(
+            it.branch,
+            current = it.isCurrent,
+            favorite = it.isFavorite,
+            selected = selected
+          )
+        }
+        NodeType.GROUP_NODE -> iconProvider.forGroup()
+        NodeType.GROUP_REPOSITORY_NODE -> iconProvider.forRepository(descriptor.repository!!)
         else -> null
       }
 

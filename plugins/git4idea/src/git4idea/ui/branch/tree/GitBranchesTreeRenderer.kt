@@ -3,7 +3,6 @@ package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -17,14 +16,12 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.util.getAvailTextLength
-import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.TagsNode
@@ -33,10 +30,10 @@ import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesClippedNamesCache
+import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.canHighlight
-import icons.DvcsImplIcons
 import java.awt.Component
 import java.awt.Graphics2D
 import javax.swing.Icon
@@ -52,6 +49,7 @@ abstract class GitBranchesTreeRenderer(
   repositories: List<GitRepository>,
   private val favoriteToggleOnClickSupported: Boolean = true,
 ) : TreeCellRenderer {
+  private val iconProvider = GitBranchesTreeIconProvider(project)
   private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
 
   private val updateScaleHelper = UpdateScaleHelper()
@@ -69,14 +67,11 @@ abstract class GitBranchesTreeRenderer(
     return DefaultControl(defaultIcon, defaultIcon, selectedIcon, selectedIcon)
   }
 
-  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? {
-    val value = treeNode ?: return null
-    return when (value) {
-      is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is RefUnderRepository -> getBranchIcon(value.ref, listOf(value.repository), isSelected)
-      is GitReference -> getBranchIcon(value, affectedRepositories, isSelected)
-      else -> null
-    }
+  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? = when (treeNode) {
+    is GitBranchesTreeModel.BranchesPrefixGroup -> iconProvider.forGroup()
+    is RefUnderRepository -> getBranchIcon(treeNode.ref, listOf(treeNode.repository), isSelected)
+    is GitReference -> getBranchIcon(treeNode, affectedRepositories, isSelected)
+    else -> null
   }
 
   private fun getBranchIcon(reference: GitReference, repositories: List<GitRepository>, isSelected: Boolean): Icon {
@@ -89,23 +84,15 @@ abstract class GitBranchesTreeRenderer(
       selectedRepository?.let { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
       ?: repositories.all { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
 
-    return when {
-      isSelected && isFavorite -> AllIcons.Nodes.Favorite
-      isSelected && favoriteToggleOnClickSupported -> AllIcons.Nodes.NotFavoriteOnHover
-      isCurrent && isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
-      isCurrent -> DvcsImplIcons.CurrentBranchLabel
-      isFavorite -> AllIcons.Nodes.Favorite
-      reference is GitTag -> DvcsImplIcons.BranchLabel
-      else -> AllIcons.Vcs.BranchNode
-    }
+    return iconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = isSelected)
   }
 
   private fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
     val value = treeNode ?: return null
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-      is GitRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value, colorManager)
-      is GitBranchesTreeModel.TopLevelRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value.repository, colorManager)
+      is GitRepository -> iconProvider.forRepository(value)
+      is GitBranchesTreeModel.TopLevelRepository -> iconProvider.forRepository(value.repository)
       else -> null
     }
   }
