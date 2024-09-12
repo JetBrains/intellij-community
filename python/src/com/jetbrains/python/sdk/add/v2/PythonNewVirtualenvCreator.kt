@@ -18,6 +18,7 @@ import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.newProjectWizard.validateProjectPathAndGetPath
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
@@ -102,7 +103,7 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
                 }
                 else {
                   locationValidationMessage.set(message("sdk.create.custom.venv.folder.not.empty"))
-                  suggestedVenvName = ".venv"
+                  suggestedVenvName = VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
                   suggestedLocation = locationPath
                   val suggestedPath = (if (locationPath.isDirectory()) locationPath else locationPath.parent).resolve(suggestedVenvName)
                   firstFixLink.text = message("sdk.create.custom.venv.use.different.venv.link",

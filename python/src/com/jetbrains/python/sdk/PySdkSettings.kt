@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
@@ -44,9 +43,9 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
       state.PREFERRED_VIRTUALENV_BASE_SDK = value
     }
 
-  fun onVirtualEnvCreated(baseSdk: Sdk, location: @SystemIndependent String, projectPath: @SystemIndependent String?) {
+  fun onVirtualEnvCreated(sdkPath: String?, location: @SystemIndependent String, projectPath: @SystemIndependent String?) {
     setPreferredVirtualEnvBasePath(location, projectPath)
-    preferredVirtualEnvBaseSdk = baseSdk.homePath
+    preferredVirtualEnvBaseSdk = sdkPath
   }
 
   private fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
@@ -56,10 +55,12 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
       }
       addMacroReplacement(defaultVirtualEnvRoot, VIRTUALENV_ROOT_DIR_MACRO_NAME)
     }
+
     val pathToSave = when {
       projectPath != null && FileUtil.isAncestor(projectPath, value, true) -> value.trimEnd { !it.isLetter() }
       else -> PathUtil.getParentPath(value)
     }
+
     state.PREFERRED_VIRTUALENV_BASE_PATH = pathMap.substitute(pathToSave, true)
   }
 
@@ -69,12 +70,18 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
       addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectPath ?: userHome)
       addMacroExpand(VIRTUALENV_ROOT_DIR_MACRO_NAME, defaultPath)
     }
-    val rawSavedPath = state.PREFERRED_VIRTUALENV_BASE_PATH ?: defaultPath
-    val savedPath = pathMap.substitute(rawSavedPath, true)
+
+    val rawSavedPath = state.PREFERRED_VIRTUALENV_BASE_PATH
+    val savedPath = rawSavedPath?.takeIf { it.isNotEmpty() }?.let { pathMap.substitute(it, true) }
+    val venvInProject = projectPath?.let { "$it/${VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME}" }
+
     return when {
+      // if no venv has been created yet try to create in the project dir; otherwise default to ~/.virtualenvs
+      savedPath == null -> pathMap.substitute(venvInProject ?: defaultPath, true)
+      // if we already created venv and it aligns with the project path, use it
       projectPath != null && FileUtil.isAncestor(projectPath, savedPath, true) -> savedPath
-      projectPath != null -> "$savedPath/${PathUtil.getFileName(projectPath)}"
-      else -> savedPath
+      // otherwise use a known path but try to add the project name as a folder
+      else -> savedPath + projectPath?.let { "/${PathUtil.getFileName(it)}" }
     }
   }
 
@@ -88,10 +95,13 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   class State {
     @JvmField
     var USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT: Boolean = true
+
     @JvmField
     var PREFERRED_ENVIRONMENT_TYPE: String? = null
+
     @JvmField
     var PREFERRED_VIRTUALENV_BASE_PATH: String? = null
+
     @JvmField
     var PREFERRED_VIRTUALENV_BASE_SDK: String? = null
   }

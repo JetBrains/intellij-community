@@ -24,6 +24,7 @@ import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
@@ -43,11 +44,6 @@ import java.nio.file.Path
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
 class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
-
-  companion object {
-    private const val VENV_DIR = ".venv"
-  }
-
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
     assert(it.isNotEmpty()) {
@@ -68,7 +64,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
 
   private fun updateVenvLocationHint() {
     val get = selectedMode.get()
-    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.value.resolve(VENV_DIR).toString()))
+    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.value.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).toString()))
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
@@ -166,10 +162,8 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
         val projectPath = projectPath.value
-        model.setupVirtualenv(projectPath.resolve(VENV_DIR), // todo just keep venv path, all the rest is in the model
-                              projectPath
-          //pythonBaseVersion.get()!!)
-        )
+        // todo just keep venv path, all the rest is in the model
+        model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), projectPath)
       }
       BASE_CONDA -> model.selectCondaEnvironment(base = true)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)

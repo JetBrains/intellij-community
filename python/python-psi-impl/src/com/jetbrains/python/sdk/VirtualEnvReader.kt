@@ -32,7 +32,7 @@ class VirtualEnvReader(
    */
   @RequiresBackgroundThread
   fun getVEnvRootDir(): Directory {
-    return resolveDir("WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
+    return resolveDirFromEnvOrElseGetDirInHomePath("WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
 
   /**
@@ -44,7 +44,7 @@ class VirtualEnvReader(
 
   @RequiresBackgroundThread
   fun getPyenvRootDir(): Directory {
-    return resolveDir("PYENV_ROOT", ".pyenv")
+    return resolveDirFromEnvOrElseGetDirInHomePath("PYENV_ROOT", ".pyenv")
   }
 
   @RequiresBackgroundThread
@@ -128,7 +128,7 @@ class VirtualEnvReader(
     dir.listDirectoryEntries().firstOrNull { it.isRegularFile() && it.name.lowercase() in pythonNames }
 
   @RequiresBackgroundThread
-  private fun resolveDir(env: String, dirName: String): Path =
+  private fun resolveDirFromEnvOrElseGetDirInHomePath(env: String, dirName: String): Path =
     envs[env]?.let { tryResolvePath(it) }
     ?: Path.of(SystemProperties.getUserHome(), dirName)
 
@@ -145,5 +145,6 @@ class VirtualEnvReader(
      * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
      */
     const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
+    const val DEFAULT_VIRTUALENV_DIRNAME = ".venv"
   }
 }
