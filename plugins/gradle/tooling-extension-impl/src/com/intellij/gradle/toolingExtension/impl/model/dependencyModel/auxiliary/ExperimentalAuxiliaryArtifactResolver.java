@@ -16,6 +16,7 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,11 +52,11 @@ public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactR
     }
     Set<ResolvedArtifactResult> javadocs = Collections.emptySet();
     if (downloadJavadoc) {
-      javadocs = resolve(configuration, JavadocArtifact.class);
+      javadocs = resolve(configuration, DocsType.JAVADOC);
     }
     Set<ResolvedArtifactResult> sources = Collections.emptySet();
     if (downloadSources) {
-      sources = resolve(configuration, SourcesArtifact.class);
+      sources = resolve(configuration, DocsType.SOURCES);
     }
     Map<ComponentIdentifier, Map<Class<? extends Artifact>, Set<File>>> classifiedArtifacts = classify(sources, javadocs);
     return new AuxiliaryConfigurationArtifacts(classifiedArtifacts);
@@ -85,8 +86,10 @@ public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactR
     return result;
   }
 
-  private @NotNull Set<ResolvedArtifactResult> resolve(@NotNull Configuration configuration,
-                                                       @NotNull Class<? extends Artifact> artifactType) {
+  private @NotNull Set<ResolvedArtifactResult> resolve(
+    @NotNull Configuration configuration,
+    @MagicConstant(stringValues = {DocsType.JAVADOC, DocsType.SOURCES}) @NotNull String docsType
+  ) {
     ObjectFactory objects = project.getObjects();
     return configuration
       .getIncoming()
@@ -100,20 +103,10 @@ public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactR
           container.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.class, Usage.JAVA_RUNTIME));
           container.attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.class, Category.DOCUMENTATION));
           container.attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.class, Bundling.EXTERNAL));
-          container.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, getDocsType(artifactType)));
+          container.attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType.class, docsType));
         });
       })
       .getArtifacts()
       .getArtifacts();
-  }
-
-  private static @NotNull String getDocsType(@NotNull Class<? extends Artifact> artifactType) {
-    if (artifactType == JavadocArtifact.class) {
-      return DocsType.JAVADOC;
-    }
-    else {
-      // always fallback to sources
-      return DocsType.SOURCES;
-    }
   }
 }
