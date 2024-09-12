@@ -67,36 +67,27 @@ private fun collectErrorsLoggedInTheCurrentThread(executable: () -> Unit): List<
  * to a fresh [TestLoggerAssertionError], which is then thrown.
  */
 @Internal
-fun <T> rethrowErrorsLoggedInTheCurrentThread(executable: () -> T): T {
+fun <T> recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(executable: () -> T): T {
   if (System.getProperty("intellij.testFramework.rethrow.logged.errors") == "true") {
     return executable()
   }
   val errorLog = ErrorLog()
-  val result: T = try {
+  try {
     withErrorLog(errorLog).use { _ ->
-      executable()
+      return executable()
     }
   }
-  catch (t: Throwable) {
-    val loggedErrors = errorLog.takeLoggedErrors()
-    if (loggedErrors.isNotEmpty()) {
-      rethrowLoggedErrors(testFailure = t, loggedErrors)
-    }
-    throw t
+  finally {
+    errorLog.reportAsFailures()
   }
-  val loggedErrors = errorLog.takeLoggedErrors()
-  if (loggedErrors.isNotEmpty()) {
-    rethrowLoggedErrors(testFailure = null, loggedErrors)
-  }
-  return result
 }
 
 /**
  * An overload for Java.
  */
 @Internal
-fun rethrowErrorsLoggedInTheCurrentThread(executable: ThrowableRunnable<*>) {
-  rethrowErrorsLoggedInTheCurrentThread(executable::run)
+fun recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(executable: ThrowableRunnable<*>) {
+  recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(executable::run)
 }
 
 private fun rethrowLoggedErrors(

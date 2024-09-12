@@ -14,8 +14,8 @@ class JUnit3LoggedErrorTest : UsefulTestCase() {
     private val LOG = Logger.getInstance(JUnit3LoggedErrorTest::class.java)
   }
 
-  // It is expected that this test fails and all 4 logged errors are visible in the test failure.
-  fun `test logged error fails the test`() {
+  // It is expected that this test does not fail, and all 4 logged errors are reported as separate test failures.
+  fun `test logged error does not fail the test`() {
     LOG.error(Throwable())
     LOG.error(Throwable("throwable message 1"))
     LOG.error("error with message", Throwable())

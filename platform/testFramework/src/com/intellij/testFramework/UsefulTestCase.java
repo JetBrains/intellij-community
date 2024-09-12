@@ -69,7 +69,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
-import static com.intellij.testFramework.TestLoggerKt.rethrowErrorsLoggedInTheCurrentThread;
+import static com.intellij.testFramework.TestLoggerKt.recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures;
 import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTestEnvironment;
 import static org.junit.Assume.assumeTrue;
@@ -523,7 +523,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
       boolean success = false;
       TestLoggerFactory.onTestStarted();
       try {
-        rethrowErrorsLoggedInTheCurrentThread(() -> testRunnable.run());
+        recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(testRunnable);
         success = true;
       }
       catch (AssumptionViolatedException e) {

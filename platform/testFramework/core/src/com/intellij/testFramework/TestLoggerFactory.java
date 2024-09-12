@@ -39,7 +39,7 @@ import java.util.logging.StreamHandler;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
-import static com.intellij.testFramework.TestLoggerKt.rethrowErrorsLoggedInTheCurrentThread;
+import static com.intellij.testFramework.TestLoggerKt.recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures;
 import static java.util.Objects.requireNonNullElse;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
@@ -405,7 +405,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       .around((base, description) -> new Statement() {
         @Override
         public void evaluate() {
-          rethrowErrorsLoggedInTheCurrentThread(() -> base.evaluate());
+          recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(() -> base.evaluate());
         }
       });
   }
