@@ -481,7 +481,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testPatchingJavaBase() {
     highlight("Main.java", """
-      package <error descr="Package 'lang' exists in another module: java.base">java.lang</error>;
+      package <error descr="Package 'java.lang' exists in another module: java.base">java.lang</error>;
       public class Main {}
     """.trimIndent())
     withCompileArguments(module, "--patch-module=java.base=/src") {
@@ -490,6 +490,17 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
        public class Main {}
      """.trimIndent())
     }
+
+    highlight("Main.java", """
+      package java;
+      public class Main {}
+    """.trimIndent())
+
+    highlight("Main.java", """
+      package java.lang.my;
+      public class Main {}
+    """.trimIndent())
+
   }
 
   fun testAddReadsDependingOnSourceModule() {

@@ -80,9 +80,14 @@ final class ModuleHighlightUtil {
               if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
                 return null;
               }
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(reference)
-                .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getName(), anotherJavaModule.getName()));
+              for (PsiPackageAccessibilityStatement export : anotherJavaModule.getExports()) {
+                String exportPackageName = export.getPackageName();
+                if (exportPackageName != null && exportPackageName.equals(pack.getQualifiedName())) {
+                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                    .range(reference)
+                    .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getQualifiedName(), anotherJavaModule.getName()));
+                }
+              }
             }
           }
         }
