@@ -3,6 +3,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.java.compiler.charts.CompilationChartsProjectActivity"/>
     <compileServer.plugin classpath="jps/java-compiler-charts-jps.jar"/>
+    <buildProcess.parametersProvider implementation="com.intellij.java.compiler.charts.CompilationChartsBuildParametersProvider"/>
 
     <registryKey key="compilation.charts" defaultValue="false"
                  description="Show compilation charts" restartRequired="false"/>

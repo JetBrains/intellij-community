@@ -21,12 +21,19 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ChartsBuilderService extends BuilderService {
+  private static final Logger LOG = Logger.getInstance(ChartsBuilderService.class);
+
   public static final String COMPILATION_STATISTIC_BUILDER_ID = "jps.compile.statistic";
   public static final String COMPILATION_STATUS_BUILDER_ID = "jps.compile.status";
 
   @Override
   public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return List.of(new ChartsModuleLevelBuilder());
+    if (Boolean.getBoolean("compilation.charts")) {
+      LOG.info("Compilation charts enabled.");
+      return List.of(new ChartsModuleLevelBuilder());
+    } else {
+      return List.of();
+    }
   }
 
   private static class ChartsModuleLevelBuilder extends ModuleLevelBuilder {
