@@ -60,10 +60,10 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         .orElse(null);
     }
     if (type instanceof PyClassType classType) {
-        PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, this, false, context);
-        if (parameterizedType instanceof PyCollectionType collectionType) {
-          return collectionType.toClass();
-        }
+      PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, this, false, context);
+      if (parameterizedType instanceof PyCollectionType collectionType) {
+        return collectionType;
+      }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);
   }

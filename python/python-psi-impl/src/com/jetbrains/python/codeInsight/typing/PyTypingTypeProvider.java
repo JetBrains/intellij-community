@@ -1888,15 +1888,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
                                                                 t -> t instanceof PyTypeParameterType typeParameterType &&
                                                                      typeParameterType.getDefaultType() != null)) {
-        PyType parameterizedType;
-        if (anchor instanceof PySubscriptionExpression subscriptionExpression) {
-          List<PyType> indexTypes = getIndexTypes(subscriptionExpression, context);
-          parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, indexTypes, context.myContext);
-        }
-        else {
-          List<PyTypeParameterType> typeParameters = collectTypeParameters(genericDefinitionType.getPyClass(), context);
-          parameterizedType = PyTypeChecker.trySubstituteByDefaultsOnly(genericDefinitionType, typeParameters, true, context.getTypeContext());
-        }
+        List<PyType> indexTypes = anchor instanceof PySubscriptionExpression subscriptionExpression
+                                  ? getIndexTypes(subscriptionExpression, context)
+                                  : List.of();
+
+        PyType parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, indexTypes, context.myContext);
         if (parameterizedType instanceof PyCollectionType collectionType) {
           return toInstance ? collectionType.toInstance() : collectionType.toClass();
         }
@@ -1954,7 +1950,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             PyTypeChecker.mapTypeParametersToSubstitutions(new PyTypeChecker.GenericSubstitutions(),
                                                            typeParamsFromAliasStmt,
                                                            indexTypes,
-                                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
+                                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
+                                                           Option.USE_DEFAULTS);
 
           if (substitutions == null) return null;
           var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutions);
@@ -1993,6 +1990,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           return PyTupleType.create(element, indexTypes);
         }
         if (operandType != null) {
+          if (operandType instanceof PyClassType classType) {
+            PyType parameterizedType = parameterizeClassWithDefaults(classType, subscriptionExpr, true, context);
+            if (parameterizedType instanceof PyCollectionType) {
+              return parameterizedType;
+            }
+          }
           return PyTypeChecker.parameterizeType(operandType, indexTypes, context.getTypeContext());
         }
       }

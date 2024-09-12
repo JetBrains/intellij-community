@@ -1639,10 +1639,10 @@ public final class PyTypeChecker {
       List<PyType> expectedTypeParams = new ArrayList<>(new LinkedHashSet<>(typeParams.getAllTypeParameters()));
       var substitutions = mapTypeParametersToSubstitutions(new GenericSubstitutions(),
                                                            expectedTypeParams, actualTypeParams,
-                                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
+                                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
+                                                           Option.USE_DEFAULTS);
       if (substitutions == null) return null;
-      var substitutionsWithDefaults = getSubstitutionsWithDefaults(substitutions);
-      return substitute(genericType, substitutionsWithDefaults, context);
+      return substitute(genericType, substitutions, context);
     }
     // An already parameterized type, don't override existing values for type parameters
     else if (genericType instanceof PyCollectionType) {
@@ -1693,8 +1693,9 @@ public final class PyTypeChecker {
                                                    boolean unmappedToAny,
                                                    @NotNull TypeEvalContext context) {
     if (!typeParameterTypes.isEmpty()) {
-      List<Couple<PyType>> typeParametersToSubstitutions = ContainerUtil.map(typeParameterTypes, typeParameterType
-        -> new Couple<>(typeParameterType, unmappedToAny ? null : typeParameterType));
+      List<Couple<PyType>> typeParametersToSubstitutions =
+        ContainerUtil.map(typeParameterTypes, typeParameterType
+          -> new Couple<>(typeParameterType, unmappedToAny ? null : typeParameterType));
       var substitutions = fillSubstitutionsWithTypeParameters(new GenericSubstitutions(), typeParametersToSubstitutions);
       var subsWithDefaults = getSubstitutionsWithDefaults(substitutions);
       return substitute(targetType, subsWithDefaults, context);

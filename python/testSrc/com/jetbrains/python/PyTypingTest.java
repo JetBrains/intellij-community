@@ -5518,6 +5518,14 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-71002
+  public void testExplicitAnyNotSubstitutedByDefaults() {
+    doTest("Test[Any, Any, bool]", """
+      class Test[T = str, T1 = int, T2 = bool]: ...
+      expr = Test[Any, Any]()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
