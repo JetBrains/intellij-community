@@ -57,7 +57,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       }
 
       if (parent.addSampleCode) {
-        withJavaSampleCodeAsset("src", "", parent.generateOnboardingTips)
+        withJavaSampleCodeAsset("src", null, parent.generateOnboardingTips)
       }
     }
 

@@ -19,14 +19,11 @@ private const val DEFAULT_FILE_NAME = "Main.java"
 
 object AssetsJava {
 
-  fun createJavaSourcePath(sourceRootPath: String, aPackage: String, fileName: String): String {
-    val packageDirectory = aPackage.replace('.', '/')
+  fun createJavaSourcePath(sourceRootPath: String, packageName: String?, fileName: String): String {
     val pathJoiner = StringJoiner("/")
-    if (sourceRootPath.isNotEmpty()) {
-      pathJoiner.add(sourceRootPath)
-    }
-    if (packageDirectory.isNotEmpty()) {
-      pathJoiner.add(packageDirectory)
+    pathJoiner.add(sourceRootPath)
+    if (packageName != null) {
+      pathJoiner.add(packageName.replace('.', '/'))
     }
     pathJoiner.add(fileName)
     return pathJoiner.toString()
@@ -35,7 +32,7 @@ object AssetsJava {
 
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourceRootPath: String,
-  aPackage: String,
+  packageName: String?,
   generateOnboardingTips: Boolean,
 ) {
   val templateName = when {
@@ -44,18 +41,20 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
     else -> "SampleCodeWithOnboardingTips.java"
   }
 
-  val sourcePath = AssetsJava.createJavaSourcePath(sourceRootPath, aPackage, DEFAULT_FILE_NAME)
-  withJavaSampleCodeAsset(sourcePath, templateName, aPackage, generateOnboardingTips)
+  val sourcePath = AssetsJava.createJavaSourcePath(sourceRootPath, packageName, DEFAULT_FILE_NAME)
+  withJavaSampleCodeAsset(sourcePath, templateName, packageName, generateOnboardingTips)
 }
 
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourcePath: String,
   templateName: String,
-  aPackage: String,
+  packageName: String?,
   generateOnboardingTips: Boolean,
 ) {
   addTemplateAsset(sourcePath, templateName, buildMap {
-    put("PACKAGE_NAME", aPackage)
+    if (packageName != null) {
+      put("PACKAGE_NAME", packageName)
+    }
     if (generateOnboardingTips) {
       val tipsContext = object : KeymapTextContext() {
         override fun isSimplifiedMacShortcuts(): Boolean = ClientSystemInfo.isMac()
