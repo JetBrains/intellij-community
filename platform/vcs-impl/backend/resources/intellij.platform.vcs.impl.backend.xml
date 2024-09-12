@@ -4,4 +4,7 @@
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.impl.backend.shelf.ShelfApiProvider"/>
+  </extensions>
 </idea-plugin>
