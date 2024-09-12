@@ -40,6 +40,7 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
 
   @Override
   public GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+    if (aClass == null) return GenerationInfo.EMPTY_ARRAY;
     myGenerateGetterHandler.myGenerateAnnotations = myGenerateAnnotations;
     myGenerateSetterHandler.myGenerateAnnotations = myGenerateAnnotations;
     ArrayList<GenerationInfo> array = new ArrayList<>();

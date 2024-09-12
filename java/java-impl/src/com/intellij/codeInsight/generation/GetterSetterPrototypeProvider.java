@@ -11,8 +11,6 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
-
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
   @Contract(pure = true)
@@ -44,13 +42,13 @@ public abstract class GetterSetterPrototypeProvider {
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
                                                   boolean ignoreInvalidTemplate) {
-    return generateGetterSetters(field, generateGetter, ignoreInvalidTemplate, EnumSet.noneOf(EncapsulatableClassMember.Option.class));
+    return generateGetterSetters(field, generateGetter, ignoreInvalidTemplate, SetterGetterGenerationOptions.empty());
   }
 
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
                                                   boolean ignoreInvalidTemplate,
-                                                  @NotNull EnumSet<EncapsulatableClassMember.Option> options) {
+                                                  @NotNull SetterGetterGenerationOptions options) {
     for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);

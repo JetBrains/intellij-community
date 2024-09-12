@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCase {
@@ -464,8 +463,8 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       }
 
       @Override
-      protected @NotNull EnumSet<EncapsulatableClassMember.Option> getOptions() {
-        return allAnnotations ? EnumSet.of(EncapsulatableClassMember.Option.COPY_ALL_ANNOTATIONS) : super.getOptions();
+      protected @NotNull SetterGetterGenerationOptions getOptions() {
+        return allAnnotations ? new SetterGetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     UIUtil.dispatchAllInvocationEvents();
@@ -564,8 +563,8 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       }
 
       @Override
-      protected @NotNull EnumSet<EncapsulatableClassMember.Option> getOptions() {
-        return allAnnotations ? EnumSet.of(EncapsulatableClassMember.Option.COPY_ALL_ANNOTATIONS) : super.getOptions();
+      protected @NotNull SetterGetterGenerationOptions getOptions() {
+        return allAnnotations ? new SetterGetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     UIUtil.dispatchAllInvocationEvents();

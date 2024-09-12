@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 public class PsiFieldMember extends PsiElementClassMember<PsiField> implements PropertyClassMember {
@@ -25,17 +24,25 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public @Nullable GenerationInfo generateGetter() throws IncorrectOperationException {
-    final GenerationInfo[] infos = generateGetters(getElement().getContainingClass());
+    return generateGetter(SetterGetterGenerationOptions.empty());
+  }
+
+  @Override
+  public @Nullable GenerationInfo generateGetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+    PsiClass containingClass = getElement().getContainingClass();
+    if(containingClass == null) return null;
+    final GenerationInfo[] infos = generateGetters(containingClass, options);
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
 
   @Override
   public GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException {
-    return generateGetters(aClass, EnumSet.noneOf(Option.class));
+    if (aClass == null) return null;
+    return generateGetters(aClass, SetterGetterGenerationOptions.empty());
   }
 
   @Override
-  public GenerationInfo @Nullable [] generateGetters(PsiClass aClass, @NotNull  EnumSet<Option> options) throws IncorrectOperationException {
+  public GenerationInfo @Nullable [] generateGetters(@NotNull PsiClass aClass, @NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
     PsiField field = getElement();
     if (field.hasModifierProperty(PsiModifier.STATIC) &&
         field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -47,7 +54,14 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public @Nullable GenerationInfo generateSetter() throws IncorrectOperationException {
-    final GenerationInfo[] infos = generateSetters(getElement().getContainingClass());
+    return generateSetter(SetterGetterGenerationOptions.empty());
+  }
+
+  @Override
+  public @Nullable GenerationInfo generateSetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+    PsiClass containingClass = getElement().getContainingClass();
+    if (containingClass == null) return null;
+    final GenerationInfo[] infos = generateSetters(containingClass, options);
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
 
@@ -58,11 +72,12 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public GenerationInfo @Nullable [] generateSetters(PsiClass aClass) {
-    return generateSetters(aClass, EnumSet.noneOf(Option.class));
+    if (aClass == null) return null;
+    return generateSetters(aClass, SetterGetterGenerationOptions.empty());
   }
 
   @Override
-  public GenerationInfo @Nullable [] generateSetters(PsiClass aClass, @NotNull EnumSet<Option> options) {
+  public GenerationInfo @Nullable [] generateSetters(@NotNull PsiClass aClass, @NotNull SetterGetterGenerationOptions options) {
     final PsiField field = getElement();
     if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
       return null;
@@ -75,13 +90,13 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
     for (PsiMethod prototype : prototypes) {
       final PsiMethod method = createMethodIfNotExists(aClass, prototype);
       if (method != null) {
-        methods.add(new PsiGenerationInfo(method));
+        methods.add(new PsiGenerationInfo<>(method));
       }
     }
     return methods.isEmpty() ? null : methods.toArray(GenerationInfo.EMPTY_ARRAY);
   }
 
-  private static @Nullable PsiMethod createMethodIfNotExists(PsiClass aClass, final PsiMethod template) {
+  private static @Nullable PsiMethod createMethodIfNotExists( @NotNull PsiClass aClass, final PsiMethod template) {
     PsiMethod existing = aClass.findMethodBySignature(template, false);
     return existing == null || !existing.isPhysical() ? template : null;
   }

@@ -19,14 +19,11 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
-
 public interface EncapsulatableClassMember extends ClassMember {
-
 
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @deprecated please, use {@link EncapsulatableClassMember#generateGetter(EnumSet)}
+   * @deprecated please, use {@link EncapsulatableClassMember#generateGetter(SetterGetterGenerationOptions)}
    */
   @Deprecated
   @Nullable
@@ -34,7 +31,7 @@ public interface EncapsulatableClassMember extends ClassMember {
 
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @deprecated please, use {@link EncapsulatableClassMember#generateSetter(EnumSet)}
+   * @deprecated please, use {@link EncapsulatableClassMember#generateSetter(SetterGetterGenerationOptions)}
    */
   @Deprecated
   @Nullable
@@ -44,7 +41,7 @@ public interface EncapsulatableClassMember extends ClassMember {
    * @return PsiElement or TemplateGenerationInfo
    */
   @Nullable
-  default GenerationInfo generateGetter(@NotNull EnumSet<Option> options) throws IncorrectOperationException {
+  default GenerationInfo generateGetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
     return generateGetter();
   }
 
@@ -52,7 +49,7 @@ public interface EncapsulatableClassMember extends ClassMember {
    * @return PsiElement or TemplateGenerationInfo
    */
   @Nullable
-  default GenerationInfo generateSetter(@NotNull EnumSet<Option> options) throws IncorrectOperationException {
+  default GenerationInfo generateSetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
     return generateSetter();
   }
 
@@ -63,7 +60,4 @@ public interface EncapsulatableClassMember extends ClassMember {
     return false;
   }
 
-  enum Option {
-    COPY_ALL_ANNOTATIONS
-  }
 }

@@ -20,19 +20,17 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
-
 public interface PropertyClassMember extends EncapsulatableClassMember {
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @deprecated please, use {@link PropertyClassMember#generateGetters(PsiClass, EnumSet)}
+   * @deprecated please, use {@link PropertyClassMember#generateGetters(PsiClass, SetterGetterGenerationOptions)}
    */
   @Deprecated
   GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @deprecated please, use {@link PropertyClassMember#generateSetters(PsiClass, EnumSet)}
+   * @deprecated please, use {@link PropertyClassMember#generateSetters(PsiClass, SetterGetterGenerationOptions)}
    */
   @Deprecated
   GenerationInfo @Nullable [] generateSetters(PsiClass aClass) throws IncorrectOperationException;
@@ -40,14 +38,14 @@ public interface PropertyClassMember extends EncapsulatableClassMember {
   /**
    * @return PsiElement or TemplateGenerationInfo
    */
-  default GenerationInfo @Nullable [] generateGetters(PsiClass aClass, @NotNull EnumSet<Option> options) throws IncorrectOperationException{
+  default GenerationInfo @Nullable [] generateGetters(@NotNull PsiClass aClass, @NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException{
     return generateGetters(aClass);
   }
 
   /**
    * @return PsiElement or TemplateGenerationInfo
    */
-  default GenerationInfo @Nullable [] generateSetters(PsiClass aClass, @NotNull EnumSet<Option> options) throws IncorrectOperationException{
+  default GenerationInfo @Nullable [] generateSetters(@NotNull PsiClass aClass, @NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException{
     return generateSetters(aClass);
   }
 }

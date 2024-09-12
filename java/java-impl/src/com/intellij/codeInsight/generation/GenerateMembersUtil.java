@@ -763,29 +763,29 @@ public final class GenerateMembersUtil {
   }
 
   public static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, PsiClass aClass) {
-    return generatePrototype(field, aClass, true, EnumSet.noneOf(EncapsulatableClassMember.Option.class), SetterTemplatesManager.getInstance());
+    return generatePrototype(field, aClass, true, SetterGetterGenerationOptions.empty(), SetterTemplatesManager.getInstance());
   }
 
   static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generateGetterPrototype(field, ignoreInvalidTemplate, EnumSet.noneOf(EncapsulatableClassMember.Option.class));
+    return generateGetterPrototype(field, ignoreInvalidTemplate, SetterGetterGenerationOptions.empty());
   }
 
   static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generateSetterPrototype(field, ignoreInvalidTemplate, EnumSet.noneOf(EncapsulatableClassMember.Option.class));
+    return generateSetterPrototype(field, ignoreInvalidTemplate, SetterGetterGenerationOptions.empty());
   }
 
-  static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull EnumSet<EncapsulatableClassMember.Option> options) {
+  static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull SetterGetterGenerationOptions options) {
     return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, GetterTemplatesManager.getInstance());
   }
 
-  static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull EnumSet<EncapsulatableClassMember.Option> options) {
+  static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull SetterGetterGenerationOptions options) {
     return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, SetterTemplatesManager.getInstance());
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field,
                                                       PsiClass psiClass,
                                                       boolean ignoreInvalidTemplate,
-                                                      @NotNull EnumSet<EncapsulatableClassMember.Option> options,
+                                                      @NotNull SetterGetterGenerationOptions options,
                                                       @NotNull TemplatesManager templatesManager) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -833,8 +833,7 @@ public final class GenerateMembersUtil {
     }
     if (annotationTarget != null) {
       PsiType fieldType = field.getType();
-      String type = options.contains(EncapsulatableClassMember.Option.COPY_ALL_ANNOTATIONS) ? fieldType.getCanonicalText(true) :
-                    getTypeWithNullableAnnotations(factory, fieldType);
+      String type = options.copyAllAnnotations() ? fieldType.getCanonicalText(true) : getTypeWithNullableAnnotations(factory, fieldType);
       if (annotationTarget instanceof PsiParameter psiParameter && psiParameter.getTypeElement() != null) {
         psiParameter.getTypeElement().replace(factory.createTypeElementFromText(type, psiParameter));
       }
