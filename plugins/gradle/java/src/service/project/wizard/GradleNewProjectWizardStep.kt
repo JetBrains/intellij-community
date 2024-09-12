@@ -457,11 +457,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  protected fun linkGradleProject(
-    project: Project,
-    builder: AbstractGradleModuleBuilder = GradleJavaModuleBuilder(),
-    configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
-  ): Module? {
+  protected fun setupBuilder(builder: AbstractGradleModuleBuilder) {
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
@@ -485,14 +481,15 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     )
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
+  }
 
-    builder.configureBuildScript {
-      it.configureBuildScript()
-    }
+  protected fun setupBuildScript(builder: AbstractGradleModuleBuilder, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+    builder.configureBuildScript(configure)
+  }
 
-    return setupProjectFromBuilder(project, builder)?.also {
-      startJdkDownloadIfNeeded(it)
-    }
+  protected fun setupProject(project: Project, builder: AbstractGradleModuleBuilder) {
+    setupProjectFromBuilder(project, builder)
+      ?.also { startJdkDownloadIfNeeded(it) }
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

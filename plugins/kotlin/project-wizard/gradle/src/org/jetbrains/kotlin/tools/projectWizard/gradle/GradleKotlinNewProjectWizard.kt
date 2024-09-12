@@ -261,7 +261,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 it.getGradleKotlinVersion()
             }
             val pluginManagementVersion = getPluginManagementKotlinVersion(project)
-            linkGradleProject(project, moduleBuilder) {
+
+            setupBuilder(moduleBuilder)
+            setupBuildScript(moduleBuilder) {
                 withKotlinJvmPlugin(kotlinVersionToUse.takeIf { pluginManagementVersion == null && parentKotlinVersion == null })
                 withKotlinTest()
 
@@ -269,6 +271,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     withKotlinJvmToolchain(it)
                 }
             }
+            setupProject(project, moduleBuilder)
         }
     }
 

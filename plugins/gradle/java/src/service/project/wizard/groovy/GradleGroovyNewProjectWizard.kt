@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
@@ -66,7 +67,9 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkGradleProject(project) {
+      val builder = GradleJavaModuleBuilder()
+      setupBuilder(builder)
+      setupBuildScript(builder) {
         when (val groovySdk = groovySdk) {
           null -> withPlugin("groovy")
           is FrameworkLibraryDistributionInfo -> withGroovyPlugin(groovySdk.version.versionString)
@@ -85,6 +88,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         }
         withJUnit()
       }
+      setupProject(project, builder)
     }
   }
 

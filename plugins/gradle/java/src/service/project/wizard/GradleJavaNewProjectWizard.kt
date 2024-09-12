@@ -18,6 +18,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -77,10 +78,13 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkGradleProject(project) {
+      val builder = GradleJavaModuleBuilder()
+      setupBuilder(builder)
+      builder.configureBuildScript(fun GradleBuildScriptBuilder<*>.() {
         withJavaPlugin()
         withJUnit()
-      }
+      })
+      setupProject(project, builder)
     }
 
     init {
