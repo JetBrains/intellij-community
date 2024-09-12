@@ -52,7 +52,8 @@ public class HelpManagerImpl extends HelpManager {
       activeKeymap = activeKeymap.getParent();
     }
     if (activeKeymap != null) {
-      url = url.addParameters(Map.of("keymap", activeKeymap.getName()));
+      //We need to use the presentable name here because that's what is stored on the docs side
+      url = url.addParameters(Map.of("keymap", activeKeymap.getPresentableName()));
     }
 
     return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url.toExternalForm());
