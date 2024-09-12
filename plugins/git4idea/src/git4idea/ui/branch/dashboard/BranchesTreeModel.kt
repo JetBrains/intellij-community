@@ -45,8 +45,6 @@ internal data class BranchNodeDescriptor(
     val suffix = branchInfo?.branchName ?: displayName
     return if (suffix != null) "$type:$suffix" else "$type"
   }
-
-  fun getDisplayText() = displayName ?: branchInfo?.branchName
 }
 
 private fun resolveDisplayName(
@@ -70,8 +68,7 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
       NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
       NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
       NodeType.HEAD_NODE -> message("group.Git.HEAD.Branch.Filter.title")
-      NodeType.GROUP_REPOSITORY_NODE -> " ${nodeDescriptor.getDisplayText()}"
-      else -> nodeDescriptor.getDisplayText() ?: super.toString() //NON-NLS
+      else -> nodeDescriptor.displayName ?: super.toString() //NON-NLS
     }
   }
 

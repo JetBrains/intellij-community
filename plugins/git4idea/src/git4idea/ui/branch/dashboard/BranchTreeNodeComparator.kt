@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.NaturalComparator
 internal val BranchTreeNodeComparator = compareBy<BranchNodeDescriptor> {
   getOrderWeight(it)
 } then compareBy(NaturalComparator.INSTANCE) {
-  it.getDisplayText()
+  it.displayName
 } then compareBy {
   it.type
 }
