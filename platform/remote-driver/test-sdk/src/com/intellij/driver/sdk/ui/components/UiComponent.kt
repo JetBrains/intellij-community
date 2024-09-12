@@ -476,4 +476,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       component.isFocusOwner()
     }
   }
+
+  fun waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor("Component '$this' is visible", timeout = timeout) {
+      component.isVisible()
+    }
+  }
 }
