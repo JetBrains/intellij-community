@@ -64,7 +64,7 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
       cpuLoad = os.getSystemCpuLoad();
     }
     if (cpuLoad < 0) return null;
-    statistics.cpu = cpuLoad * 100;
+    statistics.cpu = (long)(cpuLoad * 100);
 
     return new CompileStatisticBuilderMessage("STATISTIC", JSON.toJson(statistics));
   }
@@ -89,7 +89,7 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     public long heapMax;
     public long nonHeapUsed;
     public long nonHeapMax;
-    public double cpu;
+    public long cpu;
     public long time = System.nanoTime();
   }
 }

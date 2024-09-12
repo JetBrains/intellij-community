@@ -20,8 +20,6 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   val scrollToEndEvent: RdProperty<ScrollToEndEvent> = RdProperty(ScrollToEndEvent())
   val zoomEvent: RdProperty<ZoomEvent> = RdProperty(ZoomEvent.Reset)
 
-  private var lastCpuValue : Double = 0.0
-
   fun requestScrollToEnd() = scrollToEndEvent.set(ScrollToEndEvent())
 
   fun requestZoomChange(event: ZoomEvent) = zoomEvent.set(event)
@@ -43,15 +41,7 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
     if (statistics.start > value.time) statistics.start = value.time
     if (statistics.end < value.time) statistics.end = value.time
 
-    if (value.cpu > 0L) {
-      lastCpuValue = value.cpu
-      statistics.cpu.add(StatisticData(value.time, value.cpu.toLong()))
-    } else {
-      val newLastCpuValue = (lastCpuValue / DIVISION_FACTOR_WITH_ZERO_CPU_LOAD)
-      lastCpuValue = newLastCpuValue
-      statistics.cpu.add(StatisticData(value.time, newLastCpuValue.toLong()))
-    }
-
+    statistics.cpu.add(StatisticData(value.time, value.cpu))
     statistics.memoryMax.add(StatisticData(value.time, value.heapMax))
     statistics.memoryUsed.add(StatisticData(value.time, value.heapUsed))
   }
@@ -134,9 +124,5 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
     };
 
     abstract fun max(statistics: Statistics): Long
-  }
-
-  companion object {
-    private const val DIVISION_FACTOR_WITH_ZERO_CPU_LOAD = 1.01
   }
 }
