@@ -6,10 +6,13 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.help.WebHelpProvider;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.util.Url;
 import kotlin.jvm.functions.Function1;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class HelpManagerImpl extends HelpManager {
@@ -43,6 +46,11 @@ public class HelpManagerImpl extends HelpManager {
 
     Function1<String, Url> urlSupplier = ExternalProductResourceUrls.getInstance().getHelpPageUrl();
     if (urlSupplier == null) return null;
-    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(urlSupplier.invoke(id).toExternalForm());
+
+    final KeymapManager manager = KeymapManager.getInstance();
+    final Keymap activeKeymap = manager == null ? null : KeymapManager.getInstance().getActiveKeymap();
+
+    final String urlWithUtm = IdeUrlTrackingParametersProvider.getInstance().augmentUrl(urlSupplier.invoke(id).toExternalForm());
+    return activeKeymap == null ? urlWithUtm : "%s&keymap=%s".formatted(urlWithUtm, activeKeymap.getPresentableName());
   }
 }
