@@ -362,7 +362,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
-  public void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
+  void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {

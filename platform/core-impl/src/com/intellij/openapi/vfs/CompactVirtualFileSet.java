@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Set of VirtualFiles optimized for compact storage of very large number of files.
+ * Set of {@link VirtualFile}s optimized for compact storage of very large number of files.
  * <p>
  * Supports optimized {@link Collection#add(Object)} and {@link Collection#addAll(Collection)}
  * without materialization of all containing files.
@@ -39,11 +39,6 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   CompactVirtualFileSet() {
   }
 
-  /**
-   * @deprecated Use {@link VfsUtilCore#createCompactVirtualFileSet(Collection)} instead
-   */
-  @Deprecated
-  @ApiStatus.Internal
   CompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
     addAll(files);
   }
