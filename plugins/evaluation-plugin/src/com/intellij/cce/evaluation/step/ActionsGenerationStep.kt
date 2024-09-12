@@ -69,7 +69,7 @@ open class ActionsGenerationStep(
     val actionsSummarizer = ActionsSummarizer()
     for ((i, file) in files.sortedBy { it.name }.withIndex()) {
       if (totalSessions >= sessionsLimit) {
-        LOG.warn("Generating actions is canceled by sessions limit ($totalSessions).  With error: ${errors.size}")
+        LOG.warn("Generating actions is canceled by sessions limit. Sessions=$totalSessions, sessionsLimit=$sessionsLimit.  With error: ${errors.size}")
         break
       }
       if (totalFiles >= filesLimit) {
@@ -93,7 +93,7 @@ open class ActionsGenerationStep(
           else -> throw IllegalStateException("Parent psi and offset are null.")
         }
         val codeFragment = codeFragmentBuilder.build(file, rootVisitor, featureName)
-        val fileActions = actionsGenerator.generate(codeFragment, sessionLimit = sessionsLimit - totalSessions)
+        val fileActions = actionsGenerator.generate(codeFragment)
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
         totalSessions += fileActions.sessionsCount

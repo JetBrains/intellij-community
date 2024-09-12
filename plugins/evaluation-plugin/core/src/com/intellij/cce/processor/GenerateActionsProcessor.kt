@@ -3,27 +3,18 @@ package com.intellij.cce.processor
 
 import com.intellij.cce.actions.Action
 import com.intellij.cce.actions.ActionsBuilder
-import com.intellij.cce.actions.SessionLimitReachedException
 import com.intellij.cce.core.CodeFragment
-import com.intellij.openapi.diagnostic.logger
 
 abstract class GenerateActionsProcessor : CodeFragmentProcessor {
-  private val LOG = logger<GenerateActionsProcessor>()
-
   private lateinit var actionsBuilder: ActionsBuilder
 
   protected fun actions(init: ActionsBuilder.() -> Unit) {
     init(actionsBuilder)
   }
 
-  fun buildActions(code: CodeFragment, sessionLimit: Int): List<Action> {
-    actionsBuilder = ActionsBuilder(sessionLimit)
-    try {
-       process(code)
-    } catch (t: SessionLimitReachedException) {
-      LOG.warn("session limit reached. process only first $sessionLimit sessions")
-    }
-
+  fun buildActions(code: CodeFragment): List<Action> {
+    actionsBuilder = ActionsBuilder()
+    process(code)
     return actionsBuilder.build()
   }
 }
