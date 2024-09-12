@@ -68,7 +68,7 @@ open class ActionsGenerationStep(
     var totalSessions = 0
     var totalFiles = 0
     val actionsSummarizer = ActionsSummarizer()
-    for ((i, file) in files.shuffled(FILES_RANDOM).withIndex()) {
+    for ((i, file) in files.sortedBy { it.name }.shuffled(FILES_RANDOM).withIndex()) {
       if (totalSessions >= sessionsLimit) {
         LOG.warn("Generating actions is canceled by sessions limit. Sessions=$totalSessions, sessionsLimit=$sessionsLimit.  With error: ${errors.size}")
         break
