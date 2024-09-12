@@ -231,6 +231,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
 
   companion object {
     @JvmStatic
+    @Deprecated("use PyV3 in com.jetbrains.python.newProjectWizard")
     fun initializeGit(project: Project, root: VirtualFile) {
       runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
         GitRepositoryInitializer.getInstance()?.initRepository(project, root, true)

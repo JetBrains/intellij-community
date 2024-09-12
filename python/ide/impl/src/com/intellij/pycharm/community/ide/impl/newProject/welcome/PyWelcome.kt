@@ -41,8 +41,6 @@ import com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeColle
 import com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector.RunConfigurationResult
 import com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector.ScriptResult
 import com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector.logWelcomeRunConfiguration
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable
@@ -52,7 +50,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
-import javax.swing.JPanel
 
 internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   override val isEdtRequired: Boolean
@@ -74,24 +71,6 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   private fun isInsideTempDirectory(baseDir: VirtualFile): Boolean {
     val tempDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.getTempDirectory()) ?: return false
     return VfsUtil.isAncestor(tempDir, baseDir, true)
-  }
-}
-
-internal object PyWelcomeGenerator {
-  fun createWelcomeSettingsPanel(): JPanel {
-    return panel {
-      row {
-        checkBox(PyWelcomeBundle.message("py.welcome.new.project.text"))
-          .selected(PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject)
-          .comment(PyWelcomeBundle.message("py.welcome.new.project.description"))
-          .onChanged { PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject = it.isSelected }
-      }
-    }
-  }
-
-  fun welcomeUser(project: Project, baseDir: VirtualFile, module: Module) {
-    PyWelcomeCollector.logWelcomeProject(project, ProjectType.NEW)
-    PyWelcome.welcomeUser(project, baseDir, module)
   }
 }
 

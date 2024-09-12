@@ -12,14 +12,12 @@ object PySdkConfigurationCollector : CounterUsagesCollector() {
 
   internal enum class Source { CONFIGURATOR, INSPECTION }
   internal enum class InputData { NOT_FILLED, SPECIFIED }
-  internal enum class VirtualEnvResult { CREATION_FAILURE, DEPS_NOT_FOUND, INSTALLATION_FAILURE, CREATED }
+  internal enum class VirtualEnvResult { DEPS_NOT_FOUND, INSTALLATION_FAILURE, }
   internal enum class CondaEnvResult {
     LISTING_FAILURE,
     CREATION_FAILURE,
     NO_LISTING_DIFFERENCE,
     AMBIGUOUS_LISTING_DIFFERENCE,
-    NO_BINARY,
-    AMBIGUOUS_BINARIES,
     CREATED
   }
 

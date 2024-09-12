@@ -17,9 +17,6 @@ class PyPackageRepositories : PersistentStateComponent<PyPackageRepositories> {
   @Property
   val invalidRepositories = mutableSetOf<PyPackageRepository>()
 
-  val validRepositories: List<PyPackageRepository>
-    get() = repositories.filterNot { it in invalidRepositories }
-
 
   override fun getState(): PyPackageRepositories {
     return this

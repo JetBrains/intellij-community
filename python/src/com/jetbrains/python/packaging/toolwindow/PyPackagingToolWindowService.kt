@@ -339,10 +339,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       .toList()
   }
 
-  internal suspend fun moduleAttached() {
-    toolWindowPanel?.recreateModulePanel()
-  }
-
   companion object {
     private const val PACKAGES_LIMIT = 50
 

@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 internal object PyWelcomeCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  internal enum class ProjectType { NEW, OPENED }
-  internal enum class ScriptResult { DISABLED_BUT_COULD, DISABLED_AND_COULD_NOT, CREATED, NOT_EMPTY, NO_VFILE, NO_PSI, NO_DOCUMENT }
+  internal enum class ProjectType { OPENED }
+  internal enum class ScriptResult { DISABLED_BUT_COULD, DISABLED_AND_COULD_NOT, CREATED, NOT_EMPTY, NO_VFILE, NO_DOCUMENT }
   internal enum class ProjectViewPoint { IMMEDIATELY, FROM_LISTENER }
   internal enum class ProjectViewResult { EXPANDED, REJECTED, NO_TOOLWINDOW }
   internal enum class RunConfigurationResult { CREATED, NULL }

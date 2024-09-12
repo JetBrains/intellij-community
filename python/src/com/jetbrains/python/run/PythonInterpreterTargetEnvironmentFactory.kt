@@ -145,9 +145,6 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     fun isMutable(configuration: TargetEnvironmentConfiguration): Boolean =
       EP_NAME.extensionList.mapNotNull { it.isMutable(configuration) }.firstOrNull() ?: false
 
-    fun TargetEnvironmentConfiguration.isOfType(targetEnvironmentType: TargetEnvironmentType<*>): Boolean =
-      typeId == targetEnvironmentType.id
-
     /**
      * Target provides access to its filesystem using VFS (like WSL)
      */
