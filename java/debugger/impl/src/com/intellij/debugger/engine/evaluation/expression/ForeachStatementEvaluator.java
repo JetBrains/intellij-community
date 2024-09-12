@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -52,11 +54,17 @@ public class ForeachStatementEvaluator extends ForStatementEvaluatorBase {
                                                 });
     }
     else {
-      Object iterator = new MethodEvaluator(iterableEvaluator, null, "iterator", null, new Evaluator[0]).evaluate(context);
+      Object iterator =
+        new MethodEvaluator(iterableEvaluator, JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_LANG_ITERABLE), "iterator", null,
+                            new Evaluator[0]).evaluate(context);
       IdentityEvaluator iteratorEvaluator = new IdentityEvaluator((Value)iterator);
-      myConditionEvaluator = new MethodEvaluator(iteratorEvaluator, null, "hasNext", null, new Evaluator[0]);
-      myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator,
-                                                new MethodEvaluator(iteratorEvaluator, null, "next", null, new Evaluator[0]));
+      myConditionEvaluator =
+        new MethodEvaluator(iteratorEvaluator, JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_UTIL_ITERATOR), "hasNext", null,
+                            new Evaluator[0]);
+      myNextEvaluator = new AssignmentEvaluator(myIterationParameterEvaluator, new MethodEvaluator(iteratorEvaluator,
+                                                                                                   JVMNameUtil.getJVMRawText(
+                                                                                                     CommonClassNames.JAVA_UTIL_ITERATOR),
+                                                                                                   "next", null, new Evaluator[0]));
     }
     return value;
   }
