@@ -38,7 +38,7 @@ class BuiltInHelpManager : HelpManager() {
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
         URLEncoder.encode(
           helpIdToUse, StandardCharsets.UTF_8)
-      }${if (activeKeymap != null) "&keymap=${activeKeymap}" else ""}"
+      }${if (activeKeymap != null) "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}" else ""}"
 
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
@@ -83,7 +83,11 @@ class BuiltInHelpManager : HelpManager() {
         if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
           val productCode = info.build.productCode
           if (!StringUtil.isEmpty(productCode)) {
-            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion${if (activeKeymap != null) "&keymap=${activeKeymap}" else ""}"
+            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion${
+              if (activeKeymap != null)
+                "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
+              else ""
+            }"
           }
         }
       }

@@ -15,6 +15,9 @@ import kotlin.jvm.functions.Function1;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 public class HelpManagerImpl extends HelpManager {
   private static final ExtensionPointName<WebHelpProvider>
     WEB_HELP_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.webHelpProvider");
@@ -51,6 +54,7 @@ public class HelpManagerImpl extends HelpManager {
     final Keymap activeKeymap = manager == null ? null : KeymapManager.getInstance().getActiveKeymap();
 
     final String urlWithUtm = IdeUrlTrackingParametersProvider.getInstance().augmentUrl(urlSupplier.invoke(id).toExternalForm());
-    return activeKeymap == null ? urlWithUtm : "%s&keymap=%s".formatted(urlWithUtm, activeKeymap.getPresentableName());
+    return activeKeymap == null ? urlWithUtm : "%s&keymap=%s".formatted(urlWithUtm, URLEncoder.encode(activeKeymap.getPresentableName(),
+                                                                                                      StandardCharsets.UTF_8));
   }
 }
