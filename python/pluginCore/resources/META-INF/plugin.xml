@@ -633,8 +633,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <!-- Parameter Info -->
     <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
                  description="Show type hints for all parameters in parameter info window"/>
-    <registryKey key="python.unified.interpreter.configuration" defaultValue="true"
-                 description="Use the same UI to configure interpreters in IDE widget and New Project Wizard"/>
 
     <!-- Machine Learning -->
     <registryKey
