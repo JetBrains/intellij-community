@@ -8,8 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class AccessibilityAuditManager: AccessibilityAudit {
   private var accessibilityTestResult: AccessibilityTestResult = AccessibilityTestResult.NOT_RUNNING
+  var isRunning = false
+    private set
 
   override fun runAccessibilityTests(ac: AccessibleContext) {
+    isRunning = true
     accessibilityTestResult = AccessibilityTestResult.PASS
 
     if (!AccessibleNameAndDescriptionNotEqualInspection().passesInspection(ac)) {
@@ -19,9 +22,26 @@ class AccessibilityAuditManager: AccessibilityAudit {
     if (!AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(ac)) {
       accessibilityTestResult = AccessibilityTestResult.FAIL
     }
+
+    if (!AccessibleActionNotNullInspection().passesInspection(ac)) {
+      accessibilityTestResult = AccessibilityTestResult.FAIL
+    }
+
+    if (!AccessibleTextNotNullInspection().passesInspection(ac)) {
+      accessibilityTestResult = AccessibilityTestResult.FAIL
+    }
+
+    if (!AccessibleEditableTextNotNullInspection().passesInspection(ac)) {
+      accessibilityTestResult = AccessibilityTestResult.FAIL
+    }
+
+    if (!AccessibleValueNotNullInspection().passesInspection(ac)) {
+      accessibilityTestResult = AccessibilityTestResult.FAIL
+    }
   }
 
   override fun clearAccessibilityTestsResult() {
+    isRunning = false
     accessibilityTestResult = AccessibilityTestResult.NOT_RUNNING
   }
 

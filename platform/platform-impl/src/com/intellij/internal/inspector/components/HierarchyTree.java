@@ -19,6 +19,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
@@ -273,6 +274,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
   private static final class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
     private final Component myInitialSelection;
+    private final List<IconWithErrorCount> accessibilityAuditIcons = new ArrayList<>();
 
     ComponentTreeCellRenderer(Component initialSelection) {
       myInitialSelection = initialSelection;
@@ -291,6 +293,9 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
       Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       boolean isRenderer = false;
+
+      accessibilityAuditIcons.clear();
+
       if (value instanceof ComponentNode componentNode) {
         isRenderer = componentNode.getUserObject() instanceof List<?>;
         Component component = componentNode.getComponent();
@@ -369,18 +374,20 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
         }
 
         AccessibilityTestResult accessibilityResult = componentNode.getAccessibilityTestResult();
+        AccessibilityAuditManager accessibilityAudit = componentNode.accessibilityAudit;
 
-        if (accessibilityResult != AccessibilityTestResult.NOT_RUNNING) {
-          SimpleTextAttributes attributes;
+        if (accessibilityAudit.isRunning()) {
+          int fontHeight = getFontMetrics(getFont()).getHeight();
 
           if (AccessibilityTestResult.FAIL.equals(accessibilityResult)) {
-            attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED);
+            accessibilityAuditIcons.add(new IconWithErrorCount(
+              IconUtil.scale(AllIcons.General.Warning, this, fontHeight / (float) AllIcons.General.Warning.getIconHeight()
+              ), 1));
           } else {
-            attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GREEN);
+            accessibilityAuditIcons.add(new IconWithErrorCount(
+              IconUtil.scale(AllIcons.General.GreenCheckmark, this, fontHeight / (float) AllIcons.General.GreenCheckmark.getIconHeight()),
+              0));
           }
-
-          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          append(accessibilityResult.getResult(), attributes);
         }
       }
       if (isRenderer) {
@@ -390,6 +397,63 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       setBackground(background);
 
       SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, false, selected);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+
+      if (accessibilityAuditIcons.isEmpty()) {
+        return;
+      }
+
+      GraphicsUtil.setupAntialiasing(g);
+
+      int componentHeight = getSize().height;
+      int iconX = getPreferredSize().width;
+      int iconSpacing = getIconTextGap() * 2;
+
+      FontMetrics fontMetrics = g.getFontMetrics();
+      int textHeight = fontMetrics.getHeight();
+
+      g.setColor(UIUtil.getTreeForeground());
+
+      for (IconWithErrorCount entry : accessibilityAuditIcons) {
+        Icon icon = entry.getIcon();
+        int errorCount = entry.getErrorCount();
+        int iconHeight = icon.getIconHeight();
+        int iconY = (componentHeight - iconHeight) / 2;
+
+        icon.paintIcon(this, g, iconX, iconY);
+
+        if (errorCount != 0) {
+          int textX = iconX + icon.getIconWidth() + iconSpacing;
+          int textY = (componentHeight - textHeight) / 2 + fontMetrics.getAscent();
+          g.drawString(String.valueOf(errorCount), textX, textY);
+
+          iconX = textX + fontMetrics.stringWidth(String.valueOf(errorCount)) + iconSpacing;
+        } else {
+          iconX += icon.getIconWidth() + iconSpacing;
+        }
+      }
+    }
+  }
+
+  private static class IconWithErrorCount {
+    private final Icon icon;
+    private final int errorCount;
+
+    private IconWithErrorCount(Icon icon, int errorCount) {
+      this.icon = icon;
+      this.errorCount = errorCount;
+    }
+
+    public Icon getIcon() {
+      return icon;
+    }
+
+    public int getErrorCount() {
+      return errorCount;
     }
   }
 
