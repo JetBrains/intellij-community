@@ -22,16 +22,15 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 internal data class RemoteInfo(val remoteName: String, val repository: GitRepository?)
 
-internal data class BranchInfo(
-  val branch: GitBranch,
-  val isLocal: Boolean,
-  val isCurrent: Boolean,
-  var isFavorite: Boolean,
-  var incomingOutgoingState: IncomingOutgoingState = IncomingOutgoingState.EMPTY,
-  val repositories: List<GitRepository>,
-) {
+internal data class BranchInfo(val branch: GitBranch,
+                               val isCurrent: Boolean,
+                               var isFavorite: Boolean,
+                               var incomingOutgoingState: IncomingOutgoingState = IncomingOutgoingState.EMPTY,
+                               val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
   val branchName: @NlsSafe String get() = branch.name
+  val isLocalBranch = branch is GitLocalBranch
+
   override fun toString() = branchName
 }
 
@@ -129,7 +128,7 @@ internal class NodeDescriptorsModel(
   private fun clear() = branchNodeDescriptors.clear()
 
   private fun populateFrom(br: BranchInfo, groupingConfig: Map<GroupingKey, Boolean>) {
-    val curParent: BranchNodeDescriptor = if (br.isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor
+    val curParent: BranchNodeDescriptor = if (br.isLocalBranch) localRootNodeDescriptor else remoteRootNodeDescriptor
     val groupByDirectory = groupingConfig[GROUPING_BY_DIRECTORY]!!
     val groupByRepository = groupingConfig[GROUPING_BY_REPOSITORY]!!
 
@@ -196,6 +195,6 @@ internal class NodeDescriptorsModel(
 
   private fun GitRepository.isCurrentBranch(branchName: String) = currentBranch?.name == branchName
   private fun GitRepository.isFavorite(branch: BranchInfo) =
-    project.service<GitBranchManager>().isFavorite(if (branch.isLocal) GitBranchType.LOCAL else GitBranchType.REMOTE,
+    project.service<GitBranchManager>().isFavorite(if (branch.isLocalBranch) GitBranchType.LOCAL else GitBranchType.REMOTE,
                                                    this, branch.branchName)
 }

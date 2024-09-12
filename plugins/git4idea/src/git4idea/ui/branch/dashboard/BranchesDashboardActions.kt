@@ -3,7 +3,6 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.diverged
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -23,7 +22,6 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitLocalBranch
-import git4idea.GitRemoteBranch
 import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
 import git4idea.branch.GitBranchType
@@ -68,7 +66,7 @@ internal object BranchesDashboardActions {
   internal class HeadAndBranchActions(headBranch: GitLocalBranch,
                                       headBranchRepo: GitRepository,
                                       private val branch: BranchInfo) : ActionGroup(), DumbAware {
-    private val headBranchInfo = BranchInfo(headBranch, true, true, false, IncomingOutgoingState.EMPTY, listOf(headBranchRepo))
+    private val headBranchInfo = BranchInfo(headBranch, true, false, IncomingOutgoingState.EMPTY, listOf(headBranchRepo))
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
       arrayOf(ShowArbitraryBranchesDiffAction(headBranchInfo, branch), ShowArbitraryBranchesFileDiffAction(headBranchInfo, branch))
@@ -186,7 +184,7 @@ internal object BranchesDashboardActions {
 
         createOrCheckoutNewBranch(project, repositories, "$branchName^0",
                                   message("action.Git.New.Branch.dialog.title", branchName),
-                                  calculateNewBranchInitialName(branchName, !branchInfo.isLocal))
+                                  calculateNewBranchInitialName(branchName, !branchInfo.isLocalBranch))
       }
     }
 
@@ -255,7 +253,7 @@ internal object BranchesDashboardActions {
 
       val disabled =
         branches.any {
-          it.isCurrent || (!it.isLocal && isRemoteBranchProtected(getSelectedRepositories(it, selectionPaths), it.branchName))
+          it.isCurrent || (!it.isLocalBranch && isRemoteBranchProtected(getSelectedRepositories(it, selectionPaths), it.branchName))
         }
 
       e.presentation.isEnabled = !disabled
@@ -271,7 +269,7 @@ internal object BranchesDashboardActions {
 
     private fun delete(project: Project, branches: Collection<BranchInfo>, controller: BranchesDashboardController) {
       val gitBrancher = GitBrancher.getInstance(project)
-      val (localBranches, remoteBranches) = branches.partition { it.isLocal && !it.isCurrent }
+      val (localBranches, remoteBranches) = branches.partition { it.isLocalBranch && !it.isCurrent }
       with(gitBrancher) {
         val branchesToContainingRepositories: Map<String, List<GitRepository>> =
           localBranches.associate { it.branchName to controller.getSelectedRepositories(it) }
@@ -469,7 +467,7 @@ internal object BranchesDashboardActions {
 
       val gitBranchManager = project.service<GitBranchManager>()
       for (branch in branches) {
-        val type = if (branch.isLocal) GitBranchType.LOCAL else GitBranchType.REMOTE
+        val type = if (branch.isLocalBranch) GitBranchType.LOCAL else GitBranchType.REMOTE
         val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
         val repositories = controller.getSelectedRepositories(branch)
 

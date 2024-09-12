@@ -158,10 +158,10 @@ private class TestContext(groupByDirectories: Boolean) {
 
   fun setState(localBranches: Collection<String>, remoteBranches: Collection<String>) {
     val local = localBranches.map {
-      BranchInfo(GitLocalBranch(it), isLocal = true, isCurrent = false, isFavorite = false, repositories = emptyList())
+      BranchInfo(GitLocalBranch(it), isCurrent = false, isFavorite = false, repositories = emptyList())
     }
     val remote = remoteBranches.map {
-      BranchInfo(GitStandardRemoteBranch(ORIGIN, it), isLocal = false, isCurrent = false, isFavorite = false, repositories = emptyList())
+      BranchInfo(GitStandardRemoteBranch(ORIGIN, it), isCurrent = false, isFavorite = false, repositories = emptyList())
     }
     branchesTree.refreshNodeDescriptorsModel(localBranches = local, remoteBranches = remote, showOnlyMy = false)
     branchesTree.searchModel.updateStructure()

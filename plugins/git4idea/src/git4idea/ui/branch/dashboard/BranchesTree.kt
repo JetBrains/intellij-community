@@ -3,9 +3,6 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getRepositoryIcon
-import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
@@ -26,7 +23,6 @@ import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.FList
 import com.intellij.util.ui.JBUI
@@ -116,7 +112,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       }
 
       toolTipText =
-        if (branchInfo != null && branchInfo.isLocal)
+        if (branchInfo != null && branchInfo.isLocalBranch)
           BranchPresentation.getTooltip(getBranchesTooltipData(branchInfo.branchName, getSelectedRepositories(descriptor)))
         else null
 

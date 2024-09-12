@@ -22,7 +22,7 @@ import it.unimi.dsi.fastutil.ints.IntSet
 internal object BranchesDashboardUtil {
 
   fun getLocalBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
-    val localMap = mutableMapOf<GitBranch, MutableSet<GitRepository>>()
+    val localMap = mutableMapOf<GitLocalBranch, MutableSet<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
       if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
 
@@ -37,7 +37,7 @@ internal object BranchesDashboardUtil {
     val gitBranchManager = project.service<GitBranchManager>()
     val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
     val local = localMap.map { (branch, repos) ->
-      BranchInfo(branch, true, repos.any { it.currentBranch == branch },
+      BranchInfo(branch, repos.any { it.currentBranch == branch },
                  repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branch.name) },
                  incomingOutgoingManager.getIncomingOutgoingState(repos, branch as GitLocalBranch),
                  repos.toList())
@@ -57,7 +57,7 @@ internal object BranchesDashboardUtil {
     }
     val gitBranchManager = project.service<GitBranchManager>()
     return remoteMap.map { (branch, repos) ->
-      BranchInfo(branch, false, false,
+      BranchInfo(branch, false,
                  repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branch.name) },
                  IncomingOutgoingState.EMPTY,
                  repos)
