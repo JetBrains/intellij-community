@@ -35,7 +35,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
-private val Module.storage: FileBasedStorage
+internal val Module.storage: FileBasedStorage
   get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
 @RunsInActiveStoreMode

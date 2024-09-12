@@ -21,6 +21,8 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import java.nio.file.Path
@@ -55,7 +57,7 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
     if (changedUrlsList.isEmpty() && changedModuleStorePaths.isEmpty()) {
       return null
     }
-    
+
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         val virtualFileUrlWatcher = VirtualFileUrlWatcher.getInstance(project)
@@ -81,9 +83,13 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
 
     val oldModuleId = ModuleId(oldModuleName)
     val workspaceModel = WorkspaceModel.getInstance(project)
+
     val moduleEntity = workspaceModel.currentSnapshot.resolve(oldModuleId)
     val description = "Update module name when iml file is renamed"
     if (moduleEntity != null) {
+      val oldModuleDir = PathUtil.getParentPath(oldUrl)
+      if (moduleEntity.entitySource.virtualFileUrl?.url != oldModuleDir)
+        return
       workspaceModel.updateProjectModel(description) { diff ->
         diff.modifyModuleEntity(moduleEntity) { this.name = newModuleName }
       }
@@ -95,7 +101,7 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
       }
     }
   }
-  
+
   private fun collectChangedModuleStorePathsAfterDirectoryRename(event: VFilePropertyChangeEvent, changedModuleStorePaths: ArrayList<Pair<Module, Path>>) {
     if (!event.file.isDirectory || event.requestor is StateStorage || event.propertyName != VirtualFile.PROP_NAME) return
 
