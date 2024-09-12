@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.List;
 
 final class TypoTolerantMatcher extends MinusculeMatcher {
@@ -211,11 +210,6 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
   public boolean isStartMatch(@NotNull String name) {
     FList<TextRange> fragments = matchingFragments(name);
     return fragments != null && isStartMatch(fragments);
-  }
-
-  public static boolean isStartMatch(@NotNull Iterable<? extends TextRange> fragments) {
-    Iterator<? extends TextRange> iterator = fragments.iterator();
-    return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
   }
 
   @Override
