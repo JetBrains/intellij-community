@@ -10,6 +10,9 @@
     <extensionPoint qualifiedName="intellij.vcs.github.titleAndDescriptionGenerator"
                     interface="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.vcs.github.gistContentsCollector"
+                    interface="org.jetbrains.plugins.github.GithubGistContentsCollector"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -62,6 +65,11 @@
     <registryKey defaultValue="5000"
                  description="Milliseconds margin used when comparing known last seen date with last updated at date for PRs"
                  key="github.last.seen.state.margin.millis"/>
+
+    <vcs.github.gistContentsCollector
+      implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"
+      id="default"
+      order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
