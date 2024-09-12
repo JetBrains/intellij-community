@@ -38,6 +38,9 @@ object Versions {
     object KOTLINX {
         val KOTLINX_HTML = Dependencies.KOTLINX.KOTLINX_HTML.version
         val KOTLINX_NODEJS = Dependencies.KOTLINX.KOTLINX_NODEJS.version
+        val KOTLINX_DATETIME = Version.fromString("0.6.1")
+        val KOTLINX_COROUTINES = Version.fromString("1.8.1")
+        val KOTLINX_SERIALIZATION_JSON = Version.fromString("1.7.2")
     }
 
     object JS_WRAPPERS {

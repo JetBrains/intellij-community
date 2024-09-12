@@ -456,7 +456,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  protected fun setupBuilder(builder: AbstractGradleModuleBuilder) {
+  fun setupBuilder(builder: AbstractGradleModuleBuilder) {
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
@@ -482,11 +482,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.setGradleHome(gradleHome)
   }
 
-  protected fun setupBuildScript(builder: AbstractGradleModuleBuilder, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+  fun setupBuildScript(builder: AbstractGradleModuleBuilder, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     builder.configureBuildScript(configure)
   }
 
-  protected fun setupProject(project: Project, builder: AbstractGradleModuleBuilder) {
+  fun setupProject(project: Project, builder: AbstractGradleModuleBuilder) {
     setupProjectFromBuilder(project, builder)
       ?.also { startJdkDownloadIfNeeded(it) }
   }

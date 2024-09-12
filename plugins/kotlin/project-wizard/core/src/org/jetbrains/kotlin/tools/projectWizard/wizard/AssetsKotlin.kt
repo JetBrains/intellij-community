@@ -84,7 +84,15 @@ fun AssetsNewProjectWizardStep.withKotlinSampleCode(
 }
 
 fun AssetsNewProjectWizardStep.prepareKotlinSampleOnboardingTips(project: Project) {
-    prepareOnboardingTips(project, DEFAULT_TEMPLATE_NAME, DEFAULT_FILE_NAME) { charsSequence ->
+    prepareKotlinSampleOnboardingTips(project, DEFAULT_TEMPLATE_NAME, DEFAULT_FILE_NAME)
+}
+
+fun AssetsNewProjectWizardStep.prepareKotlinSampleOnboardingTips(
+    project: Project,
+    templateWithoutTips: String,
+    fileName: String
+) {
+    prepareOnboardingTips(project, templateWithoutTips, fileName) { charsSequence ->
         charsSequence.indexOf("println(\"i").takeIf { it >= 0 }
     }
 }
