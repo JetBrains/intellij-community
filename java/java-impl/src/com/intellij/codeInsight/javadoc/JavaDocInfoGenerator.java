@@ -2242,7 +2242,7 @@ public class JavaDocInfoGenerator {
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
     if (!CODE_TAG.equals(tag.getName())) return false;
-    return isInPre(tag);
+    return isInPre(tag, true);
   }
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
@@ -2278,7 +2278,7 @@ public class JavaDocInfoGenerator {
       }
       appendPlainText(tmpBuffer, doEscaping ? StringUtil.escapeXmlEntities(elementText) : elementText);
     }
-    if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
+    if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag, false)) {
       buffer.append(tmpBuffer);
     }
     else {
@@ -2286,21 +2286,26 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static boolean isInPre(PsiElement element) {
+  /// @param strict If `true`, the method expects the `<pre>` tag to be the only text right before the `element`
+  private static boolean isInPre(@NotNull PsiElement element, boolean strict) {
     PsiElement sibling = element.getPrevSibling();
     while (sibling != null) {
-      if (sibling instanceof PsiDocToken) {
+      if (sibling instanceof PsiDocToken && sibling.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
         String text = StringUtil.toLowerCase(sibling.getText());
         int pos = text.lastIndexOf("pre>");
         if (pos > 0) {
           switch (text.charAt(pos - 1)) {
             case '<' -> {
-              return true;
+              if(!strict || text.endsWith("pre>")){
+                return true;
+              }
             }
             case '/' -> {
               return false;
             }
           }
+        } else if(strict && !text.trim().isEmpty()) {
+          return false;
         }
       }
       sibling = sibling.getPrevSibling();

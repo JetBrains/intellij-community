@@ -211,6 +211,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testPreTagLeakBeforeCode() {
     doTestClass();
   }
+  public void testPreTagStrictBeforeCode(){
+    doTestClass();
+  }
 
 
   public void testRepeatableAnnotations() {
