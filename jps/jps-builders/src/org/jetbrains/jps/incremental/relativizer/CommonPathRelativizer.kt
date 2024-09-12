@@ -1,40 +1,34 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.incremental.relativizer;
+package org.jetbrains.jps.incremental.relativizer
 
-import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 
-class CommonPathRelativizer implements PathRelativizer {
-  private final String myPath;
-  private final String myIdentifier;
+internal open class CommonPathRelativizer @JvmOverloads constructor(
+  private val basePath: String?, private val identifier: String,
   /**
-   * can be null when myPath is null, or it is impossible to detect the sensitivity of the file system
+   * can be null when basePath is null, or it is impossible to detect the sensitivity of the file system
    */
-  private final @Nullable Boolean myIsCaseSensitive;
-
-  CommonPathRelativizer(@Nullable String path, @NotNull String identifier) {
-    this(path, identifier, null);
-  }
-
-  CommonPathRelativizer(@Nullable String path, @NotNull String identifier, @Nullable Boolean isCaseSensitive) {
-    myPath = path;
-    myIdentifier = identifier;
-    myIsCaseSensitive = isCaseSensitive;
-  }
-
-  @Override
-  public @Nullable String toRelativePath(@NotNull String path) {
-    if (myPath == null ||
-        !(myIsCaseSensitive != null ? FileUtil.startsWith(path, myPath, myIsCaseSensitive) : FileUtil.startsWith(path, myPath))) {
-      return null;
+  private val isCaseSensitive: Boolean? = null
+) : PathRelativizer {
+  override fun toRelativePath(path: String): String? {
+    if (basePath == null ||
+        !(if (isCaseSensitive == null)
+          FileUtil.startsWith(path, basePath, SystemInfoRt.isFileSystemCaseSensitive)
+        else
+          FileUtil.startsWith(path, basePath, isCaseSensitive))
+    ) {
+      return null
     }
-    return myIdentifier + path.substring(myPath.length());
+    return identifier + path.substring(basePath.length)
   }
 
-  @Override
-  public @Nullable String toAbsolutePath(@NotNull String path) {
-    if (myPath == null || !path.startsWith(myIdentifier)) return null;
-    return myPath + path.substring(myIdentifier.length());
+  override fun toAbsolutePath(path: String): String? {
+    if (basePath == null || !path.startsWith(identifier)) {
+      return null
+    }
+    else {
+      return basePath + path.substring(identifier.length)
+    }
   }
 }
