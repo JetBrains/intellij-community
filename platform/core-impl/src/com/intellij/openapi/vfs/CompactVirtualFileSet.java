@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.*;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,16 +24,16 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSetEx {
-  static final int BIT_SET_LIMIT = 1000;
   static final int INT_SET_LIMIT = 10;
-  static final int BIT_SET_PARTITION = 8192;
+  static final int BIT_SET_LIMIT = 1000;
+  static final int BIT_SET_PARTITION_SIZE = 2048; // 256 bytes partition size
+  static final int PARTITIONED_BIT_SET_ID_LIMIT = BIT_SET_PARTITION_SIZE * 16; // max 8kB BitSet size
 
   // all non-VirtualFileWithId files and first several files (up to INT_SET_LIMIT) are stored here
-  private final Set<VirtualFile> weirdFiles = new HashSet<>();
   // when file set become large (>BIT_SET_LIMIT), they stored as id-set here
-  private IntSet idSet;
   // when file set become very big (e.g. whole project files AnalysisScope) the bit-mask of their ids are stored here
-  private Int2ObjectMap<BitSet> fileIdPartitionMap;
+  private final Set<VirtualFile> weirdFiles = new HashSet<>();
+  private SetStorage storage;
   private boolean frozen;
 
   CompactVirtualFileSet() {
@@ -51,22 +50,17 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   @Deprecated
   @ApiStatus.Internal
   public CompactVirtualFileSet(@NotNull IntSet fileIds) {
-    idSet = fileIds;
-    if (idSet.size() > BIT_SET_LIMIT) {
-      convertToPartitionedBitSet();
+    storage = new IntSetStorage(fileIds);
+    if (storage.size() > BIT_SET_LIMIT) {
+      convertToBitSet();
     }
   }
 
   @Override
   @ApiStatus.Internal
   public boolean containsId(int fileId) {
-    IntSet idSet = this.idSet;
-    if (idSet != null) {
-      return idSet.contains(fileId);
-    }
-    if (fileIdPartitionMap != null) {
-      BitSet partition = fileIdPartitionMap.get(fileId / BIT_SET_PARTITION);
-      return partition != null && partition.get(fileId % BIT_SET_PARTITION);
+    if (storage != null) {
+      return storage.containsId(fileId);
     }
     for (VirtualFile file : weirdFiles) {
       if (file instanceof VirtualFileWithId && ((VirtualFileWithId)file).getId() == fileId) {
@@ -79,15 +73,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   @Override
   @ApiStatus.Internal
   public int @NotNull [] onlyInternalFileIds() {
-    IntSet idSet = this.idSet;
-    if (idSet != null) {
-      return idSet.toIntArray();
-    }
-    if (fileIdPartitionMap != null) {
-      return fileIdPartitionMap.int2ObjectEntrySet().stream().flatMapToInt(entry -> {
-        int partitionOffset = entry.getIntKey() * BIT_SET_PARTITION;
-        return entry.getValue().stream().map(id -> partitionOffset + id);
-      }).toArray();
+    if (storage != null) {
+      return storage.toIntArray();
     }
     return weirdFiles
       .stream()
@@ -100,14 +87,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   public boolean contains(Object file) {
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
-      Int2ObjectMap<BitSet> ids = fileIdPartitionMap;
-      if (ids != null) {
-        BitSet partition = ids.get(id / BIT_SET_PARTITION);
-        return partition != null && partition.get(id % BIT_SET_PARTITION);
-      }
-      IntSet idSet = this.idSet;
-      if (idSet != null) {
-        return idSet.contains(id);
+      if (storage != null) {
+        return storage.containsId(id);
       }
     }
     return weirdFiles.contains(file);
@@ -119,23 +100,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     boolean added;
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
-      Int2ObjectMap<BitSet> ids = fileIdPartitionMap;
-      IntSet idSet = this.idSet;
-      if (ids != null) {
-        BitSet partition = ids.computeIfAbsent(
-          id / BIT_SET_PARTITION,
-          k -> new BitSet(BIT_SET_PARTITION - 1)
-        );
-        added = !partition.get(id % BIT_SET_PARTITION);
-        if (added) {
-          partition.set(id % BIT_SET_PARTITION);
-        }
-      }
-      else if (idSet != null) {
-        added = idSet.add(id);
-        if (idSet.size() > BIT_SET_LIMIT) {
-          convertToPartitionedBitSet();
-        }
+      if (storage != null) {
+        added = storage.add(id);
       }
       else {
         added = weirdFiles.add(file);
@@ -151,29 +117,37 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   }
 
   private void convertToIntSet() {
-    IntSet idSet = new IntOpenHashSet(weirdFiles.size());
+    storage = new IntSetStorage();
     for (Iterator<VirtualFile> iterator = weirdFiles.iterator(); iterator.hasNext(); ) {
       VirtualFile wf = iterator.next();
       if (wf instanceof VirtualFileWithId) {
-        idSet.add(((VirtualFileWithId)wf).getId());
+        storage.add(((VirtualFileWithId)wf).getId());
         iterator.remove();
       }
     }
-    this.idSet = idSet;
+  }
+
+  private void convertToBitSet() {
+    // If we have too big fileIds convert directly to partitioned bit set
+    for (IntIterator iterator = storage.intIterator(); iterator.hasNext(); ) {
+      if (iterator.nextInt() > PARTITIONED_BIT_SET_ID_LIMIT) {
+        convertToPartitionedBitSet();
+        return;
+      }
+    }
+    IntIterator iterator = storage.intIterator();
+    storage = new BitSetStorage();
+    while (iterator.hasNext()) {
+      storage.add(iterator.nextInt());
+    }
   }
 
   private void convertToPartitionedBitSet() {
-    fileIdPartitionMap = new Int2ObjectOpenHashMap<>();
-    IntIterator iterator = idSet.intIterator();
+    IntIterator iterator = storage.intIterator();
+    storage = new PartitionedBitSetStorage();
     while (iterator.hasNext()) {
-      int id = iterator.nextInt();
-      BitSet partition = fileIdPartitionMap.computeIfAbsent(
-        id / BIT_SET_PARTITION,
-        k -> new BitSet(BIT_SET_PARTITION - 1)
-      );
-      partition.set(id % BIT_SET_PARTITION);
+      storage.add(iterator.nextInt());
     }
-    this.idSet = null;
   }
 
   @Override
@@ -187,18 +161,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       return false;
     }
     int fileId = ((VirtualFileWithId)o).getId();
-    if (fileIdPartitionMap != null) {
-      BitSet partition = fileIdPartitionMap.get(fileId / BIT_SET_PARTITION);
-      if (partition != null && partition.get(fileId % BIT_SET_PARTITION)) {
-        partition.clear(fileId % BIT_SET_PARTITION);
-        if (partition.cardinality() == 0) {
-          fileIdPartitionMap.remove(fileId / BIT_SET_PARTITION);
-        }
-        return true;
-      }
-    }
-    if (idSet != null && idSet.remove(fileId)) {
-      return true;
+    if (storage != null) {
+      return storage.remove(fileId);
     }
     return false;
   }
@@ -207,8 +171,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   public void clear() {
     assertNotFrozen();
     weirdFiles.clear();
-    idSet = null;
-    fileIdPartitionMap = null;
+    storage = null;
   }
 
 
@@ -229,22 +192,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   @Override
   public boolean process(@NotNull Processor<? super VirtualFile> processor) {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    Int2ObjectMap<BitSet> ids = fileIdPartitionMap;
-    if (ids != null) {
-      for (Int2ObjectMap.Entry<BitSet> entry : ids.int2ObjectEntrySet()) {
-        int partitionOffset = entry.getIntKey() * BIT_SET_PARTITION;
-        BitSet partition = entry.getValue();
-        BitSetIterator iterator = new BitSetIterator(partition);
-        while (iterator.hasNext()) {
-          int id = iterator.next();
-          VirtualFile file = virtualFileManager.findFileById(partitionOffset + id);
-          if (file != null && !processor.process(file)) return false;
-        }
-      }
-    }
-    IntSet idSet = this.idSet;
-    if (idSet != null) {
-      IntIterator iterator = idSet.iterator();
+    if (storage != null) {
+      IntIterator iterator = storage.intIterator();
       while (iterator.hasNext()) {
         VirtualFile file = virtualFileManager.findFileById(iterator.nextInt());
         if (file != null && !processor.process(file)) {
@@ -262,17 +211,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public int size() {
-    int result = 0;
-    Int2ObjectMap<BitSet> ids = fileIdPartitionMap;
-    if (ids != null) {
-      for (Int2ObjectMap.Entry<BitSet> entry : ids.int2ObjectEntrySet()) {
-        result += entry.getValue().cardinality();
-      }
-    }
-    else if (idSet != null) {
-      result += idSet.size();
-    }
-    return result + weirdFiles.size();
+    return (storage != null ? storage.size() : 0) + weirdFiles.size();
   }
 
   @Override
@@ -282,35 +221,13 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       CompactVirtualFileSet compactVirtualFileSet = (CompactVirtualFileSet)c;
       boolean modified = false;
 
-      if (idSet != null) {
-        IntIterator iterator = idSet.intIterator();
+      if (storage != null) {
+        IntIterator iterator = storage.intIterator();
         while (iterator.hasNext()) {
           int id = iterator.nextInt();
           if (!compactVirtualFileSet.containsId(id)) {
             iterator.remove();
             modified = true;
-          }
-        }
-      }
-
-      if (fileIdPartitionMap != null) {
-        ObjectIterator<Int2ObjectMap.Entry<BitSet>> entryIterator = fileIdPartitionMap.int2ObjectEntrySet().iterator();
-        while (entryIterator.hasNext()) {
-          Int2ObjectMap.Entry<BitSet> entry = entryIterator.next();
-          int offset = entry.getIntKey() * BIT_SET_PARTITION;
-          BitSetIterator bitSetIterator = new BitSetIterator(entry.getValue());
-          boolean removedAll = true;
-          while (bitSetIterator.hasNext()) {
-            if (!compactVirtualFileSet.containsId(bitSetIterator.next() + offset)) {
-              bitSetIterator.remove();
-              modified = true;
-            }
-            else {
-              removedAll = false;
-            }
-          }
-          if (removedAll) {
-            entryIterator.remove();
           }
         }
       }
@@ -349,48 +266,16 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
         }
       }
 
-      IntIterator toAdd;
-      if (setToAdd.idSet != null) {
-        toAdd = setToAdd.idSet.intIterator();
-      }
-      else if (setToAdd.fileIdPartitionMap != null) {
-        toAdd = IntIterators.asIntIterator(
-          setToAdd.fileIdPartitionMap.int2ObjectEntrySet().stream().flatMapToInt(entry -> {
-            int offset = entry.getIntKey() * BIT_SET_PARTITION;
-            return entry.getValue().stream().map(it -> it + offset);
-          }).iterator()
-        );
-      }
-      else {
-        return modified;
+      if (setToAdd.storage == null) return modified;
+
+      if (storage == null) {
+        convertToIntSet();
       }
 
+      IntIterator toAdd = setToAdd.storage.intIterator();
       while (toAdd.hasNext()) {
         int id = toAdd.nextInt();
-
-        if (fileIdPartitionMap == null && idSet == null) {
-          convertToIntSet();
-        }
-
-        if (fileIdPartitionMap != null) {
-          BitSet partition = fileIdPartitionMap.computeIfAbsent(
-            id / BIT_SET_PARTITION,
-            k -> new BitSet(BIT_SET_PARTITION - 1)
-          );
-          if (!partition.get(id % BIT_SET_PARTITION)) {
-            modified = true;
-            partition.set(id % BIT_SET_PARTITION);
-          }
-        }
-        else if (idSet != null) {
-          modified = idSet.add(id) || modified;
-          if (idSet.size() > BIT_SET_LIMIT) {
-            convertToPartitionedBitSet();
-          }
-        }
-        else {
-          throw new IllegalStateException();
-        }
+        storage.add(id);
       }
 
       return modified;
@@ -402,83 +287,14 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
 
   @Override
   public @NotNull Iterator<VirtualFile> iterator() {
-    Int2ObjectMap<BitSet> ids = fileIdPartitionMap;
-    IntSet idSet = this.idSet;
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    Iterator<VirtualFile> fromIdsIterator;
-    if (ids == null || ids.isEmpty()) {
-      fromIdsIterator = Collections.emptyIterator();
+    Iterator<VirtualFile> storageIterator;
+    if (storage == null || storage.size() == 0) {
+      storageIterator = Collections.emptyIterator();
     }
     else {
-      ObjectIterator<Int2ObjectMap.Entry<BitSet>> entryIterator = ids.int2ObjectEntrySet().iterator();
-      fromIdsIterator = new Iterator<VirtualFile>() {
-
-        private VirtualFile next;
-        private Boolean hasNext;
-        private BitSetIterator idIterator;
-        private Int2ObjectMap.Entry<BitSet> curEntry;
-
-        @Override
-        public boolean hasNext() {
-          findNext();
-          return hasNext;
-        }
-
-        private void findNext() {
-          if (hasNext == null) {
-            hasNext = false;
-            int id = -1;
-            if (curEntry != null && idIterator != null && idIterator.hasNext()) {
-              id = idIterator.next();
-            }
-            else {
-              while (entryIterator.hasNext()) {
-                curEntry = entryIterator.next();
-                idIterator = new BitSetIterator(curEntry.getValue());
-                if (idIterator.hasNext()) {
-                  id = idIterator.next();
-                  break;
-                }
-              }
-            }
-            if (id >= 0) {
-              int offset = curEntry.getIntKey() * BIT_SET_PARTITION;
-              next = virtualFileManager.findFileById(id + offset);
-              hasNext = true;
-            }
-          }
-        }
-
-        @Override
-        public VirtualFile next() {
-          findNext();
-
-          if (!hasNext) {
-            throw new NoSuchElementException();
-          }
-
-          VirtualFile result = next;
-          hasNext = null;
-          return result;
-        }
-
-        @Override
-        public void remove() {
-          idIterator.remove();
-          if (curEntry.getValue().isEmpty()) {
-            entryIterator.remove();
-          }
-        }
-      };
-    }
-
-    Iterator<? extends VirtualFile> totalIterator;
-    if (idSet == null) {
-      totalIterator = ContainerUtil.concatIterators(fromIdsIterator, weirdFiles.iterator());
-    }
-    else {
-      Iterator<VirtualFile> idSetIterator = new Iterator<VirtualFile>() {
-        final IntIterator iterator = idSet.intIterator();
+      storageIterator = new Iterator<VirtualFile>() {
+        final IntIterator iterator = storage.intIterator();
 
         @Override
         public boolean hasNext() {
@@ -496,8 +312,8 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
           iterator.remove();
         }
       };
-      totalIterator = ContainerUtil.concatIterators(fromIdsIterator, idSetIterator, weirdFiles.iterator());
     }
+    Iterator<VirtualFile> totalIterator = ContainerUtil.concatIterators(storageIterator, weirdFiles.iterator());
 
     return new Iterator<VirtualFile>() {
       VirtualFile next;
@@ -544,33 +360,200 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     };
   }
 
-  private static class BitSetIterator {
+  private interface SetStorage {
+
+    int size();
+
+    boolean containsId(int id);
+
+    int[] toIntArray();
+
+    boolean add(int id);
+
+    IntIterator intIterator();
+
+    boolean remove(int id);
+  }
+
+  // when file set becomes large, they stored as id-set here
+  private class IntSetStorage implements SetStorage {
+    private final IntSet set;
+
+    IntSetStorage() {
+      set = new IntOpenHashSet();
+    }
+
+    IntSetStorage(IntSet ids) {
+      set = new IntOpenHashSet(ids);
+    }
+
+    @Override
+    public int size() {
+      return set.size();
+    }
+
+    @Override
+    public boolean containsId(int id) {
+      return set.contains(id);
+    }
+
+    @Override
+    public int[] toIntArray() {
+      return set.toIntArray();
+    }
+
+    @Override
+    public boolean add(int id) {
+      boolean result = set.add(id);
+      if (set.size() > BIT_SET_LIMIT) {
+        convertToBitSet();
+      }
+      return result;
+    }
+
+    @Override
+    public boolean remove(int id) {
+      return set.remove(id);
+    }
+
+    @Override
+    public IntIterator intIterator() {
+      return set.intIterator();
+    }
+  }
+
+  // when file sets become very big (e.g. whole project files AnalysisScope) the bit-mask of their ids are stored here
+  private class BitSetStorage implements SetStorage {
+    private final BitSet set = new BitSet();
+
+    @Override
+    public int size() {
+      return set.cardinality();
+    }
+
+    @Override
+    public boolean containsId(int id) {
+      return set.get(id);
+    }
+
+    @Override
+    public int[] toIntArray() {
+      return set.stream().toArray();
+    }
+
+    @Override
+    public boolean add(int id) {
+      if (set.get(id)) return false;
+      if (id > PARTITIONED_BIT_SET_ID_LIMIT) {
+        convertToPartitionedBitSet();
+        storage.add(id);
+      }
+      else {
+        set.set(id);
+      }
+      return true;
+    }
+
+    @Override
+    public boolean remove(int id) {
+      if (!set.get(id)) return false;
+      set.clear(id);
+      return true;
+    }
+
+    @Override
+    public IntIterator intIterator() {
+      return new BitSetIterator(set);
+    }
+  }
+
+  // when file ids are large, then we use partitioned bit set
+  private static class PartitionedBitSetStorage implements SetStorage {
+    private final Int2ObjectMap<BitSet> map = new Int2ObjectOpenHashMap<>();
+
+    @Override
+    public int size() {
+      int result = 0;
+      for (Int2ObjectMap.Entry<BitSet> entry : map.int2ObjectEntrySet()) {
+        result += entry.getValue().cardinality();
+      }
+      return result;
+    }
+
+    @Override
+    public boolean containsId(int id) {
+      BitSet partition = map.get(id / BIT_SET_PARTITION_SIZE);
+      return partition != null && partition.get(id % BIT_SET_PARTITION_SIZE);
+    }
+
+    @Override
+    public boolean add(int id) {
+      BitSet partition = map.computeIfAbsent(
+        id / BIT_SET_PARTITION_SIZE,
+        k -> new BitSet(BIT_SET_PARTITION_SIZE - 1)
+      );
+      if (partition.get(id % BIT_SET_PARTITION_SIZE)) return false;
+      partition.set(id % BIT_SET_PARTITION_SIZE);
+      return true;
+    }
+
+    @Override
+    public boolean remove(int id) {
+      BitSet partition = map.get(id / BIT_SET_PARTITION_SIZE);
+      if (partition == null || !partition.get(id % BIT_SET_PARTITION_SIZE)) return false;
+      partition.clear(id % BIT_SET_PARTITION_SIZE);
+      if (partition.cardinality() == 0) {
+        map.remove(id / BIT_SET_PARTITION_SIZE);
+      }
+      return true;
+    }
+
+    @Override
+    public int[] toIntArray() {
+      return map.int2ObjectEntrySet().stream().flatMapToInt(entry -> {
+        int partitionOffset = entry.getIntKey() * BIT_SET_PARTITION_SIZE;
+        return entry.getValue().stream().map(id -> partitionOffset + id);
+      }).toArray();
+    }
+
+    @Override
+    public IntIterator intIterator() {
+      return new PartitionedBitSetIterator(map);
+    }
+  }
+
+  private static class BitSetIterator implements IntIterator {
     private final @NotNull BitSet myBitSet;
     private int currentBit = -1;
+    private int toRemoveBit = -1;
     private Boolean hasNext;
 
     private BitSetIterator(@NotNull BitSet set) {
       myBitSet = set;
     }
 
+    @Override
     public boolean hasNext() {
       findNext();
       return hasNext;
     }
 
-    public int next() {
+    @Override
+    public int nextInt() {
       findNext();
       if (!hasNext) {
         throw new NoSuchElementException();
       }
       hasNext = null;
+      toRemoveBit = currentBit;
       return currentBit;
     }
 
-    // be careful: doesn't follow contract of Iterator#remove()
+    @Override
     public void remove() {
-      if (currentBit >= 0) {
-        myBitSet.clear(currentBit);
+      if (toRemoveBit >= 0) {
+        myBitSet.clear(toRemoveBit);
+        toRemoveBit = -1;
       }
     }
 
@@ -578,6 +561,76 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
       if (hasNext == null) {
         currentBit = myBitSet.nextSetBit(this.currentBit + 1);
         hasNext = currentBit != -1;
+      }
+    }
+  }
+
+  private static class PartitionedBitSetIterator implements IntIterator {
+
+    private int next;
+    private boolean canRemove;
+    private Boolean hasNext;
+    private BitSetIterator idIterator;
+    private Int2ObjectMap.Entry<BitSet> curEntry;
+    private final Iterator<Int2ObjectMap.Entry<BitSet>> entryIterator;
+
+    PartitionedBitSetIterator(Int2ObjectMap<BitSet> map) {
+      entryIterator = map.int2ObjectEntrySet().iterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      canRemove = false;
+      findNext();
+      return hasNext;
+    }
+
+    private void findNext() {
+      if (hasNext == null) {
+        hasNext = false;
+        int id = -1;
+        if (curEntry != null && idIterator != null && idIterator.hasNext()) {
+          id = idIterator.nextInt();
+        }
+        else {
+          while (entryIterator.hasNext()) {
+            curEntry = entryIterator.next();
+            idIterator = new BitSetIterator(curEntry.getValue());
+            if (idIterator.hasNext()) {
+              id = idIterator.nextInt();
+              break;
+            }
+          }
+        }
+        if (id >= 0) {
+          int offset = curEntry.getIntKey() * BIT_SET_PARTITION_SIZE;
+          next = id + offset;
+          hasNext = true;
+        }
+      }
+    }
+
+    @Override
+    public int nextInt() {
+      findNext();
+
+      if (!hasNext) {
+        throw new NoSuchElementException();
+      }
+
+      canRemove = true;
+      int result = next;
+      hasNext = null;
+      return result;
+    }
+
+    @Override
+    public void remove() {
+      if (!canRemove)
+        throw new IllegalStateException("Cannot remove element using PartitionedBitSetIterator after a call to hasNext().");
+      idIterator.remove();
+      if (curEntry.getValue().isEmpty()) {
+        entryIterator.remove();
       }
     }
   }

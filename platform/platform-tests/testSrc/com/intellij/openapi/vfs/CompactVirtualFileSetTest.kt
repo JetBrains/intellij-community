@@ -37,6 +37,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test very big set`() {
+    doSimpleAddTest(veryBigSetSize)
+  }
+
+  @Test
   fun `test addAll()`() {
     doSimpleAddAllTest(sliceSize = 3)
   }
@@ -49,6 +54,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test big addAll()`() {
     doSimpleAddAllTest(sliceSize = 777)
+  }
+
+  @Test
+  fun `test very big addAll()`() {
+    doSimpleAddAllTest(sliceSize = veryBigSetSize / 3)
   }
 
   @Test
@@ -76,6 +86,12 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test retainAll() of very big CVFSet`() {
+    val set = generateCVFSet(veryBigSetSize)
+    doTestRetainAll(set)
+  }
+
+  @Test
   fun `test remove() from small CVSet`() {
     doTestRemove(smallSetSize)
   }
@@ -91,6 +107,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test remove() from very big CVSet`() {
+    doTestRemove(veryBigSetSize)
+  }
+
+  @Test
   fun `test iterator remove from small CVSet`() {
     doTestIteratorRemove(smallSetSize)
   }
@@ -103,6 +124,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test iterator remove from big CVSet`() {
     doTestIteratorRemove(bigSetSize)
+  }
+
+  @Test
+  fun `test iterator remove from very big CVSet`() {
+    doTestIteratorRemove(veryBigSetSize)
   }
 
   @Test
@@ -130,6 +156,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test process on big CVSet`() {
     doTestProcess(bigSetSize)
+  }
+
+  @Test
+  fun `test process on very big CVSet`() {
+    doTestProcess(veryBigSetSize)
   }
 
   private fun doTestRetainAll(set: Set<VirtualFile>) {
@@ -246,6 +277,14 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   private val bigSetSize: Int
     get() {
       val size = 2000
+      assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
+      assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
+      return size
+    }
+
+  private val veryBigSetSize: Int
+    get() {
+      val size = 13000
       assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
       assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
       return size
