@@ -65,6 +65,7 @@ data class Delay internal constructor(override val sessionId: UUID, val seconds:
 
 data class TextRange(val start: Int, val end: Int)
 
+
 class ActionsBuilder {
   private val actions: MutableList<Action> = mutableListOf()
 
