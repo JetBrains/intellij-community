@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchAdapter
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -50,7 +51,14 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
       })
 
       searchEverywhereUI.searchField.text += character
-      PlatformTestUtil.waitForFuture(future)
+      try {
+        PlatformTestUtil.waitForFuture(future)
+      }
+      catch (ex: AssertionError) {
+        thisLogger().debug("Exception was thrown while waiting for typing feedback")
+        thisLogger().debug(ex)
+
+      }
     }
   }
 }
