@@ -37,6 +37,7 @@ internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher
   return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
 }
 
+@Internal
 @TestOnly
 fun registerSearcherForTesting(key: Class<*>, searcher: Searcher<*, *>, parentDisposable: Disposable) {
   if (!ApplicationManager.getApplication().isUnitTestMode) throw IllegalStateException()

@@ -101,8 +101,6 @@ f:com.intellij.psi.impl.search.CachesBasedRefSearcher
 - com.intellij.openapi.application.QueryExecutorBase
 - <init>():V
 - processQuery(com.intellij.psi.search.searches.ReferencesSearch$SearchParameters,com.intellij.util.Processor):V
-f:com.intellij.psi.impl.search.HelperKt
-- sf:registerSearcherForTesting(java.lang.Class,com.intellij.model.search.Searcher,com.intellij.openapi.Disposable):V
 com.intellij.psi.impl.search.IndexPatternBuilder
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getCharsAllowedInContinuationPrefix(com.intellij.psi.tree.IElementType):java.lang.String
