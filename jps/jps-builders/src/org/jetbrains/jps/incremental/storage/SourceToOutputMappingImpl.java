@@ -16,7 +16,7 @@ import java.util.Iterator;
 public final class SourceToOutputMappingImpl implements SourceToOutputMapping, StorageOwner {
   private final OneToManyPathsMapping myMapping;
 
-  public SourceToOutputMappingImpl(@NotNull Path storePath, PathRelativizerService relativizer) throws IOException {
+  public SourceToOutputMappingImpl(@NotNull Path storePath, @NotNull PathRelativizerService relativizer) throws IOException {
     myMapping = new OneToManyPathsMapping(storePath, relativizer);
   }
 

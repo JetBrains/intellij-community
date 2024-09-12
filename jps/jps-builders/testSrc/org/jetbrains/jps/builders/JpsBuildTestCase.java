@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
@@ -200,8 +200,8 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
       BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject());
-      ProjectStamps projectStamps = new ProjectStamps(myDataStorageRoot.toPath(), targetsState, relativizer);
-      BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
+      ProjectStamps projectStamps = new ProjectStamps(myDataStorageRoot.toPath(), targetsState);
+      BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, null);
       return new ProjectDescriptor(myModel, new BuildFSState(true), projectStamps, dataManager, buildLoggingManager, index,
                                    targetIndex, buildRootIndex, ignoredFileIndex);
     }

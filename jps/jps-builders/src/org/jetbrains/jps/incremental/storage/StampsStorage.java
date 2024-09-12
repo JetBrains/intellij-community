@@ -31,8 +31,6 @@ public interface StampsStorage<T extends Stamp> {
   @NotNull
   T getCurrentStamp(@NotNull Path file) throws IOException;
 
-  boolean wipe();
-
   void close() throws IOException;
 
   boolean isDirtyStamp(@NotNull Stamp stamp, @NotNull Path file) throws IOException;

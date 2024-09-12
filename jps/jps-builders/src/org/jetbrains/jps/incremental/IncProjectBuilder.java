@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.api.BuildParametersKeys;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -44,6 +43,7 @@ import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -1506,8 +1506,8 @@ public final class IncProjectBuilder {
           }
 
           if (target instanceof ModuleBuildTarget) {
-            // check if deleted source was associated with a form
-            final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+            // check if the deleted source was associated with a form
+            final OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
             final Collection<String> boundForms = sourceToFormMap.getState(deletedSource);
             if (boundForms != null) {
               for (String formPath : boundForms) {

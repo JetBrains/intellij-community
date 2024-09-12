@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,10 +24,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
-import org.jetbrains.jps.incremental.storage.StampsStorage;
+import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -43,6 +40,8 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 import static org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isCompilerReferenceFSCaseSensitive;
 
 public final class BuildRunner {
+  private static final boolean USE_EXPERIMENTAL_STORAGE = Boolean.getBoolean("jps.use.experimental.storage");
+
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   private final JpsModelLoader myModelLoader;
   private List<String> myFilePaths = Collections.emptyList();
@@ -73,6 +72,22 @@ public final class BuildRunner {
     return load(msgHandler, dataStorageRoot.toPath(), fsState);
   }
 
+  private static @NotNull ProjectStamps initProjectStampStorage(@NotNull Path dataStorageRoot,
+                                                                @NotNull PathRelativizerService relativizer,
+                                                                @NotNull BuildTargetsState targetsState,
+                                                                @Nullable StorageManager storageManager)
+    throws IOException {
+    if (ProjectStamps.PORTABLE_CACHES) {
+      // allow compaction on close (not more than 10 seconds) to ensure minimal storage size
+      assert storageManager != null;
+      HashStampStorage stampStorage = new HashStampStorage(storageManager, relativizer, targetsState);
+      return new ProjectStamps(stampStorage);
+    }
+    else {
+      return new ProjectStamps(dataStorageRoot, targetsState);
+    }
+  }
+
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot.toFile());
@@ -87,9 +102,13 @@ public final class BuildRunner {
 
     ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;
+    StorageManager storageManager = USE_EXPERIMENTAL_STORAGE || ProjectStamps.PORTABLE_CACHES
+                                    ? new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"), 10_000)
+                                    : null;
     try {
-      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
+      projectStamps = initProjectStampStorage(dataStorageRoot, relativizer, targetsState, storageManager);
+
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
@@ -99,6 +118,11 @@ public final class BuildRunner {
     catch (Exception e) {
       // second try
       LOG.info(e);
+
+      if (storageManager != null) {
+        storageManager.forceClose();
+      }
+
       if (projectStamps != null) {
         projectStamps.close();
       }
@@ -108,9 +132,9 @@ public final class BuildRunner {
       myForceCleanCaches = true;
       NioFiles.deleteRecursively(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
-      // second attempt succeeded
+      projectStamps = initProjectStampStorage(dataStorageRoot, relativizer, targetsState, storageManager);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
+      // the second attempt succeeded
       msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }

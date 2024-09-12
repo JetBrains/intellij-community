@@ -3,6 +3,8 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
@@ -23,29 +25,26 @@ public final class ProjectStamps {
 
   private final StampsStorage<? extends StampsStorage.Stamp> stampStorage;
 
-  public ProjectStamps(Path dataStorageRoot, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
-    if (PORTABLE_CACHES) {
-      stampStorage = new HashStampStorage(dataStorageRoot, relativizer, targetsState);
-    }
-    else {
-      stampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
-    }
+  @ApiStatus.Internal
+  public ProjectStamps(@NotNull StampsStorage<? extends StampsStorage.Stamp> stampStorage) throws IOException {
+    this.stampStorage = stampStorage;
+  }
+
+  public ProjectStamps(@NotNull Path dataStorageRoot, @NotNull BuildTargetsState targetsState) throws IOException {
+    this(new FileTimestampStorage(dataStorageRoot, targetsState));
   }
 
   /**
-   * @deprecated Please use {@link #ProjectStamps(Path, BuildTargetsState, PathRelativizerService)}
+   * @deprecated Please use {@link #ProjectStamps(Path, BuildTargetsState)}
    */
+  @SuppressWarnings("unused")
   @Deprecated
   public ProjectStamps(File dataStorageRoot, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
-    this(dataStorageRoot.toPath(), targetsState, relativizer);
+    this(dataStorageRoot.toPath(), targetsState);
   }
 
-  public StampsStorage<? extends StampsStorage.Stamp> getStampStorage() {
+  public @NotNull StampsStorage<? extends StampsStorage.Stamp> getStampStorage() {
     return stampStorage;
-  }
-
-  public void clean() {
-    stampStorage.wipe();
   }
 
   public void close() {

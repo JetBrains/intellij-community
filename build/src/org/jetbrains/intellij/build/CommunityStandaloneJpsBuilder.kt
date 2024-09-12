@@ -102,6 +102,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "netty-buffer",
     "aalto-xml",
     "caffeine",
+    "mvstore",
     "jetbrains.kotlinx.metadata.jvm",
     "hash4j"
   )) {

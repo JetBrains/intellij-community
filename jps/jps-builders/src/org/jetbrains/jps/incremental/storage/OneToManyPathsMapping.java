@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public final class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
+public final class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> implements OneToManyPathMapping {
   private final PathRelativizerService relativizer;
 
   public OneToManyPathsMapping(@NotNull Path storePath, PathRelativizerService relativizer) throws IOException {
@@ -29,8 +29,8 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   }
 
   @Override
-  public void update(@NotNull String keyPath, @SuppressWarnings("NullableProblems") @NotNull Collection<String> boundPaths) throws IOException {
-    super.update(normalizePath(keyPath), normalizePaths((List<String>)boundPaths));
+  public void update(@NotNull String keyPath, @SuppressWarnings("NullableProblems") @NotNull List<String> boundPaths) throws IOException {
+    super.update(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
   public void update(@NotNull String keyPath, @NotNull String boundPath) throws IOException {

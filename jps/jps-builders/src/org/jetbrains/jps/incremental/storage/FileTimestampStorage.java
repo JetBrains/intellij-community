@@ -22,7 +22,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   private final BuildTargetsState myTargetsState;
   private final Path timestampRoot;
 
-  FileTimestampStorage(Path dataStorageRoot, BuildTargetsState targetsState) throws IOException {
+  FileTimestampStorage(@NotNull Path dataStorageRoot, @NotNull BuildTargetsState targetsState) throws IOException {
     super(calcStorageRoot(dataStorageRoot).resolve("data").toFile(), new FileKeyDescriptor(), new StateExternalizer());
     timestampRoot = calcStorageRoot(dataStorageRoot);
     myTargetsState = targetsState;

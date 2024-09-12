@@ -52,7 +52,7 @@ public final class BuildDataManager {
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
   private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
-  private final OneToManyPathsMapping mySrcToFormMap;
+  private final OneToManyPathMapping mySrcToFormMap;
   private final Mappings myMappings;
   private final Object myGraphManagementLock = new Object();
   private DependencyGraph myDepGraph;
@@ -76,11 +76,19 @@ public final class BuildDataManager {
     }
   };
 
-  public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
+  public BuildDataManager(BuildDataPaths dataPaths,
+                          BuildTargetsState targetsState,
+                          PathRelativizerService relativizer,
+                          @Nullable StorageManager storageManager) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     try {
-      mySrcToFormMap = new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer);
+      if (storageManager == null) {
+        mySrcToFormMap = new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer);
+      }
+      else {
+        mySrcToFormMap = new ExperimentalOneToManyPathMapping("source-to-form", storageManager, relativizer);
+      }
       myOutputToTargetRegistry = new OutputToTargetRegistry(getOutputToSourceRegistryRoot().resolve("data"), relativizer);
       File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
       if (JavaBuilderUtil.isDepGraphEnabled()) {
@@ -128,8 +136,8 @@ public final class BuildDataManager {
     return myOutputToTargetRegistry;
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
-    final SourceToOutputMappingImpl map = getStorage(target, SRC_TO_OUT_MAPPING_PROVIDER);
+  public SourceToOutputMapping getSourceToOutputMap(BuildTarget<?> target) throws IOException {
+    SourceToOutputMappingImpl map = getStorage(target, SRC_TO_OUT_MAPPING_PROVIDER);
     return new SourceToOutputMappingWrapper(map, myTargetsState.getBuildTargetId(target));
   }
 
@@ -143,7 +151,7 @@ public final class BuildDataManager {
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
 
-  public OneToManyPathsMapping getSourceToFormMap() {
+  public OneToManyPathMapping getSourceToFormMap() {
     return mySrcToFormMap;
   }
 
@@ -370,10 +378,14 @@ public final class BuildDataManager {
     return new File(dataStorageRoot, forDepGraph? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
   }
 
-  private static void wipeStorage(@NotNull Path root, @Nullable AbstractStateStorage<?, ?> storage) {
+  private static void wipeStorage(@NotNull Path root, @Nullable StorageOwner storage) {
     if (storage != null) {
       synchronized (storage) {
-        storage.wipe();
+        try {
+          storage.clean();
+        }
+        catch (IOException ignore) {
+        }
       }
     }
     else {
@@ -388,7 +400,7 @@ public final class BuildDataManager {
     }
   }
 
-  private static void closeStorage(@Nullable AbstractStateStorage<?, ?> storage) throws IOException {
+  private static void closeStorage(@Nullable StorageOwner storage) throws IOException {
     if (storage != null) {
       synchronized (storage) {
         storage.close();
