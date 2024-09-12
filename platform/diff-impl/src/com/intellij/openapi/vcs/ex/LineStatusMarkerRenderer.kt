@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffDrawUtil
@@ -39,10 +39,15 @@ abstract class LineStatusMarkerRenderer internal constructor(
   private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)
   private var disposed = false
 
+  private val gutterLayer = getGutterLayer()
   private var gutterHighlighter: RangeHighlighter = createGutterHighlighter()
   private val errorStripeHighlighters: MutableList<RangeHighlighter> = ArrayList()
 
   protected abstract fun getRanges(): List<Range>?
+
+  protected open fun getGutterLayer(): Int {
+    return DiffDrawUtil.LST_LINE_MARKER_LAYER
+  }
 
   init {
     Disposer.register(disposable, Disposable {
@@ -89,7 +94,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
   private fun createGutterHighlighter(): RangeHighlighter {
     val markupModel = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
     return markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.textLength,
-                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                              gutterLayer,
                                                               HighlighterTargetArea.LINES_IN_RANGE,
                                                               false) { it: RangeHighlighterEx ->
       it.setGreedyToLeft(true)
@@ -184,7 +189,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
 
   private fun createErrorStripeHighlighter(markupModel: MarkupModelEx, textRange: TextRange, diffType: Byte): RangeHighlighter {
     return markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.startOffset, textRange.endOffset,
-                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                              gutterLayer,
                                                               HighlighterTargetArea.LINES_IN_RANGE,
                                                               false) { it: RangeHighlighterEx ->
       it.setThinErrorStripeMark(true)

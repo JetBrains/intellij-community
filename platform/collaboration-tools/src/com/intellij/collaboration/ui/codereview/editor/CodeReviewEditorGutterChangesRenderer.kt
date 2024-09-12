@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diff.DefaultFlagsProvider
+import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -42,14 +43,16 @@ import java.awt.datatransfer.StringSelection
 /**
  * Draws and handles review changes markers in gutter
  */
-class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorGutterActionableChangesModel,
-                                            private val editor: Editor,
-                                            disposable: Disposable)
-  : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
+open class CodeReviewEditorGutterChangesRenderer(
+  private val model: CodeReviewEditorGutterActionableChangesModel,
+  private val editor: Editor,
+  disposable: Disposable,
+  val lineStatusMarkerColorScheme: LineStatusMarkerColorScheme = ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME,
+) : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
     LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT,
-                                          ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME, 0)
+                                          lineStatusMarkerColorScheme, 0)
   }
 
   override fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = ReviewChangesTextAttributes()
@@ -57,6 +60,7 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
   private inner class ReviewChangesTextAttributes : TextAttributes() {
     override fun getErrorStripeColor(): Color = ReviewInEditorUtil.REVIEW_CHANGES_STATUS_COLOR
   }
+
 
   override fun createPopupPanel(editor: Editor,
                                 range: Range,
@@ -73,17 +77,26 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
       null
     }
 
-    val actions = mutableListOf<AnAction>(
-      ShowPrevChangeMarkerAction(range),
-      ShowNextChangeMarkerAction(range),
-      CopyLineStatusRangeAction(range),
-      ShowDiffAction(range),
-      ToggleByWordDiffAction()
+
+    val actions = listOfNotNull(
+      createRevertAction(range),
+      createPrevChangeAction(range),
+      createNextChangeAction(range),
+      createCopyLineAction(range),
+      createShowDiffAction(range),
+      createToggleByWordDiffAction()
     )
 
     val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
   }
+
+  protected open fun createRevertAction(range: Range): AnAction? = null
+  protected open fun createPrevChangeAction(range: Range): AnAction? = ShowPrevChangeMarkerAction(range)
+  protected open fun createNextChangeAction(range: Range): AnAction? = ShowNextChangeMarkerAction(range)
+  protected open fun createCopyLineAction(range: Range): AnAction? = CopyLineStatusRangeAction(range)
+  protected open fun createShowDiffAction(range: Range): AnAction? = ShowDiffAction(range)
+  protected open fun createToggleByWordDiffAction(): AnAction? = ToggleByWordDiffAction()
 
   private fun createPopupEditor(project: Project?, mainEditor: Editor, vcsContent: String, disposable: Disposable): Editor {
     val factory = EditorFactory.getInstance()
@@ -245,7 +258,7 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
         val disposable = Disposer.newDisposable("Editor code review changes renderer disposable")
         editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, model)
         try {
-          val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
+          val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable, ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME)
           model.reviewRanges.collect {
             renderer.scheduleUpdate()
           }
