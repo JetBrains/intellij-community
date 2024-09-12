@@ -322,13 +322,13 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   // PY-20770
-  //public void testAsyncGeneratorAsend() {
-  //  doTest("Awaitable[int]",
-  //         """
-  //           async def asyncgen():
-  //               yield 42
-  //           expr = asyncgen().asend("hello")""");
-  //}
+  public void testAsyncGeneratorAsend() {
+    doTest("Coroutine[Any, Any, int]",
+           """
+             async def asyncgen():
+                 yield 42
+             expr = asyncgen().asend("hello")""");
+  }
 
   // PY-20770
   public void testAsyncGeneratorAwaitOnAsend() {
@@ -1147,26 +1147,26 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   // PY-29891
-  //public void testContextManagerType() {
-  //  doTest("str",
-  //         """
-  //           from typing import Type, ContextManager
-  //           def example():
-  //             manager: Type[ContextManager[str]]
-  //             with manager() as m:
-  //                   expr = m""");
-  //}
+  public void testContextManagerType() {
+    doTest("str",
+           """
+             from typing import Type, ContextManager
+             def example():
+               manager: Type[ContextManager[str]]
+               with manager() as m:
+                     expr = m""");
+  }
 
   // PY-29891
-  //public void testAsyncContextManager() {
-  //  doTest("str",
-  //         """
-  //           from typing import AsyncContextManager
-  //           async def example():
-  //               manager: AsyncContextManager[str]
-  //               async with manager as m:
-  //                   expr = m""");
-  //}
+  public void testAsyncContextManager() {
+    doTest("str",
+           """
+             from typing import AsyncContextManager
+             async def example():
+                 manager: AsyncContextManager[str]
+                 async with manager as m:
+                     expr = m""");
+  }
 
   // PY-49935
   public void testParamSpecExample() {
