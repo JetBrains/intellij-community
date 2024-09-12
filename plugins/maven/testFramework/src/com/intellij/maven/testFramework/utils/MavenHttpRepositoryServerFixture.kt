@@ -48,7 +48,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
         return expectedUsername == username && expectedPassword == password && expectedPassword != null
       }
     }
-    setupRemoteRepositoryServerInMemory(repo, contextPath, authenticator)
+    setupRemoteRepositoryServerReadFiles(repo, contextPath, authenticator)
   }
 
   fun startRepositoryFor(repo: File, expectedUsername: String, expectedPassword: String) {

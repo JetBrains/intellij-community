@@ -755,6 +755,13 @@ abstract class MavenTestCase : UsefulTestCase() {
   private val testMavenHome: String?
     get() = System.getProperty("idea.maven.test.home")
 
+  protected fun fileContentEqual(file1: File, file2: File): Boolean {
+    val file1Bytes = file1.readBytes()
+    val file2Bytes = file2.readBytes()
+
+    return file1Bytes.contentEquals(file2Bytes)
+  }
+
   companion object {
     val preimportTestMode: Boolean = java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")
 
