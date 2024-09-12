@@ -2579,11 +2579,6 @@ f:org.jetbrains.jps.incremental.messages.ProgressMessage
 f:org.jetbrains.jps.incremental.messages.UnprocessedFSChangesNotification
 - org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 - <init>():V
-f:org.jetbrains.jps.incremental.relativizer.MavenPathRelativizer
-- org.jetbrains.jps.incremental.relativizer.PathRelativizer
-- <init>():V
-- toAbsolutePath(java.lang.String):java.lang.String
-- toRelativePath(java.lang.String):java.lang.String
 org.jetbrains.jps.incremental.relativizer.PathRelativizer
 - a:toAbsolutePath(java.lang.String):java.lang.String
 - a:toRelativePath(java.lang.String):java.lang.String
@@ -2689,7 +2684,7 @@ a:org.jetbrains.jps.incremental.storage.CompositeStorageOwner
 - pa:getChildStorages():java.lang.Iterable
 f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - org.jetbrains.jps.incremental.storage.AbstractStateStorage
-- <init>(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
+- <init>(java.nio.file.Path,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - appendData(java.lang.String,java.lang.String):V
 - appendData(java.lang.String,java.util.Collection):V
 - getKeys():java.util.List
@@ -2712,7 +2707,6 @@ f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - sf:TRACK_LIBRARY_CONTENT_PROPERTY:java.lang.String
 - <init>(java.io.File,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
-- clean():V
 - close():V
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
 org.jetbrains.jps.incremental.storage.StampsStorage
@@ -2726,7 +2720,6 @@ org.jetbrains.jps.incremental.storage.StampsStorage
 - a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):Z
 - a:removeStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):V
 - a:saveStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.storage.StampsStorage$Stamp):V
-- a:wipe():Z
 org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
 org.jetbrains.jps.incremental.storage.StorageOwner
 - a:clean():V

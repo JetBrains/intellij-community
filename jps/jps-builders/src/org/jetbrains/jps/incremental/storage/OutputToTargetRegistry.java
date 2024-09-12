@@ -5,13 +5,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.PersistentMapBuilder;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,8 +44,8 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     }
   };
 
-  OutputToTargetRegistry(File storePath, PathRelativizerService relativizer) throws IOException {
-    super(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER);
+  OutputToTargetRegistry(@NotNull Path storePath, PathRelativizerService relativizer) throws IOException {
+    super(PersistentMapBuilder.newBuilder(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER));
     myRelativizer = relativizer;
   }
 

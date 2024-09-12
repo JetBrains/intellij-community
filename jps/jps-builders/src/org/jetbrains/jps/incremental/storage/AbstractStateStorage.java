@@ -17,14 +17,20 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
+  private static final boolean DO_COMPRESS = Boolean.parseBoolean(System.getProperty("jps.storage.do.compression", "true"));
+
   protected final Object dataLock = new Object();
   private final @NotNull PersistentMapBuilder<Key, T> mapBuilder;
   private @NotNull PersistentMapImpl<Key, T> map;
   private final boolean isCompressed;
 
   public AbstractStateStorage(File storePath, KeyDescriptor<Key> keyDescriptor, DataExternalizer<T> stateExternalizer) throws IOException {
-    this(PersistentMapBuilder.newBuilder(storePath.toPath(), keyDescriptor, stateExternalizer),
-         Boolean.parseBoolean(System.getProperty("jps.storage.do.compression", "true")));
+    this(PersistentMapBuilder.newBuilder(storePath.toPath(), keyDescriptor, stateExternalizer), DO_COMPRESS);
+  }
+
+  @ApiStatus.Internal
+  protected AbstractStateStorage(@NotNull PersistentMapBuilder<Key, T> mapBuilder) throws IOException {
+    this(mapBuilder, DO_COMPRESS);
   }
 
   @ApiStatus.Internal

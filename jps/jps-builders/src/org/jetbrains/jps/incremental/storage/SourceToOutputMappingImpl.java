@@ -7,8 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -16,7 +16,7 @@ import java.util.Iterator;
 public final class SourceToOutputMappingImpl implements SourceToOutputMapping, StorageOwner {
   private final OneToManyPathsMapping myMapping;
 
-  public SourceToOutputMappingImpl(File storePath, PathRelativizerService relativizer) throws IOException {
+  public SourceToOutputMappingImpl(@NotNull Path storePath, PathRelativizerService relativizer) throws IOException {
     myMapping = new OneToManyPathsMapping(storePath, relativizer);
   }
 

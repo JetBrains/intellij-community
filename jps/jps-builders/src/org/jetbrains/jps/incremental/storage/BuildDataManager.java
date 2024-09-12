@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +71,8 @@ public final class BuildDataManager {
     }
 
     @Override
-    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
-      return new SourceToOutputMappingImpl(new File(new File(targetDataDir, SRC_TO_OUTPUT_STORAGE), SRC_TO_OUTPUT_FILE_NAME), relativizer);
+    public @NotNull SourceToOutputMappingImpl createStorage(@NotNull File targetDataDir, @NotNull PathRelativizerService relativizer) throws IOException {
+      return new SourceToOutputMappingImpl(targetDataDir.toPath().resolve(SRC_TO_OUTPUT_STORAGE).resolve(SRC_TO_OUTPUT_FILE_NAME), relativizer);
     }
   };
 
@@ -79,8 +80,8 @@ public final class BuildDataManager {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     try {
-      mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
-      myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
+      mySrcToFormMap = new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer);
+      myOutputToTargetRegistry = new OutputToTargetRegistry(getOutputToSourceRegistryRoot().resolve("data"), relativizer);
       File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
       if (JavaBuilderUtil.isDepGraphEnabled()) {
         myMappings = null;
@@ -134,7 +135,7 @@ public final class BuildDataManager {
 
   @ApiStatus.Internal
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
-    return new SourceToOutputMappingImpl(getSourceToOutputMapRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_FILE_NAME).toFile(), myRelativizer);
+    return new SourceToOutputMappingImpl(getSourceToOutputMapRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
   public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
@@ -345,12 +346,12 @@ public final class BuildDataManager {
     return myDataPaths.getTargetDataRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_STORAGE);
   }
 
-  private File getSourceToFormsRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), SRC_TO_FORM_STORAGE);
+  private @NotNull Path getSourceToFormsRoot() {
+    return myDataPaths.getDataStorageRoot().toPath().resolve(SRC_TO_FORM_STORAGE);
   }
 
-  private File getOutputToSourceRegistryRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), OUT_TARGET_STORAGE);
+  private @NotNull Path getOutputToSourceRegistryRoot() {
+    return myDataPaths.getDataStorageRoot().toPath().resolve(OUT_TARGET_STORAGE);
   }
 
   public BuildDataPaths getDataPaths() {
@@ -369,14 +370,21 @@ public final class BuildDataManager {
     return new File(dataStorageRoot, forDepGraph? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
   }
 
-  private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
+  private static void wipeStorage(@NotNull Path root, @Nullable AbstractStateStorage<?, ?> storage) {
     if (storage != null) {
       synchronized (storage) {
         storage.wipe();
       }
     }
     else {
-      FileUtil.delete(root);
+      try {
+        FileUtilRt.deleteRecursively(root);
+      }
+      catch (IOException ignore) {
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
     }
   }
 

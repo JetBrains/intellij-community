@@ -3,13 +3,18 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentMapBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -18,8 +23,8 @@ import java.util.*;
 public final class OneToManyPathsMapping extends AbstractStateStorage<String, Collection<String>> {
   private final PathRelativizerService relativizer;
 
-  public OneToManyPathsMapping(File storePath, PathRelativizerService relativizer) throws IOException {
-    super(storePath, PathStringDescriptors.createPathStringDescriptor(), new PathCollectionExternalizer());
+  public OneToManyPathsMapping(@NotNull Path storePath, PathRelativizerService relativizer) throws IOException {
+    super(PersistentMapBuilder.newBuilder(storePath, PathStringDescriptors.createPathStringDescriptor(), new PathCollectionExternalizer()));
     this.relativizer = relativizer;
   }
 
