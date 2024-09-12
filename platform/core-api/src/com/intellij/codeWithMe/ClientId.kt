@@ -1,6 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
+import com.intellij.codeWithMe.ClientId.Companion.absenceBehaviorValue
+import com.intellij.codeWithMe.ClientId.Companion.defaultLocalId
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.installThreadContext
@@ -230,7 +233,6 @@ data class ClientId(val value: String) {
      */
     @Internal
     @JvmStatic
-    @RequiresBlockingContext
     fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
       return withClientId(clientId, errorOnMismatch = true).use {
         action()
@@ -256,7 +258,6 @@ data class ClientId(val value: String) {
      */
     @Internal
     @JvmStatic
-    @RequiresBlockingContext
     fun <T> withExplicitClientId(clientId: ClientId?, action: () -> T): T {
       return withClientId(clientId, errorOnMismatch = false).use {
         action()

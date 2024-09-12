@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -109,7 +108,6 @@ class IjentSessionRegistry(private val coroutineScope: CoroutineScope) {
     suspend fun instanceAsync(): IjentSessionRegistry =
       serviceAsync()
 
-    @RequiresBlockingContext
     @JvmStatic
     fun instance(): IjentSessionRegistry =
       ApplicationManager.getApplication().service()

@@ -17,7 +17,6 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
@@ -41,6 +40,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
+import kotlin.Throws
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -1101,7 +1101,6 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   return null
 }
 
-@RequiresBlockingContext
 fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
   DescriptorListLoadingContext().use { context ->
     return runBlocking {

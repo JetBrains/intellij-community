@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 
@@ -37,7 +36,6 @@ internal class InlineCompletionTypingTracker(parentDisposable: Disposable) {
    * @see getDocumentChangeEvent
    */
   @RequiresEdt
-  @RequiresBlockingContext
   fun allowTyping(typingEvent: TypingEvent) {
     lastTypingEvent = typingEvent
   }
@@ -53,7 +51,6 @@ internal class InlineCompletionTypingTracker(parentDisposable: Disposable) {
    * @see allowTyping
    */
   @RequiresEdt
-  @RequiresBlockingContext
   fun getDocumentChangeEvent(documentEvent: DocumentEvent, editor: Editor): InlineCompletionEvent.DocumentChange? {
     val lastTypingEvent = lastTypingEvent
     this.lastTypingEvent = null

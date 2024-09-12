@@ -3,14 +3,12 @@ package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 class GradleProjectResolverResultHandler(
   private val context: ProjectResolverContext
 ) {
 
-  @RequiresBlockingContext
   fun onResolveProjectInfoStarted() {
     require(!application.isWriteAccessAllowed) {
       "Must not execute inside write action"

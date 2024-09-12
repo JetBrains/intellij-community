@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -82,7 +81,6 @@ class InlineCompletionSession private constructor(
    * The method can select a variant as long as it contains at least one computed element. Otherwise, the variant is skipped.
    */
   @RequiresEdt
-  @RequiresBlockingContext
   fun useNextVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.useNextVariant()
@@ -97,7 +95,6 @@ class InlineCompletionSession private constructor(
    * The method can select a variant as long as it contains at least one computed element. Otherwise, the variant is skipped.
    */
   @RequiresEdt
-  @RequiresBlockingContext
   fun usePrevVariant() {
     ThreadingAssertions.assertEventDispatchThread()
     variantsProvider?.usePrevVariant()

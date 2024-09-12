@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -13,7 +12,6 @@ interface DocumentationDownloader {
 
   suspend fun canHandle(project: Project, file: VirtualFile): Boolean
 
-  @RequiresBlockingContext
   fun download(project: Project, file: VirtualFile): ActionCallback
 
   companion object {

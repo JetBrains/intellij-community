@@ -13,7 +13,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -23,7 +22,6 @@ internal class ProjectFileNavigatorImpl(
   private val cs: CoroutineScope,
 ) {
   companion object {
-    @RequiresBlockingContext
     fun getInstance(project: Project): ProjectFileNavigatorImpl = project.service()
   }
 

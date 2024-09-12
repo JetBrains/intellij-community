@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.random.Random
 
@@ -58,7 +57,6 @@ sealed interface TypingEvent {
  */
 interface InlineCompletionEvent {
 
-  @RequiresBlockingContext
   fun toRequest(): InlineCompletionRequest?
 
   /**
@@ -195,7 +193,6 @@ interface InlineCompletionEvent {
   class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
 }
 
-@RequiresBlockingContext
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
   return runReadAction {
     val file = PsiDocumentManager.getInstance(project).getPsiFile(caret.editor.document) ?: return@runReadAction null

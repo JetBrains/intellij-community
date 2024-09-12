@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ClientSessionsUtil")
 @file:Suppress("UNCHECKED_CAST", "unused", "UnusedReceiverParameter")
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * **Note:** This method should not be called within a suspend context.
  * It is recommended to use [Application.forEachSessionSuspending] instead.
  */
-@RequiresBlockingContext
 fun Application.forEachSession(kind: ClientKind, action: (ClientAppSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind)) {
     ClientId.withExplicitClientId(session.clientId) {
@@ -51,7 +49,6 @@ suspend fun Application.forEachSessionSuspending(kind: ClientKind, action: suspe
  * **Note:** This method should not be called within a suspend context.
  * It is recommended to use [Project.forEachSessionSuspending] instead.
  */
-@RequiresBlockingContext
 fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>) {
     ClientId.withExplicitClientId(session.clientId) {

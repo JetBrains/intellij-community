@@ -10,12 +10,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -24,7 +19,6 @@ import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.EditorMouseFixture
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
@@ -294,7 +288,6 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
 
   //TODO: also check for fixture.file.text
   @RequiresReadLock
-  @RequiresBlockingContext
   private fun compareContents(expectedLine: String) {
     assertThat(fixture.editor.document.text.removeCaret()).describedAs {
       "Expected and actual contents are different."
@@ -302,7 +295,6 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   }
 
   @RequiresReadLock
-  @RequiresBlockingContext
   private fun compareCaretPosition(expectedLine: String) {
     val actualLineWithCaret = StringBuilder(fixture.editor.document.text).insert(fixture.caretOffset, "<caret>").toString()
     assertThat(actualLineWithCaret).describedAs {

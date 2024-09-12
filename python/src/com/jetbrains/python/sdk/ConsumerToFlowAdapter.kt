@@ -22,7 +22,6 @@ private class MyService(val coroutineScope: CoroutineScope)
 /**
  * collects first item of flow in EDT and calls [consumer] to be used as an adapter.
  */
-@RequiresBlockingContext
 internal fun <T : Any> Flow<T>.oneShotConsumer(consumer: Consumer<T>) {
   ApplicationManager.getApplication().service<MyService>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
     // Platform doesn't guarantee write intent lock on EDT

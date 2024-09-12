@@ -5,7 +5,6 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAct
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.gradle.tooling.GradleConnectionException
@@ -60,7 +59,6 @@ class GradleModelFetchActionResultHandlerBridge(
     }
   }
 
-  @RequiresBlockingContext
   fun collectAllEvents() {
     require(!application.isWriteAccessAllowed) {
       "Must not execute inside write action"

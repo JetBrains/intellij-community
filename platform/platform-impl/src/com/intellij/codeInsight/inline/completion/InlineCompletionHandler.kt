@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingTracker
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
@@ -17,6 +16,7 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVar
 import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -35,7 +35,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.*
@@ -141,7 +140,6 @@ class InlineCompletionHandler(
 
   @RequiresEdt
   @RequiresWriteLock
-  @RequiresBlockingContext
   fun insert() {
     ThreadingAssertions.assertEventDispatchThread()
     ThreadingAssertions.assertWriteAccess()
@@ -168,7 +166,6 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!context.isDisposed)
@@ -178,7 +175,6 @@ class InlineCompletionHandler(
     sessionManager.sessionRemoved()
   }
 
-  @RequiresBlockingContext
   fun cancel(finishType: FinishType = FinishType.OTHER) {
     executor.cancel()
     application.invokeAndWait {
@@ -237,7 +233,6 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
   private fun complete(
     isActive: Boolean,
     cause: Throwable?,
@@ -257,7 +252,6 @@ class InlineCompletionHandler(
    * @see onDocumentEvent
    */
   @RequiresEdt
-  @RequiresBlockingContext
   internal fun allowTyping(event: TypingEvent) {
     typingTracker.allowTyping(event)
   }
@@ -271,7 +265,6 @@ class InlineCompletionHandler(
    * @see InlineCompletionTypingTracker.getDocumentChangeEvent
    */
   @RequiresEdt
-  @RequiresBlockingContext
   internal fun onDocumentEvent(documentEvent: DocumentEvent, editor: Editor) {
     val event = typingTracker.getDocumentChangeEvent(documentEvent, editor)
     if (event != null) {
@@ -395,7 +388,6 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
     val presentable = element.toPresentable()
     presentable.render(editor, endOffset() ?: startOffset)
@@ -423,7 +415,6 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
   private fun getVariantsComputer(
     variants: List<InlineCompletionVariant>,
     context: InlineCompletionContext,
@@ -522,7 +513,6 @@ class InlineCompletionHandler(
     editor.caretModel.addCaretListener(listener, this)
   }
 
-  @RequiresBlockingContext
   @RequiresEdt
   private fun traceBlocking(event: InlineCompletionEventType) {
     ThreadingAssertions.assertEventDispatchThread()

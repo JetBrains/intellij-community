@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.ide.actions.DistractionFreeModeController
@@ -35,7 +35,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.AvatarIcon
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
@@ -103,7 +102,6 @@ class ProjectWindowCustomizerService : Disposable {
       ApplicationManager.registerCleaner { instance = null }
     }
 
-    @RequiresBlockingContext
     fun getInstance(): ProjectWindowCustomizerService {
       var result = instance
       if (result == null) {

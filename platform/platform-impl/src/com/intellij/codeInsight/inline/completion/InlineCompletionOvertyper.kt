@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper.UpdatedElements
@@ -9,7 +9,6 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
@@ -64,7 +63,6 @@ interface InlineCompletionOvertyper : InlineCompletionSuggestionUpdateManager.Ad
    * Note that before rendering new elements, all current elements from [context] are disposed.
    */
   @RequiresEdt
-  @RequiresBlockingContext
   fun overtype(context: InlineCompletionContext, typing: TypingEvent): UpdatedElements?
 
   /**

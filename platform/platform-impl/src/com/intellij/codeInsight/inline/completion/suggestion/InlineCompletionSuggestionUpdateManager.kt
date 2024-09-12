@@ -10,7 +10,6 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,7 +29,6 @@ interface InlineCompletionSuggestionUpdateManager {
    * It is called on some event when inline completion variants are already provided and initialized (they may be not computed yet).
    */
   @RequiresEdt
-  @RequiresBlockingContext
   fun update(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult
 
   /**
@@ -45,7 +43,6 @@ interface InlineCompletionSuggestionUpdateManager {
    */
   @ApiStatus.Experimental
   @RequiresEdt
-  @RequiresBlockingContext
   fun updateWhileNoVariants(event: InlineCompletionEvent): Boolean {
     return event !is InlineCompletionEvent.DocumentChange && event !is InlineCompletionEvent.Backspace
   }
@@ -99,34 +96,27 @@ interface InlineCompletionSuggestionUpdateManager {
     }
 
     @RequiresEdt
-    @RequiresBlockingContext
     fun onDocumentChange(event: InlineCompletionEvent.DocumentChange, variant: InlineCompletionVariant.Snapshot): UpdateResult = Invalidated
 
     @RequiresEdt
-    @RequiresBlockingContext
     fun onDirectCall(event: InlineCompletionEvent.DirectCall, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @RequiresEdt
-    @RequiresBlockingContext
     fun onLookupEvent(event: InlineCompletionEvent.InlineLookupEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @ApiStatus.Experimental
     @RequiresEdt
-    @RequiresBlockingContext
     fun onBackspace(event: InlineCompletionEvent.Backspace, variant: InlineCompletionVariant.Snapshot): UpdateResult = Invalidated
 
     @ApiStatus.Experimental
     @RequiresEdt
-    @RequiresBlockingContext
     fun onInsertNextWord(event: InlineCompletionEvent.InsertNextWord, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @ApiStatus.Experimental
     @RequiresEdt
-    @RequiresBlockingContext
     fun onInsertNextLine(event: InlineCompletionEvent.InsertNextLine, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     @RequiresEdt
-    @RequiresBlockingContext
     fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     private fun ignoreDocumentAndCaretChanges(editor: Editor, block: () -> UpdateResult): UpdateResult {

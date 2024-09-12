@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,6 @@ public abstract class ActionManager {
   /**
    * Fetches the instance of ActionManager implementation.
    */
-  @RequiresBlockingContext
   public static ActionManager getInstance() {
     return ApplicationManager.getApplication().getService(ActionManager.class);
   }

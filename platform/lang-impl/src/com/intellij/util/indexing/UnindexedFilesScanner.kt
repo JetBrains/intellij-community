@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
@@ -574,7 +573,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(
     }
   }
 
-  @RequiresBlockingContext
   private fun <T> markStage(scanningStage: ProjectScanningHistoryImpl.Stage, block: () -> T): T {
     ProgressManager.checkCanceled()
     LOG.info("[${myProject.locationHash}], scanning stage: $scanningStage")

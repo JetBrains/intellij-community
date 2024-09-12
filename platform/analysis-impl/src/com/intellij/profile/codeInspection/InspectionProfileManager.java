@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,6 @@ public interface InspectionProfileManager {
     return null;
   }
 
-  @RequiresBlockingContext
   static @NotNull InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getService(InspectionProfileManager.class);
   }

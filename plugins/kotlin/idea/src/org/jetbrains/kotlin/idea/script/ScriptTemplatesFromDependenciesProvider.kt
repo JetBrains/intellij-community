@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
@@ -85,7 +84,6 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     @Volatile
     private var forceStartUpdate = false
 
-    @RequiresBlockingContext
     private fun loadScriptDefinitions() {
         if (project.isDefault || project.isDisposed || !project.isInitialized) {
             return onEarlyEnd()

@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.HintHint
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
@@ -24,10 +23,8 @@ private val logger = fileLogger()
 @Internal
 interface ClientLookupManager {
   companion object {
-    @RequiresBlockingContext
     fun getInstance(session: ClientProjectSession): ClientLookupManager? = session.serviceOrNull()
 
-    @RequiresBlockingContext
     fun getCurrentInstance(project: Project): ClientLookupManager = project.currentSession.service()
   }
 

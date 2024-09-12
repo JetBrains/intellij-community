@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
@@ -29,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleLightBuild;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
-import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
+import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
@@ -148,7 +147,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myProjectResolverIndicator.token();
   }
 
-  @RequiresBlockingContext
   public <R> R computeCancellable(@NotNull Supplier<R> action) {
     var result = new Ref<R>();
     runCancellable(() -> {
@@ -157,7 +155,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return result.get();
   }
 
-  @RequiresBlockingContext
   public void runCancellable(@NotNull Runnable action) {
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {

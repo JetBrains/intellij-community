@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.observation
 
 import com.intellij.concurrency.IntelliJContextElement
@@ -10,7 +10,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,7 +77,6 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
    * Installs a tracker for a blocking asynchronous activity of [action].
    * This method is cheap to use: it does not add any synchronization or complex computations.
    */
-  @RequiresBlockingContext
   fun <T> trackConfigurationActivityBlocking(kind: ActivityKey, action: () -> T): T {
     val currentContext = currentThreadContext()
     return withObservationTracker(kind) { observationTracker ->

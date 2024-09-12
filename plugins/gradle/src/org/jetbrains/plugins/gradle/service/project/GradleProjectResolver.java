@@ -36,7 +36,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -239,7 +238,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return true;
   }
 
-  @RequiresBlockingContext
   private <R> R computeCancellable(@NotNull DefaultProjectResolverContext resolverContext, @NotNull Supplier<R> action) {
     ExternalSystemTaskId taskId = resolverContext.getExternalSystemTaskId();
     CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();

@@ -13,12 +13,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 internal object InlineCompletionContextLogs {
   @RequiresReadLock
-  @RequiresBlockingContext
   fun getFor(request: InlineCompletionRequest): List<EventPair<*>> {
     val element = if (request.startOffset == 0) null else request.file.findElementAt(request.startOffset - 1)
     val simple = captureSimple(request.file, request.editor, request.startOffset, element)
