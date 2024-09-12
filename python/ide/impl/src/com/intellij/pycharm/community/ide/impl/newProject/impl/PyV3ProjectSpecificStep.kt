@@ -9,4 +9,4 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectBaseGenerator
 internal class PyV3ProjectSpecificStep(
   generator: PyV3ProjectBaseGenerator<*>,
   callback: AbstractNewProjectStep.AbstractCallback<PyV3BaseProjectSettings>,
-) : ProjectSettingsStepBase<PyV3BaseProjectSettings>(generator, callback)
+) : ProjectSettingsStepBase<PyV3BaseProjectSettings>(generator, callback, generator.newProjectName)

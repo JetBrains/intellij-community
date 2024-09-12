@@ -18541,6 +18541,7 @@ c:com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 - pf:myProjectDirectory:com.intellij.openapi.util.NotNullLazyValue
 - pf:myProjectGenerator:com.intellij.platform.DirectoryProjectGenerator
 - <init>(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):V
+- p:<init>(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback,java.lang.String):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - checkValid():Z
 - pf:createActionButton():javax.swing.JButton
@@ -18554,7 +18555,7 @@ c:com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 - p:createLocationComponent():com.intellij.openapi.ui.LabeledComponent
 - createPanel():javax.swing.JPanel
 - dispose():V
-- p:findSequentNonExistingUntitled():java.io.File
+- p:findSequentNonExistingUntitled():java.nio.file.Path
 - getActionButton():javax.swing.JButton
 - pf:getIcon():javax.swing.Icon
 - p:getPeer():com.intellij.platform.ProjectGeneratorPeer

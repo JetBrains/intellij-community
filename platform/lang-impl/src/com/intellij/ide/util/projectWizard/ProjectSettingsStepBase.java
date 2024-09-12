@@ -14,6 +14,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -42,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +64,8 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
   private AbstractNewProjectStep<T> myProjectStep;
+  private static final String DEFAULT_PROJECT_NAME = "untitled";
+  private final @NlsSafe @NotNull String myNewProjectName;
   /**
    * If {@link ProjectGeneratorPeer#getComponent()} is Kotlin DSL UI, we store it here and use for validation
    */
@@ -70,12 +74,22 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
                                  AbstractNewProjectStep.AbstractCallback<T> callback) {
+    this(projectGenerator, callback, null);
+  }
+
+  /**
+   * @param newProjectName {@link #myLocationField} will have default value ending with this name. Null means default
+   */
+  protected ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
+                                    AbstractNewProjectStep.AbstractCallback<T> callback,
+                                    @NlsSafe @Nullable String newProjectName) {
     super();
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled());
+    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled().toFile());
+    myNewProjectName = newProjectName != null ? newProjectName : DEFAULT_PROJECT_NAME;
   }
 
   @Override
@@ -367,8 +381,11 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
                                    BorderLayout.WEST);
   }
 
-  protected @NotNull File findSequentNonExistingUntitled() {
-    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
+  /**
+   * Looks for the place for a new project
+   */
+  protected @NotNull Path findSequentNonExistingUntitled() {
+    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), myNewProjectName, "").toPath();
   }
 
   @Override

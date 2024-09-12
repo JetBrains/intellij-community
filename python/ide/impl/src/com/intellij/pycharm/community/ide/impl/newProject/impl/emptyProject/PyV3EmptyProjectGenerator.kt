@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 class PyV3EmptyProjectGenerator : PyV3ProjectBaseGenerator<PyV3EmptyProjectSettings>(
-  PyV3EmptyProjectSettings(generateWelcomeScript = false), PyV3EmptyProjectUI) {
+  PyV3EmptyProjectSettings(generateWelcomeScript = false), PyV3EmptyProjectUI, _newProjectName = "PythonProject") {
   override fun getName(): @Nls String = PyBundle.message("pure.python.project")
 
   override fun getLogo(): Icon = PythonPsiApiIcons.Python

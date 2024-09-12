@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
@@ -29,15 +30,19 @@ import java.nio.file.Path
  * [typeSpecificSettings] are settings defaults.
  * [typeSpecificUI] is a UI to display these settings and bind then using Kotlin DSL UI
  * [allowedInterpreterTypes] limits a list of allowed interpreters (all interpreters are allowed by default)
+ * [newProjectName] is a default name of the new project ([getName]Project is default)
  */
 abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val errorSink: ErrorSink = ShowingMessageErrorSync,
+  private val _newProjectName: @NlsSafe String? = null,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
   private val baseSettings = PyV3BaseProjectSettings()
   private val projectPathFlow = MutableStateFlow(Path.of(SystemProperties.getUserHome()))
+  val newProjectName: @NlsSafe String get() = _newProjectName ?: "${name.replace(" ", "")}Project"
+
 
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope

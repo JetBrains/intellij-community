@@ -35,7 +35,6 @@ import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.promotion.PromoProjectGenerator
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -43,7 +42,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.util.*
 import javax.swing.JPanel
 
 
@@ -171,13 +169,6 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   }
 
 
-  override fun findSequentNonExistingUntitled(): File {
-    return Optional
-      .ofNullable(PyUtil.`as`(myProjectGenerator, PythonProjectGenerator::class.java))
-      .map { it.newProjectPrefix }
-      .map { FileUtil.findSequentNonexistentFile(getBaseDir(), it!!, "") }
-      .orElseGet { super.findSequentNonExistingUntitled() }
-  }
 
   private fun getBaseDir(): File {
     if (PlatformUtils.isDataSpell() && Path.of(ProjectUtil.getBaseDir()).startsWith(PathManager.getConfigDir())) {

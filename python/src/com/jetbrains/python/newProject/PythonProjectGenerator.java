@@ -88,9 +88,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     myErrorCallback = errorCallback;
   }
 
-  public @Nullable JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
-    return null;
-  }
 
   /**
    * Upper part of project generation wizard panel could be customized

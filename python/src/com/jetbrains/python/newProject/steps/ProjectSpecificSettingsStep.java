@@ -61,7 +61,9 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
 
   public ProjectSpecificSettingsStep(final @NotNull DirectoryProjectGenerator<T> projectGenerator,
                                      final @NotNull AbstractNewProjectStep.AbstractCallback<T> callback) {
-    super(projectGenerator, callback);
+    super(projectGenerator, callback, (projectGenerator instanceof PythonProjectGenerator<T> pyProjectGenerator)
+                                      ? pyProjectGenerator.getNewProjectPrefix()
+                                      : null);
   }
 
   @Override
@@ -76,19 +78,12 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
   @Override
   protected @Nullable JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;
-    if (myProjectGenerator instanceof PythonProjectGenerator) {
-      advancedSettings = ((PythonProjectGenerator<?>)myProjectGenerator).getSettingsPanel(myProjectDirectory.get());
-    }
-    else if (myProjectGenerator instanceof WebProjectTemplate) {
+    if (myProjectGenerator instanceof WebProjectTemplate) {
       advancedSettings = getPeer().getComponent();
     }
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
       final HideableDecorator deco = new HideableDecorator(jPanel, PyBundle.message("python.new.project.more.settings"), false);
-      if (myProjectGenerator instanceof PythonProjectGenerator) {
-        final ValidationResult result = ((PythonProjectGenerator<?>)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
-        deco.setOn(!result.isOk());
-      }
       deco.setContentComponent(advancedSettings);
       return jPanel;
     }
@@ -361,16 +356,7 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
       .toList();
   }
 
-  @Override
-  protected @NotNull File findSequentNonExistingUntitled() {
-    return Optional
-      .ofNullable(PyUtil.as(myProjectGenerator, PythonProjectGenerator.class))
-      .map(PythonProjectGenerator::getNewProjectPrefix)
-      .map(it -> FileUtil.findSequentNonexistentFile(getBaseDir(), it, ""))
-      .orElseGet(() -> super.findSequentNonExistingUntitled());
-  }
-
-  /**
+   /**
    * If {@link PythonProjectGenerator} {@link PythonProjectGenerator#supportsWelcomeScript()},
    * {@link ProjectSpecificSettingsStep} and inheritors should ask use if one should be created, and return true if so.
    */
