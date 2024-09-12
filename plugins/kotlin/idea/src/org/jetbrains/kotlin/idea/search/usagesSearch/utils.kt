@@ -277,4 +277,3 @@ fun KtFile.getDefaultImports(): List<ImportPath> {
         .getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
 }
 
-fun PsiFile.scriptDefinitionExists(): Boolean = findScriptDefinition() != null

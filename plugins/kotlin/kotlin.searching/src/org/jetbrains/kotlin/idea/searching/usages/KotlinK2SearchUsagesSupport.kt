@@ -270,6 +270,10 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return false
     }
 
+    override fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {
+        return true
+    }
+
     override fun getDefaultImports(file: KtFile): List<ImportPath> {
         return file.getDefaultImports()
     }

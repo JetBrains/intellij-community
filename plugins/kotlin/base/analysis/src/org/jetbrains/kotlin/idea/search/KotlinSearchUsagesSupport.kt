@@ -138,6 +138,7 @@ interface KotlinSearchUsagesSupport {
     fun forceResolveReferences(file: KtFile, elements: List<KtElement>)
 
     fun scriptDefinitionExists(file: PsiFile): Boolean
+    fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean
 
     fun getDefaultImports(file: KtFile): List<ImportPath>
 

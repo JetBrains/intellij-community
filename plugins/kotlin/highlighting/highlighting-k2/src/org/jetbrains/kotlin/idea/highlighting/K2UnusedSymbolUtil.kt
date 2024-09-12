@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.findScriptsWithUsages
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
@@ -193,7 +193,7 @@ object K2UnusedSymbolUtil {
       val project = declaration.project
       val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
-      if (!findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
+      if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
           // Not all script configurations are loaded; behave like it is used
           return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
       }

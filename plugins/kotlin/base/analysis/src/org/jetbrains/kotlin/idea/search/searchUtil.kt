@@ -3,29 +3,21 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
-import com.intellij.psi.impl.cache.impl.id.IdIndex
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.util.Processor
-import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.scriptDefinitionExists
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
@@ -103,24 +95,6 @@ fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     }
 
     return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn)
-}
-
-fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {
-    val project = declaration.project
-    val scope = declaration.useScope() as? GlobalSearchScope ?: return true
-
-    val name = declaration.name.takeIf { it?.isNotBlank() == true } ?: return true
-    val collector = Processor<VirtualFile> { file ->
-        val ktFile =
-            (PsiManager.getInstance(project).findFile(file) as? KtFile)?.takeIf { it.scriptDefinitionExists() } ?: return@Processor true
-        processor(ktFile)
-    }
-    return FileBasedIndex.getInstance().getFilesWithKey(
-        IdIndex.NAME,
-        setOf(IdIndexEntry(name, true)),
-        collector,
-        scope
-    )
 }
 
 fun PsiReference.isImportUsage(): Boolean =
