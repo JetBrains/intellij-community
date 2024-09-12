@@ -18,24 +18,18 @@ import java.util.stream.Collectors;
  * {@link PathRelativizerService#toRelative} or {@link PathRelativizerService#toFull} with any path.
  */
 final class JavaSdkPathRelativizer implements PathRelativizer {
-  private @Nullable Map<String, String> javaSdkPathMap;
+  private final @NotNull Map<String, String> javaSdkPathMap;
 
-  JavaSdkPathRelativizer(@Nullable Set<? extends JpsSdk<?>> javaSdks) {
-    if (javaSdks != null) {
-      javaSdkPathMap = javaSdks.stream()
-        .collect(Collectors.toMap(sdk -> {
-          JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
-          return "$JDK_" + (version != null ? version.toString() : "0") + "$";
-        }, sdk -> PathRelativizerService.normalizePath(sdk.getHomePath()), (sdk1, sdk2) -> sdk1));
-    }
+  JavaSdkPathRelativizer(@NotNull Set<? extends JpsSdk<?>> javaSdks) {
+    javaSdkPathMap = javaSdks.stream()
+      .collect(Collectors.toMap(sdk -> {
+        JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
+        return "$JDK_" + (version == null ? "0" : version.toString()) + "$";
+      }, sdk -> PathRelativizerService.normalizePath(sdk.getHomePath()), (sdk1, sdk2) -> sdk1));
   }
 
   @Override
   public @Nullable String toRelativePath(@NotNull String path) {
-    if (javaSdkPathMap == null || javaSdkPathMap.isEmpty()) {
-      return null;
-    }
-
     for (Map.Entry<String, String> entry : javaSdkPathMap.entrySet()) {
       if (FileUtil.startsWith(path, entry.getValue())) {
         return entry.getKey() + path.substring(entry.getValue().length());
@@ -46,10 +40,6 @@ final class JavaSdkPathRelativizer implements PathRelativizer {
 
   @Override
   public @Nullable String toAbsolutePath(@NotNull String path) {
-    if (javaSdkPathMap == null || javaSdkPathMap.isEmpty()) {
-      return null;
-    }
-
     for (Map.Entry<String, String> it : javaSdkPathMap.entrySet()) {
       if (path.startsWith(it.getKey())) {
         return it.getValue() + path.substring(it.getKey().length());

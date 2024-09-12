@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +18,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class PathRelativizerService {
@@ -29,7 +27,7 @@ public final class PathRelativizerService {
   private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
-  private final List<PathRelativizer> relativizers;
+  private final PathRelativizer[] relativizers;
   private final Set<String> unhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
 
   public PathRelativizerService(@Nullable String projectPath) {
@@ -45,16 +43,12 @@ public final class PathRelativizerService {
   }
 
   public PathRelativizerService(@NotNull JpsProject project, @Nullable Boolean projectDirIsCaseSensitive) {
-    Set<JpsSdk<?>> javaSdks = project.getModules().stream()
-      .map(module -> module.getSdk(JpsJavaSdkType.INSTANCE))
-      .filter(sdk -> sdk != null && sdk.getVersionString() != null && sdk.getHomePath() != null)
-      .collect(Collectors.toSet());
+    Set<JpsSdk<?>> javaSdks = project.getModules().stream().map(module -> module.getSdk(JpsJavaSdkType.INSTANCE))
+      .filter(sdk -> sdk != null && sdk.getVersionString() != null && sdk.getHomePath() != null).collect(Collectors.toSet());
 
     File projectBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(project);
-    relativizers = initialize(projectBaseDirectory == null ? null : projectBaseDirectory.getAbsolutePath(),
-                              getBuildDirPath(project),
-                              projectDirIsCaseSensitive,
-                              javaSdks);
+    relativizers = initialize(projectBaseDirectory == null ? null : projectBaseDirectory.getAbsolutePath(), getBuildDirPath(project),
+                              projectDirIsCaseSensitive, javaSdks);
   }
 
   @TestOnly
@@ -111,19 +105,36 @@ public final class PathRelativizerService {
     }
   }
 
-  private static @NotNull List<PathRelativizer> initialize(@Nullable String projectPath,
-                                                           @Nullable String buildDirPath,
-                                                           @Nullable Boolean projectDirIsCaseSensitive,
-                                                           @Nullable Set<? extends JpsSdk<?>> javaSdks) {
+  private static PathRelativizer[] initialize(@Nullable String projectPath,
+                                              @Nullable String buildDirPath,
+                                              @Nullable Boolean projectDirIsCaseSensitive,
+                                              @Nullable Set<? extends JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath == null ? null : normalizePath(projectPath);
     String normalizedBuildDirPath = buildDirPath == null ? null : normalizePath(buildDirPath);
-    return List.of(
-      new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER, projectDirIsCaseSensitive),
-      new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER),
-      new JavaSdkPathRelativizer(javaSdks),
-      new MavenPathRelativizer(),
-      new GradlePathRelativizer()
-    );
+    List<PathRelativizer> result = new ArrayList<>(5);
+    if (normalizedBuildDirPath != null) {
+      result.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER, projectDirIsCaseSensitive == null
+                                                                                         ? SystemInfoRt.isFileSystemCaseSensitive
+                                                                                         : projectDirIsCaseSensitive));
+    }
+    if (normalizedProjectPath != null) {
+      result.add(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER));
+    }
+
+    if (javaSdks != null && !javaSdks.isEmpty()) {
+      result.add(new JavaSdkPathRelativizer(javaSdks));
+    }
+
+    String mavenRepositoryPath = MavenPathRelativizer.getNormalizedMavenRepositoryPath();
+    if (mavenRepositoryPath != null) {
+      result.add(new MavenPathRelativizer(mavenRepositoryPath));
+    }
+
+    String gradleRepositoryPath = GradlePathRelativizer.initializeGradleRepositoryPath();
+    if (gradleRepositoryPath != null) {
+      result.add(new GradlePathRelativizer(gradleRepositoryPath));
+    }
+    return result.toArray(new PathRelativizer[0]);
   }
 
   static @NotNull String normalizePath(@NotNull String path) {
