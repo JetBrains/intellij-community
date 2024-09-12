@@ -22,19 +22,24 @@ import javax.swing.SwingUtilities
 
 abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
   fun MockSearchEverywhereProvider.runSearchAndCollectLogEvents(testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
-    val emptyDisposable = Disposer.newDisposable()
+    val disposables = mutableListOf<Disposable>()
 
-    return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable) {
-      val searchEverywhereUI = this.provide(project)
+    try {
+      val emptyDisposable = Disposer.newDisposable()
+      disposables.add(emptyDisposable)
 
-      PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
+      return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable) {
+        val searchEverywhereUI = this.provide(project)
+        disposables.add(searchEverywhereUI)
 
-      testProcedure(searchEverywhereUI)
+        PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
 
-      Disposer.dispose(searchEverywhereUI)  // Otherwise, the instance seems to be reused between different tests
-    }.also {
-      Disposer.dispose(emptyDisposable)
-    }.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
+        testProcedure(searchEverywhereUI)
+      }.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
+    }
+    finally {
+      disposables.forEach { Disposer.dispose(it) }
+    }
   }
 
   fun SearchEverywhereUI.type(query: CharSequence) = also { searchEverywhereUI ->
