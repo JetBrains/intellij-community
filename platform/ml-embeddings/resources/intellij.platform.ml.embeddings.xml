@@ -10,7 +10,7 @@
                  description="Embeddings models version"
                  key="intellij.platform.ml.embeddings.model.version"/>
 
-    <registryKey defaultValue="2.0.138"
+    <registryKey defaultValue="2.0.139"
                  description="Embeddings native server version"
                  key="intellij.platform.ml.embeddings.server.version"/>
 

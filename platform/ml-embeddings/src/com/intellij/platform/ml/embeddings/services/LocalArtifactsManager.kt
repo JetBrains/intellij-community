@@ -203,13 +203,13 @@ sealed class ModelArtifact(
 ) : DownloadableArtifact {
   data object SmallModelArtifact : ModelArtifact("small", "dan_100k_optimized.onnx", "bert-base-uncased.txt")
 
-  override val archiveName = "$name.zip"
-  override val downloadLink: String = listOf(CDN_LINK_BASE, MODEL_VERSION, "$name.zip").joinToString(separator = "/")
+  final override val archiveName = "$name.zip"
+  override val downloadLink: String = listOf(CDN_LINK_BASE, MODEL_VERSION, archiveName).joinToString(separator = "/")
   override val destination: Path = LocalArtifactsManager.modelsRoot / name
 
   override fun checkPresent(): Boolean {
     // TODO: add signature check
-    return listOf(weightsPath, vocabPath).all { destination.resolve(it).exists() }
+    return destination.isDirectory() && listOf(weightsPath, vocabPath).all { destination.resolve(it).exists() }
   }
 
   fun getVocabPath(): Path = destination / vocabPath
@@ -217,7 +217,7 @@ sealed class ModelArtifact(
 
   companion object {
     // TODO: synchronize with teamcity config
-    private const val CDN_LINK_BASE = "https://download.jetbrains.com/resources/ml/embeddings/models"
+    private const val CDN_LINK_BASE = "https://download.jetbrains.com/resources/ml/full-line/models/embeddings"
   }
 }
 
