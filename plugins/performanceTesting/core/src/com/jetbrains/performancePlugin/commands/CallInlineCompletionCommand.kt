@@ -26,6 +26,9 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "callInlineCompletionCommand"
     const val SPAN_NAME: @NonNls String = "callInlineCompletion"
+    const val ON_SHOW_SPAN_NAME: @NonNls String = SPAN_NAME + "OnShow"
+    const val ON_COMPLETION_SPAN_NAME: @NonNls String = SPAN_NAME + "OnCompletion"
+    const val ON_HIDE_SPAN_NAME: @NonNls String = SPAN_NAME + "OnHide"
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -36,10 +39,11 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
     val listener = object : InlineCompletionEventAdapter {
       private var spanShow: Span? = null
       private var spanHide: Span? = null
+      private var completionSpan: Span? = null
       override fun onCompletion(event: InlineCompletionEventType.Completion) {
-        if (event.isActive) {
-          actionCallback.setDone()
-        }
+        completionSpan?.end()
+        completionSpan = null
+        actionCallback.setDone()
       }
 
       override fun onShow(event: InlineCompletionEventType.Show) {
@@ -49,8 +53,9 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
       }
 
       override fun onRequest(event: InlineCompletionEventType.Request) {
-        spanShow = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "Show").startSpan()
-        spanHide = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "Hide").startSpan()
+        spanShow = PerformanceTestSpan.TRACER.spanBuilder(ON_SHOW_SPAN_NAME).startSpan()
+        spanHide = PerformanceTestSpan.TRACER.spanBuilder(ON_HIDE_SPAN_NAME).startSpan()
+        completionSpan = PerformanceTestSpan.TRACER.spanBuilder(ON_COMPLETION_SPAN_NAME).startSpan()
       }
 
       override fun onHide(event: InlineCompletionEventType.Hide) {

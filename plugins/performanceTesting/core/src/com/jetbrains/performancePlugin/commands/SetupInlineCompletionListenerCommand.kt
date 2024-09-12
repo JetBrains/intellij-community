@@ -25,6 +25,9 @@ class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCo
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "setupInlineCompletionListener"
     const val SPAN_NAME: @NonNls String = "inlineCompletion"
+    const val ON_SHOW_SPAN_NAME: @NonNls String = SPAN_NAME + "OnShow"
+    const val ON_COMPLETION_SPAN_NAME: @NonNls String = SPAN_NAME + "OnCompletion"
+    const val ON_HIDE_SPAN_NAME: @NonNls String = SPAN_NAME + "OnHide"
     private val listeners: MutableMap<Editor, InlineCompletionEventListener> = mutableMapOf()
   }
 
@@ -39,11 +42,18 @@ class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCo
     val l = object : InlineCompletionEventAdapter {
       private var spanShow: Span? = null
       private var spanHide: Span? = null
+      private var completionSpan: Span? = null
       override fun onRequest(event: InlineCompletionEventType.Request) {
         currentOTContext.makeCurrent().use {
-          spanShow = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "Show").startSpan()
-          spanHide = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "Hide").startSpan()
+          spanShow = PerformanceTestSpan.TRACER.spanBuilder(ON_SHOW_SPAN_NAME).startSpan()
+          spanHide = PerformanceTestSpan.TRACER.spanBuilder(ON_HIDE_SPAN_NAME).startSpan()
+          completionSpan = PerformanceTestSpan.TRACER.spanBuilder(ON_COMPLETION_SPAN_NAME).startSpan()
         }
+      }
+
+      override fun onCompletion(event: InlineCompletionEventType.Completion) {
+        completionSpan?.end()
+        completionSpan = null
       }
 
       override fun onHide(event: InlineCompletionEventType.Hide) {
