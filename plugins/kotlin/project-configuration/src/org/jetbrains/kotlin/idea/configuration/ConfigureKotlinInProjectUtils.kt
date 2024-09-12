@@ -467,6 +467,7 @@ private const val GROUP_WITH_KOTLIN_VERSION = 2
 typealias ModulesNamesAndFirstSourceRootModules = Map<String, Module>
 typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootModules>
 
+@Deprecated("Use org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion instead")
 fun Module.getGradleKotlinVersion(): String? {
     return getKotlinCompilerArguments(this)?.pluginClasspaths?.let { pluginsClasspaths ->
         pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {

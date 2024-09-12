@@ -13,8 +13,8 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -41,6 +41,7 @@ interface KotlinGradleModel : Serializable {
     val kotlinTarget: String?
     val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet
     val gradleUserHome: String
+    val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 }
 
 data class KotlinGradleModelImpl(
@@ -53,6 +54,7 @@ data class KotlinGradleModelImpl(
     override val kotlinTarget: String? = null,
     override val kotlinTaskProperties: KotlinTaskPropertiesBySourceSet,
     override val gradleUserHome: String,
+    override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
 ) : KotlinGradleModel
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
@@ -252,6 +254,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
+            kotlinGradlePluginVersion = project.kotlinGradlePluginVersion()
         )
     }
 
@@ -290,5 +293,11 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
                 }
             }
         }
+    }
+
+    private fun Project.kotlinGradlePluginVersion(): KotlinGradlePluginVersion? {
+        val extension = project.extensions.findByName("kotlin") ?: return null
+        val kotlinGradlePluginVersionString = KotlinExtensionReflection(project, extension).kotlinGradlePluginVersion ?: return null
+        return KotlinGradlePluginVersion.parse(kotlinGradlePluginVersionString)
     }
 }

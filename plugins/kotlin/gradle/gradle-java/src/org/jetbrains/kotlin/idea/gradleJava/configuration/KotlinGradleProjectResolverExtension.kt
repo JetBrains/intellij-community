@@ -126,6 +126,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             pureKotlinSourceFolders.addAll(
                 gradleModel.kotlinTaskProperties.flatMap { it.value.pureKotlinSourceFolders ?: emptyList() }.map { it.absolutePath }
             )
+            kotlinGradlePluginVersion = gradleModel.kotlinGradlePluginVersion
             mainModuleNode.createChild(KotlinGradleProjectData.KEY, this)
         }
         if (gradleModel.hasKotlinPlugin) {
