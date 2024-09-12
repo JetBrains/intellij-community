@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathMapper
 import com.intellij.util.SystemProperties
@@ -69,16 +68,9 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
     val pathMapper = getPathMapper(project, sdk, settingsProvider)
     val envs = settingsProvider.envs.toMutableMap()
     putIPythonEnvFlag(project, envs)
-    if (Registry.`is`("python.use.targets.api")) {
-      val workingDirFunction = getWorkingDirFunction(project, module, pathMapper, settingsProvider)
-      val setupScriptFunction = createSetupScriptFunction(project, module, workingDirFunction, pathMapper, settingsProvider)
-      return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
-    }
-    else {
-      val workingDir = getWorkingDir(project, module, pathMapper, settingsProvider)
-      val setupFragment = createSetupFragment(module, workingDir, pathMapper, settingsProvider)
-      return ConstantConsoleParameters(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment)
-    }
+    val workingDirFunction = getWorkingDirFunction(project, module, pathMapper, settingsProvider)
+    val setupScriptFunction = createSetupScriptFunction(project, module, workingDirFunction, pathMapper, settingsProvider)
+    return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
   }
 
   override fun createConsoleRunner(project: Project, contextModule: Module?): PydevConsoleRunner {

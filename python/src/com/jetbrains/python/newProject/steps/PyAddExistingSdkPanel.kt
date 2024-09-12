@@ -87,33 +87,13 @@ class PyAddExistingSdkPanel(project: Project?,
     val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null &&
                                                   !needAssociateConfigurationWithModule(it.targetEnvConfiguration) }
     val interpreterComponent: JComponent
-    if (Registry.`is`("python.use.targets.api")) {
-      val preselectedSdk = sdksForNewProject.firstOrNull { it == preferredSdk }
-      val pythonSdkComboBox = createPythonSdkComboBox(sdksForNewProject, preselectedSdk)
-      pythonSdkComboBox.addActionListener { update() }
-      interpreterComponent = pythonSdkComboBox.withAddInterpreterLink(project, module)
-      sdkComboBox = pythonSdkComboBox
-      addSdkChangedListener = { runnable ->
-        sdkComboBox.addActionListener { runnable.run() }
-      }
-    }
-    else {
-      val legacySdkChooser = PythonSdkChooserCombo(project, module,
-                                                   sdksForNewProject) {
-        it != null && it == preferredSdk
-      }.apply {
-        if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
-          putClientProperty("JButton.buttonType", null)
-        }
-        addChangedListener {
-          update()
-        }
-      }
-      interpreterComponent = legacySdkChooser
-      sdkComboBox = legacySdkChooser.comboBox
-      addSdkChangedListener = { runnable ->
-        legacySdkChooser.addChangedListener { runnable.run() }
-      }
+    val preselectedSdk = sdksForNewProject.firstOrNull { it == preferredSdk }
+    val pythonSdkComboBox = createPythonSdkComboBox(sdksForNewProject, preselectedSdk)
+    pythonSdkComboBox.addActionListener { update() }
+    interpreterComponent = pythonSdkComboBox.withAddInterpreterLink(project, module)
+    sdkComboBox = pythonSdkComboBox
+    addSdkChangedListener = { runnable ->
+      sdkComboBox.addActionListener { runnable.run() }
     }
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), interpreterComponent)

@@ -153,16 +153,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   @RequiresEdt
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    if (Registry.is("python.use.targets.api")) {
-      return createSessionUsingTargetsApi(state, environment);
-    }
-    if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
-      Project project = environment.getProject();
-      Module module = PyRunnerUtil.getModule(state);
-      throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
-                                              () -> showPythonInterpreterSettings(project, module));
-    }
-    return createSessionLegacy(state, environment);
+    return createSessionUsingTargetsApi(state, environment);
   }
 
   private @NotNull Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,

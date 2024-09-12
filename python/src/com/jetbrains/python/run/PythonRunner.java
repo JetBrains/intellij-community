@@ -58,23 +58,12 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     execute(state, () -> {
       try {
-        boolean useTargetsAPI = Registry.is("python.use.targets.api");
 
         ExecutionResult executionResult;
-        RunProfile profile = env.getRunProfile();
-        if (useTargetsAPI && state instanceof PythonCommandLineState) {
+        if (state instanceof PythonCommandLineState) {
           // TODO [cloud-api.python] profile functionality must be applied here:
           //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
           executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
-        }
-        else if (!useTargetsAPI && PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
-          Project project = env.getProject();
-          Module module = PyRunnerUtil.getModule(state);
-          throw new ExecutionExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
-                                                    () -> showPythonInterpreterSettings(project, module));
-        }
-        else if (!useTargetsAPI && state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
-          executionResult = ((PythonCommandLineState)state).execute(env.getExecutor(), (CommandLinePatcher)profile);
         }
         else {
           executionResult = state.execute(env.getExecutor(), this);

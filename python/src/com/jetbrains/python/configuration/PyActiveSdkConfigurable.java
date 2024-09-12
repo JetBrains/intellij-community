@@ -107,13 +107,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton additionalAction;
-    if (Registry.get("python.use.targets.api").asBoolean()) {
-      additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
-                                            link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
-    }
-    else {
-      additionalAction = buildDetailsButton(mySdkCombo, this::onShowDetailsClicked);
-    }
+    additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
+                                          link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
 
     myMainPanel = buildPanel(project, mySdkCombo, additionalAction, myPackagesPanel, packagesNotificationPanel, customizer);
 
@@ -239,13 +234,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void onShowAllSelected() {
-    if (Registry.is("python.use.targets.api")) {
-      Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
-      onShowAllInterpretersDialogClosed(selectedSdk);
-    }
-    else {
-      buildAllSdksDialog().show();
-    }
+    Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
+    onShowAllInterpretersDialogClosed(selectedSdk);
   }
 
   protected void onSdkSelected() {

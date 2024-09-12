@@ -10,15 +10,7 @@ class PyRunConfigurationTargetOptions : PyRunConfigurationEditorExtension {
   private val factoriesCache = WeakHashMap<RunConfigurationTargetEnvironmentAdjuster, PyRunConfigurationEditorFactory>()
 
   override fun accepts(configuration: AbstractPythonRunConfiguration<out AbstractPythonRunConfiguration<*>>): PyRunConfigurationEditorFactory? {
-    if (!Registry.`is`("python.use.targets.api")) return null
-    val sdk = configuration.sdk ?: return null
-    val adjuster = RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk) ?: return null
-    return if (adjuster.providesAdditionalRunConfigurationUI()) {
-      factoriesCache.computeIfAbsent(adjuster) { RunConfigurationsTargetOptionsFactory(adjuster) }
-    }
-    else {
-      null
-    }
+    return null
   }
 
   private class RunConfigurationsTargetOptionsFactory(private val adjuster: RunConfigurationTargetEnvironmentAdjuster) : PyRunConfigurationEditorFactory {

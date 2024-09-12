@@ -551,7 +551,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
 
     <!-- Targets API -->
-    <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API."/>
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
     <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
                  description="Use project location as a working directory for the packaging tool execution."/>
@@ -856,7 +855,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
-    <remoteSdkValidator implementation="com.jetbrains.python.target.PyTargetSdkValidator"/>
 
     <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
     <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>

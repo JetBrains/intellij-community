@@ -138,26 +138,21 @@ public final class PythonSdkUpdater {
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        if (Registry.get("python.use.targets.api").asBoolean()) {
-          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
-          String version = targetsFacade.getInterpreterVersion(indicator);
-          commitSdkVersionIfChanged(mySdk, version);
-          if (targetsFacade.isLocalTarget()) {
-            List<String> paths = targetsFacade.getInterpreterPaths(indicator);
-            updateSdkPaths(mySdk, paths, myProject);
-          }
-          else {
-            targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
-          }
+        PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
+        String version = targetsFacade.getInterpreterVersion(indicator);
+        commitSdkVersionIfChanged(mySdk, version);
+        if (targetsFacade.isLocalTarget()) {
+          List<String> paths = targetsFacade.getInterpreterPaths(indicator);
+          updateSdkPaths(mySdk, paths, myProject);
         }
         else {
-          updateLocalSdkVersionAndPaths(mySdk, myProject);
+          targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
         }
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
         refreshPackages(mySdk, indicator);
       }
-      catch (InvalidSdkException | ExecutionException e) {
+      catch (ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
       finally {

@@ -83,16 +83,11 @@ class PySdkPopupFactory(val module: Module) {
     }
 
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
-    if (Registry.get("python.use.targets.api").asBoolean()) {
-      val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
-      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { switchToSdk(module, it, currentSdk) })
-      group.add(addNewInterpreterPopupGroup)
-      group.addSeparator()
-    }
+    val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
+    addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { switchToSdk(module, it, currentSdk) })
+    group.add(addNewInterpreterPopupGroup)
+    group.addSeparator()
     group.add(InterpreterSettingsAction())
-    if (!Registry.get("python.use.targets.api").asBoolean()) {
-      group.add(AddInterpreterAction(module.project, module, currentSdk))
-    }
     group.add(object : AnAction(PyBundle.message("python.packaging.interpreter.widget.manage.packages")) {
       override fun actionPerformed(e: AnActionEvent) {
         ToolWindowManager.getInstance(module.project).getToolWindow("Python Packages")?.show()
