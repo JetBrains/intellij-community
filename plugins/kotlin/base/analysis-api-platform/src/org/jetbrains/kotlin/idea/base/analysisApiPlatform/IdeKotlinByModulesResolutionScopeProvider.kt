@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
@@ -6,17 +6,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
+import org.jetbrains.kotlin.idea.base.analysis.builtins.hasCommonKotlinStdlib
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isJs
-import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.kotlin.platform.wasm.isWasm
 
 internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
@@ -72,20 +68,6 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
         }
 
         return scope
-    }
-
-    /**
-     * Checks if a source module with the [this] target will depend on a common stdlib artifact.
-     *
-     * This also means that the module is `common` in HMPP terms
-     */
-    private fun TargetPlatform.hasCommonKotlinStdlib(): Boolean {
-        if (componentPlatforms.size <= 1) return false
-        if (isJvm()) return false
-        if (isJs()) return false
-        if (isWasm()) return false
-        if (isNative()) return false
-        return true
     }
 
     private fun GlobalSearchScope.withBuiltInsScope(project: Project): GlobalSearchScope {
