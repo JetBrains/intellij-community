@@ -56,7 +56,14 @@ public class ClassesProcessor {
     }
 
     private String getType() {
-        return type == ClassNode.CLASS_ANONYMOUS ? "ANONYMOUS" : type == ClassNode.CLASS_LAMBDA ? "LAMBDA" : type == ClassNode.CLASS_LOCAL ? "LOCAL" : type == ClassNode.CLASS_MEMBER ? "MEMBER" : type == ClassNode.CLASS_ROOT ? "ROOT" : "UNKNOWN(" + type +")";
+      return switch (type) {
+        case ClassNode.CLASS_ANONYMOUS -> "ANONYMOUS";
+        case ClassNode.CLASS_LAMBDA -> "LAMBDA";
+        case ClassNode.CLASS_LOCAL -> "LOCAL";
+        case ClassNode.CLASS_MEMBER -> "MEMBER";
+        case ClassNode.CLASS_ROOT -> "ROOT";
+        default -> "UNKNOWN(" + type + ")";
+      };
     }
   }
 
@@ -145,7 +152,7 @@ public class ClassesProcessor {
 
               // enclosing class
               String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
-              if (enclClassName == null || innerName.equals(enclClassName)) {
+              if (enclClassName == null || innerName == null || innerName.equals(enclClassName)) {
                 continue;  // invalid name or self reference
               }
               if (rec.type == ClassNode.CLASS_MEMBER && !innerName.equals(enclClassName + '$' + entry.simpleName)) {

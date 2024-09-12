@@ -599,7 +599,7 @@ public class VarDefinitionHelper {
             }
             else if (stat.type == Statement.StatementType.TRY_CATCH ||
               stat.type == Statement.StatementType.CATCH_ALL) {
-              leaked_n.clear(); // Catches can't leak anything mwhahahahah!
+              leaked_n.clear(); // Catches can't leak anything!
             }
             this_vars.putAll(leaked_n);
           }
@@ -667,7 +667,7 @@ public class VarDefinitionHelper {
 
   private boolean remapVar(Statement stat, VarVersionPair from, VarVersionPair to) {
     if (from.equals(to))
-      throw new IllegalArgumentException("Shit went wrong: " + from);
+      throw new IllegalArgumentException("Something went wrong: " + from);
     boolean success = false;
     if (stat.getExprents() == null) {
       for (Object obj : stat.getSequentialObjects()) {

@@ -80,11 +80,6 @@ public class Fernflower implements IDecompiledData {
 
     DecompilerContext.setCurrentContext(context);
 
-    String vendor = System.getProperty("java.vendor", "missing vendor");
-    String javaVersion = System.getProperty("java.version", "missing java version");
-    String jvmVersion = System.getProperty("java.vm.version", "missing jvm version");
-    logger.writeMessage(String.format("JVM info: %s - %s - %s", vendor, javaVersion, jvmVersion), IFernflowerLogger.Severity.INFO);
-
     if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
       ClasspathScanner.addAllClasspath(structContext);
     }

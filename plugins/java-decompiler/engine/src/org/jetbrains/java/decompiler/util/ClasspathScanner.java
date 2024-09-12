@@ -14,7 +14,6 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-//todo support path from idea?
 public final class ClasspathScanner {
 
     public static void addAllClasspath(StructContext ctx) {

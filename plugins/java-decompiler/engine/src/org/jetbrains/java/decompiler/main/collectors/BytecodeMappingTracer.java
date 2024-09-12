@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.collectors;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.struct.attr.StructLineNumberTableAttribute;
 
 import java.util.*;
@@ -31,7 +32,7 @@ public class BytecodeMappingTracer {
     mapping.putIfAbsent(bytecode_offset, currentSourceLine);
   }
 
-  public void addMapping(BitSet bytecode_offsets) {
+  public void addMapping(@Nullable BitSet bytecode_offsets) {
     if (bytecode_offsets != null) {
       for (int i = bytecode_offsets.nextSetBit(0); i >= 0; i = bytecode_offsets.nextSetBit(i+1)) {
         addMapping(i);

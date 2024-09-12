@@ -834,7 +834,8 @@ public abstract class Statement implements IMatchable {
   }
 
   //TODO: Cleanup/cache?
-  public void getOffset(BitSet values) {
+  public void getOffset(@Nullable BitSet values) {
+    if (values == null) return;
     if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null)
       values.or(((DummyExitStatement)this).bytecode);
     if (this.getExprents() != null) {

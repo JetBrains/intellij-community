@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -45,6 +46,7 @@ public abstract class Exprent implements IMatchable {
 
   public final int type;
   public final int id;
+  @Nullable
   public BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
 
   public Exprent(int type) {
@@ -145,7 +147,7 @@ public abstract class Exprent implements IMatchable {
 
   public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
 
-  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
+  public void addBytecodeOffsets(@Nullable BitSet bytecodeOffsets) {
     if (bytecodeOffsets != null) {
       if (bytecode == null) {
         bytecode = new BitSet();
@@ -154,19 +156,19 @@ public abstract class Exprent implements IMatchable {
     }
   }
 
-  public abstract void getBytecodeRange(BitSet values);
+  public abstract void getBytecodeRange(@Nullable BitSet values);
 
-  protected void measureBytecode(BitSet values) {
-    if (bytecode != null)
+  protected void measureBytecode(@Nullable BitSet values) {
+    if (bytecode != null && values != null)
       values.or(bytecode);
   }
 
-  protected static void measureBytecode(BitSet values, Exprent exprent) {
+  protected static void measureBytecode(@Nullable BitSet values, @Nullable Exprent exprent) {
     if (exprent != null)
       exprent.getBytecodeRange(values);
   }
 
-  protected static void measureBytecode(BitSet values, List<? extends Exprent> list) {
+  protected static void measureBytecode(@Nullable BitSet values, @Nullable List<? extends Exprent> list) {
     if (list != null && !list.isEmpty()) {
       for (Exprent e : list)
         e.getBytecodeRange(values);

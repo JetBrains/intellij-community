@@ -233,6 +233,7 @@ public final class CatchStatement extends Statement {
 
   @Override
   public void getOffset(BitSet values) {
+    if (values == null) return;
     super.getOffset(values);
 
     for (Exprent exp : this.getResources()) {

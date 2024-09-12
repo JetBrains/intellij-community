@@ -99,9 +99,7 @@ public final class DotExporter {
   private static Collection<BasicBlock> unique(List<BasicBlock> blocks, boolean showMultipleEdges) {
     if (showMultipleEdges)
       return blocks;
-    var set = new LinkedHashSet<BasicBlock>();
-    set.addAll(blocks);
-    return set;
+    return new LinkedHashSet<>(blocks);
   }
 
   private static String toDotFormat(VarVersionsGraph graph) {
@@ -145,7 +143,7 @@ public final class DotExporter {
           for (Entry<Integer, FastSparseSet<Integer>> entry : lst) {
             label.append("\\n").append(entry.getKey());
             Set<Integer> set = entry.getValue().toPlainSet();
-            label.append("=").append(set.toString());
+            label.append("=").append(set);
           }
         }
       }
@@ -194,6 +192,7 @@ public final class DotExporter {
   }
 
   public static void toDotFile(DirectGraph dgraph, StructMethod mt, String suffix) {
+    if (DecompilerContext.getProperty(IFernflowerPreferences.DOTS_FOLDER) == null) return;
     toDotFile(dgraph, mt, suffix, null);
   }
 

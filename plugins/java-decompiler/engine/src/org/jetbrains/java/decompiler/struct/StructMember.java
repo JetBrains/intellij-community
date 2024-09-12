@@ -127,16 +127,4 @@ public abstract class StructMember {
       ((StructLocalVariableTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TABLE.name)).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.name));
     return attributes;
   }
-
-  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
-    StructGeneralAttribute attribute = StructGeneralAttribute.createAttribute(name);
-    int length = in.readInt();
-    if (attribute == null) {
-      in.discard(length);
-    }
-    else {
-      attribute.initContent(in, pool);
-    }
-    return attribute;
-  }
 }

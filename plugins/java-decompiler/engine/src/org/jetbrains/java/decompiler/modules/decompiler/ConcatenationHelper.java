@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.ClassNameConstants;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
@@ -158,7 +159,7 @@ public final class ConcatenationHelper {
     return createConcatExprent(lstOperands, expr.bytecode);
   }
 
-  private static Exprent createConcatExprent(List<Exprent> lstOperands, BitSet bytecode) {
+  private static Exprent createConcatExprent(List<Exprent> lstOperands, @Nullable BitSet bytecode) {
     // build exprent to return
     Exprent func = lstOperands.get(0);
 
