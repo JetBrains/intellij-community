@@ -5518,6 +5518,14 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-71002
+  public void testExplicitAnyNotSubstitutedByDefaults() {
+    doTest("Test[Any, Any, bool]", """
+      class Test[T = str, T1 = int, T2 = bool]: ...
+      expr = Test[Any, Any]()
+      """);
+  }
+
   public void testDataclassTransformConstructorSignature() {
     doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
       from typing import dataclass_transform

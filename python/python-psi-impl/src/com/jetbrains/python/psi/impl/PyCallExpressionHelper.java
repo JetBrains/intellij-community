@@ -539,15 +539,7 @@ public final class PyCallExpressionHelper {
         }
       }
     }
-    if (callee instanceof PySubscriptionExpression subscriptionExpression) {
-      PyExpression operandExpr = subscriptionExpression.getOperand();
-      PyType operandType = context.getType(operandExpr);
-      if (operandType instanceof PyClassType classType) {
-        PyType parameterizeClassWithDefaults = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, callee, true, context);
-        if (parameterizeClassWithDefaults instanceof PyCollectionType) {
-          return parameterizeClassWithDefaults;
-        }
-      }
+    if (callee instanceof PySubscriptionExpression) {
       final PyType parametrizedType = Ref.deref(PyTypingTypeProvider.getType(callee, context));
       if (parametrizedType != null) {
         return parametrizedType;
