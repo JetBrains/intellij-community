@@ -30,13 +30,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub<?>, PsiClass> {
+public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub<PsiClass>, PsiClass> {
   JavaClassElementType(@NotNull String id, @NotNull IElementType parentElementType) {
     super(id, parentElementType);
   }
 
   @Override
-  public PsiClass createPsi(final @NotNull PsiClassStub stub) {
+  public PsiClass createPsi(final @NotNull PsiClassStub<PsiClass> stub) {
     return getPsiFactory(stub).createClass(stub);
   }
 
@@ -56,7 +56,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public @NotNull PsiClassStub createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiClassStub<PsiClass> createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     boolean isDeprecatedByComment = false;
     boolean isInterface = false;
     boolean isEnum = false;
@@ -167,7 +167,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public @NotNull PsiClassStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiClassStub<PsiClass> deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     short flags = dataStream.readShort();
     boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
     boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
@@ -181,13 +181,13 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
         name = typeInfo.getShortTypeText();
       }
       String sourceFileName = dataStream.readNameString();
-      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, typeInfo, name, null, flags);
+      PsiClassStubImpl<PsiClass> classStub = new PsiClassStubImpl<>(type, parentStub, typeInfo, name, null, flags);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
     else {
       String baseRef = dataStream.readNameString();
-      return new PsiClassStubImpl(type, parentStub, TypeInfo.SimpleTypeInfo.NULL, null, baseRef, flags);
+      return new PsiClassStubImpl<>(type, parentStub, TypeInfo.SimpleTypeInfo.NULL, null, baseRef, flags);
     }
   }
 
