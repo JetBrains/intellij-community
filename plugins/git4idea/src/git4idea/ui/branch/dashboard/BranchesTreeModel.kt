@@ -104,11 +104,6 @@ internal class NodeDescriptorsModel(
   private val localRootNodeDescriptor: BranchNodeDescriptor,
   private val remoteRootNodeDescriptor: BranchNodeDescriptor,
 ) {
-  var localNodeExist = false
-    private set
-  var remoteNodeExist = false
-    private set
-
   /**
    * Parent node descriptor to direct children map
    */
@@ -125,9 +120,6 @@ internal class NodeDescriptorsModel(
     groupingConfig: Map<GroupingKey, Boolean>,
   ) {
     clear()
-
-    localNodeExist = localBranches.isNotEmpty()
-    remoteNodeExist = remoteBranches.isNotEmpty()
 
     val branches = (localBranches.asSequence() + remoteBranches.asSequence()).filter(filter)
 

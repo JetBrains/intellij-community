@@ -295,11 +295,8 @@ internal abstract class FilteringBranchesTreeBase(
   final override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
     when (nodeDescriptor.type) {
       NodeType.ROOT -> getRootNodeDescriptors()
-      NodeType.LOCAL_ROOT -> localBranchesNode.getNodeDescriptor().getDirectChildren()
-      NodeType.REMOTE_ROOT -> remoteBranchesNode.getNodeDescriptor().getDirectChildren()
-      NodeType.GROUP_NODE -> nodeDescriptor.getDirectChildren()
-      NodeType.GROUP_REPOSITORY_NODE -> nodeDescriptor.getDirectChildren()
-      else -> emptyList() //leaf branch node
+      NodeType.BRANCH, NodeType.HEAD_NODE -> emptyList()
+      else -> nodeDescriptorsModel.getChildrenForParent(nodeDescriptor)
     }
 
   final override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply =
@@ -322,14 +319,17 @@ internal abstract class FilteringBranchesTreeBase(
 
   private fun isMy(branch: BranchInfo) = branch.isMy == ThreeState.YES
 
-  private fun getRootNodeDescriptors() =
-    mutableListOf<BranchNodeDescriptor>().apply {
-      if (nodeDescriptorsModel.localNodeExist || nodeDescriptorsModel.remoteNodeExist) add(headBranchesNode.getNodeDescriptor())
-      if (nodeDescriptorsModel.localNodeExist) add(localBranchesNode.getNodeDescriptor())
-      if (nodeDescriptorsModel.remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
+  private fun getRootNodeDescriptors(): List<BranchNodeDescriptor> = buildList {
+    listOf(localBranchesNode, remoteBranchesNode).forEach {
+      val rootNodeDescriptor = it.getNodeDescriptor()
+      if (getChildren(rootNodeDescriptor).isNotEmpty()) {
+        add(rootNodeDescriptor)
+      }
     }
-
-  private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
+    if (isNotEmpty()) {
+      add(0, headBranchesNode.getNodeDescriptor())
+    }
+  }
 }
 
 internal class FilteringBranchesTree(
