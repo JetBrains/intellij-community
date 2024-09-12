@@ -75,17 +75,17 @@ class EditorCellOutputs(
       val shouldUpdate = oldHeight != newHeight
       field = value
 
-      if (shouldUpdate)
+      if (shouldUpdate) {
         JupyterBoundsChangeHandler.get(editor)?.boundsChanged()
+      }
     }
 
   init {
     update()
   }
 
-  override fun doDispose() {
-    outputs.forEach { it.dispose() }
-    inlay?.let { Disposer.dispose(it) }
+  override fun dispose() {
+    super.dispose()
   }
 
   override fun calculateBounds(): Rectangle {
@@ -120,8 +120,10 @@ class EditorCellOutputs(
       }
     }
     else {
-      inlay?.let { Disposer.dispose(it) }
-      inlay = null
+      inlay?.let {
+        Disposer.dispose(it)
+        inlay = null
+      }
     }
   }
 
@@ -172,7 +174,6 @@ class EditorCellOutputs(
   private fun removeOutput(idx: Int) {
     innerComponent.remove(idx)
     val outputComponent = _outputs.removeAt(idx)
-    outputComponent.dispose()
     remove(outputComponent)
   }
 
@@ -239,6 +240,7 @@ class EditorCellOutputs(
     priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
     offset = computeInlayOffset(editor.document, interval().lines),
   ).also { inlay ->
+    Disposer.register(this, inlay)
     Disposer.register(inlay) {
       onInlayDisposed(this)
     }

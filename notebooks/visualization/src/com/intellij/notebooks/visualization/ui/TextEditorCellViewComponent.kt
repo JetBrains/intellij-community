@@ -48,6 +48,8 @@ class TextEditorCellViewComponent(
     }
   }
 
+  private val presentationToInlay = mutableMapOf<InlayPresentation, Inlay<*>>()
+
   init {
     editor.contentComponent.addMouseListener(mouseListener)
   }
@@ -71,9 +73,9 @@ class TextEditorCellViewComponent(
     }
   }
 
-  override fun doDispose() {
+  override fun dispose() {
+    super.dispose()
     disposeExistingHighlighter()
-    presentationToInlay.values.forEach { Disposer.dispose(it) }
     editor.contentComponent.removeMouseListener(mouseListener)
   }
 
@@ -133,8 +135,6 @@ class TextEditorCellViewComponent(
     editor.caretModel.moveToOffset(offset)
   }
 
-  private val presentationToInlay = mutableMapOf<InlayPresentation, Inlay<*>>()
-
   override fun addInlayBelow(presentation: InlayPresentation) {
     editor.inlayModel.addBlockElement(
       editor.document.getLineEndOffset(cell.interval.lines.last),
@@ -144,6 +144,7 @@ class TextEditorCellViewComponent(
       PresentationRenderer(presentation)
     )?.also { inlay ->
       presentationToInlay[presentation] = inlay
+      Disposer.register(this, inlay)
     }
   }
 

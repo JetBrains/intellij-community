@@ -16,7 +16,6 @@ class ControllerEditorCellViewComponent(
   private val cell: EditorCell,
 ) : EditorCellViewComponent(), HasGutterIcon {
 
-
   private var foldedRegion: FoldRegion? = null
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
@@ -25,8 +24,9 @@ class ControllerEditorCellViewComponent(
     inlay.update()
   }
 
-  override fun doDispose() {
-    controller.let { controller -> Disposer.dispose(controller.inlay) }
+  override fun dispose() {
+    super.dispose()
+    Disposer.dispose(controller.inlay)
     disposeFolding()
   }
 

@@ -12,22 +12,21 @@ abstract class EditorCellViewComponent : Disposable {
 
   private val children = mutableListOf<EditorCellViewComponent>()
 
+  /* Add automatically registers child disposable. */
   fun add(child: EditorCellViewComponent) {
     children.add(child)
     child.parent = this
+    Disposer.register(this, child)
   }
 
+  /* Chile disposable will be automatically disposed. */
   fun remove(child: EditorCellViewComponent) {
+    Disposer.dispose(child)
     children.remove(child)
     child.parent = null
   }
 
-  override fun dispose() {
-    children.forEach { Disposer.dispose(it) }
-    doDispose()
-  }
-
-  open fun doDispose() = Unit
+  override fun dispose() = Unit
 
   fun onViewportChange() {
     children.forEach { it.onViewportChange() }

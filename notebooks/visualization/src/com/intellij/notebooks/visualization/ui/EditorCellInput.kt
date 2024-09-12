@@ -37,7 +37,6 @@ class EditorCellInput(
 
   private fun getFoldingBounds(): Pair<Int, Int> {
     //For disposed
-    cell
     if (cell.intervalPointer.get() == null) {
       return Pair(0, 0)
     }
@@ -58,7 +57,8 @@ class EditorCellInput(
     (component as? InputComponent)?.updateFolding(ctx, folded)
   }
 
-  override fun doDispose() {
+  override fun dispose() {
+    super.dispose()
     folding.dispose()
   }
 

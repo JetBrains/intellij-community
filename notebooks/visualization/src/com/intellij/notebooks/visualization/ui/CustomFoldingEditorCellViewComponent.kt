@@ -39,11 +39,14 @@ class CustomFoldingEditorCellViewComponent(
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     background = EditorGutterColor.getEditorGutterBackgroundColor(editor as EditorImpl, false)
   }
+
   private val mainComponent = JPanel().also {
     it.layout = BorderLayout()
     it.add(component, BorderLayout.CENTER)
     it.add(bottomContainer, BorderLayout.SOUTH)
   }
+
+  private val presentationToComponent = mutableMapOf<InlayPresentation, JComponent>()
 
   @TestOnly
   fun getComponentForTest(): JComponent {
@@ -55,7 +58,8 @@ class CustomFoldingEditorCellViewComponent(
     foldingRegion?.update()
   }
 
-  override fun doDispose() {
+  override fun dispose() {
+    super.dispose()
     disposeFolding()
   }
 
@@ -101,8 +105,6 @@ class CustomFoldingEditorCellViewComponent(
       editor.componentContainer.add(mainComponent, CustomFoldingConstraint(fr, true))
     }
   }
-
-  private val presentationToComponent = mutableMapOf<InlayPresentation, JComponent>()
 
   override fun addInlayBelow(presentation: InlayPresentation) {
     val inlayComponent = object : JComponent() {

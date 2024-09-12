@@ -94,16 +94,15 @@ class EditorCellView(
       add(it)
     }
 
-
   fun postInitInlays() {
     updateControllers()
   }
 
-  override fun doDispose() {
+  override fun dispose() {
+    super.dispose()
     _controllers.forEach { controller ->
       disposeController(controller)
     }
-    outputs?.let { Disposer.dispose(it) }
     removeCellHighlight()
   }
 
@@ -158,11 +157,9 @@ class EditorCellView(
   internal fun updateOutputs() {
     if (hasOutputs()) {
       if (outputs == null) {
-        outputs = EditorCellOutputs(editor, { interval })
-          .also {
-            Disposer.register(this, it)
-            add(it)
-          }
+        outputs = EditorCellOutputs(editor, { interval }).also {
+          add(it)
+        }
         updateCellHighlight()
         updateFolding()
       }
@@ -172,10 +169,9 @@ class EditorCellView(
     }
     else {
       outputs?.let {
-        Disposer.dispose(it)
         remove(it)
+        outputs = null
       }
-      outputs = null
     }
   }
 
@@ -326,7 +322,6 @@ class EditorCellView(
   private fun updateRunButtonVisibility() {
     input.runCellButton?.visible = !disableActions && (mouseOver || selected)
   }
-
 
   override fun calculateBounds(): Rectangle {
     val inputBounds = input.calculateBounds()
