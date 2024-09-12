@@ -129,8 +129,7 @@ public final class BatchEvaluator {
         return false;
       }
 
-      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
-      DebuggerUtilsEx.setValuesNoCheck(argArray, values);
+      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values, evaluationContext);
       String value = DebuggerUtils.getInstance().processCollectibleValue(
         () -> ((DebugProcessImpl)debugProcess).invokeMethod(
           evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
@@ -164,7 +163,7 @@ public final class BatchEvaluator {
         return true;
       }
     }
-    catch (ClassNotLoadedException | ObjectCollectedException | EvaluateException | InvalidTypeException e) {
+    catch (ObjectCollectedException | EvaluateException e) {
       LOG.debug(e);
     }
     return false;
