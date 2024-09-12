@@ -671,11 +671,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       return ref;
     }
-    else if ((element instanceof PsiField || element instanceof PsiMethod) && ((PsiMember) element).hasModifierProperty(PsiModifier.STATIC)) {
+    else if ((element instanceof PsiField || element instanceof PsiMethod)) {
       PsiMember member = (PsiMember) element;
       PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
-      String qName = psiClass.getQualifiedName() + "." + member.getName();
+      boolean isStatic = ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC);
+      String qName = psiClass.getQualifiedName() + (isStatic ? "." : ".this.") + member.getName();
       PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       return ref;

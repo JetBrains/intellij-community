@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -70,8 +70,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       if (usage instanceof MemberHidesStaticImportUsageInfo) {
         staticImportHides.add((MemberHidesStaticImportUsageInfo)usage);
       } else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
-        PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
-        PsiMethod resolved = (PsiMethod)collidingRef.resolve();
+        PsiReference reference = element.getReference();
+        if (reference == null) continue;
+        PsiMethod resolved = (PsiMethod)reference.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
       }
       else if (!(element instanceof PsiMethod overrider)) {

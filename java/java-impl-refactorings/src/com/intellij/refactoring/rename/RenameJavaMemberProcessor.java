@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -19,8 +19,6 @@ import java.util.Set;
 
 
 public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcessor {
-  private static final Logger LOG = Logger.getInstance(RenameJavaMemberProcessor.class);
-
   public static void qualifyMember(PsiMember member, PsiElement occurence, String newName) throws IncorrectOperationException {
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
@@ -123,10 +121,11 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
   protected static void qualifyOuterMemberReferences(final List<? extends MemberHidesOuterMemberUsageInfo> outerHides) throws IncorrectOperationException {
     for (MemberHidesOuterMemberUsageInfo usage : outerHides) {
       final PsiElement element = usage.getElement();
-      PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
+      if (element == null) continue;
       PsiMember member = (PsiMember)usage.getReferencedElement();
-      PsiReferenceExpression ref = createMemberReference(member, collidingRef);
-      collidingRef.replace(ref);
+      if (member == null) continue;
+      PsiReference reference = element.getReference();
+      if (reference != null) JavaCodeStyleManager.getInstance(element.getProject()).shortenClassReferences(reference.bindToElement(member));
     }
   }
 

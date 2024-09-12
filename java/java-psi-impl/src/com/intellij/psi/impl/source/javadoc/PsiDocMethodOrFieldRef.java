@@ -335,13 +335,11 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           ((PsiJavaCodeReferenceElement)ref).bindToElement(containingClass);
         }
       }
-      else {
-        if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
-          PsiDocComment fromText = JavaPsiFacade.getElementFactory(containingClass.getProject())
-            .createDocCommentFromText("/**{@link " + containingClass.getQualifiedName() + "#" + newName + "}*/");
-          PsiDocMethodOrFieldRef methodOrFieldRefFromText = PsiTreeUtil.findChildOfType(fromText, PsiDocMethodOrFieldRef.class);
-          addAfter(Objects.requireNonNull(methodOrFieldRefFromText).getFirstChild(), null);
-        }
+      else if (containingClass != null && PsiTreeUtil.getParentOfType(PsiDocMethodOrFieldRef.this, PsiClass.class) != containingClass) {
+        PsiDocComment fromText = JavaPsiFacade.getElementFactory(containingClass.getProject())
+          .createDocCommentFromText("/**{@link " + containingClass.getQualifiedName() + "#" + newName + "}*/");
+        PsiDocMethodOrFieldRef methodOrFieldRefFromText = PsiTreeUtil.findChildOfType(fromText, PsiDocMethodOrFieldRef.class);
+        addAfter(Objects.requireNonNull(methodOrFieldRefFromText).getFirstChild(), null);
       }
 
       if (hasSignature || !name.equals(newName)) {
