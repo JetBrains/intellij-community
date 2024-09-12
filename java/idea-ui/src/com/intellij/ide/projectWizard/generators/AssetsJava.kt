@@ -16,10 +16,21 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private const val DEFAULT_FILE_NAME = "Main.java"
+private const val DEFAULT_TEMPLATE_NAME = "SampleCode"
+private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithRenderedOnboardingTips.java"
+private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"
 
 object AssetsJava {
 
-  fun createJavaSourcePath(sourceRootPath: String, packageName: String?, fileName: String): String {
+  fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String {
+    return when {
+      !generateOnboardingTips -> DEFAULT_TEMPLATE_NAME
+      shouldRenderOnboardingTips() -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME
+      else -> DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME
+    }
+  }
+
+  fun getJavaSampleSourcePath(sourceRootPath: String, packageName: String?, fileName: String): String {
     val pathJoiner = StringJoiner("/")
     pathJoiner.add(sourceRootPath)
     if (packageName != null) {
@@ -35,13 +46,8 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   packageName: String?,
   generateOnboardingTips: Boolean,
 ) {
-  val templateName = when {
-    !generateOnboardingTips -> "SampleCode"
-    shouldRenderOnboardingTips() -> "SampleCodeWithRenderedOnboardingTips.java"
-    else -> "SampleCodeWithOnboardingTips.java"
-  }
-
-  val sourcePath = AssetsJava.createJavaSourcePath(sourceRootPath, packageName, DEFAULT_FILE_NAME)
+  val templateName = AssetsJava.getJavaSampleTemplateName(generateOnboardingTips)
+  val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, DEFAULT_FILE_NAME)
   withJavaSampleCodeAsset(sourcePath, templateName, packageName, generateOnboardingTips)
 }
 
@@ -91,7 +97,7 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
 }
 
 fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project) {
-  prepareOnboardingTips(project, "SampleCode", DEFAULT_FILE_NAME) { charSequence ->
+  prepareOnboardingTips(project, DEFAULT_TEMPLATE_NAME, DEFAULT_FILE_NAME) { charSequence ->
     charSequence.indexOf("System.out.println").takeIf { it >= 0 }
   }
 }

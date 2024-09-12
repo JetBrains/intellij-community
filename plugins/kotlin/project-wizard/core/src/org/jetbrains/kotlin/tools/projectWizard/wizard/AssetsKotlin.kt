@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.icon
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shortcut
@@ -13,6 +14,20 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 
 private const val DEFAULT_FILE_NAME = "Main.kt"
+private const val DEFAULT_TEMPLATE_NAME = "KotlinSampleCode"
+private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "KotlinSampleCodeWithOnboardingTips"
+private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "KotlinSampleCodeWithRenderedOnboardingTips"
+
+object AssetsKotlin {
+
+    fun getKotlinSampleTemplateName(generateOnboardingTips: Boolean): String {
+        return when {
+            !generateOnboardingTips -> DEFAULT_TEMPLATE_NAME
+            shouldRenderOnboardingTips() -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME
+            else -> DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME
+        }
+    }
+}
 
 fun AssetsNewProjectWizardStep.withKotlinSampleCode(
     sourceRootPath: String,
@@ -20,13 +35,8 @@ fun AssetsNewProjectWizardStep.withKotlinSampleCode(
     generateOnboardingTips: Boolean,
     shouldOpenFile: Boolean = true
 ) {
-    val templateName = when {
-        !generateOnboardingTips -> "KotlinSampleCode"
-        shouldRenderOnboardingTips() -> "KotlinSampleCodeWithRenderedOnboardingTips"
-        else -> "KotlinSampleCodeWithOnboardingTips"
-    }
-
-    val sourcePath = "$sourceRootPath/$DEFAULT_FILE_NAME"
+    val templateName = AssetsKotlin.getKotlinSampleTemplateName(generateOnboardingTips)
+    val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, null, DEFAULT_FILE_NAME)
     withKotlinSampleCode(sourcePath, templateName, packageName, generateOnboardingTips, shouldOpenFile)
 }
 
@@ -74,7 +84,7 @@ fun AssetsNewProjectWizardStep.withKotlinSampleCode(
 }
 
 fun AssetsNewProjectWizardStep.prepareKotlinSampleOnboardingTips(project: Project) {
-    prepareOnboardingTips(project, "KotlinSampleCode", DEFAULT_FILE_NAME) { charsSequence ->
+    prepareOnboardingTips(project, DEFAULT_TEMPLATE_NAME, DEFAULT_FILE_NAME) { charsSequence ->
         charsSequence.indexOf("println(\"i").takeIf { it >= 0 }
     }
 }

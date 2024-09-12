@@ -26,7 +26,7 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
 
     @Deprecated("Use AssetsJava util instead")
     fun createJavaSourcePath(sourceRootPath: String, aPackage: String, fileName: String) =
-      AssetsJava.createJavaSourcePath(sourceRootPath, aPackage.nullize(), fileName)
+      AssetsJava.getJavaSampleSourcePath(sourceRootPath, aPackage.nullize(), fileName)
 
     @Deprecated("Use AssetsOnboardingTips util instead")
     fun proposeToGenerateOnboardingTipsByDefault() =
