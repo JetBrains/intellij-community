@@ -5,23 +5,47 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.util.ui.tree.AbstractTreeModel
 import git4idea.GitBranch
 import git4idea.GitReference
+import git4idea.branch.TagsNode
 import git4idea.repo.GitRepository
 import javax.swing.Icon
-import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
+import kotlin.properties.Delegates.observable
 
-interface GitBranchesTreeModel : TreeModel {
+abstract class GitBranchesTreeModel : AbstractTreeModel() {
+  protected val branchesTreeCache = mutableMapOf<Any, List<Any>>()
+  protected open val nameMatcher: MinusculeMatcher? = null
 
-  var isPrefixGrouping: Boolean
+  abstract var isPrefixGrouping: Boolean
 
-  fun getPreferredSelection(): TreePath?
+  abstract fun getPreferredSelection(): TreePath?
 
-  fun updateTags()
-  fun filterBranches(matcher: MinusculeMatcher? = null) {}
+  open fun filterBranches(matcher: MinusculeMatcher? = null) {}
+
+  override fun getRoot() = TreeRoot
+
+  override fun getChild(parent: Any?, index: Int): Any = getChildren(parent)[index]
+
+  override fun getChildCount(parent: Any?): Int = getChildren(parent).size
+
+  override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
+
+  protected abstract fun getChildren(parent: Any?): List<Any>
+
+  fun updateTags() {
+    val indexOfTagsNode = getIndexOfChild(root, TagsNode)
+    initTags(nameMatcher)
+    branchesTreeCache.keys.clear()
+    val pathChanged = if (indexOfTagsNode < 0) TreePath(arrayOf(root)) else TreePath(arrayOf(root, TagsNode))
+    treeStructureChanged(pathChanged, null, null)
+  }
+
+  protected abstract fun initTags(matcher: MinusculeMatcher?)
 
   object TreeRoot : PathElementIdProvider {
     const val NAME = "TreeRoot"

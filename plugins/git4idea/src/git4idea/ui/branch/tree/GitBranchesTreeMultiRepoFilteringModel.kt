@@ -6,7 +6,6 @@ import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitLocalBranch
 import git4idea.GitReference
@@ -20,7 +19,6 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
-import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
@@ -28,7 +26,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private val project: Project,
   private val repositories: List<GitRepository>,
   private val topLevelActions: List<Any> = emptyList()
-) : AbstractTreeModel(), GitBranchesTreeModel {
+) : GitBranchesTreeModel() {
 
   private val branchManager = project.service<GitBranchManager>()
 
@@ -42,9 +40,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
   private lateinit var commonTagsTree: LazyRefsSubtreeHolder<GitTag>
   private lateinit var repositoriesWithBranchesTree: LazyRepositoryBranchesHolder
 
-  private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
-
-  private var nameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
+  override var nameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
 
   override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
     nameMatcher = null // rebuild tree
@@ -70,19 +66,11 @@ class GitBranchesTreeMultiRepoFilteringModel(
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
-  private fun initTags(matcher: MinusculeMatcher?) {
+  override fun initTags(matcher: MinusculeMatcher?) {
     val tags = GitBranchUtil.getCommonTags(repositories)
     val favoriteTags = project.service<GitBranchManager>().getFavoriteBranches(GitTagType)
     commonTagsTree = LazyRefsSubtreeHolder(repositories, tags, favoriteTags, matcher, ::isPrefixGrouping)
   }
-
-  override fun getRoot() = TreeRoot
-
-  override fun getChild(parent: Any?, index: Int): Any = getChildren(parent)[index]
-
-  override fun getChildCount(parent: Any?): Int = getChildren(parent).size
-
-  override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
   override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
                                              || (node === GitBranchType.LOCAL && commonLocalBranchesTree.isEmpty())
@@ -94,7 +82,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
     type === GitBranchType.LOCAL && repositoriesWithBranchesTree.isLocalBranchesEmpty(repository)
     || type === GitBranchType.REMOTE && repositoriesWithBranchesTree.isRemoteBranchesEmpty(repository)
 
-  private fun getChildren(parent: Any?): List<Any> {
+  override fun getChildren(parent: Any?): List<Any> {
     if (parent == null || !haveFilteredBranches()) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
@@ -160,18 +148,6 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   override fun getPreferredSelection(): TreePath? =
     (actionsTree.topMatch ?: repositoriesTree.topMatch ?: getPreferredBranch())?.let { createTreePathFor(this, it) }
-
-  override fun updateTags() {
-    val indexOfTagsNode = getIndexOfChild(root, TagsNode)
-    initTags(nameMatcher)
-    branchesTreeCache.keys.clear()
-    if (indexOfTagsNode < 0) {
-      treeStructureChanged(TreePath(arrayOf(root)), null, null)
-    }
-    else {
-      treeStructureChanged(TreePath(arrayOf(root)), intArrayOf(indexOfTagsNode), arrayOf(TagsNode))
-    }
-  }
 
   private fun getPreferredBranch(): Any? =
     getPreferredBranch(project, repositories, nameMatcher, commonLocalBranchesTree, commonRemoteBranchesTree, commonTagsTree)
