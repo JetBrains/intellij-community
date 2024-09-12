@@ -110,6 +110,7 @@ val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = {
     "intellij.platform.testFramework",
     "intellij.platform.testFramework.core",
     "intellij.platform.testFramework.impl",
+    "intellij.platform.testFramework.teamCity",
     "intellij.tools.testsBootstrap",
   )) {
     layout.withModule(name, TEST_FRAMEWORK_JAR)

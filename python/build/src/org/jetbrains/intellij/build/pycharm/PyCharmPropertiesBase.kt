@@ -24,6 +24,7 @@ abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework.common",
       "intellij.platform.testFramework.junit5",
+      "intellij.platform.testFramework.teamCity",
       "intellij.platform.testFramework",
     ))
   }
