@@ -11,17 +11,9 @@ internal val BranchTreeNodeComparator = compareBy<BranchNodeDescriptor> {
   it.type
 }
 
-private fun getOrderWeight(descriptor: BranchNodeDescriptor): Int {
-  val branchInfo = descriptor.branchInfo
-
-  val isCurrent = branchInfo != null && branchInfo.isCurrent
-  if (isCurrent) return 0
-
-  val isFavorite = branchInfo != null && branchInfo.isFavorite
-  if (isFavorite) return 1
-
-  val isGroupNode = descriptor.type == NodeType.GROUP_NODE
-  if (isGroupNode) return 2
-
-  return 3
+private fun getOrderWeight(descriptor: BranchNodeDescriptor): Int = when {
+  descriptor is BranchNodeDescriptor.Branch && descriptor.branchInfo.isCurrent -> 0
+  descriptor is BranchNodeDescriptor.Branch && descriptor.branchInfo.isFavorite -> 1
+  descriptor.type == NodeType.GROUP_NODE -> 2
+  else -> 3
 }

@@ -187,7 +187,7 @@ private class TestContext(groupByDirectories: Boolean) {
 internal class GitBranchesTestTree(
   tree: Tree,
   groupByDirectories: Boolean,
-): FilteringBranchesTreeBase(tree, BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT))) {
+): FilteringBranchesTreeBase(tree, BranchTreeNode(BranchNodeDescriptor.Group(NodeType.ROOT))) {
   @Suppress("UNCHECKED_CAST")
   val speedSearch: FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
     get() = searchModel.speedSearch as FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>

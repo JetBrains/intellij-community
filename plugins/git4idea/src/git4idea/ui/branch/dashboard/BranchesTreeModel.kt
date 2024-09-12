@@ -34,26 +34,47 @@ internal data class BranchInfo(val branch: GitBranch,
   override fun toString() = branchName
 }
 
-internal data class BranchNodeDescriptor(
-  val type: NodeType,
-  val branchInfo: BranchInfo? = null,
-  val repository: GitRepository? = null,
-  val displayName: @Nls String? = resolveDisplayName(branchInfo, repository),
-  var parent: BranchNodeDescriptor? = null,
-) {
-  override fun toString(): String {
-    val suffix = branchInfo?.branchName ?: displayName
-    return if (suffix != null) "$type:$suffix" else "$type"
-  }
-}
+internal sealed class BranchNodeDescriptor() {
+  abstract val type: NodeType
+  abstract var parent: BranchNodeDescriptor?
+  abstract val displayName: @Nls String?
 
-private fun resolveDisplayName(
-  branchInfo: BranchInfo?,
-  repository: GitRepository?,
-) = when {
-  branchInfo != null -> branchInfo.branchName
-  repository != null -> DvcsUtil.getShortRepositoryName(repository)
-  else -> null
+  object Head : BranchNodeDescriptor() {
+    override val type = NodeType.HEAD_NODE
+    override var parent: BranchNodeDescriptor? = null
+    override val displayName = message("group.Git.HEAD.Branch.Filter.title")
+
+    override fun toString() = "$type"
+  }
+
+  internal data class Branch(
+    val branchInfo: BranchInfo,
+    override var parent: BranchNodeDescriptor?,
+    override val displayName: @Nls String? = branchInfo.branchName,
+  ) : BranchNodeDescriptor() {
+    override val type: NodeType = NodeType.BRANCH
+
+    override fun toString(): String = "$type:${branchInfo.branchName}"
+  }
+
+  internal data class Repository(
+    val repository: GitRepository, override var parent: BranchNodeDescriptor?,
+  ) : BranchNodeDescriptor() {
+    override val type = NodeType.GROUP_REPOSITORY_NODE
+    override val displayName = DvcsUtil.getShortRepositoryName(repository)
+
+    override fun toString(): String = typeWithDisplayName()
+  }
+
+  internal data class Group(
+    override val type: NodeType,
+    override val displayName: @Nls String? = null,
+    override var parent: BranchNodeDescriptor? = null,
+  ) : BranchNodeDescriptor() {
+    override fun toString(): String = typeWithDisplayName()
+  }
+
+  protected fun typeWithDisplayName() = if (displayName != null) "$type:$displayName" else "$type"
 }
 
 internal enum class NodeType {
@@ -62,15 +83,9 @@ internal enum class NodeType {
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
 
-  fun getTextRepresentation(): @Nls String {
-    val nodeDescriptor = userObject as? BranchNodeDescriptor ?: return super.toString() //NON-NLS
-    return when (nodeDescriptor.type) {
-      NodeType.LOCAL_ROOT -> message("group.Git.Local.Branch.title")
-      NodeType.REMOTE_ROOT -> message("group.Git.Remote.Branch.title")
-      NodeType.HEAD_NODE -> message("group.Git.HEAD.Branch.Filter.title")
-      else -> nodeDescriptor.displayName ?: super.toString() //NON-NLS
-    }
-  }
+  fun getTextRepresentation(): @Nls String =
+    (userObject as? BranchNodeDescriptor)?.displayName
+           ?: super.toString() //NON-NLS
 
   fun getNodeDescriptor() = userObject as BranchNodeDescriptor
 
@@ -135,7 +150,7 @@ internal class NodeDescriptorsModel(
       }
       groupByRepository -> applyGroupingByRepository(curParent, br)
       groupByDirectory -> applyGroupingByDirectory(curParent, br.copy())
-      else -> addChild(curParent, BranchNodeDescriptor(NodeType.BRANCH, br.copy(), parent = curParent))
+      else -> addChild(curParent, BranchNodeDescriptor.Branch(br.copy(), parent = curParent))
     }
   }
 
@@ -153,7 +168,7 @@ internal class NodeDescriptorsModel(
                            incomingOutgoingState = incomingOutgoingManager.getIncomingOutgoingState(repository, GitLocalBranch(br.branchName)))
 
       val repositoryNodeDescriptor = repositoryNodeDescriptors.computeIfAbsent(repository) {
-        val repositoryNodeDescriptor = BranchNodeDescriptor(NodeType.GROUP_REPOSITORY_NODE, repository = repository, parent = curParent)
+        val repositoryNodeDescriptor = BranchNodeDescriptor.Repository(repository = repository, parent = curParent)
         addChild(curParent, repositoryNodeDescriptor)
         repositoryNodeDescriptor
       }
@@ -162,7 +177,7 @@ internal class NodeDescriptorsModel(
         additionalGrouping.invoke(branch, repositoryNodeDescriptor)
       }
       else {
-        val branchNodeDescriptor = BranchNodeDescriptor(NodeType.BRANCH, branch, parent = repositoryNodeDescriptor)
+        val branchNodeDescriptor = BranchNodeDescriptor.Branch(branch, parent = repositoryNodeDescriptor)
         addChild(repositoryNodeDescriptor, branchNodeDescriptor)
       }
     }
@@ -175,10 +190,12 @@ internal class NodeDescriptorsModel(
     while (iter.hasNext()) {
       @NlsSafe val branchNamePart = iter.next()
       val groupNode = iter.hasNext()
-      val nodeType = if (groupNode) NodeType.GROUP_NODE else NodeType.BRANCH
-      val branchInfo = if (nodeType == NodeType.BRANCH) branch else null
+      val branchNodeDescriptor = if (groupNode) {
+        BranchNodeDescriptor.Group(NodeType.GROUP_NODE, parent = curParent, displayName = branchNamePart)
+      } else {
+        BranchNodeDescriptor.Branch(branch, parent = curParent, displayName = branchNamePart)
+      }
 
-      val branchNodeDescriptor = BranchNodeDescriptor(nodeType, branchInfo, displayName = branchNamePart, parent = curParent)
       addChild(curParent, branchNodeDescriptor)
       curParent = branchNodeDescriptor
     }
