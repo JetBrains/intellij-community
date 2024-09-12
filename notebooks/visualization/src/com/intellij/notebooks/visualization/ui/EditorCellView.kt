@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebooks.ui.visualization.*
 import com.intellij.notebooks.visualization.*
@@ -292,7 +293,7 @@ class EditorCellView(
       }
     }
 
-    if (uiSettings.presentationMode) {  // See PY-74597
+    if (uiSettings.presentationMode || DistractionFreeModeController.isDistractionFreeModeEnabled()) {  // See PY-74597
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
           o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, presentationModeMasking = true)
