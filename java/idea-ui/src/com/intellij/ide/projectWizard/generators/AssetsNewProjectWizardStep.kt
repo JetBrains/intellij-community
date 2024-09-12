@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorEmptyDirectory
+import com.intellij.ide.starters.local.GeneratorResourceFile
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.*
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
+import java.net.URL
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 
@@ -66,6 +68,14 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     val template = templateManager.getInternalTemplate(templateName)
     addAssets(GeneratorTemplateFile(sourcePath, template))
     templateProperties.putAll(properties)
+  }
+
+  fun addResourceAsset(path: String, resource: URL, vararg permissions: PosixFilePermission) {
+    addResourceAsset(path, resource, permissions.toSet())
+  }
+
+  fun addResourceAsset(path: String, resource: URL, permissions: Set<PosixFilePermission>) {
+    addAssets(GeneratorResourceFile(path, permissions, resource))
   }
 
   fun addEmptyDirectoryAsset(path: String, vararg permissions: PosixFilePermission) {
