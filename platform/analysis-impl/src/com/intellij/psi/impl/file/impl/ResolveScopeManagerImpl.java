@@ -104,7 +104,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
       return allScope;
     }
 
-    return LibraryScopeCache.getInstance(myProject).getLibraryScope(projectFileIndex.getOrderEntriesForFile(vFile));
+    return LibraryScopeCache.getInstance(myProject).getLibraryScope(vFile);
   }
 
   @Override
@@ -198,7 +198,7 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
         return allScope;
       }
 
-      GlobalSearchScope result = LibraryScopeCache.getInstance(myProject).getLibraryUseScope(entries);
+      GlobalSearchScope result = LibraryScopeCache.getInstance(myProject).getLibraryUseScope(notNullVFile);
       return containingFile == null || virtualFile.isDirectory() || result.contains(virtualFile)
              ? result : GlobalSearchScope.fileScope(containingFile).uniteWith(result);
     }

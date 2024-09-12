@@ -72,10 +72,9 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
 
   @Nullable
   private static JavaVersionBasedScope getClassFileScope(@NotNull VirtualFile file, @NotNull Project project) {
-    ProjectFileIndex index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
     LanguageLevel level = JavaMultiReleaseUtil.getVersion(file);
-    if (level != null && index != null) {
-      GlobalSearchScope baseScope = LibraryScopeCache.getInstance(project).getLibraryScope(index.getOrderEntriesForFile(file));
+    if (level != null && !project.isDefault()) {
+      GlobalSearchScope baseScope = LibraryScopeCache.getInstance(project).getLibraryScope(file);
       return new JavaVersionBasedScope(project, baseScope, level);
     }
     return null;

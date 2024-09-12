@@ -3549,7 +3549,9 @@ f:com.intellij.openapi.roots.impl.LibraryScopeCache
 - <init>(com.intellij.openapi.project.Project):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.impl.LibraryScopeCache
 - getLibrariesOnlyScope():com.intellij.psi.search.GlobalSearchScope
+- getLibraryScope(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.GlobalSearchScope
 - getLibraryScope(java.util.List):com.intellij.psi.search.GlobalSearchScope
+- getLibraryUseScope(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.GlobalSearchScope
 - getLibraryUseScope(java.util.List):com.intellij.psi.search.GlobalSearchScope
 - getScopeForSdk(com.intellij.openapi.roots.JdkOrderEntry):com.intellij.psi.search.GlobalSearchScope
 a:com.intellij.openapi.vfs.ex.dummy.DummyCachingFileSystem
