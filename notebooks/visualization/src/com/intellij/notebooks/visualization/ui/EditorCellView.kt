@@ -1,10 +1,8 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
-import com.intellij.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
-import com.intellij.notebooks.ui.visualization.NotebookLineMarkerRenderer
-import com.intellij.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
-import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.ide.ui.UISettings
+import com.intellij.notebooks.ui.visualization.*
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
@@ -17,7 +15,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.*
@@ -25,8 +22,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
 import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Point
 import java.awt.Rectangle
 import java.time.ZonedDateTime
 import javax.swing.JComponent
@@ -48,6 +43,8 @@ class EditorCellView(
   var cell: EditorCell,
   private val cellInlayManager: NotebookCellInlayManager,
 ) : EditorCellViewComponent(), Disposable {
+
+  private val uiSettings = UISettings.getInstance()
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
 
@@ -266,18 +263,7 @@ class EditorCellView(
 
     removeCellHighlight()
 
-    addCellHighlighter {
-      editor.markupModel.addRangeHighlighter(
-        null,
-        startOffset,
-        endOffset,
-        HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
-        HighlighterTargetArea.LINES_IN_RANGE
-      ).apply {
-        lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
-      }
-    }
-
+    // manages the cell background + clips background on the right below the scroll bar
     if (interval.type == NotebookCellLines.CellType.CODE) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighter(
@@ -295,29 +281,25 @@ class EditorCellView(
       }
     }
 
-    if (interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
-      addCellHighlighter {
-        editor.markupModel.addRangeHighlighter(
-          null,
-          startOffset,
-          endOffset,
-          HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
-          HighlighterTargetArea.LINES_IN_RANGE
-        )
-      }
-    }
-
+    // draws gray vertical rectangles between line numbers and the leftmost border of the text
     if (interval.type == NotebookCellLines.CellType.CODE) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
           o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
         }
       }
-    }
-    else if (editor.editorKind != EditorKind.DIFF) {
+    } else if (editor.editorKind != EditorKind.DIFF) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
           o.lineMarkerRenderer = NotebookTextCellBackgroundLineMarkerRenderer(o)
+        }
+      }
+    }
+
+    if (uiSettings.presentationMode) {  // See PY-74597
+      addCellHighlighter {
+        editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
+          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, presentationModeMasking = true)
         }
       }
     }
@@ -362,37 +344,6 @@ class EditorCellView(
     input.runCellButton?.updateGutterAction(progressStatus)
   }
 
-  inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
-    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-      editor as EditorImpl
-
-      g.create().use { g2 ->
-        g2 as Graphics2D
-
-        val visualLineStart = editor.xyToVisualPosition(Point(0, g2.clip.bounds.y)).line
-        val visualLineEnd = editor.xyToVisualPosition(Point(0, g2.clip.bounds.run { y + height })).line
-        val logicalLineStart = editor.visualToLogicalPosition(VisualPosition(visualLineStart, 0)).line
-        val logicalLineEnd = editor.visualToLogicalPosition(VisualPosition(visualLineEnd, 0)).line
-
-        if (interval.lines.first > logicalLineEnd || interval.lines.last < logicalLineStart) return
-
-        paintBackground(editor, g2, r, interval)
-      }
-    }
-
-    private fun paintBackground(
-      editor: EditorImpl,
-      g: Graphics,
-      r: Rectangle,
-      interval: NotebookCellLines.Interval,
-    ) {
-      for (controller: NotebookCellInlayController in controllers) {
-        controller.paintGutter(editor, g, r, interval)
-      }
-      outputs?.paintGutter(editor, g, r)
-    }
-  }
-
   internal data class NotebookCellDataProvider(
     val editor: Editor,
     val component: JComponent,
@@ -417,13 +368,14 @@ class EditorCellView(
 }
 
 /**
- * Renders rectangle in the right part of editor to make filled code cells look like rectangles with margins.
+ * Renders rectangle in the right part of the editor to make filled code cells look like rectangles with margins.
  * But mostly it's used as a token to filter notebook cell highlighters.
  */
+@Suppress("DuplicatedCode")
 private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
-  override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
+  override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
     editor as EditorImpl
-    @Suppress("NAME_SHADOWING") g.create().use { g ->
+    graphics.create().use { g ->
       val scrollbarWidth = editor.scrollPane.verticalScrollBar.width
       val oldBounds = g.clipBounds
       val visibleArea = editor.scrollingModel.visibleArea

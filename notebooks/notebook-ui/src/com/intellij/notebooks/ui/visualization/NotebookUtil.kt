@@ -15,7 +15,6 @@ import java.awt.Rectangle
 val Editor.notebookAppearance: NotebookEditorAppearance
   get() = NOTEBOOK_APPEARANCE_KEY.get(this)!!
 
-
 inline fun paintNotebookCellBackgroundGutter(
   editor: EditorImpl,
   g: Graphics,
@@ -23,6 +22,7 @@ inline fun paintNotebookCellBackgroundGutter(
   lines: IntRange,
   top: Int,
   height: Int,
+  presentationModeMasking: Boolean = false,  // PY-74597
   crossinline actionBetweenBackgroundAndStripe: () -> Unit = {}
 ) {
   val diffViewOffset = 6  // randomly picked a number that fits well
@@ -30,14 +30,18 @@ inline fun paintNotebookCellBackgroundGutter(
   val stripe = appearance.getCellStripeColor(editor, lines)
   val stripeHover = appearance.getCellStripeHoverColor(editor, lines)
   val borderWidth = appearance.getLeftBorderWidth()
-  val rectBorderCellX = r.width - borderWidth
+  val gutterWidth = editor.gutterComponentEx.width
 
-  g.color = appearance.getCodeCellBackground(editor.colorsScheme)
+  val (fillX, fillWidth, fillColor) = when (presentationModeMasking) {
+    true -> Triple(r.width - borderWidth - gutterWidth, gutterWidth, editor.colorsScheme.defaultBackground)
+    else -> Triple(r.width - borderWidth, borderWidth, appearance.getCodeCellBackground(editor.colorsScheme))
+  }
 
-  if (editor.editorKind == EditorKind.DIFF) {
-    g.fillRect(rectBorderCellX + diffViewOffset, top, borderWidth - diffViewOffset, height)
-  } else {
-    g.fillRect(rectBorderCellX, top, borderWidth, height)
+  g.color = fillColor
+
+  when (editor.editorKind == EditorKind.DIFF) {
+    true -> g.fillRect(fillX + diffViewOffset, top, fillWidth - diffViewOffset, height)
+    else -> g.fillRect(fillX, top, fillWidth, height)
   }
 
   actionBetweenBackgroundAndStripe()
