@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
@@ -13,6 +14,9 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
   @Test
   fun `test basic tasks importing`() {
     createSettingsFile("include 'subproject'")
+    createBuildFile("subproject") {
+      // do not apply any plugins
+    }
     importProject()
     assertSyncViewTree {
       assertNode("finished") {
@@ -36,6 +40,9 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
         throw new RuntimeException()
       }
     """.trimIndent())
+    createBuildFile("project2") {
+      // do not apply any plugins
+    }
     importProject()
     assertSyncViewTree {
       assertNode("finished") {

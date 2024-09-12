@@ -59,6 +59,7 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
       })
       .generate()
     createProjectSubFile("build.gradle", buildScript)
+    createProjectSubDirs("projectA", "projectB", "projectC")
     createSettingsFile("include 'projectA', 'projectB', 'projectC'")
     val expectedGradleTasks = listOf("compileJava", "processResources", "classes", "jar", "assemble", "compileTestJava",
                                      "processTestResources", "testClasses", "test", "check", "build", "clean", "other")
