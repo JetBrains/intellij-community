@@ -262,7 +262,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
         val receiverExpression = expression.getReceiverExpression()
         if (receiverExpression == null) {
-            val (receiverValue, isSameReceiverType) = analyze(expression) {
+            val (receiverValue, isSameReceiverType, deleteReceiver) = analyze(expression) {
                 val resolveCall = expression.resolveToCall()
                 val partiallyAppliedSymbol = resolveCall?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
 
@@ -272,17 +272,26 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 val originalSymbolReceiverType = originalSymbol?.receiverType
                 val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
                 if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
-                    getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
-                                                originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType))
+                    require(partiallyAppliedSymbol != null)
+                    val receiverToDelete = originalSymbolReceiverType != null
+                            && (partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
+                            && (partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
+                    val isSameReceiverType = originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
+                            originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType)
+                    Triple(
+                        getThisQualifier(value),
+                        isSameReceiverType,
+                        receiverToDelete
+                    )
                 } else {
                     val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KaFunctionType
                     val receiverType = functionalType?.receiverType
                     if (receiverType == null) {
-                        null to true
+                        Triple(null, true, false)
                     } else {
                         val isSame = originalSymbolReceiverType != null && receiverType.semanticallyEquals(originalSymbolReceiverType) ||
                                 originalSymbolDispatchType != null && receiverType.semanticallyEquals(originalSymbolDispatchType)
-                        "this".takeIf { isSame } to isSame
+                        Triple("this".takeIf { isSame }, isSame, false)
                     }
                 }
             }
@@ -300,6 +309,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                         thisExpression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
                     } else if (!isSameReceiverType) {
                         thisExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
+                    }
+                    if (deleteReceiver) {
+                        thisExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
                     }
                 }
             }

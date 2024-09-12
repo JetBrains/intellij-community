@@ -158,9 +158,18 @@ class CodeInliner(
 
         receiver?.let { r ->
             for (instanceExpression in codeToInline.collectDescendantsOfType<KtInstanceExpressionWithLabel> {
-                it is KtThisExpression && it.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null
+                it is KtThisExpression
             }) {
-                codeToInline.replaceExpression(instanceExpression, r)
+                if (instanceExpression.getCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY) != null) {
+                    (instanceExpression.parent as? KtDotQualifiedExpression)?.let {
+                        val selectorExpression = it.selectorExpression
+                        if (selectorExpression != null) {
+                            it.replace(selectorExpression)
+                        }
+                    }
+                } else if (instanceExpression.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null) {
+                    codeToInline.replaceExpression(instanceExpression, r)
+                }
             }
         }
 
