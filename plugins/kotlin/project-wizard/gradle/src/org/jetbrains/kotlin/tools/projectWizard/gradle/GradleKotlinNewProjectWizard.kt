@@ -288,8 +288,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
-        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
-
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
@@ -297,15 +295,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips())
+                if (parent.generateOnboardingTips) {
+                    prepareKotlinSampleOnboardingTips(project)
+                }
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, parent.generateOnboardingTips)
             }
-        }
-
-        override fun setupProject(project: Project) {
-            if (shouldAddOnboardingTips()) {
-                prepareKotlinSampleOnboardingTips(project)
-            }
-            super.setupProject(project)
         }
     }
 }

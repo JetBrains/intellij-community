@@ -133,16 +133,16 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
     }
 
     private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
-
-        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
-
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips(), shouldOpenFile = false)
+                if (parent.generateOnboardingTips) {
+                    prepareKotlinSampleOnboardingTips(project)
+                }
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, parent.generateOnboardingTips, shouldOpenFile = false)
             }
         }
 
@@ -156,13 +156,6 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             directories.forEach {
                 Path.of(it).createDirectories()
             }
-        }
-
-        override fun setupProject(project: Project) {
-            if (shouldAddOnboardingTips()) {
-                prepareKotlinSampleOnboardingTips(project)
-            }
-            super.setupProject(project)
         }
     }
 }

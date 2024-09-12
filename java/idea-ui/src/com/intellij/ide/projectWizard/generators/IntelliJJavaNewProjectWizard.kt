@@ -55,17 +55,12 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       }
-
       if (parent.addSampleCode) {
+        if (parent.generateOnboardingTips) {
+          prepareJavaSampleOnboardingTips(project)
+        }
         withJavaSampleCodeAsset("src", null, parent.generateOnboardingTips)
       }
-    }
-
-    override fun setupProject(project: Project) {
-      if (parent.generateOnboardingTips) {
-        prepareJavaSampleOnboardingTips(project)
-      }
-      super.setupProject(project)
     }
   }
 }

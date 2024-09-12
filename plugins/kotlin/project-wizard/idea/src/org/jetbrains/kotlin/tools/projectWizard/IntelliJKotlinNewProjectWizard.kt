@@ -136,23 +136,17 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
     }
 
     private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
-        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
-
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinIgnoreAssets())
             }
             if (parent.addSampleCode) {
+                if (parent.generateOnboardingTips) {
+                    prepareKotlinSampleOnboardingTips(project)
+                }
                 val sourceRootPath = if (parent.useCompactProjectStructure) "src" else "src/main/kotlin"
-                withKotlinSampleCode(sourceRootPath, null, shouldAddOnboardingTips())
+                withKotlinSampleCode(sourceRootPath, null, parent.generateOnboardingTips)
             }
-        }
-
-        override fun setupProject(project: Project) {
-            if (shouldAddOnboardingTips()) {
-                prepareKotlinSampleOnboardingTips(project)
-            }
-            super.setupProject(project)
         }
     }
 }

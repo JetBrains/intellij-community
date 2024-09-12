@@ -101,15 +101,11 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
       if (parent.addSampleCode) {
+        if (parent.generateOnboardingTips) {
+          prepareJavaSampleOnboardingTips(project)
+        }
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }
-    }
-
-    override fun setupProject(project: Project) {
-      if (parent.generateOnboardingTips) {
-        prepareJavaSampleOnboardingTips(project)
-      }
-      super.setupProject(project)
     }
   }
 }
