@@ -1,7 +1,7 @@
 fun foo() {
 
     //comment 1
-    val a = 5
+    var a = 5
 
 
     /*comment 2*/ //comment 3

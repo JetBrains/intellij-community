@@ -111,7 +111,6 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
                 iteratorOnNullableProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
             ),
             InspectionLikeProcessingGroup(
-                VarToValProcessing(),
                 RemoveExplicitPropertyTypeProcessing(),
             ),
             K2ShortenReferenceProcessing(),

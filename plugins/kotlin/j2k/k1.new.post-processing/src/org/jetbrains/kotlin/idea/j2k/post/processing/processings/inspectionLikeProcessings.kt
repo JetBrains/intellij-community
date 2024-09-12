@@ -192,23 +192,6 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     }
 }
 
-/**
- * Handles a local 'var' without an initializer. For other cases, see [org.jetbrains.kotlin.j2k.postProcessings.VarToValProcessing]
- */
-internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
-    private val inspection = CanBeValInspection()
-
-    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings): Boolean =
-        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
-                CanBeValInspection.Util.canBeVal(element, ignoreNotUsedVals = false)
-
-    override fun apply(element: KtDeclaration) {
-        val project = element.project
-        if (element !is KtValVarKeywordOwner) return
-        element.valOrVarKeyword?.replace(KtPsiFactory(project).createValKeyword())
-    }
-}
-
 internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     private val inspection = MayBeConstantInspection()
 
