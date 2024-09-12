@@ -65,7 +65,6 @@ import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.GradleBundle.message
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 import javax.swing.Icon
@@ -173,7 +172,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
               label(GradleBundle.message("gradle.project.settings.distribution.local.location.npw"))
                 .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
               val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                .withTitle(message("gradle.project.settings.distribution.local.location.dialog"))
+                .withTitle(GradleBundle.message("gradle.project.settings.distribution.local.location.dialog"))
                 .withPathToTextConvertor(::getPresentablePath)
                 .withTextToPathConvertor(::getCanonicalPath)
               textFieldWithBrowseButton(fileChooserDescriptor, context.project)
