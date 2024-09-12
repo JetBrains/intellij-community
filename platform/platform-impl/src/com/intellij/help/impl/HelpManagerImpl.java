@@ -15,6 +15,7 @@ import kotlin.jvm.functions.Function1;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -54,7 +55,12 @@ public class HelpManagerImpl extends HelpManager {
     final Keymap activeKeymap = manager == null ? null : KeymapManager.getInstance().getActiveKeymap();
 
     final String urlWithUtm = IdeUrlTrackingParametersProvider.getInstance().augmentUrl(urlSupplier.invoke(id).toExternalForm());
-    return activeKeymap == null ? urlWithUtm : "%s&keymap=%s".formatted(urlWithUtm, URLEncoder.encode(activeKeymap.getPresentableName(),
-                                                                                                      StandardCharsets.UTF_8));
+    if (activeKeymap == null) return urlWithUtm;
+    try {
+      return new URIBuilder(urlWithUtm).setParameter("keymap", activeKeymap.getPresentableName()).build().toString();
+    }
+    catch (URISyntaxException e) {
+      return urlWithUtm;
+    }
   }
 }
