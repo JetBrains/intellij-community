@@ -568,6 +568,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       }
     }
+
+    private void onMousePress() {
+      if (UISettings.isIdeHelpTooltipEnabled()) {
+        HelpTooltip.dispose(myIconLabel);
+      }
+    }
   }
 
   // IDEA-313550: Intention light bulb border is calculated wrong
@@ -584,6 +590,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     public void mousePressed(@NotNull MouseEvent e) {
       if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
         logMousePressed(e);
+        myLightBulbPanel.onMousePress();
         showPopup(true);
       }
     }
