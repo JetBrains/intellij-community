@@ -728,7 +728,6 @@
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
-    <!--suppress PluginXmlValidity -->
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"
            popup="true" searchable="false" use-shortcut-of="NewElement"/>
     <reference ref="AssociateWithFileType"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.testFramework.TestDataPath;
@@ -11,6 +11,13 @@ public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDom
   @Override
   protected String getBasePath() {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/actions";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    setUpActionClasses(!getTestName(false).contains("Without"));
   }
 
   public void testActionAbstractClass() {

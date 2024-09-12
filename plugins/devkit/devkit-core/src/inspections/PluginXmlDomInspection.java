@@ -973,16 +973,23 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     PsiClass actionGroupClass = clazz.getValue();
     if (actionGroupClass == null) return;
 
-    PsiMethod canBePerformedMethod = new LightMethodBuilder(actionGroupClass.getManager(), "canBePerformed")
-      .setContainingClass(JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
-                                                                                             actionGroupClass.getResolveScope()))
+    PsiClass actionGroup = JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
+                                                                                              actionGroupClass.getResolveScope());
+    if (actionGroup == null) return;
+
+    PsiMethod canBePerformedMethodTemplate = new LightMethodBuilder(actionGroupClass.getManager(), "canBePerformed")
+      .setContainingClass(actionGroup)
       .setModifiers(PsiModifier.PUBLIC)
       .setMethodReturnType(PsiTypes.booleanType())
       .addParameter("context", DataContext.class.getName());
 
-    PsiMethod overriddenCanBePerformedMethod = actionGroupClass.findMethodBySignature(canBePerformedMethod, false);
-    if (overriddenCanBePerformedMethod == null) {
-      String methodPresentation = PsiFormatUtil.formatMethod(canBePerformedMethod, PsiSubstitutor.EMPTY,
+    PsiMethod actionGroupCanBePerformed = actionGroup.findMethodBySignature(canBePerformedMethodTemplate, false);
+    if (actionGroupCanBePerformed == null) {
+      return;
+    }
+
+    if (actionGroupClass.findMethodBySignature(canBePerformedMethodTemplate, false) == null) {
+      String methodPresentation = PsiFormatUtil.formatMethod(canBePerformedMethodTemplate, PsiSubstitutor.EMPTY,
                                                              PsiFormatUtilBase.SHOW_NAME |
                                                              PsiFormatUtilBase.SHOW_PARAMETERS |
                                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS,

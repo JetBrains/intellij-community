@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
@@ -9,6 +9,13 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/actions";
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    setUpActionClasses(!getTestName(false).contains("Without"));
   }
 
   public void testActionAbstractClass() {
@@ -29,7 +36,6 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     myFixture.testHighlighting("ActionWrongClass.xml");
   }
 
-  @SuppressWarnings("removal")
   public void testActionComplexHighlighting() {
     myFixture.copyFileToProject("MyBundle.properties");
     myFixture.copyFileToProject("AnotherBundle.properties");
@@ -42,14 +48,26 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase {}");
     myFixture.addClass("package foo.bar; class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup {}");
     myFixture.addClass("""
-                       package foo.bar;
-                       import org.jetbrains.annotations.NotNull;
-                       public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup {
-                         @Override
-                         public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) { return true; }
-                       }""");
+                         package foo.bar;
+                         import org.jetbrains.annotations.NotNull;
+                         public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup {
+                           @Override
+                           public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) { return true; }
+                         }""");
 
     myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>");
     myFixture.testHighlighting("ActionComplexHighlighting.xml");
+  }
+
+  public void testActionGroupWithoutCanBePerformed() {
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
+    myFixture.addClass("""
+                         package foo.bar;
+                         
+                         public class GroupWithoutCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup {
+                         }
+                         """);
+
+    myFixture.testHighlighting("ActionGroupWithoutCanBePerformed.xml");
   }
 }
