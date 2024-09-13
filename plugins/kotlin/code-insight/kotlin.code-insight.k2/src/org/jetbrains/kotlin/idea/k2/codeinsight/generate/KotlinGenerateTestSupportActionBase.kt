@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateUnsupportedOrSuperCall
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -123,7 +124,11 @@ abstract class KotlinGenerateTestSupportActionBase(
                 methodKind.getFileTemplateDescriptor(it) != null && isApplicableTo(it, klass)
             }
 
-            chooseAndPerform(editor, frameworks) { doGenerate(editor, file, klass, it) }
+            chooseAndPerform(editor, frameworks) {
+                project.executeCommand(KotlinBundle.message("command.generate.test.support.generate.test.function"), null) {
+                    doGenerate(editor, file, klass, it)
+                }
+            }
         }
     }
 
