@@ -41,7 +41,7 @@ import static java.awt.GridBagConstraints.HORIZONTAL;
 public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return PluginModuleType.getInstance();
   }
 

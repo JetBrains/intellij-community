@@ -281,7 +281,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     public EmptyModuleBuilder createModuleBuilder() {
       return new EmptyModuleBuilder() {
         @Override
-        public ModuleType getModuleType() {
+        public ModuleType<?> getModuleType() {
           return getInstance();
         }
       };

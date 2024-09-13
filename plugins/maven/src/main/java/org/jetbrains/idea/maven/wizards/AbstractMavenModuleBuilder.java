@@ -191,7 +191,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return StdModuleTypes.JAVA;
   }
 

@@ -56,7 +56,7 @@ public class PythonModuleBuilderBase extends ModuleBuilder {
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return PythonModuleTypeBase.getInstance();
   }
 
