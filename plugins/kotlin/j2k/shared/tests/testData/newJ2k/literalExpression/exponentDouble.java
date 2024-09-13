@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Exponent {
     private final double[] doubles = {
             5e5, +5e5, -5e5, 5e+5, 5e-5,
