@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
@@ -56,6 +57,11 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
     }
   }
 
+  fun closePopup() {
+    searchEverywhereUi.closePopup()
+    waitFor("Popup is closed") { notPresent() }
+  }
+
   private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
     val action = driver.utility(ActionUtils::class).getActions(searchEverywhereUi.component).filter {
       it.getShortcutSet().getShortcuts().singleOrNull()?.toString() == shortcut
@@ -77,10 +83,13 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
     private val searchEverywhereUiComponent get() = driver.cast(component, SearchEverywhereUiComponent::class)
 
     fun getSelectedTabID(): String = searchEverywhereUiComponent.getSelectedTabID()
+
+    fun closePopup() = driver.withContext(OnDispatcher.EDT) { searchEverywhereUiComponent.closePopup() }
   }
 
   @Remote("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI")
   interface SearchEverywhereUiComponent {
     fun getSelectedTabID(): String
+    fun closePopup()
   }
 }

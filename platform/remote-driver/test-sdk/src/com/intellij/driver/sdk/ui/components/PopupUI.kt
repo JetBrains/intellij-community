@@ -6,6 +6,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
+import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.popup(@Language("xpath") xpath: String? = null) =
@@ -44,6 +45,8 @@ open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
   fun close() = driver.withContext(OnDispatcher.EDT) {
     popupComponent.dispose()
   }
+
+  fun setBounds(bounds: Rectangle) = popupComponent.setBounds(bounds.x, bounds.y, bounds.width, bounds.height)
 }
 
 @Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")

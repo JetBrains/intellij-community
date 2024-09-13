@@ -31,6 +31,7 @@ interface Window: Component {
   fun dispose()
   fun requestFocus()
   fun toFront()
+  fun setBounds(x: Int, y: Int, width: Int, height: Int)
 }
 
 @Remote("java.awt.Color")
