@@ -30,8 +30,8 @@ class GenerifyExceptionMessageTest {
         Entity source filter: 11111111111111111111111111111111111111111111111111
         
         Version: v27
-        Saving store content at: /opt/teamcity-agent/temp/buildTmp/startupPerformanceTests8000405305582635120/perf-startup/tests/IU-installer-from-file/spring-beans/log/workspaceModel/storeDump-20211004-061900
-        java.lang.AssertionError: VirtualFileUrl: file:///opt/teamcity-agent/temp/buildTmp/startupPerformanceTests8000405305582635120/perf-startup/cache/projects/unpacked/springbeans-master/.idea/libraries exist in both maps but EntityId: 17179869184 with Property: entitySource absent at other
+        Saving store content at: <FILE>
+        java.lang.AssertionError: VirtualFileUrl: file://<FILE>: 17179869184 with Property: entitySource absent at other
         """.trimIndent()
 
       // text1234text => text<NUM>text
