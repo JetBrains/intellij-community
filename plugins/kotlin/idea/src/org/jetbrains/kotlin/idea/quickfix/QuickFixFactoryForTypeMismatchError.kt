@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -154,10 +155,8 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
 
-        val convertKClassToClassFix = ConvertKClassToClassFix.create(file, expectedType, expressionType, diagnosticElement)
-        if (convertKClassToClassFix != null) {
-            actions.add(convertKClassToClassFix)
-        }
+        val convertKClassToClassFix = ConvertKClassToClassFixFactory.create(file, expectedType, expressionType, diagnosticElement)
+        actions.addIfNotNull(convertKClassToClassFix)
 
         if (expectedType.isInterface()) {
             val expressionTypeDeclaration = expressionType.constructor.declarationDescriptor?.let {
