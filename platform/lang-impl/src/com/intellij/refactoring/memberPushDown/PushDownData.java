@@ -13,19 +13,19 @@ public final class PushDownData<MemberInfo extends MemberInfoBase<Member>,
                           Member extends PsiElement> {
   private PsiElement mySourceClass;
   private final List<MemberInfo> myMembersToMove;
-  private final DocCommentPolicy<?> myCommentPolicy;
+  private final DocCommentPolicy myCommentPolicy;
   private final boolean myPreserveLinks;
 
   PushDownData(@NotNull PsiElement sourceClass,
                @NotNull List<MemberInfo> membersToMove,
-               @NotNull DocCommentPolicy<?> commentPolicy) {
+               @NotNull DocCommentPolicy commentPolicy) {
     this(sourceClass, membersToMove, commentPolicy, false);
   }
 
   @ApiStatus.Experimental
   PushDownData(@NotNull PsiElement sourceClass,
                @NotNull List<MemberInfo> membersToMove,
-               @NotNull DocCommentPolicy<?> commentPolicy,
+               @NotNull DocCommentPolicy commentPolicy,
                boolean preserveExternalLinks) {
     mySourceClass = sourceClass;
     myMembersToMove = membersToMove;
@@ -42,7 +42,7 @@ public final class PushDownData<MemberInfo extends MemberInfoBase<Member>,
   public @NotNull List<MemberInfo> getMembersToMove() {
     return myMembersToMove;
   }
-  public @NotNull DocCommentPolicy<?> getCommentPolicy() {
+  public @NotNull DocCommentPolicy getCommentPolicy() {
     return myCommentPolicy;
   }
 

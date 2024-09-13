@@ -44,7 +44,7 @@ public final class ExtractSuperClassUtil {
                                            final String superclassName,
                                            final PsiClass subclass,
                                            final MemberInfo[] selectedMemberInfos,
-                                           final DocCommentPolicy<?> javaDocPolicy)
+                                           final DocCommentPolicy javaDocPolicy)
     throws IncorrectOperationException {
 
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)

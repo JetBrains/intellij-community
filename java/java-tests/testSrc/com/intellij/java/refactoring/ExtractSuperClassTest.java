@@ -161,7 +161,7 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       }
       WriteCommandAction.writeCommandAction(getProject()).run(() -> ExtractSuperClassUtil
         .extractSuperClass(getProject(), psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
-                           infos.toArray(new MemberInfo[0]), new DocCommentPolicy<>(DocCommentPolicy.ASIS)));
+                           infos.toArray(new MemberInfo[0]), new DocCommentPolicy(DocCommentPolicy.ASIS)));
     });
   }
 
@@ -186,7 +186,7 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       assertNotNull(psiClass);
       final MemberInfo[] members = RefactoringTestUtil.findMembers(psiClass, membersToFind);
       doTest(members, targetPackageName, psiClass, conflicts, 
-             targetDirectory -> new ExtractSuperClassProcessor(getProject(), targetDirectory, newClassName, psiClass, members, false, new DocCommentPolicy<>(DocCommentPolicy.ASIS)));
+             targetDirectory -> new ExtractSuperClassProcessor(getProject(), targetDirectory, newClassName, psiClass, members, false, new DocCommentPolicy(DocCommentPolicy.ASIS)));
     });
   }
 

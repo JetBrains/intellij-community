@@ -11,5 +11,5 @@ public interface JavaPullUpHandlerBase extends RefactoringActionHandler {
   void runSilently(@NotNull PsiClass sourceClass,
                    PsiClass targetSuperClass,
                    MemberInfo[] membersToMove,
-                   DocCommentPolicy<?> javaDocPolicy);
+                   DocCommentPolicy javaDocPolicy);
 }

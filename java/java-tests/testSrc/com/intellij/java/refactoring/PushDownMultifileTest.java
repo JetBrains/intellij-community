@@ -56,7 +56,7 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
         assertTrue("No methods found", methods.length > 0);
         final MemberInfo memberInfo = new MemberInfo(methods[0]);
         memberInfo.setChecked(true);
-        new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);
@@ -108,7 +108,7 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
         assertTrue("No methods found", fields.length > 0);
         final MemberInfo memberInfo = new MemberInfo(fields[0]);
         memberInfo.setChecked(true);
-        new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+        new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
 
 
         //LocalFileSystem.getInstance().refresh(false);

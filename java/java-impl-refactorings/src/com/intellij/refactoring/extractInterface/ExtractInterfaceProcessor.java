@@ -15,7 +15,7 @@ public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
                String newClassName,
                PsiClass aClass,
                MemberInfo[] memberInfos,
-               DocCommentPolicy<?> javaDocPolicy) {
+               DocCommentPolicy javaDocPolicy) {
     super(project, replaceInstanceOf, targetDirectory, newClassName, aClass, memberInfos, javaDocPolicy);
   }
 

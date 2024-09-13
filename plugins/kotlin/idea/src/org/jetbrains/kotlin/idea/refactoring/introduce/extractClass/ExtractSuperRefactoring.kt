@@ -58,9 +58,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 data class ExtractSuperInfo(
     val originalClass: KtClassOrObject,
@@ -69,7 +66,7 @@ data class ExtractSuperInfo(
     val targetFileName: String,
     val newClassName: String,
     val isInterface: Boolean,
-    val docPolicy: DocCommentPolicy<*>
+    val docPolicy: DocCommentPolicy
 )
 
 class ExtractSuperRefactoring(

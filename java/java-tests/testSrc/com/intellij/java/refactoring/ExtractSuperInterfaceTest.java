@@ -32,7 +32,7 @@ public class ExtractSuperInterfaceTest extends ExtractSuperClassTest {
       assertNotNull(psiClass);
       final MemberInfo[] members = RefactoringTestUtil.findMembers(psiClass, membersToFind);
       doTest(members, null, psiClass, null,
-             targetDirectory -> new ExtractInterfaceProcessor(getProject(), false, targetDirectory, newClassName, psiClass, members, new DocCommentPolicy<>(DocCommentPolicy.ASIS)));
+             targetDirectory -> new ExtractInterfaceProcessor(getProject(), false, targetDirectory, newClassName, psiClass, members, new DocCommentPolicy(DocCommentPolicy.ASIS)));
     });
   }
 

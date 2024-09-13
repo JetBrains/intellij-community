@@ -43,12 +43,12 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private final PsiClass mySourceClass;
   private final PsiClass myTargetSuperClass;
   private final MemberInfo[] myMembersToMove;
-  private final DocCommentPolicy<?> myJavaDocPolicy;
+  private final DocCommentPolicy myJavaDocPolicy;
   private Set<PsiMember> myMembersAfterMove;
   private Set<PsiMember> myMovedMembers;
   private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = new HashMap<>();
 
-  public PullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy<?> javaDocPolicy) {
+  public PullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
     super(sourceClass.getProject());
     mySourceClass = sourceClass;
     myTargetSuperClass = targetSuperClass;
@@ -273,7 +273,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   @Override
-  public DocCommentPolicy<?> getDocCommentPolicy() {
+  public DocCommentPolicy getDocCommentPolicy() {
     return myJavaDocPolicy;
   }
 

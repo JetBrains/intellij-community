@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil
@@ -11,12 +14,12 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringHierarchyUtil
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.AbstractMemberPullPushTest
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.qualifiedClassNameForRendering
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
 abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
     private fun getTargetClassName(file: PsiFile) = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// TARGET_CLASS: ")
@@ -66,7 +69,7 @@ abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
             )
             if (!conflicts.isEmpty) throw BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values())
 
-            PullUpProcessor(sourceClass, targetClass, memberInfos, DocCommentPolicy<PsiComment>(DocCommentPolicy.ASIS)).run()
+            PullUpProcessor(sourceClass, targetClass, memberInfos, DocCommentPolicy(DocCommentPolicy.ASIS)).run()
             UIUtil.dispatchAllInvocationEvents()
         }
     }

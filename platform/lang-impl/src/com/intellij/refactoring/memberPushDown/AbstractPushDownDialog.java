@@ -103,6 +103,6 @@ public abstract class AbstractPushDownDialog<MemberInfo extends MemberInfoBase<M
   protected void doAction() {
     if(!isOKActionEnabled()) return;
 
-    invokeRefactoring(new PushDownProcessor<>(myClass, getSelectedMemberInfos(), new DocCommentPolicy<>(myJavaDocPanel.getPolicy())));
+    invokeRefactoring(new PushDownProcessor<>(myClass, getSelectedMemberInfos(), new DocCommentPolicy(myJavaDocPanel.getPolicy())));
   }
 }

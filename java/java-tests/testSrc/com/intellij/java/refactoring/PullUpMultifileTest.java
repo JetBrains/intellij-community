@@ -57,7 +57,7 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
         PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory,
                                            psiMethod -> PullUpProcessor.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod)));
 
-      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
     });
 
     if (conflicts.length != 0 && conflictsMap.isEmpty()) {
@@ -107,7 +107,7 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
       final MemberInfo memberInfo = new MemberInfo(methods[0]);
       memberInfo.setChecked(true);
       membersToMove[0] = memberInfo;
-      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy<>(DocCommentPolicy.ASIS)).run();
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
     });
   }
 }

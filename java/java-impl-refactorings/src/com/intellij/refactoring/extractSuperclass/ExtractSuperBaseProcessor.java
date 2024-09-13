@@ -31,14 +31,14 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   protected PsiDirectory myTargetDirectory;
   protected final String myNewClassName;
   protected final MemberInfo[] myMemberInfos;
-  protected final DocCommentPolicy<?> myJavaDocPolicy;
+  protected final DocCommentPolicy myJavaDocPolicy;
 
 
   public ExtractSuperBaseProcessor(Project project,
                                    boolean replaceInstanceOf,
                                    PsiDirectory targetDirectory,
                                    String newClassName,
-                                   PsiClass aClass, MemberInfo[] memberInfos, DocCommentPolicy<?> javaDocPolicy) {
+                                   PsiClass aClass, MemberInfo[] memberInfos, DocCommentPolicy javaDocPolicy) {
     super(project, replaceInstanceOf, newClassName);
     myTargetDirectory = targetDirectory;
     myNewClassName = newClassName;
