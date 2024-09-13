@@ -62,7 +62,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   private final Set<PsiMember> myMembersToMove;
   private final PsiClass mySourceClass;
   private final Project myProject;
-  private final DocCommentPolicy myDocCommentPolicy;
+  private final DocCommentPolicy<?> myDocCommentPolicy;
   private final Set<PsiMember> myMembersAfterMove;
 
   final ExplicitSuperDeleter myExplicitSuperDeleter;

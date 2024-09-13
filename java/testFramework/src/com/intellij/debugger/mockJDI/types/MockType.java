@@ -15,7 +15,7 @@ public abstract class MockType extends MockMirror implements Type {
     super(virtualMachine);
   }
 
-  public static MockType createType(final MockVirtualMachine virtualMachine, Class aClass) {
+  public static MockType createType(final MockVirtualMachine virtualMachine, Class<?> aClass) {
     if (aClass.isPrimitive()) {
       if (aClass == boolean.class) {
         return virtualMachine.getBooleanType();

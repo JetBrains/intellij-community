@@ -152,7 +152,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
-    final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
+    final DocCommentPolicy<?> javaDocPolicy = new DocCommentPolicy<>(dialog.getDocCommentPolicy());
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {
       return ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);

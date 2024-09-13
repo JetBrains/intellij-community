@@ -52,7 +52,7 @@ public final class InconsistentLanguageLevelInspection extends GlobalInspectionT
                                        dependantModule.getName(), dependantLanguageLevel.getShortText()),
             module,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(dependantModule.getName()),
-            (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
+            (QuickFix<?>)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
           return new CommonProblemDescriptor[] {problemDescriptor};
         }
       }

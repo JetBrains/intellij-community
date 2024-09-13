@@ -51,7 +51,7 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
     return myProvider.isEnabledForModuleType(moduleType);
   }
 

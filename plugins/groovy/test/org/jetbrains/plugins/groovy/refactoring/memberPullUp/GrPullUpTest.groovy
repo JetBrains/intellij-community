@@ -192,7 +192,7 @@ class GrPullUpTest extends LightGroovyTestCase {
       }
     }
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener)
-    final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS))
+    final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy<>(DocCommentPolicy.ASIS))
     helper.run()
     UIUtil.dispatchAllInvocationEvents()
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener)

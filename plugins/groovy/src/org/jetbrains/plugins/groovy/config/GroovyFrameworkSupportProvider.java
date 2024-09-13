@@ -50,7 +50,7 @@ public class GroovyFrameworkSupportProvider extends FrameworkSupportInModuleProv
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
     return GroovyFacetUtil.isAcceptableModuleType(moduleType);
   }
 }

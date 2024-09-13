@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance(InvokeThread.class);
 
-  private static final ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<>();
+  private static final ThreadLocal<WorkerThreadRequest<?>> ourWorkerRequest = new ThreadLocal<>();
 
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
@@ -103,7 +103,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   protected final EventQueue<E> myEvents;
 
-  private volatile WorkerThreadRequest myCurrentRequest = null;
+  private volatile WorkerThreadRequest<E> myCurrentRequest = null;
 
   public InvokeThread() {
     myEvents = new EventQueue<>(PrioritizedTask.Priority.values().length);
@@ -123,7 +123,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     processEvent(event);
   }
 
-  private void run(final @NotNull WorkerThreadRequest threadRequest) {
+  private void run(final @NotNull WorkerThreadRequest<?> threadRequest) {
     try {
       DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ProgressManager.getInstance().runProcess(() -> {
         while (true) {
@@ -132,7 +132,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
               break;
             }
 
-            final WorkerThreadRequest currentRequest = getCurrentRequest();
+            final WorkerThreadRequest<E> currentRequest = getCurrentRequest();
             if (currentRequest != threadRequest) {
               String message = "Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed();
               LOG.error(message, new IllegalStateException(message), ThreadDumper.dumpThreadsToString());
@@ -193,8 +193,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
   }
 
-  public static InvokeThread currentThread() {
-    final WorkerThreadRequest request = getCurrentThreadRequest();
+  public static InvokeThread<?> currentThread() {
+    final WorkerThreadRequest<?> request = getCurrentThreadRequest();
     return request != null ? request.getOwner() : null;
   }
 
@@ -223,11 +223,11 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     currentThreadRequest.requestStop();
   }
 
-  public WorkerThreadRequest getCurrentRequest() {
+  public WorkerThreadRequest<E> getCurrentRequest() {
     return myCurrentRequest;
   }
 
-  public static WorkerThreadRequest getCurrentThreadRequest() {
+  public static WorkerThreadRequest<?> getCurrentThreadRequest() {
     return ourWorkerRequest.get();
   }
 

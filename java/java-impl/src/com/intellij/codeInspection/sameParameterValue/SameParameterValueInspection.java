@@ -22,7 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.AccessModifier;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -172,7 +174,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
       canonicalText = constValue.canonicalText();
     }
     else {
-      canonicalText = presentableText = (value instanceof Iterable it) ? Strings.join(it, ", ") : String.valueOf(value);
+      canonicalText = presentableText = (value instanceof Iterable<?> it) ? Strings.join(it, ", ") : String.valueOf(value);
     }
     PsiElement anchor = ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter);
     if (!anchor.isPhysical()) return null;

@@ -26,7 +26,7 @@ public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGro
   @NotNull
   public abstract FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model);
 
-  public abstract boolean isEnabledForModuleType(@NotNull ModuleType moduleType);
+  public abstract boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType);
 
   public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
     return isEnabledForModuleType(builder.getModuleType());

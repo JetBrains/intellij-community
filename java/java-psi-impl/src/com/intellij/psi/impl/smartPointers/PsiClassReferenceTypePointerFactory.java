@@ -22,7 +22,7 @@ public final class PsiClassReferenceTypePointerFactory implements ClassTypePoint
   }
 
   private static class ClassReferenceTypePointer extends TypePointerBase<PsiClassReferenceType> {
-    private final SmartPsiElementPointer mySmartPsiElementPointer;
+    private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> mySmartPsiElementPointer;
     private final String myReferenceText;
     private final Project myProject;
 
@@ -38,7 +38,7 @@ public final class PsiClassReferenceTypePointerFactory implements ClassTypePoint
     @Override
     protected PsiClassReferenceType calcType() {
       PsiClassReferenceType myType = null;
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)mySmartPsiElementPointer.getElement();
+      final PsiJavaCodeReferenceElement referenceElement = mySmartPsiElementPointer.getElement();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
       if (referenceElement != null) {
         myType = (PsiClassReferenceType)factory.createType(referenceElement);

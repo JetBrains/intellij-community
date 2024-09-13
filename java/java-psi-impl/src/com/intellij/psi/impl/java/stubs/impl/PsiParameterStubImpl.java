@@ -49,7 +49,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
 
   @Override
   public PsiModifierListStub getModList() {
-    for (StubElement child : getChildrenStubs()) {
+    for (StubElement<?> child : getChildrenStubs()) {
       if (child instanceof PsiModifierListStub) {
         return (PsiModifierListStub)child;
       }

@@ -161,7 +161,7 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       }
       WriteCommandAction.writeCommandAction(getProject()).run(() -> ExtractSuperClassUtil
         .extractSuperClass(getProject(), psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
-                           infos.toArray(new MemberInfo[0]), new DocCommentPolicy(DocCommentPolicy.ASIS)));
+                           infos.toArray(new MemberInfo[0]), new DocCommentPolicy<>(DocCommentPolicy.ASIS)));
     });
   }
 

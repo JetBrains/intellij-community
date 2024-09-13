@@ -197,7 +197,7 @@ class ClassPatternsPanel extends JPanel {
     }
 
     @Override
-    public Class getColumnClass(int col) {
+    public Class<?> getColumnClass(int col) {
       if (col == 0) {
         return Boolean.class;
       }

@@ -11,7 +11,7 @@ public class ExtractSuperClassProcessor extends ExtractSuperBaseProcessor {
 
   public ExtractSuperClassProcessor(Project project,
                                     PsiDirectory targetDirectory, String newClassName, PsiClass aClass, MemberInfo[] memberInfos, boolean replaceInstanceOf,
-                                    DocCommentPolicy javaDocPolicy) {
+                                    DocCommentPolicy<?> javaDocPolicy) {
     super(project, replaceInstanceOf, targetDirectory, newClassName, aClass, memberInfos, javaDocPolicy);
   }
 

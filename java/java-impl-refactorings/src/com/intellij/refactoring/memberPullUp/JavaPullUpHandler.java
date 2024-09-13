@@ -64,7 +64,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
   @Override
   public void runSilently(@NotNull PsiClass sourceClass,
                           PsiClass targetSuperClass,
-                          MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
+                          MemberInfo[] membersToMove, DocCommentPolicy<?> javaDocPolicy) {
     new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
   }
 
@@ -152,7 +152,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
     }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, () ->
-        new PullUpProcessor(mySubclass, superClass, infos.toArray(new MemberInfo[0]), new DocCommentPolicy(dialog.getJavaDocPolicy())).run());
+        new PullUpProcessor(mySubclass, superClass, infos.toArray(new MemberInfo[0]), new DocCommentPolicy<>(dialog.getJavaDocPolicy())).run());
       boolean ok = conflictsDialog.showAndGet();
       if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
       return ok;

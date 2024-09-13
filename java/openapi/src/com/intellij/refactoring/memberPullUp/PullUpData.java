@@ -27,7 +27,7 @@ public interface PullUpData {
 
   PsiClass getTargetClass();
 
-  DocCommentPolicy getDocCommentPolicy();
+  DocCommentPolicy<?> getDocCommentPolicy();
 
   Set<PsiMember> getMembersToMove();
 

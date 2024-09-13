@@ -39,14 +39,14 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
 
   public PushDownProcessor(@NotNull Klass sourceClass,
                            @NotNull List<MemberInfo> memberInfos,
-                           @NotNull DocCommentPolicy javaDocPolicy) {
+                           @NotNull DocCommentPolicy<?> javaDocPolicy) {
     this(sourceClass, memberInfos, javaDocPolicy, false);
   }
 
   @ApiStatus.Experimental
   public PushDownProcessor(@NotNull Klass sourceClass,
                            @NotNull List<MemberInfo> memberInfos,
-                           @NotNull DocCommentPolicy javaDocPolicy,
+                           @NotNull DocCommentPolicy<?> javaDocPolicy,
                            boolean preserveExternalLinks) {
     super(sourceClass.getProject());
     myDelegate = PushDownDelegate.findDelegate(sourceClass);

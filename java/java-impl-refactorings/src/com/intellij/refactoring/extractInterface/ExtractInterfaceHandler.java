@@ -40,7 +40,7 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
   private String myInterfaceName;
   private MemberInfo[] mySelectedMembers;
   private PsiDirectory myTargetDir;
-  private DocCommentPolicy myJavaDocPolicy;
+  private DocCommentPolicy<?> myJavaDocPolicy;
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
@@ -100,7 +100,7 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
         myInterfaceName = dialog.getExtractedSuperName();
         mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
         myTargetDir = dialog.getTargetDirectory();
-        myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
+        myJavaDocPolicy = new DocCommentPolicy<>(dialog.getDocCommentPolicy());
         LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
         try {
           return extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
@@ -116,7 +116,7 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
                                    PsiClass aClass,
                                    String interfaceName,
                                    MemberInfo[] selectedMembers,
-                                   DocCommentPolicy javaDocPolicy) {
+                                   DocCommentPolicy<?> javaDocPolicy) {
     final Project project = aClass.getProject();
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(ExtractSuperClassUtil.REFACTORING_EXTRACT_SUPER_ID, ExtractSuperClassUtil.createBeforeData(aClass, selectedMembers));

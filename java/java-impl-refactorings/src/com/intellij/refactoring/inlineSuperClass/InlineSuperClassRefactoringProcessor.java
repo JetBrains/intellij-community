@@ -316,7 +316,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     try {
       final UsageInfo[] infos = ContainerUtil.map2Array(myTargetClasses, UsageInfo.class, UsageInfo::new);
-      new PushDownProcessor<>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy(myPolicy), myCurrentInheritor!=null)
+      new PushDownProcessor<>(mySuperClass, Arrays.asList(myMemberInfos), new DocCommentPolicy<>(myPolicy), myCurrentInheritor!=null)
         .pushDownToClasses(infos);
 
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);

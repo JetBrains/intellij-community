@@ -136,7 +136,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), getExtractedSuperName(),
                                          mySourceClass, getSelectedMemberInfos().toArray(new MemberInfo[0]),
-                                         new DocCommentPolicy(getDocCommentPolicy()));
+                                         new DocCommentPolicy<>(getDocCommentPolicy()));
   }
 
   @Override
