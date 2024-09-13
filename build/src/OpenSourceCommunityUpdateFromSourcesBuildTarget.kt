@@ -34,7 +34,7 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: COMMUNITY_ROOT.communityRoot
     runBlocking(Dispatchers.Default) {
       createBuildTasks(createCommunityBuildContext(options, projectHome))
-        .buildUnpackedDistribution(options.outRootDir!!.resolve(distOutputRelativePath), includeBinAndRuntime = false)
+        .buildUnpackedDistribution(options.outRootDir!!.resolve(distOutputRelativePath), includeBinAndRuntime = true)
     }
   }
 }
