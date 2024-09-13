@@ -43,7 +43,7 @@ return #addClassLiteral()##
 }
 ##
 #macro (addClassLiteral)
-    #if ($isCommon || $isNative)
+    #if ($isCommon || $isNative || $isWasm)
     this::class##
     #elseif ($isJs)
     this::class.js##

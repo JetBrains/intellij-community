@@ -41,6 +41,7 @@ class KotlinEqualsHashCodeTemplatesManager : EqualsHashCodeTemplatesManagerBase(
         map.put("isCommon", PsiTypes.booleanType())
         map.put("isJs", PsiTypes.booleanType())
         map.put("isNative", PsiTypes.booleanType())
+        map.put("isWasm", PsiTypes.booleanType())
     }
 
     override fun getHashCodeImplicitVars(project: Project): Map<String, PsiType> {

@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.isWasm
+import org.jetbrains.kotlin.platform.wasm.isWasmJs
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -93,6 +95,7 @@ object VelocityGeneratorHelper {
         vc.put("isCommon", clazz.platform.isCommon())
         vc.put("isJs", clazz.platform.isJs())
         vc.put("isNative", clazz.platform.isNative())
+        vc.put("isWasm", clazz.platform.isWasm())
 
         for (paramName in contextMap.keys) {
             vc.put(paramName, contextMap[paramName])
