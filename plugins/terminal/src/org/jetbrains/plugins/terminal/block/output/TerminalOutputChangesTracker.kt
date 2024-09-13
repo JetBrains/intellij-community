@@ -64,7 +64,7 @@ internal class TerminalOutputChangesTracker(
 
   init {
     val listener = object : TextBufferChangesListener {
-      override fun linesChanged(fromIndex: Int) {
+      override fun linesChanged(fromIndex: Int) = textBuffer.withLock {
         val line = textBuffer.historyLinesCount + fromIndex
         lastChangedVisualLine = min(lastChangedVisualLine, line)
         isAnyLineChanged = true
@@ -74,7 +74,7 @@ internal class TerminalOutputChangesTracker(
         }
       }
 
-      override fun linesDiscardedFromHistory(lines: List<TerminalLine>) {
+      override fun linesDiscardedFromHistory(lines: List<TerminalLine>) = textBuffer.withLock {
         if (lastChangedVisualLine >= lines.size) {
           lastChangedVisualLine -= lines.size
         }
@@ -90,7 +90,7 @@ internal class TerminalOutputChangesTracker(
         }
       }
 
-      override fun widthResized() {
+      override fun widthResized() = textBuffer.withLock {
         // Consider resize of the width as a full replacement of the output.
         // Because in the process of this operation, some lines might be discarded from the Text Buffer,
         // and it is not tracked now, so it may bring the inconsistency if we omit it.
