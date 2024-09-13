@@ -5,8 +5,10 @@ import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
+import org.jetbrains.kotlin.idea.gradleTooling.toKotlinToolingVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 
 internal class KotlinGradleBuildSystemFacade : KotlinBuildSystemFacade {
@@ -22,5 +24,9 @@ internal class KotlinGradleBuildSystemFacade : KotlinBuildSystemFacade {
             name = kotlinSourceSet.name,
             sourceDirectories = kotlinSourceSet.sourceDirs.map { file -> file.toPath() }
         )
+    }
+
+    override fun getKotlinToolingVersion(module: Module): KotlinToolingVersion? {
+        return module.kotlinGradlePluginVersion?.toKotlinToolingVersion()
     }
 }

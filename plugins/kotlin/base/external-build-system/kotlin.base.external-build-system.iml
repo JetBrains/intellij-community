@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
   </component>
 </module>
