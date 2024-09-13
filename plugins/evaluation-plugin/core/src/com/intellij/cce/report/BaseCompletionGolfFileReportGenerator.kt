@@ -35,7 +35,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
     }
   }
 
-  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
+  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
     return createHTML().body {
       div("cg") {
         div {

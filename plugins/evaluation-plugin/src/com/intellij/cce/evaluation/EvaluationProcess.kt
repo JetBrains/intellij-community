@@ -6,18 +6,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import kotlin.system.measureTimeMillis
 
-class EvaluationProcess private constructor(private val steps: List<EvaluationStep>,
-                                            private val finalStep: FinishEvaluationStep?) {
+class EvaluationProcess private constructor (
+  private val environment: EvaluationEnvironment,
+  private val steps: List<EvaluationStep>,
+  private val finalStep: FinishEvaluationStep?
+) {
   companion object {
-    fun build(init: Builder.() -> Unit, stepFactory: StepFactory): EvaluationProcess {
+    fun build(environment: EvaluationEnvironment, stepFactory: StepFactory, init: Builder.() -> Unit): EvaluationProcess {
       val builder = Builder()
       builder.init()
-      return builder.build(stepFactory)
+      return builder.build(environment, stepFactory)
     }
-  }
-
-  fun startAsync(workspace: EvaluationWorkspace) = ApplicationManager.getApplication().executeOnPooledThread {
-    start(workspace)
   }
 
   fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
@@ -28,7 +27,7 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
       if (hasError && step !is UndoableEvaluationStep.UndoStep) continue
       println("Starting step: ${step.name} (${step.description})")
       val duration = measureTimeMillis {
-        val result = step.start(currentWorkspace)
+        val result = environment.execute(step, workspace)
         if (result == null) {
           hasError = true
         } else {
@@ -48,7 +47,7 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
     var shouldGenerateReports: Boolean = false
     var shouldReorderElements: Boolean = false
 
-    fun build(factory: StepFactory): EvaluationProcess {
+    fun build(environment: EvaluationEnvironment, factory: StepFactory): EvaluationProcess {
       val steps = mutableListOf<EvaluationStep>()
       val isTestingEnvironment = ApplicationManager.getApplication().isUnitTestMode
 
@@ -56,7 +55,9 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
         factory.setupSdkStep()?.let { steps.add(it) }
 
         if (!Registry.`is`("evaluation.plugin.disable.sdk.check")) {
-          steps.add(factory.checkSdkConfiguredStep())
+          factory.checkSdkConfiguredStep()?.let {
+            steps.add(it)
+          }
         }
       }
 
@@ -96,7 +97,7 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
           steps.add(step.undoStep())
       }
 
-      return EvaluationProcess(steps, factory.finishEvaluationStep().takeIf { !isTestingEnvironment })
+      return EvaluationProcess(environment, steps, factory.finishEvaluationStep().takeIf { !isTestingEnvironment })
     }
   }
 }

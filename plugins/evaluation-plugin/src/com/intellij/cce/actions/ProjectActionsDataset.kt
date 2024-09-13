@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.cce.evaluation.step
+package com.intellij.cce.actions
 
-import com.intellij.cce.actions.ActionsGenerator
-import com.intellij.cce.actions.CallFeature
-import com.intellij.cce.actions.FileActions
-import com.intellij.cce.core.JvmProperties
-import com.intellij.cce.core.PropertyAdapters
-import com.intellij.cce.core.SymbolLocation
-import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.core.*
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.common.CommonActionsInvoker
 import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.SetupSdkStep
+import com.intellij.cce.evaluation.step.CheckProjectSdkStep
+import com.intellij.cce.interpreter.*
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
 import com.intellij.cce.processor.GenerateActionsProcessor
@@ -16,44 +16,59 @@ import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.Progress
 import com.intellij.cce.util.Summary
+import com.intellij.cce.util.text
 import com.intellij.cce.visitor.CodeFragmentBuilder
 import com.intellij.cce.workspace.Config
-import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlin.random.Random
 
-open class ActionsGenerationStep(
-  protected val config: Config,
-  protected val language: String,
-  protected  val evaluationRootInfo: EvaluationRootInfo,
-  project: Project,
-  protected val processor: GenerateActionsProcessor,
-  protected val featureName: String
-) : BackgroundEvaluationStep(project) {
-  override val name: String = "Generating actions"
+open class ProjectActionsDataset(
+  private val strategy: EvaluationStrategy,
+  val config: Config.ActionsGeneration,
+  private val filesLimit: Int?, // TODO dataset generation could be lazy
+  private val sessionsLimit: Int?,
+  private val evaluationRootInfo: EvaluationRootInfo,
+  val project: Project,
+  val processor: GenerateActionsProcessor,
+  private val featureName: String
+) : EvaluationDataset {
+  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
+  override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
-  override val description: String = "Generating actions by selected files"
+  override val preparationDescription: String = "Generating actions by selected files"
 
-  override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
+  override fun prepare(datasetContext: DatasetContext, progress: Progress) {
     val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
-      FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, config.actions.ignoreFileNames, language)
+      FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, config.ignoreFileNames, config.language)
     }
     generateActions(
-      workspace,
-      language,
+      datasetContext,
+      config.language,
       filesForEvaluation,
       evaluationRootInfo,
       progress,
-      filesLimit = config.interpret.filesLimit ?: Int.MAX_VALUE,
-      sessionsLimit = config.interpret.sessionsLimit ?: Int.MAX_VALUE,)
-    return workspace
+      filesLimit = this.filesLimit ?: Int.MAX_VALUE,
+      sessionsLimit = this.sessionsLimit ?: Int.MAX_VALUE,
+    )
+  }
+
+  override fun sessionCount(datasetContext: DatasetContext): Int = datasetContext.actionsStorage.computeSessionsCount()
+
+  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationDatasetChunk> {
+    val files = datasetContext.actionsStorage.getActionFiles()
+    return files.shuffled(FILES_RANDOM).asSequence().map { file ->
+      val fileActions = datasetContext.actionsStorage.getActions(file)
+      val fileText = FilesHelper.getFile(project, fileActions.path).text()
+      FileActionsChunk(fileActions, fileText)
+    }.iterator()
   }
 
   protected fun generateActions(
-    workspace: EvaluationWorkspace,
+    datasetContext: DatasetContext,
     languageName: String,
     files: Collection<VirtualFile>,
     evaluationRootInfo: EvaluationRootInfo,
@@ -62,7 +77,7 @@ open class ActionsGenerationStep(
     sessionsLimit: Int = Int.MAX_VALUE,
   ) {
     val actionsGenerator = ActionsGenerator(processor)
-    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
+    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, strategy)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0
@@ -96,7 +111,7 @@ open class ActionsGenerationStep(
         val codeFragment = codeFragmentBuilder.build(file, rootVisitor, featureName)
         val fileActions = actionsGenerator.generate(codeFragment)
         actionsSummarizer.update(fileActions)
-        workspace.actionsStorage.saveActions(fileActions)
+        datasetContext.actionsStorage.saveActions(fileActions)
         totalSessions += fileActions.sessionsCount
         if (fileActions.sessionsCount > 0) {
           totalFiles++
@@ -106,7 +121,7 @@ open class ActionsGenerationStep(
       catch (e: Throwable) {
         indicator.setProgress(filename, "error: ${e.message} | $filename", progress)
         try {
-          workspace.errorsStorage.saveError(
+          datasetContext.errorsStorage.saveError(
             FileErrorInfo(FilesHelper.getRelativeToProjectPath(project, file.path), e.message
                                                                                     ?: "No Message", stackTraceToString(e))
           )
@@ -120,7 +135,7 @@ open class ActionsGenerationStep(
       LOG.info("Generating actions for file ${file.path} completed. Done: $i/${files.size}. With error: ${errors.size}")
     }
 
-    actionsSummarizer.save(workspace)
+    actionsSummarizer.save(datasetContext)
   }
 
   private class ActionsSummarizer {
@@ -164,8 +179,8 @@ open class ActionsGenerationStep(
       }
     }
 
-    fun save(workspace: EvaluationWorkspace) {
-      workspace.saveAdditionalStats("actions", rootSummary.asSerializable())
+    fun save(datasetContext: DatasetContext) {
+      datasetContext.saveAdditionalStats("actions", rootSummary.asSerializable())
     }
 
     private enum class CompletionKind {
@@ -181,6 +196,31 @@ open class ActionsGenerationStep(
 
     private fun TokenProperties.java(): JvmProperties? = PropertyAdapters.Jvm.adapt(this)
   }
+
+  private inner class FileActionsChunk(
+    private val fileActions: FileActions,
+    override val presentationText: String,
+  ) : EvaluationDatasetChunk {
+    override val datasetName: String = config.projectName
+    override val name: String = fileActions.path
+    override val sessionCount: Int = fileActions.sessionsCount
+
+    override fun evaluate(
+      featureInvoker: FeatureInvoker,
+      handler: InterpretationHandler,
+      filter: InterpretFilter,
+      order: InterpretationOrder,
+      sessionHandler: (Session) -> Unit
+    ): List<Session> {
+      val factory = object : InvokersFactory {
+        override fun createActionsInvoker(): ActionsInvoker = CommonActionsInvoker(project)
+        override fun createFeatureInvoker(): FeatureInvoker = featureInvoker
+      }
+      val actionInterpreter = ActionInvokingInterpreter(factory, handler, filter, order)
+      return actionInterpreter.interpret(fileActions, sessionHandler)
+    }
+  }
 }
 
+private val LOG = Logger.getInstance(ProjectActionsDataset::class.java)
 private val FILES_RANDOM = Random(42)

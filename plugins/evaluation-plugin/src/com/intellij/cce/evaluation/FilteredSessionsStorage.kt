@@ -9,7 +9,7 @@ class FilteredSessionsStorage(private val filter: SessionsFilter, private val st
   override fun getSessions(path: String): FileSessionsInfo {
     val sessionsInfo = storage.getSessions(path)
     val filteredSessions = filter.apply(sessionsInfo.sessions)
-    return FileSessionsInfo(sessionsInfo.projectName, sessionsInfo.filePath, sessionsInfo.text, filteredSessions)
+    return sessionsInfo.copy(sessions = filteredSessions)
   }
 
   override fun getSessionFiles(): List<Pair<String, String>> = storage.getSessionFiles()

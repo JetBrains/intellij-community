@@ -5,24 +5,20 @@ import com.intellij.cce.actions.*
 import com.intellij.cce.core.Session
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
-import java.nio.file.Paths
-import kotlin.random.Random
 
 class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
                                 private val handler: InterpretationHandler,
                                 private val filter: InterpretFilter,
-                                private val order: InterpretationOrder,
-                                private val projectPath: String?) : Interpreter {
+                                private val order: InterpretationOrder) {
 
-  override fun interpret(fileActions: FileActions, sessionHandler: (Session) -> Unit): List<Session> {
+  fun interpret(fileActions: FileActions, sessionHandler: (Session) -> Unit): List<Session> {
     val actionsInvoker = invokersFactory.createActionsInvoker()
     val featureInvoker = invokersFactory.createFeatureInvoker()
     val sessions = mutableListOf<Session>()
-    val filePath = if (projectPath == null) fileActions.path else Paths.get(projectPath).resolve(fileActions.path).toString()
-    val needToClose = !actionsInvoker.isOpen(filePath)
-    val text = actionsInvoker.openFile(filePath)
+    val needToClose = !actionsInvoker.isOpen(fileActions.path)
+    val text = actionsInvoker.openFile(fileActions.path)
     if (fileActions.checksum != computeChecksum(text)) {
-      handler.onErrorOccurred(IllegalStateException("File $filePath has been modified."), fileActions.sessionsCount)
+      handler.onErrorOccurred(IllegalStateException("File ${fileActions.path} has been modified."), fileActions.sessionsCount)
       return emptyList()
     }
     var shouldCompleteToken = filter.shouldCompleteToken()
@@ -57,22 +53,11 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
     if (text != resultText) {
       actionsInvoker.deleteRange(0, resultText.length)
       actionsInvoker.printText(text)
-      if (needToClose) actionsInvoker.closeFile(filePath)
+      if (needToClose) actionsInvoker.closeFile(fileActions.path)
       throw IllegalStateException("Text before and after interpretation doesn't match. Diff:\n${getDiff(text, resultText)}")
     }
-    if (needToClose) actionsInvoker.closeFile(filePath)
+    if (needToClose) actionsInvoker.closeFile(fileActions.path)
     handler.onFileProcessed(fileActions.path)
     return sessions.sortedBy { it.offset }
   }
-
-  private fun List<Action>.reorder(order: InterpretationOrder): List<Action> {
-    val groups = groupBy { it.sessionId }.values
-    return when (order) {
-      InterpretationOrder.LINEAR -> groups.flatten()
-      InterpretationOrder.REVERSED -> groups.reversed().flatten()
-      InterpretationOrder.RANDOM -> groups.shuffled(ORDER_RANDOM).flatten()
-    }
-  }
 }
-
-private val ORDER_RANDOM = Random(42)

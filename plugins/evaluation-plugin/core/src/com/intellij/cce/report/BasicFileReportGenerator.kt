@@ -15,7 +15,7 @@ open class BasicFileReportGenerator(
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
-  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
+  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
     val sessions = fileEvaluations.map { it.sessionsInfo.sessions }
     val maxLookupOrder = sessions.flatMap { session -> session.map { it.lookups.size - 1 } }.maxOrNull() ?: 0
     return createHTML().body {

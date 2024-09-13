@@ -40,7 +40,7 @@ class FusLogsSaver(private val finalStorageDir: Path, private val allowedGroups:
   }
 
   @OptIn(ExperimentalPathApi::class)
-  override fun save(languageName: String, trainingPercentage: Int) {
+  override fun save(languageName: String?, trainingPercentage: Int) {
     try {
       for (sessionTemporaryRelativePath in temporaryFusLogsDirectory.walk()) {
         val sessionTemporaryPath = temporaryFusLogsDirectory / sessionTemporaryRelativePath
@@ -54,8 +54,8 @@ class FusLogsSaver(private val finalStorageDir: Path, private val allowedGroups:
     }
   }
 
-  private fun obtainFinalLogsDirectory(languageName: String): Path {
-    val fusFinalDirectory = finalStorageDir / languageName
+  private fun obtainFinalLogsDirectory(languageName: String?): Path {
+    val fusFinalDirectory = if (languageName != null) finalStorageDir / languageName else finalStorageDir
     if (!fusFinalDirectory.exists()) {
       fusFinalDirectory.createDirectory()
     }

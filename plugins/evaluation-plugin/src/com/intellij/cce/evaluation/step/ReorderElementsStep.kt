@@ -10,23 +10,29 @@ import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.FeaturesSerializer
-import com.intellij.cce.workspace.info.FileSessionsInfo
-import com.intellij.openapi.project.Project
 
-class ReorderElementsStep(config: Config, project: Project) :
+class ReorderElementsStep(private val config: Config) :
   CreateWorkspaceStep(
     Config.buildFromConfig(config) { evaluationTitle = config.reorder.title },
-    ReorderElementsHandler(config.reorder.features),
-    project) {
+    ReorderElementsHandler(config.reorder.features, config.actions != null)
+  ) {
 
   override val name: String = "Reorder elements"
 
   override val description: String = "Reorder elements by features values"
 
-  private class ReorderElementsHandler(private val featuresForReordering: List<String>) : TwoWorkspaceHandler {
+  private class ReorderElementsHandler(
+    private val featuresForReordering: List<String>,
+    private val isActionProjectDataset: Boolean
+  ) : TwoWorkspaceHandler {
 
     override fun invoke(workspace1: EvaluationWorkspace, workspace2: EvaluationWorkspace, indicator: Progress) {
       if (featuresForReordering.isEmpty()) return
+
+      check(isActionProjectDataset) {
+        "Reorder is available only for action-based dataset"
+      }
+
       val files = workspace1.sessionsStorage.getSessionFiles()
       for ((counter, file) in files.withIndex()) {
         indicator.setProgress(file.first, file.first, counter.toDouble() / files.size)
@@ -54,7 +60,7 @@ class ReorderElementsStep(config: Config, project: Project) :
           workspace2.featuresStorage.saveSession(newSession, fileSessionsInfo.filePath)
         }
         workspace2.sessionsStorage.saveSessions(
-          FileSessionsInfo(fileSessionsInfo.projectName, fileSessionsInfo.filePath, fileSessionsInfo.text, resultSessions)
+          fileSessionsInfo.copy(sessions = resultSessions)
         )
       }
       workspace2.sessionsStorage.saveMetadata()

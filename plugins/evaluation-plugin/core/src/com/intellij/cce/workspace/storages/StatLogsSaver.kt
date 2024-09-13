@@ -17,11 +17,11 @@ class StatLogsSaver(private val logsTemporaryStoragePath: Path, private val fina
 
   override fun <T> invokeRememberingLogs(action: () -> T): T = action()
 
-  override fun save(languageName: String, trainingPercentage: Int) {
+  override fun save(languageName: String?, trainingPercentage: Int) {
     val logsDir = logsTemporaryStoragePath.toFile()
     if (!logsDir.exists()) return
     require(logsDir.isDirectory)
-    val outputDir = finalStorageDir / languageName
+    val outputDir = if (languageName != null) finalStorageDir / languageName else finalStorageDir
     Files.createDirectories(outputDir)
     FileWriter(Paths.get(outputDir.toString(), "full.log").toString()).use { writer ->
       for (logChunk in (logsDir.listFiles() ?: emptyArray())

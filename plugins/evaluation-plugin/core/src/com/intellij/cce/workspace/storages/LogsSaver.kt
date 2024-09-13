@@ -3,13 +3,13 @@ package com.intellij.cce.workspace.storages
 interface LogsSaver {
   fun <T> invokeRememberingLogs(action: () -> T): T
 
-  fun save(languageName: String, trainingPercentage: Int)
+  fun save(languageName: String?, trainingPercentage: Int)
 }
 
 class NoLogsSaver : LogsSaver {
   override fun <T> invokeRememberingLogs(action: () -> T): T = action()
 
-  override fun save(languageName: String, trainingPercentage: Int) = Unit
+  override fun save(languageName: String?, trainingPercentage: Int) = Unit
 }
 
 fun logsSaverIf(condition: Boolean, createSaver: () -> LogsSaver): LogsSaver = if (condition) createSaver() else NoLogsSaver()
@@ -23,7 +23,7 @@ private fun makeNestingCollector(saverA: LogsSaver,
     }
   }
 
-  override fun save(languageName: String, trainingPercentage: Int) {
+  override fun save(languageName: String?, trainingPercentage: Int) {
     try {
       saverA.save(languageName, trainingPercentage)
     }

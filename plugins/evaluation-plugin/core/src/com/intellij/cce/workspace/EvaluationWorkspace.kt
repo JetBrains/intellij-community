@@ -6,9 +6,8 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.fus.FusLogsSaver
 import com.intellij.cce.workspace.storages.*
-import com.intellij.cce.workspace.storages.storage.ActionsStorage
-import com.intellij.cce.workspace.storages.storage.ActionsStorageFactory
-import com.intellij.cce.workspace.storages.storage.getActionsStorageTypeFromEnv
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.createDirectories
 import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -27,8 +26,13 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
       return EvaluationWorkspace(Paths.get(workspaceDir).toAbsolutePath(), statsLogsPath)
     }
 
-    fun create(config: Config, statsLogsPath: Path): EvaluationWorkspace {
-      val workspace = EvaluationWorkspace(Paths.get(config.outputDir).toAbsolutePath().resolve(formatter.format(Date())), statsLogsPath)
+    fun create(config: Config, statsLogsPath: Path, debug: Boolean = false): EvaluationWorkspace {
+      val path = Paths.get(config.outputDir).toAbsolutePath()
+        .resolve(if (debug) "debug" else formatter.format(Date()))
+      if (debug) {
+        FileUtil.deleteRecursively(path)
+      }
+      val workspace = EvaluationWorkspace(path, statsLogsPath)
       workspace.writeConfig(config)
       return workspace
     }
@@ -37,15 +41,12 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
   private val sessionsDir = subdir("data")
   private val fullLineLogsDir = subdir("full-line-logs")
   private val featuresDir = subdir("features")
-  private val actionsDir = subdir("actions")
   private val errorsDir = subdir("errors")
   private val reportsDir = subdir("reports")
   private val pathToConfig = path().resolve(ConfigFactory.DEFAULT_CONFIG_NAME)
   private val _reports: MutableMap<String, MutableMap<String, Path>> = mutableMapOf()
 
   val sessionsStorage: CompositeSessionsStorage = CompositeSessionsStorage(sessionsDir.toString())
-
-  val actionsStorage: ActionsStorage = ActionsStorageFactory.create(actionsDir.toString(), getActionsStorageTypeFromEnv())
 
   val errorsStorage: FileErrorsStorage = FileErrorsStorage(errorsDir.toString())
 

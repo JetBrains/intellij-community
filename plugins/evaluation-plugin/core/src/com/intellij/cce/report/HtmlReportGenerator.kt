@@ -110,7 +110,7 @@ class HtmlReportGenerator(
       }
       body {
         h1 { +reportTitle }
-        h3 { +"${fileGenerator.reportReferences.size} file(s) successfully processed" }
+        h3 { +"${fileGenerator.reportReferences.size} chunk(s) successfully processed" }
         h3 { +"${errorReferences.size} errors occurred" }
         unsafe { raw(getToolbar(globalMetrics)) }
         div { id = "metricsTable" }
