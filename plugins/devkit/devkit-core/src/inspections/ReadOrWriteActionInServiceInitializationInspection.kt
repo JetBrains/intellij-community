@@ -28,6 +28,12 @@ private val runWriteActionMethods: CallMatcher = CallMatcher.anyOf(
   CallMatcher.instanceCall("com.intellij.openapi.application.WriteAction", "execute"),
 )
 
+private val invokeAndWaitMethods: CallMatcher = CallMatcher.anyOf(
+  CallMatcher.instanceCall("com.intellij.openapi.application.Application", "invokeAndWait"),
+  CallMatcher.instanceCall("com.intellij.util.ui.EdtInvocationManager", "invokeAndWait"),
+  CallMatcher.instanceCall("com.intellij.openapi.application.impl.LaterInvocator", "invokeAndWait"),
+)
+
 private val PERSISTENT_STATE_COMPONENT_INIT_METHOD_NAMES = arrayOf(
   "loadState",
   "noStateLoaded",
@@ -44,10 +50,10 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
       holder.file.language,
       object : AbstractUastNonRecursiveVisitor() {
         override fun visitCallExpression(node: UCallExpression): Boolean {
-          val actionType = node.getReadOrWriteActionRunMethodCallType()
+          val forbiddenCallType = node.getForbiddenMethodCallType() ?: return true
           val callContextHolder = CallContextHolder()
-          if (actionType.isReadOrWrite() && isCalledDuringServiceInitialization(node, callContextHolder)) {
-            registerProblem(node, actionType, holder, callContextHolder)
+          if (isCalledDuringServiceInitialization(node, callContextHolder)) {
+            registerProblem(node, forbiddenCallType, holder, callContextHolder)
           }
           return true
         }
@@ -56,11 +62,12 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
     )
   }
 
-  private fun UCallExpression.getReadOrWriteActionRunMethodCallType(): ActionType {
+  private fun UCallExpression.getForbiddenMethodCallType(): CallType? {
     return when {
-      runReadActionMethods.uCallMatches(this) -> ActionType.READ
-      runWriteActionMethods.uCallMatches(this) -> ActionType.WRITE
-      else -> ActionType.NONE
+      runReadActionMethods.uCallMatches(this) -> CallType.READ
+      runWriteActionMethods.uCallMatches(this) -> CallType.WRITE
+      invokeAndWaitMethods.uCallMatches(this) -> CallType.INVOKE_AND_WAIT
+      else -> null
     }
   }
 
@@ -196,21 +203,22 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
 
   private fun registerProblem(
     uCallExpression: UCallExpression,
-    actionType: ActionType,
+    actionType: CallType,
     holder: ProblemsHolder,
     callContextHolder: CallContextHolder,
   ) {
     val anchor = uCallExpression.methodIdentifier?.sourcePsi ?: return
     val callContext = callContextHolder.value ?: ""
-    val message = if (actionType == ActionType.READ) message("inspection.read.or.write.action.during.service.init.message.read", callContext)
-    else message("inspection.read.or.write.action.during.service.init.message.write", callContext)
+    val message = when (actionType) {
+      CallType.READ -> message("inspection.read.or.write.action.during.service.init.message.read", callContext)
+      CallType.WRITE -> message("inspection.read.or.write.action.during.service.init.message.write", callContext)
+      CallType.INVOKE_AND_WAIT -> message("inspection.read.or.write.action.during.service.init.message.invoke.and.wait", callContext)
+    }
     holder.registerProblem(anchor, message)
   }
 
-  private enum class ActionType {
-    READ, WRITE, NONE;
-
-    fun isReadOrWrite() = this == READ || this == WRITE
+  private enum class CallType {
+    READ, WRITE, INVOKE_AND_WAIT;
   }
 
   private class CallContextHolder(@Nls var value: String? = null)

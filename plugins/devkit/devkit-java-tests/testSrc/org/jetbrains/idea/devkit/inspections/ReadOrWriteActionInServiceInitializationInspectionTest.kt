@@ -59,6 +59,9 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
           ApplicationManager.getApplication().<error descr="Do not run write actions during service initialization">runWriteAction</error>(() -> {
             // do something
           });
+          ApplicationManager.getApplication().<error descr="Do not run 'invokeAndWait' during service initialization">invokeAndWait</error>(() -> {
+            // do something
+          });
           writeActionMethodUsedInStaticInitBlock();
         }
         
@@ -157,6 +160,13 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
         public static void notUsedInInitStatic() {
           // should not be reported:
           ApplicationManager.getApplication().runWriteAction(() -> {
+            // do something
+          });
+        }
+        
+        public static void notUsedInvokeAndWait() {
+          // should not be reported:
+          ApplicationManager.getApplication().invokeAndWait(() -> {
             // do something
           });
         }

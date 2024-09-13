@@ -70,6 +70,9 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
             ApplicationManager.getApplication().<error descr="Do not run write actions during service initialization">runWriteAction</error> {
               // do something
             }
+            ApplicationManager.getApplication().<error descr="Do not run 'invokeAndWait' during service initialization">invokeAndWait</error> {
+              // do something
+            }
             writeActionMethodUsedInCompanionObjectInitBlock()
           }
       
@@ -147,6 +150,13 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
           fun notUsedInInitStatic() {
             // should not be reported:
             ApplicationManager.getApplication().runWriteAction {
+              // do something
+            }
+          }
+      
+          fun notUsedInvokeAndWait() {
+            // should not be reported:
+            ApplicationManager.getApplication().invokeAndWait {
               // do something
             }
           }
