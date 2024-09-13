@@ -17,17 +17,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
 public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcessor {
-  public static void qualifyMember(PsiMember member, PsiElement occurence, String newName) throws IncorrectOperationException {
+  public static void qualifyMember(PsiMember member, PsiElement occurence, String newName) {
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
       qualifyMember(occurence, newName, containingClass, member.hasModifierProperty(PsiModifier.STATIC));
     }
   }
 
-  protected static void qualifyMember(final PsiElement occurence, final String newName, @NotNull final PsiClass containingClass, final boolean isStatic)
-      throws IncorrectOperationException {
+  protected static void qualifyMember(PsiElement occurence, String newName, @NotNull PsiClass containingClass, boolean isStatic) {
     PsiManager psiManager = occurence.getManager();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     if (isStatic) {
@@ -43,7 +41,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  public static PsiReferenceExpression createMemberReference(PsiMember member, PsiElement context) throws IncorrectOperationException {
+  public static PsiReferenceExpression createMemberReference(PsiMember member, PsiElement context) {
     final PsiManager manager = member.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final String name = member.getName();
@@ -54,8 +52,8 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return createQualifiedMemberReference(context, name, containingClass, member.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  protected static PsiReferenceExpression createQualifiedMemberReference(final PsiElement context, final String name,
-                                                                         @NotNull final PsiClass containingClass, final boolean isStatic) throws IncorrectOperationException {
+  protected static PsiReferenceExpression createQualifiedMemberReference(PsiElement context, String name,
+                                                                         @NotNull PsiClass containingClass, boolean isStatic) {
     PsiReferenceExpression ref;
     final PsiJavaCodeReferenceElement qualifier;
 
@@ -86,7 +84,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return ref;
   }
 
-  protected static void findMemberHidesOuterMemberCollisions(final PsiMember member, final String newName, final List<? super UsageInfo> result) {
+  protected static void findMemberHidesOuterMemberCollisions(PsiMember member, String newName, List<? super UsageInfo> result) {
     if (member instanceof PsiCompiledElement) return;
     final PsiClass memberClass = member.getContainingClass();
     for (PsiClass aClass = memberClass != null ? memberClass.getContainingClass() : null; aClass != null; aClass = aClass.getContainingClass()) {
@@ -118,7 +116,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     });
   }
 
-  protected static void qualifyOuterMemberReferences(final List<? extends MemberHidesOuterMemberUsageInfo> outerHides) throws IncorrectOperationException {
+  protected static void qualifyOuterMemberReferences(final List<? extends MemberHidesOuterMemberUsageInfo> outerHides) {
     for (MemberHidesOuterMemberUsageInfo usage : outerHides) {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
