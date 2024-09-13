@@ -10,7 +10,7 @@ import org.jetbrains.plugins.terminal.block.session.StyleRange
  * This partial output can contain 100 lines with [logicalLineIndex] equal to 900.
  * So, by applying this output, we will replace the output from line 900 with the new 100 lines.
  * @param terminalWidth width at the moment of partial output collection.
- * @param isChangedDiscarded whether some lines were discarded from the history before being collected.
+ * @param isChangesDiscarded whether some lines were discarded from the history before being collected.
  * If this property is true, then it means that from the last call of [TerminalOutputChangesTracker.collectChangedOutputOrWait]
  * so much output arrived to the TextBuffer, so we had to discard some not yet collected lines.
  * This property is used to indicate that there are missed lines between the previously collected output and this output.
@@ -20,5 +20,5 @@ internal data class PartialCommandOutput(
   val styles: List<StyleRange>,
   val logicalLineIndex: Int,
   val terminalWidth: Int,
-  val isChangedDiscarded: Boolean,
+  val isChangesDiscarded: Boolean,
 )

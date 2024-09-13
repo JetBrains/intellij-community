@@ -167,7 +167,7 @@ internal class TerminalOutputController(
         output.styleRanges,
         logicalLineIndex = 0,
         terminalWidth,
-        isChangedDiscarded = false,
+        isChangesDiscarded = false,
       )
     }
 
@@ -310,7 +310,7 @@ internal class TerminalOutputController(
         editor.document.insertString(block.endOffset, "\n")
       }
 
-      if (output.isChangedDiscarded) {
+      if (output.isChangesDiscarded) {
         // The output was so big, so the history buffer was overflown, and some changes were lost.
         // Consider all available lines in the block as trimmed
         block.trimmedLinesCount = output.logicalLineIndex
