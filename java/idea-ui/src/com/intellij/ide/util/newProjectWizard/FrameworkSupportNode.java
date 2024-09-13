@@ -26,7 +26,7 @@ public class FrameworkSupportNode extends FrameworkSupportNodeBase<FrameworkSupp
   private final FrameworkSupportModelBase myModel;
   private final Disposable myParentDisposable;
 
-  public FrameworkSupportNode(final FrameworkSupportInModuleProvider provider, final FrameworkSupportNodeBase parentNode, final FrameworkSupportModelBase model,
+  public FrameworkSupportNode(final FrameworkSupportInModuleProvider provider, final FrameworkSupportNodeBase<?> parentNode, final FrameworkSupportModelBase model,
                               Disposable parentDisposable) {
     super(provider, parentNode);
     myParentDisposable = parentDisposable;

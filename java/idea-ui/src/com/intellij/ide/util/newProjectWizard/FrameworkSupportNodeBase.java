@@ -17,9 +17,9 @@ import java.util.List;
 
 public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> extends CheckedTreeNode {
   private static final Logger LOG = Logger.getInstance(FrameworkSupportNodeBase.class);
-  private final FrameworkSupportNodeBase myParentNode;
+  private final FrameworkSupportNodeBase<?> myParentNode;
 
-  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase parentNode) {
+  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase<?> parentNode) {
     super(userObject);
     setChecked(false);
     myParentNode = parentNode;
@@ -28,12 +28,13 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T getUserObject() {
     return (T)super.getUserObject();
   }
 
-  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase> nodes, @Nullable final Comparator<? super FrameworkSupportNodeBase> comparator) {
+  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase<?>> nodes, @Nullable final Comparator<? super FrameworkSupportNodeBase<?>> comparator) {
     if (nodes == null) return;
 
     nodes.sort((o1, o2) -> {
@@ -48,8 +49,8 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
       return o1.getTitle().compareToIgnoreCase(o2.getTitle());
     });
     for (FrameworkSupportNodeBase<?> node : nodes) {
-      @SuppressWarnings({"unchecked", "rawtypes"})
-      List<FrameworkSupportNodeBase<?>> children = (List)node.children;
+      @SuppressWarnings("unchecked") 
+      List<FrameworkSupportNodeBase<?>> children = (List<FrameworkSupportNodeBase<?>>)(List<?>)node.children;
       sortByName(children, null);
     }
   }
@@ -76,13 +77,13 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return getUserObject().getId();
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("unchecked")
   @NotNull
-  public List<FrameworkSupportNodeBase> getChildren() {
-    return children != null ? (List)children : Collections.emptyList();
+  public List<FrameworkSupportNodeBase<?>> getChildren() {
+    return children != null ? (List<FrameworkSupportNodeBase<?>>)(List<?>)children : Collections.emptyList();
   }
 
-  public FrameworkSupportNodeBase getParentNode() {
+  public FrameworkSupportNodeBase<?> getParentNode() {
     return myParentNode;
   }
 }
