@@ -93,14 +93,7 @@ internal class ZipArchiveOutputStream(
     }
 
     buffer.clear()
-    writeZipLocalFileHeader(
-      name = name,
-      size = size,
-      compressedSize = size,
-      crc32 = crc,
-      method = ZipEntry.STORED,
-      buffer = buffer,
-    )
+    writeZipLocalFileHeader(name = name, size = size, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
 
     val localFileHeaderOffset = channelPosition
     val dataOffset = localFileHeaderOffset + buffer.readableBytes()
@@ -121,14 +114,7 @@ internal class ZipArchiveOutputStream(
 
   fun writeEmptyFile(name: ByteArray) {
     buffer.clear()
-    writeZipLocalFileHeader(
-      name = name,
-      size = 0,
-      compressedSize = 0,
-      crc32 = 0,
-      method = ZipEntry.STORED,
-      buffer = buffer,
-    )
+    writeZipLocalFileHeader(name = name, size = 0, compressedSize = 0, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
     writeRawEntry(
       data = buffer,
       name = name,
@@ -184,7 +170,7 @@ internal class ZipArchiveOutputStream(
     val method = ZipEntry.STORED
 
     buffer.clear()
-    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
+    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = method, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
     writeBuffer()
 
@@ -211,7 +197,7 @@ internal class ZipArchiveOutputStream(
     val dataOffset = position + headerSize
 
     buffer.clear()
-    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = buffer)
+    writeZipLocalFileHeader(name = name, size = size, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
 
     if (fileChannel == null) {

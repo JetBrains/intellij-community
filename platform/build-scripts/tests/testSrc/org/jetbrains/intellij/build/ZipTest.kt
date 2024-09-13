@@ -236,11 +236,24 @@ class ZipTest {
   }
 
   @Test
-  fun compression(@TempDir tempDir: Path) {
+  fun `compress small`(@TempDir tempDir: Path) {
+    doCompressTest(tempDir = tempDir, fileSize = 12 * 1024)
+  }
+
+  @Test
+  fun `compress large`(@TempDir tempDir: Path) {
+    doCompressTest(tempDir = tempDir, fileSize = 15 * 1024 * 1024)
+  }
+
+  private fun doCompressTest(tempDir: Path, fileSize: Int) {
     val dir = tempDir.resolve("dir")
     Files.createDirectories(dir)
-    val data = Random(42).nextBytes(4 * 1024)
-    Files.write(dir.resolve("file"), data + data + data)
+    val random = Random(42)
+    Files.newOutputStream(dir.resolve("file")).use {
+      for (chunkSize in splitIntoChunks(size = fileSize, chunkSize = 32 * 1024)) {
+        it.write(random.nextBytes(chunkSize))
+      }
+    }
 
     val archiveFile = tempDir.resolve("archive.zip")
     zipWithCompression(archiveFile, mapOf(dir to ""))
@@ -342,4 +355,13 @@ private fun runInThread(block: () -> Unit): Thread {
   thread.isDaemon = true
   thread.start()
   return thread
+}
+
+private fun splitIntoChunks(size: Int, @Suppress("SameParameterValue") chunkSize: Int): Sequence<Int> = sequence {
+  var remaining = size
+  while (remaining > 0) {
+    val chunk = if (remaining >= chunkSize) chunkSize else remaining
+    yield(chunk)
+    remaining -= chunk
+  }
 }
