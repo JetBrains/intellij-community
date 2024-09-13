@@ -37,7 +37,6 @@ internal suspend fun Http2ClientConnection.getString(path: CharSequence): String
       ),
       endStream = true,
     )
-    result.await()
   }
 }
 
@@ -74,7 +73,6 @@ private suspend fun <T : Any> Http2ClientConnection.doGetJsonOrDefaultIfNotFound
       ),
       endStream = true,
     )
-    result.await()
   }
 }
 
@@ -93,7 +91,6 @@ private suspend fun <T : Any> Http2ClientConnection.post(path: AsciiString, data
       endStream = false,
     )
     stream.writeData(ByteBufUtil.writeUtf8(bufferAllocator, data), endStream = true)
-    result.await()
   }
 }
 

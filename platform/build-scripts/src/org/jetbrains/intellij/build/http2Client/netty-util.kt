@@ -116,12 +116,6 @@ internal abstract class InboundHandlerResultTracker<T : Any>(
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
   }
-
-  override fun channelInactive(context: ChannelHandlerContext) {
-    if (!result.isCompleted) {
-      result.completeExceptionally(IllegalStateException("Stream closed without result ($this)"))
-    }
-  }
 }
 
 // not suspendCancellableCoroutine - we must close the channel / event loop group

@@ -32,7 +32,6 @@ internal suspend fun Http2ClientConnection.download(path: String, file: Path): L
     stream.pipeline().addLast(FileDownloadHandler(result = result, file = file))
 
     stream.writeHeaders(createHeaders(HttpMethod.GET, AsciiString.of(path)), endStream = true)
-    result.await()
   }
 }
 
@@ -64,7 +63,6 @@ internal suspend fun Http2ClientConnection.download(
     )
 
     stream.writeHeaders(createHeaders(HttpMethod.GET, AsciiString.of(path)), endStream = true)
-    result.await()
   }
 }
 
@@ -84,12 +82,6 @@ private class ZstdDecompressingFileDownloadHandler(
 
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     result.completeExceptionally(cause)
-  }
-
-  override fun channelInactive(context: ChannelHandlerContext) {
-    if (!result.isCompleted) {
-      result.completeExceptionally(IllegalStateException("Stream closed without result (download=$file)"))
-    }
   }
 
   override fun handlerAdded(ctx: ChannelHandlerContext?) {

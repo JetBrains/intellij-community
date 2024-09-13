@@ -53,11 +53,12 @@ internal suspend fun Http2ClientConnection.upload(
   isDir: Boolean = false,
 ): UploadResult {
   return connection.stream { stream, result ->
-    stream.pipeline().addLast(WebDavPutStatusChecker(result))
+    val status = CompletableDeferred<Unit>(parent = result)
+    stream.pipeline().addLast(WebDavPutStatusChecker(status))
 
     stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
 
-    if (zstdCompressContextPool == null) {
+    val uploadResult = if (zstdCompressContextPool == null) {
       FileChannel.open(file, READ_OPERATION).use { channel ->
         uploadUncompressed(fileChannel = channel, sourceBlockSize = sourceBlockSize, stream = stream, fileSize = channel.size())
       }
@@ -78,9 +79,8 @@ internal suspend fun Http2ClientConnection.upload(
       compressFile(file = file, zstdCompressContextPool = zstdCompressContextPool, sourceBlockSize = sourceBlockSize, stream = stream)
     }
 
-    // 1. writer must send the last data frame with endStream=true
-    // 2. stream now has the half-closed state - we listen for server header response with endStream
-    // 3. our ChannelInboundHandler above checks status and Netty closes the stream (as endStream was sent by both client and server)
+    status.await()
+    result.complete(uploadResult)
   }
 }
 
