@@ -119,6 +119,7 @@ internal class CertificateWarningDialog(
           if (it && !isDetailsShown) {
             setOKButtonText(IdeBundle.message("trust.certificate"))
             isDetailsShown = true
+            isOKActionEnabled = selectedCerts.isNotEmpty()
             updateDetails()
           }
           pack()
