@@ -26,7 +26,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
 
-  private val PLUGIN_EXCEPTIONS = setOf("com.intellij.ja", "com.intellij.ko", "com.intellij.zh")
+  private val PLUGIN_EXCEPTIONS = setOf("com.intellij.ja", "com.intellij.ko", "com.intellij.zh", "com.intellij.marketplace")
 
   // TODO: migrate to better solution in 2024.3.
   // Other places where these are mentioned:
