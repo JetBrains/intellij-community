@@ -11,7 +11,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
 import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.branch.TagsNode
+import git4idea.branch.GitTagType
 import git4idea.repo.GitRepository
 import javax.swing.Icon
 import javax.swing.tree.TreePath
@@ -38,10 +38,10 @@ abstract class GitBranchesTreeModel : AbstractTreeModel() {
   protected abstract fun getChildren(parent: Any?): List<Any>
 
   fun updateTags() {
-    val indexOfTagsNode = getIndexOfChild(root, TagsNode)
+    val indexOfTagsNode = getIndexOfChild(root, GitTagType)
     initTags(nameMatcher)
     branchesTreeCache.keys.clear()
-    val pathChanged = if (indexOfTagsNode < 0) TreePath(arrayOf(root)) else TreePath(arrayOf(root, TagsNode))
+    val pathChanged = if (indexOfTagsNode < 0) TreePath(arrayOf(root)) else TreePath(arrayOf(root, GitTagType))
     treeStructureChanged(pathChanged, null, null)
   }
 

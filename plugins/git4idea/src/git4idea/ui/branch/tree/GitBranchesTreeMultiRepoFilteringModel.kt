@@ -14,7 +14,6 @@ import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitTagType
-import git4idea.branch.TagsNode
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
@@ -76,7 +75,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
                                              || (node === GitBranchType.LOCAL && commonLocalBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && commonRemoteBranchesTree.isEmpty())
                                              || (node is RefTypeUnderRepository && node.isEmpty())
-                                             || (node is TagsNode && commonTagsTree.isEmpty())
+                                             || (node is GitTagType && commonTagsTree.isEmpty())
 
   private fun RefTypeUnderRepository.isEmpty() =
     type === GitBranchType.LOCAL && repositoriesWithBranchesTree.isLocalBranchesEmpty(repository)

@@ -35,10 +35,3 @@ object GitTagType : GitRefType {
   override fun getName(): String = "TAG"
   override fun getPathElementId(): String = name
 }
-
-
-object TagsNode : GitRefType {
-  const val NAME = "TAGS"
-  override fun getName(): String = NAME
-  override fun getPathElementId(): String = NAME
-}

@@ -23,7 +23,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
-import git4idea.branch.TagsNode
+import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -217,7 +217,7 @@ internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyRefsSubtreeHo
     if (recentCheckoutBranchesTree != null && !recentCheckoutBranchesTree.isEmpty()) GitBranchesTreeModel.RecentNode else null,
     if (!localBranchesTree.isEmpty()) GitBranchType.LOCAL else null,
     if (!remoteBranchesTree.isEmpty()) GitBranchType.REMOTE else null,
-    if (tagsTree != null && !tagsTree.isEmpty()) TagsNode else null
+    if (tagsTree != null && !tagsTree.isEmpty()) GitTagType else null
   )
 }
 

@@ -24,7 +24,7 @@ import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
-import git4idea.branch.TagsNode
+import git4idea.branch.GitTagType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -169,7 +169,7 @@ abstract class GitBranchesTreeRenderer(
             else -> GitBundle.message("group.Git.Recent.Branch.title")
           }
         }
-        TagsNode -> {
+        GitTagType -> {
           when {
             model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.tags.in.repo",
                                                                            DvcsUtil.getShortRepositoryName(model.selectedRepository))

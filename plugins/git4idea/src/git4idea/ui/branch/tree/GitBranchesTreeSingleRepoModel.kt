@@ -14,11 +14,9 @@ import git4idea.GitRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitTagType
-import git4idea.branch.TagsNode
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
-import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
@@ -78,7 +76,7 @@ open class GitBranchesTreeSingleRepoModel(
                                              || (node === RecentNode && recentCheckoutBranchesTree.isEmpty())
                                              || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
-                                             || (node === TagsNode && tagsTree.isEmpty())
+                                             || (node === GitTagType && tagsTree.isEmpty())
 
   override fun initTags(matcher: MinusculeMatcher?) {
     val tags = repository.tags
@@ -115,7 +113,7 @@ open class GitBranchesTreeSingleRepoModel(
   private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
     val branchesMap: Map<String, Any> = when {
       RecentNode == branchType -> recentCheckoutBranchesTree.tree
-      TagsNode == branchType -> tagsTree.tree
+      GitTagType == branchType -> tagsTree.tree
       GitBranchType.LOCAL == branchType -> localBranchesTree.tree
       GitBranchType.REMOTE == branchType -> remoteBranchesTree.tree
       else -> emptyMap()

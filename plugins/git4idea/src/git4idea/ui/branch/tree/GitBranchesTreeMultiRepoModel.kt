@@ -61,7 +61,7 @@ class GitBranchesTreeMultiRepoModel(
   override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
                                              || (node === GitBranchType.LOCAL && commonLocalBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && commonRemoteBranchesTree.isEmpty())
-                                             || (node === TagsNode && commonTagsTree.isEmpty())
+                                             || (node === GitTagType && commonTagsTree.isEmpty())
 
   override fun getChildren(parent: Any?): List<Any> {
     if (parent == null) return emptyList()
@@ -90,7 +90,7 @@ class GitBranchesTreeMultiRepoModel(
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType -> commonLocalBranchesTree.tree
       GitBranchType.REMOTE == branchType -> commonRemoteBranchesTree.tree
-      branchType == TagsNode -> commonTagsTree.tree
+      branchType == GitTagType -> commonTagsTree.tree
       else -> emptyMap()
     }
 

@@ -108,7 +108,7 @@ abstract class GitBranchesWithDetailsTreeRenderer(
       is GitLocalBranch -> {
         treeNode.getCommonTrackedBranch(affectedRepositories)?.name
       }
-      is TagsNode -> {
+      is GitTagType -> {
         if (GitRepositoryManager.getInstance(project).repositories.any { it.tagHolder.isLoading }) GitBundle.message(
           "group.Git.Tags.loading.text")
         else null
@@ -135,7 +135,7 @@ abstract class GitBranchesWithDetailsTreeRenderer(
 
   private fun getIncomingOutgoingState(treeNode: Any?): IncomingOutgoingState {
     treeNode ?: return IncomingOutgoingState.EMPTY
-    
+
     return when (treeNode) {
       is GitLocalBranch -> getIncomingOutgoingState(treeNode)
       is GitBranchesTreeModel.RefUnderRepository -> getIncomingOutgoingState(treeNode.ref)
