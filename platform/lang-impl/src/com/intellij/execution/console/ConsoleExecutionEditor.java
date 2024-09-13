@@ -165,10 +165,12 @@ public final class ConsoleExecutionEditor implements Disposable {
             continue;
           }
 
-          final EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
-          editor.addFocusListener(myFocusListener);
-          if (selectedTextEditor == editor) { // already focused
-            myCurrentEditor = editor;
+          final Editor editor = ((TextEditor)fileEditor).getEditor();
+          if (editor instanceof EditorEx editorEx) {
+            editorEx.addFocusListener(myFocusListener);
+            if (selectedTextEditor == editorEx) { // already focused
+              myCurrentEditor = editorEx;
+            }
           }
           ActionUtil.copyRegisteredShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
         }
