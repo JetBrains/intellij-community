@@ -38,6 +38,22 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
             vm_options.push("-Djava.net.preferIPv4Stack=true".to_string())
         }
 
+        if let Some(command) = self.get_args().get(0) {
+            match command.as_str() {
+                "remoteDevStatus" | "cwmHostStatus" => {
+                    vm_options.retain(|opt| {
+                        if opt.starts_with("-agentlib:jdwp=") {
+                            info!("Dropping debug option to prevent startup failure due to port conflict: {}", opt);
+                            false
+                        } else {
+                            true
+                        }
+                    });
+                }
+                _ => {}
+            }
+        }
+
         Ok(vm_options)
     }
 

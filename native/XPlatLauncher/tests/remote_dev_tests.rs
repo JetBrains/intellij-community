@@ -151,6 +151,15 @@ mod tests {
         check_output(&launch_result, |output| output.contains(&expected_output));
     }
 
+    #[test]
+    fn remote_dev_status_debug_vm_option_test() {
+        let mut test = prepare_test_env(LauncherLocation::RemoteDev);
+        test.create_toolbox_vm_options("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n\n");
+        let args = &["status"];
+        run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(args).assert_status());
+        // app will exit with an error if debug option has been passed to it along with 'status' command
+    }
+
     fn check_output<Check>(run_result: &LauncherRunResult, check: Check) where Check: FnOnce(&String) -> bool {
         assert!(check(&run_result.stdout), "Output check failed; run result: {:?}", run_result);
     }

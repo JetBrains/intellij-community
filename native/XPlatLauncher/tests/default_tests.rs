@@ -260,6 +260,16 @@ mod tests {
     }
 
     #[test]
+    fn debug_vm_option_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n\n");
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_vm_option_presence(&dump, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n");
+    }
+
+    #[test]
     fn arguments_test() {
         let args = &["arguments-test-123"];
         let dump = run_launcher(LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
