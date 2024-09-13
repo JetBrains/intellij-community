@@ -374,11 +374,6 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
-        @TestMetadata("call.kt")
-        public void testCall() throws Exception {
-            performTest();
-        }
-
         @TestMetadata("negated.kt")
         public void testNegated() throws Exception {
             performTest();
@@ -394,8 +389,18 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("qualifiedCall.kt")
+        public void testQualifiedCall() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("simpleCall.kt")
+        public void testSimpleCall() throws Exception {
             performTest();
         }
     }
