@@ -2974,6 +2974,8 @@ e:com.intellij.ui.tree.LeafState
 - s:values():com.intellij.ui.tree.LeafState[]
 com.intellij.ui.tree.LeafState$Supplier
 - a:getLeafState():com.intellij.ui.tree.LeafState
+*:com.intellij.ui.tree.SuspendingTreeVisitor
+- a:visit(javax.swing.tree.TreePath,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ui.tree.TreeCollector
 - add(java.lang.Object):Z
 - get():java.util.List

@@ -7040,9 +7040,17 @@ a:com.intellij.ui.ListUtil$Updatable
 - pa:update():V
 c:com.intellij.ui.LoadingNode
 - javax.swing.tree.DefaultMutableTreeNode
+- com.intellij.ui.treeStructure.TreeNodeViewModel
+- sf:Companion:com.intellij.ui.LoadingNode$Companion
 - <init>():V
 - <init>(java.lang.String):V
-- s:getText():java.lang.String
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getChildren():kotlinx.coroutines.flow.Flow
+- getPresentation():kotlinx.coroutines.flow.Flow
+- sf:getText():java.lang.String
+- presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
+f:com.intellij.ui.LoadingNode$Companion
+- f:getText():java.lang.String
 a:com.intellij.ui.MouseDragHelper
 - java.awt.event.MouseAdapter
 - com.intellij.openapi.util.Weighted
@@ -11105,6 +11113,56 @@ com.intellij.ui.treeStructure.TreeBulkExpansionListener
 - treeBulkCollapseStarted(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
 - treeBulkExpansionEnded(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
 - treeBulkExpansionStarted(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
+*:com.intellij.ui.treeStructure.TreeDomainModel
+- a:accessData(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- a:computeRoot(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ui.treeStructure.TreeDomainModelKt
+- *sf:TreeDomainModel(com.intellij.ide.util.treeView.AbstractTreeStructure,Z,I):com.intellij.ui.treeStructure.TreeDomainModel
+*:com.intellij.ui.treeStructure.TreeNodeDomainModel
+- a:computeChildren(kotlin.coroutines.Continuation):java.lang.Object
+- a:computeLeafState(kotlin.coroutines.Continuation):java.lang.Object
+- a:computePresentation(com.intellij.ui.treeStructure.TreeNodePresentationBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- a:getUserObject():java.lang.Object
+*:com.intellij.ui.treeStructure.TreeNodePresentation
+- a:getFullText():java.util.List
+- a:getIcon():javax.swing.Icon
+- a:getMainText():java.lang.String
+- a:getToolTip():java.lang.String
+- a:isLeaf():Z
+*:com.intellij.ui.treeStructure.TreeNodePresentationBuilder
+- a:appendTextFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- a:build():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:setIcon(javax.swing.Icon):V
+- a:setMainText(java.lang.String):V
+- a:setToolTipText(java.lang.String):V
+*:com.intellij.ui.treeStructure.TreeNodeTextFragment
+- a:getAttributes():com.intellij.ui.SimpleTextAttributes
+- a:getText():java.lang.String
+*:com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getChildren():kotlinx.coroutines.flow.Flow
+- a:getPresentation():kotlinx.coroutines.flow.Flow
+- a:getUserObject():java.lang.Object
+- a:presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
+*:com.intellij.ui.treeStructure.TreeSwingModel
+- com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
+- com.intellij.ui.treeStructure.BgtAwareTreeModel
+- javax.swing.tree.TreeModel
+- a:getChild(java.lang.Object,I):com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getRoot():com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getShowLoadingNode():Z
+- a:setShowLoadingNode(Z):V
+f:com.intellij.ui.treeStructure.TreeSwingModelKt
+- *sf:TreeSwingModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeViewModel):com.intellij.ui.treeStructure.TreeSwingModel
+*:com.intellij.ui.treeStructure.TreeViewModel
+- a:accept(com.intellij.ui.tree.SuspendingTreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:accept(com.intellij.ui.tree.TreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:getComparator():java.util.Comparator
+- a:getDomainModel():com.intellij.ui.treeStructure.TreeDomainModel
+- a:getRoot():kotlinx.coroutines.flow.Flow
+- a:invalidate(javax.swing.tree.TreePath,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:setComparator(java.util.Comparator):V
+f:com.intellij.ui.treeStructure.TreeViewModelKt
+- *sf:TreeViewModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeDomainModel):com.intellij.ui.treeStructure.TreeViewModel
 c:com.intellij.ui.treeStructure.WeightBasedComparator
 - java.util.Comparator
 - sf:FULL_INSTANCE:com.intellij.ui.treeStructure.WeightBasedComparator

@@ -23,6 +23,7 @@ import com.intellij.ui.tree.DelegatingEdtBgtTreeVisitor;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.TreeNodeViewModel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
 import com.intellij.util.concurrency.EdtScheduler;
@@ -1354,7 +1355,9 @@ public final class TreeUtil {
   }
 
   public static @Nullable Object getUserObject(@Nullable Object node) {
-    return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
+    if (node instanceof DefaultMutableTreeNode treeNode) return treeNode.getUserObject();
+    if (node instanceof TreeNodeViewModel nodeModel) return nodeModel.getUserObject();
+    return node;
   }
 
   public static @Nullable <T> T getUserObject(@NotNull Class<T> type, @Nullable Object node) {

@@ -173,7 +173,10 @@ class CachedTreePresentation(rootPresentation: CachedTreePresentationData) {
   }
 
   private fun getCachedNode(node: Any): CachedTreePresentationNode? {
-    return if (node is CachedTreePresentationNode) return node else cachedNodeByRealNode[node]
+    if (node is CachedTreePresentationNode) return node
+    val userObject = TreeUtil.getUserObject(node)
+    if (userObject is CachedTreePresentationNode) return userObject
+    return cachedNodeByRealNode[node]
   }
 
   fun setExpanded(path: TreePath, isExpanded: Boolean) {
