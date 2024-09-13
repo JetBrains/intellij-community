@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" exported="" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" exported="" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
   </component>
 </module>
