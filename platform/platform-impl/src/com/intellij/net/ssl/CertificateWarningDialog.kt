@@ -127,7 +127,9 @@ internal class CertificateWarningDialog(
     }.withMinimumWidth(JBUIScale.scale(400))
       .withPreferredWidth(JBUIScale.scale(600))
 
-    return JBScrollPane(panel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+    return JBScrollPane(panel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
+      border = JBUI.Borders.empty()
+    }
   }
 
   override fun doOKAction() {
