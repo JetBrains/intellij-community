@@ -119,8 +119,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     Predicate<PsiFile> filter = null;
 
     PsiClass[] classes = clsFile.getClasses();
-    if (classes.length > 0) {
-      String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
+    if (classes.length > 0 && classes[0] instanceof ClsClassImpl cls) {
+      String sourceFileName = cls.getSourceFileName();
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
       LanguageLevel level = JavaMultiReleaseUtil.getVersion(clsFile);
