@@ -99,6 +99,7 @@ public class GradleExecutionHelper {
       projectDir = projectPathFile.getParent();
       if (settings != null) {
         List<String> arguments = settings.getArguments();
+        // Setting the custom build file location is deprecated since Gradle 7.6, see IDEA-359161 for more details.
         if (!arguments.contains("-b") && !arguments.contains("--build-file")) {
           settings.withArguments("-b", projectPath);
         }
