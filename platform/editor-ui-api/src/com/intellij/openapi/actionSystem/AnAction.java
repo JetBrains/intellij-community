@@ -340,9 +340,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   /**
-   * <b>Deprecated and unused</b>
-   * The method is a part of a dropped contract.
-   * Drop it ASAP and move all the required code to {@link #actionPerformed(AnActionEvent)}.
+   * Though the platform components (toolbars, menus, etc.) do their best to call update sometime before calling actionPerformed,
+   * implementations MUST NOT rely on it.
+   * Instead, they MUST always check whether the data context is suitable in {@link #actionPerformed(AnActionEvent)} and do nothing if it is not.
    *
    * @deprecated Move any code to {@link #actionPerformed(AnActionEvent)}
    */
@@ -389,8 +389,10 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * Performs the action logic.
    * <p>
    * It is called on the UI thread with all data in the provided {@link DataContext} instance.
-   *
-   * @see #beforeActionPerformedUpdate(AnActionEvent)
+   * <p>
+   * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
+   * The implementors shoud not assume that {@link #update(AnActionEvent)} or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
+   * and MUST to re-check that context is suitable, and do nothing if it is not.
    */
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 

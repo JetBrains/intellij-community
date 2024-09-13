@@ -210,37 +210,17 @@ public class AnActionEvent implements PlaceProvider {
     return myPresentation.isPreferInjectedPsi() ? getInjectedDataContext(myDataContext) : myDataContext;
   }
 
-  /**
-   * @see #getRequiredData(DataKey)
-   */
   public final @Nullable <T> T getData(@NotNull DataKey<T> key) {
     return getDataContext().getData(key);
   }
 
   /**
-   * Returns not null data by a data key. This method assumes that data has been checked for {@code null} in {@code AnAction#update} method.
-   * <br/><br/>
-   * Example of proper usage:
+   * Returns not null data by a data key. This method assumes that data has been checked for {@code null} before.
    *
-   * <pre>
-   *
-   * public class MyAction extends AnAction {
-   *   public void update(AnActionEvent e) {
-   *     // perform action if and only if EDITOR != null
-   *     boolean enabled = e.getData(CommonDataKeys.EDITOR) != null;
-   *     e.getPresentation().setEnabled(enabled);
-   *   }
-   *
-   *   public void actionPerformed(AnActionEvent e) {
-   *     // if we're here then EDITOR != null
-   *     Document doc = e.getRequiredData(CommonDataKeys.EDITOR).getDocument();
-   *     doSomething(doc);
-   *   }
-   * }
-   *
-   * </pre>
+   * @deprecated See the {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)} javadoc.
    * @see #getData(DataKey)
    */
+  @Deprecated
   public final @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
     if (data == null) throw new AssertionError(key.getName() + " is missing");
