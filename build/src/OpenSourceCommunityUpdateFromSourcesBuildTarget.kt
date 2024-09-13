@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
@@ -10,7 +9,7 @@ import org.jetbrains.intellij.build.createCommunityBuildContext
 import java.nio.file.Path
 
 /**
- * Update locally installed distribution from compiled classes
+ * Update a locally installed distribution from compiled classes.
  */
 object OpenSourceCommunityUpdateFromSourcesBuildTarget {
   @JvmStatic
@@ -21,7 +20,7 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
       BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
       BuildOptions.SOURCES_ARCHIVE_STEP,
     )
-    if (!SystemProperties.getBooleanProperty("intellij.build.local.plugins.repository", false)) {
+    if (!System.getProperty("intellij.build.local.plugins.repository", "false").toBoolean()) {
       options.buildStepsToSkip += listOf(
         BuildOptions.PROVIDED_MODULES_LIST_STEP,
         BuildOptions.NON_BUNDLED_PLUGINS_STEP,
