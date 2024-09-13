@@ -145,7 +145,7 @@ internal class CertificateWarningDialog(
   private fun createCertificateTree(): JTree {
     val untrusted = certificateErrorsMap.entries.filter { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
     val certificatesTree =
-      if (untrusted.isNotEmpty() && certificates.size > 1) {
+      if ((untrusted.isNotEmpty() && certificates.size > 1) || certificateErrorsMap.filter { entry -> entry.value.isNotEmpty() }.size > 1) {
         val root = CheckedTreeNode("root").apply { isChecked = false }
         var lastNode = root
         certificates.reversed().forEach {
@@ -225,18 +225,18 @@ internal class CertificateWarningDialog(
   private fun getTreeCellTextAndColor(value: Any?): Pair<String, Color> {
     val labelForeground = JBUI.CurrentTheme.Label.foreground()
     val userObject = (value as? DefaultMutableTreeNode)?.userObject as? X509Certificate ?: return Pair("", labelForeground)
-    val myWrapper = CertificateWrapper(userObject)
+    val certErrors = certificateErrorsMap[userObject]!!
     val errors = mutableListOf<String>()
-    if (myWrapper.isNotYetValid) {
+    if (certErrors.contains(CertificateError.NOT_YET_VALID)) {
       errors.add(IdeBundle.message("label.certificate.not.yet.valid"))
     }
-    else if (myWrapper.isExpired) {
+    else if (certErrors.contains(CertificateError.EXPIRED)) {
       errors.add(IdeBundle.message("label.certificate.expired"))
     }
 
-    if (myWrapper.isSelfSigned) {
+    if (certErrors.contains(CertificateError.SELF_SIGNED)) {
       errors.add(IdeBundle.message("label.certificate.self.signed"))
-    } else if (certificateErrorsMap[userObject]!!.contains(CertificateError.UNTRUSTED_AUTHORITY)) {
+    } else if (certErrors.contains(CertificateError.UNTRUSTED_AUTHORITY)) {
       val error = if (userObject != certificates.first()) IdeBundle.message("label.certificate.untrusted.authority")
       else IdeBundle.message("label.certificate.signed.by.untrusted.authority")
       errors.add(error)
@@ -388,19 +388,29 @@ internal class CertificateWarningDialog(
 
   private fun getCertificateErrorsMap(): Map<X509Certificate, List<CertificateError>> {
     val result = certificates.associateWith { mutableListOf<CertificateError>() }.toMutableMap()
+    val errorMessage = "unable to find valid certification path"
+    val isUntrusted = try {
+      manager.checkServerTrusted(certificates.toTypedArray(), authType)
+      false
+    }
+    catch (e: CertificateException) {
+      e.message?.contains(errorMessage) == true
+    }
     certificates.reversed().forEach { cert ->
       val model = CertificateWrapper(cert)
       val errors = result[cert]!!
       if (model.isSelfSigned) errors.add(CertificateError.SELF_SIGNED)
       if (model.isNotYetValid) errors.add(CertificateError.NOT_YET_VALID)
       if (model.isExpired) errors.add(CertificateError.EXPIRED)
-      try {
-        if (errors.contains(CertificateError.SELF_SIGNED)) return@forEach
-        manager.checkServerTrusted(arrayOf(cert), authType)
-      }
-      catch (_: CertificateException) {
-        errors.add(CertificateError.UNTRUSTED_AUTHORITY)
-        return@forEach
+      if (isUntrusted && !errors.contains(CertificateError.SELF_SIGNED)) {
+        try {
+          manager.checkServerTrusted(arrayOf(cert), authType)
+        }
+        catch (e: CertificateException) {
+          if (e.message?.contains(errorMessage) == true) {
+            errors.add(CertificateError.UNTRUSTED_AUTHORITY)
+          }
+        }
       }
     }
     return result
