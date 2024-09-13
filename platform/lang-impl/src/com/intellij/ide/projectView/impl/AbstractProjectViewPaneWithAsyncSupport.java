@@ -47,7 +47,7 @@ import java.util.Comparator;
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
 public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane {
-  private AsyncProjectViewSupport myAsyncSupport;
+  private ProjectViewPaneSupport myAsyncSupport;
   private JComponent myComponent;
 
   protected AbstractProjectViewPaneWithAsyncSupport(@NotNull Project project) {
@@ -118,7 +118,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @ApiStatus.Internal
-  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+  protected void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
   }
 
   @Override
@@ -236,7 +236,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @Override
-  AsyncProjectViewSupport getAsyncSupport() {
+  ProjectViewPaneSupport getAsyncSupport() {
     return myAsyncSupport;
   }
 

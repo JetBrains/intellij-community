@@ -16329,7 +16329,6 @@ c:com.intellij.ide.projectView.impl.ProjectViewPane
 - sf:ID:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V
 - s:canBeSelectedInProjectView(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
-- configureAsyncSupport(com.intellij.ide.projectView.impl.AsyncProjectViewSupport):V
 - createSelectInTarget():com.intellij.ide.SelectInTarget
 - p:createStructure():com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase
 - p:createTree(javax.swing.tree.DefaultTreeModel):com.intellij.ide.projectView.impl.ProjectViewTree

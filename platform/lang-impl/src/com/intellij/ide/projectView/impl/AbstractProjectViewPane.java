@@ -222,11 +222,11 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
     if (element instanceof PsiElement) {
-      AsyncProjectViewSupport support = getAsyncSupport();
+      var support = getAsyncSupport();
       if (support != null) support.updateByElement((PsiElement)element, updateStructure);
     }
     else if (element instanceof TreePath) {
-      AsyncProjectViewSupport support = getAsyncSupport();
+      var support = getAsyncSupport();
       if (support != null) support.update((TreePath)element, updateStructure);
     }
   }
@@ -1116,7 +1116,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
   }
 
-  AsyncProjectViewSupport getAsyncSupport() {
+  @Nullable ProjectViewPaneSupport getAsyncSupport() {
     return null;
   }
 

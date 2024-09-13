@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,8 +45,9 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     super(project);
   }
 
+  @ApiStatus.Internal
   @Override
-  public void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+  public void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
     support.setMultiSelectionEnabled(false);
   }
 
