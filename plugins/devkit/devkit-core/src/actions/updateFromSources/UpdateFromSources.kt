@@ -113,10 +113,6 @@ internal fun updateFromSources(project: Project, beforeRestart: () -> Unit, rest
         runUpdateScript(params, project, workIdeHome, deployDir, builtDistDir, restartAutomatically, beforeRestart)
       }
     }
-
-  if (!builtDistDir.isDirectory() || builtDistDir.listDirectoryEntries().isEmpty()) {
-    return showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.empty.dir", builtDistDir))
-  }
 }
 
 private fun showError(project: Project, message: @NotificationContent String, vararg actions: NotificationAction) {
@@ -191,6 +187,11 @@ private fun runUpdateScript(
                 }
               }
             )
+            return
+          }
+
+          if (!builtDistDir.isDirectory() || builtDistDir.listDirectoryEntries().isEmpty()) {
+            showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.empty.dir", builtDistDir))
             return
           }
 
