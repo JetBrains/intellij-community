@@ -20,23 +20,23 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     // Remote node collapsed
     val expectedBeforeTyping = """
       |-ROOT
-      | HEAD_NODE
-      | -LOCAL_ROOT
+      | HEAD
+      | -LOCAL
       |  BRANCH:main
       |  [BRANCH:main-123]
-      | +REMOTE_ROOT
+      | +REMOTE
     """.trimMargin()
     assertTree(expectedBeforeTyping)
 
     // Remote node expanded
     val expectedDuringTyping = """
       |-ROOT
-      | HEAD_NODE
-      | -LOCAL_ROOT
+      | HEAD
+      | -LOCAL
       |  BRANCH:main
       |  [BRANCH:main-123]
-      | -REMOTE_ROOT
-      |  -GROUP_NODE:origin
+      | -REMOTE
+      |  -GROUP:origin
       |   BRANCH:origin/main
     """.trimMargin()
 
@@ -53,11 +53,11 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     searchTextField.text = "main"
     assertTree("""
       |-ROOT
-      | HEAD_NODE
-      | -LOCAL_ROOT
+      | HEAD
+      | -LOCAL
       |  [BRANCH:main]
-      | -REMOTE_ROOT
-      |  -GROUP_NODE:origin
+      | -REMOTE
+      |  -GROUP:origin
       |   BRANCH:origin/main
     """.trimMargin())
   }
@@ -69,12 +69,12 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     searchTextField.text = "mai"
     val expectedSelectionNotUpdated = """
       |-ROOT
-      | HEAD_NODE
-      | -LOCAL_ROOT
+      | HEAD
+      | -LOCAL
       |  BRANCH:main
       |  [BRANCH:main-123]
-      | -REMOTE_ROOT
-      |  -GROUP_NODE:origin
+      | -REMOTE
+      |  -GROUP:origin
       |   BRANCH:origin/main
     """.trimMargin()
     assertTree(expectedSelectionNotUpdated)
@@ -82,12 +82,12 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     searchTextField.text = "main"
     val expectedSelectionUpdated = """
       |-ROOT
-      | HEAD_NODE
-      | -LOCAL_ROOT
+      | HEAD
+      | -LOCAL
       |  [BRANCH:main]
       |  BRANCH:main-123
-      | -REMOTE_ROOT
-      |  -GROUP_NODE:origin
+      | -REMOTE
+      |  -GROUP:origin
       |   BRANCH:origin/main
     """.trimMargin()
     assertTree(expectedSelectionUpdated)
@@ -99,9 +99,9 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     searchTextField.text = "main"
     assertTree("""
       |-ROOT
-      | HEAD_NODE
-      | -LOCAL_ROOT
-      |  -GROUP_NODE:main
+      | HEAD
+      | -LOCAL
+      |  -GROUP:main
       |   BRANCH:main/123
       |  [BRANCH:main]
     """.trimMargin())
@@ -113,16 +113,16 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     searchTextField.text = "242"
     assertTree("""
       |-ROOT
-      | HEAD_NODE
-      | LOCAL_ROOT
-      | -REMOTE_ROOT
-      |  -GROUP_NODE:origin
-      |   -GROUP_NODE:242
+      | HEAD
+      | LOCAL
+      | -REMOTE
+      |  -GROUP:origin
+      |   -GROUP:242
       |    BRANCH:origin/242/fix
-      |   -GROUP_NODE:a
-      |    -GROUP_NODE:242
+      |   -GROUP:a
+      |    -GROUP:242
       |     BRANCH:origin/a/242/b
-      |   -GROUP_NODE:ish
+      |   -GROUP:ish
       |    BRANCH:origin/ish/242
       |   [BRANCH:origin/242]
     """.trimMargin())
@@ -134,9 +134,9 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
     searchTextField.text = "242"
     assertTree("""
      |-ROOT
-     | HEAD_NODE
-     | LOCAL_ROOT
-     | -REMOTE_ROOT
+     | HEAD
+     | LOCAL
+     | -REMOTE
      |  [BRANCH:origin/242]
      |  BRANCH:origin/242/fix
      |  BRANCH:origin/a/242/b
@@ -187,7 +187,7 @@ private class TestContext(groupByDirectories: Boolean) {
 internal class GitBranchesTestTree(
   tree: Tree,
   groupByDirectories: Boolean,
-): FilteringBranchesTreeBase(tree, BranchTreeNode(BranchNodeDescriptor.Group(NodeType.ROOT))) {
+): FilteringBranchesTreeBase(tree, BranchTreeNode(BranchNodeDescriptor.Root)) {
   @Suppress("UNCHECKED_CAST")
   val speedSearch: FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
     get() = searchModel.speedSearch as FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>

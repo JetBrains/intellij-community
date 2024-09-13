@@ -33,8 +33,9 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
+import git4idea.branch.GitBranchType
+import git4idea.branch.GitTagType
 import git4idea.branch.calcTooltip
-import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
@@ -200,9 +201,11 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       .map(TreePath::getLastPathComponent)
       .mapNotNull { it as? BranchTreeNode }
       .filter {
-        it.getNodeDescriptor().displayName != null &&
-        it.getNodeDescriptor().type == NodeType.GROUP_NODE &&
-        (it.getNodeDescriptor().parent?.type == NodeType.REMOTE_ROOT || it.getNodeDescriptor().parent is BranchNodeDescriptor.Repository)
+        val nodeDescriptor = it.getNodeDescriptor()
+        val parent = nodeDescriptor.parent
+        val isUnderRemoteNode = parent is BranchNodeDescriptor.TopLevelGroup && parent.refType == GitBranchType.REMOTE
+        val isUnderRepoNode = parent is BranchNodeDescriptor.Repository
+        nodeDescriptor is BranchNodeDescriptor.Group && (isUnderRepoNode || (isUnderRemoteNode))
       }
       .map { with(it.getNodeDescriptor()) { RemoteInfo(displayName!!, (parent as? BranchNodeDescriptor.Repository)?.repository) } }
       .toSet()
@@ -266,8 +269,8 @@ internal abstract class FilteringBranchesTreeBase(
   tree: Tree,
   rootNode: BranchTreeNode,
 ) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, rootNode) {
-  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor.Group(NodeType.LOCAL_ROOT, message("group.Git.Local.Branch.title")))
-  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor.Group(NodeType.REMOTE_ROOT, message("group.Git.Remote.Branch.title")))
+  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor.TopLevelGroup(GitBranchType.LOCAL))
+  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor.TopLevelGroup(GitBranchType.REMOTE))
   private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor.Head)
 
   private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
@@ -285,17 +288,20 @@ internal abstract class FilteringBranchesTreeBase(
     }
 
   final override fun createNode(nodeDescriptor: BranchNodeDescriptor) =
-    when (nodeDescriptor.type) {
-      NodeType.LOCAL_ROOT -> localBranchesNode
-      NodeType.REMOTE_ROOT -> remoteBranchesNode
-      NodeType.HEAD_NODE -> headBranchesNode
+    when (nodeDescriptor) {
+      BranchNodeDescriptor.Head -> headBranchesNode
+      is BranchNodeDescriptor.TopLevelGroup -> when (nodeDescriptor.refType) {
+        GitBranchType.LOCAL -> localBranchesNode
+        GitBranchType.REMOTE -> remoteBranchesNode
+        GitBranchType.RECENT, GitTagType -> error("${nodeDescriptor.refType} is not supported")
+      }
       else -> BranchTreeNode(nodeDescriptor)
     }
 
   final override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
-    when (nodeDescriptor.type) {
-      NodeType.ROOT -> getRootNodeDescriptors()
-      NodeType.BRANCH, NodeType.HEAD_NODE -> emptyList()
+    when (nodeDescriptor) {
+      BranchNodeDescriptor.Root -> getRootNodeDescriptors()
+      is BranchNodeDescriptor.Branch, BranchNodeDescriptor.Head -> emptyList()
       else -> nodeDescriptorsModel.getChildrenForParent(nodeDescriptor)
     }
 
@@ -336,7 +342,7 @@ internal class FilteringBranchesTree(
   val project: Project,
   val component: BranchesTreeComponent,
   private val uiController: BranchesDashboardController,
-  rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor.Group(NodeType.ROOT)),
+  rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor.Root),
   place: @NonNls String,
   private val disposable: Disposable
 ) : FilteringBranchesTreeBase(component, rootNode) {
@@ -566,7 +572,7 @@ private class BranchesFilteringSpeedSearch(private val tree: FilteringBranchesTr
   private var bestMatch: BestMatch? = null
 
   override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: FilteringTree.Matching) {
-    if (result == FilteringTree.Matching.NONE || userObject.type == NodeType.GROUP_NODE) return
+    if (result == FilteringTree.Matching.NONE || userObject is BranchNodeDescriptor.Group) return
     val text = tree.getText(userObject) ?: return
     val singleMatch = matchingFragments?.singleOrNull() ?: return
 

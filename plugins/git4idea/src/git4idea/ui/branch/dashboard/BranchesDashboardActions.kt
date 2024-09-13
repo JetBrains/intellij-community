@@ -125,8 +125,10 @@ internal object BranchesDashboardActions {
       }
 
       val selectedBranchNodes = e.getData(GIT_BRANCH_DESCRIPTORS).orEmpty()
-      if (selectedBranchNodes.size == 1 && selectedBranchNodes.first().type == NodeType.REMOTE_ROOT) {
-        return RemoteGlobalActions()
+      selectedBranchNodes.singleOrNull()?.let {
+        if (it is BranchNodeDescriptor.TopLevelGroup && it.refType == GitBranchType.REMOTE) {
+          return RemoteGlobalActions()
+        }
       }
 
       val currentBranch = guessRepo.currentBranch

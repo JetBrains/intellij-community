@@ -12,6 +12,7 @@ import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitRefType
 import git4idea.branch.IncomingOutgoingState
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -34,51 +35,45 @@ internal data class BranchInfo(val branch: GitBranch,
   override fun toString() = branchName
 }
 
-internal sealed class BranchNodeDescriptor() {
-  abstract val type: NodeType
-  abstract var parent: BranchNodeDescriptor?
-  abstract val displayName: @Nls String?
+internal sealed class BranchNodeDescriptor {
+  open var parent: BranchNodeDescriptor? = null
+  abstract val displayName: String?
 
-  object Head : BranchNodeDescriptor() {
-    override val type = NodeType.HEAD_NODE
-    override var parent: BranchNodeDescriptor? = null
-    override val displayName = message("group.Git.HEAD.Branch.Filter.title")
+  internal object Root : BranchNodeDescriptor() {
+    override val displayName = null
 
-    override fun toString() = "$type"
+    override fun toString() = "ROOT"
+  }
+
+  internal object Head : BranchNodeDescriptor() {
+    override val displayName: @Nls String = message("group.Git.HEAD.Branch.Filter.title")
+
+    override fun toString() = "HEAD"
+  }
+
+  internal data class TopLevelGroup(val refType: GitRefType) : BranchNodeDescriptor() {
+    override val displayName: @Nls String = refType.getText()
+
+    override fun toString() = refType.name
   }
 
   internal data class Branch(
     val branchInfo: BranchInfo,
     override var parent: BranchNodeDescriptor?,
-    override val displayName: @Nls String? = branchInfo.branchName,
+    override val displayName: @NlsSafe String = branchInfo.branchName,
   ) : BranchNodeDescriptor() {
-    override val type: NodeType = NodeType.BRANCH
-
-    override fun toString(): String = "$type:${branchInfo.branchName}"
+    override fun toString(): String = "BRANCH:${branchInfo.branchName}"
   }
 
-  internal data class Repository(
-    val repository: GitRepository, override var parent: BranchNodeDescriptor?,
-  ) : BranchNodeDescriptor() {
-    override val type = NodeType.GROUP_REPOSITORY_NODE
-    override val displayName = DvcsUtil.getShortRepositoryName(repository)
+  internal data class Repository(val repository: GitRepository, override var parent: BranchNodeDescriptor?) : BranchNodeDescriptor() {
+    override val displayName: @NlsSafe String = DvcsUtil.getShortRepositoryName(repository)
 
-    override fun toString(): String = typeWithDisplayName()
+    override fun toString(): String = "REPO:$displayName"
   }
 
-  internal data class Group(
-    override val type: NodeType,
-    override val displayName: @Nls String? = null,
-    override var parent: BranchNodeDescriptor? = null,
-  ) : BranchNodeDescriptor() {
-    override fun toString(): String = typeWithDisplayName()
+  internal data class Group(override val displayName: @NlsSafe String, override var parent: BranchNodeDescriptor?) : BranchNodeDescriptor() {
+    override fun toString(): String = "GROUP:$displayName"
   }
-
-  protected fun typeWithDisplayName() = if (displayName != null) "$type:$displayName" else "$type"
-}
-
-internal enum class NodeType {
-  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE, GROUP_REPOSITORY_NODE, HEAD_NODE
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
@@ -183,7 +178,7 @@ internal class NodeDescriptorsModel(
       @NlsSafe val branchNamePart = iter.next()
       val groupNode = iter.hasNext()
       val branchNodeDescriptor = if (groupNode) {
-        BranchNodeDescriptor.Group(NodeType.GROUP_NODE, parent = curParent, displayName = branchNamePart)
+        BranchNodeDescriptor.Group(parent = curParent, displayName = branchNamePart)
       } else {
         BranchNodeDescriptor.Branch(branch, parent = curParent, displayName = branchNamePart)
       }
