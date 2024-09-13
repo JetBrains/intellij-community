@@ -24,8 +24,8 @@ import java.util.Collections;
 /**
  * @author Eugene Zhuravlev
  */
-public class LibraryDescriptor {
-  
+public final class LibraryDescriptor implements Dependency {
+
   private @NlsSafe String myName;
   private final Collection<File> myJars;
 
@@ -56,5 +56,10 @@ public class LibraryDescriptor {
 
   public String toString() {
     return "Lib[" + myName + "]";
+  }
+
+  @Override
+  public int getWeight() {
+    return myJars.size() > 1 ? 30 : 40;
   }
 }

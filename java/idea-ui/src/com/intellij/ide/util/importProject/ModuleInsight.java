@@ -321,7 +321,7 @@ public abstract class ModuleInsight {
     final LibraryDescriptor newLibrary = new LibraryDescriptor(newLibraryName, new ArrayList<>(jarsToExtract));
     myLibraries.add(newLibrary);
     library.removeJars(jarsToExtract);
-    if (library.getJars().size() == 0) {
+    if (library.getJars().isEmpty()) {
       removeLibrary(library);
     }
     return newLibrary;
@@ -336,7 +336,7 @@ public abstract class ModuleInsight {
         newModule = createModuleDescriptor(root, sources != null ? sources : new HashSet<>());
       }
       else {
-        if (sources != null && sources.size() > 0) {
+        if (sources != null && !sources.isEmpty()) {
           for (DetectedSourceRoot source : sources) {
             newModule.addSourceRoot(root, source);
           }
@@ -377,7 +377,7 @@ public abstract class ModuleInsight {
     to.addJars(files);
     from.removeJars(files);
     // remove the library if it became empty
-    if (from.getJars().size() == 0) {
+    if (from.getJars().isEmpty()) {
       removeLibrary(from);
     }
   }
@@ -424,11 +424,7 @@ public abstract class ModuleInsight {
     final Map<File, LibraryDescriptor> rootToLibraryMap = new HashMap<>();
     for (File jar : jars) {
       final File parent = jar.getParentFile();
-      LibraryDescriptor lib = rootToLibraryMap.get(parent);
-      if (lib == null) {
-        lib = new LibraryDescriptor(parent.getName(), new HashSet<>());
-        rootToLibraryMap.put(parent, lib);
-      }
+      LibraryDescriptor lib = rootToLibraryMap.computeIfAbsent(parent, p -> new LibraryDescriptor(p.getName(), new HashSet<>()));
       lib.addJars(Collections.singleton(jar));
     }
     return new ArrayList<>(rootToLibraryMap.values());

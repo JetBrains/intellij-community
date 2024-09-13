@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
 */
-public class ModuleDescriptor {
+public non-sealed class ModuleDescriptor implements Dependency {
   private String myName;
   private final MultiMap<File, DetectedSourceRoot> myContentToSourceRoots = new MultiMap<>();
   private final Set<File> myLibraryFiles = new HashSet<>();
@@ -64,8 +64,13 @@ public class ModuleDescriptor {
     return myReuseExistingElement;
   }
 
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return myModuleType;
+  }
+
+  @Override
+  public int getWeight() {
+    return 20;
   }
 
   private static String suggestModuleName(final File contentRoot) {
@@ -156,7 +161,7 @@ public class ModuleDescriptor {
   public String computeModuleFilePath() throws InvalidDataException {
     final String name = getName();
     final Set<File> contentRoots = getContentRoots();
-    if (contentRoots.size() > 0) {
+    if (!contentRoots.isEmpty()) {
       return contentRoots.iterator().next().getPath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
     }
     else {

@@ -3,6 +3,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -14,9 +15,9 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
+class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
-  public LibrariesLayoutPanel(final ModuleInsight insight) {
+  LibrariesLayoutPanel(final ModuleInsight insight) {
     super(insight);
   }
 
@@ -37,8 +38,8 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
-  protected Collection getDependencies(final LibraryDescriptor entry) {
-    return entry.getJars();
+  protected Collection<? extends Dependency> getDependencies(final LibraryDescriptor entry) {
+    return ContainerUtil.map(entry.getJars(), FileDescriptor::new);
   }
 
   @Override
