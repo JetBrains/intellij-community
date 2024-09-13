@@ -73,7 +73,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   init {
     cs.launch {
-      withContext(KernelService.instance.kernelCoroutineContext.await()) {
+      withKernel {
         collectActiveTasks()
       }
     }
