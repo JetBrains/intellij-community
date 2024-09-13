@@ -25660,6 +25660,7 @@ com.intellij.ui.tree.project.ProjectFileNode
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 a:com.intellij.ui.tree.project.ProjectFileNodeUpdater
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.concurrency.Invoker):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - p:getUpdatingDelay():I
 - updateFromElement(com.intellij.psi.PsiElement):V
 - updateFromFile(com.intellij.openapi.vfs.VirtualFile):V

@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,10 @@ public abstract class ProjectFileNodeUpdater {
 
   public ProjectFileNodeUpdater(@NotNull Project project, @NotNull Invoker invoker) {
     this(project, new ProjectFileNodeUpdaterLegacyInvoker(invoker));
+  }
+
+  public ProjectFileNodeUpdater(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    this(project, new ProjectFileNodeUpdaterCoroutineInvoker(coroutineScope));
   }
 
   private ProjectFileNodeUpdater(@NotNull Project project, @NotNull ProjectFileNodeUpdaterInvoker invoker) {

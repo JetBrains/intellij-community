@@ -89,7 +89,8 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
       });
     }
     myTreeStructure = createStructure();
-    myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+    myAsyncSupport = myProject.getService(ProjectViewPaneSupportService.class)
+      .createProjectViewPaneSupport(this, myTreeStructure, createComparator());
     configureAsyncSupport(myAsyncSupport);
     myAsyncSupport.setModelTo(myTree);
 
@@ -242,6 +243,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
 
   @ApiStatus.Internal
   public @NotNull AsyncProjectViewSupport createAsyncSupport(@NotNull Disposable parent, @NotNull Comparator<NodeDescriptor<?>> comparator) {
+    // TODO: how do we apply the new implementation to CWM?
     return new AsyncProjectViewSupport(parent, myProject, createStructure(), comparator);
   }
 }
