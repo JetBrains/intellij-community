@@ -2,7 +2,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -19,7 +18,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-@HardwareAgentRequired
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {

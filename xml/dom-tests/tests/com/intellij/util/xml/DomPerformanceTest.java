@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
-@HardwareAgentRequired
 public class DomPerformanceTest extends DomHardCoreTestCase {
   public void testVisitorPerformance() {
     Ref<MyElement> ref = new Ref<>();

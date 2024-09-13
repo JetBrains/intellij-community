@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -22,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Zhuravlev
  */
 @SkipSlowTestLocally
-@HardwareAgentRequired
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   interface MapConstructor<T, T2> {
     PersistentHashMap<T, T2> createMap(File file) throws IOException;

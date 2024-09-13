@@ -2,7 +2,6 @@
 package com.intellij;
 
 import com.intellij.idea.ExcludeFromTestDiscovery;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
@@ -371,9 +370,6 @@ public class TestCaseLoader {
 
     if (checkForExclusion) {
       if (shouldExcludeTestClass(moduleName, testCaseClass)) return false;
-
-      boolean isHardwareAgentRequired = getAnnotationInHierarchy(testCaseClass, HardwareAgentRequired.class) != null;
-      if (isHardwareAgentRequired != HARDWARE_AGENT_REQUIRED) return false;
     }
 
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {

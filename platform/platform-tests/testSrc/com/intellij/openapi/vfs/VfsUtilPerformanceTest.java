@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -51,7 +50,6 @@ import static org.junit.Assert.*;
 
 @RunFirst
 @SkipSlowTestLocally
-@HardwareAgentRequired
 public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 

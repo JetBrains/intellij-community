@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -51,7 +50,6 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * tests the daemon performance during highlighting interruptions/typing
  */
-@HardwareAgentRequired
 public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
   private static final boolean DEBUG = false;
 
