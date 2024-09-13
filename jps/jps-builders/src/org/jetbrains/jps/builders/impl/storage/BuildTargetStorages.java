@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,7 @@ public final class BuildTargetStorages extends CompositeStorageOwner {
     try {
       return (S)myStorages.computeIfAbsent(provider, _provider -> {
         try {
-          return _provider.createStorage(myPaths.getTargetDataRoot(myTarget), relativizer);
+          return _provider.createStorage(myPaths.getTargetDataRoot(myTarget).toPath(), relativizer);
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);

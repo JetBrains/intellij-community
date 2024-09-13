@@ -26,6 +26,7 @@ import org.jetbrains.jps.incremental.storage.createPathStringDescriptor
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 /**
@@ -157,8 +158,8 @@ internal class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.S
 
   companion object {
     private val PACKAGE_CACHE_STORAGE_PROVIDER = object : StorageProvider<AbstractStateStorage<String, String>>() {
-      override fun createStorage(targetDataDir: File): AbstractStateStorage<String, String> {
-        val storageFile = File(targetDataDir, "mockPackageFacade/packages")
+      override fun createStorage(targetDataDir: Path): AbstractStateStorage<String, String> {
+        val storageFile = targetDataDir.resolve("mockPackageFacade/packages").toFile()
         return object : AbstractStateStorage<String, String>(storageFile, createPathStringDescriptor(), EnumeratorStringDescriptor()) {
         }
       }

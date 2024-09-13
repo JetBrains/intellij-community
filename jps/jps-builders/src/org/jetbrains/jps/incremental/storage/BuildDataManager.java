@@ -66,13 +66,13 @@ public final class BuildDataManager {
 
   private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
     @Override
-    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(@NotNull Path targetDataDir) throws IOException {
       return createStorage(targetDataDir, myRelativizer);
     }
 
     @Override
-    public @NotNull SourceToOutputMappingImpl createStorage(@NotNull File targetDataDir, @NotNull PathRelativizerService relativizer) throws IOException {
-      return new SourceToOutputMappingImpl(targetDataDir.toPath().resolve(SRC_TO_OUTPUT_STORAGE).resolve(SRC_TO_OUTPUT_FILE_NAME), relativizer);
+    public @NotNull SourceToOutputMappingImpl createStorage(@NotNull Path targetDataDir, @NotNull PathRelativizerService relativizer) throws IOException {
+      return new SourceToOutputMappingImpl(targetDataDir.resolve(SRC_TO_OUTPUT_STORAGE).resolve(SRC_TO_OUTPUT_FILE_NAME), relativizer);
     }
   };
 
