@@ -73,7 +73,7 @@ public final class AsyncProjectViewSupport {
           }
           List<VirtualFile> roots = collector.get();
           LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
-          myStructureTreeModel.getInvoker().invoke(() -> roots.forEach(root -> updateByFile(root, true)));
+          roots.forEach(root -> updateByFile(root, true));
         }
       }
     };

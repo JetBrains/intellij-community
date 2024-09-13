@@ -29,12 +29,16 @@ import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 public abstract class ProjectFileNodeUpdater {
   private static final Logger LOG = Logger.getInstance(ProjectFileNodeUpdater.class);
   private final Ref<Set<VirtualFile>> reference = new Ref<>();
-  private final Invoker invoker;
+  private final ProjectFileNodeUpdaterInvoker invoker;
   private volatile boolean root;
   private volatile long time;
   private volatile int size;
 
   public ProjectFileNodeUpdater(@NotNull Project project, @NotNull Invoker invoker) {
+    this(project, new ProjectFileNodeUpdaterLegacyInvoker(invoker));
+  }
+
+  private ProjectFileNodeUpdater(@NotNull Project project, @NotNull ProjectFileNodeUpdaterInvoker invoker) {
     this.invoker = invoker;
     MessageBusConnection connection = project.getMessageBus().connect(invoker);
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
