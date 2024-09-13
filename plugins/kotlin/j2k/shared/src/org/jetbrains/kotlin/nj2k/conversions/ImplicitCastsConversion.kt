@@ -26,6 +26,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
             is JKIfElseExpression -> convertIfElseExpression(element)
             is JKKtAssignmentStatement -> convertAssignmentStatement(element)
             is JKArrayAccessExpression -> convertArrayAccessExpression(element)
+            is JKReturnStatement -> convertReturnStatement(element)
         }
         return recurse(element)
     }
@@ -186,6 +187,14 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
     private fun convertArrayAccessExpression(element: JKArrayAccessExpression) {
         element.indexExpression.castTo(typeFactory.types.int)?.let {
             element.indexExpression = it
+        }
+    }
+
+    private fun convertReturnStatement(element: JKReturnStatement) {
+        val method = element.parentOfType<JKMethod>() ?: return
+        val expectedType = method.returnType.type.asPrimitiveType() ?: return
+        element.expression.castTo(expectedType)?.let {
+            element.expression = it
         }
     }
 
