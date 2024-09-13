@@ -4647,7 +4647,7 @@ a:com.intellij.refactoring.classMembers.AbstractMemberInfoModel
 - isMemberEnabled(com.intellij.refactoring.classMembers.MemberInfoBase):Z
 - memberInfoChanged(com.intellij.refactoring.classMembers.MemberInfoChange):V
 com.intellij.refactoring.classMembers.ClassMembersRefactoringSupport
-- a:createDependentMembersCollector(java.lang.Object,java.lang.Object):com.intellij.refactoring.classMembers.DependentMembersCollectorBase
+- a:createDependentMembersCollector(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.refactoring.classMembers.DependentMembersCollectorBase
 - a:isProperMember(com.intellij.refactoring.classMembers.MemberInfoBase):Z
 a:com.intellij.refactoring.classMembers.DependentMembersCollectorBase
 - pf:myClass:java.lang.Object
