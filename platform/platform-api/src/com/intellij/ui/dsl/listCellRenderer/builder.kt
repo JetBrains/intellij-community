@@ -33,3 +33,17 @@ fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRender
     text(textExtractor(value) ?: "")
   }
 }
+
+/**
+ * A version of [textListCellRenderer] with separator support
+ */
+fun <T> groupedTextListCellRenderer(textExtractor: (T) -> @Nls String?, separatorExtractor: (T) -> String?): ListCellRenderer<T> {
+  return listCellRenderer {
+    text(textExtractor(value) ?: "")
+    separatorExtractor(value)?.let {
+      separator {
+        text = it
+      }
+    }
+  }
+}

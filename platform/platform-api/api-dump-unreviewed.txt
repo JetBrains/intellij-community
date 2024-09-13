@@ -9492,6 +9492,7 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 - f:subGridBuilder(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 - bs:subGridBuilder$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
+- sf:groupedTextListCellRenderer(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 *f:com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
