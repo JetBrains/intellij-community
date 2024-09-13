@@ -28,17 +28,17 @@ class BuiltInHelpManager : HelpManager() {
 
   override fun invokeHelp(helpId: String?) {
 
-    val helpIdToUse = helpId ?: "top"
+    val helpIdToUse = URLEncoder.encode(helpId, StandardCharsets.UTF_8) ?: "top"
     logWillOpenHelpId(helpIdToUse)
 
     try {
       val manager = KeymapManager.getInstance()
       val activeKeymap = if (manager == null) null else KeymapManager.getInstance().activeKeymap
+      val activeKeymapParam = if (activeKeymap == null) "" else "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
 
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
-        URLEncoder.encode(
-          helpIdToUse, StandardCharsets.UTF_8)
-      }${if (activeKeymap != null) "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}" else ""}"
+        helpIdToUse
+      }$activeKeymapParam"
 
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
@@ -68,26 +68,19 @@ class BuiltInHelpManager : HelpManager() {
         }
 
         val info = ApplicationInfo.getInstance()
-        val productVersion = info.majorVersion + "." + info.minorVersion.substringBefore(".")
+        val productVersion = info.shortVersion
 
         var baseUrl = Utils.getStoredValue(SettingsPage.OPEN_HELP_BASE_URL,
                                            Utils.BASE_HELP_URL)
 
         if (!baseUrl.endsWith("/")) baseUrl += "/"
 
-        url = "${baseUrl}help/$productWebPath/$productVersion/?${
-          URLEncoder.encode(
-            helpIdToUse, StandardCharsets.UTF_8)
-        }"
+        url = "${baseUrl}help/$productWebPath/$productVersion/?${helpIdToUse}"
 
         if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
           val productCode = info.build.productCode
           if (!StringUtil.isEmpty(productCode)) {
-            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion${
-              if (activeKeymap != null)
-                "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
-              else ""
-            }"
+            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion$activeKeymapParam"
           }
         }
       }
@@ -103,7 +96,6 @@ class BuiltInHelpManager : HelpManager() {
       else {
         BrowserLauncher.instance.browse(url, browser)
       }
-
     }
     catch (e: URISyntaxException) {
       LOG.error("Help id '$helpIdToUse' produced an invalid URL.", e)
