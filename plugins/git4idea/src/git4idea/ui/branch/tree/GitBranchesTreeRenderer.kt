@@ -22,10 +22,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
-import git4idea.branch.GitTagType
-import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
@@ -162,47 +159,14 @@ abstract class GitBranchesTreeRenderer(
     internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
       val value = treeNode ?: return null
       return when (value) {
-        GitBranchType.RECENT -> {
-          when (model) {
-            is GitBranchesTreeSelectedRepoModel -> GitBundle.message("group.Git.Recent.Branch.in.repo.title",
-                                                                     DvcsUtil.getShortRepositoryName(model.selectedRepository))
-            else -> GitBundle.message("group.Git.Recent.Branch.title")
-          }
-        }
-        GitTagType -> {
-          when {
-            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.tags.in.repo",
-                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
-            repositories.size > 1 -> GitBundle.message("common.tags")
-            else -> GitBundle.message("group.Git.Tags.title")
-          }
-        }
-        GitBranchType.LOCAL -> {
-          when {
-            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.local.branches.in.repo",
-                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
-            repositories.size > 1 -> GitBundle.message("common.local.branches")
-            else -> GitBundle.message("group.Git.Local.Branch.title")
-          }
-        }
-        GitBranchType.REMOTE -> {
-          when {
-            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.remote.branches.in.repo",
-                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
-            repositories.size > 1 -> GitBundle.message("common.remote.branches")
-            else -> GitBundle.message("group.Git.Remote.Branch.title")
-          }
+        is GitRefType -> when {
+          model is GitBranchesTreeSelectedRepoModel -> value.getInRepoText(DvcsUtil.getShortRepositoryName(model.selectedRepository))
+          repositories.size > 1 -> value.getCommonText()
+          else -> value.getText()
         }
         is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
         is GitRepository -> DvcsUtil.getShortRepositoryName(value)
-        is GitBranchesTreeModel.RefTypeUnderRepository -> {
-          when (value.type) {
-            GitBranchType.RECENT -> GitBundle.message("group.Git.Recent.Branch.title")
-            GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
-            GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
-            else -> null
-          }
-        }
+        is GitBranchesTreeModel.RefTypeUnderRepository -> value.type.getText()
         is RefUnderRepository -> getText(value.ref, model, repositories)
         is GitReference -> if (model.isPrefixGrouping) value.name.split('/').last() else value.name
         is PopupFactoryImpl.ActionItem -> value.text

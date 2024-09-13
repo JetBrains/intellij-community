@@ -8,6 +8,8 @@ import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.branch.GitBranchType.LOCAL
 import git4idea.branch.GitBranchType.REMOTE
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 
 sealed interface GitRefType : BranchType, PathElementIdProvider {
   companion object {
@@ -20,19 +22,42 @@ sealed interface GitRefType : BranchType, PathElementIdProvider {
       }
     }
   }
+
+  override fun getPathElementId() = name
+
+  fun getText(): @Nls String
+  fun getInRepoText(repoShortName: String): @Nls String
+  fun getCommonText(): @Nls String
 }
 
-enum class GitBranchType(private val myName: String) : GitRefType {
-  LOCAL("LOCAL"), REMOTE("REMOTE"), RECENT("RECENT");
+enum class GitBranchType : GitRefType {
+  LOCAL {
+    override fun getName() = "LOCAL"
 
-  override fun getName(): String {
-    return myName
+    override fun getText() = GitBundle.message("group.Git.Local.Branch.title")
+    override fun getInRepoText(repoShortName: String) = GitBundle.message("branches.local.branches.in.repo", repoShortName)
+    override fun getCommonText() = GitBundle.message("common.local.branches")
+  },
+  REMOTE {
+    override fun getName() = "REMOTE"
+
+    override fun getText() = GitBundle.message("group.Git.Remote.Branch.title")
+    override fun getInRepoText(repoShortName: String) = GitBundle.message("branches.remote.branches.in.repo", repoShortName)
+    override fun getCommonText() = GitBundle.message("common.remote.branches")
+  },
+  RECENT {
+    override fun getName() = "RECENT"
+
+    override fun getText() = GitBundle.message("group.Git.Recent.Branch.title")
+    override fun getInRepoText(repoShortName: String) = GitBundle.message("group.Git.Recent.Branch.in.repo.title", repoShortName)
+    override fun getCommonText() = getText()
   }
-
-  override fun getPathElementId(): String = myName
 }
 
 object GitTagType : GitRefType {
-  override fun getName(): String = "TAG"
-  override fun getPathElementId(): String = name
+  override fun getName() = "TAG"
+
+  override fun getText() = GitBundle.message("group.Git.Tags.title")
+  override fun getInRepoText(repoShortName: String) = GitBundle.message("branches.tags.in.repo", repoShortName)
+  override fun getCommonText() = GitBundle.message("common.tags")
 }
