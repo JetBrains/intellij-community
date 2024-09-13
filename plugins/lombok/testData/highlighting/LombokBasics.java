@@ -55,7 +55,7 @@ class <warning descr="Class 'IntellijInspectionNPEDemo' is never used">IntellijI
       }
     }
 
-    public final String <warning descr="Public field 'jsonObject' is assigned but never accessed">jsonObject</warning>;
+    public final String jsonObject;
   }
 
 }

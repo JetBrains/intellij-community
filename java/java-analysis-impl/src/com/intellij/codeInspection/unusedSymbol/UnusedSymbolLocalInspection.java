@@ -196,7 +196,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
           }
         }
         else if (!UnusedSymbolUtil.isFieldUsed(project, file, field, helper)) {
-          if (UnusedSymbolUtil.isImplicitWrite(project, field)) {
+          if (UnusedSymbolUtil.isImplicitWrite(project, field) && !UnusedSymbolUtil.isImplicitRead(project, field)) {
             registerProblem(field, getNotUsedForReadingMessage(field), List.of(fixFactory.createSafeDeleteFix(field)));
           }
           else if (!UnusedSymbolUtil.isImplicitUsage(project, field)) {
