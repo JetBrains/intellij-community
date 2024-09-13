@@ -106,35 +106,6 @@ internal class GitBranchesTreePopupShowRecentBranchesAction :
   }
 }
 
-internal class GitBranchesTreePopupShowTagsAction :
-  ToggleAction(GitBundle.messagePointer("git.branches.popup.show.tags.name")), DumbAware {
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.isEnabledAndVisible = e.project != null
-                                         && e.getData(GitBranchesTreePopupBase.POPUP_KEY) != null
-  }
-
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
-
-  override fun isSelected(e: AnActionEvent): Boolean =
-    e.project?.let(GitVcsSettings::getInstance)?.showTags() ?: true
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    GitVcsSettings.getInstance(project).setShowTags(state)
-
-    for (repository in GitRepositoryManager.getInstance(project).repositories) {
-      repository.tagHolder.updateEnabled()
-    }
-    e.getRequiredData(GitBranchesTreePopupBase.POPUP_KEY).refresh()
-  }
-
-  companion object {
-    fun isSelected(project: Project?): Boolean =
-      project != null && project.let(GitVcsSettings::getInstance).showTags()
-  }
-}
 
 internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {
 

@@ -13,10 +13,10 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupMinimalRenderer
-import git4idea.ui.branch.popup.GitBranchesTreePopupShowTagsAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import git4idea.ui.branch.tree.GitBranchesTreeShowTagsAction
 import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
 import git4idea.ui.branch.tree.createTreePathFor
 import java.util.function.Consumer
@@ -85,7 +85,7 @@ class GitCompareWithBranchPopup(
 
   override fun getSearchFiledEmptyText(): String = GitBundle.message(
     "git.compare.with.branch.search.field.empty.text",
-    if (GitBranchesTreePopupShowTagsAction.isSelected(project)) 1 else 0
+    if (GitBranchesTreeShowTagsAction.isSelected(project)) 1 else 0
   )
 
   override fun getTreeEmptyText(searchPattern: String?): String = GitBundle.message("git.compare.with.branch.search.not.found", searchPattern)

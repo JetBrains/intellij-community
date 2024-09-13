@@ -168,5 +168,7 @@ public abstract class DvcsBranchManager<T extends Repository> {
     default void branchFavoriteSettingsChanged() { }
 
     default void branchGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) { }
+
+    default void showTagsSettingsChanged() { }
   }
 }

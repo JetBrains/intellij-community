@@ -120,6 +120,7 @@ a:com.intellij.dvcs.branch.DvcsBranchManager
 com.intellij.dvcs.branch.DvcsBranchManager$DvcsBranchManagerListener
 - branchFavoriteSettingsChanged():V
 - branchGroupingSettingsChanged(com.intellij.dvcs.branch.GroupingKey,Z):V
+- showTagsSettingsChanged():V
 a:com.intellij.dvcs.branch.DvcsBranchPopup
 - pf:myCurrentRepository:com.intellij.dvcs.repo.Repository
 - pf:myInSpecificRepository:Z

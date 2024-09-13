@@ -66,6 +66,10 @@ internal class BranchesDashboardController(
       override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
         toggleGrouping(key, state)
       }
+
+      override fun showTagsSettingsChanged() {
+        ui.updateBranchesTree(false)
+      }
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {

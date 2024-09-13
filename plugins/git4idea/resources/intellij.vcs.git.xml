@@ -51,6 +51,8 @@
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$ChangeBranchFilterAction"/>
       <action id="Git.Log.Branches.Navigate.Log.To.Branch.On.Selection"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToBranchAction"/>
+      <separator/>
+      <action id="git.branches.show.tags" class="git4idea.ui.branch.tree.GitBranchesTreeShowTagsAction"/>
     </group>
     <group id="Git.Log.Branches.Grouping.Settings" icon="AllIcons.Actions.GroupBy"
            class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupingSettingsGroup">
@@ -189,7 +191,7 @@
       <action id="git.branches.group.by.prefix" class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
       <action id="git.branches.show.recent" class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
-      <action id="git.branches.show.tags" class="git4idea.ui.branch.popup.GitBranchesTreePopupShowTagsAction"/>
+      <reference ref="git.branches.show.tags"/>
       <action id="git.branches.popup.resize" class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
