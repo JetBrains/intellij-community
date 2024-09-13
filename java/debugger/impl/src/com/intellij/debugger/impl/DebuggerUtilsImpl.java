@@ -560,18 +560,29 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return null;
   }
 
-  public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext, Class<?> cls, String methodName, List<Value> arguments)
-    throws EvaluateException {
+  public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
+                                         Class<?> cls,
+                                         String methodName,
+                                         List<Value> arguments,
+                                         boolean keepResult) throws EvaluateException {
     ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext);
     if (helperClass != null) {
       Method method = findMethod(helperClass, methodName, null);
       if (method != null) {
         DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-        return evaluationContext.computeAndKeep(
-          () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true));
+        ThrowableComputable<Value, EvaluateException> invoker =
+          () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
+        return keepResult ? evaluationContext.computeAndKeep(invoker) : invoker.compute();
       }
     }
     return null;
+  }
+
+  public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,
+                                         Class<?> cls,
+                                         String methodName,
+                                         List<Value> arguments) throws EvaluateException {
+    return invokeHelperMethod(evaluationContext, cls, methodName, arguments, true);
   }
 
   @Nullable

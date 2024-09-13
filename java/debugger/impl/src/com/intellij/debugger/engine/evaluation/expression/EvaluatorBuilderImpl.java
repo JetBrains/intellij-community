@@ -1441,7 +1441,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       PsiElement qualifier = expression.getQualifier();
       PsiType interfaceType = expression.getFunctionalInterfaceType();
-      if (!Registry.is("debugger.compiling.evaluator.method.refs") && interfaceType != null && qualifier != null) {
+      if (!Registry.is("debugger.compiling.evaluator.method.refs") &&
+          !Registry.is("debugger.evaluate.method.helper") &&
+          interfaceType != null &&
+          qualifier != null) {
         String code = null;
         try {
           PsiElement resolved = expression.resolve();
