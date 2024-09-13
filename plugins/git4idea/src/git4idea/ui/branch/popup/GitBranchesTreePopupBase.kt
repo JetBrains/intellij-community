@@ -413,7 +413,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   private fun JTree.calculateTopLevelVisibleRows() =
     model.getChildCount(model.root) + model.getChildCount(
       if (model is GitBranchesTreeSingleRepoModel
-          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) RecentNode
+          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) GitBranchType.RECENT
       else GitBranchType.LOCAL)
 
   private fun overrideTreeActions(tree: JTree) = with(tree) {

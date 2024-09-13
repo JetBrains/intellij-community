@@ -162,7 +162,7 @@ abstract class GitBranchesTreeRenderer(
     internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
       val value = treeNode ?: return null
       return when (value) {
-        GitBranchesTreeModel.RecentNode -> {
+        GitBranchType.RECENT -> {
           when (model) {
             is GitBranchesTreeSelectedRepoModel -> GitBundle.message("group.Git.Recent.Branch.in.repo.title",
                                                                      DvcsUtil.getShortRepositoryName(model.selectedRepository))
@@ -197,7 +197,7 @@ abstract class GitBranchesTreeRenderer(
         is GitRepository -> DvcsUtil.getShortRepositoryName(value)
         is GitBranchesTreeModel.RefTypeUnderRepository -> {
           when (value.type) {
-            GitBranchesTreeModel.RecentNode -> GitBundle.message("group.Git.Recent.Branch.title")
+            GitBranchType.RECENT -> GitBundle.message("group.Git.Recent.Branch.title")
             GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
             GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
             else -> null

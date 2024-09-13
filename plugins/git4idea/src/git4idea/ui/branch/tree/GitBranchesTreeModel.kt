@@ -2,20 +2,17 @@
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
-import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
-import git4idea.GitBranch
 import git4idea.GitReference
+import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.repo.GitRepository
 import javax.swing.Icon
 import javax.swing.tree.TreePath
-import kotlin.properties.Delegates.observable
 
 abstract class GitBranchesTreeModel : AbstractTreeModel() {
   protected val branchesTreeCache = mutableMapOf<Any, List<Any>>()
@@ -51,12 +48,12 @@ abstract class GitBranchesTreeModel : AbstractTreeModel() {
     const val NAME = "TreeRoot"
     override fun getPathElementId(): String = NAME
   }
-  data class BranchesPrefixGroup(val type: BranchType,
+  data class BranchesPrefixGroup(val type: GitRefType,
                                  val prefix: List<String>,
                                  val repository: GitRepository? = null) : PathElementIdProvider {
     override fun getPathElementId(): String = type.name + "/" + prefix.toString()
   }
-  data class RefTypeUnderRepository(val repository: GitRepository, val type: BranchType)
+  data class RefTypeUnderRepository(val repository: GitRepository, val type: GitRefType)
 
   data class TopLevelRepository(val repository: GitRepository): PresentableNode {
     override fun getPresentableText(): String = DvcsUtil.getShortRepositoryName(repository)
@@ -64,12 +61,6 @@ abstract class GitBranchesTreeModel : AbstractTreeModel() {
 
   data class RefUnderRepository(val repository: GitRepository, val ref: GitReference): PresentableNode {
     override fun getPresentableText(): String = ref.name
-  }
-
-  object RecentNode : BranchType, PathElementIdProvider {
-    const val NAME = "RECENT"
-    override fun getName(): String = NAME
-    override fun getPathElementId(): String = NAME
   }
 
   interface PresentableNode : ItemPresentation {

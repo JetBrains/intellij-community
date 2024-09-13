@@ -86,7 +86,7 @@ class GitBranchesTreeMultiRepoModel(
     return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes
   }
 
-  private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
+  private fun getBranchTreeNodes(branchType: GitRefType, path: List<String>): List<Any> {
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType -> commonLocalBranchesTree.tree
       GitBranchType.REMOTE == branchType -> commonRemoteBranchesTree.tree

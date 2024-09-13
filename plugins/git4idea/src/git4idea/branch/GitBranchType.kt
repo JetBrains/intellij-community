@@ -9,9 +9,10 @@ import git4idea.GitTag
 import git4idea.branch.GitBranchType.LOCAL
 import git4idea.branch.GitBranchType.REMOTE
 
-interface GitRefType : BranchType, PathElementIdProvider {
+sealed interface GitRefType : BranchType, PathElementIdProvider {
   companion object {
-    fun of(reference: GitReference): GitRefType {
+    fun of(reference: GitReference, recent: Boolean = false): GitRefType {
+      if (recent) GitBranchType.RECENT
       return when (reference) {
         is GitBranch -> if (reference.isRemote) REMOTE else LOCAL
         is GitTag -> return GitTagType
@@ -22,7 +23,7 @@ interface GitRefType : BranchType, PathElementIdProvider {
 }
 
 enum class GitBranchType(private val myName: String) : GitRefType {
-  LOCAL("LOCAL"), REMOTE("REMOTE");
+  LOCAL("LOCAL"), REMOTE("REMOTE"), RECENT("RECENT");
 
   override fun getName(): String {
     return myName

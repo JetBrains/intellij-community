@@ -6,13 +6,13 @@ import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
@@ -72,11 +72,9 @@ open class GitBranchesTreeSingleRepoModel(
 
   protected open fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.branches.remoteBranches
 
-  override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
-                                             || (node === RecentNode && recentCheckoutBranchesTree.isEmpty())
-                                             || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
-                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
-                                             || (node === GitTagType && tagsTree.isEmpty())
+  override fun isLeaf(node: Any?): Boolean = node is GitReference
+                                             || node is RefUnderRepository
+                                             || (node is GitRefType && getCorrespondingTree(node).isEmpty())
 
   override fun initTags(matcher: MinusculeMatcher?) {
     val tags = repository.tags
@@ -88,7 +86,7 @@ open class GitBranchesTreeSingleRepoModel(
     if (parent == null || notHaveFilteredNodes()) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
-      is BranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
+      is GitRefType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
       is BranchesPrefixGroup -> {
         branchesTreeCache
           .getOrPut(parent) {
@@ -110,16 +108,16 @@ open class GitBranchesTreeSingleRepoModel(
     return matchedActions + localAndRemoteTopLevelNodes
   }
 
-  private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
-    val branchesMap: Map<String, Any> = when {
-      RecentNode == branchType -> recentCheckoutBranchesTree.tree
-      GitTagType == branchType -> tagsTree.tree
-      GitBranchType.LOCAL == branchType -> localBranchesTree.tree
-      GitBranchType.REMOTE == branchType -> remoteBranchesTree.tree
-      else -> emptyMap()
-    }
-
+  private fun getBranchTreeNodes(branchType: GitRefType, path: List<String>): List<Any> {
+    val branchesMap: Map<String, Any> = getCorrespondingTree(branchType)
     return buildBranchTreeNodes(branchType, branchesMap, path)
+  }
+
+  private fun getCorrespondingTree(branchType: GitRefType): Map<String, Any> = when (branchType) {
+    GitBranchType.REMOTE -> remoteBranchesTree.tree
+    GitBranchType.RECENT -> recentCheckoutBranchesTree.tree
+    GitBranchType.LOCAL -> localBranchesTree.tree
+    GitTagType -> tagsTree.tree
   }
 
   override fun getPreferredSelection(): TreePath? =

@@ -13,6 +13,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
+import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
@@ -131,7 +132,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
     return topNodes + localAndRemoteNodes + notEmptyRepositories
   }
 
-  private fun getTreeNodes(branchType: BranchType, path: List<String>, repository: GitRepository? = null): List<Any> {
+  private fun getTreeNodes(branchType: GitRefType, path: List<String>, repository: GitRepository? = null): List<Any> {
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType && repository == null -> commonLocalBranchesTree.tree
       GitBranchType.LOCAL == branchType && repository != null -> repositoriesWithBranchesTree[repository].localBranches.tree
