@@ -2,6 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.RdTarget
 
 @Remote("com.intellij.ide.GeneralSettings")
 interface GeneralSettingsRef {
@@ -21,6 +22,6 @@ fun Driver.setOpenNewProjectsInNewWindow() {
   service(GeneralSettingsRef::class).setConfirmOpenNewProject(0)
 }
 
-fun Driver.setAdvancedSetting(id: String, value: Boolean) {
-  service(AdvancedSettingsRef::class).setBoolean(id, value)
+fun Driver.setAdvancedSetting(id: String, value: Boolean, rdTarget: RdTarget = RdTarget.DEFAULT) {
+  service(AdvancedSettingsRef::class, rdTarget).setBoolean(id, value)
 }
