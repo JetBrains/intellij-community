@@ -488,7 +488,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "Guava", url = "https://github.com/google/guava")
       .apache("https://github.com/google/guava/raw/master/LICENSE"),
     LibraryLicense(name = "Hamcrest", libraryName = "hamcrest", url = "https://hamcrest.org/")
-      .newBsd("https://github.com/hamcrest/JavaHamcrest/blob/master/LICENSE.txt")
+      .newBsd("https://github.com/hamcrest/JavaHamcrest/blob/master/LICENSE")
       .suppliedByPersons("Joe Walnes", "Nat Pryce", "Steve Freeman"),
     LibraryLicense(libraryName = "hash4j", url = "https://github.com/dynatrace-oss/hash4j")
       .apache("https://github.com/dynatrace-oss/hash4j/blob/main/LICENSE"),
