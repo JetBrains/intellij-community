@@ -204,7 +204,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return !Character.isJavaIdentifierPart(c);
   }
 
-  private static <T, U> void addToMap(@NotNull Map<T, U> map, @NotNull Collection<? extends T> keys, U value) {
+  private static <T, U> void addToMap(@NotNull Map<? super T, ? super U> map, @NotNull Collection<? extends T> keys, U value) {
     for (T key : keys) {
       map.put(key, value);
     }
