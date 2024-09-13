@@ -69,6 +69,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   private val mutex = Mutex()
 
   val logManager: VcsLogManager? get() = cachedLogManager
+
   @get:ApiStatus.Internal
   val projectLogManager: VcsProjectLogManager? get() = cachedLogManager
   val dataManager: VcsLogData? get() = cachedLogManager?.dataManager
@@ -86,18 +87,18 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     val busConnection = project.messageBus.connect(listenersDisposable)
     busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
       LOG.debug("Recreating Vcs Log after roots changed")
-      launchWithAnyModality { disposeLog(recreate = true) }
+      launchRecreateLog()
     })
     busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
     VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         LOG.debug("Recreating Vcs Log after indexing registry value changed")
-        launchWithAnyModality { disposeLog(recreate = true) }
+        launchRecreateLog()
       }
     }, listenersDisposable)
     project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
       LOG.debug("Recreating Vcs Log after settings changed")
-      launchWithAnyModality { disposeLog(recreate = true) }
+      launchRecreateLog()
     }, listenersDisposable)
     PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
@@ -133,9 +134,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
-        mutex.withLock {
-          disposeLogInternal(useRawSwingDispatcher = useRawSwingDispatcher)
-        }
+        launchDisposeLog(useRawSwingDispatcher = useRawSwingDispatcher).join()
       }
     }
     catch (e: TimeoutCancellationException) {
@@ -153,27 +152,39 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     return tabManager?.openAnotherLogTab(filters = filters, location = location)
   }
 
-  @RequiresBackgroundThread
-  private suspend fun disposeLog(recreate: Boolean, beforeCreateLog: (suspend () -> Unit)? = null) {
-    mutex.withLock {
-      disposeLogInternal(false)
-      if (!recreate || isDisposing) return
+  fun createLogInBackground(forceInit: Boolean) {
+    launchCreateLog(forceInit)
+  }
 
-      try {
-        beforeCreateLog?.invoke()
+  private fun launchCreateLog(forceInit: Boolean): Job {
+    return launchWithAnyModality {
+      mutex.withLock {
+        createLogInternal(forceInit)
       }
-      catch (e: Throwable) {
-        LOG.error("Unable to execute 'beforeCreateLog'", e)
-      }
+    }
+  }
 
-      try {
+  private fun launchDisposeLog(useRawSwingDispatcher: Boolean = false): Job {
+    return launchWithAnyModality {
+      mutex.withLock {
+        disposeLogInternal(useRawSwingDispatcher)
+      }
+    }
+  }
+
+  private fun launchRecreateLog(beforeCreateLog: (suspend () -> Unit)? = null): Job {
+    return launchWithAnyModality {
+      mutex.withLock {
+        disposeLogInternal(false)
+
+        try {
+          beforeCreateLog?.invoke()
+        }
+        catch (e: Throwable) {
+          LOG.error("Unable to execute 'beforeCreateLog'", e)
+        }
+
         createLogInternal(forceInit = false)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error("Unable to execute 'createLog'", e)
       }
     }
   }
@@ -183,20 +194,6 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       dropLogManager()?.also { it.disposeUi() }
     }
     if (logManager != null) Disposer.dispose(logManager)
-  }
-
-  fun createLogInBackground(forceInit: Boolean) {
-    coroutineScope.async {
-      createLog(forceInit) != null
-    }
-  }
-
-  private suspend fun createLog(forceInit: Boolean): VcsLogManager? {
-    if (isDisposing) return null
-
-    mutex.withLock {
-      return createLogInternal(forceInit)
-    }
   }
 
   private suspend fun createLogInternal(forceInit: Boolean): VcsLogManager? {
@@ -258,7 +255,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     }
 
     override suspend fun execute(project: Project) {
-      getInstance(project).createLog(forceInit = false)
+      getInstance(project).launchCreateLog(forceInit = false)
     }
   }
 
@@ -268,7 +265,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
       if (hasLogExtensions(pluginDescriptor)) {
         LOG.debug { "Disposing Vcs Log after loading ${pluginDescriptor.pluginId}" }
-        launchWithAnyModality { disposeLog(recreate = true) }
+        launchRecreateLog()
       }
     }
 
@@ -276,7 +273,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       if (hasLogExtensions(pluginDescriptor)) {
         affectedPlugins.add(pluginDescriptor.pluginId)
         LOG.debug { "Disposing Vcs Log before unloading ${pluginDescriptor.pluginId}" }
-        launchWithAnyModality { disposeLog(recreate = false) }
+        launchDisposeLog()
       }
     }
 
@@ -285,7 +282,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
         LOG.debug { "Recreating Vcs Log after unloading ${pluginDescriptor.pluginId}" }
         // createLog calls between beforePluginUnload and pluginUnloaded are technically not prohibited
         // so, just in case, recreating log here
-        launchWithAnyModality { disposeLog(recreate = true) }
+        launchRecreateLog()
       }
     }
 
@@ -336,7 +333,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     @ApiStatus.Internal
     @RequiresBackgroundThread
     suspend fun VcsProjectLog.runOnDisposedLog(task: (suspend () -> Unit)?) {
-      disposeLog(recreate = true, beforeCreateLog = task)
+      launchRecreateLog(beforeCreateLog = task).join()
     }
 
     /**
@@ -355,7 +352,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       // schedule showing the log, wait its initialization, and then open the tab
       projectLog.coroutineScope.launch {
         withBackgroundProgress(project, VcsLogBundle.message("vcs.log.creating.process")) {
-          projectLog.createLog(forceInit = true)
+          waitWhenLogIsReady(project)
 
           withContext(Dispatchers.EDT) {
             projectLog.logManager?.let {
@@ -369,7 +366,8 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     suspend fun waitWhenLogIsReady(project: Project): Boolean {
       val projectLog = getInstance(project)
       if (projectLog.logManager != null) return true
-      return projectLog.createLog(true) != null
+      projectLog.launchCreateLog(forceInit = true).join()
+      return projectLog.logManager != null
     }
 
     @ApiStatus.Internal
