@@ -4,6 +4,7 @@ package com.intellij.dvcs.push.ui;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -68,6 +69,8 @@ public abstract class PushActionBase extends DumbAwareAction {
     boolean enabled = isEnabled(dialog);
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setText(getText(dialog, enabled));
-    e.getPresentation().setDescription(getDescription(dialog, enabled));
+    String description = getDescription(dialog, enabled);
+    e.getPresentation().setDescription(description);
+    e.getPresentation().putClientProperty(ActionUtil.TOOLTIP_TEXT, description);
   }
 }
