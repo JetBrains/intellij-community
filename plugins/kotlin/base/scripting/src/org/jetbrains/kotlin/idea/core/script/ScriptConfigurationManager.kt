@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
@@ -176,11 +179,24 @@ object ClasspathToVfsConverter {
         val key = path.pathString
         val newType = path.fileType
 
+        //we cannot use `refreshAndFindFileByPath` under read lock
+        fun VirtualFileSystem.findLocalFileByPath(filePath: String): VirtualFile? {
+            val application = ApplicationManager.getApplication()
+
+            return if (!application.isDispatchThread() && application.isReadAccessAllowed()
+                || isUnitTestMode()
+            ) {
+                findFileByPath(filePath)
+            } else {
+                refreshAndFindFileByPath(filePath)
+            }
+        }
+
         fun compute(filePath: String): Pair<FileType, VirtualFile?> {
             return newType to when (newType) {
                 FileType.NOT_EXISTS, FileType.UNKNOWN -> null
-                FileType.DIRECTORY -> StandardFileSystems.local()?.findFileByPath(filePath)
-                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.findFileByPath(filePath + URLUtil.JAR_SEPARATOR)
+                FileType.DIRECTORY -> StandardFileSystems.local()?.findLocalFileByPath(filePath)
+                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.findLocalFileByPath(filePath + URLUtil.JAR_SEPARATOR)
             }
         }
 
