@@ -44,12 +44,12 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
       
         String v3 = getV3();
         private String getV3() {
-          return ReadAction.<error descr="Do not run read actions during service initialization">compute</error>(() -> {return "";});
+          return ReadAction.<error descr="Do not run read actions during service initialization ('getV3' is called in 'v3' field initializer)">compute</error>(() -> {return "";});
         }
         
         static final String v4 = getV4();
         private static String getV4() {
-          return ReadAction.<error descr="Do not run read actions during service initialization">computeCancellable</error>(() -> {return "";});
+          return ReadAction.<error descr="Do not run read actions during service initialization ('getV4' is called in 'v4' field initializer)">computeCancellable</error>(() -> {return "";});
         }
       
         static {
@@ -63,7 +63,7 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
         }
         
         private static void writeActionMethodUsedInStaticInitBlock() {
-          WriteAction.<error descr="Do not run write actions during service initialization">run</error>(() -> {});
+          WriteAction.<error descr="Do not run write actions during service initialization ('writeActionMethodUsedInStaticInitBlock' is called in static initialization block)">run</error>(() -> {});
         }
       
         TestService() {
@@ -74,7 +74,7 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
         
         private void readActionMethodUsedInConstructor() {
           ReadAction.nonBlocking(() -> "")
-                     .<error descr="Do not run read actions during service initialization">executeSynchronously</error>();
+                     .<error descr="Do not run read actions during service initialization ('readActionMethodUsedInConstructor' is called in 'TestService' constructor or init block)">executeSynchronously</error>();
         }
         
         public void notUsedInInit() {
@@ -200,6 +200,7 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
         @Override
         public void loadState(@NotNull State state) {
           String value = ReadAction.<error descr="Do not run read actions during service initialization">compute</error>(() -> {return "";});
+          readActionMethodUsedInLoadState();
           myState = state;
         }
       
@@ -209,6 +210,11 @@ class ReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteAction
         
         @Override public void noStateLoaded() {
           WriteAction.<error descr="Do not run write actions during service initialization">run</error>(() -> {});
+        }
+        
+        private void readActionMethodUsedInLoadState() {
+          ReadAction.nonBlocking(() -> "")
+                     .<error descr="Do not run read actions during service initialization ('readActionMethodUsedInLoadState' is called in 'loadState' method)">executeSynchronously</error>();
         }
       
         @Override

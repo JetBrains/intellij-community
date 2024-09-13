@@ -36,7 +36,7 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
         var v1: String = ReadAction.<error descr="Do not run read actions during service initialization">compute</error><String, RuntimeException> { "any" }
         var v2: String = getV2()
         private fun getV2(): String {
-          return ReadAction.<error descr="Do not run read actions during service initialization">compute</error><String, RuntimeException> { "any" }
+          return ReadAction.<error descr="Do not run read actions during service initialization ('getV2' is called in 'v2' field initializer)">compute</error><String, RuntimeException> { "any" }
         }
       
         init {
@@ -46,7 +46,7 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
         }
       
         private fun readActionMethodUsedInInitBlock() {
-          ReadAction.nonBlocking<String> { "any" }.<error descr="Do not run read actions during service initialization">executeSynchronously</error>()
+          ReadAction.nonBlocking<String> { "any" }.<error descr="Do not run read actions during service initialization ('readActionMethodUsedInInitBlock' is called in 'TestService' constructor or init block)">executeSynchronously</error>()
         }
       
         fun notUsedInInit() {
@@ -60,7 +60,7 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
           val v3: String = ReadAction.<error descr="Do not run read actions during service initialization">computeCancellable</error><String, RuntimeException> { "any" }
           val v4: String = getV4()
           private fun getV4(): String {
-            return ReadAction.<error descr="Do not run read actions during service initialization">computeCancellable</error><String, RuntimeException> { "any" }
+            return ReadAction.<error descr="Do not run read actions during service initialization ('getV4' is called in 'v4' field initializer)">computeCancellable</error><String, RuntimeException> { "any" }
           }
       
           init {
@@ -74,7 +74,7 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
           }
       
           private fun writeActionMethodUsedInCompanionObjectInitBlock() {
-            WriteAction.<error descr="Do not run write actions during service initialization">run</error><RuntimeException> {
+            WriteAction.<error descr="Do not run write actions during service initialization ('writeActionMethodUsedInCompanionObjectInitBlock' is called in 'Companion' constructor or init block)">run</error><RuntimeException> {
               // do something
             }
           }
@@ -181,7 +181,12 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
         @Suppress("UNUSED_VARIABLE")
         override fun loadState(state: State) {
           val value = ReadAction.<error descr="Do not run read actions during service initialization">compute</error><String, RuntimeException> { "any" }
+          readActionMethodUsedInLoadState()
           myState = state
+        }
+      
+        private fun readActionMethodUsedInLoadState() {
+          ReadAction.nonBlocking<String> { "any" }.<error descr="Do not run read actions during service initialization ('readActionMethodUsedInLoadState' is called in 'loadState' method)">executeSynchronously</error>()
         }
       
         override fun initializeComponent() {
