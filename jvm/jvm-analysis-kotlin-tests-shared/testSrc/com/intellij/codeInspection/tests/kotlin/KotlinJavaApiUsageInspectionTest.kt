@@ -171,7 +171,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     myFixture.addClass("""
       package javax.swing;
       
-      public class AbstractListModel<K> implements ListModel<E> { }
+      public class AbstractListModel<E> implements ListModel<E> { }
     """.trimIndent())
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import javax.swing.AbstractListModel
