@@ -13951,7 +13951,7 @@ f:com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 - mergeWith(com.intellij.ide.actions.searcheverywhere.MergeableElement):com.intellij.ide.actions.searcheverywhere.MergeableElement
 - f:setSimilarityScore(java.lang.Double):V
 - shouldBeMergedIntoAnother():Z
-f:com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+c:com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 - com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - fetchWeightedElements(java.lang.String,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):V

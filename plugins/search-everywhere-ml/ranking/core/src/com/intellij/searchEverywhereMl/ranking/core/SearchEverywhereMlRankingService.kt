@@ -196,7 +196,8 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   private fun mapElementsProvider(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>): () -> List<SearchEverywhereFoundElementInfoWithMl> {
     return { ->
       elementsProvider.invoke()
-        .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
+        .map {
+          SearchEverywhereFoundElementInfoWithMl.from(it) }
     }
   }
 }
