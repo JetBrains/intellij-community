@@ -9,7 +9,6 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.session.scraper.*
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
-import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 
@@ -68,6 +67,11 @@ internal class ShellCommandOutputScraperImpl(
       return scrapeOutput(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker)
     }
 
+    /**
+     * @param startLine index of the line in the [TerminalTextBuffer] coordinate system.
+     * Positive indexes for the screen lines, negative - for the history.
+     * So, the 0th line is the first screen line, -1 line is the last history line.
+     */
     fun scrapeOutput(
       textBuffer: TerminalTextBuffer,
       commandEndMarker: String? = null,
@@ -100,6 +104,11 @@ internal interface ShellCommandOutputListener {
 internal const val NEW_LINE: Char = '\n'
 internal const val NEW_LINE_STRING: String = NEW_LINE.toString()
 
+/**
+ * @param startLine index of the line in the [TerminalTextBuffer] coordinate system.
+ * Positive indexes for the screen lines, negative - for the history.
+ * So, the 0th line is the first screen line, -1 line is the last history line.
+ */
 internal fun TerminalTextBuffer.collectLines(
   terminalLinesCollector: TerminalLinesCollector,
   startLine: Int = -historyLinesCount,
