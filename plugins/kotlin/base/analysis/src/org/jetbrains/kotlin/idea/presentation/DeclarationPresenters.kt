@@ -91,19 +91,31 @@ open class KotlinFunctionPresentation(
 ) : KotlinDefaultNamedDeclarationPresentation(function) {
     override fun getPresentableText(): String {
         return buildString {
-            function.receiverTypeReference?.getTypeText()?.let {
-                append(StringUtil.getShortName(it))
-                append(".")
+            val receiverTypeText = getTrimmedTypeText(function.receiverTypeReference)
+            if (receiverTypeText.isNotEmpty()) {
+                append("$receiverTypeText.")
             }
 
             name?.let { append(it) }
 
             append("(")
             append(function.valueParameters.joinToString {
-                (if (it.isVarArg) "vararg " else "") + StringUtil.getShortName(it.typeReference?.getTypeText() ?: "")
+                val typeReference = it.typeReference
+                (if (it.isVarArg) "vararg " else "") + getTrimmedTypeText(typeReference)
             })
             append(")")
         }
+    }
+
+    private fun getTrimmedTypeText(typeReference: KtTypeReference?): String {
+        val typeText = when (typeReference?.typeElement) {
+            null -> ""
+            is KtFunctionType -> typeReference.getTypeText()
+            else -> {
+                StringUtil.getShortName(typeReference.getTypeText())
+            }
+        }
+        return typeText
     }
 
     override fun getLocationString(): String? {
