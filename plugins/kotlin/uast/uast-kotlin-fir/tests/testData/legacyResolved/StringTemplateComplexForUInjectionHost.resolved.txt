@@ -4,7 +4,7 @@ UPolyadicExpression (operator = +) -> UQualifiedReferenceExpression -> Decompile
 UPolyadicExpression (operator = +) -> UQualifiedReferenceExpression -> Decompiled_Method: repeat
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> Kotlin_Light_Method: getCase4
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = case4) -> Kotlin_Light_Method: getCase4
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = repeat) -> FUN: repeat
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = repeat) -> Decompiled_Method: repeat
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
 UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = i) -> Kotlin_Light_Value_Parameter: i
@@ -14,11 +14,11 @@ UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = simpleForTemplate) -> Kotlin_Light_Method: simpleForTemplate
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = simpleForTemplate) -> Kotlin_Light_Method: simpleForTemplate
     ULocalVariable (name = trimA) -> UQualifiedReferenceExpression -> Decompiled_Method: trimIndent
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> FUN: trimIndent
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> Decompiled_Method: trimIndent
     ULocalVariable (name = trimB) -> UQualifiedReferenceExpression -> Decompiled_Method: trimMargin
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimMargin) -> FUN: trimMargin
-    UBinaryExpression (operator = ==) -> USimpleNameReferenceExpression (identifier = ==) -> FUN: equals
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimMargin) -> Decompiled_Method: trimMargin
+    UBinaryExpression (operator = ==) -> USimpleNameReferenceExpression (identifier = ==) -> Decompiled_Method: equals
     UBinaryExpression (operator = ==) -> UQualifiedReferenceExpression -> Decompiled_Method: trimIndent
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> FUN: trimIndent
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = trimIndent) -> Decompiled_Method: trimIndent
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus

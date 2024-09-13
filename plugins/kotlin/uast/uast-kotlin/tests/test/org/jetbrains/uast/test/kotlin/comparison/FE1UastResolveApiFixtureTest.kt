@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -20,6 +20,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveStringFromUast() {
         checkResolveStringFromUast(myFixture, project)
+    }
+
+    fun testResolveBuiltinOperator() {
+        checkResolveBuiltinOperator(myFixture, project)
+    }
+
+    fun testResolveBuiltinClass() {
+        checkResolveBuiltinClass(myFixture, project)
     }
 
     fun testMultiResolve() {

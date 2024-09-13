@@ -26,11 +26,11 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ja
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Thread) -> Decompiled_Class: Thread
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = sleep) -> null: null
-UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> FUN: emptyList
+UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> Decompiled_Method: emptyList
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:kotlin.collections: collections
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = collections) -> PsiPackage:kotlin.collections: collections
-UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = emptyList) -> FUN: emptyList
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = emptyList) -> Decompiled_Method: emptyList
 UImportStatement (isOnDemand = false) -> UQualifiedReferenceExpression -> PROPERTY: SIZE_BYTES
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: IntCompanionObject
 UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: Integer

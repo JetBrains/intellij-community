@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
@@ -11,6 +11,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
@@ -35,6 +36,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
+import kotlin.test.assertEquals
 
 interface UastResolveApiFixtureTestBase {
     fun checkResolveStringFromUast(myFixture: JavaCodeInsightTestFixture, project: Project) {
@@ -57,6 +59,42 @@ interface UastResolveApiFixtureTestBase {
             "resolved expression $resolve should be equivalent to ${variable.sourcePsi}",
             PsiManager.getInstance(project).areElementsEquivalent(resolve, variable.sourcePsi)
         )
+    }
+
+    fun checkResolveBuiltinOperator(myFixture: JavaCodeInsightTestFixture, project: Project) {
+        val file = myFixture.addFileToProject("s.kt", """
+            class Main { 
+                fun bar(arg: String.(String) -> String) { }
+            
+                fun main() { 
+                    bar(String::plus) 
+                } 
+            }
+        """.trimIndent()
+        )
+
+        val refs = file.toUElement()!!.findElementByTextFromPsi<UCallableReferenceExpression>("String::plus")
+        val resolved = refs.cast<UCallableReferenceExpression>().resolve()
+        assertInstanceOf<PsiMethod>(resolved)
+        assertEquals((resolved as PsiMethod).name, "plus")
+    }
+
+    fun checkResolveBuiltinClass(myFixture: JavaCodeInsightTestFixture, project: Project) {
+        val file = myFixture.addFileToProject("s.kt", """
+            class Main { 
+                fun bar(arg: String.(String) -> String) { }
+            
+                fun main() { 
+                    bar(String::plus) 
+                } 
+            }
+        """.trimIndent()
+        )
+
+        val refs = file.toUElement()!!.findElementByTextFromPsi<UCallableReferenceExpression>("String::plus")
+        val resolved = refs.cast<UCallableReferenceExpression>().qualifierExpression?.tryResolve()
+        assertInstanceOf<PsiClass>(resolved)
+        assertEquals((resolved as PsiClass).name, "String")
     }
 
     fun checkMultiResolve(myFixture: JavaCodeInsightTestFixture) {

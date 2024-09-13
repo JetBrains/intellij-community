@@ -31,7 +31,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> FUN: compareTo
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
@@ -40,9 +40,9 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ko
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> FUN: plus
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
     UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> Decompiled_Method: listOf
     UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> Decompiled_Method: listOf
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = lmbd) -> Kotlin_Light_Value_Parameter: lmbd

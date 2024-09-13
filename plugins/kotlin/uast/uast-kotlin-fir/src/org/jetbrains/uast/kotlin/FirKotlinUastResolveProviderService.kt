@@ -549,6 +549,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         lambda?.parameters?.firstOrNull()?.javaPsi?.let { return it }
                     }
                 }
+
+                is KtNamedFunction -> {
+                    if (resolvedTargetSymbol is KaFunctionSymbol) {
+                        toPsiMethod(resolvedTargetSymbol, ktExpression)?.let { return it }
+                    }
+                }
             }
 
             // TODO: need to handle resolved target to library source
