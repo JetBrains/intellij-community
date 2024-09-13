@@ -14,6 +14,7 @@ document.addEventListener("click", function (e) {
   }
   const suggestionDiv = e.target.closest(".suggestion")
   const featureValueDiv = e.target.closest(".feature-value")
+  const popupDiv = e.target.closest(".autocomplete-items")
   if (featureValueDiv != null) {
     e.stopPropagation()
     if (e.target.classList.contains("favorite-button")) {
@@ -31,7 +32,7 @@ document.addEventListener("click", function (e) {
   else if (suggestionDiv != null) {
     updateElementFeatures(suggestionDiv)
   }
-  else {
+  else if (popupDiv == null) {
     closeAllLists()
   }
 })
