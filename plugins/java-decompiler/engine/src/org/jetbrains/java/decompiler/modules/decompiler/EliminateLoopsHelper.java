@@ -18,7 +18,6 @@ public final class EliminateLoopsHelper {
 
     if(ret) {
       SequenceHelper.condenseSequences(root);
-      StackVarsProcessor.simplifyStackVars(root, mt, cl);
 
       Set<Integer> setReorderedIfs = new HashSet<>();
 
@@ -82,10 +81,9 @@ public final class EliminateLoopsHelper {
       for (Statement statement : switchStatement.getCaseStatements()) {
         allEdges.addAll(statement.getAllSuccessorEdges());
       }
-      Statement finalParentloop = parentloop;
+      //not a good workaround, but there is not another key, because edges are broken at this moment
       if (allEdges.stream()
-            .anyMatch(edge -> edge.getType() == StatEdge.EdgeType.BREAK &&
-                              edge.closure == finalParentloop)) {
+            .anyMatch(edge -> edge.closure.type == Statement.StatementType.DO)) {
         return false;
       }
     }

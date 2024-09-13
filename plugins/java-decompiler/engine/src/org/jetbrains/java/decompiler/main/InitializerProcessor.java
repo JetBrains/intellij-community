@@ -89,7 +89,7 @@ public final class InitializerProcessor {
     for (MethodWrapper method : wrapper.getMethods()) {
       if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) {
         Statement firstData = Statements.findFirstData(method.root);
-        if (firstData == null || firstData.getExprents().isEmpty()) {
+        if (firstData == null || firstData.getExprents() == null || firstData.getExprents().isEmpty()) {
           return;
         }
 
