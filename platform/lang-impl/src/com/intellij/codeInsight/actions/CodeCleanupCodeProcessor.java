@@ -4,6 +4,7 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,6 +20,7 @@ import java.util.concurrent.FutureTask;
 public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private SelectionModel mySelectionModel = null;
+  private InspectionProfileImpl myProfile = null;
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
@@ -42,9 +44,17 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
     return new FutureTask<>(() -> {
       if (!file.isValid()) return false;
       Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);
-      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), file);
+      if (myProfile == null) {
+        GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), file);
+      } else {
+        GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, file);
+      }
       return true;
     });
+  }
+
+  public void setProfile(InspectionProfileImpl profile) {
+    myProfile = profile;
   }
 
   private Collection<TextRange> getRanges(@NotNull PsiFile file, boolean processChangedTextOnly) {

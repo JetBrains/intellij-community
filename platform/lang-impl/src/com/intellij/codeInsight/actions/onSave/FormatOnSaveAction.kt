@@ -83,6 +83,7 @@ internal class FormatOnSaveAction : ActionOnSave() {
 
     if (CodeCleanupOnSaveActionInfo.isCodeCleanupOnSaveEnabled(project) && !isDumb(project)) {
       processor = CodeCleanupCodeProcessor(processor)
+      processor.setProfile(CodeCleanupOnSaveOptions.getInstance(project).getInspectionProfile())
     }
 
     // This guarantees that per-file undo chain won't break and there won't be the "Following files affected by this action have been already changed" modal error dialog.

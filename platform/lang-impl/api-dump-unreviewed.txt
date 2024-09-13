@@ -2531,6 +2531,7 @@ f:com.intellij.codeInsight.actions.CodeCleanupCodeProcessor
 - <init>(com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor,com.intellij.openapi.editor.SelectionModel):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[],java.lang.Runnable,Z):V
 - s:getProgressText():java.lang.String
+- setProfile(com.intellij.codeInspection.ex.InspectionProfileImpl):V
 com.intellij.codeInsight.actions.DirectoryFormattingOptions
 - com.intellij.codeInsight.actions.ReformatFilesOptions
 - a:isIncludeSubdirectories():Z
@@ -2784,7 +2785,16 @@ f:com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveActionInfo
 - <init>(com.intellij.ide.actionsOnSave.ActionOnSaveContext):V
 - getActionLinks():java.util.List
 - getComment():com.intellij.ide.actionsOnSave.ActionOnSaveComment
+- getDropDownLinks():java.util.List
 - s:isCodeCleanupOnSaveEnabled(com.intellij.openapi.project.Project):Z
+f:com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions
+- com.intellij.openapi.components.PersistentStateComponent
+- PROFILE:java.lang.String
+- <init>(com.intellij.openapi.project.Project):V
+- getInspectionProfile():com.intellij.codeInspection.ex.InspectionProfileImpl
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions
+- getState():com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions
+- loadState(com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions):V
 a:com.intellij.codeInsight.actions.onSave.FormatOnSaveActionInfoBase
 - com.intellij.ide.actionsOnSave.ActionOnSaveInfo
 - pa:addApplicableFileTypes(java.util.Collection):V
