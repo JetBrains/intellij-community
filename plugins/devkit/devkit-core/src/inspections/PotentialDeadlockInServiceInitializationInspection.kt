@@ -43,7 +43,7 @@ private val PERSISTENT_STATE_COMPONENT_INIT_METHOD_NAMES = arrayOf(
 private const val VISIT_CHILDREN = false
 private const val SKIP_CHILDREN = true
 
-internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastInspectionBase() {
+internal class PotentialDeadlockInServiceInitializationInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(
@@ -71,12 +71,12 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
     }
   }
 
-  private fun isCalledDuringServiceInitialization(readOrWriteActionCall: UCallExpression, callContextHolder: CallContextHolder): Boolean {
-    val uClass = readOrWriteActionCall.getContainingNonCompanionObjectClass() ?: return false
+  private fun isCalledDuringServiceInitialization(forbiddenCall: UCallExpression, callContextHolder: CallContextHolder): Boolean {
+    val uClass = forbiddenCall.getContainingNonCompanionObjectClass() ?: return false
     return isService(uClass) &&
-           (isCalledDuringInit(readOrWriteActionCall) ||
-            isInMethodCalledDuringInit(uClass, readOrWriteActionCall, callContextHolder) ||
-            isCalledDuringPersistentStateComponentInit(uClass, readOrWriteActionCall, callContextHolder))
+           (isCalledDuringInit(forbiddenCall) ||
+            isInMethodCalledDuringInit(uClass, forbiddenCall, callContextHolder) ||
+            isCalledDuringPersistentStateComponentInit(uClass, forbiddenCall, callContextHolder))
   }
 
   private fun UElement.getContainingNonCompanionObjectClass(): UClass? {
@@ -84,41 +84,37 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
     return if (uClass.javaPsi.name == "Companion") uClass.getParentOfType<UClass>() else uClass
   }
 
-  private fun isCalledDuringInit(readOrWriteActionCall: UCallExpression): Boolean {
-    return !isCalledInAnonymousClassOrLambda(readOrWriteActionCall) &&
-           (isCalledInConstructor(readOrWriteActionCall) ||
-            isCalledInInitBlock(readOrWriteActionCall) ||
-            isCalledInFieldAssignment(readOrWriteActionCall))
+  private fun isCalledDuringInit(forbiddenCall: UCallExpression): Boolean {
+    return !isCalledInAnonymousClassOrLambda(forbiddenCall) &&
+           (isCalledInConstructor(forbiddenCall) ||
+            isCalledInInitBlock(forbiddenCall) ||
+            isCalledInFieldAssignment(forbiddenCall))
   }
 
-  private fun isCalledInAnonymousClassOrLambda(readOrWriteActionCall: UCallExpression): Boolean {
+  private fun isCalledInAnonymousClassOrLambda(forbiddenActionCall: UCallExpression): Boolean {
     // do not report calls in listener, alarm, etc. registration
-    return readOrWriteActionCall.getParentOfType<UObjectLiteralExpression>() != null ||
-           readOrWriteActionCall.getParentOfType<ULambdaExpression>() != null
+    return forbiddenActionCall.getParentOfType<UObjectLiteralExpression>() != null ||
+           forbiddenActionCall.getParentOfType<ULambdaExpression>() != null
   }
 
-  private fun isCalledInConstructor(readOrWriteActionCall: UCallExpression): Boolean {
-    return readOrWriteActionCall.getContainingUMethod()?.isConstructor == true
+  private fun isCalledInConstructor(forbiddenCall: UCallExpression): Boolean {
+    return forbiddenCall.getContainingUMethod()?.isConstructor == true
   }
 
-  private fun isCalledInInitBlock(readOrWriteActionCall: UCallExpression): Boolean {
-    return readOrWriteActionCall.getParentOfType<UClassInitializer>() != null
+  private fun isCalledInInitBlock(forbiddenCall: UCallExpression): Boolean {
+    return forbiddenCall.getParentOfType<UClassInitializer>() != null
   }
 
-  private fun isCalledInFieldAssignment(readOrWriteActionCall: UCallExpression): Boolean {
-    return readOrWriteActionCall.getParentOfType<UField>() != null
+  private fun isCalledInFieldAssignment(forbiddenCall: UCallExpression): Boolean {
+    return forbiddenCall.getParentOfType<UField>() != null
   }
 
-  private fun isInMethodCalledDuringInit(
-    serviceClass: UClass,
-    readOrWriteActionCall: UCallExpression,
-    callContextHolder: CallContextHolder,
-  ): Boolean {
-    if (isCalledInAnonymousClassOrLambda(readOrWriteActionCall)) return false
+  private fun isInMethodCalledDuringInit(serviceClass: UClass, forbiddenCall: UCallExpression, callContextHolder: CallContextHolder): Boolean {
+    if (isCalledInAnonymousClassOrLambda(forbiddenCall)) return false
     val companionObject = serviceClass.innerClasses.firstOrNull { it.javaPsi.name == "Companion" }
     val initializationElements: List<UElement> = serviceClass.getInitializationElements() +
                                                  (companionObject?.getInitializationElements() ?: emptyList())
-    val containingMethod = readOrWriteActionCall.getContainingUMethod() ?: return false
+    val containingMethod = forbiddenCall.getContainingUMethod() ?: return false
     return containingMethod.isCalledInAnyOf(initializationElements, callContextHolder)
   }
 
@@ -154,30 +150,30 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
   private fun getContextText(calledMethod: UMethod, caller: UElement): @Nls String? {
     val callerName = when (caller) {
       is UMethod ->
-        if (caller.isConstructor) message("inspection.read.or.write.action.during.service.init.message.context.constructor", caller.name)
-        else message("inspection.read.or.write.action.during.service.init.message.context.method", caller.name)
+        if (caller.isConstructor) message("inspection.potential.deadlock.during.service.init.message.context.constructor", caller.name)
+        else message("inspection.potential.deadlock.during.service.init.message.context.method", caller.name)
 
       is UField ->
-        message("inspection.read.or.write.action.during.service.init.message.context.field", @Suppress("UElementAsPsi") caller.name)
+        message("inspection.potential.deadlock.during.service.init.message.context.field", @Suppress("UElementAsPsi") caller.name)
 
       is UClassInitializer ->
         // there is no API in UAST to distinguish companion object context, but we can live with it
-        if (caller.isStatic) message("inspection.read.or.write.action.during.service.init.message.context.static.initializer")
-        else message("inspection.read.or.write.action.during.service.init.message.context.instance.initializer")
+        if (caller.isStatic) message("inspection.potential.deadlock.during.service.init.message.context.static.initializer")
+        else message("inspection.potential.deadlock.during.service.init.message.context.instance.initializer")
 
       else -> return null
     }
-    return message("inspection.read.or.write.action.during.service.init.message.context", "'${calledMethod.name}'", callerName)
+    return message("inspection.potential.deadlock.during.service.init.message.context", "'${calledMethod.name}'", callerName)
   }
 
   private fun isCalledDuringPersistentStateComponentInit(
     serviceClass: UClass,
-    readOrWriteActionCall: UCallExpression,
+    forbiddenCall: UCallExpression,
     callContextHolder: CallContextHolder,
   ): Boolean {
     return isPersistentStateComponent(serviceClass) &&
-           (isCalledDuringPersistentStateComponentInitMethods(readOrWriteActionCall) ||
-            isInMethodCalledDuringPersistentStateComponentInit(serviceClass, readOrWriteActionCall, callContextHolder))
+           (isCalledDuringPersistentStateComponentInitMethods(forbiddenCall) ||
+            isInMethodCalledDuringPersistentStateComponentInit(serviceClass, forbiddenCall, callContextHolder))
   }
 
   private fun isPersistentStateComponent(serviceClass: UClass): Boolean {
@@ -185,19 +181,19 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
     return JvmInheritanceUtil.isInheritor(servicePsiClass, PersistentStateComponent::class.java.canonicalName)
   }
 
-  private fun isCalledDuringPersistentStateComponentInitMethods(readOrWriteActionCall: UCallExpression): Boolean {
-    if (isCalledInAnonymousClassOrLambda(readOrWriteActionCall)) return false
-    val containingMethod = readOrWriteActionCall.getContainingUMethod() ?: return false
+  private fun isCalledDuringPersistentStateComponentInitMethods(forbiddenCall: UCallExpression): Boolean {
+    if (isCalledInAnonymousClassOrLambda(forbiddenCall)) return false
+    val containingMethod = forbiddenCall.getContainingUMethod() ?: return false
     return PERSISTENT_STATE_COMPONENT_INIT_METHOD_NAMES.contains(containingMethod.name)
   }
 
   private fun isInMethodCalledDuringPersistentStateComponentInit(
-    serviceClass: UClass, readOrWriteActionCall: UCallExpression,
+    serviceClass: UClass, forbiddenCall: UCallExpression,
     callContextHolder: CallContextHolder,
   ): Boolean {
-    if (isCalledInAnonymousClassOrLambda(readOrWriteActionCall)) return false
+    if (isCalledInAnonymousClassOrLambda(forbiddenCall)) return false
     val lifecycleMethods: List<UMethod> = serviceClass.methods.filter { PERSISTENT_STATE_COMPONENT_INIT_METHOD_NAMES.contains(it.name) }
-    val containingMethod = readOrWriteActionCall.getContainingUMethod() ?: return false
+    val containingMethod = forbiddenCall.getContainingUMethod() ?: return false
     return containingMethod.isCalledInAnyOf(lifecycleMethods, callContextHolder)
   }
 
@@ -210,9 +206,9 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
     val anchor = uCallExpression.methodIdentifier?.sourcePsi ?: return
     val callContext = callContextHolder.value ?: ""
     val message = when (actionType) {
-      CallType.READ -> message("inspection.read.or.write.action.during.service.init.message.read", callContext)
-      CallType.WRITE -> message("inspection.read.or.write.action.during.service.init.message.write", callContext)
-      CallType.INVOKE_AND_WAIT -> message("inspection.read.or.write.action.during.service.init.message.invoke.and.wait", callContext)
+      CallType.READ -> message("inspection.potential.deadlock.during.service.init.message.read", callContext)
+      CallType.WRITE -> message("inspection.potential.deadlock.during.service.init.message.write", callContext)
+      CallType.INVOKE_AND_WAIT -> message("inspection.potential.deadlock.during.service.init.message.invoke.and.wait", callContext)
     }
     holder.registerProblem(anchor, message)
   }

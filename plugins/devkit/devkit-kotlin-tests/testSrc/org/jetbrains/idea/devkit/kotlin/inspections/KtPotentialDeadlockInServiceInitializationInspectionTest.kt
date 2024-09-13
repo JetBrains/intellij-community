@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import org.jetbrains.idea.devkit.inspections.ReadOrWriteActionInServiceInitializationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.PotentialDeadlockInServiceInitializationInspectionTestBase
 
-class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActionInServiceInitializationInspectionTestBase() {
+class KtPotentialDeadlockInServiceInitializationInspectionTest : PotentialDeadlockInServiceInitializationInspectionTestBase() {
 
   fun `test read and write actions are reported in a light service`() {
     myFixture.configureByText("TestService.kt", getServiceWithReadAndWriteActionsCalledDuringInit(true))

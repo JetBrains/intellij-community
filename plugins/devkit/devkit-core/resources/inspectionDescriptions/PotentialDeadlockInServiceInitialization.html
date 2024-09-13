@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports read and write actions run from the scope of service initialization:
+Reports read/write actions and <code>invokeAndWait</code> called from the scope of service initialization:
 <ul>
   <li>service constructors and initialization blocks (including static)</li>
   <li>service companion object's initialization blocks (Kotlin)</li>
@@ -13,7 +13,7 @@ Reports read and write actions run from the scope of service initialization:
     </ul>
 </ul>
 
-<p>Running a read or write action during service initialization may cause deadlocks.</p>
+<p>Running a read/write action or calling <code>invokeAndWait</code> during service initialization may cause deadlocks.</p>
 
 <p><b>Examples:</b></p>
 <p>Kotlin:</p>

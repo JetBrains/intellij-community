@@ -17,7 +17,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.DevKitInspectionFixTestBase
 
-abstract class ReadOrWriteActionInServiceInitializationInspectionTestBase : DevKitInspectionFixTestBase() {
+abstract class PotentialDeadlockInServiceInitializationInspectionTestBase : DevKitInspectionFixTestBase() {
 
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     // too many classes to add manually via addClass, so using the slower libraries approach:
@@ -39,7 +39,7 @@ abstract class ReadOrWriteActionInServiceInitializationInspectionTestBase : DevK
       KotlinTester.configureKotlinStdLib(it)
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
-    myFixture.enableInspections(ReadOrWriteActionInServiceInitializationInspection())
+    myFixture.enableInspections(PotentialDeadlockInServiceInitializationInspection())
   }
 
 }
