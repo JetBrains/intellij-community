@@ -1039,7 +1039,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       ArrayList<MavenArtifact> artifacts = new ArrayList<>();
       for (MavenArtifactResolutionRequest request : requests) {
         if (task.isCanceled()) break;
-        MavenArtifact artifact = doResolveArtifact(request.getArtifactInfo(), request.getRemoteRepositories(), task.getIndicator());
+        MavenArtifact artifact = doResolveArtifact(
+          request.getArtifactInfo(), request.getRemoteRepositories(), request.updateSnapshots(), task.getIndicator()
+        );
         artifacts.add(artifact);
         task.incrementFinishedRequests();
       }
@@ -1052,16 +1054,18 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private MavenArtifact doResolveArtifact(MavenArtifactInfo info,
                                           List<MavenRemoteRepository> remoteRepositories,
+                                          boolean updateSnapshots,
                                           MavenServerConsoleIndicatorImpl indicator) {
-    Artifact resolved = doResolveArtifact(createArtifact(info), convertRepositories(remoteRepositories), indicator);
+    Artifact resolved = doResolveArtifact(createArtifact(info), convertRepositories(remoteRepositories), updateSnapshots, indicator);
     return Maven3ModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
   }
 
   private Artifact doResolveArtifact(Artifact artifact,
                                      List<ArtifactRepository> remoteRepositories,
+                                     boolean updateSnapshots,
                                      MavenServerConsoleIndicatorImpl indicator) {
     try {
-      return tryResolveArtifact(artifact, remoteRepositories, indicator);
+      return tryResolveArtifact(artifact, remoteRepositories, updateSnapshots, indicator);
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().info(e);
@@ -1071,6 +1075,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   private Artifact tryResolveArtifact(@NotNull Artifact artifact,
                                       @NotNull List<ArtifactRepository> repos,
+                                      boolean updateSnapshots,
                                       MavenServerConsoleIndicatorImpl indicator)
     throws
     ArtifactResolutionException,
@@ -1098,6 +1103,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
     else {
       MavenExecutionRequest request = createRequest(null, null, null);
+      if (updateSnapshots) {
+        request.setUpdateSnapshots(true);
+      }
       for (ArtifactRepository artifactRepository : repos) {
         request.addRemoteRepository(artifactRepository);
       }

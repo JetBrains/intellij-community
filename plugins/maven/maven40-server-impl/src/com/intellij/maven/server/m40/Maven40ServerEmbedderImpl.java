@@ -993,6 +993,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     try {
       MavenExecutionRequest executionRequest =
         createRequest(null, null, null);
+      if (!requests.isEmpty() && requests.iterator().next().updateSnapshots()) {
+        executionRequest.setUpdateSnapshots(true);
+      }
       ArrayList<MavenArtifact> artifacts = new ArrayList<>();
       Set<MavenRemoteRepository> repos = new LinkedHashSet<>();
       for (MavenArtifactResolutionRequest request : requests) {

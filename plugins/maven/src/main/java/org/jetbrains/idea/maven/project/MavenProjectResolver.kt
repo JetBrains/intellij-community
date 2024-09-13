@@ -69,6 +69,7 @@ class MavenProjectResolver(private val myProject: Project) {
                       eventHandler: MavenEventHandler): MavenProjectResolutionResult {
     val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProjectWithHolder>>()
+    val fileToDependencyHash = tree.projects.associate { it.file to if (incrementally) it.dependencyHash else null }
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
       val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)
@@ -81,7 +82,7 @@ class MavenProjectResolver(private val myProject: Project) {
         }
         val projectsWithUnresolvedPluginsChunk = withContext(tracer.span("doResolve $baseDir")) {
           doResolve(
-            incrementally,
+            fileToDependencyHash,
             mavenProjectsInBaseDir,
             tree,
             generalSettings,
@@ -115,19 +116,25 @@ class MavenProjectResolver(private val myProject: Project) {
       }
     }
     MavenUtil.restartConfigHighlighting(mavenProjects)
+
+    if (incrementally && updateSnapshots) {
+      updateSnapshotsAfterIncrementalSync(tree, fileToDependencyHash, embeddersManager, progressReporter, eventHandler)
+    }
     return MavenProjectResolutionResult(projectsWithUnresolvedPlugins)
   }
 
-  private suspend fun doResolve(incrementally: Boolean,
-                                mavenProjects: Collection<MavenProject>,
-                                tree: MavenProjectsTree,
-                                generalSettings: MavenGeneralSettings,
-                                embedder: MavenEmbedderWrapper,
-                                progressReporter: RawProgressReporter,
-                                eventHandler: MavenEventHandler,
-                                workspaceMap: MavenWorkspaceMap?,
-                                updateSnapshots: Boolean,
-                                userProperties: Properties): Collection<MavenProjectWithHolder> {
+  private suspend fun doResolve(
+    fileToDependencyHash: Map<VirtualFile, String?>,
+    mavenProjects: Collection<MavenProject>,
+    tree: MavenProjectsTree,
+    generalSettings: MavenGeneralSettings,
+    embedder: MavenEmbedderWrapper,
+    progressReporter: RawProgressReporter,
+    eventHandler: MavenEventHandler,
+    workspaceMap: MavenWorkspaceMap?,
+    updateSnapshots: Boolean,
+    userProperties: Properties,
+  ): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCanceled()
     MavenLog.LOG.debug("Project resolution started: ${mavenProjects.size}")
@@ -135,7 +142,6 @@ class MavenProjectResolver(private val myProject: Project) {
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
     val explicitProfiles = tree.explicitProfiles
-    val fileToDependencyHash = mavenProjects.associate { it.file to if (incrementally) it.dependencyHash else null }
     val resultsAndProblems = resolveProjectsInEmbedder(
       embedder,
       fileToDependencyHash,
@@ -183,6 +189,54 @@ class MavenProjectResolver(private val myProject: Project) {
     }
     MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
+  }
+
+  private suspend fun updateSnapshotsAfterIncrementalSync(
+    tree: MavenProjectsTree,
+    fileToDependencyHash: Map<VirtualFile, String?>,
+    embeddersManager: MavenEmbeddersManager,
+    progressReporter: RawProgressReporter,
+    eventHandler: MavenEventHandler,
+  ) {
+    val projectMultiMap = MavenUtil.groupByBasedir(tree.projects, tree)
+    for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
+      val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, baseDir)
+      try {
+        updateSnapshotsAfterIncrementalSync(mavenProjectsForBaseDir, fileToDependencyHash, embedder, progressReporter, eventHandler)
+      }
+      finally {
+        embeddersManager.release(embedder)
+      }
+    }
+  }
+
+  private suspend fun updateSnapshotsAfterIncrementalSync(
+    mavenProjects: Collection<MavenProject>,
+    fileToDependencyHash: Map<VirtualFile, String?>,
+    embedder: MavenEmbedderWrapper,
+    progressReporter: RawProgressReporter,
+    eventHandler: MavenEventHandler,
+  ) {
+    val requests = mutableSetOf<MavenArtifactResolutionRequest>()
+    for (mavenProject in mavenProjects) {
+      if (mavenProject.dependencyHash == fileToDependencyHash[mavenProject.file]) {
+        // dependencies haven't changed and were not updated, so we need to force update SNAPSHOT dependencies
+        for (dependency in mavenProject.dependencies) {
+          if (dependency.baseVersion.endsWith("-SNAPSHOT")) {
+            val artifactInfo = MavenArtifactInfo(
+              dependency.groupId,
+              dependency.artifactId,
+              dependency.baseVersion,
+              dependency.packaging,
+              dependency.classifier)
+            val request = MavenArtifactResolutionRequest(artifactInfo, mavenProject.remoteRepositories, true)
+            requests.add(request)
+          }
+        }
+      }
+    }
+    if (requests.isEmpty()) return
+    embedder.resolveArtifacts(requests, progressReporter, eventHandler)
   }
 
   // trims line and column from file path, e.g., project/pom.xml:12:345 -> project/pom.xml

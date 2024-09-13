@@ -79,7 +79,6 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
     helper.addTestData("remote_snapshot/2", "remote")
 
     updateAllProjects()
-    updateAllProjectsFullSync() // TODO: incremental sync must be enough
 
     assertTrue(helper.getTestData(jarSnapshot).isFile)
     assertTrue(helper.getTestData(jarVersion3).isFile)
