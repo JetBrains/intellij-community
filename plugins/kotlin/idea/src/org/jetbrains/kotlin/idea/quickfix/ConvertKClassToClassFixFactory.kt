@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -20,7 +21,7 @@ internal object ConvertKClassToClassFixFactory {
         expectedType: KotlinType,
         expressionType: KotlinType,
         diagnosticElement: KtExpression,
-    ): ConvertKClassToClassFix? {
+    ): IntentionAction? {
         val expressionClassDescriptor = expressionType.constructor.declarationDescriptor as? ClassDescriptor ?: return null
         if (!KotlinBuiltIns.isKClass(expressionClassDescriptor) || !expectedType.isJClass()) return null
         val expressionTypeArgument = expressionType.arguments.firstOrNull()?.type ?: return null
@@ -32,7 +33,7 @@ internal object ConvertKClassToClassFixFactory {
             listOf(TypeProjectionImpl(expressionTypeArgument))
         )
         if (javaLangClassType.isSubtypeOf(expectedType)) {
-            return ConvertKClassToClassFix(diagnosticElement)
+            return ConvertKClassToClassFix(diagnosticElement).asIntention()
         }
         return null
     }
