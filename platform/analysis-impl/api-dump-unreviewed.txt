@@ -2621,6 +2621,7 @@ c:com.intellij.codeInspection.ex.GlobalInspectionContextBase
 - p:canceled():V
 - p:classifyTool(java.util.List,java.util.List,java.util.List,com.intellij.codeInspection.ex.Tools,com.intellij.codeInspection.ex.InspectionToolWrapper):V
 - cleanup():V
+- s:cleanupElements(com.intellij.openapi.project.Project,java.lang.Runnable,java.util.function.Predicate,com.intellij.codeInspection.InspectionProfile,com.intellij.psi.PsiElement[]):V
 - s:cleanupElements(com.intellij.openapi.project.Project,java.lang.Runnable,java.util.function.Predicate,com.intellij.psi.PsiElement[]):V
 - s:cleanupElements(com.intellij.openapi.project.Project,java.lang.Runnable,com.intellij.psi.PsiElement[]):V
 - close(Z):V
