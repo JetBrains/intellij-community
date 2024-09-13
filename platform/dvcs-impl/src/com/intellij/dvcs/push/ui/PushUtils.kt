@@ -16,3 +16,15 @@ fun getProhibitedTarget(ui: VcsPushUi): PushTarget? {
   }
   return null
 }
+
+fun getProhibitedTargetConfigurablePath(ui: VcsPushUi): String? {
+  for ((support, pushInfo) in ui.selectedPushSpecs) {
+    val prohibited = pushInfo.find { !support.isForcePushAllowed(it.repository, it.pushSpec.target) }
+    if (prohibited != null) return support.forcePushConfigurablePath
+  }
+  for ((support, _) in ui.selectedPushSpecs) {
+    return support.forcePushConfigurablePath
+  }
+  return null
+}
+

@@ -19,6 +19,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +92,10 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public abstract boolean isForcePushAllowed(@NotNull Repo repo, Target target);
 
   public abstract boolean isSilentForcePushAllowed(@NotNull Target target);
+
+  public @Nullable @Nls String getForcePushConfigurablePath() {
+    return null;
+  }
 
   public abstract void saveSilentForcePushTarget(@NotNull Target target);
 

@@ -76,6 +76,7 @@ a:com.intellij.dvcs.push.PushSupport
 - a:createTargetPanel(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource,com.intellij.dvcs.push.PushTarget):com.intellij.dvcs.push.PushTargetPanel
 - a:getDefaultTarget(com.intellij.dvcs.repo.Repository):com.intellij.dvcs.push.PushTarget
 - getDefaultTarget(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):com.intellij.dvcs.push.PushTarget
+- getForcePushConfigurablePath():java.lang.String
 - a:getOutgoingCommitsProvider():com.intellij.dvcs.push.OutgoingCommitsProvider
 - a:getPusher():com.intellij.dvcs.push.Pusher
 - a:getRepositoryManager():com.intellij.dvcs.repo.RepositoryManager

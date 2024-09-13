@@ -365,6 +365,7 @@ c:com.intellij.dvcs.push.ui.PushTargetTextField
 - p:updateBorder(com.intellij.openapi.editor.ex.EditorEx):V
 f:com.intellij.dvcs.push.ui.PushUtils
 - sf:getProhibitedTarget(com.intellij.dvcs.push.ui.VcsPushUi):com.intellij.dvcs.push.PushTarget
+- sf:getProhibitedTargetConfigurablePath(com.intellij.dvcs.push.ui.VcsPushUi):java.lang.String
 c:com.intellij.dvcs.push.ui.RepositoryNode
 - com.intellij.ui.CheckedTreeNode
 - com.intellij.dvcs.push.ui.EditableTreeNode
