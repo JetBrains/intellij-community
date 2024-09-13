@@ -24,14 +24,14 @@ private const val SCALED_ICON_CACHE_LIMIT = 8
 internal var isIconActivated: Boolean = !GraphicsEnvironment.isHeadless()
 
 internal class ScaledIconCache {
-  private val cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT + 1)
+  private var cache: Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>? = null
 
   @Synchronized
   fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?, attributes: IconAttributes): Icon {
     val sysScale = JBUIScale.sysScale(gc)
     val pixScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale * JBUIScale.scale(1f) else JBUIScale.scale(1f)
     val cacheKey = getCacheKey(pixScale, sysScale, attributes)
-    cache.getAndMoveToFirst(cacheKey)?.get()?.let {
+    cache?.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
 
@@ -51,7 +51,7 @@ internal class ScaledIconCache {
       attributes
     )
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
-    cache.getAndMoveToFirst(cacheKey)?.get()?.let {
+    cache?.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
     return loadIcon(host = host, scaleContext = scaleContext, cacheKey = cacheKey, attributes = attributes)
@@ -72,11 +72,12 @@ internal class ScaledIconCache {
 
       // cache it - don't try to load it again and again
       val icon = EMPTY_ICON
-      cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
+      getOrCreateCache().putAndMoveToFirst(cacheKey, SoftReference(icon))
       return icon
     }
 
     val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
+    val cache = getOrCreateCache()
     cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
     if (cache.size > SCALED_ICON_CACHE_LIMIT) {
       cache.removeLast()
@@ -84,8 +85,16 @@ internal class ScaledIconCache {
     return icon
   }
 
+  private fun getOrCreateCache(): Long2ObjectLinkedOpenHashMap<SoftReference<Icon>> {
+    var cache = cache
+    if (cache == null) {
+      cache = Long2ObjectLinkedOpenHashMap<SoftReference<Icon>>(SCALED_ICON_CACHE_LIMIT + 1)
+      this.cache = cache
+    }
+    return cache
+  }
   fun clear() {
-    cache.clear()
+    cache = null
   }
 }
 
