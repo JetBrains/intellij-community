@@ -25514,7 +25514,8 @@ a:com.intellij.ui.tree.AbstractTreeWalker
 - start(javax.swing.tree.TreePath,java.lang.Object):V
 f:com.intellij.ui.tree.AsyncTreeModel
 - com.intellij.ui.tree.Searchable
-- com.intellij.ui.tree.TreeVisitor$Acceptor
+- com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
+- com.intellij.ui.treeStructure.BgtAwareTreeModel
 - com.intellij.util.ui.tree.AbstractTreeModel
 - <init>(javax.swing.tree.TreeModel,com.intellij.openapi.Disposable):V
 - <init>(javax.swing.tree.TreeModel,Z,com.intellij.openapi.Disposable):V

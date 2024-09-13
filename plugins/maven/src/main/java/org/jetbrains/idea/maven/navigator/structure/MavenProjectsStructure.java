@@ -236,7 +236,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void accept(@NotNull TreeVisitor visitor) {
-    ((AsyncTreeModel)myTree.getModel()).accept(visitor);
+    ((TreeVisitor.Acceptor)myTree.getModel()).accept(visitor);
   }
 
   public void updateGoals() {

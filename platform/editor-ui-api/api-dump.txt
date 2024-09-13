@@ -3028,6 +3028,10 @@ c:com.intellij.ui.tree.TreeVisitor$ByTreePath
 - visit(javax.swing.tree.TreePath):com.intellij.ui.tree.TreeVisitor$Action
 - p:visit(javax.swing.tree.TreePath,java.lang.Object):com.intellij.ui.tree.TreeVisitor$Action
 - p:visit(javax.swing.tree.TreePath,java.lang.Object,I):com.intellij.ui.tree.TreeVisitor$Action
+com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
+- com.intellij.ui.tree.TreeVisitor$Acceptor
+- accept(com.intellij.ui.tree.TreeVisitor):org.jetbrains.concurrency.Promise
+- a:accept(com.intellij.ui.tree.TreeVisitor,Z):org.jetbrains.concurrency.Promise
 *e:com.intellij.ui.tree.TreeVisitor$VisitThread
 - java.lang.Enum
 - sf:BGT:com.intellij.ui.tree.TreeVisitor$VisitThread

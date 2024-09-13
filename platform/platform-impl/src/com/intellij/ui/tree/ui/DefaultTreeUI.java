@@ -11,8 +11,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
-import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.treeStructure.BgtAwareTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.TreeUiBulkExpandCollapseSupport;
 import com.intellij.util.ObjectUtils;
@@ -602,7 +602,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
 
   @Override
   protected void setRootVisible(boolean newValue) {
-    if (treeModel instanceof AsyncTreeModel) {
+    if (treeModel instanceof BgtAwareTreeModel) {
       // this method must be called on EDT to be consistent with ATM,
       // because it modifies a list of visible nodes in the layout cache
       EdtInvocationManager.invokeLaterIfNeeded(() -> super.setRootVisible(newValue));
@@ -720,7 +720,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
         JTree tree = getTree();
         if (!shouldAutoExpand(tree, path)) return;
         TreeModel model = tree.getModel();
-        if (model instanceof AsyncTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
+        if (model instanceof BgtAwareTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
           int pathCount = 1 + path.getPathCount();
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
@@ -799,10 +799,10 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     if (!shouldAutoExpand(tree, row.getParentPath())) {
       return;
     }
-    if (tree.getModel() instanceof AsyncTreeModel asyncTreeModel) {
+    if (tree.getModel() instanceof BgtAwareTreeModel) {
       Object node = row.getLastPathComponent();
       if (isAutoExpandAllowed(tree, node)) {
-        asyncTreeModel.onValidThread(() -> tree.expandPath(row));
+        EdtInvocationManager.invokeLaterIfNeeded(() -> tree.expandPath(row));
       }
     }
   }

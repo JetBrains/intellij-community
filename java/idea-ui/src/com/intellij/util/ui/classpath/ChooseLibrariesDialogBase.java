@@ -123,7 +123,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
     myModel.invalidateAsync().thenRun(() -> {
-      ((AsyncTreeModel)myTree.getModel()).accept(path -> {
+      ((TreeVisitor.Acceptor)myTree.getModel()).accept(path -> {
         return TreeVisitor.Action.CONTINUE; // traverse to update myParentsMap
       }).onProcessed(path -> {
         myModel.select(library, myTree, p -> {});

@@ -143,7 +143,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       TodoView todoView = this.myProject.getService(TodoView.class);
       todoView.setSelectedContent(this);
 
-      AsyncTreeModel model = (AsyncTreeModel)myTree.getModel();
+      var model = (TreeVisitor.Acceptor)myTree.getModel();
       model.accept(new TreeVisitor() {
         @Override
         public @NotNull Action visit(@NotNull TreePath path) {

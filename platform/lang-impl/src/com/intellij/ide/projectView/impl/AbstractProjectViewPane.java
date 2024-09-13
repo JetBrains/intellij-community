@@ -38,6 +38,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
+import com.intellij.ui.treeStructure.BgtAwareTreeModel;
 import com.intellij.ui.treeStructure.TreeStateListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -637,7 +638,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       private boolean isExpandAllAllowed() {
         JTree tree = getTree();
         TreeModel model = tree == null ? null : tree.getModel();
-        return model == null || model instanceof AsyncTreeModel || model instanceof InvokerSupplier;
+        return model == null || model instanceof BgtAwareTreeModel || model instanceof InvokerSupplier;
       }
 
       @Override

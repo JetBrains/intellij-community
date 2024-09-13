@@ -21,7 +21,6 @@ com/intellij/ide/actions/searcheverywhere/SearchEverywhereSpellingCorrector
 com/intellij/ide/actions/searcheverywhere/SearchListModel
 com/intellij/ide/plugins/ContainerDescriptor
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl
-com/intellij/ide/projectView/impl/AsyncProjectViewSupport
 com/intellij/ide/todo/FileTree
 com/intellij/ide/todo/TodoNodeVisitor
 com/intellij/ide/todo/TodoTreeBuilderCoroutineHelper

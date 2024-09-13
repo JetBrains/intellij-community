@@ -10908,6 +10908,8 @@ c:com.intellij.ui.treeStructure.AutoExpandSimpleNodeListener
 - com.intellij.util.ui.tree.TreeModelAdapter
 - <init>(javax.swing.JTree):V
 - treeNodesInserted(javax.swing.event.TreeModelEvent):V
+com.intellij.ui.treeStructure.BgtAwareTreeModel
+- javax.swing.tree.TreeModel
 a:com.intellij.ui.treeStructure.CachingSimpleNode
 - com.intellij.ui.treeStructure.SimpleNode
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor):V
