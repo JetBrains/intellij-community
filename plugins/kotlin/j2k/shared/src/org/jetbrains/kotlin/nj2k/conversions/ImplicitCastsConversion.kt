@@ -25,6 +25,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
             is JKBinaryExpression -> return recurse(convertBinaryExpression(element))
             is JKIfElseExpression -> convertIfElseExpression(element)
             is JKKtAssignmentStatement -> convertAssignmentStatement(element)
+            is JKArrayAccessExpression -> convertArrayAccessExpression(element)
         }
         return recurse(element)
     }
@@ -179,6 +180,12 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
             expression.elseBranch.castTo(type)?.let {
                 expression.elseBranch = it.copyTreeAndDetach()
             }
+        }
+    }
+
+    private fun convertArrayAccessExpression(element: JKArrayAccessExpression) {
+        element.indexExpression.castTo(typeFactory.types.int)?.let {
+            element.indexExpression = it
         }
     }
 
