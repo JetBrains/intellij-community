@@ -14166,6 +14166,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - createList():com.intellij.ui.components.JBList
 - dispose():V
 - findElementsForPattern(java.lang.String):java.util.concurrent.Future
+- findPsiElementsForPattern(java.lang.String):java.util.concurrent.Future
 - getFoundElementsInfo():java.util.List
 - getSelectedTabID():java.lang.String
 - getSelectionIdentity():java.lang.Object

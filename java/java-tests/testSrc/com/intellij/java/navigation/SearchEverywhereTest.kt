@@ -4,6 +4,7 @@ package com.intellij.java.navigation
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.gotoByName.GotoActionTest
 import com.intellij.idea.IJIgnore
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -228,14 +229,14 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
         recentFilesContributor
       ))
 
-      var future = ui.findElementsForPattern("appfile")
+      var future = ui.findPsiElementsForPattern("appfile")
       assertEquals(listOf(file2, file1, file4, file3, file6, file5), waitForFuture(future, SEARCH_TIMEOUT))
 
       myFixture.openFileInEditor(file4.originalFile.virtualFile)
       myFixture.openFileInEditor(file3.originalFile.virtualFile)
       myFixture.openFileInEditor(file5.originalFile.virtualFile)
       myFixture.openFileInEditor(wrongFile.originalFile.virtualFile)
-      future = ui.findElementsForPattern("appfile")
+      future = ui.findPsiElementsForPattern("appfile")
       assertEquals(listOf(file4, file3, file5, file2, file1, file6), waitForFuture(future, SEARCH_TIMEOUT))
     } finally {
       AdvancedSettings.setBoolean("search.everywhere.recent.at.top", savedFlag)
