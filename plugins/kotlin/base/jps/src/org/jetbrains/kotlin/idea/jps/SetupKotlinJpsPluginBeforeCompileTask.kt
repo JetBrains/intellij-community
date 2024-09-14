@@ -29,7 +29,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             onUnsupportedVersion = { context.addErrorWithReferenceToKotlincXml(it) }
         ) ?: return true
 
-        LOG.debug("Attempting to download non-bundled JPS version: $jpsVersion")
+        LOG.debug("Attempting to lazy download JPS version: $jpsVersion")
 
         return KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
             project = project,
