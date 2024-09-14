@@ -123,7 +123,7 @@ object InitializePropertyQuickFixFactories {
             val newParameterName = constructor.valueParameters.last().name
                 ?: errorWithAttachment(property, constructor, containingClass)
 
-            val psiFactory = org.jetbrains.kotlin.psi.KtPsiFactory(project)
+            val psiFactory = KtPsiFactory(project)
             when (constructor) {
                 is KtPrimaryConstructor -> property.setInitializer(psiFactory.createExpression(newParameterName))
                 is KtSecondaryConstructor -> {

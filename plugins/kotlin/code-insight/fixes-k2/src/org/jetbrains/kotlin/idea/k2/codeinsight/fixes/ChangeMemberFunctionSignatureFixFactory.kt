@@ -105,11 +105,11 @@ object ChangeMemberFunctionSignatureFixFactory {
 
     private interface ParameterChooser {
         context(KaSession)
-        fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newTypes: KaType): Boolean
+        fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newType: KaType): Boolean
 
         object MatchNames : ParameterChooser {
             context(KaSession)
-            override fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newTypes: KaType): Boolean {
+            override fun accept(parameter: KaValueParameterSymbol, superParameter: KaValueParameterSymbol, newType: KaType): Boolean {
                 return parameter.name == superParameter.name
             }
         }
@@ -206,8 +206,7 @@ object ChangeMemberFunctionSignatureFixFactory {
 
         val name = functionSymbol.name ?: return emptyList()
         return containingClass.superTypes.flatMap { superType ->
-            (superType.symbol as? KaClassSymbol)?.memberScope?.callables(name)?.filterIsInstance<KaNamedFunctionSymbol>()
-                ?: emptySequence<KaNamedFunctionSymbol>()
+            (superType.symbol as? KaClassSymbol)?.memberScope?.callables(name)?.filterIsInstance<KaNamedFunctionSymbol>() ?: emptySequence()
         }.filter {
             it.origin != KaSymbolOrigin.INTERSECTION_OVERRIDE && it.origin != KaSymbolOrigin.SUBSTITUTION_OVERRIDE && it.modality != KaSymbolModality.FINAL && it.visibility != KaSymbolVisibility.PRIVATE
         }
