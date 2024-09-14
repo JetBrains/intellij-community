@@ -67,9 +67,6 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private static final String SUGGEST_ANNOTATION_DEPENDENCY = "java.suggest.annotation.dependency";
   private static final @NonNls String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
   private InferNullityAdditionalUi myUi;
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
-    .getInstance()
-    .getNotificationGroup("Infer Nullity");
 
   public InferNullityAnnotationsAction() {
     super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaBundle.messagePointer("action.title.infer.nullity.annotations"));
@@ -287,8 +284,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             if (command.myCount == 0) {
               NullityInferrer.nothingFoundMessage(project);
             } else {
-              NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
-                                                    NotificationType.INFORMATION)
+              getNotificationGroup().createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
+                                                        NotificationType.INFORMATION)
                 .notify(project);
             }
           }
@@ -301,6 +298,11 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         action.finish();
       }
     };
+  }
+
+  private static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance()
+      .getNotificationGroup("Infer Nullity");
   }
 
   protected void restartAnalysis(final @NotNull Project project, final @NotNull AnalysisScope scope) {
