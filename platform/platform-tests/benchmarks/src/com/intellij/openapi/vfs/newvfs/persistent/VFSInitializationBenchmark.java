@@ -62,7 +62,7 @@ public class VFSInitializationBenchmark {
     @TearDown
     public void tearDown() throws Exception {
       if (connectionToClose != null) {
-        PersistentFSConnector.disconnect(connectionToClose);
+        connectionToClose.close();
         connectionToClose = null;
       }
       if (temporaryFolder != null) {

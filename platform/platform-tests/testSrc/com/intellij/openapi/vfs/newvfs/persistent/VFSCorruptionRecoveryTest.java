@@ -292,7 +292,7 @@ public class VFSCorruptionRecoveryTest {
         FSRecordsImpl.currentImplementationVersion(),
         Collections.emptyList()
       );
-      PersistentFSConnector.disconnect(connection);
+      connection.close();
       fail("VFS wasn't closed properly, no recoverers -> VFS init must fail");
     }
     catch (VFSInitException ex) {
@@ -317,7 +317,7 @@ public class VFSCorruptionRecoveryTest {
       FSRecordsImpl.currentImplementationVersion(),
       Collections.singletonList(new NotClosedProperlyRecoverer())
     );
-    PersistentFSConnector.disconnect(connection);
+    connection.close();
   }
 
 

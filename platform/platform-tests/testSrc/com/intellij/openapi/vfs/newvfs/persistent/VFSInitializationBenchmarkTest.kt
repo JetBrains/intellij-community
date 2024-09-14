@@ -22,7 +22,7 @@ class VFSInitializationBenchmarkTest {
         cachesDir,
         version
       )
-      PersistentFSConnector.disconnect(initializationResult.connection)
+      initializationResult.connection.close()
     }
       .warmupIterations(1)
       .attempts(4)
@@ -38,7 +38,7 @@ class VFSInitializationBenchmarkTest {
       cachesDir,
       version
     )
-    PersistentFSConnector.disconnect(result.connection)
+    result.connection.close()
 
     Benchmark.newBenchmark("open existing VFS files") {
       val initResult = PersistentFSConnector.connect(
@@ -47,7 +47,7 @@ class VFSInitializationBenchmarkTest {
       )
       assertFalse(initResult.vfsCreatedAnew,
                   "Must open existing, but: $initResult")
-      PersistentFSConnector.disconnect(initResult.connection)
+      initResult.connection.close()
     }
       .attempts(4)
       .start()

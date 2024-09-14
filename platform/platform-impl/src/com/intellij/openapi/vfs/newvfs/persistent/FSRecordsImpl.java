@@ -430,7 +430,7 @@ public final class FSRecordsImpl implements Closeable {
       }
 
       try {
-        PersistentFSConnector.disconnect(connection);
+        connection.close();
       }
       catch (IOException e) {
         //handleError(e);

@@ -54,7 +54,7 @@ public class VFSInitializationTest {
       recordsCountBeforeClose = records.recordsCount();
     }
     finally {
-      PersistentFSConnector.disconnect(connection);
+      connection.close();
     }
 
     final PersistentFSConnection reopenedConnection = tryInit(cachesDir, version, PersistentFSConnector.RECOVERERS);
@@ -66,7 +66,7 @@ public class VFSInitializationTest {
       );
     }
     finally {
-      PersistentFSConnector.disconnect(reopenedConnection);
+      reopenedConnection.close();
     }
   }
 
@@ -249,7 +249,7 @@ public class VFSInitializationTest {
             filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
           }
           finally {
-            PersistentFSConnector.disconnect(connection);
+            connection.close();
           }
         }
         catch (IOException ex) {
@@ -336,7 +336,7 @@ public class VFSInitializationTest {
                    reopenedConnection.records().wasClosedProperly());
     }
     finally {
-      PersistentFSConnector.disconnect(reopenedConnection);
+      reopenedConnection.close();
     }
   }
 
@@ -359,7 +359,7 @@ public class VFSInitializationTest {
           fail("VFS init must fail (with error ~ NOT_CLOSED_SAFELY)");
         }
         finally {
-          PersistentFSConnector.disconnect(conn);
+          conn.close();
         }
       }
       catch (VFSInitException requestToRebuild) {
@@ -402,7 +402,7 @@ public class VFSInitializationTest {
   }
 
   private static void disconnect(PersistentFSConnection connection) throws Exception {
-    PersistentFSConnector.disconnect(connection);
+    connection.close();
     StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
   }
 
@@ -411,7 +411,7 @@ public class VFSInitializationTest {
     PersistentFSRecordsStorageFactory.resetStorageImplementation();
 
     for (PersistentFSConnection connection : connectionsOpened) {
-      PersistentFSConnector.disconnect(connection);
+      connection.close();
       StorageTestingUtils.bestEffortToCloseAndUnmap(connection);
     }
     for (PersistentFSConnection connection : connectionsOpened) {
