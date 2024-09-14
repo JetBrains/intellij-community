@@ -61,6 +61,7 @@ public final class BuildDataManager {
   private final NodeSourcePathMapper myDepGraphPathMapper;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
+  @Nullable private final StorageManager storageManager;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
   private final PathRelativizerService myRelativizer;
@@ -85,6 +86,7 @@ public final class BuildDataManager {
                           @Nullable StorageManager storageManager) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
+    this.storageManager = storageManager;
     try {
       if (storageManager == null) {
         mySrcToFormMap = new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer);
@@ -139,9 +141,15 @@ public final class BuildDataManager {
     return myOutputToTargetRegistry;
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(BuildTarget<?> target) throws IOException {
-    SourceToOutputMappingImpl map = getStorage(target, SRC_TO_OUT_MAPPING_PROVIDER);
-    return new SourceToOutputMappingWrapper(map, myTargetsState.getBuildTargetId(target));
+  public @NotNull SourceToOutputMapping getSourceToOutputMap(@NotNull BuildTarget<?> target) throws IOException {
+    int targetId = myTargetsState.getBuildTargetId(target);
+    if (storageManager == null) {
+      SourceToOutputMappingImpl map = getStorage(target, SRC_TO_OUT_MAPPING_PROVIDER);
+      return new SourceToOutputMappingWrapper(map, targetId);
+    }
+    else {
+      return new SourceToOutputMappingWrapper(ExperimentalSourceToOutputMapping.createSourceToOutputMap(storageManager, myRelativizer, target), targetId);
+    }
   }
 
   @ApiStatus.Internal
@@ -464,7 +472,7 @@ public final class BuildDataManager {
     }
 
     @Override
-    public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
+    public void setOutputs(@NotNull String srcPath, @NotNull List<String> outputs) throws IOException {
       try {
         myDelegate.setOutputs(srcPath, outputs);
       }
@@ -504,23 +512,18 @@ public final class BuildDataManager {
     }
 
     @Override
-    public @NotNull Collection<String> getSources() throws IOException {
-      return myDelegate.getSources();
-    }
-
-    @Override
     public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
       return myDelegate.getOutputs(srcPath);
     }
 
     @Override
-    public @NotNull Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
-      return myDelegate.getOutputsIterator(srcPath);
+    public @NotNull Iterator<String> getSourcesIterator() throws IOException {
+      return myDelegate.getSourcesIterator();
     }
 
     @Override
-    public @NotNull Iterator<String> getSourcesIterator() throws IOException {
-      return myDelegate.getSourcesIterator();
+    public @NotNull SourceToOutputMappingCursor cursor() throws IOException {
+      return myDelegate.cursor();
     }
   }
 

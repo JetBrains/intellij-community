@@ -98,7 +98,7 @@ public final class FormsInstrumenter extends FormsBuilder {
           for (File form : forms) {
             formPaths.add(form.getPath());
           }
-          sourceToFormMap.update(src.getPath(), formPaths);
+          sourceToFormMap.setOutputs(src.getPath(), formPaths);
           srcToForms.remove(src);
         }
         // clean mapping

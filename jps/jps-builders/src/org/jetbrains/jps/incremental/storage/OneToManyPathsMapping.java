@@ -1,19 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentMapBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-import org.jetbrains.jps.javac.Iterators;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -29,11 +27,11 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   }
 
   @Override
-  public void update(@NotNull String keyPath, @SuppressWarnings("NullableProblems") @NotNull List<String> boundPaths) throws IOException {
+  public void setOutputs(@NotNull String keyPath, @NotNull List<String> boundPaths) throws IOException {
     super.update(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
-  public void update(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
+  void setOutput(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     super.update(normalizePath(keyPath), List.of(normalizePath(boundPath)));
   }
 
@@ -46,11 +44,23 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     super.appendData(normalizePath(keyPath), normalizePaths((List<String>)boundPaths));
   }
 
+  /**
+   * @deprecated Use {@link #getOutputs(String)}
+   */
+  @Deprecated(forRemoval = true)
   @Override
   public @Nullable Collection<String> getState(@NotNull String keyPath) throws IOException {
+    return getOutputs(keyPath);
+  }
+
+  @Override
+  public @Nullable List<String> getOutputs(@NotNull String keyPath) throws IOException {
     List<String> collection = (List<String>)super.getState(relativizer.toRelative(keyPath));
-    if (collection == null || collection.isEmpty()) {
+    if (collection == null) {
       return null;
+    }
+    else if (collection.isEmpty()) {
+      return Collections.emptyList();
     }
     else {
       String[] result = new String[collection.size()];
@@ -61,9 +71,21 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     }
   }
 
-  public @NotNull Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
+  public String @Nullable [] getOutputArray(@NotNull String keyPath) throws IOException {
     List<String> collection = (List<String>)super.getState(relativizer.toRelative(keyPath));
-    return collection == null ? Collections.emptyIterator() : Iterators.map(collection.iterator(), relativizer::toFull);
+    if (collection == null) {
+      return null;
+    }
+    else if (collection.isEmpty()) {
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    }
+    else {
+      String[] result = new String[collection.size()];
+      for (int i = 0, size = collection.size(); i < size; i++) {
+        result[i] = relativizer.toFull(collection.get(i));
+      }
+      return result;
+    }
   }
 
   @Override
@@ -72,22 +94,13 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   }
 
   @Override
-  public @NotNull List<String> getKeys() throws IOException {
-    List<String> collection = (List<String>)super.getKeys();
-    if (collection.isEmpty()) {
-      return List.of();
-    }
-
-    String[] result = new String[collection.size()];
-    for (int i = 0; i < collection.size(); i++) {
-      result[i] = relativizer.toFull(collection.get(i));
-    }
-    return Arrays.asList(result);
+  public @NotNull Iterator<String> getKeysIterator() throws IOException {
+    return super.getKeyIterator(relativizer::toFull);
   }
 
-  @Override
-  public Iterator<String> getKeysIterator() throws IOException {
-    return Iterators.map(super.getKeysIterator(), relativizer::toFull);
+  @ApiStatus.Internal
+  public @NotNull SourceToOutputMappingCursor cursor() throws IOException {
+    return new SourceToOutputMappingCursorImpl(getKeysIterator());
   }
 
   public void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
@@ -150,5 +163,33 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
       normalized[i] = relativizer.toRelative(outputs.get(i));
     }
     return Arrays.asList(normalized);
+  }
+
+  private final class SourceToOutputMappingCursorImpl implements SourceToOutputMappingCursor {
+    private final Iterator<String> mySourceIterator;
+    private String sourcePath;
+
+    private SourceToOutputMappingCursorImpl(Iterator<String> sourceIterator) { mySourceIterator = sourceIterator; }
+
+    @Override
+    public boolean hasNext() {
+      return mySourceIterator.hasNext();
+    }
+
+    @Override
+    public @NotNull String next() {
+      sourcePath = mySourceIterator.next();
+      return sourcePath;
+    }
+
+    @Override
+    public String @NotNull [] getOutputPaths() {
+      try {
+        return Objects.requireNonNullElse(getOutputArray(sourcePath), ArrayUtilRt.EMPTY_STRING_ARRAY);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
   }
 }

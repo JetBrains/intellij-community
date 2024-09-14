@@ -12,9 +12,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   private static final boolean DO_COMPRESS = Boolean.parseBoolean(System.getProperty("jps.storage.do.compression", "true"));
@@ -106,19 +107,22 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
     }
   }
 
-  public Collection<Key> getKeys() throws IOException {
-    synchronized (dataLock) {
-      List<Key> result = new ArrayList<>();
-      map.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
-      return result;
-    }
-  }
-
-  public Iterator<Key> getKeysIterator() throws IOException {
+  public @NotNull Iterator<Key> getKeysIterator() throws IOException {
     synchronized (dataLock) {
       List<Key> result = new ArrayList<>();
       map.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
       return result.iterator();
+    }
+  }
+
+  protected final @NotNull Iterator<Key> getKeyIterator(@NotNull Function<Key, Key> mapper) throws IOException {
+    synchronized (dataLock) {
+      List<Key> result = new ArrayList<>();
+      map.processExistingKeys(key -> {
+        result.add(mapper.apply(key));
+        return true;
+      });
+      return result.isEmpty() ? Collections.emptyIterator() : result.iterator();
     }
   }
 

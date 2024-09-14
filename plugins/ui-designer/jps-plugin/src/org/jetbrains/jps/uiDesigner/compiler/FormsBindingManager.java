@@ -162,7 +162,7 @@ public final class FormsBindingManager extends FormsBuilder {
       for (Map.Entry<File, ModuleBuildTarget> entry : filesToCompile.entrySet()) {
         final File srcFile = entry.getKey();
         final ModuleBuildTarget target = entry.getValue();
-        final Collection<String> boundForms = sourceToFormMap.getState(srcFile.getPath());
+        final Collection<String> boundForms = sourceToFormMap.getOutputs(srcFile.getPath());
         if (boundForms != null) {
           for (String formPath : boundForms) {
             final File formFile = new File(formPath);

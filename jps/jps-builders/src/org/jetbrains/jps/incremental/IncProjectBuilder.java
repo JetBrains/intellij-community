@@ -728,14 +728,15 @@ public final class IncProjectBuilder {
                                        int targetId) throws IOException {
     Set<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalFileSet() : null;
     OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
-    for (String srcPath : mapping.getSources()) {
-      final Collection<String> outs = mapping.getOutputs(srcPath);
-      if (outs != null && !outs.isEmpty()) {
+    for (SourceToOutputMappingCursor cursor = mapping.cursor(); cursor.hasNext(); ) {
+      cursor.next();
+      String [] outs = cursor.getOutputPaths();
+      if (outs.length > 0) {
         List<String> deletedPaths = new ArrayList<>();
         for (String out : outs) {
           BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
-        outputToTargetRegistry.removeMapping(outs, targetId);
+        outputToTargetRegistry.removeMapping(Arrays.asList(outs), targetId);
         if (!deletedPaths.isEmpty()) {
           context.processMessage(new FileDeletedEvent(deletedPaths));
         }
@@ -1309,8 +1310,12 @@ public final class IncProjectBuilder {
               // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
               // Now it does. It isn't yet obvious whether it is right or wrong behaviour. Let's leave old behaviour for a
               // while for safety and keeping kotlin incremental JPS tests green
-              List<String> filteredOuts =
-                ContainerUtil.filter(outs, out -> !"kotlin_module".equals(StringUtil.substringAfterLast(out, ".")));
+              List<String> filteredOuts = new ArrayList<>();
+              for (String out : outs) {
+                if (!"kotlin_module".equals(StringUtil.substringAfterLast(out, "."))) {
+                  filteredOuts.add(out);
+                }
+              }
               affectedOutputs.addAll(filteredOuts);
             }
           }
@@ -1321,10 +1326,11 @@ public final class IncProjectBuilder {
 
     if (!affectedOutputs.isEmpty()) {
       for (SourceToOutputMapping srcToOut : mappings) {
-        for (String src : srcToOut.getSources()) {
+        for (SourceToOutputMappingCursor cursor = srcToOut.cursor(); cursor.hasNext(); ) {
+          String src = cursor.next();
           if (!affectedSources.contains(src)) {
-            for (Iterator<String> it = srcToOut.getOutputsIterator(src); it.hasNext(); ) {
-              if (affectedOutputs.contains(it.next())) {
+            for (String out : cursor.getOutputPaths()) {
+              if (affectedOutputs.contains(out)) {
                 FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, new File(src));
                 break;
               }
@@ -1508,7 +1514,7 @@ public final class IncProjectBuilder {
           if (target instanceof ModuleBuildTarget) {
             // check if the deleted source was associated with a form
             final OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-            final Collection<String> boundForms = sourceToFormMap.getState(deletedSource);
+            final Collection<String> boundForms = sourceToFormMap.getOutputs(deletedSource);
             if (boundForms != null) {
               for (String formPath : boundForms) {
                 final File formFile = new File(formPath);

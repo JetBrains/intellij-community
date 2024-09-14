@@ -4,52 +4,43 @@
 package org.jetbrains.jps.incremental.storage
 
 import com.dynatrace.hash4j.hashing.Hashing
-import org.h2.mvstore.type.DataType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.StringListDataType
-import java.io.IOException
-import kotlin.Throws
 
-internal interface OneToManyPathMapping : StorageOwner {
-  @Throws(IOException::class)
-  fun getState(path: String): Collection<String>?
+@ApiStatus.Internal
+open class ExperimentalOneToManyPathMapping protected constructor(
+  @JvmField protected val mapHandle: MapHandle<LongArray, Array<String>>,
+  @JvmField protected val relativizer: PathRelativizerService,
+  private val valueOffset: Int = 0,
+) : OneToManyPathMapping, StorageOwner by StorageOwnerByMap(mapHandle = mapHandle) {
+  constructor(
+    mapName: String,
+    storageManager: StorageManager,
+    relativizer: PathRelativizerService,
+  ) : this(storageManager.openMap(mapName, LongPairKeyDataType, StringListDataType), relativizer)
 
-  @Throws(IOException::class)
-  fun update(path: String, outPaths: List<String>)
-
-  @Throws(IOException::class)
-  fun remove(path: String)
-}
-
-internal class ExperimentalOneToManyPathMapping(
-  mapName: String,
-  storageManager: StorageManager,
-  private val relativizer: PathRelativizerService,
-) : OneToManyPathMapping,
-    StorageOwnerByMap<LongArray, Array<String>>(
-      mapName = mapName,
-      storageManager = storageManager,
-      keyType = LongPairKeyDataType,
-      valueType = StringListDataType,
-    ) {
-
-  private fun getKey(path: String): LongArray {
-    val stringKey = relativizer.toRelative(path).toByteArray()
-    return longArrayOf(Hashing.xxh3_64().hashBytesToLong(stringKey), Hashing.komihash5_0().hashBytesToLong(stringKey))
-  }
+  protected fun getKey(path: String): LongArray = stringTo128BitHash(relativizer.toRelative(path))
 
   @Suppress("ReplaceGetOrSet")
-  override fun getState(path: String): Collection<String>? {
+  final override fun getOutputs(path: String): List<String>? {
     val key = getKey(path)
     val list = mapHandle.map.get(key) ?: return null
-    return Array<String>(list.size) { relativizer.toFull(list.get(it)) }.asList()
+    return Array<String>(list.size - valueOffset) { relativizer.toFull(list.get(it + valueOffset)) }.asList()
   }
 
-  override fun update(path: String, outPaths: List<String>) {
-    val key = getKey(path)
+  final override fun setOutputs(path: String, outPaths: List<String>) {
+    val relativeSourcePath = relativizer.toRelative(path)
+    val key = stringTo128BitHash(relativeSourcePath)
     if (outPaths.isEmpty()) {
       mapHandle.map.remove(key)
+    }
+    else if (valueOffset == 1) {
+      val listWithRelativePaths = Array(outPaths.size + 1) {
+        if (it == 0) relativeSourcePath else relativizer.toRelative(outPaths.get(it - 1))
+      }
+      mapHandle.map.put(key, listWithRelativePaths)
     }
     else {
       val listWithRelativePaths = Array(outPaths.size) {
@@ -59,21 +50,18 @@ internal class ExperimentalOneToManyPathMapping(
     }
   }
 
-  override fun remove(path: String) {
+  final override fun remove(path: String) {
     mapHandle.map.remove(getKey(path))
   }
 }
 
-internal sealed class StorageOwnerByMap<K : Any, V : Any>(
-  mapName: String,
-  storageManager: StorageManager,
-  keyType: DataType<K>,
-  valueType: DataType<V>,
-) : StorageOwner {
-  @JvmField
-  protected val mapHandle = storageManager.openMap(mapName, keyType, valueType)
+internal fun stringTo128BitHash(string: String): LongArray {
+  val bytes = string.toByteArray()
+  return longArrayOf(Hashing.xxh3_64().hashBytesToLong(bytes), Hashing.komihash5_0().hashBytesToLong(bytes))
+}
 
-  final override fun flush(memoryCachesOnly: Boolean) {
+internal class StorageOwnerByMap<K : Any, V : Any>(private val mapHandle: MapHandle<K, V>) : StorageOwner {
+  override fun flush(memoryCachesOnly: Boolean) {
     if (memoryCachesOnly) {
       // set again to force to clear the cache (in kb)
       mapHandle.map.store.cacheSize = MV_STORE_CACHE_SIZE_IN_MB * 1024
@@ -83,11 +71,11 @@ internal sealed class StorageOwnerByMap<K : Any, V : Any>(
     }
   }
 
-  final override fun clean() {
+  override fun clean() {
     mapHandle.map.clear()
   }
 
-  final override fun close() {
+  override fun close() {
     mapHandle.release()
   }
 }

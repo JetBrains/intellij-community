@@ -174,6 +174,8 @@ public final class BuildManager implements Disposable {
     s -> !(s.contains(IDEA_PROJECT_DIR_PATTERN) || s.endsWith(IWS_EXTENSION) || s.endsWith(IPR_EXTENSION)) :
     s -> !(Strings.endsWithIgnoreCase(s, IWS_EXTENSION) || Strings.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
+  private static final String JPS_USE_EXPERIMENTAL_STORAGE = "jps.use.experimental.storage";
+
   private final String myFallbackSdkHome;
   private final String myFallbackSdkVersion;
 
@@ -1409,6 +1411,9 @@ public final class BuildManager implements Disposable {
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
+    if (Boolean.getBoolean(JPS_USE_EXPERIMENTAL_STORAGE)) {
+      cmdLine.addParameter("-D" + JPS_USE_EXPERIMENTAL_STORAGE + "=true");
+    }
 
     String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
     if (jnaBootLibraryPath != null && wslPath == null) {

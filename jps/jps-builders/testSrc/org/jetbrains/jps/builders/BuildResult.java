@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -20,10 +21,7 @@ import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -64,15 +62,15 @@ public final class BuildResult implements MessageHandler {
     for (BuildTarget<?> target : targets) {
       id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);
     }
-    Int2ObjectMap<String> hashCodeToOutputPath = new Int2ObjectOpenHashMap<>();
+    Int2ObjectOpenHashMap<String> hashCodeToOutputPath = new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {
       stream.println("Begin Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
       SourceToOutputMapping map = pd.dataManager.getSourceToOutputMap(target);
-      List<String> sourcesList = new ArrayList<>(map.getSources());
-      Collections.sort(sourcesList);
-      for (String source : sourcesList) {
-        List<String> outputs = new ArrayList<>(ObjectUtils.notNull(map.getOutputs(source), Collections.emptySet()));
-        Collections.sort(outputs);
+      List<String> sourceList = new ObjectArrayList<>(map.getSourcesIterator());
+      sourceList.sort(null);
+      for (String source : sourceList) {
+        List<String> outputs = new ArrayList<>(Objects.requireNonNullElse(map.getOutputs(source), Collections.emptyList()));
+        outputs.sort(null);
         for (String output : outputs) {
           hashCodeToOutputPath.put(FileUtil.pathHashCode(output), output);
         }
@@ -84,7 +82,7 @@ public final class BuildResult implements MessageHandler {
 
 
     OutputToTargetRegistry registry = pd.dataManager.getOutputToTargetRegistry();
-    List<Integer> keys = new ArrayList<>(registry.getKeys());
+    List<Integer> keys = new IntArrayList(registry.getKeysIterator());
     Collections.sort(keys);
     stream.println("Begin Of OutputToTarget");
     for (Integer key : keys) {
@@ -96,7 +94,7 @@ public final class BuildResult implements MessageHandler {
         targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
       });
       Collections.sort(targetsNames);
-      stream.println(hashCodeToOutputPath.get(key) + " -> " + targetsNames);
+      stream.println(hashCodeToOutputPath.get(key.intValue()) + " -> " + targetsNames);
     }
     stream.println("End Of OutputToTarget");
   }

@@ -1836,16 +1836,17 @@ org.jetbrains.jps.builders.storage.BuildDataPaths
 org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - a:appendOutput(java.lang.String,java.lang.String):V
 - a:getOutputs(java.lang.String):java.util.Collection
-- a:getOutputsIterator(java.lang.String):java.util.Iterator
-- a:getSources():java.util.Collection
+- getSources():java.util.Collection
 - a:getSourcesIterator():java.util.Iterator
 - a:remove(java.lang.String):V
 - a:removeOutput(java.lang.String,java.lang.String):V
 - a:setOutput(java.lang.String,java.lang.String):V
-- a:setOutputs(java.lang.String,java.util.Collection):V
+- a:setOutputs(java.lang.String,java.util.List):V
 a:org.jetbrains.jps.builders.storage.StorageProvider
 - <init>():V
-- a:createStorage(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StorageOwner
+- createStorage(java.io.File):org.jetbrains.jps.incremental.storage.StorageOwner
+- createStorage(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):org.jetbrains.jps.incremental.storage.StorageOwner
+- createStorage(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StorageOwner
 - createStorage(java.nio.file.Path,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):org.jetbrains.jps.incremental.storage.StorageOwner
 f:org.jetbrains.jps.cmdline.BuildRunner
 - <init>(org.jetbrains.jps.cmdline.JpsModelLoader):V
@@ -2609,7 +2610,7 @@ a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - f:close():V
 - flush(Z):V
 - f:force():V
-- getKeys():java.util.Collection
+- pf:getKeyIterator(java.util.function.Function):java.util.Iterator
 - getKeysIterator():java.util.Iterator
 - getState(java.lang.Object):java.lang.Object
 - remove(java.lang.Object):V
@@ -2686,14 +2687,14 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - <init>(java.nio.file.Path,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - appendData(java.lang.String,java.lang.String):V
 - appendData(java.lang.String,java.util.Collection):V
-- getKeys():java.util.List
 - getKeysIterator():java.util.Iterator
+- getOutputArray(java.lang.String):java.lang.String[]
+- a:getOutputs(java.lang.String):java.util.Collection
+- getOutputs(java.lang.String):java.util.List
 - getState(java.lang.String):java.util.Collection
-- getStateIterator(java.lang.String):java.util.Iterator
 - remove(java.lang.String):V
 - removeData(java.lang.String,java.lang.String):V
-- update(java.lang.String,java.lang.String):V
-- update(java.lang.String,java.util.List):V
+- setOutputs(java.lang.String,java.util.List):V
 f:org.jetbrains.jps.incremental.storage.OutputToTargetRegistry
 - org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - getSafeToDeleteOutputs(java.util.Collection,I):java.util.Collection

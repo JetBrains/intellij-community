@@ -9,8 +9,8 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class SourceToOutputMappingImpl implements SourceToOutputMapping, StorageOwner {
@@ -21,13 +21,13 @@ public final class SourceToOutputMappingImpl implements SourceToOutputMapping, S
   }
 
   @Override
-  public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
-    myMapping.update(srcPath, outputs);
+  public void setOutputs(@NotNull String srcPath, @NotNull List<String> outputs) throws IOException {
+    myMapping.setOutputs(srcPath, outputs);
   }
 
   @Override
   public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    myMapping.update(srcPath, outputPath);
+    myMapping.setOutput(srcPath, outputPath);
   }
 
   @Override
@@ -46,23 +46,18 @@ public final class SourceToOutputMappingImpl implements SourceToOutputMapping, S
   }
 
   @Override
-  public @NotNull Collection<String> getSources() throws IOException {
-    return myMapping.getKeys();
-  }
-
-  @Override
-  public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
-    return myMapping.getState(srcPath);
-  }
-
-  @Override
-  public @NotNull Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
-    return myMapping.getStateIterator(srcPath);
+  public @Nullable List<String> getOutputs(@NotNull String srcPath) throws IOException {
+    return myMapping.getOutputs(srcPath);
   }
 
   @Override
   public @NotNull Iterator<String> getSourcesIterator() throws IOException {
     return myMapping.getKeysIterator();
+  }
+
+  @Override
+  public @NotNull SourceToOutputMappingCursor cursor() throws IOException {
+    return myMapping.cursor();
   }
 
   @Override

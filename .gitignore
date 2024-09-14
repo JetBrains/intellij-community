@@ -5,6 +5,7 @@
 .idea/libraries/Gradle__*.xml
 .idea/shelf
 .idea/workspace.xml
+.jqwik-database
 /.diff
 /config
 /out
