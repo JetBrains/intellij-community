@@ -2,31 +2,14 @@ package com.intellij.codeInspection.tests.kotlin.test
 
 import com.intellij.jvm.analysis.internal.testFramework.test.TestMethodWithoutAssertionInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.project.IntelliJProjectConfiguration
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.PathUtil
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
-import java.io.File
 
 abstract class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase(), ExpectedPluginModeProvider {
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : TestFrameworkDescriptor(LanguageLevel.HIGHEST) {
-    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-      super.configureModule(module, model, contentEntry)
-      val stdLibJar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
-      PsiTestUtil.addLibrary(model, "kotlin-stdlib", stdLibJar.parent, stdLibJar.name)
-      val ktTestJar = File(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("kotlin-test").first())
-      PsiTestUtil.addLibrary(model, "kotlin-test", ktTestJar.parent, ktTestJar.name)
-    }
+    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 
   fun `test highlighting for empty method body`() {
