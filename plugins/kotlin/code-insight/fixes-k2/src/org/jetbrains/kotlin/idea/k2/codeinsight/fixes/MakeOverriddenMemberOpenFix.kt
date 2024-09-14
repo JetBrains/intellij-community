@@ -7,11 +7,7 @@ import com.intellij.modcommand.Presentation
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -63,8 +59,7 @@ internal object MakeOverriddenMemberOpenFixFactory {
     }
 }
 
-context(KaSession)
-private fun computeElementContext(element: KtNamedDeclaration): ElementContext? {
+private fun KaSession.computeElementContext(element: KtNamedDeclaration): ElementContext? {
     val overriddenNonOverridableMembers = mutableListOf<DeclarationPointer>()
     val containingDeclarationNames = mutableListOf<String>()
     val symbol = element.symbol as? KaCallableSymbol ?: return null
@@ -90,7 +85,6 @@ private data class ElementContext(
     val containingDeclarationNames: List<String>,
 )
 
-context(KaSession)
 private fun retainNonOverridableMembers(
     callableMemberSymbols: Collection<KaCallableSymbol>,
 ): Collection<KaCallableSymbol> {

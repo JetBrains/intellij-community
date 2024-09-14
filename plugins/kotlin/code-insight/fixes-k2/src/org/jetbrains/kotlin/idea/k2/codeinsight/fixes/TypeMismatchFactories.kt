@@ -44,8 +44,7 @@ object TypeMismatchFactories {
         getFixesForTypeMismatch(diagnostic.psi, expectedType = builtinTypes.boolean, actualType = diagnostic.actualType)
     }
 
-    context(KaSession)
-    private fun getFixesForTypeMismatch(
+    private fun KaSession.getFixesForTypeMismatch(
         psi: PsiElement,
         expectedType: KaType,
         actualType: KaType

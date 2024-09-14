@@ -24,9 +24,8 @@ internal object ChangeAccessorTypeFixFactory {
         getFixes(diagnostic.psi, diagnostic.expectedType)
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getFixes(element: KtElement, expectedType: KaType): List<ChangeAccessorTypeFix> {
+    private fun KaSession.getFixes(element: KtElement, expectedType: KaType): List<ChangeAccessorTypeFix> {
         val propertyAccessor = element.getParentOfType<KtPropertyAccessor>(
             strict = false,
             KtProperty::class.java,

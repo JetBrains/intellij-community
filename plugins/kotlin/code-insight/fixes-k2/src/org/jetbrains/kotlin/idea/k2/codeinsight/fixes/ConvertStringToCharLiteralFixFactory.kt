@@ -42,8 +42,7 @@ internal object ConvertStringToCharLiteralFixFactory {
         getFixes(diagnostic.psi, diagnostic.expectedType)
     }
 
-    context(KaSession)
-    private fun getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
+    private fun KaSession.getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
         if (element !is KtStringTemplateExpression) return emptyList()
         if (!expectedType.isCharType) return emptyList()
 

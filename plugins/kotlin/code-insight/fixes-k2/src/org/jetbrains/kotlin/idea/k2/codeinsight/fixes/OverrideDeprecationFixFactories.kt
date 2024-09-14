@@ -46,8 +46,7 @@ internal object OverrideDeprecationFixFactories {
     }
 }
 
-context(KaSession)
-private fun renderName(symbol: KaSymbol): String? {
+private fun KaSession.renderName(symbol: KaSymbol): String? {
     val containerPrefix = symbol.containingDeclaration?.name?.let { "${it.render()}." } ?: ""
     val name = symbol.name?.render() ?: return null
     return containerPrefix + name

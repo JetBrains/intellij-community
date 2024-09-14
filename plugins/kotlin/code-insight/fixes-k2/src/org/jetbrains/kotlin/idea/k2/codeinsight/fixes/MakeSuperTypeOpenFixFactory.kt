@@ -22,8 +22,7 @@ object MakeSuperTypeOpenFixFactory {
         createQuickFixes(diagnostic)
     }
 
-    context(KaSession)
-    private fun createQuickFixes(
+    private fun KaSession.createQuickFixes(
         diagnostic: KaFirDiagnostic<KtElement>,
     ): List<AddModifierFix> {
         val typeRef = diagnostic.psi as? KtTypeReference

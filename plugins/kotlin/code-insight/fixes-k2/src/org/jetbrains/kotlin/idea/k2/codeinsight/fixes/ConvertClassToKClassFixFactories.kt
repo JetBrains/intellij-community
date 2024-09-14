@@ -31,8 +31,7 @@ internal object ConvertClassToKClassFixFactories {
         listOfNotNull(createFixIfAvailable(diagnostic.psi, diagnostic.expectedType))
     }
 
-    context(KaSession)
-    private fun createFixIfAvailable(element: PsiElement?, expectedType: KaType): ConvertClassToKClassFix? {
+    private fun KaSession.createFixIfAvailable(element: PsiElement?, expectedType: KaType): ConvertClassToKClassFix? {
         val dotQualifiedExpression = element as? KtDotQualifiedExpression ?: return null
         if (!expectedType.isKClass()) return null
 

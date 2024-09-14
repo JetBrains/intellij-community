@@ -25,8 +25,7 @@ object SpecifyExplicitTypeFixFactories {
             createQuickFix(diagnostic.psi)
         }
 
-    context(KaSession)
-    private fun createQuickFix(declaration: KtDeclaration) =
+    private fun KaSession.createQuickFix(declaration: KtDeclaration) =
         if (declaration is KtCallableDeclaration) listOf(SpecifyExplicitTypeQuickFix(declaration, getTypeInfo(declaration)))
         else emptyList()
 }

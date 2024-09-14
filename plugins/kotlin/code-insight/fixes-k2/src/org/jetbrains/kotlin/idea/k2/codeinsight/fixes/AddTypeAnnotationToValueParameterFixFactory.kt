@@ -33,8 +33,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
             )
         }
 
-    context(KaSession)
-    private fun getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
+    private fun KaSession.getTypeName(element: KtParameter, defaultValue: KtExpression): String? {
         val type = defaultValue.expressionType ?: return null
 
         if (type.isArrayOrPrimitiveArray) {
@@ -53,9 +52,8 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
         return getTypeName(type)
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getTypeName(type: KaType): String {
+    private fun KaSession.getTypeName(type: KaType): String {
         val typeName = type.render(
             KaTypeRendererForSource.WITH_SHORT_NAMES,
             Variance.INVARIANT

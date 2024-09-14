@@ -110,8 +110,7 @@ object CastExpressionFixFactories {
         )
     }
 
-    context(KaSession)
-    private fun createFixes(
+    private fun KaSession.createFixes(
         isDueToNullability: Boolean,
         actualType: KaType,
         expectedType: KaType,

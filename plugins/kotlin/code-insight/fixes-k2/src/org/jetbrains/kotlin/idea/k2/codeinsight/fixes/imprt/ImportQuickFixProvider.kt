@@ -115,8 +115,7 @@ object ImportQuickFixProvider {
         }
     }
 
-    context(KaSession)
-    private fun createImportFix(
+    private fun KaSession.createImportFix(
         position: KtElement,
         importCandidateSymbols: List<KaDeclarationSymbol>,
     ): ImportQuickFix? {

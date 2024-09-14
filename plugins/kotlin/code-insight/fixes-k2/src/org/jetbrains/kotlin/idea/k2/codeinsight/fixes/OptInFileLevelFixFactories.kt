@@ -36,8 +36,7 @@ internal object OptInFileLevelFixFactories {
         createQuickFix(diagnostic)
     }
 
-    context(KaSession)
-    private fun createQuickFix(
+    private fun KaSession.createQuickFix(
         diagnostic: KaFirDiagnostic<PsiElement>,
     ): List<IntentionAction> {
         val element = diagnostic.psi.findParentOfType<KtElement>()

@@ -190,7 +190,6 @@ object ChangeVisibilityFixFactories {
             )
         }
 
-    context(KaSession)
     private fun createFixForNoExplicitVisibilityInApiMode(
         element: KtDeclaration,
     ): List<ChangeVisibilityModCommandAction> {
@@ -203,7 +202,6 @@ object ChangeVisibilityFixFactories {
         return listOf(ChangeToPublicModCommandAction(element, elementName))
     }
 
-    context(KaSession)
     private fun createChangeVisibilityFixOnSuperCallFromPublicInline(
         element: KtElement,
         referencedDeclaration: KaSymbol,
@@ -215,7 +213,6 @@ object ChangeVisibilityFixFactories {
         )
     }
 
-    context(KaSession)
     private fun createChangeVisibilityFixOnProtectedCallFromPublicInlineError(
         referencedSymbol: KaSymbol,
         inlineSymbol: KaSymbol
@@ -246,7 +243,6 @@ object ChangeVisibilityFixFactories {
         return declaration?.takeIf { it.name != null }
     }
 
-    context(KaSession)
     private fun createChangeVisibilityFixOnInvisibleReference(
         element: PsiElement,
         visibility: Visibility,
@@ -279,8 +275,7 @@ object ChangeVisibilityFixFactories {
         return targetVisibilities.mapNotNull { createFixToTargetVisibility(reference, declaration, it) }
     }
 
-    context(KaSession)
-    private fun createChangeVisibilityFixOnExposure(
+    private fun KaSession.createChangeVisibilityFixOnExposure(
         element: PsiElement,
         elementVisibility: EffectiveVisibility,
         restrictingSymbol: KaSymbol,

@@ -51,9 +51,8 @@ private fun KaType.unwrap(): KaType {
  *
  * For instance, given Pair<T, Pair<Int, U>>, the function returns Pair<*, Pair<Int, *>>.
  */
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun substituteTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
+private fun KaSession.substituteTypeParameterTypesWithStarTypeProjections(type: KaType): KaType? {
     return when (type) {
         is KaClassType -> buildClassType(type.symbol) {
             type.typeArguments.mapNotNull { it.type }.forEach {

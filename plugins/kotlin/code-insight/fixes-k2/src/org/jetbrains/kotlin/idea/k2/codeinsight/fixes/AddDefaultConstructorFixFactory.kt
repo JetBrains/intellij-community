@@ -21,8 +21,7 @@ internal object AddDefaultConstructorFixFactory {
     }
 }
 
-context(KaSession)
-private fun elementToBaseClass(element: PsiElement): KtClass? {
+private fun KaSession.elementToBaseClass(element: PsiElement): KtClass? {
     return when {
         element is KtConstructorCalleeExpression ->
             element.getStrictParentOfType<KtClassOrObject>()
@@ -44,8 +43,7 @@ private fun elementToBaseClass(element: PsiElement): KtClass? {
     }
 }
 
-context(KaSession)
-private fun superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): KtClass? {
+private fun KaSession.superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): KtClass? {
     val baseType = typeEntry.typeReference?.type ?: return null
     val baseClassSymbol = baseType.expandedSymbol ?: return null
     if (!baseClassSymbol.isExpect) return null
@@ -53,8 +51,7 @@ private fun superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): KtClass? {
     return baseClassSymbol.psi as? KtClass
 }
 
-context(KaSession)
-private fun annotationEntryToClass(entry: KtAnnotationEntry): KtClass? {
+private fun KaSession.annotationEntryToClass(entry: KtAnnotationEntry): KtClass? {
     val symbol = entry.typeReference?.type?.expandedSymbol ?: return null
     if (!symbol.isExpect) return null
     return symbol.psi as? KtClass

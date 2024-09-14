@@ -20,8 +20,7 @@ internal object FinalUpperBoundFixFactories {
         listOfNotNull(createQuickFix(element))
     }
 
-    context(KaSession)
-    private fun createQuickFix(element: KtTypeReference): InlineTypeParameterFix? {
+    private fun KaSession.createQuickFix(element: KtTypeReference): InlineTypeParameterFix? {
         val parameterListOwner = element.getStrictParentOfType<KtTypeParameterListOwner>() ?: return null
         val parameterList = parameterListOwner.typeParameterList ?: return null
         val (parameter, _, _) = prepareInlineTypeParameterContext(element, parameterList) ?: return null

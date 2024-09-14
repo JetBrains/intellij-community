@@ -54,8 +54,7 @@ internal object AddStarProjectionsFixFactory {
     }
 }
 
-context(KaSession)
-private fun getTargetClasses(
+private fun KaSession.getTargetClasses(
     typeReference: KtTypeReference,
     classSymbol: KaClassSymbol,
 ): List<KaNamedClassSymbol> {

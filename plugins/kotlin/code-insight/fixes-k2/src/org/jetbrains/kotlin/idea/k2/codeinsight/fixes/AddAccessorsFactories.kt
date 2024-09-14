@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -25,7 +24,6 @@ object AddAccessorsFactories {
             createQuickFix(diagnostic.psi)
         }
 
-    context(KaSession)
     private fun createQuickFix(
         property: KtProperty,
     ): List<AddAccessorsQuickFix> {

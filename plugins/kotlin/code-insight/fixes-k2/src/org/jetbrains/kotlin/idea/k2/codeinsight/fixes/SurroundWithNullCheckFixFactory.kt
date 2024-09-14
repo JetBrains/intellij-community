@@ -72,8 +72,7 @@ internal object SurroundWithNullCheckFixFactory {
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    context(KaSession)
-    private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
+    private fun KaSession.createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val element = when (diagnostic) {
             is KaFirDiagnostic.UnsafeCall -> diagnostic.receiverExpression
             else -> diagnostic.psi
@@ -115,7 +114,6 @@ internal object SurroundWithNullCheckFixFactory {
         )
     }
 
-    context(KaSession)
     private fun createQuickFixIfApplicableToTypeMismatch(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val nullableExpression = diagnostic.psi as? KtReferenceExpression ?: return emptyList()
         val root = SurroundWithNullCheckUtils.getRootExpressionIfApplicable(nullableExpression) ?: return emptyList()

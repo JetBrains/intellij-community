@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -274,9 +273,8 @@ object InitializePropertyQuickFixFactories {
             createFixes(diagnostic.psi)
         }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun createFixes(
+    private fun KaSession.createFixes(
         property: KtProperty,
     ): List<CommonIntentionAction> {
         // An extension property cannot be initialized because it has no backing field

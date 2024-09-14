@@ -53,9 +53,8 @@ object DeprecationFixFactory {
         createDeprecation(kaSymbol, diagnostics.psi)
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun createDeprecation(
+    private fun KaSession.createDeprecation(
         kaSymbol: KaDeclarationSymbol,
         psi: PsiElement
     ): List<IntentionAction> {
@@ -181,7 +180,6 @@ abstract class DeprecatedSymbolUsageFixBase(
     }
 }
 
-context(KaSession)
 fun fetchReplaceWithPattern(
     symbol: KaDeclarationSymbol
 ): ReplaceWithData? {
