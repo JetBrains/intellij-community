@@ -1,6 +1,5 @@
-
 public class A {
     void foo() {
-        Nam<caret>
+        if (true) lo<caret>
     }
 }

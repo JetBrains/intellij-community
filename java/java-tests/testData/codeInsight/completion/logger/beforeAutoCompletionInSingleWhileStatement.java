@@ -1,6 +1,5 @@
-
 public class A {
     void foo() {
-        Nam<caret>
+        while (true) lo<caret>
     }
 }

@@ -5,22 +5,34 @@ import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiExpressionStatement
-import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 
 class JvmLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
+           StandardPatterns.or(
            psiElement()
              .withSuperParent(2, PsiExpressionStatement::class.java)
              .afterLeaf(StandardPatterns.or(
                psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.SEMICOLON),
                psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.COLON),
                psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.LBRACE),
+               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.RBRACE),
                psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.ARROW),
+               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.RPARENTH).and(
+                 StandardPatterns.or(
+                 psiElement().withParent(PsiIfStatement::class.java),
+                 psiElement().withParent(PsiForStatement::class.java),
+                 psiElement().withParent(PsiForeachStatement::class.java),
+                 psiElement().withParent(PsiWhileStatement::class.java)
+                 )
+               )
              )),
+           psiElement().withSuperParent(2, PsiLambdaExpression::class.java).afterLeaf(
+             psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.ARROW)
+           )
+           ),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val javaResultWithSorting = JavaCompletionSorting.addJavaSorting(parameters, result)

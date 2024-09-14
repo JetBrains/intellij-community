@@ -1,6 +1,6 @@
-
 public class A {
     void foo() {
-        Nam<caret>
+        int x = 10;
+        lo<caret>
     }
 }
