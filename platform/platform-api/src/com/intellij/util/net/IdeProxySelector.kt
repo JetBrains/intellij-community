@@ -7,12 +7,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.net.NetUtils.isLocalhost
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.SocketAddress
-import java.net.URI
-import java.net.URL
-import java.util.Collections
+import java.net.*
+import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
@@ -23,8 +19,13 @@ class IdeProxySelector(
   private val autoProxyResult = AtomicReference<AutoProxyHolder?>()
   private val exceptionsMatcher = AtomicReference<ExceptionsMatcherHolder?>()
 
-  override fun select(uri: URI): List<Proxy> {
+  override fun select(uri: URI?): List<Proxy> {
     logger.debug { "$uri: select" }
+    if (uri == null) {
+      logger.debug { "$uri: no proxy, uri is null" }
+      return NO_PROXY_LIST
+    }
+
     if (!("http" == uri.scheme || "https" == uri.scheme)) {
       logger.debug { "$uri: no proxy, not http/https scheme: ${uri.scheme}" }
       return NO_PROXY_LIST
