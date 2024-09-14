@@ -175,6 +175,7 @@ class CompilationContextImpl private constructor(
       if (!options.useCompiledClassesFromProjectOutput) {
         // disable compression - otherwise, our zstd/zip cannot compress efficiently
         System.setProperty("jps.storage.do.compression", "false")
+        System.setProperty("jps.new.storage.cache.size.mb", "96")
       }
 
       check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {

@@ -205,6 +205,8 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
+  // used by JPS (portable or new storage), not in util-8 as mvstore requires Java 1
+  layout.withProjectLibrary(libraryName = "mvstore", jarName = UTIL_JAR)
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(PLATFORM_LOADER_JAR, sequenceOf(
     "intellij.platform.util.rt.java8",

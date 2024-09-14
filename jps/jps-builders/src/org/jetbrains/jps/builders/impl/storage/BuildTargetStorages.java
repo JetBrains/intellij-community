@@ -8,7 +8,6 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
@@ -20,15 +19,14 @@ public final class BuildTargetStorages extends CompositeStorageOwner {
   private static final Logger LOG = Logger.getInstance(BuildTargetStorages.class);
   private final BuildTarget<?> myTarget;
   private final BuildDataPaths myPaths;
-  private final ConcurrentMap<StorageProvider<? extends StorageOwner>, StorageOwner> myStorages = new ConcurrentHashMap<>(16, 0.75f,
-                                                                                                                          BuildDataManager.getConcurrencyLevel());
+  private final ConcurrentMap<StorageProvider<? extends StorageOwner>, StorageOwner> myStorages = new ConcurrentHashMap<>();
 
-  public BuildTargetStorages(BuildTarget<?> target, BuildDataPaths paths) {
+  public BuildTargetStorages(@NotNull BuildTarget<?> target, @NotNull BuildDataPaths paths) {
     myTarget = target;
     myPaths = paths;
   }
 
-  public @NotNull <S extends StorageOwner> S getOrCreateStorage(final @NotNull StorageProvider<S> provider, PathRelativizerService relativizer) throws IOException {
+  public @NotNull <S extends StorageOwner> S getOrCreateStorage(@NotNull StorageProvider<S> provider, PathRelativizerService relativizer) throws IOException {
     try {
       return (S)myStorages.computeIfAbsent(provider, _provider -> {
         try {

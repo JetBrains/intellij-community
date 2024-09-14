@@ -17,21 +17,15 @@ import static org.jetbrains.jps.incremental.storage.StampsStorage.Stamp;
 public interface StampsStorage<T extends Stamp> {
   Path getStorageRoot();
 
-  void force();
-
   void saveStamp(@NotNull Path file, BuildTarget<?> buildTarget, @NotNull T stamp) throws IOException;
 
   void removeStamp(@NotNull Path file, BuildTarget<?> buildTarget) throws IOException;
-
-  void clean() throws IOException;
 
   @Nullable
   T getPreviousStamp(@NotNull Path file, BuildTarget<?> target) throws IOException;
 
   @NotNull
   T getCurrentStamp(@NotNull Path file) throws IOException;
-
-  void close() throws IOException;
 
   boolean isDirtyStamp(@NotNull Stamp stamp, @NotNull Path file) throws IOException;
 

@@ -100,7 +100,7 @@ public final class BuildTargetsState {
     return getTypeState(type).getStaleTargetIds();
   }
 
-  public void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
+  void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
     getTypeState(type).removeStaleTarget(targetId);
   }
 

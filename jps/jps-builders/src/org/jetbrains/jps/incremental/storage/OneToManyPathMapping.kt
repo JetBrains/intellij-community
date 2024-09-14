@@ -4,7 +4,7 @@ package org.jetbrains.jps.incremental.storage
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
-internal interface OneToManyPathMapping : StorageOwner {
+internal interface OneToManyPathMapping {
   @Throws(IOException::class)
   fun getOutputs(path: String): Collection<String>?
 

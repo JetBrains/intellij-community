@@ -212,8 +212,14 @@ public final class IncProjectBuilder {
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
+      StorageManager storageManager = myProjectDescriptor.dataManager.getStorageManager();
+      if (storageManager == null) {
+        ((StorageOwner)myProjectDescriptor.getProjectStamps().getStampStorage()).flush(false);
+      }
       myProjectDescriptor.dataManager.flush(false);
-      myProjectDescriptor.getProjectStamps().getStampStorage().force();
+      if (storageManager != null) {
+        storageManager.clearCache();
+      }
     });
 
     final CleanupTempDirectoryExtension cleaner = CleanupTempDirectoryExtension.getInstance();
@@ -430,11 +436,14 @@ public final class IncProjectBuilder {
 
   private static void flushContext(CompileContext context) {
     if (context != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.getProjectStamps().getStampStorage().force();
-      pd.dataManager.flush(false);
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      if (projectDescriptor.dataManager.getStorageManager() == null) {
+        ((StorageOwner)projectDescriptor.getProjectStamps().getStampStorage()).flush(false);
+      }
+      projectDescriptor.dataManager.flush(false);
     }
-    final ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
+
+    ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       server.stop();
       ExternalJavacManager.KEY.set(context, null);
@@ -644,7 +653,9 @@ public final class IncProjectBuilder {
       LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
       if (cleanCaches) {
         try {
-          projectDescriptor.getProjectStamps().getStampStorage().clean();
+          if (projectDescriptor.dataManager.getStorageManager() == null) {
+            ((StorageOwner)projectDescriptor.getProjectStamps().getStampStorage()).clean();
+          }
         }
         catch (IOException e) {
           if (ex == null) {
@@ -685,32 +696,34 @@ public final class IncProjectBuilder {
     }
   }
 
-  private void cleanOutputOfStaleTargets(BuildTargetType<?> type, CompileContext context) {
-    List<Pair<String, Integer>> targetIds = myProjectDescriptor.dataManager.getTargetsState().getStaleTargetIds(type);
-    if (targetIds.isEmpty()) return;
+  private void cleanOutputOfStaleTargets(BuildTargetType<?> targetType, CompileContext context) {
+    BuildDataManager dataManager = myProjectDescriptor.dataManager;
+    List<Pair<String, Integer>> targetIds = dataManager.getTargetsState().getStaleTargetIds(targetType);
+    if (targetIds.isEmpty()) {
+      return;
+    }
 
     context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.old.output.directories")));
     for (Pair<String, Integer> ids : targetIds) {
-      String stringId = ids.first;
+      String targetId = ids.first;
       try {
         SourceToOutputMappingImpl mapping = null;
         try {
-          mapping = myProjectDescriptor.dataManager.createSourceToOutputMapForStaleTarget(type, stringId);
-          clearOutputFiles(context, mapping, type, ids.second);
+          mapping = dataManager.createSourceToOutputMapForStaleTarget(targetType, targetId);
+          clearOutputFiles(context, mapping, targetType, ids.second);
         }
         finally {
           if (mapping != null) {
             mapping.close();
           }
         }
-        FileUtil.delete(myProjectDescriptor.dataManager.getDataPaths().getTargetDataRoot(type, stringId));
-        myProjectDescriptor.dataManager.getTargetsState().cleanStaleTarget(type, stringId);
+        dataManager.cleanStaleTarget(targetType, targetId);
       }
       catch (IOException e) {
         LOG.warn(e);
         myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING,
                                                                JpsBuildBundle.message("build.message.failed.to.delete.output.files.from.obsolete.0.target.1",
-                                                                                      stringId, e.toString())));
+                                                                                      targetId, e.toString())));
       }
     }
   }

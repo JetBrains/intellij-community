@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.jps.incremental.storage
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -20,18 +22,6 @@ internal class HashStampStorage(
   private val targetState: BuildTargetsState,
 ) : StampsStorage<HashStamp> {
   private val mapHandle = storageManager.openMap("file-hash-and-mtime-v1", HashStampStorageKeyType, HashStampStorageValueType)
-
-  override fun force() {
-    mapHandle.tryCommit()
-  }
-
-  override fun clean() {
-    mapHandle.map.clear()
-  }
-
-  override fun close() {
-    mapHandle.release()
-  }
 
   override fun getStorageRoot(): Path = storageManager.file
 

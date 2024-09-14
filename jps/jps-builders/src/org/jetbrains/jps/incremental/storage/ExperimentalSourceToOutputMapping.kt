@@ -5,6 +5,7 @@ import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVMap.Decision
 import org.h2.mvstore.MVMap.DecisionMaker
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
@@ -49,8 +50,9 @@ class ExperimentalSourceToOutputMapping private constructor(
       // we can use composite key and sort by target id, but as we compile targets in parallel:
       // * avoid blocking - in-memory lock per map root,
       // * avoid a huge B-tree and reduce rebalancing time due to contention.
+      val mapName = storageManager.getMapName(targetId = targetId, typeId = targetTypeId, suffix = "src-to-out-v1")
       return ExperimentalSourceToOutputMapping(
-        mapHandle = storageManager.openMap("$targetId|$targetTypeId|src-to-out", mapBuilder),
+        mapHandle = storageManager.openMap(mapName, mapBuilder),
         relativizer = relativizer,
       )
     }
@@ -103,6 +105,11 @@ class ExperimentalSourceToOutputMapping private constructor(
   }
 
   override fun getSourcesIterator(): Iterator<String> = cursor()
+
+  @TestOnly
+  fun clear() {
+    mapHandle.map.clear()
+  }
 }
 
 private val CHECK_COLLISIONS = System.getProperty("jps.source.to.output.mapping.check.collisions", "false").toBoolean()

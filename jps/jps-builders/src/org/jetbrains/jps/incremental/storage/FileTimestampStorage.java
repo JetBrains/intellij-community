@@ -18,7 +18,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.TimestampPerTarget;
 
-final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<FileTimestamp> {
+final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<FileTimestamp>,
+                                                                                                     StorageOwner {
   private final BuildTargetsState myTargetsState;
   private final Path timestampRoot;
 

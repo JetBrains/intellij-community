@@ -14,7 +14,7 @@ open class ExperimentalOneToManyPathMapping protected constructor(
   @JvmField protected val mapHandle: MapHandle<LongArray, Array<String>>,
   @JvmField protected val relativizer: PathRelativizerService,
   private val valueOffset: Int = 0,
-) : OneToManyPathMapping, StorageOwner by StorageOwnerByMap(mapHandle = mapHandle) {
+) : OneToManyPathMapping{
   constructor(
     mapName: String,
     storageManager: StorageManager,
@@ -58,24 +58,4 @@ open class ExperimentalOneToManyPathMapping protected constructor(
 internal fun stringTo128BitHash(string: String): LongArray {
   val bytes = string.toByteArray()
   return longArrayOf(Hashing.xxh3_64().hashBytesToLong(bytes), Hashing.komihash5_0().hashBytesToLong(bytes))
-}
-
-internal class StorageOwnerByMap<K : Any, V : Any>(private val mapHandle: MapHandle<K, V>) : StorageOwner {
-  override fun flush(memoryCachesOnly: Boolean) {
-    if (memoryCachesOnly) {
-      // set again to force to clear the cache (in kb)
-      mapHandle.map.store.cacheSize = MV_STORE_CACHE_SIZE_IN_MB * 1024
-    }
-    else {
-      mapHandle.tryCommit()
-    }
-  }
-
-  override fun clean() {
-    mapHandle.map.clear()
-  }
-
-  override fun close() {
-    mapHandle.release()
-  }
 }

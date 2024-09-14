@@ -18,12 +18,13 @@ class SourceToOutputMappingFuzzTest {
   }
 
   private lateinit var mapping: ExperimentalSourceToOutputMapping
+  private lateinit var storageManager: StorageManager
   private var file: Path? = null
 
   @BeforeProperty
   fun setUp() {
     file = Files.createTempFile("mvstore", ".db")
-    val storageManager = StorageManager(file!!, 0)
+    storageManager = StorageManager(file!!, 0)
     mapping = ExperimentalSourceToOutputMapping.createSourceToOutputMap(
       storageManager = storageManager,
       relativizer = PathRelativizerService(),
@@ -35,7 +36,7 @@ class SourceToOutputMappingFuzzTest {
   @AfterProperty
   fun tearDown() {
     try {
-      mapping.close()
+      storageManager.close()
     }
     finally {
       file?.let { Files.deleteIfExists(it) }
@@ -78,10 +79,30 @@ class SourceToOutputMappingFuzzTest {
 
     checkCursorAndSourceIterator(source, outputs!!)
   }
+  
+  @Property
+  fun removeOutputs(@ForAll("pathStrings") source: String, @ForAll("pathStringLists") outputs: List<String>) {
+    mapping.setOutputs(source, outputs)
+    mapping.remove(source)
+    val result = mapping.getOutputs(source)
+    assertThat(result).isNull()
+
+    val cursor = mapping.cursor()
+    var found = false
+    while (cursor.hasNext()) {
+      if (cursor.next() == source) {
+        found = true
+        break
+      }
+    }
+    assertThat(found).isFalse()
+
+    assertThat(mapping.sourcesIterator.asSequence().contains(source)).isFalse()
+  }
 
   @Property
   fun cursor(@ForAll("pathStringLists") sources: List<String>, @ForAll("pathStringListsList") outputs: List<List<String>>) {
-    mapping.clean()
+    mapping.clear()
 
     val expectedMap = HashMap<String, List<String>>()
     for (source in sources) {

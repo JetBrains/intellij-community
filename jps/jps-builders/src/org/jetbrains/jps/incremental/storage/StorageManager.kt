@@ -3,18 +3,25 @@ package org.jetbrains.jps.incremental.storage
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
+import org.h2.mvstore.MVStoreTool
 import org.h2.mvstore.type.DataType
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.measureTime
 
-internal const val MV_STORE_CACHE_SIZE_IN_MB = 32
+private val MV_STORE_CACHE_SIZE_IN_MB = System.getProperty("jps.new.storage.cache.size.mb", "64").toInt()
 
 @ApiStatus.Internal
-class StorageManager(@JvmField val file: Path, allowedCompactionTimeOnClose: Int) {
-  private val storeValue = StoreValue(file = file, allowedCompactionTimeOnClose = allowedCompactionTimeOnClose)
+class StorageManager(@JvmField val file: Path, private val allowedCompactionTimeOnClose: Int) {
+  private val store = SynchronizedClearableLazy { createOrResetMvStore(file = file, readOnly = false, ::thisLogger) }
+
+  fun open() {
+    store.value
+  }
 
   fun <K : Any, V : Any> openMap(name: String, keyType: DataType<K>, valueType: DataType<V>): MapHandle<K, V> {
     val mapBuilder = MVMap.Builder<K, V>()
@@ -24,77 +31,59 @@ class StorageManager(@JvmField val file: Path, allowedCompactionTimeOnClose: Int
   }
 
   fun <K : Any, V : Any> openMap(name: String, mapBuilder: MVMap.Builder<K, V>): MapHandle<K, V> {
-    val store = storeValue.openStore()
-    return MapHandle(storeValue, openOrResetMap(store = store, name = name, mapBuilder = mapBuilder, logSupplier = ::thisLogger))
+    return MapHandle(openOrResetMap(store = store.value, name = name, mapBuilder = mapBuilder, logSupplier = ::thisLogger))
   }
 
-  /** Only if error occurred and you release all [MapHandle]s */
+  /** Only if error occurred */
   fun forceClose() {
-    storeValue.forceClose()
-  }
-}
-
-internal class StoreValue(private val file: Path, private val allowedCompactionTimeOnClose: Int) {
-  private var refCount = 0
-  private var store: MVStore? = null
-
-  @Synchronized
-  fun forceClose() {
-    refCount = 0
-    store?.let {
-      store = null
-      it.closeImmediately()
-    }
+    store.valueIfInitialized?.closeImmediately()
   }
 
-  @Synchronized
-  fun openStore(): MVStore {
-    if (refCount == 0) {
-      require(store == null)
-      val store = createOrResetMvStore(file = file, readOnly = false, ::thisLogger)
-      this.store = store
-      refCount++
-      return store
-    }
-
-    refCount++
-    return store!!
-  }
-
-  @Synchronized
-  fun release() {
-    when (refCount) {
-      1 -> {
-        store!!.close(allowedCompactionTimeOnClose)
-        store = null
-        refCount = 0
+  fun close() {
+    store.valueIfInitialized?.let {
+      store.drop()
+      val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "true").toBoolean()
+      it.close(if (isCompactOnClose) 0 else allowedCompactionTimeOnClose)
+      if (isCompactOnClose && Files.exists(file)) {
+        val time = measureTime {
+          MVStoreTool.compact(file.toString(), false)
+        }
+        thisLogger().info("Compacted storage in $time")
       }
-      0 -> throw IllegalStateException("Store is already closed")
-      else -> refCount--
     }
   }
+
+  fun commit() {
+    store.valueIfInitialized?.tryCommit()
+  }
+
+  fun clearCache() {
+    // set again to force to clear the cache (in kb)
+    store.valueIfInitialized?.cacheSize = MV_STORE_CACHE_SIZE_IN_MB * 1024
+  }
+
+  fun clean() {
+    store.valueIfInitialized?.let {
+      store.drop()
+      it.closeImmediately()
+      Files.deleteIfExists(file)
+    }
+  }
+
+  fun removeStaleMaps(targetId: String, typeId: String) {
+    val store = store.value
+    for (mapName in store.mapNames) {
+      if (mapName.startsWith(getMapName(targetId = targetId, typeId = typeId, suffix = ""))) {
+        store.removeMap(mapName)
+      }
+    }
+  }
+
+  fun getMapName(targetId: String, typeId: String, suffix: String): String = "$targetId|$typeId|$suffix"
 }
 
 @ApiStatus.Internal
-class MapHandle<K : Any, V: Any> internal constructor(
-  private val storeValue: StoreValue,
-  @JvmField val map: MVMap<K, V>,
-) {
-  @Volatile
-  private var isReleased = false
-
-  fun release() {
-    if (!isReleased) {
-      storeValue.release()
-      isReleased = true
-    }
-  }
-
-  fun tryCommit() {
-    require(!isReleased)
-    map.store.tryCommit()
-  }
-}
+class MapHandle<K : Any, V: Any> internal constructor(@JvmField val map: MVMap<K, V>)
 
 private fun <K : Any, V: Any> openOrResetMap(
   store: MVStore,
@@ -155,6 +144,7 @@ private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Lo
     .backgroundExceptionHandler(storeErrorHandler)
     // avoid extra thread - db maintainer should use coroutines
     .autoCommitDisabled()
+    .autoCommitBufferSize(4096)
     .cacheSize(MV_STORE_CACHE_SIZE_IN_MB)
     .let {
       if (readOnly) it.readOnly() else it

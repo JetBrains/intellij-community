@@ -2,7 +2,7 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.Nls;
@@ -67,7 +67,7 @@ public final class BuildRunner {
   /**
    * @deprecated please use {@link #load(MessageHandler, Path, BuildFSState)}
    */
-  @Deprecated()
+  @Deprecated(forRemoval = true)
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull File dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     return load(msgHandler, dataStorageRoot.toPath(), fsState);
   }
@@ -102,10 +102,9 @@ public final class BuildRunner {
 
     ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;
-    StorageManager storageManager = USE_EXPERIMENTAL_STORAGE || ProjectStamps.PORTABLE_CACHES
-                                    ? new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"), 10_000)
-                                    : null;
+    StorageManager storageManager = null;
     try {
+      storageManager = createStorageManager(dataStorageRoot);
       projectStamps = initProjectStampStorage(dataStorageRoot, relativizer, targetsState, storageManager);
 
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
@@ -122,7 +121,6 @@ public final class BuildRunner {
       if (storageManager != null) {
         storageManager.forceClose();
       }
-
       if (projectStamps != null) {
         projectStamps.close();
       }
@@ -130,7 +128,9 @@ public final class BuildRunner {
         dataManager.close();
       }
       myForceCleanCaches = true;
-      NioFiles.deleteRecursively(dataStorageRoot);
+      FileUtilRt.deleteRecursively(dataStorageRoot);
+
+      storageManager = createStorageManager(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectStamps = initProjectStampStorage(dataStorageRoot, relativizer, targetsState, storageManager);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
@@ -142,6 +142,17 @@ public final class BuildRunner {
     return new ProjectDescriptor(
       jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
     );
+  }
+
+  private static @Nullable StorageManager createStorageManager(@NotNull Path dataStorageRoot) {
+    if (USE_EXPERIMENTAL_STORAGE || ProjectStamps.PORTABLE_CACHES) {
+      StorageManager manager = new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"), 10_000);
+      manager.open();
+      return manager;
+    }
+    else {
+      return null;
+    }
   }
 
   public static @NotNull @Nls String getRootCompilerName() {

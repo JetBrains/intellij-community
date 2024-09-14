@@ -49,7 +49,9 @@ public final class ProjectStamps {
 
   public void close() {
     try {
-      stampStorage.close();
+      if (stampStorage instanceof StorageOwner) {
+        ((StorageOwner)stampStorage).close();
+      }
     }
     catch (IOException e) {
       LOG.error(e);
