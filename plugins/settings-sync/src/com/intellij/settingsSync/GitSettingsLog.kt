@@ -318,6 +318,8 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
   override fun collectCurrentSnapshot(): SettingsSnapshot {
     // todo check repository consistency, e.g. there should be no uncommitted changes
     git.checkout().setName(MASTER_REF_NAME).setForced(true).call()
+    git.reset().setMode(ResetCommand.ResetType.HARD).call()
+    git.clean().setForce(true).setCleanDirectories(true).call()
 
     val lastModifiedDate = getDate(getBranchTip(master))
 

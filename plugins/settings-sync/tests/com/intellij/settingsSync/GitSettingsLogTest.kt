@@ -10,6 +10,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.lib.Repository
@@ -602,6 +603,44 @@ internal class GitSettingsLogTest {
     catch (ex: Exception) {
       fail("Shouldn't fail: ${ex.message}")
     }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-13061"])
+  fun `drop for unfinished modifications`() {
+    val editorXml = (configDir / "options" / "editor.xml").write("Editor Initial")
+    val lafXml = (configDir / "options" / "laf.xml").write("LaF Initial")
+    val generalXml = (configDir / "options" / "ide.general.xml").write("General Initial")
+
+    val settingsLog = initializeGitSettingsLog(lafXml, editorXml)
+
+
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Cloud")
+        fileState("options/ide.general.xml", "General Cloud")
+      }, "Remote changes"
+    )
+    settingsLog.advanceMaster()
+
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Ide")
+        fileState("options/ide.general.xml", "General Ide")
+      }, "Local changes"
+    )
+
+    generalXml.write("General Cloud")
+    (configDir / "settingsSync" / "options" / "ide.general.xml").write("General New")
+    val repository = FileRepositoryBuilder()
+      .setGitDir((configDir / "settingsSync"/ ".git").toFile())
+      .setAutonomous(true).readEnvironment().build()
+    val git = Git(repository)
+    val addCommand = git.add()
+    addCommand.addFilepattern("options/ide.general.xml")
+    addCommand.call()
+
+    initializeGitSettingsLog(lafXml, editorXml, generalXml)
   }
 
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
