@@ -15,6 +15,10 @@ public interface BuildDataPaths {
 
   @NotNull File getTargetTypeDataRoot(@NotNull BuildTargetType<?> targetType);
 
+  /**
+   * @deprecated Use {@link #getTargetDataRootDir}.
+   */
+  @Deprecated
   @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target);
 
   @NotNull Path getTargetDataRootDir(@NotNull BuildTarget<?> target);

@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
@@ -76,6 +78,7 @@ public final class BuildDataManager {
     }
   };
 
+  @ApiStatus.Internal
   public BuildDataManager(BuildDataPaths dataPaths,
                           BuildTargetsState targetsState,
                           PathRelativizerService relativizer,
@@ -151,6 +154,7 @@ public final class BuildDataManager {
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
 
+  @ApiStatus.Internal
   public OneToManyPathMapping getSourceToFormMap() {
     return mySrcToFormMap;
   }
@@ -186,12 +190,12 @@ public final class BuildDataManager {
     }
     finally {
       // delete all data except src-out mapping which is cleaned in a special way
-      final File[] targetData = myDataPaths.getTargetDataRoot(target).listFiles();
-      if (targetData != null) {
-        final File srcOutputMapRoot = getSourceToOutputMapRoot(target);
-        for (File dataFile : targetData) {
-          if (!FileUtil.filesEqual(dataFile, srcOutputMapRoot)) {
-            FileUtil.delete(dataFile);
+      List<Path> targetData = NioFiles.list(myDataPaths.getTargetDataRootDir(target));
+      if (!targetData.isEmpty()) {
+        Path srcOutputMapRoot = getSourceToOutputMapRoot(target);
+        for (Path dataFile : targetData) {
+          if (!dataFile.equals(srcOutputMapRoot)) {
+            NioFiles.deleteRecursively(dataFile);
           }
         }
       }
@@ -346,8 +350,8 @@ public final class BuildDataManager {
     }
   }
 
-  private File getSourceToOutputMapRoot(BuildTarget<?> target) {
-    return new File(myDataPaths.getTargetDataRoot(target), SRC_TO_OUTPUT_STORAGE);
+  private @NotNull Path getSourceToOutputMapRoot(BuildTarget<?> target) {
+    return myDataPaths.getTargetDataRootDir(target).resolve(SRC_TO_OUTPUT_STORAGE);
   }
 
   private Path getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {

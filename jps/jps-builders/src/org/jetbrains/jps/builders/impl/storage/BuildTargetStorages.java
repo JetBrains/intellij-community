@@ -32,7 +32,7 @@ public final class BuildTargetStorages extends CompositeStorageOwner {
     try {
       return (S)myStorages.computeIfAbsent(provider, _provider -> {
         try {
-          return _provider.createStorage(myPaths.getTargetDataRoot(myTarget).toPath(), relativizer);
+          return _provider.createStorage(myPaths.getTargetDataRootDir(myTarget), relativizer);
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);

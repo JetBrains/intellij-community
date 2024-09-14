@@ -40,7 +40,7 @@ public final class BuildDataPathsImpl implements BuildDataPaths {
 
   @Override
   public @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target) {
-    return getTargetDataRoot(target.getTargetType(), target.getId()).toFile();
+    return getTargetDataRootDir(target).toFile();
   }
 
   @Override

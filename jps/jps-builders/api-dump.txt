@@ -1845,8 +1845,8 @@ org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - a:setOutputs(java.lang.String,java.util.Collection):V
 a:org.jetbrains.jps.builders.storage.StorageProvider
 - <init>():V
-- a:createStorage(java.io.File):org.jetbrains.jps.incremental.storage.StorageOwner
-- createStorage(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):org.jetbrains.jps.incremental.storage.StorageOwner
+- a:createStorage(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StorageOwner
+- createStorage(java.nio.file.Path,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):org.jetbrains.jps.incremental.storage.StorageOwner
 f:org.jetbrains.jps.cmdline.BuildRunner
 - <init>(org.jetbrains.jps.cmdline.JpsModelLoader):V
 - createCompilationScope(org.jetbrains.jps.cmdline.ProjectDescriptor,java.util.List):org.jetbrains.jps.incremental.CompileScope
@@ -2617,7 +2617,6 @@ a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - f:wipe():Z
 f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - sf:PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY:java.lang.String
-- <init>(org.jetbrains.jps.builders.storage.BuildDataPaths,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - clean(java.util.function.Consumer):V
 - cleanTargetStorages(org.jetbrains.jps.builders.BuildTarget):V
 - close():V
@@ -2630,7 +2629,6 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - s:getMappingsRoot(java.io.File):java.io.File
 - getOutputToTargetRegistry():org.jetbrains.jps.incremental.storage.OutputToTargetRegistry
 - getRelativizer():org.jetbrains.jps.incremental.relativizer.PathRelativizerService
-- getSourceToFormMap():org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - getSourceToOutputMap(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - getStorage(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.builders.storage.StorageProvider):org.jetbrains.jps.incremental.storage.StorageOwner
 - getTargetsState():org.jetbrains.jps.incremental.storage.BuildTargetsState
@@ -2684,6 +2682,7 @@ a:org.jetbrains.jps.incremental.storage.CompositeStorageOwner
 - pa:getChildStorages():java.lang.Iterable
 f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - org.jetbrains.jps.incremental.storage.AbstractStateStorage
+- org.jetbrains.jps.incremental.storage.StorageOwner
 - <init>(java.nio.file.Path,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - appendData(java.lang.String,java.lang.String):V
 - appendData(java.lang.String,java.util.Collection):V
@@ -2694,7 +2693,7 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - remove(java.lang.String):V
 - removeData(java.lang.String,java.lang.String):V
 - update(java.lang.String,java.lang.String):V
-- update(java.lang.String,java.util.Collection):V
+- update(java.lang.String,java.util.List):V
 f:org.jetbrains.jps.incremental.storage.OutputToTargetRegistry
 - org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - getSafeToDeleteOutputs(java.util.Collection,I):java.util.Collection
@@ -2706,7 +2705,7 @@ f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - sf:TRACK_LIBRARY_CONTENT:Z
 - sf:TRACK_LIBRARY_CONTENT_PROPERTY:java.lang.String
 - <init>(java.io.File,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
-- <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
+- <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
 - close():V
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
 org.jetbrains.jps.incremental.storage.StampsStorage
