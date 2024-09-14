@@ -337,9 +337,6 @@ public final class FSRecordsImpl implements Closeable {
   /** Lock to protect individual file-records updates */
   private final FileRecordLock fileRecordLock = new FileRecordLock();
 
-  //TODO RC: why to have it both here, and also in PersistentFSConnection? Mb one place is enough?
-  private volatile boolean closed = false;
-
   /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
   private volatile Exception closedStackTrace = null;
 
@@ -394,7 +391,7 @@ public final class FSRecordsImpl implements Closeable {
 
   @Override
   public synchronized void close() {
-    if (!closed) {
+    if (!connection.isClosed()) {
       LOG.info("VFS closing");
       Exception stackTraceEx = new Exception("FSRecordsImpl close stacktrace");
 
@@ -409,9 +406,6 @@ public final class FSRecordsImpl implements Closeable {
           stackTraceEx.addSuppressed(stoppingEx);
         }
       }
-
-      closed = true;
-
 
       try {
         //ensure async scanning is finished -- until that records file is still in use,
@@ -450,11 +444,11 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   boolean isClosed() {
-    return closed;
+    return connection.isClosed();
   }
 
   void checkNotClosed() {
-    if (closed) {
+    if (connection.isClosed()) {
       throw alreadyClosedException();
     }
   }
@@ -1607,7 +1601,7 @@ public final class FSRecordsImpl implements Closeable {
    */
   @Contract("_->fail")
   RuntimeException handleError(Throwable e) throws RuntimeException, Error {
-    if (e instanceof ClosedStorageException || closed) {
+    if (e instanceof ClosedStorageException || isClosed()) {
       // no connection means IDE is closing...
       RuntimeException alreadyDisposed = alreadyClosedException();
       alreadyDisposed.addSuppressed(e);

@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ThreadSafeThrottler;
 import com.intellij.util.io.DataEnumerator;
@@ -190,23 +189,30 @@ public final class PersistentFSConnection {
     records.force();
   }
 
-  synchronized void close() throws IOException {
+  public boolean isClosed() {
+    return closed;
+  }
+
+  public synchronized void close() throws IOException {
     if (closed) {
       return;
     }
 
     force();
 
-    //ensure async loading is finished
-    Exception freeRecordsLoadingError = ExceptionUtil.runAndCatch(() -> freeRecords.getValue());
-    if (freeRecordsLoadingError != null) {
-      //not an issue on close, but could provide some insights
-      LOG.info("Free records loading is failed", freeRecordsLoadingError);
+    try {//ensure async loading is finished:
+      freeRecords.getValue();
     }
+    catch (Throwable ex) {
+      //not an issue on close, but could provide some insights
+      LOG.info("Free records loading is failed", ex);
+    }
+
     closeStorages(records,
                   namesEnumerator,
                   attributesStorage,
                   contentStorage);
+
     closed = true;
   }
 
