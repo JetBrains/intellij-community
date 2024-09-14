@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public final class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
   public @Nullable HighlightUsagesHandlerBase<PsiRecordComponent> createHighlightUsagesHandler(@NotNull Editor editor,
@@ -20,12 +18,11 @@ public final class HighlightRecordComponentsRecordFactory extends HighlightUsage
                                                                                                @NotNull PsiElement target) {
     if (!(target instanceof PsiIdentifier)) return null;
     PsiElement parent = target.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) return null;
-    PsiElement resolved = ((PsiReferenceExpression)parent).resolve();
+    if (!(parent instanceof PsiReferenceExpression ref)) return null;
+    PsiElement resolved = ref.resolve();
     if (!(resolved instanceof LightRecordMember member)) return null;
 
-    PsiRecordComponent component = member.getRecordComponent();
-    return new RecordComponentHighlightUsagesHandler(editor, file, component);
+    return new RecordComponentHighlightUsagesHandler(editor, file, member.getRecordComponent());
   }
 
   private static class RecordComponentHighlightUsagesHandler extends HighlightUsagesHandlerBase<PsiRecordComponent> {
@@ -42,37 +39,39 @@ public final class HighlightRecordComponentsRecordFactory extends HighlightUsage
     }
 
     @Override
-    protected void selectTargets(@NotNull List<? extends PsiRecordComponent> targets, @NotNull Consumer<? super List<? extends PsiRecordComponent>> selectionConsumer) {
+    protected void selectTargets(@NotNull List<? extends PsiRecordComponent> targets, 
+                                 @NotNull Consumer<? super List<? extends PsiRecordComponent>> selectionConsumer) {
       selectionConsumer.consume(targets);
     }
 
     @Override
     public void computeUsages(@NotNull List<? extends PsiRecordComponent> targets) {
       assert targets.size() == 1;
-      PsiRecordComponent record = targets.get(0);
-      PsiIdentifier nameIdentifier = record.getNameIdentifier();
-      if (nameIdentifier != null) {
-        addOccurrence(nameIdentifier);
-        final String name = nameIdentifier.getText();
-        Consumer<PsiExpression> onOccurence = (expr) -> addOccurrence(expr);
-        JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            if (isReferenceToRecordComponent(name, expression)) {
-              onOccurence.consume(expression);
-            }
+      PsiIdentifier nameIdentifier = targets.get(0).getNameIdentifier();
+      if (nameIdentifier == null) return;
+      boolean componentHighlighted = nameIdentifier.getContainingFile() == myFile;
+      if (componentHighlighted) addOccurrence(nameIdentifier);
+      final String name = nameIdentifier.getText();
+      JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          PsiElement element = expression.getReferenceNameElement();
+          if (element != null &&
+              name.equals(element.getText()) &&
+              expression.resolve() instanceof LightRecordMember member &&
+              member.getRecordComponent() == myComponent) {
+            addOccurrence(element);
           }
-        };
-        myComponent.getContainingFile().accept(visitor);
-      }
+        }
+      };
+      myFile.accept(visitor);
+      buildStatusText(null, componentHighlighted ? myReadUsages.size() - 1 : myReadUsages.size());
     }
 
-    private boolean isReferenceToRecordComponent(String name, PsiReferenceExpression referenceExpression) {
-      if (!name.equals(referenceExpression.getReferenceName())) return false;
-      LightRecordMember recordMember = tryCast(referenceExpression.resolve(), LightRecordMember.class);
-      if (recordMember == null) return false;
-      return recordMember.getRecordComponent() == myComponent;
+    @Override
+    protected void addOccurrence(@NotNull PsiElement element) {
+      super.addOccurrence(element);
     }
   }
 }

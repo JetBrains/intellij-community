@@ -1,6 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.highlighting;
-
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -355,6 +354,22 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
       }""");
     ctrlShiftF7();
     assertRangesAndTexts("17:18 s", "42:43 s", "51:52 s", "71:72 s");
+  }
+
+  public void testRecordComponents2() {
+    configureByText(JavaFileType.INSTANCE, """
+      record A(String s) {
+      }""");
+    configureByText(JavaFileType.INSTANCE, """
+      class User {
+        void x(A a) {
+          System.out.println(a.s<caret>);
+          System.out.println(a.s);
+        }
+      }
+      """);
+    ctrlShiftF7();
+    assertRangeText("s", "s");
   }
 
   @Override
