@@ -1679,7 +1679,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testImplementViaOverrideCompletion() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods...", "MustBeInvokedByOverriders", "public void run");
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…", "MustBeInvokedByOverriders", "public void run");
     getLookup().setCurrentItem(getLookup().getItems().get(4));
     myFixture.type('\n');
     checkResult();
@@ -1688,7 +1688,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods...");
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     myFixture.type('\n');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
@@ -1698,7 +1698,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods...");
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     myFixture.type('\n');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
@@ -1708,7 +1708,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testSuggestToOverrideMethodsInMulticaretMode() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods...");
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     myFixture.type('\n');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();

@@ -55,7 +55,7 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
       }
       """);
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention("Change to ...");
+    IntentionAction action = myFixture.findSingleIntention("Change to …");
     myFixture.launchAction(action);
     myFixture.checkResult("""
                             class Test {
