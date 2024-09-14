@@ -356,22 +356,6 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
     assertRangesAndTexts("17:18 s", "42:43 s", "51:52 s", "71:72 s");
   }
 
-  public void testRecordComponents2() {
-    configureByText(JavaFileType.INSTANCE, """
-      record A(String s) {
-      }""");
-    configureByText(JavaFileType.INSTANCE, """
-      class User {
-        void x(A a) {
-          System.out.println(a.s<caret>);
-          System.out.println(a.s);
-        }
-      }
-      """);
-    ctrlShiftF7();
-    assertRangeText("s", "s");
-  }
-
   @Override
   protected @NotNull LanguageLevel getProjectLanguageLevel() {
     return LanguageLevel.JDK_16; // records are needed
