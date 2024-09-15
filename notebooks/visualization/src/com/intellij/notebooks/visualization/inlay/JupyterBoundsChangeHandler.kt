@@ -1,5 +1,7 @@
 package com.intellij.notebooks.visualization.inlay
 
+import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.NotebookCellLinesEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
@@ -11,8 +13,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
-import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.NotebookCellLinesEvent
 import java.beans.PropertyChangeListener
 
 class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
@@ -53,7 +53,7 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
         if (event.isIntervalsChanged())
           boundsChanged()
       }
-    })
+    }, editor.disposable)
 
     editor.inlayModel.addListener(object : InlayModel.Listener {
       override fun onBatchModeFinish(editor: Editor) = boundsChanged()

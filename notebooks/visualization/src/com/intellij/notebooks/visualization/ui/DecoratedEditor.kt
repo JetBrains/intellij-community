@@ -264,6 +264,9 @@ class DecoratedEditor private constructor(
 internal fun <T> keepScrollingPositionWhile(editor: Editor, task: () -> T): T {
   return ReadAction.compute<T, Nothing> {
     EditorScrollingPositionKeeper(editor).use { keeper ->
+      if (editor.isDisposed) {
+        return@compute task()
+      }
       keeper.savePosition()
       val r = task()
       keeper.restorePosition(false)
