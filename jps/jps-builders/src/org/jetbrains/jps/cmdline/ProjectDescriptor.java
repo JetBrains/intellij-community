@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
@@ -27,8 +30,9 @@ import java.util.Set;
 public final class ProjectDescriptor {
   private final JpsProject myProject;
   private final JpsModel myModel;
+  @TestOnly
+  private ProjectStamps deprecatedStamps;
   public final BuildFSState fsState;
-  private final ProjectStamps myProjectStamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
   private final ModuleExcludeIndex myModuleExcludeIndex;
@@ -39,18 +43,36 @@ public final class ProjectDescriptor {
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
 
+  /**
+   * @deprecated Use {@link ProjectDescriptor#ProjectDescriptor(JpsModel, BuildFSState, BuildDataManager, BuildLoggingManager, ModuleExcludeIndex, BuildTargetIndex, BuildRootIndex, IgnoredFileIndex)}
+   */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
                            ProjectStamps projectStamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
-                           final ModuleExcludeIndex moduleExcludeIndex,
-                           final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex) {
+                           ModuleExcludeIndex moduleExcludeIndex,
+                           BuildTargetIndex buildTargetIndex,
+                           BuildRootIndex buildRootIndex,
+                           IgnoredFileIndex ignoredFileIndex) {
+    this(model, fsState, dataManager, loggingManager, moduleExcludeIndex, buildTargetIndex, buildRootIndex, ignoredFileIndex);
+    deprecatedStamps = projectStamps;
+  }
+
+  public ProjectDescriptor(JpsModel model,
+                           BuildFSState fsState,
+                           BuildDataManager dataManager,
+                           BuildLoggingManager loggingManager,
+                           ModuleExcludeIndex moduleExcludeIndex,
+                           BuildTargetIndex buildTargetIndex,
+                           BuildRootIndex buildRootIndex,
+                           IgnoredFileIndex ignoredFileIndex) {
     myModel = model;
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
     this.fsState = fsState;
-    myProjectStamps = projectStamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;
@@ -106,26 +128,11 @@ public final class ProjectDescriptor {
       shouldClose = myUseCounter == 0;
     }
     if (shouldClose) {
-      if (dataManager.getStorageManager() == null) {
-        try {
-          myProjectStamps.close();
-        }
-        finally {
-          try {
-            dataManager.close();
-          }
-          catch (IOException e) {
-            e.printStackTrace(System.err);
-          }
-        }
+      try {
+        dataManager.close();
       }
-      else {
-        try {
-          dataManager.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace(System.err);
-        }
+      catch (IOException e) {
+        e.printStackTrace(System.err);
       }
     }
   }
@@ -142,7 +149,16 @@ public final class ProjectDescriptor {
     return myProject;
   }
 
+  /**
+   * @deprecated Use {@link BuildDataManager#getFileStampStorage(BuildTarget)}.
+   */
+  @Deprecated(forRemoval = true)
   public ProjectStamps getProjectStamps() {
-    return myProjectStamps;
+    //noinspection TestOnlyProblems
+    if (deprecatedStamps != null) {
+      return deprecatedStamps;
+    }
+    //noinspection removal
+    return dataManager.getFileStampService();
   }
 }

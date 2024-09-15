@@ -72,16 +72,10 @@ public final class BuildRunner {
     return load(msgHandler, dataStorageRoot.toPath(), fsState);
   }
 
-  private static @NotNull ProjectStamps initProjectStampStorage(@NotNull Path dataStorageRoot,
-                                                                @NotNull PathRelativizerService relativizer,
-                                                                @NotNull BuildTargetsState targetsState,
-                                                                @Nullable StorageManager storageManager)
-    throws IOException {
+  private static @Nullable ProjectStamps initProjectStampStorage(@NotNull Path dataStorageRoot,
+                                                                 @NotNull BuildTargetsState targetsState) throws IOException {
     if (ProjectStamps.PORTABLE_CACHES) {
-      // allow compaction on close (not more than 10 seconds) to ensure minimal storage size
-      assert storageManager != null;
-      HashStampStorage stampStorage = new HashStampStorage(storageManager, relativizer, targetsState);
-      return new ProjectStamps(stampStorage);
+      return null;
     }
     else {
       return new ProjectStamps(dataStorageRoot, targetsState);
@@ -100,14 +94,14 @@ public final class BuildRunner {
 
     PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), isCompilerReferenceFSCaseSensitive());
 
-    ProjectStamps projectStamps = null;
+    ProjectStamps fileStampService = null;
     BuildDataManager dataManager = null;
     StorageManager storageManager = null;
     try {
       storageManager = createStorageManager(dataStorageRoot);
-      projectStamps = initProjectStampStorage(dataStorageRoot, relativizer, targetsState, storageManager);
+      fileStampService = initProjectStampStorage(dataStorageRoot, targetsState);
 
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, fileStampService, storageManager);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
@@ -121,26 +115,28 @@ public final class BuildRunner {
       if (storageManager != null) {
         storageManager.forceClose();
       }
-      if (projectStamps != null) {
-        projectStamps.close();
-      }
+
       if (dataManager != null) {
         dataManager.close();
       }
+      else if (fileStampService != null) {
+        fileStampService.close();
+      }
+
       myForceCleanCaches = true;
       FileUtilRt.deleteRecursively(dataStorageRoot);
 
       storageManager = createStorageManager(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectStamps = initProjectStampStorage(dataStorageRoot, relativizer, targetsState, storageManager);
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
+      fileStampService = initProjectStampStorage(dataStorageRoot, targetsState);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, fileStampService, storageManager);
       // the second attempt succeeded
       msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
     return new ProjectDescriptor(
-      jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+      jpsModel, fsState, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
     );
   }
 
@@ -206,8 +202,11 @@ public final class BuildRunner {
     return createCompilationScope(pd, scopes, myFilePaths, forceClean, false);
   }
 
-  private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,
-                                                     final boolean forceClean, final boolean includeDependenciesToScope) throws Exception {
+  private static CompileScope createCompilationScope(@NotNull ProjectDescriptor projectDescriptor,
+                                                     @NotNull List<TargetTypeBuildScope> scopes,
+                                                     @NotNull Collection<String> paths,
+                                                     boolean forceClean,
+                                                     boolean includeDependenciesToScope) throws Exception {
     Set<BuildTargetType<?>> targetTypes = new HashSet<>();
     Set<BuildTargetType<?>> targetTypesToForceBuild = new HashSet<>();
     Set<BuildTarget<?>> targets = new HashSet<>();
@@ -227,7 +226,7 @@ public final class BuildRunner {
         targetTypes.add(targetType);
       }
       else {
-        BuildTargetLoader<?> loader = targetType.createLoader(pd.getModel());
+        BuildTargetLoader<?> loader = targetType.createLoader(projectDescriptor.getModel());
         for (String targetId : scope.getTargetIdList()) {
           BuildTarget<?> target = loader.createTarget(targetId);
           if (target != null) {
@@ -240,11 +239,13 @@ public final class BuildRunner {
       }
     }
     if (includeDependenciesToScope) {
-      includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, pd);
+      includeDependenciesToScope(targetTypes, targets, targetTypesToForceBuild, projectDescriptor);
     }
 
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
-    if (!paths.isEmpty()) {
+    if (paths.isEmpty()) {
+      files = Collections.emptyMap();
+    }
+    else {
       boolean forceBuildAllModuleBasedTargets = false;
       for (BuildTargetType<?> type : targetTypesToForceBuild) {
         if (type instanceof JavaModuleBuildTargetType) {
@@ -255,7 +256,7 @@ public final class BuildRunner {
       files = new HashMap<>();
       for (String path : paths) {
         final File file = new File(path);
-        final Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null);
+        final Collection<BuildRootDescriptor> descriptors = projectDescriptor.getBuildRootIndex().findAllParentDescriptors(file, null);
         for (BuildRootDescriptor descriptor : descriptors) {
           Set<File> fileSet = files.get(descriptor.getTarget());
           if (fileSet == null) {
@@ -266,16 +267,13 @@ public final class BuildRunner {
           if (added) {
             final BuildTargetType<?> targetType = descriptor.getTarget().getTargetType();
             if (targetTypesToForceBuild.contains(targetType) || (forceBuildAllModuleBasedTargets && targetType instanceof ModuleBasedBuildTargetType)) {
-              pd.fsState.markDirty(null, file, descriptor, stampsStorage, false);
+              StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(descriptor.getTarget());
+              projectDescriptor.fsState.markDirty(null, file, descriptor, stampStorage, false);
             }
           }
         }
       }
     }
-    else {
-      files = Collections.emptyMap();
-    }
-
     return new CompileScopeImpl(targetTypes, targetTypesToForceBuild, targets, files);
   }
 

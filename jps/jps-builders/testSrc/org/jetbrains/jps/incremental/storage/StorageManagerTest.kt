@@ -45,7 +45,7 @@ class StorageManagerTest {
       mapping.appendOutput("foo/bar/Baz.java", "out/bar/Baz.class")
       assertThat(mapping.getOutputs("foo/bar/Baz.java")).containsExactly("out/bar/Baz.class")
 
-      storageManager.removeStaleMaps(targetId = "test-module", typeId = "java")
+      storageManager.removeMaps(targetId = "test-module", typeId = "java")
       assertThat(mapping.getOutputs("foo/bar/Baz.java")).isNull()
     }
     finally {

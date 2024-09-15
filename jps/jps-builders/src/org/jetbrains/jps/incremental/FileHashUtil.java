@@ -6,6 +6,7 @@ import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 
@@ -17,12 +18,11 @@ import java.nio.file.StandardOpenOption;
 
 @ApiStatus.Internal
 public final class FileHashUtil {
-
   /**
    * @param path a normalized system-independent path, possibly relative, but without "." and ".." relative references
    * @param hash hash sink to be updated
    */
-  public static void computePathHashCode(@Nullable String path, HashSink hash) {
+  public static void computePathHashCode(@Nullable String path, @NotNull HashSink hash) {
     int length = path == null? 0 : path.length();
     if (length == 0) {
       hash.putInt(0);

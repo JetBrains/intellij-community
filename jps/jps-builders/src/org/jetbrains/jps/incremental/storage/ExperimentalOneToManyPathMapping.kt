@@ -3,24 +3,16 @@
 
 package org.jetbrains.jps.incremental.storage
 
-import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
-import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
-import org.jetbrains.jps.incremental.storage.dataTypes.StringListDataType
+import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
 
 @ApiStatus.Internal
-open class ExperimentalOneToManyPathMapping protected constructor(
+open class ExperimentalOneToManyPathMapping(
   @JvmField protected val mapHandle: MapHandle<LongArray, Array<String>>,
   @JvmField protected val relativizer: PathRelativizerService,
   private val valueOffset: Int = 0,
-) : OneToManyPathMapping{
-  constructor(
-    mapName: String,
-    storageManager: StorageManager,
-    relativizer: PathRelativizerService,
-  ) : this(storageManager.openMap(mapName, LongPairKeyDataType, StringListDataType), relativizer)
-
+) : OneToManyPathMapping {
   protected fun getKey(path: String): LongArray = stringTo128BitHash(relativizer.toRelative(path))
 
   @Suppress("ReplaceGetOrSet")
@@ -53,9 +45,4 @@ open class ExperimentalOneToManyPathMapping protected constructor(
   final override fun remove(path: String) {
     mapHandle.map.remove(getKey(path))
   }
-}
-
-internal fun stringTo128BitHash(string: String): LongArray {
-  val bytes = string.toByteArray()
-  return longArrayOf(Hashing.xxh3_64().hashBytesToLong(bytes), Hashing.komihash5_0().hashBytesToLong(bytes))
 }

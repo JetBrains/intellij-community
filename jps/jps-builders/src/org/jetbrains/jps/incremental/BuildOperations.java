@@ -33,20 +33,20 @@ import java.util.*;
 public final class BuildOperations {
   private BuildOperations() { }
 
-  public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target, boolean readOnly) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
-    final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+  public static void ensureFSStateInitialized(@NotNull CompileContext context, @NotNull BuildTarget<?> target, boolean readOnly) throws IOException {
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    BuildTargetConfiguration configuration = projectDescriptor.getTargetsState().getTargetConfiguration(target);
     if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-      FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, true, null, null);
-      pd.fsState.markInitialScanPerformed(target);
+      StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
+      FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampStorage, true, null, null);
+      projectDescriptor.fsState.markInitialScanPerformed(target);
       if (!readOnly) {
         configuration.save(context);
       }
     }
     else {
       boolean isTargetDirty = false;
-      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || (!pd.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
+      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || (!projectDescriptor.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
         if (isTargetDirty) {
           configuration.logDiagnostics(context);
         }
@@ -56,34 +56,34 @@ public final class BuildOperations {
             // case when target build is forced, is handled separately
             IncProjectBuilder.clearOutputFiles(context, target);
           }
-          pd.dataManager.cleanTargetStorages(target);
+          projectDescriptor.dataManager.cleanTargetStorages(target);
           configuration.save(context);
         }
       }
-      else if (!pd.fsState.isInitialScanPerformed(target)) {
+      else if (!projectDescriptor.fsState.isInitialScanPerformed(target)) {
         initTargetFSState(context, target, false);
       }
     }
   }
 
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
     Set<File> currentFiles = FileCollectionFactory.createCanonicalFileSet();
-    FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, forceMarkDirty, currentFiles, null);
+    FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampStorage, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
-    final BuildFSState fsState = pd.fsState;
-    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
+    final BuildFSState fsState = projectDescriptor.fsState;
+    final SourceToOutputMapping sourceToOutputMap = projectDescriptor.dataManager.getSourceToOutputMap(target);
     for (final Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext(); ) {
       final String path = it.next();
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        fsState.registerDeleted(context, target, file, stampsStorage);
+        fsState.registerDeleted(context, target, file, stampStorage);
       }
     }
-    pd.fsState.markInitialScanPerformed(target);
+    projectDescriptor.fsState.markInitialScanPerformed(target);
   }
 
   public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
@@ -102,7 +102,8 @@ public final class BuildOperations {
       if (target instanceof ModuleBuildTarget) {
         context.clearNonIncrementalMark((ModuleBuildTarget)target);
       }
-      StampsStorage<? extends StampsStorage.Stamp> stampStorage = projectDescriptor.getProjectStamps().getStampStorage();
+
+      StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
       long targetBuildStartStamp = context.getCompilationStartStamp(target);
       for (BuildRootDescriptor buildRootDescriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
         marked |= fsState.markAllUpToDate(context, buildRootDescriptor, stampStorage, targetBuildStartStamp);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
@@ -26,17 +27,18 @@ final class ChainedTargetsBuildListener implements BuildListener {
 
   @Override
   public void filesGenerated(@NotNull FileGeneratedEvent event) {
-    final ProjectDescriptor pd = myContext.getProjectDescriptor();
-    final BuildFSState fsState = pd.fsState;
+    final ProjectDescriptor projectDescriptor = myContext.getProjectDescriptor();
+    final BuildFSState fsState = projectDescriptor.fsState;
     for (Pair<String, String> pair : event.getPaths()) {
       final String relativePath = pair.getSecond();
       final File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
-      for (BuildRootDescriptor desc : pd.getBuildRootIndex().findAllParentDescriptors(file, myContext)) {
-        if (!event.getSourceTarget().equals(desc.getTarget())) {
-          // do not mark files belonging to the target that originated the event
-          // It is assumed that those files will be explicitly marked dirty by particular builder, if needed.
+      for (BuildRootDescriptor buildRootDescriptor : projectDescriptor.getBuildRootIndex().findAllParentDescriptors(file, myContext)) {
+        BuildTarget<?> target = buildRootDescriptor.getTarget();
+        if (!event.getSourceTarget().equals(target)) {
+          // Do not mark files belonging to the target that originated the event;
+          // It is assumed that those files will be explicitly marked dirty by a particular builder, if needed.
           try {
-            fsState.markDirty(myContext, file, desc, pd.getProjectStamps().getStampStorage(), false);
+            fsState.markDirty(myContext, file, buildRootDescriptor, projectDescriptor.dataManager.getFileStampStorage(target), false);
           }
           catch (IOException ignored) {
           }

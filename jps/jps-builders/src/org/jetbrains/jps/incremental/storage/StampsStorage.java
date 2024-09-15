@@ -9,27 +9,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static org.jetbrains.jps.incremental.storage.StampsStorage.Stamp;
-
 /**
  * @author Eugene Zhuravlev
  */
-public interface StampsStorage<T extends Stamp> {
-  Path getStorageRoot();
+public interface StampsStorage<T> {
+  @Nullable Path getStorageRoot();
 
-  void saveStamp(@NotNull Path file, BuildTarget<?> buildTarget, @NotNull T stamp) throws IOException;
+  void updateStamp(@NotNull Path file, BuildTarget<?> buildTarget, long currentFileTimestamp) throws IOException;
 
   void removeStamp(@NotNull Path file, BuildTarget<?> buildTarget) throws IOException;
 
   @Nullable
-  T getPreviousStamp(@NotNull Path file, BuildTarget<?> target) throws IOException;
-
-  @NotNull
-  T getCurrentStamp(@NotNull Path file, long currentFileTimestamp) throws IOException;
-
-  boolean isDirtyStamp(@NotNull Stamp stamp, @NotNull Path file) throws IOException;
-
-  boolean isDirtyStamp(@Nullable Stamp stamp, @NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException;
-
-  interface Stamp { }
+  T getCurrentStampIfUpToDate(@NotNull Path file, BuildTarget<?> target, @Nullable BasicFileAttributes attrs) throws IOException;
 }

@@ -1,9 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage.dataTypes
 
+import com.dynatrace.hash4j.hashing.Hashing
 import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.DataType
 import java.nio.ByteBuffer
+
+// getBytes is faster (70k op/s vs. 50 op/s)
+// use xxh3_64 as first as it is more proven hash algo than komihash
+internal fun stringTo128BitHash(string: String): LongArray {
+  val bytes = string.toByteArray()
+  return longArrayOf(Hashing.xxh3_64().hashBytesToLong(bytes), Hashing.komihash5_0().hashBytesToLong(bytes))
+}
 
 internal object LongPairKeyDataType : DataType<LongArray> {
   override fun isMemoryEstimationAllowed() = true

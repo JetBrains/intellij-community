@@ -12,6 +12,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.StringListDataType
+import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
 
 @Internal
 class ExperimentalSourceToOutputMapping private constructor(
@@ -25,7 +26,6 @@ class ExperimentalSourceToOutputMapping private constructor(
       it.setValueType(StringListDataType)
     }
 
-    @JvmStatic
     fun createSourceToOutputMap(
       storageManager: StorageManager,
       relativizer: PathRelativizerService,
@@ -50,7 +50,7 @@ class ExperimentalSourceToOutputMapping private constructor(
       // we can use composite key and sort by target id, but as we compile targets in parallel:
       // * avoid blocking - in-memory lock per map root,
       // * avoid a huge B-tree and reduce rebalancing time due to contention.
-      val mapName = storageManager.getMapName(targetId = targetId, typeId = targetTypeId, suffix = "src-to-out-v1")
+      val mapName = storageManager.getMapName(targetId = targetId, targetTypeId = targetTypeId, suffix = "src-to-out-v1")
       return ExperimentalSourceToOutputMapping(
         mapHandle = storageManager.openMap(mapName, mapBuilder),
         relativizer = relativizer,

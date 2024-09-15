@@ -86,10 +86,8 @@ public final class FormsInstrumenter extends FormsBuilder {
       final InstrumentationClassFinder finder = ClassProcessingBuilder.createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
 
       try {
-        final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer, config.isUseDynamicBundles());
-
-        final OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-
+        Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer, config.isUseDynamicBundles());
+        OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap(chunk.representativeTarget());
         for (Map.Entry<File, Collection<File>> entry : processed.entrySet()) {
           final File src = entry.getKey();
           final Collection<File> forms = entry.getValue();

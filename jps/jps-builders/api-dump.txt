@@ -1883,7 +1883,7 @@ f:org.jetbrains.jps.cmdline.PreloadedData
 f:org.jetbrains.jps.cmdline.ProjectDescriptor
 - f:dataManager:org.jetbrains.jps.incremental.storage.BuildDataManager
 - f:fsState:org.jetbrains.jps.incremental.fs.BuildFSState
-- <init>(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.incremental.fs.BuildFSState,org.jetbrains.jps.incremental.storage.ProjectStamps,org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.logging.BuildLoggingManager,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.builders.BuildTargetIndex,org.jetbrains.jps.builders.BuildRootIndex,org.jetbrains.jps.indices.IgnoredFileIndex):V
+- <init>(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.incremental.fs.BuildFSState,org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.logging.BuildLoggingManager,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.builders.BuildTargetIndex,org.jetbrains.jps.builders.BuildRootIndex,org.jetbrains.jps.indices.IgnoredFileIndex):V
 - getBuildRootIndex():org.jetbrains.jps.builders.BuildRootIndex
 - getBuildTargetIndex():org.jetbrains.jps.builders.BuildTargetIndex
 - getEncodingConfiguration():org.jetbrains.jps.incremental.CompilerEncodingConfiguration
@@ -2434,7 +2434,7 @@ f:org.jetbrains.jps.incremental.fs.BuildFSState
 - isInitialScanPerformed(org.jetbrains.jps.builders.BuildTarget):Z
 - isMarkedForRecompilation(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.builders.BuildRootDescriptor,java.io.File):Z
 - load(java.io.DataInputStream,org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.builders.BuildRootIndex):V
-- markAllUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage):Z
+- markAllUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,J):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
 - markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage):Z
@@ -2619,14 +2619,16 @@ a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - sf:PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY:java.lang.String
 - clean(java.util.function.Consumer):V
+- cleanStaleTarget(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):V
 - cleanTargetStorages(org.jetbrains.jps.builders.BuildTarget):V
 - close():V
-- closeSourceToOutputStorages(java.util.Collection):V
+- closeSourceToOutputStorages(org.jetbrains.jps.builders.impl.BuildTargetChunk):V
 - createDependencyGraph(java.io.File,Z):V
 - flush(Z):V
-- s:getConcurrencyLevel():I
 - getDataPaths():org.jetbrains.jps.builders.storage.BuildDataPaths
 - getDependencyGraph():org.jetbrains.jps.dependency.GraphConfiguration
+- getFileStampService():org.jetbrains.jps.incremental.storage.ProjectStamps
+- getFileStampStorage(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage
 - s:getMappingsRoot(java.io.File):java.io.File
 - getOutputToTargetRegistry():org.jetbrains.jps.incremental.storage.OutputToTargetRegistry
 - getRelativizer():org.jetbrains.jps.incremental.relativizer.PathRelativizerService
@@ -2659,7 +2661,6 @@ f:org.jetbrains.jps.incremental.storage.BuildTargetTypeState
 f:org.jetbrains.jps.incremental.storage.BuildTargetsState
 - <init>(org.jetbrains.jps.builders.storage.BuildDataPaths,org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.builders.BuildRootIndex):V
 - clean():V
-- cleanStaleTarget(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):V
 - getAverageBuildTime(org.jetbrains.jps.builders.BuildTargetType):J
 - getBuildRootIndex():org.jetbrains.jps.builders.BuildRootIndex
 - getBuildTargetId(org.jetbrains.jps.builders.BuildTarget):I
@@ -2683,7 +2684,6 @@ a:org.jetbrains.jps.incremental.storage.CompositeStorageOwner
 - pa:getChildStorages():java.lang.Iterable
 f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - org.jetbrains.jps.incremental.storage.AbstractStateStorage
-- org.jetbrains.jps.incremental.storage.StorageOwner
 - <init>(java.nio.file.Path,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - appendData(java.lang.String,java.lang.String):V
 - appendData(java.lang.String,java.util.Collection):V
@@ -2710,17 +2710,10 @@ f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - close():V
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
 org.jetbrains.jps.incremental.storage.StampsStorage
-- a:clean():V
-- a:close():V
-- a:force():V
-- a:getCurrentStamp(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
-- a:getPreviousStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
+- a:getCurrentStampIfUpToDate(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,java.nio.file.attribute.BasicFileAttributes):java.lang.Object
 - a:getStorageRoot():java.nio.file.Path
-- a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.nio.file.Path):Z
-- a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):Z
 - a:removeStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):V
-- a:saveStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.storage.StampsStorage$Stamp):V
-org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
+- a:updateStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,J):V
 org.jetbrains.jps.incremental.storage.StorageOwner
 - a:clean():V
 - a:close():V

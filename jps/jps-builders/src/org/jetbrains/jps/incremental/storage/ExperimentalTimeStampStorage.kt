@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.FSOperations
-import org.jetbrains.jps.incremental.FileHashUtil
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
@@ -19,10 +18,10 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 @ApiStatus.Internal
-class HashStampStorage private constructor(
-  private val mapHandle: MapHandle<LongArray, HashStamp>,
+class ExperimentalTimeStampStorage private constructor(
+  private val mapHandle: MapHandle<LongArray, Long>,
   private val relativizer: PathRelativizerService,
-) : StampsStorage<HashStamp> {
+) : StampsStorage<Long> {
   companion object {
     @VisibleForTesting
     fun createSourceToStampMap(
@@ -30,10 +29,10 @@ class HashStampStorage private constructor(
       relativizer: PathRelativizerService,
       targetId: String,
       targetTypeId: String,
-    ): HashStampStorage {
-      val mapName = storageManager.getMapName(targetId = targetId, targetTypeId = targetTypeId, suffix = "file-hash-and-mtime-v1")
-      return HashStampStorage(
-        mapHandle = storageManager.openMap(mapName, LongPairKeyDataType, HashStampStorageValueType),
+    ): ExperimentalTimeStampStorage {
+      val mapName = storageManager.getMapName(targetId, targetTypeId, "file-hash-and-mtime-v1")
+      return ExperimentalTimeStampStorage(
+        mapHandle = storageManager.openMap(mapName, LongPairKeyDataType, LongStorageValueType),
         relativizer = relativizer,
       )
     }
@@ -42,7 +41,7 @@ class HashStampStorage private constructor(
   override fun getStorageRoot(): Path? = null
 
   override fun updateStamp(file: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
-    mapHandle.map.put(createKey(file), HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = currentFileTimestamp))
+    mapHandle.map.put(createKey(file), currentFileTimestamp)
   }
 
   private fun createKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file))
@@ -51,50 +50,40 @@ class HashStampStorage private constructor(
     mapHandle.map.remove(createKey(file))
   }
 
-  fun getStoredFileStamp(file: Path): HashStamp? {
-    return mapHandle.map.get(createKey(file))
-  }
-
-  override fun getCurrentStampIfUpToDate(file: Path, target: BuildTarget<*>?, attrs: BasicFileAttributes?): HashStamp? {
+  override fun getCurrentStampIfUpToDate(file: Path, target: BuildTarget<*>?, attrs: BasicFileAttributes?): Long? {
     return mapHandle.map.get(createKey(file))?.takeIf {
-      val timestamp = if (attrs == null || !attrs.isRegularFile) FSOperations.lastModified(file) else attrs.lastModifiedTime().toMillis()
-      timestamp == it.timestamp || it.hash == FileHashUtil.getFileHash(file)
+      it == (if (attrs == null || !attrs.isRegularFile) FSOperations.lastModified(file) else attrs.lastModifiedTime().toMillis())
     }
   }
 }
 
-@ApiStatus.Internal
-@VisibleForTesting
-class HashStamp(@JvmField val hash: Long, @JvmField val timestamp: Long)
-
-private object HashStampStorageValueType : DataType<HashStamp> {
+private object LongStorageValueType : DataType<Long> {
   override fun isMemoryEstimationAllowed() = true
 
-  override fun getMemory(obj: HashStamp): Int = Long.SIZE_BYTES + Long.SIZE_BYTES
+  override fun getMemory(obj: Long): Int = Long.SIZE_BYTES
 
-  override fun createStorage(size: Int): Array<HashStamp?> = arrayOfNulls(size)
+  override fun createStorage(size: Int): Array<Long?> = arrayOfNulls(size)
 
   override fun write(buff: WriteBuffer, storage: Any, len: Int) {
     @Suppress("UNCHECKED_CAST")
-    for (value in (storage as Array<HashStamp>)) {
-      buff.putLong(value.hash)
-      buff.putVarLong(value.timestamp)
+    for (value in (storage as Array<Long>)) {
+      buff.putVarLong(value)
     }
   }
 
-  override fun write(buff: WriteBuffer, obj: HashStamp) = throw IllegalStateException("Must not be called")
+  override fun write(buff: WriteBuffer, obj: Long) = throw IllegalStateException("Must not be called")
 
   override fun read(buff: ByteBuffer, storage: Any, len: Int) {
     @Suppress("UNCHECKED_CAST")
-    storage as Array<HashStamp>
+    storage as Array<Long>
     for (i in 0 until len) {
-      storage[i] = HashStamp(hash = buff.getLong(), timestamp = readVarLong(buff))
+      storage[i] = readVarLong(buff)
     }
   }
 
   override fun read(buff: ByteBuffer) = throw IllegalStateException("Must not be called")
 
-  override fun compare(a: HashStamp, b: HashStamp) = throw IllegalStateException("Must not be called")
+  override fun compare(a: Long, b: Long) = throw IllegalStateException("Must not be called")
 
-  override fun binarySearch(key: HashStamp?, storage: Any?, size: Int, initialGuess: Int) = throw IllegalStateException("Must not be called")
+  override fun binarySearch(key: Long?, storage: Any?, size: Int, initialGuess: Int) = throw IllegalStateException("Must not be called")
 }

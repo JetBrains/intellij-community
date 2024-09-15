@@ -167,7 +167,7 @@ public final class BuildFSState {
   public void registerDeleted(@Nullable CompileContext context,
                               BuildTarget<?> target,
                               File file,
-                              @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage) throws IOException {
+                              @Nullable StampsStorage<?> stampStorage) throws IOException {
     registerDeleted(context, target, file);
     if (stampStorage != null) {
       stampStorage.removeStamp(file.toPath(), target);
@@ -239,7 +239,7 @@ public final class BuildFSState {
   public boolean markDirty(@Nullable CompileContext context,
                            File file,
                            final BuildRootDescriptor rd,
-                           @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage,
+                           @Nullable StampsStorage<?> stampStorage,
                            boolean saveEventStamp) throws IOException {
     return markDirty(context, CompilationRound.NEXT, file, rd, stampStorage, saveEventStamp);
   }
@@ -247,21 +247,21 @@ public final class BuildFSState {
   public boolean markDirty(@Nullable CompileContext context,
                            CompilationRound round,
                            File file,
-                           final BuildRootDescriptor rd,
-                           @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage,
+                           @NotNull BuildRootDescriptor buildRootDescriptor,
+                           @Nullable StampsStorage<?> stampStorage,
                            boolean saveEventStamp) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(round == CompilationRound.NEXT? NEXT_ROUND_DELTA_KEY : CURRENT_ROUND_DELTA_KEY, context);
-    if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
-      roundDelta.markRecompile(rd, file);
+    if (roundDelta != null && isInCurrentContextTargets(context, buildRootDescriptor)) {
+      roundDelta.markRecompile(buildRootDescriptor, file);
     }
 
-    final FilesDelta filesDelta = getDelta(rd.getTarget());
+    final FilesDelta filesDelta = getDelta(buildRootDescriptor.getTarget());
     filesDelta.lockData();
     try {
-      final boolean marked = filesDelta.markRecompile(rd, file);
+      final boolean marked = filesDelta.markRecompile(buildRootDescriptor, file);
       if (marked) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
+          LOG.debug(buildRootDescriptor.getTarget() + ": MARKED DIRTY: " + file.getPath());
         }
         if (saveEventStamp) {
           final long eventStamp = System.currentTimeMillis();
@@ -270,12 +270,12 @@ public final class BuildFSState {
           }
         }
         if (stampStorage != null) {
-          stampStorage.removeStamp(file.toPath(), rd.getTarget());
+          stampStorage.removeStamp(file.toPath(), buildRootDescriptor.getTarget());
         }
       }
       else {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(rd.getTarget() + ": NOT MARKED DIRTY: " + file.getPath());
+          LOG.debug(buildRootDescriptor.getTarget() + ": NOT MARKED DIRTY: " + file.getPath());
         }
       }
       return marked;
@@ -297,7 +297,7 @@ public final class BuildFSState {
                                        CompilationRound round,
                                        File file,
                                        final BuildRootDescriptor rd,
-                                       @Nullable StampsStorage<? extends StampsStorage.Stamp> stampStorage) throws IOException {
+                                       @Nullable StampsStorage<?> stampStorage) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompileIfNotDeleted(rd, file);
     if (marked && stampStorage != null) {
       stampStorage.removeStamp(file.toPath(), rd.getTarget());
@@ -384,7 +384,7 @@ public final class BuildFSState {
    */
   public boolean markAllUpToDate(@NotNull CompileContext context,
                                  @NotNull BuildRootDescriptor buildRootDescriptor,
-                                 @NotNull StampsStorage stampsStorage,
+                                 @NotNull StampsStorage<?> stampStorage,
                                  long targetBuildStartStamp) throws IOException {
     boolean marked = false;
     final BuildTarget<?> target = buildRootDescriptor.getTarget();
@@ -402,7 +402,6 @@ public final class BuildFSState {
         if (scope.isAffected(target, file)) {
           Path nioFile = file.toPath();
           long currentFileTimestamp = FSOperations.lastModified(nioFile);
-          StampsStorage.Stamp stamp = stampsStorage.getCurrentStamp(nioFile, currentFileTimestamp);
           if (!buildRootDescriptor.isGenerated() && (currentFileTimestamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
             // if the file was modified after the compilation had started,
             // do not save the stamp considering a file dirty
@@ -416,7 +415,7 @@ public final class BuildFSState {
           }
           else {
             marked = true;
-            stampsStorage.saveStamp(nioFile, target, stamp); // todo: ask jeka
+            stampStorage.updateStamp(nioFile, target, currentFileTimestamp);
           }
         }
         else {

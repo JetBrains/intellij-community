@@ -4,8 +4,8 @@ package org.jetbrains.jps.backwardRefs.index;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ExceptionUtil;
@@ -52,7 +52,7 @@ public class CompilerReferenceIndex<Input> {
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myBuildDir;
-  private final File myIndicesDir;
+  private final Path myIndicesDir;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(() -> force());
 
   private volatile Throwable myRebuildRequestCause;
@@ -71,15 +71,20 @@ public class CompilerReferenceIndex<Input> {
                                 @Nullable PathRelativizerService relativizer, boolean readOnly, int version,
                                 boolean isCaseSensitive) {
     myBuildDir = buildDir;
-    myIndicesDir = getIndexDir(buildDir);
-    if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
-      throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
+    myIndicesDir = getIndexDir(buildDir.toPath());
+
+    try {
+      Files.createDirectories(myIndicesDir);
     }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     try {
       if (versionDiffers(buildDir, version)) {
         saveVersion(buildDir, version);
       }
-      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB).toPath()) {
+      myFilePathEnumerator = new PersistentStringEnumerator(myIndicesDir.resolve(FILE_ENUM_TAB)) {
 
         @Override
         public int enumerate(String path) throws IOException {
@@ -109,7 +114,7 @@ public class CompilerReferenceIndex<Input> {
         myIndices.put(indexExtension.getName(), createCompilerIndex(indexExtension, readOnly));
       }
 
-      myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
+      myNameEnumerator = new NameEnumerator(myIndicesDir.resolve(NAME_ENUM_TAB).toFile());
     }
     catch (IOException e) {
       //IJPL-2855: must close all storages opened
@@ -209,51 +214,15 @@ public class CompilerReferenceIndex<Input> {
     removeIndexFiles(buildDir, null);
   }
 
-  public static void removeIndexFiles(File buildDir, Throwable cause) {
-    final File indexDir = getIndexDir(buildDir);
-    if (indexDir.exists()) {
-      try {
-        FileUtilRt.deleteRecursively(indexDir.toPath());
-        LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
-      }
-      catch (Throwable e) {
-        LOG.info("failed to delete backward reference index", e);
-      }
-    }
-  }
-
-  private static File getIndexDir(@NotNull File buildDir) {
-    return new File(buildDir, "backward-refs");
-  }
-
-  public static boolean exists(@NotNull File buildDir) {
-    return getIndexDir(buildDir).exists();
-  }
-
-  public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
-    Path versionFile = getIndexDir(buildDir).toPath().resolve(VERSION_FILE);
-    try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
-      int currentIndexVersion = is.readInt();
-      boolean isDiffer = currentIndexVersion != expectedVersion;
-      if (isDiffer) {
-        LOG.info("backward reference index version differ, expected = " + expectedVersion + ", current = " + currentIndexVersion);
-      }
-      return isDiffer;
-    }
-    catch (NoSuchFileException ignore) {
-      LOG.info("backward reference index version doesn't exist");
+  public void saveVersion(@NotNull File buildDir, int version) {
+    Path versionFile = getIndexDir(buildDir.toPath()).resolve(VERSION_FILE);
+    try {
+      NioFiles.createParentDirectories(versionFile);
     }
     catch (IOException e) {
-      LOG.info("backward reference index version differ due to: " + e.getClass());
+      throw new UncheckedIOException(e);
     }
-    return true;
-  }
-
-  public void saveVersion(@NotNull File buildDir, int version) {
-    File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
-
-    FileUtil.createIfDoesntExist(versionFile);
-    try (DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile))) {
+    try (DataOutputStream os = new DataOutputStream(Files.newOutputStream(versionFile))) {
       os.writeInt(version);
     }
     catch (IOException ex) {
@@ -262,12 +231,67 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
+  public File getIndicesDir() {
+    return myIndicesDir.toFile();
+  }
+
+  private <Key, Value> @NotNull CompilerMapReduceIndex<Key, Value> createCompilerIndex(@NotNull IndexExtension<Key, Value, ? super Input> indexExtension,
+                                                                                       boolean readOnly) throws IOException {
+    IndexStorage<Key, Value> indexStorage = createIndexStorage(
+      indexExtension.getKeyDescriptor(),
+      indexExtension.getValueExternalizer(),
+      indexExtension.getName(),
+      myIndicesDir.toFile(),
+      readOnly
+    );
+    try {
+      if (readOnly) {
+        //noinspection unchecked,rawtypes
+        return new CompilerMapReduceIndex(indexExtension, indexStorage, /* forwardIndex: */ null, /* forwardIndexAccessor: */ null);
+      }
+      else {
+        Path storagePath = myIndicesDir.resolve(indexExtension.getName().getName() + ".inputs");
+        ForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storagePath, /* readOnly: */ false);
+        try {
+          ForwardIndexAccessor<Key, Value> forwardIndexAccessor = new KeyCollectionForwardIndexAccessor<>(indexExtension);
+          //noinspection unchecked,rawtypes
+          return new CompilerMapReduceIndex(indexExtension, indexStorage, forwardIndex, forwardIndexAccessor);
+        }
+        catch (Throwable t) {//IJPL-2855: must close all storages opened
+          forwardIndex.close();
+          throw t;
+        }
+      }
+    }
+    catch (Throwable t) {//IJPL-2855: must close all storages opened
+      indexStorage.close();
+      throw t;
+    }
+  }
+
+  public static void removeIndexFiles(File buildDir, Throwable cause) {
+    Path indexDir = getIndexDir(buildDir.toPath());
+    if (Files.exists(indexDir)) {
+      try {
+        FileUtilRt.deleteRecursively(indexDir);
+        LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
+      }
+      catch (Throwable e) {
+        LOG.info("failed to delete backward reference index", e);
+      }
+    }
+  }
+
+  private static @NotNull Path getIndexDir(@NotNull Path buildDir) {
+    return buildDir.resolve("backward-refs");
+  }
+
   public Throwable getRebuildRequestCause() {
     return myRebuildRequestCause;
   }
 
-  public File getIndicesDir() {
-    return myIndicesDir;
+  public static boolean exists(@NotNull File buildDir) {
+    return Files.exists(getIndexDir(buildDir.toPath()));
   }
 
   public void setRebuildRequestCause(Throwable e) {
@@ -321,38 +345,23 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private <Key, Value> @NotNull CompilerMapReduceIndex<Key, Value> createCompilerIndex(@NotNull IndexExtension<Key, Value, ? super Input> indexExtension,
-                                                                                       boolean readOnly) throws IOException {
-    IndexStorage<Key, Value> indexStorage = createIndexStorage(
-      indexExtension.getKeyDescriptor(),
-      indexExtension.getValueExternalizer(),
-      indexExtension.getName(),
-      myIndicesDir,
-      readOnly
-    );
-    try {
-      if (readOnly) {
-        //noinspection unchecked,rawtypes
-        return new CompilerMapReduceIndex(indexExtension, indexStorage, /* forwardIndex: */ null, /* forwardIndexAccessor: */ null);
+  public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
+    Path versionFile = getIndexDir(buildDir.toPath()).resolve(VERSION_FILE);
+    try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
+      int currentIndexVersion = is.readInt();
+      boolean isDiffer = currentIndexVersion != expectedVersion;
+      if (isDiffer) {
+        LOG.info("backward reference index version differ, expected = " + expectedVersion + ", current = " + currentIndexVersion);
       }
-      else {
-        Path storagePath = new File(myIndicesDir, indexExtension.getName().getName() + ".inputs").toPath();
-        ForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storagePath, /* readOnly: */ false);
-        try {
-          ForwardIndexAccessor<Key, Value> forwardIndexAccessor = new KeyCollectionForwardIndexAccessor<>(indexExtension);
-          //noinspection unchecked,rawtypes
-          return new CompilerMapReduceIndex(indexExtension, indexStorage, forwardIndex, forwardIndexAccessor);
-        }
-        catch (Throwable t) {//IJPL-2855: must close all storages opened
-          forwardIndex.close();
-          throw t;
-        }
-      }
+      return isDiffer;
     }
-    catch (Throwable t) {//IJPL-2855: must close all storages opened
-      indexStorage.close();
-      throw t;
+    catch (NoSuchFileException ignore) {
+      LOG.info("backward reference index version doesn't exist");
     }
+    catch (IOException e) {
+      LOG.info("backward reference index version differ due to: " + e.getClass());
+    }
+    return true;
   }
 
   private static <Key, Value> IndexStorage<Key, Value> createIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,

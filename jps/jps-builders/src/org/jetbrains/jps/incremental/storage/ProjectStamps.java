@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -23,15 +22,10 @@ public final class ProjectStamps {
 
   private static final Logger LOG = Logger.getInstance(ProjectStamps.class);
 
-  private final StampsStorage<? extends StampsStorage.Stamp> stampStorage;
-
-  @ApiStatus.Internal
-  public ProjectStamps(@NotNull StampsStorage<? extends StampsStorage.Stamp> stampStorage) throws IOException {
-    this.stampStorage = stampStorage;
-  }
+  private final StampsStorage<?> stampStorage;
 
   public ProjectStamps(@NotNull Path dataStorageRoot, @NotNull BuildTargetsState targetsState) throws IOException {
-    this(new FileTimestampStorage(dataStorageRoot, targetsState));
+    this.stampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
   }
 
   /**
@@ -43,7 +37,7 @@ public final class ProjectStamps {
     this(dataStorageRoot.toPath(), targetsState);
   }
 
-  public @NotNull StampsStorage<? extends StampsStorage.Stamp> getStampStorage() {
+  public @NotNull StampsStorage<?> getStampStorage() {
     return stampStorage;
   }
 
@@ -56,7 +50,10 @@ public final class ProjectStamps {
     catch (IOException e) {
       LOG.error(e);
       try {
-        NioFiles.deleteRecursively(stampStorage.getStorageRoot());
+        Path root = stampStorage.getStorageRoot();
+        if (root != null) {
+          NioFiles.deleteRecursively(root);
+        }
       }
       catch (IOException ignore) {
       }

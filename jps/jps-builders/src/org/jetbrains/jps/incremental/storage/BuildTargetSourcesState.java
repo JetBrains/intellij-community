@@ -68,10 +68,9 @@ public final class BuildTargetSourcesState implements BuildListener {
   // Some modules can have same out folder for different BuildTarget's to avoid an extra hash calculation collection will be used
   // There are no pre-calculated hashes for entries from this collection in FileStampStorage
   private final Map<String, Long> calculatedHashes = new ConcurrentHashMap<>();
-  private final PathRelativizerService relativizer;
   private final BuildTargetIndex buildTargetIndex;
   private final BuildRootIndex buildRootIndex;
-  private final ProjectStamps projectStamps;
+  private final BuildDataManager dataManager;
   private final CompileContext context;
   private final String outputFolderPath;
   private final Path targetStateStorage;
@@ -79,14 +78,13 @@ public final class BuildTargetSourcesState implements BuildListener {
   public BuildTargetSourcesState(@NotNull CompileContext context) {
     this.context = context;
 
-    ProjectDescriptor pd = context.getProjectDescriptor();
-    projectStamps = pd.getProjectStamps();
-    buildRootIndex = pd.getBuildRootIndex();
-    buildTargetIndex = pd.getBuildTargetIndex();
-    relativizer = pd.dataManager.getRelativizer();
-    outputFolderPath = getOutputFolderPath(pd.getProject());
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    dataManager = projectDescriptor.dataManager;
+    buildRootIndex = projectDescriptor.getBuildRootIndex();
+    buildTargetIndex = projectDescriptor.getBuildTargetIndex();
+    outputFolderPath = getOutputFolderPath(projectDescriptor.getProject());
 
-    BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
+    BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
     targetStateStorage = dataPaths.getDataStorageRoot().toPath().resolve(TARGET_SOURCES_STATE_FILE_NAME);
 
     // subscribe to events for reporting only changed build targets
@@ -116,6 +114,7 @@ public final class BuildTargetSourcesState implements BuildListener {
       result = Collections.emptyList();
     }
     else {
+      PathRelativizerService relativizer = dataManager.getRelativizer();
       List<Future<?>> list = new ArrayList<>(buildTargets.size());
       for (BuildTarget<?> t : buildTargets) {
         list.add(parallelBuildExecutor.submit(() -> {
@@ -265,6 +264,8 @@ public final class BuildTargetSourcesState implements BuildListener {
         return;
       }
 
+      HashStampStorage stampStorage = (HashStampStorage)dataManager.getFileStampStorage(target);
+
       Files.walkFileTree(rootFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
@@ -276,7 +277,7 @@ public final class BuildTargetSourcesState implements BuildListener {
           if (!buildRootIndex.isFileAccepted(path.toFile(), rootDescriptor)) {
             return FileVisitResult.CONTINUE;
           }
-          getFileHash(target, path, rootFile, hash, hashToReuse);
+          getFileHash(path, rootFile, hash, hashToReuse, stampStorage);
           return FileVisitResult.CONTINUE;
         }
       });
@@ -305,16 +306,13 @@ public final class BuildTargetSourcesState implements BuildListener {
       .getAsLong();
   }
 
-  private void getFileHash(@NotNull BuildTarget<?> target,
-                           @NotNull Path path,
-                           @NotNull Path rootFile,
-                           @NotNull LongArrayList hash,
-                           @NotNull HashStream64 hashToReuse) {
-    StampsStorage<? extends StampsStorage.Stamp> storage = projectStamps.getStampStorage();
-    assert storage instanceof HashStampStorage;
-    HashStampStorage fileStampStorage = (HashStampStorage)storage;
-    Long fileHash = fileStampStorage.getStoredFileHash(path, target);
-    if (fileHash == null) {
+  private static void getFileHash(@NotNull Path path,
+                                  @NotNull Path rootFile,
+                                  @NotNull LongArrayList hash,
+                                  @NotNull HashStream64 hashToReuse,
+                                  @NotNull HashStampStorage stampStorage) {
+    HashStamp stamp = stampStorage.getStoredFileStamp(path);
+    if (stamp == null) {
       return;
     }
 
@@ -325,7 +323,7 @@ public final class BuildTargetSourcesState implements BuildListener {
 
     hash.add(hashToReuse
                .reset()
-               .putLong(fileHash)
+               .putLong(stamp.hash)
                .putString(relativePath)
                .getAsLong());
   }
@@ -353,8 +351,8 @@ public final class BuildTargetSourcesState implements BuildListener {
     return new HashMap<>();
   }
 
-  private boolean reportStateUnavailable() {
-    return !PORTABLE_CACHES || projectStamps == null;
+  private static boolean reportStateUnavailable() {
+    return !PORTABLE_CACHES;
   }
 
   private static @NotNull String toRelative(@NotNull Path target, @NotNull Path rootPath) {

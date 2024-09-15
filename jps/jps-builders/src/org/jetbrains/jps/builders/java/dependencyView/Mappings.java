@@ -116,7 +116,7 @@ public class Mappings {
     createImplementation();
   }
 
-  public Mappings(final File rootDir, PathRelativizerService relativizer) throws IOException {
+  public Mappings(final File rootDir, @NotNull PathRelativizerService relativizer) throws IOException {
     myLock = new Object();
     myIsDelta = false;
     myChangedClasses = null;

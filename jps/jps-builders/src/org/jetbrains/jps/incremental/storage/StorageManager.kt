@@ -2,7 +2,8 @@
 package org.jetbrains.jps.incremental.storage
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
@@ -15,15 +16,22 @@ import kotlin.time.measureTime
 
 private val MV_STORE_CACHE_SIZE_IN_MB = System.getProperty("jps.new.storage.cache.size.mb", "64").toInt()
 
+private val LOG = logger<StorageManager>()
+
 @ApiStatus.Internal
 class StorageManager(@JvmField val file: Path, private val allowedCompactionTimeOnClose: Int) {
-  private val store = SynchronizedClearableLazy { createOrResetMvStore(file = file, readOnly = false, ::thisLogger) }
+  private val storeValue = SynchronizedClearableLazy {
+    LOG.debug { "Opening storage $file" }
+    createOrResetMvStore(file = file, readOnly = false, logSupplier = { LOG })
+  }
 
   fun open() {
-    store.value
+    storeValue.value
   }
 
   fun <K : Any, V : Any> openMap(name: String, keyType: DataType<K>, valueType: DataType<V>): MapHandle<K, V> {
+    LOG.debug { "Open map $name" }
+
     val mapBuilder = MVMap.Builder<K, V>()
     mapBuilder.setKeyType(keyType)
     mapBuilder.setValueType(valueType)
@@ -31,55 +39,71 @@ class StorageManager(@JvmField val file: Path, private val allowedCompactionTime
   }
 
   fun <K : Any, V : Any> openMap(name: String, mapBuilder: MVMap.Builder<K, V>): MapHandle<K, V> {
-    return MapHandle(openOrResetMap(store = store.value, name = name, mapBuilder = mapBuilder, logSupplier = ::thisLogger))
+    return MapHandle(openOrResetMap(store = storeValue.value, name = name, mapBuilder = mapBuilder, logSupplier = { LOG }))
   }
 
   /** Only if error occurred */
   fun forceClose() {
-    store.valueIfInitialized?.closeImmediately()
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Force closing storage $file", Throwable())
+    }
+
+    storeValue.valueIfInitialized?.let {
+      storeValue.drop()
+      it.closeImmediately()
+    }
   }
 
   fun close() {
-    store.valueIfInitialized?.let {
-      store.drop()
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Closing storage $file", Throwable())
+    }
+
+    storeValue.valueIfInitialized?.let {
+      storeValue.drop()
       val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "true").toBoolean()
       it.close(if (isCompactOnClose) 0 else allowedCompactionTimeOnClose)
       if (isCompactOnClose && Files.exists(file)) {
         val time = measureTime {
           MVStoreTool.compact(file.toString(), false)
         }
-        thisLogger().info("Compacted storage in $time")
+        LOG.info("Compacted storage in $time")
       }
     }
   }
 
   fun commit() {
-    store.valueIfInitialized?.tryCommit()
+    storeValue.valueIfInitialized?.tryCommit()
   }
 
   fun clearCache() {
     // set again to force to clear the cache (in kb)
-    store.valueIfInitialized?.cacheSize = MV_STORE_CACHE_SIZE_IN_MB * 1024
+    storeValue.valueIfInitialized?.cacheSize = MV_STORE_CACHE_SIZE_IN_MB * 1024
   }
 
   fun clean() {
-    store.valueIfInitialized?.let {
-      store.drop()
-      it.closeImmediately()
+    val store = storeValue.valueIfInitialized
+    if (store == null) {
       Files.deleteIfExists(file)
     }
-  }
-
-  fun removeStaleMaps(targetId: String, typeId: String) {
-    val store = store.value
-    for (mapName in store.mapNames) {
-      if (mapName.startsWith(getMapName(targetId = targetId, typeId = typeId, suffix = ""))) {
+    else {
+      // we cannot recreate the store if reference to map is already acquired - so, remove all maps
+      for (mapName in store.mapNames) {
         store.removeMap(mapName)
       }
     }
   }
 
-  fun getMapName(targetId: String, typeId: String, suffix: String): String = "$targetId|$typeId|$suffix"
+  fun removeMaps(targetId: String, typeId: String) {
+    val store = storeValue.value
+    for (mapName in store.mapNames) {
+      if (mapName.startsWith(getMapName(targetId = targetId, targetTypeId = typeId, suffix = ""))) {
+        store.removeMap(mapName)
+      }
+    }
+  }
+
+  fun getMapName(targetId: String, targetTypeId: String, suffix: String): String = "$targetId|$targetTypeId|$suffix"
 }
 
 @ApiStatus.Internal
@@ -142,9 +166,12 @@ private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Lo
   val store = MVStore.Builder()
     .fileName(file?.toAbsolutePath()?.toString())
     .backgroundExceptionHandler(storeErrorHandler)
-    // avoid extra thread - db maintainer should use coroutines
-    .autoCommitDisabled()
-    .autoCommitBufferSize(4096)
+    // We do not disable auto-commit as JPS doesn't use Kotlin coroutines, so it's okay to use a separate daemon thread.
+    // Additionally, we ensure that the write operation will not slow down any tasks,
+    // as the actual save will be done in a background thread.
+    // Use an 8MB threshold for auto-commit instead of the default 1MB -
+    // if writes are performed too often, do not save intermediate B-Tree pages to disk.
+    .autoCommitBufferSize(8192)
     .cacheSize(MV_STORE_CACHE_SIZE_IN_MB)
     .let {
       if (readOnly) it.readOnly() else it

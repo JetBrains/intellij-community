@@ -69,5 +69,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="mvstore" level="project" />
+    <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
   </component>
 </module>

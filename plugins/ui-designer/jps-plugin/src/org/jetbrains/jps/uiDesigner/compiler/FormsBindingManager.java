@@ -22,7 +22,7 @@ import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.incremental.java.FormsParsing;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.storage.OneToManyPathMapping;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -158,22 +158,24 @@ public final class FormsBindingManager extends FormsBuilder {
       formsToCompile.keySet().removeAll(alienForms);
 
       // form should be considered dirty if the class it is bound to is dirty
-      final OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
+      BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
       for (Map.Entry<File, ModuleBuildTarget> entry : filesToCompile.entrySet()) {
-        final File srcFile = entry.getKey();
-        final ModuleBuildTarget target = entry.getValue();
-        final Collection<String> boundForms = sourceToFormMap.getOutputs(srcFile.getPath());
-        if (boundForms != null) {
-          for (String formPath : boundForms) {
-            final File formFile = new File(formPath);
-            if (!excludes.isExcluded(formFile) && formFile.exists()) {
-              addBinding(srcFile, formFile, srcToForms);
-              holderBuilder.markDirtyFile(target, formFile);
+        File srcFile = entry.getKey();
+        ModuleBuildTarget target = entry.getValue();
+        Collection<String> boundForms = dataManager.getSourceToFormMap(target).getOutputs(srcFile.getPath());
+        if (boundForms == null) {
+          continue;
+        }
 
-              context.getScope().markIndirectlyAffected(target, formFile);
-              formsToCompile.put(formFile, target);
-              exitCode = ExitCode.OK;
-            }
+        for (String formPath : boundForms) {
+          File formFile = new File(formPath);
+          if (!excludes.isExcluded(formFile) && formFile.exists()) {
+            addBinding(srcFile, formFile, srcToForms);
+            holderBuilder.markDirtyFile(target, formFile);
+
+            context.getScope().markIndirectlyAffected(target, formFile);
+            formsToCompile.put(formFile, target);
+            exitCode = ExitCode.OK;
           }
         }
       }
