@@ -293,9 +293,10 @@ class JavaToJKTreeBuilder(
 
         private fun PsiPrefixExpression.toJK(): JKExpression {
             val expression = operand.toJK()
-            return when (operationSign.tokenType) {
-                JavaTokenType.TILDE -> expression.callOn(symbolProvider.provideMethodSymbol("kotlin.Int.inv"))
-                else -> JKPrefixExpression(expression, createOperator(operationSign.tokenType, type))
+            return if (operationSign.tokenType == JavaTokenType.TILDE) {
+                expression.callOn(symbolProvider.provideMethodSymbol("kotlin.Int.inv"), expressionType = JKJavaPrimitiveType.INT)
+            } else {
+                JKPrefixExpression(expression, createOperator(operationSign.tokenType, type))
             }
         }
 

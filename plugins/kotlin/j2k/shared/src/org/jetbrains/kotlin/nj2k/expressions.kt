@@ -311,6 +311,7 @@ fun JKExpression.callOn(
     symbol: JKMethodSymbol,
     arguments: List<JKExpression> = emptyList(),
     typeArguments: List<JKTypeElement> = emptyList(),
+    expressionType: JKType? = null,
     canMoveLambdaOutsideParentheses: Boolean = false
 ): JKQualifiedExpression = JKQualifiedExpression(
     this,
@@ -318,8 +319,10 @@ fun JKExpression.callOn(
         symbol,
         JKArgumentList(arguments.map { JKArgumentImpl(it) }),
         JKTypeArgumentList(typeArguments),
-        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
-    )
+        expressionType,
+        canMoveLambdaOutsideParentheses
+    ),
+    expressionType
 )
 
 val JKStatement.statements: List<JKStatement>

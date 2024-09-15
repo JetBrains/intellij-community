@@ -21,9 +21,10 @@ class AnyWithStringConcatenationConversion(context: NewJ2kConverterContext) : Re
             return recurse(
                 JKBinaryExpression(
                     element::left.detached().parenthesizeIfCompoundExpression()
-                        .callOn(symbolProvider.provideMethodSymbol("kotlin.Any.toString")),
+                        .callOn(symbolProvider.provideMethodSymbol("kotlin.Any.toString"), expressionType = typeFactory.types.string),
                     element::right.detached(),
-                    element.operator
+                    element.operator,
+                    typeFactory.types.string
                 ).withFormattingFrom(element)
             )
         }

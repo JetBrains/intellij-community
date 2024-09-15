@@ -628,7 +628,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     // limit is not a constant, need to make it non-negative
                     val limitArgument = arguments.arguments.last()::value.detached().callOn(
                         symbolProvider.provideMethodSymbol("kotlin.ranges.coerceAtLeast"),
-                        listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT))
+                        listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT)),
+                        expressionType = typeFactory.types.int
                     )
                     listOf(JKArgumentImpl(patternArgument), JKArgumentImpl(limitArgument))
                 }
@@ -656,7 +657,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     listOf(
                         JKLambdaExpression(
                             JKKtItExpression(typeFactory.types.string).callOn(
-                                symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
+                                symbolProvider.provideMethodSymbol("kotlin.text.isEmpty"),
+                                expressionType = typeFactory.types.boolean
                             ).asStatement()
                         )
                     ),
@@ -826,11 +828,13 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         } else {
             radix.callOn(
                 symbolProvider.provideMethodSymbol("kotlin.ranges.coerceIn"),
-                listOf(JKLiteralExpression("2", INT), JKLiteralExpression("36", INT))
+                listOf(JKLiteralExpression("2", INT), JKLiteralExpression("36", INT)),
+                expressionType = typeFactory.types.int
             )
         }
         val newArguments = listOf(JKArgumentImpl(newRadix))
-        receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.text.toString"), newArguments).withFormattingFrom(expression)
+        receiver.callOn(symbolProvider.provideMethodSymbol("kotlin.text.toString"), newArguments, expressionType = typeFactory.types.string)
+            .withFormattingFrom(expression)
     }
 
     private fun primitiveToStringWithRadixArgumentsFilter(arguments: List<JKExpression>): Boolean {
@@ -902,10 +906,14 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         return JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
     }
 
-    private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
-        JKQualifiedExpression(
+    private fun JKExpression.callOn(
+        symbol: JKMethodSymbol,
+        arguments: List<JKArgument> = emptyList(),
+        expressionType: JKType? = null
+    ) = JKQualifiedExpression(
             this.parenthesizeIfCompoundExpression(),
-            JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList())
+            JKCallExpressionImpl(symbol, JKArgumentList(arguments), JKTypeArgumentList(), expressionType),
+            expressionType
         )
 
     private fun isSystemOutCall(expression: JKExpression): Boolean =
