@@ -374,6 +374,16 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("booleanLiteralFalse.kt")
+        public void testBooleanLiteralFalse() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("booleanLiteralTrue.kt")
+        public void testBooleanLiteralTrue() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("collectionsAll_implicitReceiver.kt")
         public void testCollectionsAll_implicitReceiver() throws Exception {
             performTest();
@@ -399,6 +409,21 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("ifExpression.kt")
+        public void testIfExpression() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("isInstanceCheck.kt")
+        public void testIsInstanceCheck() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("isNotInstanceCheck.kt")
+        public void testIsNotInstanceCheck() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("negated.kt")
         public void testNegated() throws Exception {
             performTest();
@@ -411,6 +436,16 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
         @TestMetadata("number.kt")
         public void testNumber() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("operatorEQ.kt")
+        public void testOperatorEQ() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("operatorIN.kt")
+        public void testOperatorIN() throws Exception {
             performTest();
         }
 
