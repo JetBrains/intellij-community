@@ -3,8 +3,15 @@ package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -23,7 +30,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 
 @TestOnly
@@ -136,6 +142,32 @@ fun TestFixture<PsiDirectory>.psiFileFixture(
   initialized(file) {
     writeAction {
       file.delete()
+    }
+  }
+}
+
+@TestOnly
+fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ ->
+  val psiFile = this@editorFixture.init()
+  val project = psiFile.project
+  val file = psiFile.virtualFile
+  val editor = withContext(Dispatchers.EDT) {
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
+    writeIntentReadAction {
+      val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
+      requireNotNull(editor)
+    }
+  }
+  initialized(editor) {
+    withContext(Dispatchers.EDT) {
+      project.serviceAsync<FileEditorManager>().closeFile(file)
+    }
+    val editorHistoryManager = project.serviceAsync<EditorHistoryManager>()
+    readAction {
+      val virtualFile = PsiManager.getInstance(project).findFile(file)?.virtualFile
+      if (virtualFile != null) {
+        editorHistoryManager.removeFile(file)
+      }
     }
   }
 }
