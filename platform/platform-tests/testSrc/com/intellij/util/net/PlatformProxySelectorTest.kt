@@ -5,12 +5,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.SocketAddress
-import java.net.URI
+import java.net.*
 import java.nio.file.Path
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -135,5 +132,12 @@ class PlatformProxySelectorTest {
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://example.com")))
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://sub.example.com")))
     }
+  }
+
+  // IJPL-161812
+  @Test
+  fun testSelectNull() {
+    val proxySelector = JdkProxyProvider.getInstance().proxySelector
+    assertContentEquals(proxySelector.select(null), NO_PROXY_LIST)
   }
 }
