@@ -123,7 +123,12 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             val functionSymbol = call.partiallyAppliedSymbol.symbol
             val callableId = functionSymbol.callableId
             if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
-                for (overriddenSymbol in functionSymbol.allOverriddenSymbols) {
+                val symbolsToCheck = sequence {
+                    yield(functionSymbol)
+                    yieldAll(functionSymbol.allOverriddenSymbols)
+                }
+
+                for (overriddenSymbol in symbolsToCheck) {
                     val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableId]
                     if (mappedCallableId != null) {
                         return mappedCallableId

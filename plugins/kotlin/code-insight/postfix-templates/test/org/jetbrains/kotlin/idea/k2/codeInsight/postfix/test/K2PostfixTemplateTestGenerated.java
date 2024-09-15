@@ -374,6 +374,31 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("collectionsAll_implicitReceiver.kt")
+        public void testCollectionsAll_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_implicitReceiver.kt")
+        public void testCollectionsIsEmpty_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_implicitReceiver_listReceiver.kt")
+        public void testCollectionsIsEmpty_implicitReceiver_listReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsNotEmpty_implicitReceiver.kt")
+        public void testCollectionsIsNotEmpty_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsNone_implicitReceiver.kt")
+        public void testCollectionsNone_implicitReceiver() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("negated.kt")
         public void testNegated() throws Exception {
             performTest();
