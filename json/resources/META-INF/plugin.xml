@@ -12,6 +12,10 @@
     <a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON">JSON</a> and
     <a href="https://json-schema.org/overview/what-is-jsonschema">JSON Schema</a> languages
   ]]></description>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
 
   <!-- Copied from the json.split plugin descriptor, unable to run from sources otherwise -->
   <extensionPoints>
