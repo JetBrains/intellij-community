@@ -203,12 +203,7 @@ public final class BuildFSState {
 
   private @NotNull FilesDelta getDelta(BuildTarget<?> buildTarget) {
     synchronized (myDeltas) {
-      FilesDelta delta = myDeltas.get(buildTarget);
-      if (delta == null) {
-        delta = new FilesDelta();
-        myDeltas.put(buildTarget, delta);
-      }
-      return delta;
+      return myDeltas.computeIfAbsent(buildTarget, __ -> new FilesDelta());
     }
   }
 
