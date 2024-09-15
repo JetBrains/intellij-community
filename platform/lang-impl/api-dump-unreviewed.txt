@@ -3817,12 +3817,6 @@ f:com.intellij.codeInsight.daemon.impl.CommonProblemDescriptorWithUserData
 - replace(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Object):Z
 f:com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt
 - sf:getConfigureHighlightingLevelPopup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.ui.popup.JBPopup
-f:com.intellij.codeInsight.daemon.impl.ConfigureInspectionsAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.codeInsight.daemon.impl.DaemonCodeAnalysisStatus
 - a:isAllAnalysisFinished(com.intellij.psi.PsiFile):Z
 - a:isRunningOrPending():Z

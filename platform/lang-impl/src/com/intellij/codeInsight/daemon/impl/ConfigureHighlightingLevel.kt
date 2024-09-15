@@ -47,7 +47,7 @@ fun getConfigureHighlightingLevelPopup(context: DataContext): JBPopup? {
     }
   }
   group.add(Separator.create())
-  group.add(ConfigureInspectionsAction())
+  group.add(ActionManager.getInstance().getAction("ConfigureInspectionsAction"))
   val title = message("popup.title.configure.highlighting.level", psi.virtualFile.presentableName)
   return JBPopupFactory.getInstance().createActionGroupPopup(title, group, context, true, null, 100)
 }
