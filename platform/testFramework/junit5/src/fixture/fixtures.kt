@@ -9,6 +9,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -169,5 +170,14 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
         editorHistoryManager.removeFile(file)
       }
     }
+  }
+}
+
+@TestOnly
+fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T): TestFixture<T> = testFixture {
+  val disposable = Disposer.newDisposable()
+  epName.point.registerExtension(extension, disposable)
+  initialized(extension) {
+    Disposer.dispose(disposable)
   }
 }
