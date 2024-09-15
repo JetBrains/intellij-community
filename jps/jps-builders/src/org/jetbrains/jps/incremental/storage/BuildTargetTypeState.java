@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -12,6 +12,8 @@ import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,12 +22,13 @@ import java.util.concurrent.ConcurrentMap;
 public final class BuildTargetTypeState {
   private static final int VERSION = 1;
   private static final Logger LOG = Logger.getInstance(BuildTargetTypeState.class);
+  @SuppressWarnings("SSBasedInspection")
   private final Object2IntOpenHashMap<BuildTarget<?>> targetIds = new Object2IntOpenHashMap<>();
   private final List<Pair<String, Integer>> myStaleTargetIds;
   private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> myConfigurations;
   private final BuildTargetType<?> myTargetType;
   private final BuildTargetsState targetState;
-  private final File myTargetsFile;
+  private final Path myTargetsFile;
   private volatile long myAverageTargetBuildTimeMs = -1;
 
   public BuildTargetTypeState(BuildTargetType<?> targetType, BuildTargetsState state) {
@@ -33,18 +36,18 @@ public final class BuildTargetTypeState {
 
     myTargetType = targetType;
     targetState = state;
-    myTargetsFile = new File(state.getDataPaths().getTargetTypeDataRoot(targetType), "targets.dat");
-    myConfigurations = new ConcurrentHashMap<>(16, 0.75f, 1);
+    myTargetsFile = state.getDataPaths().getTargetTypeDataRoot(targetType).toPath().resolve( "targets.dat");
+    myConfigurations = new ConcurrentHashMap<>();
     myStaleTargetIds = new ArrayList<>();
     load();
   }
 
   private boolean load() {
-    if (!myTargetsFile.exists()) {
+    if (Files.notExists(myTargetsFile)) {
       return false;
     }
 
-    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myTargetsFile)))) {
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(myTargetsFile)))) {
       int version = input.readInt();
       int size = input.readInt();
       BuildTargetLoader<?> loader = myTargetType.createLoader(targetState.getModel());
@@ -72,8 +75,14 @@ public final class BuildTargetTypeState {
   }
 
   public synchronized void save() {
-    FileUtilRt.createParentDirs(myTargetsFile);
-    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myTargetsFile)))) {
+    try {
+      NioFiles.createParentDirectories(myTargetsFile);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(myTargetsFile)))) {
       output.writeInt(VERSION);
       output.writeInt(targetIds.size() + myStaleTargetIds.size());
       for (Object2IntMap.Entry<BuildTarget<?>> entry : targetIds.object2IntEntrySet()) {
