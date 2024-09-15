@@ -117,4 +117,14 @@ public interface PyAstStringElement extends PsiElement {
    * is allowed to have such prefix.
    */
   boolean isFormatted();
+  
+  /**
+   * Returns whether this string literal contains "t" or "T" prefix.
+   * <p>
+   * Template strings (t-strings) are a new feature in Python 3.14 for handling
+   * text templates with embedded expressions.
+   */
+  default boolean isTemplate() {
+    return StringUtil.containsIgnoreCase(getPrefix(), "t");
+  }
 }
