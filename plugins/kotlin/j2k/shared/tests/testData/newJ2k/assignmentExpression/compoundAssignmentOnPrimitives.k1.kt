@@ -1,3 +1,8 @@
+// ERROR: No set method providing array access
+// ERROR: No set method providing array access
+// ERROR: No set method providing array access
+// ERROR: No set method providing array access
+// ERROR: No set method providing array access
 class J {
     fun testField(c: Char, b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double) {
         var cc = 1.toChar()
