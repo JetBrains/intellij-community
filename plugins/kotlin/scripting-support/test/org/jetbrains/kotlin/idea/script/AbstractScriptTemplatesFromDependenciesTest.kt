@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
@@ -63,7 +63,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
                 ?.map { folder ->
                     ModuleRootManager.getInstance(module).modifiableModel.apply {
                         val vFile = VfsUtil.findFileByIoFile(folder, true)!!
-                        MarkRootActionBase.findContentEntry(this, vFile)?.addExcludeFolder(vFile)
+                        MarkRootsManager.findContentEntry(this, vFile)?.addExcludeFolder(vFile)
                         runWriteAction { this@apply.commit() }
                     }
 

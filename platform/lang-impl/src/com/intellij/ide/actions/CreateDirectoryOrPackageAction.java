@@ -4,7 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.ide.projectView.actions.MarkRootsManager;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -317,7 +317,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
           }
 
           ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          ContentEntry entry = MarkRootActionBase.findContentEntry(model, file);
+          ContentEntry entry = MarkRootsManager.findContentEntry(model, file);
           if (entry != null) {
             entry.addSourceFolder(file, rootType);
             model.commit();

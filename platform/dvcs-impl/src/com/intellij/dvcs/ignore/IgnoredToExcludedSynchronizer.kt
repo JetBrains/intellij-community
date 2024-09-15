@@ -4,7 +4,7 @@ package com.intellij.dvcs.ignore
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.projectView.actions.MarkExcludeRootAction
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -59,12 +59,16 @@ import javax.swing.JComponent
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()
 
-private val excludeAction = object : MarkExcludeRootAction() {
-  fun exclude(module: Module, dirs: Collection<VirtualFile>) = runInEdt { modifyRoots(module, dirs.toTypedArray()) }
+private fun exclude(module: Module, dirs: Collection<VirtualFile>) {
+  runInEdt {
+    MarkRootsManager.modifyRoots(module, dirs.toTypedArray()) { vFile, entry ->
+      entry.addExcludeFolder(vFile)
+    }
+  }
 }
 
 /**
- * Shows [EditorNotifications] in .ignore files with suggestion to exclude ignored directories.
+ * Shows [EditorNotifications] in .ignore files with a suggestion to exclude ignored directories.
  * Silently excludes them if [VcsConfiguration.MARK_IGNORED_AS_EXCLUDED] is enabled.
  *
  * Not internal service. Can be used directly in related modules.
@@ -180,7 +184,7 @@ private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFil
   }
 
   for ((module, ignoredDirs) in ignoredDirsByModule) {
-    excludeAction.exclude(module!!, ignoredDirs)
+    exclude(module!!, ignoredDirs)
   }
 }
 

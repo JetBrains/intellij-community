@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -210,7 +210,7 @@ class SourceFolderManagerImpl(
     val p = sourceFoldersToChange[model.module] ?: error("Value for the module ${model.module.name} should be available")
     for ((eventFile, sourceFolders) in p) {
       val (_, url, type, packagePrefix, generated) = sourceFolders
-      val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile) ?: model.addContentEntry(url, true)
+      val contentEntry = MarkRootsManager.findContentEntry(model, eventFile) ?: model.addContentEntry(url, true)
       val sourceFolder = contentEntry.addSourceFolder(url, type, true)
       if (!packagePrefix.isNullOrEmpty()) {
         sourceFolder.packagePrefix = packagePrefix

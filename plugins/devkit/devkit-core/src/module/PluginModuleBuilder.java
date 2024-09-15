@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.ide.projectView.actions.MarkRootsManager;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -55,7 +55,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     VirtualFile contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath);
     if (contentRoot == null) return;
 
-    ContentEntry contentEntry = MarkRootActionBase.findContentEntry(rootModel, contentRoot);
+    ContentEntry contentEntry = MarkRootsManager.findContentEntry(rootModel, contentRoot);
     if (contentEntry != null) {
       contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE);
     }

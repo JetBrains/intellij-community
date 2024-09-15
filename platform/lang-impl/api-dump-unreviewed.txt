@@ -15811,12 +15811,6 @@ f:com.intellij.ide.projectView.actions.LoadUnloadModulesAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.projectView.actions.MarkAsContentRootAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.projectView.actions.MarkExcludeRootAction
 - com.intellij.ide.projectView.actions.MarkRootActionBase
 - <init>():V
@@ -15853,6 +15847,10 @@ f:com.intellij.ide.projectView.actions.MarkRootActionBase$RootsSelection
 f:com.intellij.ide.projectView.actions.MarkRootGroup
 - com.intellij.ide.actions.NonTrivialActionGroup
 - <init>():V
+*f:com.intellij.ide.projectView.actions.MarkRootsManager
+- s:commitModel(com.intellij.openapi.module.Module,com.intellij.openapi.roots.ModifiableRootModel):V
+- s:findContentEntry(com.intellij.openapi.roots.ModuleRootModel,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.ContentEntry
+- s:modifyRoots(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile[],java.util.function.BiConsumer):V
 c:com.intellij.ide.projectView.actions.MarkSourceRootAction
 - com.intellij.ide.projectView.actions.MarkRootActionBase
 - <init>(org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
