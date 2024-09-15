@@ -103,8 +103,9 @@ public final class BuildOperations {
         context.clearNonIncrementalMark((ModuleBuildTarget)target);
       }
       StampsStorage<? extends StampsStorage.Stamp> stampStorage = projectDescriptor.getProjectStamps().getStampStorage();
+      long targetBuildStartStamp = context.getCompilationStartStamp(target);
       for (BuildRootDescriptor buildRootDescriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
-        marked |= fsState.markAllUpToDate(context, buildRootDescriptor, stampStorage);
+        marked |= fsState.markAllUpToDate(context, buildRootDescriptor, stampStorage, targetBuildStartStamp);
       }
     }
 

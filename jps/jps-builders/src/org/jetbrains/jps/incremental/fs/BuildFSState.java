@@ -389,11 +389,11 @@ public final class BuildFSState {
    */
   public boolean markAllUpToDate(@NotNull CompileContext context,
                                  @NotNull BuildRootDescriptor buildRootDescriptor,
-                                 @NotNull StampsStorage stampsStorage) throws IOException {
+                                 @NotNull StampsStorage stampsStorage,
+                                 long targetBuildStartStamp) throws IOException {
     boolean marked = false;
     final BuildTarget<?> target = buildRootDescriptor.getTarget();
     final FilesDelta delta = getDelta(target);
-    final long targetBuildStartStamp = context.getCompilationStartStamp(target);
     // prevent modifications to the data structure from external FS events
     delta.lockData();
     try {
