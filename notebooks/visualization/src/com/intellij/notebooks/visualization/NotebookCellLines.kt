@@ -4,6 +4,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
 import com.intellij.util.keyFMap.KeyFMap
@@ -67,19 +68,23 @@ interface NotebookCellLines {
 
     fun getContentRange(editor: Editor): TextRange {
       val document = editor.document
+      return getContentRange(document)
+    }
+
+    private fun getContentRange(document: Document): TextRange {
       val startOffset = document.getLineStartOffset(contentLines.first)
       val endOffset = document.getLineEndOffset(contentLines.last)
       return TextRange(startOffset, endOffset)
     }
 
     fun getContentText(editor: Editor): String {
-      val range = getContentRange(editor)
-      return editor.document.getText(range)
+      val document = editor.document
+      return getContentText(document)
     }
 
-    fun getCellText(editor: Editor): String {
-      val range = getCellRange(editor)
-      return editor.document.getText(range)
+     fun getContentText(document: Document): @NlsSafe String {
+      val range = getContentRange(document)
+      return document.getText(range)
     }
 
 
