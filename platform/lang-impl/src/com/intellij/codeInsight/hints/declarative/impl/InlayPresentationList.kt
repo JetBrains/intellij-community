@@ -1,20 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.HintFontSize
 import com.intellij.codeInsight.hints.declarative.HintMarginPadding
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.LightweightHint
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -32,8 +41,8 @@ import java.awt.geom.Rectangle2D
  */
 @ApiStatus.Internal
 class InlayPresentationList(
-  @ApiStatus.Internal var model: InlayData
-) {
+  @ApiStatus.Internal var model: InlayData,
+) : DeclarativeHintView {
   private var entries: Array<InlayPresentationEntry> = model.tree.buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
   private var size: Float = Float.MAX_VALUE
@@ -66,14 +75,49 @@ class InlayPresentationList(
     return sums
   }
 
-  fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
+  override fun handleLeftClick(
+    e: EditorMouseEvent,
+    pointInsideInlay: Point,
+    fontMetricsStorage: InlayTextMetricsStorage,
+    controlDown: Boolean,
+  ) {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return
     SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
       entry.handleClick(e, this, controlDown)
     }
   }
 
-  private val marginAndPadding: Pair<Int, Int> = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!
+  override fun handleRightClick(
+    e: EditorMouseEvent,
+    pointInsideInlay: Point,
+    fontMetricsStorage: InlayTextMetricsStorage,
+  ) {
+    val project = e.editor.project ?: return
+    val document = e.editor.document
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+    val providerId = model.providerId
+    val providerInfo = InlayHintsProviderFactory.getProviderInfo(psiFile.language, providerId) ?: return
+    val providerName = providerInfo.providerName
+
+    val inlayMenu: AnAction = ActionManager.getInstance().getAction("InlayMenu")
+    val inlayMenuActionGroup = inlayMenu as ActionGroup
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu("InlayMenuPopup", inlayMenuActionGroup)
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.PSI_FILE, psiFile)
+      .add(CommonDataKeys.EDITOR, e.editor)
+      .add(InlayHintsProvider.PROVIDER_ID, providerId)
+      .add(InlayHintsProvider.PROVIDER_NAME, providerName)
+      .add(InlayHintsProvider.INLAY_PAYLOADS, model.payloads?.associate { it.payloadName to it.payload })
+      .build()
+    popupMenu.setDataContext {
+      dataContext
+    }
+
+    JBPopupMenu.showByEvent(e.mouseEvent, popupMenu.component)
+  }
+
+  private val marginAndPadding: Pair<Int, Int> get() = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!
   private fun getTextWidth(storage: InlayTextMetricsStorage): Int = getPartialWidthSums(storage).lastOrNull() ?: 0
   private fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
     val (_, padding) = marginAndPadding
@@ -86,40 +130,47 @@ class InlayPresentationList(
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {
-    val x = pointInsideInlay.x
     val partialWidthSums = getPartialWidthSums(fontMetricsStorage)
     val (margin, padding) = marginAndPadding
-    var previousRightBound = margin + padding
+    val initialLeftBound = margin + padding
+    val x = pointInsideInlay.x - initialLeftBound
+    var previousWidthSum = 0
     for ((index, entry) in entries.withIndex()) {
-      val leftBound = previousRightBound
+      val leftBound = previousWidthSum
       val rightBound = partialWidthSums[index]
 
       if (x in leftBound..<rightBound) {
         return entry
       }
-      previousRightBound = rightBound
+      previousWidthSum = partialWidthSums[index]
     }
     return null
   }
 
-  fun handleHover(e: EditorMouseEvent): LightweightHint? {
+  override fun handleHover(
+    e: EditorMouseEvent,
+    pointInsideInlay: Point,
+    fontMetricsStorage: InlayTextMetricsStorage,
+  ): LightweightHint? {
     val tooltip = model.tooltip
     return if (tooltip == null) null
     else PresentationFactory(e.editor).showTooltip(e.mouseEvent, tooltip)
   }
 
   @RequiresEdt
-  fun updateModel(newModel: InlayData) {
+  override fun updateModel(newModel: InlayData) {
     updateStateTree(newModel.tree, this.model.tree, 0, 0)
     this.model = newModel
     this.entries = newModel.tree.buildPresentationEntries()
     this._partialWidthSums = null
   }
 
-  private fun updateStateTree(treeToUpdate: TinyTree<Any?>,
-                              treeToUpdateFrom: TinyTree<Any?>,
-                              treeToUpdateIndex: Byte,
-                              treeToUpdateFromIndex: Byte) {
+  private fun updateStateTree(
+    treeToUpdate: TinyTree<Any?>,
+    treeToUpdateFrom: TinyTree<Any?>,
+    treeToUpdateIndex: Byte,
+    treeToUpdateFromIndex: Byte,
+  ) {
     // we want to preserve the structure
     val treeToUpdateTag = treeToUpdate.getBytePayload(treeToUpdateIndex)
     val treeToUpdateFromTag = treeToUpdateFrom.getBytePayload(treeToUpdateFromIndex)
@@ -140,7 +191,7 @@ class InlayPresentationList(
     }
   }
 
-  fun toggleTreeState(parentIndexToSwitch: Byte) {
+  internal fun toggleTreeState(parentIndexToSwitch: Byte) {
     val tree = model.tree
     when (val payload = tree.getBytePayload(parentIndexToSwitch)) {
       InlayTags.COLLAPSIBLE_LIST_EXPLICITLY_COLLAPSED_TAG, InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_COLLAPSED_TAG -> {
@@ -156,14 +207,20 @@ class InlayPresentationList(
     updateModel(this.model)
   }
 
-  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int = getFullWidth(textMetricsStorage)
+  @ApiStatus.Internal
+  override fun calcWidthInPixels(inlay: Inlay<*>, textMetricsStorage: InlayTextMetricsStorage): Int = getFullWidth(textMetricsStorage)
 
-  fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
+  override fun paint(
+    inlay: Inlay<*>,
+    g: Graphics2D,
+    targetRegion: Rectangle2D,
+    textAttributes: TextAttributes,
+    storage: InlayTextMetricsStorage,
+  ) {
     val editor = inlay.editor as EditorImpl
-    val storage = InlayHintsUtils.getTextMetricStorage(editor)
     var xOffset = 0
     val metrics = getMetrics(storage)
-    val gap =  if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
+    val gap = if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
     val hintFormat = model.hintFormat
     val attrKey = when (hintFormat.colorKind) {
       HintColorKind.Default -> DefaultLanguageHighlighterColors.INLAY_DEFAULT
@@ -185,7 +242,8 @@ class InlayPresentationList(
 
 
     g.withTranslated(margin + padding + targetRegion.x, targetRegion.y) {
-      for (entry in entries) {
+      val partialWidthSums = getPartialWidthSums(storage)
+      for ((index, entry) in entries.withIndex()) {
         val hoveredWithCtrl = entry.isHoveredWithCtrl
         val finalAttrs = if (hoveredWithCtrl) {
           val refAttrs = inlay.editor.colorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
@@ -199,7 +257,7 @@ class InlayPresentationList(
         g.withTranslated(xOffset, 0) {
           entry.render(g, metrics, finalAttrs, model.disabled, gap, targetRegion.height.toInt(), editor)
         }
-        xOffset += entry.computeWidth(metrics)
+        xOffset = partialWidthSums[index]
       }
     }
   }
@@ -212,7 +270,8 @@ class InlayPresentationList(
     return entries
   }
 
-  fun getMouseArea(pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage): InlayMouseArea? {
+  @ApiStatus.Internal
+  override fun getMouseArea(pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage): InlayMouseArea? {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return null
     return entry.clickArea
   }

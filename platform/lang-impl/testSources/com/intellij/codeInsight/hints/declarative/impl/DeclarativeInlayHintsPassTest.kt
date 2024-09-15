@@ -3,6 +3,8 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -38,7 +40,60 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
     assertEquals(listOf(TextInlayPresentationEntry("inlay text", clickArea = null)), getInlays().single().getEntries())
   }
 
-  private fun Inlay<out DeclarativeInlayRenderer>.getEntries(): List<InlayPresentationEntry> {
+  @Test
+  fun testAddAndUpdateAndRemoveAboveLineInlay() {
+    myFixture.configureByText("test.txt", "my content of file")
+    var inlayText = "first"
+    var inlayAdded = false
+    val passInfo = InlayProviderPassInfo(object : InlayHintsProvider {
+      override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
+        return object : SharedBypassCollector {
+          override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+            if (!inlayAdded) {
+              inlayAdded = true
+              sink.addPresentation(AboveLineIndentedPosition(0), hintFormat = HintFormat.default) {
+                text(inlayText)
+              }
+            }
+          }
+        }
+      }
+    }, "test.inlay.provider", emptyMap())
+    fun runPass(passInfo: InlayProviderPassInfo, block: (List<Inlay<out DeclarativeIndentedBlockInlayRenderer>>) -> Unit) {
+      val pass = createPass(passInfo, false)
+      collectAndApplyPass(pass)
+      block(getBlockInlays())
+    }
+
+    // add inlay
+    runPass(passInfo) { inlays ->
+      assertSize(1, inlays)
+      val inlay = inlays.single()
+      assertEquals(
+        listOf(TextInlayPresentationEntry("first", clickArea = null)),
+        inlay.getEntries()
+      )
+    }
+
+    // update inlay
+    inlayText = "second"
+    inlayAdded = false
+    runPass(passInfo) { inlays ->
+      assertSize(1, inlays)
+      val inlay = inlays.single()
+      assertEquals(
+        listOf(TextInlayPresentationEntry("second", clickArea = null)),
+        inlay.getEntries()
+      )
+    }
+
+    // remove inlay
+    runPass(passInfo) { inlays ->
+      assertSize(0, inlays)
+    }
+  }
+
+  private fun Inlay<out DeclarativeInlayRendererBase>.getEntries(): List<InlayPresentationEntry> {
     val presentationList = renderer.presentationList
     return presentationList.getEntries().toList()
   }
@@ -143,7 +198,7 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
     addAndCheckInlayWithTooltip("2")
   }
 
-  private fun createPass(providerInfo: InlayProviderPassInfo, isProviderDisabled: Boolean=false): DeclarativeInlayHintsPass {
+  private fun createPass(providerInfo: InlayProviderPassInfo, isProviderDisabled: Boolean = false): DeclarativeInlayHintsPass {
     return ActionUtil.underModalProgress(project, "") {
       DeclarativeInlayHintsPass(myFixture.file, myFixture.editor, listOf(providerInfo), isProviderDisabled, isProviderDisabled)
     }
@@ -174,6 +229,11 @@ class DeclarativeInlayHintsPassTest : LightPlatformCodeInsightFixture4TestCase()
   private fun getInlays(): List<Inlay<out DeclarativeInlayRenderer>> {
     val editor = myFixture.editor
     return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength - 1, DeclarativeInlayRenderer::class.java)
+  }
+
+  private fun getBlockInlays(): List<Inlay<out DeclarativeIndentedBlockInlayRenderer>> {
+    val editor = myFixture.editor
+    return editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength - 1, DeclarativeIndentedBlockInlayRenderer::class.java)
   }
 
   private fun collectAndApplyPass(pass: DeclarativeInlayHintsPass) {

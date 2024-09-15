@@ -28,7 +28,7 @@ data class InlayData(
 
 internal object InlayDataExternalizer : DataExternalizer<InlayData> {
   // increment on format changed
-  private const val SERDE_VERSION = 7
+  private const val SERDE_VERSION = 8
 
   private val treeExternalizer: PresentationTreeExternalizer = PresentationTreeExternalizer
 
@@ -70,6 +70,12 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
         writeINT(output, 1)
         writeINT(output, position.line)
       }
+      is AboveLineIndentedPosition -> {
+        writeINT(output, 2)
+        writeINT(output, position.offset)
+        writeINT(output, position.verticalPriority)
+        writeINT(output, position.priority)
+      }
     }
   }
 
@@ -83,6 +89,11 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
     } else if (type == 1) {
       val line = readINT(input)
       return EndOfLinePosition(line)
+    } else if (type == 2) {
+      val offset = readINT(input)
+      val verticalPriority = readINT(input)
+      val priority = readINT(input)
+      return AboveLineIndentedPosition(offset, verticalPriority, priority)
     }
     throw IllegalStateException("unknown inlay position type: $type")
   }

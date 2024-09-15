@@ -4,8 +4,12 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
+import com.intellij.codeInsight.hints.declarative.impl.views.IndentedDeclarativeHintView
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -76,12 +80,16 @@ class DeclarativeInlayHintsPass(
       val document = editor.document
       val existingInlineElements = inlayModel
         .getInlineElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
-        .filter { sourceId == it.renderer.getSourceId() }
+        .filter { sourceId == it.renderer.sourceId }
       val existingEolElements = inlayModel
         .getAfterLineEndElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
-        .filter { sourceId == it.renderer.getSourceId() }
+        .filter { sourceId == it.renderer.sourceId }
+      val existingBlockElements = inlayModel
+        .getBlockElementsInRange(0, document.textLength, DeclarativeIndentedBlockInlayRenderer::class.java)
+        .filter { sourceId == it.renderer.sourceId }
       val offsetToExistingInlineElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
       val offsetToExistingEolElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
+      val offsetToExistingBlockElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeIndentedBlockInlayRenderer>>>() // either inlay or list of inlays
       for (inlineElement in existingInlineElements) {
         val inlaysAtOffset = offsetToExistingInlineElements.computeIfAbsent(inlineElement.offset, IntFunction { SmartList() })
         inlaysAtOffset.add(inlineElement)
@@ -89,6 +97,10 @@ class DeclarativeInlayHintsPass(
       for (eolElement in existingEolElements) {
         val inlaysAtOffset = offsetToExistingEolElements.computeIfAbsent(eolElement.offset, IntFunction { SmartList() })
         inlaysAtOffset.add(eolElement)
+      }
+      for (blockElement in existingBlockElements) {
+        val inlaysAtOffset = offsetToExistingBlockElements.computeIfAbsent(blockElement.offset, IntFunction { SmartList() })
+        inlaysAtOffset.add(blockElement)
       }
       val storage = InlayHintsUtils.getTextMetricStorage(editor)
       for (inlayData in inlayDatas) {
@@ -101,9 +113,13 @@ class DeclarativeInlayHintsPass(
             val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
             if (!updated) {
               val renderer = DeclarativeInlayRenderer(inlayData, storage, inlayData.providerId, sourceId)
-              val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
+              val properties = InlayProperties()
+                .priority(position.priority)
+                .relatesToPrecedingText(true)
+                .disableSoftWrapping(false)
+              val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, properties, renderer)
               if (inlay != null) {
-                renderer.setInlay(inlay)
+                renderer.initInlay(inlay)
               }
             }
           }
@@ -113,7 +129,18 @@ class DeclarativeInlayHintsPass(
               val renderer = DeclarativeInlayRenderer(inlayData, storage, inlayData.providerId, sourceId)
               val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
               if (inlay != null) {
-                renderer.setInlay(inlay)
+                renderer.initInlay(inlay)
+              }
+            }
+          }
+          is AboveLineIndentedPosition -> {
+            val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingBlockElements, inlayData, position.offset)
+            if (!updated) {
+              val (_, anchorOffset) = IndentedDeclarativeHintView.calcIndentAnchorOffset(position.offset, document)
+              val renderer = DeclarativeIndentedBlockInlayRenderer(inlayData, storage, inlayData.providerId, sourceId, anchorOffset)
+              val inlay = inlayModel.addBlockElement(position.offset, false, true, position.verticalPriority, renderer)
+              if (inlay != null) {
+                renderer.initInlay(inlay)
               }
             }
           }
@@ -122,11 +149,12 @@ class DeclarativeInlayHintsPass(
 
       deleteNotPreservedInlays(offsetToExistingInlineElements)
       deleteNotPreservedInlays(offsetToExistingEolElements)
+      deleteNotPreservedInlays(offsetToExistingBlockElements)
 
       DeclarativeInlayHintsPassFactory.updateModificationStamp(editor, project)
     }
 
-    private fun deleteNotPreservedInlays(offsetToExistingInlays: Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>) {
+    private fun deleteNotPreservedInlays(offsetToExistingInlays: Int2ObjectOpenHashMap<out SmartList<out Inlay<*>>>) {
       for (inlays in offsetToExistingInlays.values) {
         for (inlay in inlays) {
           Disposer.dispose(inlay)
@@ -134,9 +162,11 @@ class DeclarativeInlayHintsPass(
       }
     }
 
-    private fun tryUpdateAndDeleteFromListInlay(offsetToExistingInlays: Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>,
-                                                inlayData: InlayData,
-                                                offset: Int): Boolean {
+    private fun tryUpdateAndDeleteFromListInlay(
+      offsetToExistingInlays: Int2ObjectOpenHashMap<out SmartList<out Inlay<out DeclarativeInlayRendererBase>>>,
+      inlayData: InlayData,
+      offset: Int,
+    ): Boolean {
       val inlays = offsetToExistingInlays.get(offset)
       if (inlays == null) return false
       val iterator = inlays.iterator()

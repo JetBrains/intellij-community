@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Collects inlays during construction.
  */
@@ -41,8 +43,14 @@ interface InlayTreeSink {
  */
 class InlayPayload(val payloadName: String, val payload: InlayActionPayload)
 
-sealed interface InlayPosition
+sealed interface InlayPosition {
+  @get:ApiStatus.Internal
+  val priority: Int
+}
 
-class InlineInlayPosition(val offset: Int, val relatedToPrevious: Boolean, val priority: Int = 0) : InlayPosition
+class InlineInlayPosition(val offset: Int, val relatedToPrevious: Boolean, override val priority: Int = 0) : InlayPosition
 
-class EndOfLinePosition(val line: Int) : InlayPosition
+class EndOfLinePosition @JvmOverloads constructor(val line: Int, override val priority: Int = 0) : InlayPosition
+
+@ApiStatus.Experimental
+class AboveLineIndentedPosition(val offset: Int, val verticalPriority: Int = 0, override val priority: Int = 0) : InlayPosition

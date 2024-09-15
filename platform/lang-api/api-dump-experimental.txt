@@ -386,6 +386,13 @@
 - hashCode():I
 *f:com.intellij.codeInsight.hints.SettingsKey$Companion
 - f:getFullId(java.lang.String,java.lang.String):java.lang.String
+*f:com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
+- com.intellij.codeInsight.hints.declarative.InlayPosition
+- <init>(I,I,I):V
+- b:<init>(I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getOffset():I
+- getPriority():I
+- f:getVerticalPriority():I
 *:com.intellij.codeInsight.hints.presentation.InlayPresentation
 - com.intellij.codeInsight.hints.presentation.InputHandler
 - a:addListener(com.intellij.codeInsight.hints.presentation.PresentationListener):V

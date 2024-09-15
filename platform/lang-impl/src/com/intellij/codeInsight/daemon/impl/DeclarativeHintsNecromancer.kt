@@ -6,6 +6,8 @@ import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -39,12 +41,26 @@ private class DeclarativeHintsNecromancer(
 
   override fun turnIntoZombie(recipe: TurningRecipe): DeclarativeHintsZombie? {
     if (isDeclarativeEnabled() && isCacheEnabled()) {
-      val declarativeHints = recipe.editor.getInlayModel().getInlineElementsInRange(
+      val inlineHints = recipe.editor.getInlayModel().getInlineElementsInRange(
         0,
         recipe.editor.getDocument().textLength,
         DeclarativeInlayRenderer::class.java,
       )
-      return DeclarativeHintsZombie(inlayDataList(declarativeHints))
+      val eolHints = recipe.editor.getInlayModel().getAfterLineEndElementsInRange(
+        0,
+        recipe.editor.getDocument().textLength,
+        DeclarativeInlayRenderer::class.java,
+      )
+      val blockHints = recipe.editor.getInlayModel().getBlockElementsInRange(
+        0,
+        recipe.editor.getDocument().textLength,
+        DeclarativeIndentedBlockInlayRenderer::class.java,
+      )
+      val inlayDataList = ArrayList<InlayData>(inlineHints.size + eolHints.size + blockHints.size)
+      inlineHints.mapTo(inlayDataList) { it.renderer.toInlayData() }
+      eolHints.mapTo(inlayDataList) { it.renderer.toInlayData() }
+      blockHints.mapTo(inlayDataList) { it.renderer.toInlayData() }
+      return DeclarativeHintsZombie(inlayDataList)
     } else {
       return null
     }
@@ -81,10 +97,6 @@ private class DeclarativeHintsNecromancer(
         }
       }
     }
-  }
-
-  private fun inlayDataList(declarativeHints: List<Inlay<out DeclarativeInlayRenderer>>): List<InlayData> {
-    return declarativeHints.map { inlay -> inlay.renderer.toInlayData() }
   }
 
   private fun initZombiePointers(project: Project, file: VirtualFile, tree: TinyTree<Any?>, index: Byte = 0) {
