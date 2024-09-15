@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -400,7 +401,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         receiverType: KaType,
         propertyName: String
     ): Boolean {
-        val allOverriddenSymbols = listOf(symbol) + symbol.allOverriddenSymbols
+        val allOverriddenSymbols = symbol.allOverriddenSymbolsWithSelf.toList()
         if (functionOriginateNotFromJava(allOverriddenSymbols)) return false
         if (functionNameIsInNotPropertiesList(symbol, callExpression)) return false
 

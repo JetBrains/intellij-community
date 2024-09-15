@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -111,6 +112,6 @@ internal class ReplaceGetOrSetInspection :
     context(KaSession)
     private fun KaNamedFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
-        return hasOperatorKeyword() || allOverriddenSymbols.any { it.hasOperatorKeyword() }
+        return allOverriddenSymbolsWithSelf.any { it.hasOperatorKeyword() }
     }
 }

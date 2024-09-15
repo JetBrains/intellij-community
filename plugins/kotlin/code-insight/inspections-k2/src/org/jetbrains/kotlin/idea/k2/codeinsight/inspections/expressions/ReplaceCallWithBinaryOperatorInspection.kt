@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -204,11 +205,7 @@ private val KOTLIN_ANY_EQUALS_CALLABLE_ID = CallableId(StandardClassIds.Any, Nam
 
 context(KaSession)
 private fun KaCallableSymbol.isAnyEquals(): Boolean {
-    val overriddenSymbols = sequence {
-        yield(this@isAnyEquals)
-        yieldAll(this@isAnyEquals.allOverriddenSymbols)
-    }
-    return overriddenSymbols.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
+    return allOverriddenSymbolsWithSelf.any { it.callableId == KOTLIN_ANY_EQUALS_CALLABLE_ID }
 }
 
 context(KaSession)

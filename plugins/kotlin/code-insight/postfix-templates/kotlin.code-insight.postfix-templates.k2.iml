@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
   </component>
 </module>

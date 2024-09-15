@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -108,10 +109,8 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             ?.type
             ?: return null
 
-        val symbolWithOverrides = sequence {
-            yield(partiallyAppliedSymbol.symbol)
-            yieldAll(partiallyAppliedSymbol.symbol.allOverriddenSymbols)
-        }
+        val symbolWithOverrides = partiallyAppliedSymbol.symbol.allOverriddenSymbolsWithSelf
+
         val replaceableCall = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
             when (this) {
                 is KaVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableId]

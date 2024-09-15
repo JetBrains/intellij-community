@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -123,12 +124,7 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             val functionSymbol = call.partiallyAppliedSymbol.symbol
             val callableId = functionSymbol.callableId
             if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
-                val symbolsToCheck = sequence {
-                    yield(functionSymbol)
-                    yieldAll(functionSymbol.allOverriddenSymbols)
-                }
-
-                for (overriddenSymbol in symbolsToCheck) {
+                for (overriddenSymbol in functionSymbol.allOverriddenSymbolsWithSelf) {
                     val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableId]
                     if (mappedCallableId != null) {
                         return mappedCallableId

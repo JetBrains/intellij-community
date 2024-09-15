@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -54,7 +55,7 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
     context(KaSession)
     override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val allOverriddenSymbols = listOf(call.symbol) + call.symbol.allOverriddenSymbols
+        val allOverriddenSymbols = call.symbol.allOverriddenSymbolsWithSelf
         return allOverriddenSymbols.any { it.callableId == TO_STRING_CALLABLE_ID }
             .asUnit
     }
