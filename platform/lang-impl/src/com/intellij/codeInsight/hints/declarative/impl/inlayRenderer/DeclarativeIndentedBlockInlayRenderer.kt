@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.declarative.impl.inlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.views.IndentedDeclarativeHintView
+import com.intellij.codeInsight.hints.declarative.impl.views.SingleDeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Inlay
 import org.jetbrains.annotations.ApiStatus
@@ -18,10 +19,10 @@ class DeclarativeIndentedBlockInlayRenderer(
   indentAnchorOffsetHint: Int,
 ) : DeclarativeInlayRendererBase(providerId, sourceId, fontMetricsStorage) {
 
-  override val view = IndentedDeclarativeHintView(InlayPresentationList(inlayData), indentAnchorOffsetHint)
+  override val view = IndentedDeclarativeHintView(SingleDeclarativeHintView(inlayData), indentAnchorOffsetHint)
 
   @get:TestOnly
-  override val presentationList: InlayPresentationList get() = view.view
+  override val presentationList: InlayPresentationList get() = view.view.presentationList
 
   override fun initInlay(inlay: Inlay<out DeclarativeInlayRendererBase>) {
     super.initInlay(inlay)

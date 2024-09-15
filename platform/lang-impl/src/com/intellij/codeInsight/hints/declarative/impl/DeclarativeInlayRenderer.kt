@@ -2,20 +2,21 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
+import com.intellij.codeInsight.hints.declarative.impl.views.SingleDeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 class DeclarativeInlayRenderer(
-  model: InlayData,
+  inlayData: InlayData,
   fontMetricsStorage: InlayTextMetricsStorage,
   providerId: String,
   sourceId: String,
 ) : DeclarativeInlayRendererBase(providerId, sourceId, fontMetricsStorage) {
 
-  override val view: InlayPresentationList = InlayPresentationList(model)
+  override val view = SingleDeclarativeHintView(inlayData)
 
   @get:TestOnly
-  override val presentationList: InlayPresentationList get() = view
+  override val presentationList: InlayPresentationList get() = view.presentationList
 }

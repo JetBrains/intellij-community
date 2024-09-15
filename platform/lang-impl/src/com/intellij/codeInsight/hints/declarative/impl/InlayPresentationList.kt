@@ -1,11 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.HintColorKind
-import com.intellij.codeInsight.hints.declarative.HintFontSize
-import com.intellij.codeInsight.hints.declarative.HintMarginPadding
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
@@ -42,6 +38,7 @@ import java.awt.geom.Rectangle2D
 @ApiStatus.Internal
 class InlayPresentationList(
   @ApiStatus.Internal var model: InlayData,
+  private val onStateUpdated: () -> Unit
 ) : DeclarativeHintView {
   private var entries: Array<InlayPresentationEntry> = model.tree.buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
@@ -118,21 +115,18 @@ class InlayPresentationList(
   }
 
   private val marginAndPadding: Pair<Int, Int> get() = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!
+  internal val margin: Int get() = marginAndPadding.first
+  private val padding: Int get() = marginAndPadding.second
   private fun getTextWidth(storage: InlayTextMetricsStorage): Int = getPartialWidthSums(storage).lastOrNull() ?: 0
-  private fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
-    val (_, padding) = marginAndPadding
-    return 2 * padding + getTextWidth(storage)
-  }
 
-  private fun getFullWidth(storage: InlayTextMetricsStorage): Int {
-    val (margin, padding) = marginAndPadding
-    return 2 * (margin + padding) + getTextWidth(storage)
+  // content and padding
+  internal fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
+    return 2 * padding + getTextWidth(storage)
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {
     val partialWidthSums = getPartialWidthSums(fontMetricsStorage)
-    val (margin, padding) = marginAndPadding
-    val initialLeftBound = margin + padding
+    val initialLeftBound = padding
     val x = pointInsideInlay.x - initialLeftBound
     var previousWidthSum = 0
     for ((index, entry) in entries.withIndex()) {
@@ -163,6 +157,7 @@ class InlayPresentationList(
     this.model = newModel
     this.entries = newModel.tree.buildPresentationEntries()
     this._partialWidthSums = null
+    onStateUpdated()
   }
 
   private fun updateStateTree(
@@ -208,7 +203,7 @@ class InlayPresentationList(
   }
 
   @ApiStatus.Internal
-  override fun calcWidthInPixels(inlay: Inlay<*>, textMetricsStorage: InlayTextMetricsStorage): Int = getFullWidth(textMetricsStorage)
+  override fun calcWidthInPixels(inlay: Inlay<*>, textMetricsStorage: InlayTextMetricsStorage): Int = getBoxWidth(textMetricsStorage)
 
   override fun paint(
     inlay: Inlay<*>,
@@ -228,20 +223,19 @@ class InlayPresentationList(
       HintColorKind.TextWithoutBackground -> DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
     }
     val attrs = editor.colorsScheme.getAttributes(attrKey)
-    val (margin, padding) = marginAndPadding
     g.withTranslated(targetRegion.x, targetRegion.y) {
       if (hintFormat.colorKind.hasBackground()) {
         val rectHeight = targetRegion.height.toInt() - gap * 2
         val config = GraphicsUtil.setupAAPainting(g)
         GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA)
         g.color = attrs.backgroundColor ?: textAttributes.backgroundColor
-        g.fillRoundRect(margin, gap, getBoxWidth(storage), rectHeight, ARC_WIDTH, ARC_HEIGHT)
+        g.fillRoundRect(0, gap, getBoxWidth(storage), rectHeight, ARC_WIDTH, ARC_HEIGHT)
         config.restore()
       }
     }
 
 
-    g.withTranslated(margin + padding + targetRegion.x, targetRegion.y) {
+    g.withTranslated(padding + targetRegion.x, targetRegion.y) {
       val partialWidthSums = getPartialWidthSums(storage)
       for ((index, entry) in entries.withIndex()) {
         val hoveredWithCtrl = entry.isHoveredWithCtrl
@@ -270,7 +264,6 @@ class InlayPresentationList(
     return entries
   }
 
-  @ApiStatus.Internal
   override fun getMouseArea(pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage): InlayMouseArea? {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return null
     return entry.clickArea

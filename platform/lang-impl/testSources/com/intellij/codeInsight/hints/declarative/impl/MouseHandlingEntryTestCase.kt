@@ -175,7 +175,12 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val state = buildState {
       initialStateBuilder()
     }
-    val presentationList = InlayPresentationList(createInlayData(state, HintFormat.default))
+    var stateUpdateCallbackInvoked = false
+    val presentationList = InlayPresentationList(
+      createInlayData(state, HintFormat.default),
+      onStateUpdated = {
+        stateUpdateCallbackInvoked = true
+      })
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
     val editor = myFixture.editor
@@ -192,6 +197,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     }
     val afterClickEntries = presentationList.getEntries().toList()
     assertEquals(afterClickText, toText(afterClickEntries))
+    assertTrue(stateUpdateCallbackInvoked)
     val newState = buildState {
       updatedStateBuilder()
     }
@@ -253,7 +259,13 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText("test.txt", "my text")
     val root = PresentationTreeBuilderImpl.createRoot()
     b(root)
-    val presentationList = InlayPresentationList(createInlayData(root.complete()))
+    var stateUpdateCallbackInvoked = false
+    val presentationList = InlayPresentationList(
+      createInlayData(root.complete()),
+      onStateUpdated = {
+        stateUpdateCallbackInvoked = true
+      }
+    )
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
     val entry = beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!
@@ -262,6 +274,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     entry.handleClick(EditorMouseEvent(editor, event, editor.getMouseEventArea(event)), presentationList, true)
     val afterClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(afterClick, toText(afterClickEntries))
+    assertTrue(stateUpdateCallbackInvoked)
   }
 
   private fun toText(entries: List<InlayPresentationEntry>): String {
