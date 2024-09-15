@@ -108,6 +108,20 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
     }
 
     private fun convertAssignmentStatement(statement: JKKtAssignmentStatement) {
+        val isCompoundAssignment = compoundAssignmentMap.contains(statement.token)
+
+        if (isCompoundAssignment) {
+            convertCompoundAssignment(statement)
+        } else {
+            // regular assignment
+            val fieldType = statement.field.calculateType(typeFactory) ?: return
+            statement.expression.castTo(fieldType)?.let {
+                statement.expression = it
+            }
+        }
+    }
+
+    private fun convertCompoundAssignment(statement: JKKtAssignmentStatement) {
         val fieldType = statement.field.calculateType(typeFactory) ?: return
         val expressionType = statement.expression.calculateType(typeFactory) ?: return
 
@@ -115,12 +129,6 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
             statement.expression.castTo(fieldType)?.let {
                 statement.expression = it
             }
-        }
-
-        val isCompoundAssignment = compoundAssignmentMap.contains(statement.token)
-        if (!isCompoundAssignment) {
-            castExpressionToFieldType()
-            return
         }
 
         val fieldIsByte = fieldType.asPrimitiveType()?.isByte() == true
