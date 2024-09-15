@@ -99,7 +99,7 @@ public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
    * @return whether the given prefix contains either 'f' or 'F' character
    */
   public static boolean isFormattedPrefix(@NotNull String prefix) {
-    return StringUtil.indexOfIgnoreCase(prefix, 'f', 0) >= 0;
+    return StringUtil.indexOfIgnoreCase(prefix, 'f', 0) >= 0 | StringUtil.indexOfIgnoreCase(prefix, 't', 0) >= 0;
   }
 
   /**
