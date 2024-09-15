@@ -47,7 +47,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   private static final @NotNull Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
 
-  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
+  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
 
   protected @NotNull List<LanguageLevel> myVersionsToProcess;
 
