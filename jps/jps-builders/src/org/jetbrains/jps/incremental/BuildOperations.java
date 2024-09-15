@@ -87,26 +87,29 @@ public final class BuildOperations {
   }
 
   public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final BuildFSState fsState = pd.fsState;
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    final BuildFSState fsState = projectDescriptor.fsState;
     for (BuildTarget<?> target : chunk.getTargets()) {
-      pd.getTargetsState().getTargetConfiguration(target).storeNonexistentOutputRoots(context);
+      projectDescriptor.getTargetsState().getTargetConfiguration(target).storeNonexistentOutputRoots(context);
     }
-    if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-      boolean marked = dropRemovedPaths(context, chunk);
-      for (BuildTarget<?> target : chunk.getTargets()) {
-        if (target instanceof ModuleBuildTarget) {
-          context.clearNonIncrementalMark((ModuleBuildTarget)target);
-        }
-        final StampsStorage<? extends StampsStorage.Stamp>  stampsStorage = pd.getProjectStamps().getStampStorage();
-        for (BuildRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
-          marked |= fsState.markAllUpToDate(context, rd, stampsStorage);
-        }
-      }
 
-      if (marked) {
-        context.processMessage(DoneSomethingNotification.INSTANCE);
+    if (Utils.errorsDetected(context) || context.getCancelStatus().isCanceled()) {
+      return;
+    }
+
+    boolean marked = dropRemovedPaths(context, chunk);
+    for (BuildTarget<?> target : chunk.getTargets()) {
+      if (target instanceof ModuleBuildTarget) {
+        context.clearNonIncrementalMark((ModuleBuildTarget)target);
       }
+      StampsStorage<? extends StampsStorage.Stamp> stampStorage = projectDescriptor.getProjectStamps().getStampStorage();
+      for (BuildRootDescriptor buildRootDescriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
+        marked |= fsState.markAllUpToDate(context, buildRootDescriptor, stampStorage);
+      }
+    }
+
+    if (marked) {
+      context.processMessage(DoneSomethingNotification.INSTANCE);
     }
   }
 

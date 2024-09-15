@@ -50,8 +50,8 @@ internal class HashStampStorage(
     return mapHandle.map.get(createKey(target, file))?.hash
   }
 
-  override fun getCurrentStamp(file: Path): HashStamp {
-    return HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = FSOperations.lastModified(file))
+  override fun getCurrentStamp(file: Path, currentFileTimestamp: Long): HashStamp {
+    return HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = currentFileTimestamp)
   }
 
   override fun isDirtyStamp(stamp: StampsStorage.Stamp, file: Path): Boolean {

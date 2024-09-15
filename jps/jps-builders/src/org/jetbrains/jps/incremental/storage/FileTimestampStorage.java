@@ -53,8 +53,8 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   }
 
   @Override
-  public @NotNull FileTimestamp getCurrentStamp(@NotNull Path file) {
-    return FileTimestamp.fromLong(FSOperations.lastModified(file));
+  public @NotNull FileTimestamp getCurrentStamp(@NotNull Path file, long currentFileTimestamp) {
+    return FileTimestamp.fromLong(currentFileTimestamp);
   }
 
   @Override

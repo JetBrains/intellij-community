@@ -387,44 +387,48 @@ public final class BuildFSState {
   /**
    * @return true if marked something, false otherwise
    */
-  public boolean markAllUpToDate(CompileContext context, final BuildRootDescriptor rd, final StampsStorage stampsStorage) throws IOException {
+  public boolean markAllUpToDate(@NotNull CompileContext context,
+                                 @NotNull BuildRootDescriptor buildRootDescriptor,
+                                 @NotNull StampsStorage stampsStorage) throws IOException {
     boolean marked = false;
-    final BuildTarget<?> target = rd.getTarget();
+    final BuildTarget<?> target = buildRootDescriptor.getTarget();
     final FilesDelta delta = getDelta(target);
     final long targetBuildStartStamp = context.getCompilationStartStamp(target);
     // prevent modifications to the data structure from external FS events
     delta.lockData();
     try {
-      final Set<File> files = delta.clearRecompile(rd);
-      if (files != null) {
-        CompileScope scope = context.getScope();
-        for (File file : files) {
-          if (scope.isAffected(target, file)) {
-            Path nioFile = file.toPath();
-            long currentFileTimestamp = FSOperations.lastModified(nioFile);
-            StampsStorage.Stamp stamp = stampsStorage.getCurrentStamp(nioFile);
-            if (!rd.isGenerated() && (currentFileTimestamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
-              // if the file was modified after the compilation had started,
-              // do not save the stamp considering file dirty
-              // Important!
-              // Event registration stamp check is essential for the files that were actually changed _before_ targetBuildStart,
-              // but the corresponding change event was received and processed _after_ targetBuildStart
-              if (Utils.IS_TEST_MODE) {
-                LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
-              }
-              delta.markRecompile(rd, file);
+      Set<File> files = delta.clearRecompile(buildRootDescriptor);
+      if (files == null) {
+        return marked;
+      }
+
+      CompileScope scope = context.getScope();
+      for (File file : files) {
+        if (scope.isAffected(target, file)) {
+          Path nioFile = file.toPath();
+          long currentFileTimestamp = FSOperations.lastModified(nioFile);
+          StampsStorage.Stamp stamp = stampsStorage.getCurrentStamp(nioFile, currentFileTimestamp);
+          if (!buildRootDescriptor.isGenerated() && (currentFileTimestamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
+            // if the file was modified after the compilation had started,
+            // do not save the stamp considering a file dirty
+            // Important!
+            // Event registration stamp check is essential for the files that were actually changed _before_ targetBuildStart,
+            // but the corresponding change event was received and processed _after_ targetBuildStart
+            if (Utils.IS_TEST_MODE) {
+              LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
             }
-            else {
-              marked = true;
-              stampsStorage.saveStamp(nioFile, target, stamp); // todo: ask jeka
-            }
+            delta.markRecompile(buildRootDescriptor, file);
           }
           else {
-            if (Utils.IS_TEST_MODE) {
-              LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
-            }
-            delta.markRecompile(rd, file);
+            marked = true;
+            stampsStorage.saveStamp(nioFile, target, stamp); // todo: ask jeka
           }
+        }
+        else {
+          if (Utils.IS_TEST_MODE) {
+            LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
+          }
+          delta.markRecompile(buildRootDescriptor, file);
         }
       }
       return marked;

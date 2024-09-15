@@ -25,7 +25,7 @@ public interface StampsStorage<T extends Stamp> {
   T getPreviousStamp(@NotNull Path file, BuildTarget<?> target) throws IOException;
 
   @NotNull
-  T getCurrentStamp(@NotNull Path file) throws IOException;
+  T getCurrentStamp(@NotNull Path file, long currentFileTimestamp) throws IOException;
 
   boolean isDirtyStamp(@NotNull Stamp stamp, @NotNull Path file) throws IOException;
 
