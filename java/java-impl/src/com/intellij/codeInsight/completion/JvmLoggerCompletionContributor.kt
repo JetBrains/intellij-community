@@ -5,36 +5,21 @@ import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.*
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
+import com.siyeh.ig.psiutils.ExpressionUtils
 
 class JvmLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
            StandardPatterns.or(
-           psiElement()
-             .withSuperParent(2, PsiExpressionStatement::class.java)
-             .afterLeaf(StandardPatterns.or(
-               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.SEMICOLON),
-               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.COLON),
-               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.LBRACE),
-               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.RBRACE),
-               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.ARROW),
-               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.RPARENTH).and(
-                 StandardPatterns.or(
-                 psiElement().withParent(PsiIfStatement::class.java),
-                 psiElement().withParent(PsiForStatement::class.java),
-                 psiElement().withParent(PsiForeachStatement::class.java),
-                 psiElement().withParent(PsiWhileStatement::class.java)
-                 )
-               )
-             )),
-           psiElement().withSuperParent(2, PsiLambdaExpression::class.java).afterLeaf(
-             psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.ARROW)
-           )
-           ),
+           psiElement().withParent(PsiReferenceExpression::class.java)),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+               val parent = parameters.position.parent ?: return
+               if (parent !is PsiReferenceExpression ||
+                   !ExpressionUtils.isVoidContext(parent) ||
+                   JavaKeywordCompletion.isInstanceofPlace(parameters.position)) return
                val javaResultWithSorting = JavaCompletionSorting.addJavaSorting(parameters, result)
                val module = ModuleUtil.findModuleForFile(parameters.originalFile) ?: return
                val availableLoggers = JvmLogger.findSuitableLoggers(module, true)
