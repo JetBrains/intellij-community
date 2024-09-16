@@ -13,11 +13,11 @@ import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import com.intellij.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
-import com.intellij.notebooks.visualization.use
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
@@ -25,8 +25,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.Toolkit
 import javax.swing.JComponent
@@ -85,7 +83,7 @@ class EditorCellOutputs(
 
   init {
     cell.outputs.afterChange(this) { keys ->
-      updateData(keys)
+      updateView(keys)
     }
     update()
   }
@@ -94,10 +92,14 @@ class EditorCellOutputs(
     return inlay?.bounds ?: Rectangle(0, 0, 0, 0)
   }
 
-  fun update() {
-    updateData(cell.outputs.get())
-    recreateInlayIfNecessary()
+  fun update() = runInEdt {
+    updateView(cell.outputs.get())
     onViewportChange()
+  }
+
+  private fun updateView(newDataKeys: List<NotebookOutputDataKey>) = runInEdt {
+    updateData(newDataKeys)
+    recreateInlayIfNecessary()
   }
 
   private fun recreateInlayIfNecessary() {
@@ -281,18 +283,6 @@ class EditorCellOutputs(
   private fun <A, B> Iterator<A>.zip(other: Iterator<B>): Iterator<Pair<A, B>> = object : Iterator<Pair<A, B>> {
     override fun hasNext(): Boolean = this@zip.hasNext() && other.hasNext()
     override fun next(): Pair<A, B> = this@zip.next() to other.next()
-  }
-
-  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle) {
-    val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
-    val oldClip = g.clipBounds
-    g.create().use { g2 ->
-      g2 as Graphics2D
-      g2.clip(Rectangle(oldClip.x, yOffset, oldClip.width, innerComponent.height).intersection(oldClip))
-      outputs.forEach {
-        it.paintGutter(editor, yOffset, g2, r)
-      }
-    }
   }
 
   override fun doGetInlays(): Sequence<Inlay<*>> {
