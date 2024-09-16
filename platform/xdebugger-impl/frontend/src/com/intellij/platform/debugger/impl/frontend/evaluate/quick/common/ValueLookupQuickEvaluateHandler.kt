@@ -11,7 +11,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
@@ -19,7 +18,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHint
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
-import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +49,7 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
 
     val hint: Deferred<AbstractValueHint?> = coroutineScope.async(Dispatchers.IO) {
       withKernel {
-        val remoteApi = RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
+        val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
         val projectId = project.projectId()
         val editorId = editor.editorId()
         val canShowHint = remoteApi.canShowHint(projectId, editorId, offset, type)
@@ -98,13 +96,13 @@ private class ValueLookupManagerValueHint(
   override fun evaluateAndShowHint() {
     hintCoroutineScope = parentCoroutineScope.childScope("ValueLookupManagerValueHintScope")
     val remoteHint = hintCoroutineScope!!.async(Dispatchers.IO) {
-      val remoteApi = RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
+      val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
       remoteApi.createHint(projectId, editor.editorId(), offset, type)
     }
     this@ValueLookupManagerValueHint.remoteHint = remoteHint
     hintCoroutineScope!!.launch(Dispatchers.IO) {
       val hint = remoteHint.await() ?: return@launch
-      val remoteApi = RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
+      val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
       val closedEvent = remoteApi.showHint(projectId, hint.id)
       withContext(Dispatchers.EDT) {
         closedEvent.collect {
@@ -122,7 +120,7 @@ private class ValueLookupManagerValueHint(
         hintCoroutineScope?.cancel()
         return@launch
       }
-      val remoteApi = RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
+      val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
       remoteApi.removeHint(projectId, hint.id)
       hintCoroutineScope?.cancel()
     }
