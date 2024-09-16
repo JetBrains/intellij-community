@@ -20,7 +20,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
-import com.intellij.util.io.createDirectories
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
@@ -35,7 +34,6 @@ import org.jetbrains.kotlin.tools.projectWizard.addMultiPlatformLink
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
-import java.nio.file.Path
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
@@ -137,24 +135,17 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
             }
-            createKotlinContentRoots()
+
+            addEmptyDirectoryAsset(SRC_MAIN_KOTLIN_PATH)
+            addEmptyDirectoryAsset(SRC_MAIN_RESOURCES_PATH)
+            addEmptyDirectoryAsset(SRC_TEST_KOTLIN_PATH)
+            addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
+
             if (parent.addSampleCode) {
                 if (parent.generateOnboardingTips) {
                     prepareKotlinSampleOnboardingTips(project)
                 }
                 withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, parent.generateOnboardingTips, shouldOpenFile = false)
-            }
-        }
-
-        private fun createKotlinContentRoots() {
-            val directories = listOf(
-                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
-                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
-                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
-                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
-            )
-            directories.forEach {
-                Path.of(it).createDirectories()
             }
         }
     }
