@@ -291,11 +291,12 @@ fun Module.createMultiplatformFacetM3(
     dependsOnModuleNames: List<String> = emptyList(),
     pureKotlinSourceFolders: List<String> = emptyList(),
     additionalVisibleModuleNames: Set<String> = emptySet(),
+    isHmppEnabled: Boolean = true
 ) {
     createFacetWithAdditionalSetup(platformKind, useProjectSettings) {
         this.dependsOnModuleNames = dependsOnModuleNames
         this.additionalVisibleModuleNames = additionalVisibleModuleNames
-        this.isHmppEnabled = true
+        this.isHmppEnabled = isHmppEnabled
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 }

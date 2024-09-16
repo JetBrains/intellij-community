@@ -17,13 +17,32 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
-open class ProjectResolveModel(val modules: List<ResolveModule>) {
+open class ProjectResolveModel(
+    val mode: ProjectResolveMode,
+    val modules: List<ResolveModule>
+) {
     open class Builder {
+        var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         val modules: MutableList<ResolveModule.Builder> = mutableListOf()
 
-        open fun build(): ProjectResolveModel = ProjectResolveModel(modules.map { it.build() })
+        open fun build(): ProjectResolveModel = ProjectResolveModel(
+            mode = mode, modules = modules.map { it.build() }
+        )
     }
 
+}
+
+
+enum class ProjectResolveMode {
+    /**
+     * Like a simple jps or Kotlin/JVM project
+     */
+    SinglePlatform,
+
+    /**
+     * Also equal to HMPP (Hierarchical Multiplatform or MPPv3)
+     */
+    MultiPlatform
 }
 
 open class ResolveModule(
@@ -62,7 +81,7 @@ open class ResolveModule(
         printer.println("root=${root.absolutePath}")
         testRoot?.let { testRoot -> printer.println("testRoot=${testRoot.absolutePath}") }
         printer.println("dependencies=${dependencies.joinToString { it.to.name }}")
-        if (additionalCompilerArgs != null)  printer.println("additionalCompilerArgs=$additionalCompilerArgs")
+        if (additionalCompilerArgs != null) printer.println("additionalCompilerArgs=$additionalCompilerArgs")
     }
 
     override fun equals(other: Any?): Boolean {
@@ -84,6 +103,7 @@ open class ResolveModule(
         private var state: State = State.NOT_BUILT
         private var cachedResult: ResolveModule? = null
 
+        var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         var name: String? = null
         var root: File? = null
         var platform: TargetPlatform? = null
@@ -98,7 +118,8 @@ open class ResolveModule(
             state = State.BUILDING
 
             val builtDependencies = dependencies.map { it.build() }
-            cachedResult = ResolveModule(name!!, root!!, platform!!, builtDependencies, testRoot, additionalCompilerArgs= additionalCompilerArgs)
+            cachedResult =
+                ResolveModule(name!!, root!!, platform!!, builtDependencies, testRoot, additionalCompilerArgs = additionalCompilerArgs)
             state = State.BUILT
 
             return cachedResult!!
@@ -138,6 +159,7 @@ sealed class Stdlib(
         CommonPlatforms.defaultCommonPlatform,
         KotlinCommonLibraryKind,
     )
+
     object NativeStdlib : Stdlib(
         "stdlib-native-by-host",
         { TestKotlinArtifacts.kotlinStdlibNative },
