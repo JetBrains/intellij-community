@@ -1385,6 +1385,11 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
             KotlinTestUtils.runTest(this::doTestLine, this, testDataFilePath);
         }
 
+        @TestMetadata("additionalClosingBrace.kt")
+        public void testAdditionalClosingBrace() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/line/additionalClosingBrace.kt");
+        }
+
         @TestMetadata("fileAnnotation.kt")
         public void testFileAnnotation() throws Exception {
             runTest("testData/codeInsight/moveUpDown/line/fileAnnotation.kt");
