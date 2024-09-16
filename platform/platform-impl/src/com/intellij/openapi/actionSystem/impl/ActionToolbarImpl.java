@@ -994,7 +994,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @RequiresEdt
   protected void updateActionsImmediately(boolean includeInvisible) {
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    if (getParent() == null && myTargetComponent == null && !isTestMode && !includeInvisible) {
+    if (getParent() == null && !isTestMode && !includeInvisible) {
       LOG.warn(new Throwable("'" + myPlace + "' toolbar manual update is ignored. " +
                              "Newly created toolbars are updated automatically on `addNotify`.", myCreationTrace));
       return;
