@@ -3200,6 +3200,7 @@ a:com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer
 - p:createGutterMarkerRenderer():com.intellij.openapi.editor.markup.LineMarkerRenderer
 - pf:getDisposable():com.intellij.openapi.Disposable
 - pf:getDocument():com.intellij.openapi.editor.Document
+- p:getGutterLayer():I
 - pf:getProject():com.intellij.openapi.project.Project
 - pa:getRanges():java.util.List
 - f:scheduleUpdate():V
@@ -3220,6 +3221,7 @@ a:com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 - pa:createPopupPanel(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 - pf:getRanges():java.util.List
 - pf:getRangesSource():com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
+- p:getTooltipText():java.lang.String
 - p:paintGutterMarkers(com.intellij.openapi.editor.Editor,java.util.List,java.awt.Graphics):V
 - f:reopenRange(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):V
 - scrollAndShow(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
