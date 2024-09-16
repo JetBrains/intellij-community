@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.debug;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -10,10 +9,12 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -25,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -80,68 +79,69 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
     assert pyState != null;
     pyState.setMultiprocessDebug(isMultiprocessDebug());
 
-    try(ServerSocket serverSocket = new ServerSocket(0)) {
-      int serverLocalPort = serverSocket.getLocalPort();
-      RunProfile profile = env.getRunProfile();
+    RunProfile profile = env.getRunProfile();
 
-      createExceptionBreak(myFixture, false, false, false); //turn off exception breakpoints by default
+    createExceptionBreak(myFixture, false, false, false); //turn off exception breakpoints by default
 
-      before();
+    before();
 
-      myTerminateSemaphore = new Semaphore(0);
+    myTerminateSemaphore = new Semaphore(0);
 
-      WriteAction.runAndWait(() -> {
-        myExecutionResult =
-          pyState.execute(executor, createCommandLinePatchers(runner, pyState, profile, serverLocalPort));
+    WriteAction.runAndWait(() -> {
+      var port = Registry.intValue("python.debugger.port", PyDebugRunner.DEFAULT_DEBUGGER_PORT);
 
-        mySession = XDebuggerManager.getInstance(getProject()).
-          startSession(env, new XDebugProcessStarter() {
-            @Override
-            @NotNull
-            public XDebugProcess start(@NotNull final XDebugSession session) {
-              myDebugProcess =
-                new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
-                                   isMultiprocessDebug());
-              myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
-                @Override
-                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                  myOutputBuilder.append(event.getText());
-                  if (outputType == ProcessOutputType.STDERR) {
-                    myStdErrBuilder.append(event.getText());
-                  }
+      TargetEnvironment.TargetPortBinding targetPortBinding =
+        new TargetEnvironment.TargetPortBinding(port, port);
+
+      var builder = runner.new PythonDebuggerServerModeTargetedCommandLineBuilder(project, pyState, profile, targetPortBinding);
+
+      myExecutionResult =
+        pyState.execute(executor, builder);
+
+      mySession = XDebuggerManager.getInstance(getProject()).
+        startSession(env, new XDebugProcessStarter() {
+          @Override
+          @NotNull
+          public XDebugProcess start(@NotNull final XDebugSession session) {
+            myDebugProcess =
+              new PyDebugProcess(session, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
+                                 "localhost", port);
+            myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+              @Override
+              public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                myOutputBuilder.append(event.getText());
+                if (outputType == ProcessOutputType.STDERR) {
+                  myStdErrBuilder.append(event.getText());
                 }
+              }
 
-                @Override
-                public void processTerminated(@NotNull ProcessEvent event) {
-                  myTerminateSemaphore.release();
-                  if (event.getExitCode() != 0 && !myProcessCanTerminate) {
-                    Assert.fail("Process terminated unexpectedly\n" + myOutputBuilder);
-                  }
+              @Override
+              public void processTerminated(@NotNull ProcessEvent event) {
+                myTerminateSemaphore.release();
+                if (event.getExitCode() != 0 && !myProcessCanTerminate) {
+                  Assert.fail("Process terminated unexpectedly\n" + myOutputBuilder);
                 }
-              });
+              }
+            });
 
-              myDebugProcess.getProcessHandler().startNotify();
-              return myDebugProcess;
-            }
-          });
-      });
-
-      myPausedSemaphore = new Semaphore(0);
-
-      mySession.addSessionListener(new XDebugSessionListener() {
-        @Override
-        public void sessionPaused() {
-          if (myPausedSemaphore != null) {
-            myPausedSemaphore.release();
+            myDebugProcess.getProcessHandler().startNotify();
+            return myDebugProcess;
           }
-        }
-      });
+        });
+    });
 
-      doTest(null);
-    }
-    catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e); // NON-NLS
-    }
+    myPausedSemaphore = new Semaphore(0);
+
+    mySession.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        if (myPausedSemaphore != null) {
+          myPausedSemaphore.release();
+        }
+      }
+    });
+
+    doTest(null);
   }
 
   @Override

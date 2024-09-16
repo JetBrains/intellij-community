@@ -98,9 +98,7 @@ from _pydevd_bundle import pydevd_vm_type
 from _pydevd_bundle.smart_step_into import find_stepping_variants
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
 import pydevd_file_utils
-import os
 import sys
-import inspect
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string, \
     get_non_pydevd_threads, is_pandas_container, is_numpy_container
@@ -426,7 +424,7 @@ def start_server(port):
         # closing server socket is not necessary but we don't need it
         try:
             s.shutdown(SHUT_RDWR)
-        except OSError:
+        except:
             pass
         finally:
             s.close()

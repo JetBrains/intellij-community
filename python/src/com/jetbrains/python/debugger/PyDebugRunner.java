@@ -59,6 +59,7 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,6 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.python.actions.PyExecuteInConsole.requestFocus;
 import static com.jetbrains.python.actions.PyExecuteInConsole.selectConsoleTab;
-import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -110,7 +110,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
   private static final @NonNls String PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix=";
 
-  private static final int DEFAULT_DEBUGGER_PORT = 29781;
+  @ApiStatus.Internal
+  public static final int DEFAULT_DEBUGGER_PORT = 29781;
 
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
@@ -1091,10 +1092,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * Builder class for creating a command line configured for debugging Python scripts in the server mode, when
    * an IDE process connects to the debugger.
    */
-  private final class PythonDebuggerServerModeTargetedCommandLineBuilder extends PythonDebuggerTargetedCommandLineBuilder {
+  @ApiStatus.Internal
+  public final class PythonDebuggerServerModeTargetedCommandLineBuilder extends PythonDebuggerTargetedCommandLineBuilder {
     private final @NotNull TargetEnvironment.TargetPortBinding myTargetPortBinding;
 
-    private PythonDebuggerServerModeTargetedCommandLineBuilder(@NotNull Project project,
+    public PythonDebuggerServerModeTargetedCommandLineBuilder(@NotNull Project project,
                                                                @NotNull PythonCommandLineState pyState,
                                                                @NotNull RunProfile profile,
                                                                @NotNull TargetEnvironment.TargetPortBinding targetPortBinding) {
@@ -1103,7 +1105,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     @Override
-    protected @NotNull Function<TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+    public @NotNull Function<TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getTargetPortBindings().add(myTargetPortBinding);
       return TargetEnvironmentFunctions.getTargetEnvironmentValue(myTargetPortBinding);
     }
