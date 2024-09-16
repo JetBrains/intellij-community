@@ -41,7 +41,7 @@ private val logger = logger<EditorActionAvailabilityHint>()
  *  ```
  */
 @Experimental
-class EditorActionAvailabilityHint(val actionId: String, val condition: AvailabilityCondition) {
+class EditorActionAvailabilityHint @JvmOverloads constructor(val actionId: String, val condition: AvailabilityCondition, val backend: String = "remote") {
 
   enum class AvailabilityCondition {
     CaretInside {
@@ -115,34 +115,34 @@ val Inlay<*>.actionAvailabilityHints: List<EditorActionAvailabilityHint> get() {
  * Otherwise, returns `null` (means that there's no highlighters with a hint for [actionId]).
  */
 @Internal
-fun Editor.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
+fun Editor.isActionAvailableByHint(offset: Int, actionId: String, backend: String = "remote"): Boolean? {
   val markupModel = markupModel
   if (markupModel !is MarkupModelEx) {
     return null
   }
 
-  return markupModel.isActionAvailableByHint(offset, actionId)
-         ?: document.isActionAvailableByHint(project, offset, actionId)
+  return markupModel.isActionAvailableByHint(offset, actionId, backend)
+         ?: document.isActionAvailableByHint(project, offset, actionId, backend)
 }
 
 @Internal
-fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: String): Boolean? {
+fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: String, backend: String): Boolean? {
   val markupModel = DocumentMarkupModel.forDocument(this, project, false)
   if (markupModel !is MarkupModelEx) {
     return null
   }
 
-  return markupModel.isActionAvailableByHint(offset, actionId)
+  return markupModel.isActionAvailableByHint(offset, actionId, backend)
 }
 
 
 @Internal
-private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
+private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String, backend: String): Boolean? {
   val overlappingIterator = overlappingIterator(offset, offset)
   try {
     for (highlighterEx in overlappingIterator) {
       for (actionAvailabilityHint in highlighterEx.actionAvailabilityHints) {
-        if (actionAvailabilityHint.actionId == actionId) {
+        if (actionAvailabilityHint.actionId == actionId && (actionAvailabilityHint.backend == "ANY" || actionAvailabilityHint.backend == backend)) {
           return actionAvailabilityHint.condition.isAvailable(offset, highlighterEx)
         }
       }
