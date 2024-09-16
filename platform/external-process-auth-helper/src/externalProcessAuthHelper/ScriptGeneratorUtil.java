@@ -16,7 +16,7 @@ public final class ScriptGeneratorUtil {
 
   @NotNull
   private static File createBatchScript(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
-    String batchScriptText = "@echo off" + "\n" + commandLine + " %*\n";
+    String batchScriptText = "@echo off" + "\r\n" + commandLine + " %*\r\n";
     return createTempExecutable(fileName + ".bat", batchScriptText);
   }
 
