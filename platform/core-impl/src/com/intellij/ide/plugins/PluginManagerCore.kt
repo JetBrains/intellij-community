@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.write3rdPartyPlugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -47,7 +48,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import javax.swing.JOptionPane
-import kotlin.Throws
 import kotlin.io.path.name
 import kotlin.streams.asSequence
 
@@ -708,6 +708,13 @@ object PluginManagerCore {
   }
 
   private fun check3rdPartyPluginsPrivacyConsent(aliens: List<IdeaPluginDescriptorImpl>) {
+    fun disableThirdPartyPlugins() {
+      for (descriptor in aliens) {
+        descriptor.isEnabled = false
+      }
+      PluginEnabler.HEADLESS.disable(aliens)
+    }
+
     if (GraphicsEnvironment.isHeadless()) {
       if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT || FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT) {
         thirdPartyPluginsNoteAccepted = true
@@ -718,12 +725,17 @@ object PluginManagerCore {
         descriptor.isEnabled = false
       }
     }
+    else if (AppMode.isRemoteDevHost()) {
+      logger.warn("""
+        |New third-party plugins were installed, they will be disabled because asking for consent to use third-party plugins during startup isn't supported in remote development mode:
+        | ${aliens.joinToString(separator = "\n ") { it.getName() }} 
+        |Use '--give-consent-to-use-third-party-plugins' option in 'installPlugins' option to approve installed third-party plugins automatically.
+        |""".trimMargin())
+      disableThirdPartyPlugins()
+    }
     else if (!ask3rdPartyPluginsPrivacyConsent(aliens)) {
       logger.info("3rd-party plugin privacy note declined; disabling plugins")
-      for (descriptor in aliens) {
-        descriptor.isEnabled = false
-      }
-      PluginEnabler.HEADLESS.disable(aliens)
+      disableThirdPartyPlugins()
       thirdPartyPluginsNoteAccepted = false
     }
     else {
