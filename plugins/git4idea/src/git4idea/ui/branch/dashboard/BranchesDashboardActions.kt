@@ -724,30 +724,4 @@ internal object BranchesDashboardActions {
       controller.navigateLogToSelectedBranch()
     }
   }
-
-  class RenameLocalBranch : BranchesActionBase() {
-
-    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
-      if (branches.size > 1) {
-        e.presentation.isEnabled = false
-        return
-      }
-      val branch = branches.first()
-      val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
-      val repositories = controller.getSelectedRepositories(branch)
-
-      if (!branch.isLocal || repositories.any(Repository::isFresh)) {
-        e.presentation.isEnabled = false
-      }
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val project = e.project!!
-      val branch = e.getData(GIT_BRANCHES)!!.firstOrNull() ?: return
-      val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
-      val repositories = controller.getSelectedRepositories(branch)
-
-      GitBranchPopupActions.LocalBranchActions.RenameBranchAction.rename(project, repositories, branch.branchName)
-    }
-  }
 }

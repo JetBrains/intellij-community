@@ -6,7 +6,6 @@ import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -20,7 +19,10 @@ import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.*;
-import git4idea.branch.*;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
+import git4idea.branch.GitBrancher;
+import git4idea.branch.GitNewBranchDialog;
+import git4idea.branch.GitNewBranchOptions;
 import git4idea.config.GitSharedSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -31,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh;
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -293,48 +294,6 @@ public final class GitBranchPopupActions {
                                         @NotNull String branchName) {
         GitBrancher brancher = GitBrancher.getInstance(project);
         brancher.checkout(branchName, false, repositories, null);
-      }
-    }
-
-    public static class RenameBranchAction extends DumbAwareAction {
-      private final @NotNull Project myProject;
-      private final @NotNull List<? extends GitRepository> myRepositories;
-      private final @NotNull String myCurrentBranchName;
-
-      RenameBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String currentBranchName) {
-        super(ActionsBundle.messagePointer("action.RenameAction.text"));
-        myProject = project;
-        myRepositories = repositories;
-        myCurrentBranchName = currentBranchName;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        rename(myProject, myRepositories, myCurrentBranchName);
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.rename.branch"));
-      }
-
-      public static void rename(@NotNull Project project,
-                                @NotNull List<? extends GitRepository> repositories,
-                                @NotNull String currentBranchName) {
-        GitNewBranchOptions options = new GitNewBranchDialog(project, repositories,
-                                                             GitBundle.message("branches.rename.branch", currentBranchName),
-                                                             currentBranchName,
-                                                             false, false,
-                                                             false, false, GitBranchOperationType.RENAME).showAndGetOptions();
-        if (options != null) {
-          GitBrancher brancher = GitBrancher.getInstance(project);
-          brancher.renameBranch(currentBranchName, options.getName(), repositories);
-        }
       }
     }
   }
