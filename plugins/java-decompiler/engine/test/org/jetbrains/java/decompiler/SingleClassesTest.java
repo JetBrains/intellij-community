@@ -254,5 +254,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testEnumInit() { doTest("pkg/TestEnumInit"); }
   @Test public void testGenericInit() { doTest("pkg/TestInitGeneric"); }
   @Test public void testNotNullRecord() { doTest("pkg/TestNotNullRecord"); }
+  @Test public void testNestedInheritor() { doTest("pkg/TestNestedInheritor"); }
 
 }
