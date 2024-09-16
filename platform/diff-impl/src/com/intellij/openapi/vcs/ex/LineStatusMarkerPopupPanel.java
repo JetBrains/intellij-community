@@ -268,15 +268,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                        DiffDrawUtil.LAYER_PRIORITY_LST, parentDisposable);
 
     int currentStartOffset = currentTextRange.getStartOffset();
-    List<RangeHighlighter> highlighters = new ArrayList<>();
 
-    highlighters.addAll(
-      new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
-        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
-        .withIgnored(true)
-        .withHideStripeMarkers(true)
-        .withHideGutterMarkers(true)
-        .done());
+    List<RangeHighlighter> highlighters =
+      new ArrayList<>(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
+                        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+                        .withIgnored(true)
+                        .withHideStripeMarkers(true)
+                        .withHideGutterMarkers(true)
+                        .done());
 
     for (DiffFragment fragment : wordDiff) {
       int currentStart = currentStartOffset + fragment.getStartOffset2();

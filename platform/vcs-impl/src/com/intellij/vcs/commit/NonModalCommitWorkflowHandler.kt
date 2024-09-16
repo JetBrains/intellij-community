@@ -49,7 +49,6 @@ import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecuto
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.lang.Runnable
 import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()

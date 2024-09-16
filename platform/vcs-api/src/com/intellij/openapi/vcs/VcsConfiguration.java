@@ -127,6 +127,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public @Nullable String LAST_COMMIT_MESSAGE = null;
+  public @NotNull String LAST_CHUNK_COMMIT_MESSAGE = "";
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
@@ -169,6 +170,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
       recentMessages.remove(comment);
       addCommitMessage(recentMessages, comment);
     });
+  }
+
+  public void saveTempChunkCommitMessage(@NotNull final String comment) {
+    LAST_CHUNK_COMMIT_MESSAGE = comment;
+  }
+
+  public @NotNull String getTempChunkCommitMessage() {
+    return LAST_CHUNK_COMMIT_MESSAGE;
   }
 
   private static void addCommitMessage(@NotNull List<? super String> recentMessages, @NotNull String comment) {

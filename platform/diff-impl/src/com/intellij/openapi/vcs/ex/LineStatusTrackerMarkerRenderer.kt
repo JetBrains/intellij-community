@@ -29,14 +29,15 @@ abstract class LineStatusTrackerMarkerRenderer(
   final override fun createPopupPanel(editor: Editor,
                                       range: Range,
                                       mousePosition: Point?,
-                                      disposable: Disposable): LineStatusMarkerPopupPanel {
+                                      popupDisposable: Disposable): LineStatusMarkerPopupPanel {
     var editorComponent: JComponent? = null
     if (range.hasVcsLines()) {
-      editorComponent = createVcsContentComponent(range, editor, disposable)
+      editorComponent = createVcsContentComponent(range, editor, popupDisposable)
     }
-    val actions = createToolbarActions(editor, range, mousePosition)
-    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
-    val additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable)
+    val actions = createToolbarActions(editor, range, mousePosition) +
+                  createAdditionalToolbarActions(editor, range, mousePosition, popupDisposable)
+    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
+    val additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, popupDisposable)
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, additionalInfoPanel)
   }
 
@@ -51,6 +52,7 @@ abstract class LineStatusTrackerMarkerRenderer(
   }
 
   protected open fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = emptyList()
+  protected open fun createAdditionalToolbarActions(editor: Editor, range: Range, mousePosition: Point?, popupDisposable: Disposable): List<AnAction> = emptyList()
 
   protected open fun createAdditionalInfoPanel(editor: Editor,
                                                range: Range,

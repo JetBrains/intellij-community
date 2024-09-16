@@ -83,6 +83,11 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
     return (T)this;
   }
 
+  public final T resetPreferredHeight() {
+    myPreferredHeight = null;
+    return (T)this;
+  }
+
   public final T withPreferredSize(int width, int height) {
     myPreferredWidth = width;
     myPreferredHeight = height;

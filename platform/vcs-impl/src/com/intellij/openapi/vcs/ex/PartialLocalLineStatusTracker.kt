@@ -4,12 +4,10 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -25,6 +23,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -37,6 +36,7 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
+import com.intellij.openapi.vcs.ex.commit.CommitChunkService
 import com.intellij.openapi.vcs.impl.ActiveChangeListTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -198,7 +198,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
-      assert(!affectedChangeLists.isEmpty())
+      assert(!affectedChangeLists.isEmpty)
       affectedChangeLists.toList()
     }
   }
@@ -654,32 +654,46 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                            mousePosition: Point?,
                                            disposable: Disposable): JComponent? {
       val superPanel = super.createAdditionalInfoPanel(editor, range, mousePosition, disposable)
-      val changelistPanel = createChangelistInfoPanel(editor, range, mousePosition, disposable)
-      if (superPanel == null || changelistPanel == null) return superPanel ?: changelistPanel
+      val commitPanel = createCommitPanel(editor, range, mousePosition, disposable)
 
-      return JBUI.Panels.simplePanel(changelistPanel)
+      if (superPanel == null || commitPanel == null) return superPanel ?: commitPanel
+
+      val panel = JBUI.Panels.simplePanel(commitPanel)
         .addToRight(superPanel)
         .andTransparent()
+      return panel
     }
 
-    private fun createChangelistInfoPanel(editor: Editor,
-                                          range: Range,
-                                          mousePosition: Point?,
-                                          disposable: Disposable): JComponent? {
+    private fun createCommitPanel(editor: Editor, range: Range, point: Point?, disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
+      return CommitChunkService.getInstance(project!!).getComponent(tracker, range, disposable).getCommitInput()
+    }
+
+    override fun createAdditionalToolbarActions(editor: Editor, range: Range, mousePosition: Point?, popupDisposable: Disposable): List<AnAction> {
+      return createChangeListActions(editor, range, mousePosition, popupDisposable)
+    }
+
+    private fun createChangeListActions(editor: Editor,
+                                        range: Range,
+                                        mousePosition: Point?,
+                                        disposable: Disposable): List<AnAction> {
+      if (range !is LocalRange) return emptyList()
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
-      val rangeList = changeLists.find { it.id == range.changelistId } ?: return null
+      val rangeList = changeLists.find { it.id == range.changelistId } ?: return emptyList()
 
-      val group = DefaultActionGroup()
+      val group = DefaultActionGroup(VcsBundle.message("ex.changelists"), null, AllIcons.Vcs.Changelist)
+      group.isPopup = true
       if (changeLists.size > 1) {
         group.add(Separator(VcsBundle.message("ex.changelists")))
         for (changeList in changeLists) {
-          group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
+          group.add(MoveToChangeListToggleAction(editor, range, mousePosition, changeList))
         }
         group.add(Separator.getInstance())
       }
       group.add(MoveToAnotherChangeListAction(editor, range, mousePosition))
+
+      return listOf(group)
 
 
       val link = DropDownLink(rangeList.name) { linkLabel ->
@@ -702,7 +716,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
         link.toolTipText = VcsBundle.message("ex.move.lines.to.another.changelist.0", KeymapUtil.getShortcutText(shortcuts.first()))
       }
 
-      return link
+      //return link
     }
 
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
@@ -719,17 +733,31 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       }
     }
 
-    private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
-      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, null) {
+    private inner class MoveToChangeListToggleAction(
+      private val editor: Editor, private val range: Range, val mousePosition: Point?, val changelist: LocalChangeList
+    ) : DumbAwareToggleAction(changelist.name) {
       init {
         templatePresentation.setText(StringUtil.trimMiddle(changelist.name, 60), false)
+        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
       }
 
-      override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-      override fun actionPerformed(editor: Editor, range: Range) {
-        tracker.moveToChangelist(range, changelist)
-        reopenRange(editor, range, mousePosition)
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+        val newRange = rangesSource.findRange(range)
+        e.presentation.setEnabled(newRange != null && !editor.isDisposed() && newRange is LocalRange)
+      }
+
+      override fun isSelected(e: AnActionEvent): Boolean {
+        val newRange = rangesSource.findRange(range)
+        return (newRange as LocalRange).changelistId == changelist.id
+      }
+
+      override fun setSelected(e: AnActionEvent, state: Boolean) {
+        val newRange = rangesSource.findRange(range) ?: return
+        tracker.moveToChangelist(newRange, changelist)
+        reopenRange(editor, newRange, mousePosition)
       }
     }
 
@@ -812,6 +840,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
           block.excludedFromCommit = if (isExcluded) RangeExclusionState.Excluded else RangeExclusionState.Included
         }
       }
+    }
+    fireExcludedFromCommitChanged()
+  }
+
+  fun excludeAllBlocks() {
+    documentTracker.writeLock {
+      blocks.forEach { b -> b.excludedFromCommit = RangeExclusionState.Excluded }
     }
     fireExcludedFromCommitChanged()
   }
@@ -903,7 +938,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   }
 
   @RequiresReadLock
-  private fun collectRangeStates(): List<RangeState> {
+  internal fun collectRangeStates(): List<RangeState> {
     return documentTracker.readLock {
       blocks.map { RangeState(it.range, it.marker.changelistId, it.excludedFromCommit) }
     }
