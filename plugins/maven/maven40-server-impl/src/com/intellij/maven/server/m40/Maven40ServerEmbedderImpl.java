@@ -9,10 +9,7 @@ import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtilRt;
 import org.apache.commons.cli.ParseException;
 import org.apache.maven.*;
-import org.apache.maven.api.ArtifactCoordinate;
-import org.apache.maven.api.DependencyCoordinate;
-import org.apache.maven.api.Node;
-import org.apache.maven.api.Session;
+import org.apache.maven.api.*;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.artifact.Artifact;
@@ -749,6 +746,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       this.remoteRepos = remoteRepos;
     }
   }
+
   @NotNull
   private PluginResolutionResponse resolvePlugin(LongRunningTask task,
                                                  MavenId mavenPluginId,
@@ -1001,7 +999,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       for (MavenArtifactResolutionRequest request : requests) {
         repos.addAll(request.getRemoteRepositories());
       }
-      List<ArtifactRepository> repositories = convertRepositories(new ArrayList<>(repos));
+      List<ArtifactRepository> repositories = convertRepositories(new ArrayList<>(repos), myAlwaysUpdateSnapshots);
       repositories.forEach(executionRequest::addRemoteRepository);
 
       executeWithMavenSession(executionRequest, MavenWorkspaceMap.empty(), task.getIndicator(), mavenSession -> {
@@ -1034,19 +1032,19 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) {
-    List<ArtifactRepository> result = map2ArtifactRepositories(repositories);
+  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories, boolean forceResolveSnapshots) {
+    List<ArtifactRepository> result = map2ArtifactRepositories(repositories, forceResolveSnapshots);
     if (getComponent(LegacySupport.class).getRepositorySession() == null) {
       myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
     }
     return result;
   }
 
-  private List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories) {
+  private List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories, boolean forceResolveSnapshots) {
     List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {
       try {
-        result.add(buildArtifactRepository(Maven40ModelConverter.toNativeRepository(each)));
+        result.add(buildArtifactRepository(Maven40ModelConverter.toNativeRepository(each, forceResolveSnapshots)));
       }
       catch (InvalidRepositoryException e) {
         MavenServerGlobals.getLogger().warn(e);
@@ -1080,7 +1078,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerUtil.checkToken(token);
     try {
       return new HashSet<>(
-        convertRemoteRepositories(convertRepositories(new ArrayList<>(repositories))));
+        convertRemoteRepositories(convertRepositories(new ArrayList<>(repositories), false)));
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1119,12 +1117,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     @NotNull List<MavenRemoteRepository> remoteRepositories) {
     MavenExecutionRequest request = createRequest(null, null, null);
 
-    Map<org.apache.maven.api.Artifact, Path> resolvedArtifactMap = new HashMap<>();
+    Map<DownloadedArtifact, Path> resolvedArtifactMap = new HashMap<>();
 
     executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, mavenSession -> {
       Session session = mavenSession.getSession();
       for (MavenArtifactInfo mavenArtifactInfo : artifacts) {
-        ArtifactCoordinate coordinate = session.createArtifactCoordinate(
+        ArtifactCoordinates coordinate = session.createArtifactCoordinates(
           mavenArtifactInfo.getGroupId(),
           mavenArtifactInfo.getArtifactId(),
           mavenArtifactInfo.getVersion(),
@@ -1134,27 +1132,31 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
         ArtifactResolver artifactResolver = session.getService(ArtifactResolver.class);
         ArtifactResolverResult resolved = artifactResolver.resolve(session, Collections.singleton(coordinate));
-        resolvedArtifactMap.putAll(resolved.getArtifacts());
+        resolved.getArtifacts().forEach(a -> {
+          resolvedArtifactMap.put(a, a.getPath());
+        });
 
-        DependencyCoordinate dependencyCoordinate = session.createDependencyCoordinate(coordinate);
+        DependencyCoordinates dependencyCoordinate = session.createDependencyCoordinates(coordinate);
 
         Node dependencyNode = session.collectDependencies(dependencyCoordinate);
 
-        List<DependencyCoordinate> dependencyCoordinates = dependencyNode.stream()
+        List<DependencyCoordinates> dependencyCoordinates = dependencyNode.stream()
           .filter(node -> node != dependencyNode)
           .filter(node -> node.getDependency() != null)
-          .map(node -> node.getDependency().toCoordinate())
+          .map(node -> node.getDependency().toCoordinates())
           .collect(Collectors.toList());
         ArtifactResolverResult resolvedChildren = artifactResolver.resolve(session, dependencyCoordinates);
 
-        resolvedArtifactMap.putAll(resolvedChildren.getArtifacts());
+        resolvedChildren.getArtifacts().forEach(a -> {
+          resolvedArtifactMap.put(a, a.getPath());
+        });
       }
     });
 
 
     File localRepositoryFile = getLocalRepositoryFile();
     List<MavenArtifact> resolvedArtifacts = new ArrayList<>();
-    for (org.apache.maven.api.Artifact apiArtifact : resolvedArtifactMap.keySet()) {
+    for (DownloadedArtifact apiArtifact : resolvedArtifactMap.keySet()) {
       Path artifactPath = resolvedArtifactMap.get(apiArtifact);
       MavenArtifact mavenArtifact = Maven40ApiModelConverter.convertArtifactAndPath(apiArtifact, artifactPath, localRepositoryFile);
       resolvedArtifacts.add(mavenArtifact);
