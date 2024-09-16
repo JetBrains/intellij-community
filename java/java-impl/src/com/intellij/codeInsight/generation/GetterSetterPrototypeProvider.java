@@ -42,13 +42,13 @@ public abstract class GetterSetterPrototypeProvider {
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
                                                   boolean ignoreInvalidTemplate) {
-    return generateGetterSetters(field, generateGetter, ignoreInvalidTemplate, SetterGetterGenerationOptions.empty());
+    return generateGetterSetters(field, generateGetter, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
   }
 
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
                                                   boolean ignoreInvalidTemplate,
-                                                  @NotNull SetterGetterGenerationOptions options) {
+                                                  @NotNull GetterSetterGenerationOptions options) {
     for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);

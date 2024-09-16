@@ -24,11 +24,11 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public @Nullable GenerationInfo generateGetter() throws IncorrectOperationException {
-    return generateGetter(SetterGetterGenerationOptions.empty());
+    return generateGetter(GetterSetterGenerationOptions.empty());
   }
 
   @Override
-  public @Nullable GenerationInfo generateGetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+  public @Nullable GenerationInfo generateGetter(@NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     PsiClass containingClass = getElement().getContainingClass();
     if(containingClass == null) return null;
     final GenerationInfo[] infos = generateGetters(containingClass, options);
@@ -38,11 +38,11 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   @Override
   public GenerationInfo @Nullable [] generateGetters(PsiClass aClass) throws IncorrectOperationException {
     if (aClass == null) return null;
-    return generateGetters(aClass, SetterGetterGenerationOptions.empty());
+    return generateGetters(aClass, GetterSetterGenerationOptions.empty());
   }
 
   @Override
-  public GenerationInfo @Nullable [] generateGetters(@NotNull PsiClass aClass, @NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+  public GenerationInfo @Nullable [] generateGetters(@NotNull PsiClass aClass, @NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     PsiField field = getElement();
     if (field.hasModifierProperty(PsiModifier.STATIC) &&
         field.hasModifierProperty(PsiModifier.FINAL)) {
@@ -54,11 +54,11 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
 
   @Override
   public @Nullable GenerationInfo generateSetter() throws IncorrectOperationException {
-    return generateSetter(SetterGetterGenerationOptions.empty());
+    return generateSetter(GetterSetterGenerationOptions.empty());
   }
 
   @Override
-  public @Nullable GenerationInfo generateSetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+  public @Nullable GenerationInfo generateSetter(@NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     PsiClass containingClass = getElement().getContainingClass();
     if (containingClass == null) return null;
     final GenerationInfo[] infos = generateSetters(containingClass, options);
@@ -73,11 +73,11 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   @Override
   public GenerationInfo @Nullable [] generateSetters(PsiClass aClass) {
     if (aClass == null) return null;
-    return generateSetters(aClass, SetterGetterGenerationOptions.empty());
+    return generateSetters(aClass, GetterSetterGenerationOptions.empty());
   }
 
   @Override
-  public GenerationInfo @Nullable [] generateSetters(@NotNull PsiClass aClass, @NotNull SetterGetterGenerationOptions options) {
+  public GenerationInfo @Nullable [] generateSetters(@NotNull PsiClass aClass, @NotNull GetterSetterGenerationOptions options) {
     final PsiField field = getElement();
     if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
       return null;

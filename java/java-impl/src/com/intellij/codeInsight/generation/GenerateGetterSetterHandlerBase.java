@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.IncorrectOperationException;
@@ -80,7 +81,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
                                                    @Nullable Editor editor) {
     ClassMember[] chosenMembers = super.chooseMembers(members, allowEmptySelection, copyJavadocCheckbox, project, editor);
     myGenerateAnnotations = myGenerateAnnotationsCheckBox != null && myGenerateAnnotationsCheckBox.isSelected();
-    project.getService(JavaGeneratorSettingsStorage.class).getState().setGenerateAllAnnotations(myGenerateAnnotations);
+    JavaRefactoringSettings.getInstance().GENERATE_ALL_ANNOTATIONS = myGenerateAnnotations;
     myGenerateAnnotationsCheckBox = null;
     return chosenMembers;
   }
@@ -90,17 +91,17 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     if (project == null) return null;
     if (!supportsAnnotations) return null;
     if (myGenerateAnnotationsCheckBox == null) {
-      boolean annotations = project.getService(JavaGeneratorSettingsStorage.class).getState().getGenerateAllAnnotations();
+      boolean annotations = JavaRefactoringSettings.getInstance().GENERATE_ALL_ANNOTATIONS;
       myGenerateAnnotationsCheckBox = new JBCheckBox(JavaBundle.message("generate.getter.setter.generate.all.annotations"), annotations);
       myGenerateAnnotationsCheckBox.setToolTipText(JavaBundle.message("generate.getter.setter.generate.all.annotations.tooltip"));
     }
     return new JComponent[]{myGenerateAnnotationsCheckBox};
   }
 
-  protected @NotNull SetterGetterGenerationOptions getOptions() {
+  protected @NotNull GetterSetterGenerationOptions getOptions() {
     return myGenerateAnnotations
-           ? new SetterGetterGenerationOptions(true)
-           : new SetterGetterGenerationOptions(false);
+           ? new GetterSetterGenerationOptions(true)
+           : new GetterSetterGenerationOptions(false);
   }
 
   protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final @Nls String templatesTitle) {

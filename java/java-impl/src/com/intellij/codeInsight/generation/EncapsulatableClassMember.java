@@ -23,7 +23,7 @@ public interface EncapsulatableClassMember extends ClassMember {
 
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @deprecated please, use {@link EncapsulatableClassMember#generateGetter(SetterGetterGenerationOptions)}
+   * @deprecated please, use {@link EncapsulatableClassMember#generateGetter(GetterSetterGenerationOptions)}
    */
   @Deprecated
   @Nullable
@@ -31,7 +31,7 @@ public interface EncapsulatableClassMember extends ClassMember {
 
   /**
    * @return PsiElement or TemplateGenerationInfo
-   * @deprecated please, use {@link EncapsulatableClassMember#generateSetter(SetterGetterGenerationOptions)}
+   * @deprecated please, use {@link EncapsulatableClassMember#generateSetter(GetterSetterGenerationOptions)}
    */
   @Deprecated
   @Nullable
@@ -41,7 +41,7 @@ public interface EncapsulatableClassMember extends ClassMember {
    * @return PsiElement or TemplateGenerationInfo
    */
   @Nullable
-  default GenerationInfo generateGetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+  default GenerationInfo generateGetter(@NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     return generateGetter();
   }
 
@@ -49,7 +49,7 @@ public interface EncapsulatableClassMember extends ClassMember {
    * @return PsiElement or TemplateGenerationInfo
    */
   @Nullable
-  default GenerationInfo generateSetter(@NotNull SetterGetterGenerationOptions options) throws IncorrectOperationException {
+  default GenerationInfo generateSetter(@NotNull GetterSetterGenerationOptions options) throws IncorrectOperationException {
     return generateSetter();
   }
 

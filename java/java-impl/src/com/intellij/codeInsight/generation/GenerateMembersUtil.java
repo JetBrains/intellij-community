@@ -763,29 +763,29 @@ public final class GenerateMembersUtil {
   }
 
   public static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, PsiClass aClass) {
-    return generatePrototype(field, aClass, true, SetterGetterGenerationOptions.empty(), SetterTemplatesManager.getInstance());
+    return generatePrototype(field, aClass, true, GetterSetterGenerationOptions.empty(), SetterTemplatesManager.getInstance());
   }
 
   static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generateGetterPrototype(field, ignoreInvalidTemplate, SetterGetterGenerationOptions.empty());
+    return generateGetterPrototype(field, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
   }
 
   static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate) {
-    return generateSetterPrototype(field, ignoreInvalidTemplate, SetterGetterGenerationOptions.empty());
+    return generateSetterPrototype(field, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
   }
 
-  static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull SetterGetterGenerationOptions options) {
+  static @NotNull PsiMethod generateGetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull GetterSetterGenerationOptions options) {
     return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, GetterTemplatesManager.getInstance());
   }
 
-  static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull SetterGetterGenerationOptions options) {
+  static @NotNull PsiMethod generateSetterPrototype(@NotNull PsiField field, boolean ignoreInvalidTemplate, @NotNull GetterSetterGenerationOptions options) {
     return generatePrototype(field, field.getContainingClass(), ignoreInvalidTemplate, options, SetterTemplatesManager.getInstance());
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field,
                                                       PsiClass psiClass,
                                                       boolean ignoreInvalidTemplate,
-                                                      @NotNull SetterGetterGenerationOptions options,
+                                                      @NotNull GetterSetterGenerationOptions options,
                                                       @NotNull TemplatesManager templatesManager) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

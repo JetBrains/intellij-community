@@ -463,8 +463,8 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       }
 
       @Override
-      protected @NotNull SetterGetterGenerationOptions getOptions() {
-        return allAnnotations ? new SetterGetterGenerationOptions(true) : super.getOptions();
+      protected @NotNull GetterSetterGenerationOptions getOptions() {
+        return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     UIUtil.dispatchAllInvocationEvents();
@@ -563,8 +563,8 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
       }
 
       @Override
-      protected @NotNull SetterGetterGenerationOptions getOptions() {
-        return allAnnotations ? new SetterGetterGenerationOptions(true) : super.getOptions();
+      protected @NotNull GetterSetterGenerationOptions getOptions() {
+        return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     UIUtil.dispatchAllInvocationEvents();
