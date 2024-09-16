@@ -40,8 +40,8 @@ class PyNarrowedType private constructor(
    */
   fun isBound(): Boolean = original != null
 
-  val narrowedType: PyType
-    get() = requireNotNull(iteratedItemType)
+  val narrowedType: PyType?
+    get() = iteratedItemType
 
   companion object {
 

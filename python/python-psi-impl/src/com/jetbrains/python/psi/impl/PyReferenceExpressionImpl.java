@@ -33,9 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
-import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
 
 /**
  * Implements reference expression PSI.
@@ -493,10 +491,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                var arguments = narrowedType.getOriginal().getArguments(null);
                if (!arguments.isEmpty()) {
                  var firstArgument = arguments.get(0);
-                 if (firstArgument instanceof PyReferenceExpression) {
+                 PyType type = narrowedType.getNarrowedType();
+                 if (firstArgument instanceof PyReferenceExpression && type != null) {
                    return PyTypeAssertionEvaluator.createAssertionType(
                      context.getType(firstArgument),
-                     narrowedType.getNarrowedType(),
+                     type,
                      conditionalInstruction.getResult() ^ narrowedType.getNegated(),
                      narrowedType.getTypeIs(),
                      context);
