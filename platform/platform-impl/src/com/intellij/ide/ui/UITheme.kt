@@ -12,6 +12,8 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.laf.UIThemeExportableBean
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
+import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.DEFAULT_DARK_PARENT_THEME
+import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.DEFAULT_LIGHT_PARENT_THEME
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconPathPatcher
@@ -176,13 +178,20 @@ class UITheme internal constructor(
                          warn = warn)
     }
 
-    fun loadFromJson(data: ByteArray,
-                     themeId: @NonNls String,
-                     classLoader: ClassLoader,
-                     iconMapper: ((String) -> String?)? = null): UITheme {
+    fun loadFromJsonWithParent(data: ByteArray,
+                               themeId: @NonNls String,
+                               classLoader: ClassLoader,
+                               iconMapper: ((String) -> String?)? = null): UITheme {
       val warn = createWarnFunction(classLoader)
-      val theme = readTheme(JsonFactory().createParser(data), warn)
-      val parentTheme = resolveParentTheme(theme, themeId)
+      val jsonFactory = JsonFactory()
+      val theme = readTheme(jsonFactory.createParser(data), warn)
+
+      val parentThemeId = theme.parentTheme ?: if (theme.dark) DEFAULT_DARK_PARENT_THEME else DEFAULT_LIGHT_PARENT_THEME
+      val parentThemeData = UiThemeProviderListManager.getInstance().getThemeJson(parentThemeId)
+      val parentTheme = parentThemeData?.let {
+        readTheme(jsonFactory.createParser(it), warn)
+      } ?: resolveParentTheme(theme, themeId)
+
       return createTheme(theme = theme,
                          parentTheme = parentTheme,
                          classLoader = classLoader,
