@@ -130,7 +130,7 @@ object NestedScrollingSupport {
         if (currentOwner == null) {
           return null
         }
-        val scrollOwnerTimeout = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 250).milliseconds
+        val scrollOwnerTimeout = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 1000).milliseconds
         return if (isTimeoutExceeded(scrollOwnerTimeout)) {
           resetOwner()
           null
