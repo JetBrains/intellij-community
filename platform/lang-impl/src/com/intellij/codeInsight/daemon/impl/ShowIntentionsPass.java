@@ -11,6 +11,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -243,7 +244,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state != null && !state.isFinished() || myEditor.isDisposed()) {
+    if (state != null && !state.isFinished() || myEditor.isDisposed() || InlinePrompt.isInlinePromptShown(myEditor)) {
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
