@@ -14,8 +14,6 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.ide.wizard.whenProjectCreated
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -95,11 +93,8 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       val outputDirectory = resolveOutputDirectory()
       val filesToOpen = resolveFilesToOpen(outputDirectory)
 
-      val generatedFiles = invokeAndWaitIfNeeded {
-        runWriteAction {
-          AssetsProcessor.getInstance().generateSources(outputDirectory, assets, templateProperties)
-        }
-      }
+      val assetsProcessor = AssetsProcessor.getInstance()
+      val generatedFiles = assetsProcessor.generateSources(outputDirectory, assets, templateProperties)
 
       whenProjectCreated(project) { //IDEA-244863
         reformatCode(project, generatedFiles.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }.filter { it.isFile })

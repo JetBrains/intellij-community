@@ -2,12 +2,15 @@
 package com.intellij.ide.starters.local.generator
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.starters.local.*
+import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.starters.local.GeneratorEmptyDirectory
+import com.intellij.ide.starters.local.GeneratorResourceFile
+import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.*
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.openapi.util.io.findOrCreateDirectory
+import com.intellij.openapi.util.io.findOrCreateFile
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -19,7 +22,6 @@ import kotlin.io.path.*
 @ApiStatus.NonExtendable
 interface AssetsProcessor {
 
-  @RequiresWriteLock
   fun generateSources(
     outputDirectory: Path,
     assets: List<GeneratorAsset>,
