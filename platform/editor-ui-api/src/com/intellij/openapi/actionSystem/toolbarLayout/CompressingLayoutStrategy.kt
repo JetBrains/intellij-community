@@ -132,13 +132,25 @@ private fun calculateComponentWidths(availableWidth: Int, components: List<Compo
 
   while (currentWidthSum < availableWidth && !compressibleComponents.isEmpty()) {
     val minWidthComponent: Component =  compressibleComponents.remove()
-    if (calculatedWidths.getValue(minWidthComponent) < preferredWidths.getValue(minWidthComponent)) {
-      currentWidthSum++
-      val newWidth = calculatedWidths.getValue(minWidthComponent) + 1
-      calculatedWidths[minWidthComponent] = newWidth
-      if (newWidth < preferredWidths.getValue(minWidthComponent)) {
-        compressibleComponents.add(minWidthComponent)
-      }
+    val oldWidth = calculatedWidths.getValue(minWidthComponent)
+    val preferredWidth = preferredWidths.getValue(minWidthComponent)
+    val maxAllowedWidth = oldWidth + (availableWidth - currentWidthSum)
+    val nextCompressibleComponent: Component? = compressibleComponents.peek()
+    val newWidth = if (nextCompressibleComponent == null) {
+      // This is the last component. Extend it to its preferred size, but not more than actually available.
+      preferredWidth.coerceAtMost(maxAllowedWidth)
+    }
+    else {
+      // There are other components.
+      // Extend this one so it won't be the first in the queue anymore,
+      // but take care to not exceed its preferredWidth or the available width.
+      val nextWidth = calculatedWidths.getValue(nextCompressibleComponent)
+      (nextWidth + 1).coerceAtMost(maxAllowedWidth).coerceAtMost(preferredWidth)
+    }
+    calculatedWidths[minWidthComponent] = newWidth
+    currentWidthSum += newWidth - oldWidth
+    if (newWidth < preferredWidth) {
+      compressibleComponents.add(minWidthComponent)
     }
   }
   return calculatedWidths
