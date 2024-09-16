@@ -1,12 +1,11 @@
 // "Convert 'KClass' to 'Class'" "true"
 // WITH_STDLIB
 
-fun main() {
+fun foo() {
     val clazz = String::class
-    acceptClass(<caret>clazz.java)
+    val cls: Class<*>
+    cls = clazz<caret>
 }
 
-fun acceptClass(cls: Class<*>) = Unit
-
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix
-/* IGNORE_K2 */
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertKClassToClassFix

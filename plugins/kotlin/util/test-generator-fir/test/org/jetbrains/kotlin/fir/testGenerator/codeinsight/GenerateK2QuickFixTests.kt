@@ -49,6 +49,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/typeAddition", pattern = pattern)
             model("$idea/quickfix/typeMismatch/casts", pattern = pattern)
             model("$idea/quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/convertKClassToJavaClass", pattern = pattern)
             model("$idea/quickfix/typeMismatch/incompatibleTypes", pattern = pattern)
             model("$idea/quickfix/typeMismatch/numberConversion", pattern = pattern)
             model("$idea/quickfix/typeMismatch/parameterTypeMismatch", pattern = pattern)

@@ -33,10 +33,10 @@ internal object ConvertClassToKClassFixFactories {
 
     private fun KaSession.createFixIfAvailable(element: PsiElement?, expectedType: KaType): ConvertClassToKClassFix? {
         val dotQualifiedExpression = element as? KtDotQualifiedExpression ?: return null
-        if (!expectedType.isKClass()) return null
+        if (!isKClass(expectedType)) return null
 
         val expressionType = dotQualifiedExpression.expressionType ?: return null
-        if (!expressionType.isJavaClass()) return null
+        if (!isJavaClass(expressionType)) return null
 
         val children = dotQualifiedExpression.children
         if (children.size != 2) return null
@@ -48,10 +48,7 @@ internal object ConvertClassToKClassFixFactories {
 
         return ConvertClassToKClassFix(dotQualifiedExpression)
     }
-
-    context(KaSession)
-    private fun KaType.isKClass(): Boolean = isClassType(StandardClassIds.KClass)
-
-    context(KaSession)
-    private fun KaType.isJavaClass(): Boolean = isClassType(ClassId.fromString("java/lang/Class"))
 }
+
+internal fun KaSession.isKClass(type: KaType): Boolean = type.isClassType(StandardClassIds.KClass)
+internal fun KaSession.isJavaClass(type: KaType): Boolean = type.isClassType(ClassId.fromString("java/lang/Class"))
