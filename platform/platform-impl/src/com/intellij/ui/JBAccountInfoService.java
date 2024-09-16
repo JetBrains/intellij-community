@@ -206,11 +206,9 @@ public interface JBAccountInfoService {
       INSTANCE
     }
 
-    record RequestDeclined(@NotNull String errorCode, @NlsSafe @NotNull String message) implements LicenseListResult {
-    }
+    record RequestDeclined(@NotNull String errorCode, @NlsSafe @NotNull String message) implements LicenseListResult { }
 
-    record RequestFailed(@NlsSafe @NotNull String errorMessage) implements LicenseListResult {
-    }
+    record RequestFailed(@NlsSafe @NotNull String errorMessage) implements LicenseListResult { }
   }
 
   interface AuthStateListener extends EventListener {
