@@ -282,7 +282,7 @@ private class ContextCollectionStrategySerializer : StrategySerializer<Completio
 }
 
 internal class ContextCollectionFeature : EvaluableFeatureBase<CompletionContextCollectionStrategy>("completion-context") {
-  override fun getGenerateActionsProcessor(strategy: CompletionContextCollectionStrategy): GenerateActionsProcessor {
+  override fun getGenerateActionsProcessor(strategy: CompletionContextCollectionStrategy, project: Project): GenerateActionsProcessor {
     return ContextCollectionMultiLineProcessor(strategy)
   }
 

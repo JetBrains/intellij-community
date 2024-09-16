@@ -16,7 +16,7 @@ import java.lang.reflect.Type
 
 class TestGenerationFeature : EvaluableFeatureBase<TestGenerationStrategy>("test-generation") {
 
-  override fun getGenerateActionsProcessor(strategy: TestGenerationStrategy): GenerateActionsProcessor = TestGenerationActionsProcessor()
+  override fun getGenerateActionsProcessor(strategy: TestGenerationStrategy, project: Project): GenerateActionsProcessor = TestGenerationActionsProcessor()
 
   override fun getFeatureInvoker(project: Project, language: Language, strategy: TestGenerationStrategy): FeatureInvoker =
     TestGenerationInvoker(project, language, strategy)

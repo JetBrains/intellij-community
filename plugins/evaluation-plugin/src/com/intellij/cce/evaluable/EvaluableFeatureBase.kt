@@ -19,7 +19,7 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   /**
    * how to prepare the context before the feature invocation
    */
-  abstract fun getGenerateActionsProcessor(strategy: T): GenerateActionsProcessor
+  abstract fun getGenerateActionsProcessor(strategy: T, project: Project): GenerateActionsProcessor
 
   /**
    * how to call the feature
@@ -52,7 +52,7 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
           config.interpret.sessionsLimit,
           EvaluationRootInfo(true),
           project,
-          getGenerateActionsProcessor(strategy),
+          getGenerateActionsProcessor(strategy, project),
           name
         ),
         featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)

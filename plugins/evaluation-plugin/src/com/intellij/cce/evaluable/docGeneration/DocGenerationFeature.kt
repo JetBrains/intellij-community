@@ -18,7 +18,7 @@ import java.lang.reflect.Type
 
 class DocGenerationFeature : EvaluableFeatureBase<DocGenerationStrategy>("doc-generation") {
 
-  override fun getGenerateActionsProcessor(strategy: DocGenerationStrategy): GenerateActionsProcessor =
+  override fun getGenerateActionsProcessor(strategy: DocGenerationStrategy, project: Project): GenerateActionsProcessor =
     DocGenerationActionsProcessor()
 
   override fun getFeatureInvoker(project: Project, language: Language, strategy: DocGenerationStrategy): FeatureInvoker =
