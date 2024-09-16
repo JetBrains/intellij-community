@@ -8,6 +8,7 @@ import org.apache.maven.repository.internal.MavenSessionBuilderSupplier;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.repository.SimpleResolutionErrorPolicy;
@@ -26,6 +27,7 @@ public class IdeaMavenSessionBuilderSupplier extends MavenSessionBuilderSupplier
   private final Path myLocalRepoPath;
   private final Map<String, String> mySystemProperties = new HashMap<>();
   private final Map<String, String> myUserProperties = new HashMap<>();
+  private final boolean myUpdateSnapshots;
 
   public IdeaMavenSessionBuilderSupplier(RepositorySystem repositorySystem,
                                          MavenWorkspaceMap map,
@@ -37,6 +39,7 @@ public class IdeaMavenSessionBuilderSupplier extends MavenSessionBuilderSupplier
     myLocalRepoPath = request.getLocalRepositoryPath().toPath();
     putAll(request.getSystemProperties(), mySystemProperties);
     putAll(request.getUserProperties(), myUserProperties);
+    myUpdateSnapshots = request.isUpdateSnapshots();
   }
 
   private static void putAll(Properties from, Map<String, String> to) {
@@ -54,5 +57,9 @@ public class IdeaMavenSessionBuilderSupplier extends MavenSessionBuilderSupplier
       .setUserProperties(myUserProperties)
       .withLocalRepositories(new LocalRepository(myLocalRepoPath))
       .setResolutionErrorPolicy(new SimpleResolutionErrorPolicy(1, 1));
+    if (myUpdateSnapshots) {
+      session.setArtifactUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
+      session.setMetadataUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
+    }
   }
 }

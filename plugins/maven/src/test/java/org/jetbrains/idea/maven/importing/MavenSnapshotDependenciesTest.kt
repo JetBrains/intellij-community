@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.runAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
@@ -25,7 +26,6 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun `test incremental sync update snapshot dependency`() = runBlocking {
-    needFixForMaven4() // TODO: fix for Maven 4
     val helper = MavenCustomRepositoryHelper(dir, "local1")
     helper.addTestData("remote_snapshot/1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")

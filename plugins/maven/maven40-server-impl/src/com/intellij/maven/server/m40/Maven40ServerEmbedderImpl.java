@@ -988,10 +988,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull
   private ArrayList<MavenArtifact> doResolveArtifacts(@NotNull LongRunningTask task,
                                                       @NotNull Collection<MavenArtifactResolutionRequest> requests) {
+    if (requests.isEmpty()) return new ArrayList<>();
     try {
+      boolean updateSnapshots = myAlwaysUpdateSnapshots || requests.iterator().next().updateSnapshots();
       MavenExecutionRequest executionRequest =
         createRequest(null, null, null);
-      if (!requests.isEmpty() && requests.iterator().next().updateSnapshots()) {
+      if (!requests.isEmpty() && updateSnapshots) {
         executionRequest.setUpdateSnapshots(true);
       }
       ArrayList<MavenArtifact> artifacts = new ArrayList<>();
@@ -999,7 +1001,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       for (MavenArtifactResolutionRequest request : requests) {
         repos.addAll(request.getRemoteRepositories());
       }
-      List<ArtifactRepository> repositories = convertRepositories(new ArrayList<>(repos), myAlwaysUpdateSnapshots);
+      List<ArtifactRepository> repositories = convertRepositories(new ArrayList<>(repos), updateSnapshots);
       repositories.forEach(executionRequest::addRemoteRepository);
 
       executeWithMavenSession(executionRequest, MavenWorkspaceMap.empty(), task.getIndicator(), mavenSession -> {
