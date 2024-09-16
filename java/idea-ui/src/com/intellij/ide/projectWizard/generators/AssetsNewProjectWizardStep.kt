@@ -13,7 +13,6 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
-import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.readAction
@@ -22,7 +21,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.UIBundle
@@ -106,7 +108,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         }
       }
 
-      whenProjectCreated(project) { // IDEA-244863
+      StartupManager.getInstance(project).runAfterOpened { // IDEA-244863
         val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
         coroutineScope.launchTracked {
           reformatCode(project, filesToReformat)
