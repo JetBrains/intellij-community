@@ -6,7 +6,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExtern
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
@@ -47,8 +47,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
@@ -287,10 +285,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   private static void openBuildScriptFile(@NotNull Project project, VirtualFile buildScriptFile) {
     if (buildScriptFile == null) return;
-    PsiManager psiManager = PsiManager.getInstance(project);
-    PsiFile psiFile = psiManager.findFile(buildScriptFile);
-    if (psiFile == null) return;
-    EditorHelper.openInEditor(psiFile);
+    var fileEditorManager = FileEditorManager.getInstance(project);
+    fileEditorManager.openFile(buildScriptFile, false);
   }
 
   @Override
