@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -305,10 +306,15 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   // compute additional stuff in background thread
   void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    myIsEssentialHighlightingOnly = ReadAction.compute(() -> HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile));
-    VirtualFile virtualFile = ReadAction.compute(() -> psiFile.getVirtualFile());
-    myInContent = ReadAction.compute(() -> virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false));
-    extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : ReadAction.compute(() -> SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile));
+    ReadAction.run(() -> {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (!psiFile.isValid() || virtualFile != null && !virtualFile.isValid()) {
+        throw new ProcessCanceledException(new RuntimeException(psiFile.getName() + " is invalid"));
+      }
+      myIsEssentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
+      myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false);
+      extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile);
+    });
   }
 
   @Override
