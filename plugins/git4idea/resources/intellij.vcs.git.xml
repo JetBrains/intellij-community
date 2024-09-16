@@ -216,17 +216,15 @@
     </group>
 
     <group id="Git.Branch">
-      <action class="git4idea.actions.branch.GitCheckoutAction"/>
-      <action class="git4idea.actions.tag.GitCheckoutTagAction"/>
-      <action class="git4idea.actions.tag.GitDeleteTagAction"/>
+      <action class="git4idea.actions.ref.GitCheckoutAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitCompareWithBranchAction"/>
-      <action class="git4idea.actions.branch.GitShowDiffWithBranchAction"/>
+      <action class="git4idea.actions.ref.GitShowDiffWithRefAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
-      <action class="git4idea.actions.branch.GitMergeRefAction"/>
+      <action class="git4idea.actions.ref.GitMergeRefAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
@@ -234,7 +232,7 @@
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
-      <action class="git4idea.actions.branch.GitDeleteBranchAction"/>
+      <action class="git4idea.actions.ref.GitDeleteRefAction"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" searchable="false">

@@ -4,7 +4,7 @@ package git4idea.actions.branch
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.util.NlsActions
 import git4idea.GitBranch
-import git4idea.actions.tag.GitSingleRefAction
+import git4idea.actions.ref.GitSingleRefAction
 import git4idea.repo.GitRepository
 import java.util.function.Supplier
 

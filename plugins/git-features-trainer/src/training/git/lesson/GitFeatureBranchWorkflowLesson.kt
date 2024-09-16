@@ -19,7 +19,7 @@ import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.GitLocalBranch
-import git4idea.actions.branch.GitCheckoutAction
+import git4idea.actions.ref.GitCheckoutAction
 import git4idea.actions.branch.GitCheckoutWithRebaseAction
 import git4idea.commands.Git
 import git4idea.commands.GitCommand

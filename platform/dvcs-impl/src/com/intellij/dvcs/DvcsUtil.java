@@ -98,7 +98,7 @@ public final class DvcsUtil {
   }
 
   public static <T extends Repository> void disableActionIfAnyRepositoryIsFresh(@NotNull AnActionEvent e,
-                                                                                @NotNull List<T> repositories,
+                                                                                @NotNull Collection<T> repositories,
                                                                                 @Nls String operationName) {
     boolean isFresh = ContainerUtil.exists(repositories, Repository::isFresh);
     if (isFresh) {

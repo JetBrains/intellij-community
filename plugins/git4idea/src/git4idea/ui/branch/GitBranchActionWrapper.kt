@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshotProvider
 import git4idea.GitBranch
 import git4idea.actions.branch.GitBranchActionsDataKeys
-import git4idea.actions.tag.GitSingleRefAction
+import git4idea.actions.ref.GitSingleRefAction
 import git4idea.repo.GitRepository
 
 internal class GitBranchActionWrapper(
