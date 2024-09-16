@@ -14,6 +14,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.ide.wizard.whenProjectCreated
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -110,7 +111,9 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         coroutineScope.launchTracked {
           reformatCode(project, filesToReformat)
         }
-        openFilesInEditor(project, filesToOpen.mapNotNull { it.refreshAndFindVirtualFile() })
+        coroutineScope.launchTracked {
+          openFilesInEditor(project, filesToOpen)
+        }
       }
     }
   }
@@ -157,12 +160,36 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     }
   }
 
-  private fun openFilesInEditor(project: Project, files: List<VirtualFile>) {
-    val fileEditorManager = FileEditorManager.getInstance(project)
-    val projectView = ProjectView.getInstance(project)
-    for (file in files) {
-      fileEditorManager.openFile(file, true)
-      projectView.select(null, file, false)
+  private suspend fun openFilesInEditor(project: Project, files: List<Path>) {
+    val virtualFiles = withContext(Dispatchers.IO) {
+      blockingContext {
+        files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
+          .filter { it.isFile }
+      }
+    }
+    withEdtAndReadContext {
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      for (file in virtualFiles) {
+        fileEditorManager.openFile(file, true)
+      }
+    }
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        val projectView = ProjectView.getInstance(project)
+        for (file in virtualFiles) {
+          projectView.select(null, file, false)
+        }
+      }
+    }
+  }
+
+  private suspend fun withEdtAndReadContext(action: () -> Unit) {
+    withContext(Dispatchers.IO) {
+      blockingContext {
+        invokeAndWaitIfNeeded {
+          action()
+        }
+      }
     }
   }
 
