@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.idea.AppMode;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -43,6 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,7 +321,7 @@ public class ConsoleHistoryController implements Disposable {
 
     @Override
     public void update(final @NotNull AnActionEvent e) {
-      boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
+      boolean enabled = myMultiline || isUpDownKey(e) == ThreeState.NO || canMoveInEditor(myNext);
       //enabled &= getModel().hasHistory(myNext);
       e.getPresentation().setEnabled(enabled);
       e.getPresentation().setVisible(false);
@@ -330,13 +332,17 @@ public class ConsoleHistoryController implements Disposable {
       return ActionUpdateThread.EDT;
     }
 
-    private boolean isUpDownKey(@NotNull AnActionEvent e) {
+    private ThreeState isUpDownKey(@NotNull AnActionEvent e) {
       final InputEvent event = e.getInputEvent();
+      if (event == null && AppMode.isRemoteDevHost()) {
+        // e.getInputEvent() is always null in RemoteDev, so we can't tell
+        return ThreeState.UNSURE;
+      }
       if (!(event instanceof KeyEvent)) {
-        return false;
+        return ThreeState.NO;
       }
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent((KeyEvent)event);
-      return myUpDownKeystrokes.contains(keyStroke);
+      return ThreeState.fromBoolean(myUpDownKeystrokes.contains(keyStroke));
     }
   }
 
