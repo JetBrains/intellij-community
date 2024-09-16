@@ -25,7 +25,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
       name = "compilation-charts-scroll-pane"
     }
-    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport)
+    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport, zoom)
     scroll.horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
       addMouseWheelListener(rightAdhesionScrollBarListener)
@@ -82,20 +82,9 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     vm.zoomEvent.advise(vm.lifetime) { zoomType ->
       when (zoomType) {
-        is CompilationChartsViewModel.ZoomEvent.In -> {
-          rightAdhesionScrollBarListener.disableShouldScroll()
-          zoom.increase(scroll.viewport)
-          rightAdhesionScrollBarListener.scheduleUpdateShouldScroll()
-        }
-        is CompilationChartsViewModel.ZoomEvent.Out -> {
-          rightAdhesionScrollBarListener.disableShouldScroll()
-          zoom.decrease(scroll.viewport)
-          rightAdhesionScrollBarListener.scheduleUpdateShouldScroll()
-        }
-        is CompilationChartsViewModel.ZoomEvent.Reset -> {
-          zoom.reset(scroll.viewport)
-          rightAdhesionScrollBarListener.scheduleUpdateShouldScroll()
-        }
+        is CompilationChartsViewModel.ZoomEvent.In -> rightAdhesionScrollBarListener.increase()
+        is CompilationChartsViewModel.ZoomEvent.Out -> rightAdhesionScrollBarListener.decrease()
+        is CompilationChartsViewModel.ZoomEvent.Reset -> rightAdhesionScrollBarListener.reset()
       }
       diagrams.smartDraw(true, false)
     }

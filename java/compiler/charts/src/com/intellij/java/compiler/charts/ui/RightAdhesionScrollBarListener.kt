@@ -11,7 +11,10 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JViewport
 
-internal class RightAdhesionScrollBarListener(private val viewport: JViewport) : AdjustmentListener, MouseWheelListener {
+internal class RightAdhesionScrollBarListener(
+  private val viewport: JViewport,
+  private val zoom: Zoom
+) : AdjustmentListener, MouseWheelListener {
   private var shouldScroll = true
   private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts adjust value listener", 1)
   private var updateShouldScrollTask: ScheduledFuture<*>? = null
@@ -31,7 +34,7 @@ internal class RightAdhesionScrollBarListener(private val viewport: JViewport) :
     }
   }
 
-  internal fun scheduleUpdateShouldScroll() {
+  private fun scheduleUpdateShouldScroll() {
     updateShouldScrollTask?.cancel(false)
     updateShouldScrollTask = executor.schedule(::updateShouldScroll, 100, TimeUnit.MILLISECONDS)
   }
@@ -51,7 +54,32 @@ internal class RightAdhesionScrollBarListener(private val viewport: JViewport) :
     adjustHorizontalScrollToRightIfNeeded()
   }
 
-  internal fun disableShouldScroll() {
+  private fun disableShouldScroll() {
     shouldScroll = false
   }
+
+  fun increase() {
+    disableShouldScroll()
+    zoom.adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER)
+    scheduleUpdateShouldScroll()
+  }
+
+  fun decrease() {
+    disableShouldScroll()
+    zoom.adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER)
+    scheduleUpdateShouldScroll()
+  }
+
+  fun reset() {
+    zoom.reset(viewport, viewport.getMiddlePoint())
+    scheduleUpdateShouldScroll()
+  }
+
+  private fun JViewport.getMiddlePoint(): Int = viewPosition.x + width / 2
+
+  companion object {
+    private const val ZOOM_IN_MULTIPLIER: Double = 1.1
+    private const val ZOOM_OUT_MULTIPLIER: Double = 0.9
+  }
 }
+

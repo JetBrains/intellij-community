@@ -14,8 +14,6 @@ class Zoom {
   fun toPixels(duration: Long): Double = toPixels(duration.toDouble(), scale)
   fun toPixels(duration: Double): Double = toPixels(duration, scale)
   fun toDuration(pixels: Int): Long = toDuration(pixels.toDouble(), scale)
-  fun increase(viewport: JViewport) = adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER)
-  fun decrease(viewport: JViewport) = adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER)
 
   fun adjust(viewport: JViewport, xPosition: Int, delta: Double): Point {
     val localX = xPosition - viewport.viewPosition.x
@@ -30,12 +28,11 @@ class Zoom {
     return point
   }
 
-  fun reset(viewport: JViewport) {
+  fun reset(viewport: JViewport, xPosition: Int) {
     scale = INITIAL_SCALE
-    adjust(viewport, viewport.getMiddlePoint(), 1.0)
+    adjust(viewport, xPosition, 1.0)
   }
 
-  private fun JViewport.getMiddlePoint(): Int = viewPosition.x + width / 2
   private fun toPixels(duration: Double, scale: Double): Double = nanosToSeconds(duration * scale)
   private fun toDuration(pixels: Double, scale: Double): Long = secondsToNanos(pixels / scale).roundToLong()
   private fun nanosToSeconds(time: Double): Double = time / TimeUnit.SECONDS.toNanos(1)
@@ -43,7 +40,5 @@ class Zoom {
 
   companion object {
     private const val INITIAL_SCALE: Double = 24.0
-    private const val ZOOM_IN_MULTIPLIER: Double = 1.1
-    private const val ZOOM_OUT_MULTIPLIER: Double = 0.9
   }
 }
