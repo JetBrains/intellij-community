@@ -25,6 +25,7 @@ import git4idea.branch.GitNewBranchDialog;
 import git4idea.branch.GitNewBranchOptions;
 import git4idea.config.GitSharedSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.remote.hosting.GitRemoteBranchesUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -272,23 +273,15 @@ public final class GitBranchPopupActions {
       return GitBundle.message("branches.there.are.outgoing.commits");
     }
 
-    public static class CheckoutAction extends DumbAwareAction {
-      private final Project myProject;
-      private final List<? extends GitRepository> myRepositories;
-      private final String myBranchName;
-
-      public CheckoutAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super(GitBundle.messagePointer("branches.checkout"));
-        myProject = project;
-        myRepositories = repositories;
-        myBranchName = branchName;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        checkoutBranch(myProject, myRepositories, myBranchName);
-      }
-
+    /**
+     * @deprecated use {@link GitBrancher}
+     */
+    @Deprecated(forRemoval = true)
+    public final static class CheckoutAction {
+      /**
+       * @deprecated use {@link GitBrancher#checkout(String, boolean, List, Runnable))}
+       */
+      @Deprecated(forRemoval = true)
       public static void checkoutBranch(@NotNull Project project,
                                         @NotNull List<? extends GitRepository> repositories,
                                         @NotNull String branchName) {
@@ -332,67 +325,19 @@ public final class GitBranchPopupActions {
       return getSingleBranchActions(myBranch, myRepositories, mySelectedRepository, e);
     }
 
-    public static class CheckoutRemoteBranchAction extends DumbAwareAction {
-      private final Project myProject;
-      private final List<? extends GitRepository> myRepositories;
-      private final String myRemoteBranchName;
-
-      CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                 @NotNull String remoteBranchName) {
-        super(GitBundle.messagePointer("branches.checkout"));
-        myProject = project;
-        myRepositories = repositories;
-        myRemoteBranchName = remoteBranchName;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        checkoutRemoteBranch(myProject, myRepositories, myRemoteBranchName);
-      }
-
+    /**
+     * @deprecated use {@link GitRemoteBranchesUtil}
+     */
+    @Deprecated(forRemoval = true)
+    public static final class CheckoutRemoteBranchAction {
+      /**
+       * @deprecated use {@link GitRemoteBranchesUtil#checkoutRemoteBranch(Project, List, String, String, Runnable)}
+       */
+      @Deprecated(forRemoval = true)
       @RequiresEdt
       public static void checkoutRemoteBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                               @NotNull String remoteBranchName) {
-        GitRepository repository = repositories.get(0);
-        GitRemoteBranch remoteBranch = Objects.requireNonNull(repository.getBranches().findRemoteBranch(remoteBranchName));
-        String suggestedLocalName = remoteBranch.getNameForRemoteOperations();
-        checkoutRemoteBranch(project, repositories, remoteBranchName, suggestedLocalName, null);
-      }
-
-      @RequiresEdt
-      public static void checkoutRemoteBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                              @NotNull String remoteBranchName, @NotNull String suggestedLocalName, @Nullable Runnable callInAwtLater) {
-        // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
-        if (BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, suggestedLocalName)) {
-          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater);
-          return;
-        }
-
-        Map<GitRepository, GitLocalBranch> conflictingLocalBranches = map2MapNotNull(repositories, r -> {
-          GitLocalBranch local = r.getBranches().findLocalBranch(suggestedLocalName);
-          return local != null ? Pair.create(r, local) : null;
-        });
-
-        if (hasTrackingConflicts(conflictingLocalBranches, remoteBranchName)) {
-          askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater);
-          return;
-        }
-        new GitBranchCheckoutOperation(project, repositories)
-          .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true), callInAwtLater);
-      }
-
-      @RequiresEdt
-      private static void askNewBranchNameAndCheckout(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                                      @NotNull String remoteBranchName, @NotNull String suggestedLocalName,
-                                                      @Nullable Runnable callInAwtLater) {
-        //do not allow name conflicts
-        GitNewBranchOptions options =
-          new GitNewBranchDialog(project, repositories, GitBundle.message("branches.checkout.s", remoteBranchName), suggestedLocalName,
-                                 false, true)
-            .showAndGetOptions();
-        if (options == null) return;
-        GitBrancher brancher = GitBrancher.getInstance(project);
-        brancher.checkoutNewBranchStartingFrom(options.getName(), remoteBranchName, options.shouldReset(), repositories, callInAwtLater);
+        GitRemoteBranchesUtil.checkoutRemoteBranch(project, repositories, remoteBranchName);
       }
     }
   }

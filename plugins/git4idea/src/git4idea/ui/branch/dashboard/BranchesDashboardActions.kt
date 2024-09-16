@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.getCommonCurrentBranch
-import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
@@ -650,32 +649,6 @@ internal object BranchesDashboardActions {
       }
 
       return (e.getData(SELECTED_ITEMS) as? Array<TreePath>)?.let(::getSelectedBranches)
-    }
-  }
-
-  class CheckoutSelectedBranchAction : BranchesActionBase() {
-
-    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
-      if (branches.size > 1) {
-        e.presentation.isEnabled = false
-        return
-      }
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val project = e.project!!
-      val branch = e.getData(GIT_BRANCHES)!!.firstOrNull() ?: return
-      val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
-      val repositories = controller.getSelectedRepositories(branch)
-
-      if (branch.isLocal) {
-        GitBranchPopupActions.LocalBranchActions.CheckoutAction
-          .checkoutBranch(project, repositories, branch.branchName)
-      }
-      else {
-        GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-          .checkoutRemoteBranch(project, repositories, branch.branchName)
-      }
     }
   }
 

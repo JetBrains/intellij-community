@@ -5,10 +5,11 @@ import com.intellij.dvcs.diverged
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import git4idea.GitBranch
+import git4idea.GitRemoteBranch
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
+import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions
 
 class GitCheckoutAction
   : GitSingleBranchAction(GitBundle.messagePointer("branches.checkout")) {
@@ -18,8 +19,9 @@ class GitCheckoutAction
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     if (branch.isRemote) {
-      GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction.checkoutRemoteBranch(project, repositories, branch.name)
-    } else {
+      GitRemoteBranchesUtil.checkoutRemoteBranch(project, repositories, branch.name)
+    }
+    else {
       GitBrancher.getInstance(e.project!!).checkout(branch.name, false, repositories, null)
     }
   }
