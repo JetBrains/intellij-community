@@ -127,8 +127,7 @@ open class PyAddNewCondaEnvPanel(
 
     PyCondaPackageService.onCondaEnvCreated(condaPath)
     project.excludeInnerVirtualEnv(sdk)
-    // Old conda created, convert to new
-    fixPythonCondaSdk(sdk, sdk.getOrCreateAdditionalData(), condaPath)
+
     return sdk
   }
 

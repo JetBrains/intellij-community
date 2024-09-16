@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,11 +60,9 @@ public final class PySdkTools {
       final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
 
-      // Env might be conda, so we look for conda binary and configure it as conda
-      // Consider migrating to `conda` tag
-      PyCondaSdkFixKt.fixPythonCondaSdk(sdk, PySdkExtKt.getOrCreateAdditionalData(sdk));
       ref.set(sdk);
     });
+
     final Sdk sdk = ref.get();
     if (sdk != null) {
       ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));

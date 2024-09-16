@@ -297,13 +297,13 @@ public final class PythonSdkType extends SdkType {
         // TODO we should have "remote" SDK data with unknown credentials anyway!
       }
     }
+
     var additionalData = PySdkProvider.EP_NAME.getExtensionList().stream()
       .map(ext -> ext.loadAdditionalDataForSdk(additional))
       .filter(data -> data != null)
       .findFirst()
       .orElseGet(() -> PythonSdkAdditionalData.loadFromElement(additional));
-    // Convert legacy conda SDK, temporary fix.
-    PyCondaSdkFixKt.fixPythonCondaSdk(currentSdk, additionalData);
+
     return additionalData;
   }
 
