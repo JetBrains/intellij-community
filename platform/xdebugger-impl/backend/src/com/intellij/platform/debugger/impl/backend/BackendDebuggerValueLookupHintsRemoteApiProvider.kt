@@ -44,8 +44,8 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
       val editor = editorId.findEditor()
       val point = editor.offsetToXY(offset)
 
-      val hint = getValueHintFromDebuggers(project, editor, point, hintType) ?: return@withContext false
-      hint.canShowHint()
+      val canShowHint = getValueHintFromDebuggers(project, editor, point, hintType) != null
+      return@withContext canShowHint
     }
   }
 

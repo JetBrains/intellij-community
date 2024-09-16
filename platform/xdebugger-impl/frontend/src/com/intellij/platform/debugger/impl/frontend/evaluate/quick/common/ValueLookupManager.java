@@ -202,10 +202,6 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
           hint.setEditorMouseEvent(event);
         }
         UIUtil.invokeLaterIfNeeded(() -> {
-          if (!hint.canShowHint()) {
-            return;
-          }
-
           hideHint();
 
           myCurrentHint = hint;

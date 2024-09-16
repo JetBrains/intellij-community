@@ -100,11 +100,6 @@ public abstract class AbstractValueHint {
     myCurrentRange = textRange;
   }
 
-  @ApiStatus.Internal
-  public boolean canShowHint() {
-    return true;
-  }
-
   protected abstract void evaluateAndShowHint();
 
   boolean isInsideCurrentRange(Editor editor, Point point) {
@@ -145,7 +140,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint() || !isCurrentRangeValid()) {
+    if (!isCurrentRangeValid()) {
       hideHint();
       return;
     }
