@@ -975,6 +975,11 @@ c:com.intellij.xdebugger.impl.evaluate.ExpressionInputForm
 - addLanguageComponent(javax.swing.JComponent):V
 - getMainPanel():javax.swing.JPanel
 - setName(java.lang.String):V
+f:com.intellij.xdebugger.impl.evaluate.ValueLookupManagerControllerEntityTypeProvider
+- com.jetbrains.rhizomedb.impl.EntityTypeProvider
+- sf:INSTANCE:com.intellij.xdebugger.impl.evaluate.ValueLookupManagerControllerEntityTypeProvider
+- <init>():V
+- f:getEntityTypes():java.util.List
 c:com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 - com.intellij.openapi.ui.DialogWrapper
 - sf:ADD_WATCH_KEYSTROKE:javax.swing.KeyStroke
@@ -1515,11 +1520,11 @@ f:com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction$Compa
 f:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiClientStub
 - fleet.rpc.RemoteApi
 - <init>(kotlin.jvm.functions.Function3):V
-- f:canShowHint-vZ3MphE(fleet.util.UID,fleet.util.UID,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
-- f:createHint-vZ3MphE(fleet.util.UID,fleet.util.UID,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
+- f:canShowHint(com.intellij.platform.project.ProjectId,com.intellij.openapi.editor.impl.EditorId,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
+- f:createHint(com.intellij.platform.project.ProjectId,com.intellij.openapi.editor.impl.EditorId,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInvocationHandler():kotlin.jvm.functions.Function3
-- f:removeHint(fleet.util.UID,I,kotlin.coroutines.Continuation):java.lang.Object
-- f:showHint(fleet.util.UID,I,kotlin.coroutines.Continuation):java.lang.Object
+- f:removeHint(com.intellij.platform.project.ProjectId,I,kotlin.coroutines.Continuation):java.lang.Object
+- f:showHint(com.intellij.platform.project.ProjectId,I,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiRemoteApiDescriptorImpl
 - fleet.rpc.RemoteApiDescriptor
 - sf:INSTANCE:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiRemoteApiDescriptorImpl
