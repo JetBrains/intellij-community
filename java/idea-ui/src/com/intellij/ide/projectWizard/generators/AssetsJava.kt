@@ -17,8 +17,8 @@ import java.util.*
 
 private const val DEFAULT_FILE_NAME = "Main.java"
 private const val DEFAULT_TEMPLATE_NAME = "SampleCode"
-private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithRenderedOnboardingTips.java"
-private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"
+private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"
+private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "SampleCodeWithRenderedOnboardingTips.java"
 
 object AssetsJava {
 
