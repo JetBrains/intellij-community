@@ -927,7 +927,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     public @Nls @NotNull String getName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.string.remove.fix.name", myToRemove);
+      return InspectionGadgetsBundle.message("inspection.remove.redundant.call.fix.name", myToRemove);
     }
 
     @Override
