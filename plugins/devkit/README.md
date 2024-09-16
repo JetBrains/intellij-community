@@ -3,6 +3,8 @@
 ## Inspections
 
 See `org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil` for common utility methods.
+By default, files located in _test sources_ are not checked, 
+use `DevKitInspectionUtil.isAllowedIncludingTestSources()` to include them.
 
 Consider marking inspections with _safe-only_ fixes ready for _Code | Code Cleanup..._
 (`com.intellij.codeInspection.CleanupLocalInspectionTool`).
