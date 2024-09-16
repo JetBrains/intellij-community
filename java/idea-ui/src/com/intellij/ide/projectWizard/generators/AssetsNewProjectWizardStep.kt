@@ -14,14 +14,19 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.ide.wizard.whenProjectCreated
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 import java.nio.file.Path
@@ -93,8 +98,11 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       val outputDirectory = resolveOutputDirectory()
       val filesToOpen = resolveFilesToOpen(outputDirectory)
 
-      val assetsProcessor = AssetsProcessor.getInstance()
-      val generatedFiles = assetsProcessor.generateSources(outputDirectory, assets, templateProperties)
+      val generatedFiles = invokeAndWaitIfNeeded {
+        runWithModalProgressBlocking(project, UIBundle.message("label.project.wizard.new.assets.step.generate.sources.progress", project.name)) {
+          generateSources(outputDirectory)
+        }
+      }
 
       whenProjectCreated(project) { //IDEA-244863
         reformatCode(project, generatedFiles.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }.filter { it.isFile })
@@ -119,6 +127,15 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   private fun resolveFilesToOpen(outputDirectory: Path): List<Path> {
     return filesToOpen.map { outputDirectory.resolve(it).normalize() }
+  }
+
+  private suspend fun generateSources(outputDirectory: Path): List<Path> {
+    return withContext(Dispatchers.IO) {
+      blockingContext {
+        val assetsProcessor = AssetsProcessor.getInstance()
+        assetsProcessor.generateSources(outputDirectory, assets, templateProperties)
+      }
+    }
   }
 
   private fun reformatCode(project: Project, files: List<VirtualFile>) {
