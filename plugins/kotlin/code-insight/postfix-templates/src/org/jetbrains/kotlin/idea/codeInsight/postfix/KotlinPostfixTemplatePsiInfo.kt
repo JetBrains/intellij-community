@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
 
 internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
@@ -86,13 +87,14 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             } else if (KtPsiUtil.isFalseConstant(element)) {
                 return factory.createExpression(KtTokens.TRUE_KEYWORD.value)
             }
-        } else if (element is KtCallExpression) {
-            val calleeExpression = element.calleeExpression
+        } else if (element is KtExpression && element.getPossiblyQualifiedCallExpression() != null) {
+            val callExpression = element.getPossiblyQualifiedCallExpression()
+            val calleeExpression = callExpression?.calleeExpression
             if (calleeExpression is KtNameReferenceExpression) {
                 allowAnalysisOnEdt {
                     allowAnalysisFromWriteAction {
                         analyze(element) {
-                            val mappedCallableId = resolveToMappedCallableId(element)
+                            val mappedCallableId = resolveToMappedCallableId(callExpression)
                             if (mappedCallableId != null) {
                                 return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
                             }

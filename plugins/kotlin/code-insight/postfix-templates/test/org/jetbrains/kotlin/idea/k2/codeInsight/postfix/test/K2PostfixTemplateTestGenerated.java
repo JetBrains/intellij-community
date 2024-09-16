@@ -384,8 +384,18 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("collectionsAll.kt")
+        public void testCollectionsAll() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("collectionsAll_implicitReceiver.kt")
         public void testCollectionsAll_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty.kt")
+        public void testCollectionsIsEmpty() throws Exception {
             performTest();
         }
 
@@ -399,8 +409,23 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("collectionsIsEmpty_listReceiver.kt")
+        public void testCollectionsIsEmpty_listReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsNotEmpty.kt")
+        public void testCollectionsIsNotEmpty() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("collectionsIsNotEmpty_implicitReceiver.kt")
         public void testCollectionsIsNotEmpty_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsNone.kt")
+        public void testCollectionsNone() throws Exception {
             performTest();
         }
 
@@ -1052,6 +1077,16 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty.kt")
+        public void testCollectionsIsEmpty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_listReceiver.kt")
+        public void testCollectionsIsEmpty_listReceiver() throws Exception {
             performTest();
         }
 
