@@ -3,7 +3,6 @@ package fleet.util
 
 import fleet.util.logging.KLogger
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.transformWhile
 
@@ -31,6 +30,9 @@ fun <T, K> Iterable<T>.associateByUnique(keySelector: (T) -> K): Map<K, T> =
     }
   }
 
+/**
+ * Same idea as [kotlin.collections.singleOrNull] but will throw if the collection contains more than one element.
+ * */
 inline fun <T> Iterable<T>.singleOrNullOrThrow(p: (T) -> Boolean = { true }): T? {
   var single: T? = null
   var found = false
