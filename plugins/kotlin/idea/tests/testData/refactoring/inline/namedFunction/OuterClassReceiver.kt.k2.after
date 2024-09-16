@@ -2,7 +2,7 @@ class Test {
     inner class Inner {
         fun bar() {
             listOf("").forEach {
-                bizz(it)
+                this@Test.bizz(it)
             }
         }
 
