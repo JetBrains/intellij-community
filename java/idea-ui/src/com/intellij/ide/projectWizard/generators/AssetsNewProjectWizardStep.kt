@@ -15,16 +15,17 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
-import com.intellij.openapi.vfs.refreshAndFindVirtualFile
-import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.openapi.vfs.*
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.psi.PsiManager
 import com.intellij.ui.UIBundle
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -98,14 +99,17 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       val outputDirectory = resolveOutputDirectory()
       val filesToOpen = resolveFilesToOpen(outputDirectory)
 
-      val generatedFiles = invokeAndWaitIfNeeded {
+      val filesToReformat = invokeAndWaitIfNeeded {
         runWithModalProgressBlocking(project, UIBundle.message("label.project.wizard.new.assets.step.generate.sources.progress", project.name)) {
           generateSources(outputDirectory)
         }
       }
 
-      whenProjectCreated(project) { //IDEA-244863
-        reformatCode(project, generatedFiles.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }.filter { it.isFile })
+      whenProjectCreated(project) { // IDEA-244863
+        val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
+        coroutineScope.launchTracked {
+          reformatCode(project, filesToReformat)
+        }
         openFilesInEditor(project, filesToOpen.mapNotNull { it.refreshAndFindVirtualFile() })
       }
     }
@@ -138,11 +142,19 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     }
   }
 
-  private fun reformatCode(project: Project, files: List<VirtualFile>) {
-    val psiManager = PsiManager.getInstance(project)
-    val psiFiles = files.mapNotNull { psiManager.findFile(it) }
-
-    ReformatCodeProcessor(project, psiFiles.toTypedArray(), null, false).run()
+  private suspend fun reformatCode(project: Project, files: List<Path>) {
+    val virtualFiles = withContext(Dispatchers.IO) {
+      blockingContext {
+        files.mapNotNull { it.refreshAndFindVirtualFileOrDirectory() }
+          .filter { it.isFile }
+      }
+    }
+    val psiFiles = readAction {
+      virtualFiles.mapNotNull { it.findPsiFile(project) }
+    }
+    blockingContext {
+      ReformatCodeProcessor(project, psiFiles.toTypedArray(), null, false).run()
+    }
   }
 
   private fun openFilesInEditor(project: Project, files: List<VirtualFile>) {
@@ -151,6 +163,15 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     for (file in files) {
       fileEditorManager.openFile(file, true)
       projectView.select(null, file, false)
+    }
+  }
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineScopeService(private val coroutineScope: CoroutineScope) {
+    companion object {
+      fun getCoroutineScope(project: Project): CoroutineScope {
+        return project.service<CoroutineScopeService>().coroutineScope
+      }
     }
   }
 }
