@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicBoolean
 
 private class XDebuggerValueLookupEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
@@ -59,7 +59,7 @@ class XDebuggerValueLookupHideHintsRequestEntity(override val eid: EID) : Entity
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ValueLookupManagerController(private val project: Project, private val cs: CoroutineScope) {
-  private var listeningStarted = AtomicReference(false)
+  private val listeningStarted = AtomicBoolean(false)
 
   /**
    * Starts [ValueLookupManager] listening for events (e.g. mouse movement) to trigger evaluation popups
