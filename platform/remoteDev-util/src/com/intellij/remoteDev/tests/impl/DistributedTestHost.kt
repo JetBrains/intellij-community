@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
+import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Frame
+import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
@@ -197,7 +199,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               return withContext(providedContext + clientId.asContextElement()) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
-                  requestFocus(actionTitle)
+                  requestFocus(silent = false)
                 }
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
@@ -323,9 +325,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         // actually doesn't really preserve clientId, not really important here
         // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
-        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, actionTitle ->
+        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, silent ->
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            requestFocus(actionTitle)
+            requestFocus(silent)
           }
         }
 
@@ -361,81 +363,81 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
 
-  private suspend fun requestFocus(actionTitle: String): Boolean {
-    LOG.info("$actionTitle: Requesting focus")
+  private suspend fun requestFocus(silent: Boolean): Boolean {
+    LOG.info("Requesting focus")
 
     val projects = ProjectManagerEx.getOpenProjects()
 
     if (projects.size > 1) {
-      LOG.info("'$actionTitle': Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
+      LOG.info("Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
       return false
     }
 
     val currentProject = projects.singleOrNull()
     return if (currentProject == null) {
-      requestFocusNoProject(actionTitle)
+      requestFocusNoProject(silent)
     }
     else {
-      requestFocusWithProject(currentProject, actionTitle)
+      requestFocusWithProjectIfNeeded(currentProject, silent)
     }
   }
 
-  private suspend fun requestFocusWithProject(project: Project, actionTitle: String): Boolean {
+  private suspend fun requestFocusWithProjectIfNeeded(project: Project, silent: Boolean): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
     if (projectIdeFrame == null) {
-      LOG.info("$actionTitle: No frame yet, nothing to focus")
+      LOG.info("No frame yet, nothing to focus")
       return false
     }
     else {
-      val windowString = "window '${projectIdeFrame.name}'"
-      if (SystemInfo.isWindows) {
-        return requestFocusWithProjectOnWindows(projectIdeFrame, project, windowString)
-      }
+      val frameName = "frame '${projectIdeFrame.name}'"
 
-      if (projectIdeFrame.isFocused) {
-        LOG.info("$actionTitle: Window '$windowString' is already focused")
-        return true
+      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused) && !SystemInfo.isWindows) {
+        LOG.info("Frame '$frameName' is already focused")
+        true
       }
       else {
-        LOG.info("$actionTitle: Requesting project focus for '$windowString'")
-        ProjectUtil.focusProjectWindow(project, true)
-        val waitResult = waitFor(timeout = 5.seconds.toJavaDuration()) {
-          projectIdeFrame.isFocused
-        }
-        if (!waitResult) {
-          LOG.error("Couldn't wait for focus in project '$windowString'")
-        }
-        return waitResult
+        requestFocusWithProject(projectIdeFrame, project, frameName, silent)
       }
     }
   }
 
-  private suspend fun requestFocusWithProjectOnWindows(projectIdeFrame: JFrame, project: Project, windowString: String): Boolean {
+  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, silent: Boolean): Boolean {
+    LOG.info("Requesting project focus for '$frameName'")
+
     AppIcon.getInstance().requestFocus(projectIdeFrame)
-    ProjectUtil.focusProjectWindow(project)
-    val waitResult = waitFor(timeout = 5.seconds.toJavaDuration()) { projectIdeFrame.isFocused }
-    if (!waitResult) {
-      LOG.error("Couldn't wait for focus in project '$windowString'")
+    ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
+
+    return waitFor(timeout = 5.seconds.toJavaDuration()) {
+      projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
+    }.also {
+      if (!it && !silent) {
+        val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        LOG.error("Couldn't wait for focus in project '$frameName'," +
+                  "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
+                  "\nActual focused component: " +
+                  "\nfocusedWindow is " + keyboardFocusManager.focusedWindow +
+                  "\nfocusOwner is " + keyboardFocusManager.focusOwner +
+                  "\nactiveWindow is " + keyboardFocusManager.activeWindow +
+                  "\npermanentFocusOwner is " + keyboardFocusManager.permanentFocusOwner)
+      }
     }
-    return waitResult
   }
 
-  private suspend fun requestFocusNoProject(actionTitle: String): Boolean {
+  private suspend fun requestFocusNoProject(silent: Boolean): Boolean {
     val visibleWindows = Window.getWindows().filter { it.isShowing }
-    if (visibleWindows.size != 1) {
-      LOG.info("$actionTitle: There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
+    if (visibleWindows.size > 1) {
+      LOG.info("There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
     }
-    return visibleWindows.map {
-      LOG.info("$actionTitle: Focusing window '$it'")
+    visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
-      val waitResult = waitFor(timeout = 5.seconds.toJavaDuration()) {
-        it.isFocused
+    }
+    return waitFor(timeout = 5.seconds.toJavaDuration()) {
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
+    }.also {
+      if (!it && !silent) {
+        LOG.error("Couldn't wait for focus in case there is no project")
       }
-      if (!waitResult) {
-        LOG.error("Couldn't wait for focus in project '$it'")
-      }
-      waitResult
-    }.all { it }
+    }
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {

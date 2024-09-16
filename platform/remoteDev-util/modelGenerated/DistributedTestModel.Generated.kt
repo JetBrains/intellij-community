@@ -57,7 +57,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 5182389909649567871L
+        const val serializationHash = -2934857283786697801L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -377,7 +377,8 @@ class RdTestSession private constructor(
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<RdTestActionParameters, String?>,
     private val _runNextActionGetComponentData: RdCall<RdTestActionParameters, RdTestComponentData>,
-    private val _requestFocus: RdCall<String, Boolean>,
+    private val _requestFocus: RdCall<Boolean, Boolean>,
+    private val _isFocused: RdCall<Unit, Boolean>,
     private val _visibleFrameNames: RdCall<Unit, List<String>>,
     private val _projectsNames: RdCall<Unit, List<String>>,
     private val _makeScreenshot: RdCall<String, Boolean>,
@@ -407,13 +408,14 @@ class RdTestSession private constructor(
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, RdTestActionParameters, __StringNullableSerializer)
             val _runNextActionGetComponentData = RdCall.read(ctx, buffer, RdTestActionParameters, RdTestComponentData)
-            val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+            val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Bool)
+            val _isFocused = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _visibleFrameNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _closeProject, _forceLeaveAllModals, _closeProjectIfOpened, _runNextAction, _runNextActionGetComponentData, _requestFocus, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _closeProject, _forceLeaveAllModals, _closeProjectIfOpened, _runNextAction, _runNextActionGetComponentData, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -433,6 +435,7 @@ class RdTestSession private constructor(
             RdCall.write(ctx, buffer, value._runNextAction)
             RdCall.write(ctx, buffer, value._runNextActionGetComponentData)
             RdCall.write(ctx, buffer, value._requestFocus)
+            RdCall.write(ctx, buffer, value._isFocused)
             RdCall.write(ctx, buffer, value._visibleFrameNames)
             RdCall.write(ctx, buffer, value._projectsNames)
             RdCall.write(ctx, buffer, value._makeScreenshot)
@@ -455,7 +458,8 @@ class RdTestSession private constructor(
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<RdTestActionParameters, String?> get() = _runNextAction
     val runNextActionGetComponentData: RdCall<RdTestActionParameters, RdTestComponentData> get() = _runNextActionGetComponentData
-    val requestFocus: RdCall<String, Boolean> get() = _requestFocus
+    val requestFocus: RdCall<Boolean, Boolean> get() = _requestFocus
+    val isFocused: RdCall<Unit, Boolean> get() = _isFocused
     val visibleFrameNames: RdCall<Unit, List<String>> get() = _visibleFrameNames
     val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
@@ -476,6 +480,7 @@ class RdTestSession private constructor(
         _runNextAction.async = true
         _runNextActionGetComponentData.async = true
         _requestFocus.async = true
+        _isFocused.async = true
         _visibleFrameNames.async = true
         _projectsNames.async = true
         _makeScreenshot.async = true
@@ -494,6 +499,7 @@ class RdTestSession private constructor(
         bindableChildren.add("runNextAction" to _runNextAction)
         bindableChildren.add("runNextActionGetComponentData" to _runNextActionGetComponentData)
         bindableChildren.add("requestFocus" to _requestFocus)
+        bindableChildren.add("isFocused" to _isFocused)
         bindableChildren.add("visibleFrameNames" to _visibleFrameNames)
         bindableChildren.add("projectsNames" to _projectsNames)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
@@ -523,7 +529,8 @@ class RdTestSession private constructor(
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<RdTestActionParameters, String?>(RdTestActionParameters, __StringNullableSerializer),
         RdCall<RdTestActionParameters, RdTestComponentData>(RdTestActionParameters, RdTestComponentData),
-        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
+        RdCall<Boolean, Boolean>(FrameworkMarshallers.Bool, FrameworkMarshallers.Bool),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
@@ -552,6 +559,7 @@ class RdTestSession private constructor(
             print("runNextAction = "); _runNextAction.print(printer); println()
             print("runNextActionGetComponentData = "); _runNextActionGetComponentData.print(printer); println()
             print("requestFocus = "); _requestFocus.print(printer); println()
+            print("isFocused = "); _isFocused.print(printer); println()
             print("visibleFrameNames = "); _visibleFrameNames.print(printer); println()
             print("projectsNames = "); _projectsNames.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
@@ -578,6 +586,7 @@ class RdTestSession private constructor(
             _runNextAction.deepClonePolymorphic(),
             _runNextActionGetComponentData.deepClonePolymorphic(),
             _requestFocus.deepClonePolymorphic(),
+            _isFocused.deepClonePolymorphic(),
             _visibleFrameNames.deepClonePolymorphic(),
             _projectsNames.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic(),

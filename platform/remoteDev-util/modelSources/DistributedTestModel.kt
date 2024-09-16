@@ -76,7 +76,8 @@ object DistributedTestModel : Ext(TestRoot) {
     call("closeProjectIfOpened", void, bool).async
     call("runNextAction", RdTestActionParameters, string.nullable).async
     call("runNextActionGetComponentData", RdTestActionParameters, RdTestComponentData).async
-    call("requestFocus", string, bool).async
+    call("requestFocus", bool, bool).async
+    call("isFocused", void, bool).async
     call("visibleFrameNames", void, immutableList(string)).async
     call("projectsNames", void, immutableList(string)).async
     call("makeScreenshot", string, bool).async
