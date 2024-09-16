@@ -70,11 +70,11 @@ class ValueLookupManagerController(private val project: Project, private val cs:
     }
     cs.launch(Dispatchers.Main) {
       withKernel {
-        val entities = XDebuggerValueLookupListeningStartedEntity.all()
-        if (entities.isEmpty()) {
-          change {
-            val projectEntity = project.asEntity()
-            shared {
+        change {
+          val projectEntity = project.asEntity()
+          shared {
+            val alreadyExists = XDebuggerValueLookupListeningStartedEntity.all().any { it.projectEntity == projectEntity }
+            if (!alreadyExists) {
               XDebuggerValueLookupListeningStartedEntity.new {
                 it[XDebuggerValueLookupListeningStartedEntity.Project] = projectEntity
               }
