@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.platform.ide.bootstrap.ApplicationLoader;
 import com.intellij.util.io.URLUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -72,13 +73,14 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
     }
   }
 
-  protected void printUsageHint() {
-    System.out.println(
+  private void printUsageHint() {
+    var commandName = ApplicationLoader.getCommandNameFromExtension(this);
+    System.out.printf(
       """
-        Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
+        Usage: %s pluginId* repository* (--for-project=<project-path>)*
 
         Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
-        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.""");
+        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.%n""", commandName);
   }
 
   private static void collectProjectRequiredPlugins(Collection<PluginId> collector, List<Path> projectPaths) {

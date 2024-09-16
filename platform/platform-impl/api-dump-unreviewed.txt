@@ -7211,7 +7211,6 @@ c:com.intellij.ide.plugins.HeadlessPluginsInstaller
 - getRequiredModality():I
 - s:installPlugins(java.util.Set):java.util.Collection
 - main(java.util.List):V
-- p:printUsageHint():V
 f:com.intellij.ide.plugins.InstalledPluginsState
 - sf:RESTART_REQUIRED_MESSAGE:java.lang.String
 - <init>():V
