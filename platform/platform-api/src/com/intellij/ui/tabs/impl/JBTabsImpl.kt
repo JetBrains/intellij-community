@@ -1405,6 +1405,7 @@ open class JBTabsImpl internal constructor(
 
     assert(visibleInfos.isEmpty())
     visibleInfos.addAll(tabs)
+    setTabsPosition(tabsPosition) // update the divider visibility
     resetTabsCache()
   }
 
