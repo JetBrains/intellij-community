@@ -1845,6 +1845,23 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-75961
+  public void testTypeGuardNotAppliedForUnresolvedType() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[Unresolved]:
+                 return all(isinstance(x, str) for x in val)                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+
   public void testTypeGuardCannotBeReturned() {
     myFixture.configureByText(PythonFileType.INSTANCE, """
              from typing import List
