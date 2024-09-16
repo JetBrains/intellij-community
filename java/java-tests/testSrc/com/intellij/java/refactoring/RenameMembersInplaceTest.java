@@ -77,6 +77,14 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testMethodWithJavadocRef2() {
     doTestInplaceRename("set");
   }
+
+  public void testMethodWithJavadocRef3() {
+    doTestInplaceRename("set");
+  }
+
+  public void testMethodWithJavadocRef4() {
+    doTestInplaceRename("set");
+  }
   
   public void testEnumConstructor() {
     doTestInplaceRename("Bar");

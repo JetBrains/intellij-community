@@ -676,8 +676,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
       boolean isStatic = ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC);
-      String qName = psiClass.getQualifiedName() + (isStatic ? "." : ".this.") + member.getName();
-      PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
+      String qName = psiClass.getQualifiedName();
+      if (qName == null) qName = psiClass.getName(); // local class has no qualified name, but has a short name
+      if (qName == null) return this; // ref can't be fixed
+      PsiExpression ref = parserFacade.createExpressionFromText(qName + (isStatic ? "." : ".this.") + member.getName(), this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
       return ref;
     }
