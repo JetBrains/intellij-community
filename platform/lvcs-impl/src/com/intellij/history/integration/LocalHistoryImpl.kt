@@ -24,6 +24,7 @@ import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.platform.lvcs.impl.diff.findEntry
 import com.intellij.platform.lvcs.impl.operations.getRevertCommandName
 import com.intellij.util.SystemProperties
+import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -32,13 +33,13 @@ import kotlin.Throws
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
-class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistory(), Disposable {
+class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistoryEx() {
   companion object {
     private const val DAYS_TO_KEEP = "localHistory.daysToKeep"
 
     /**
      * @see [LocalHistory.getInstance]
-     * @see [LocalHistoryFacade.getInstance]
+     * @see [LocalHistoryEx.facade]
      * @see [IdeaGateway.getInstance]
      */
     @JvmStatic
@@ -54,8 +55,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
   private var isDisabled: Boolean = false
 
-  var facade: LocalHistoryFacade? = null
-    private set
+  override var facade: LocalHistoryFacade? = null
 
   val gateway: IdeaGateway = IdeaGateway.getInstance()
 
@@ -114,7 +114,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   }
 
   private fun initHistory() {
-    facade = LocalHistoryFacade.getInstance()
+    facade = LocalHistoryFacade()
     eventDispatcher = LocalHistoryEventDispatcher(facade!!, gateway)
   }
 
@@ -144,7 +144,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   @TestOnly
   fun cleanupForNextTest() {
     doDispose()
-    facade?.reset()
+    facade?.storageDir?.delete()
     init()
   }
 

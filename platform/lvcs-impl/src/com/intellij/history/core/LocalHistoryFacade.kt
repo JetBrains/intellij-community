@@ -10,7 +10,6 @@ import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -19,28 +18,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-open class LocalHistoryFacade {
+open class LocalHistoryFacade internal constructor() {
 
-  private val storageDir: Path
+  internal val storageDir: Path
     get() = Path.of(PathManager.getSystemPath(), "LocalHistory")
 
-  internal var changeList: ChangeList
-    private set
+  internal val changeList: ChangeList
 
   init {
-    changeList = ChangeList(createStorage())
-  }
-
-  @TestOnly
-  internal fun reset() {
-    storageDir.delete()
     changeList = ChangeList(createStorage())
   }
 
@@ -209,11 +199,6 @@ open class LocalHistoryFacade {
   abstract class Listener {
     open fun changeAdded(c: Change) = Unit
     open fun changeSetFinished(changeSet: ChangeSet) = Unit
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(): LocalHistoryFacade = application.service()
   }
 }
 
