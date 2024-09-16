@@ -454,6 +454,7 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - *:isEvaluateExpressionFieldEnabled():Z
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase
 - com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- sf:DEBUGGER_FILE_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.psi.PsiElement,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
 - createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
