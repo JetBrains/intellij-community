@@ -480,6 +480,11 @@ public abstract class NativeLinuxFindUsagesFirTestGenerated extends AbstractFind
             runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/javaLambdaUsages.0.kt");
         }
 
+        @TestMetadata("jvmClassNameInLiteral.0.kt")
+        public void testJvmClassNameInLiteral() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/jvmClassNameInLiteral.0.kt");
+        }
+
         @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
         public void testKotlinAliasedClassAllUsages() throws Exception {
             runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");

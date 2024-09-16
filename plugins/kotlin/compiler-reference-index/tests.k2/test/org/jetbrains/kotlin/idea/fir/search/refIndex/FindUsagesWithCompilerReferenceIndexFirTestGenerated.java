@@ -1411,6 +1411,25 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
+            public static class TestJvmClassNameInLiteral extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("jvmClassNameInLiteral.0.kt")
+                public void testJvmClassNameInLiteral() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/jvmClassNameInLiteral.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
