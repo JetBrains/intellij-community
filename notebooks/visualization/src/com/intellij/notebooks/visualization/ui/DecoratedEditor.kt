@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import com.intellij.notebooks.ui.editor.actions.command.mode.setMode
 import com.intellij.notebooks.visualization.*
@@ -52,11 +53,6 @@ class DecoratedEditor private constructor(private val editorImpl: EditorImpl, pr
     }
 
     wrapEditorComponent(editorImpl)
-    editorImpl.component.addAncestorListener(object : AncestorListenerAdapter() {
-      override fun ancestorAdded(event: AncestorEvent?) {
-        wrapEditorComponent(editorImpl)
-      }
-    })
 
     manager.addCellViewEventsListener(object : EditorCellViewEventListener {
       override fun onEditorCellViewEvents(events: List<EditorCellViewEvent>) {
@@ -104,8 +100,17 @@ class DecoratedEditor private constructor(private val editorImpl: EditorImpl, pr
   private fun wrapEditorComponent(editor: EditorImpl) {
     val parent = editor.component.parent
     if (parent == null || parent == editorComponentParent) {
+
+      editorImpl.component.addAncestorListener(object : AncestorListenerAdapter() {
+        override fun ancestorAdded(event: AncestorEvent?) {
+          wrapEditorComponent(editorImpl)
+        }
+      })
+
       return
     }
+
+    if(parent is LanguageConsoleImpl.ConsoleEditorsPanel) return
 
     val view = editorImpl.scrollPane.viewport.view
     if (view is EditorComponentImpl) {
@@ -126,6 +131,9 @@ class DecoratedEditor private constructor(private val editorImpl: EditorImpl, pr
         it.weighty = 1.0
         it.fill = GridBagConstraints.BOTH
       })
+    }
+    else if (parent is LanguageConsoleImpl.ConsoleEditorsPanel) {
+      parent.add(newComponent)
     }
     else {
       parent.add(newComponent, BorderLayout.CENTER)
