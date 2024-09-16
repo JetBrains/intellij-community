@@ -20,8 +20,10 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   /**
    * Project entity associated with a task.
    * To retrieve an instance of a project from the entity use [asProjectOrNull] or [asProject]
+   *
+   * The entity can be null for a default project
    */
-  val projectEntity: ProjectEntity by ProjectEntityType
+  val projectEntity: ProjectEntity? by ProjectEntityType
 
   /**
    * Human-readable title of a task, which is used to display the task in UI
@@ -79,7 +81,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
     var TaskCancellationType = requiredValue("taskCancellation", TaskCancellation.serializer())
     var ProgressStateType = optionalValue("progressState", ProgressState.serializer())
     var TaskStatusType = requiredValue("taskStatus", TaskStatus.serializer())
-    val ProjectEntityType = requiredRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
+    val ProjectEntityType = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
   }
 }
 

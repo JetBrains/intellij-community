@@ -11,11 +11,13 @@ import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
@@ -27,10 +29,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
-import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.LocalProjectEntity
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.asProjectOrNull
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
@@ -86,7 +88,8 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       cs.launch {
         withKernel {
           tryWithEntities(task) {
-            val project = task.projectEntity.waitForProject()
+            val project = task.projectEntity?.waitForProject()
+                          ?: serviceAsync<ProjectManager>().defaultProject
             showIndicator(
               project,
               taskCancellingIndicator(this, task),
@@ -147,6 +150,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val taskStorage = TaskStorage.getInstance()
 
     val pipe = cs.createProgressPipe()
+
     val taskInfoEntity = taskStorage.addTask(project, title, cancellation)
 
     try {

@@ -21,6 +21,7 @@ abstract class TaskStorage {
   /**
    * Adds a new task to the storage and returns the created [TaskInfoEntity].
    *
+   * @param project in which frame the progress should be shown
    * @param title The title of the task.
    * @param cancellation Specifies if the task can be canceled.
    * @return The created [TaskInfoEntity].
@@ -32,7 +33,7 @@ abstract class TaskStorage {
   ): TaskInfoEntity = withKernel {
     createTaskInfoEntity {
       TaskInfoEntity.new {
-        it[TaskInfoEntity.ProjectEntityType] = project.asEntity()
+        it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) project.asEntity() else null
         it[TaskInfoEntity.Title] = title
         it[TaskInfoEntity.TaskCancellationType] = cancellation
         it[TaskInfoEntity.ProgressStateType] = null
