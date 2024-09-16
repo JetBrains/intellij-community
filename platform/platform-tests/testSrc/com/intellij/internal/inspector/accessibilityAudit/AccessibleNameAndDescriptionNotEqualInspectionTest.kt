@@ -27,4 +27,15 @@ class AccessibleNameAndDescriptionNotEqualInspectionTest {
     val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(context)
     Assertions.assertFalse(result)
   }
+
+  @Test
+  fun `name and description are empty`() {
+    val button = JButton()
+    val context = button.accessibleContext
+    context.accessibleName = ""
+    context.accessibleDescription = ""
+
+    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(context)
+    Assertions.assertTrue(result)
+  }
 }
