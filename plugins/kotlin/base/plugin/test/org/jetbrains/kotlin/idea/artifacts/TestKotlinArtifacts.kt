@@ -40,13 +40,13 @@ object TestKotlinArtifacts {
     private fun getKlib(artifactId: String): File =
         downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = ".klib")
 
-    private fun getSourcesJar(artifactId: String): File {
-        return downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = "-sources.jar")
+    private fun getSourcesJar(artifactId: String, extraSuffix: String = ""): File {
+        return downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = "$extraSuffix-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
                     .resolve("kotlin-from-sources-deps-renamed")
-                    .resolve("$artifactId-sources.jar"),
+                    .resolve("$artifactId$extraSuffix-sources.jar"),
                 overwrite = true
             )
     }
@@ -86,7 +86,7 @@ object TestKotlinArtifacts {
 
         libFile
     }
-    @JvmStatic val kotlinStdlibCommonSources: File by lazy { getSourcesJar("kotlin-stdlib-common") }
+    @JvmStatic val kotlinStdlibCommonSources: File by lazy { getSourcesJar("kotlin-stdlib", extraSuffix = "-common") }
     @JvmStatic val kotlinStdlibJdk7: File by lazy { getJar("kotlin-stdlib-jdk7") }
     @JvmStatic val kotlinStdlibJdk7Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk7") }
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
@@ -224,4 +224,7 @@ object TestKotlinArtifacts {
 @JvmOverloads
 fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =
     KotlinArtifactsDownloader.downloadArtifactForIdeFromSources(artifactId, version, suffix)
-        ?: ExternalResourcesChecker.reportUnavailability<Nothing>(KotlinArtifactsDownloader::downloadArtifactForIdeFromSources.name, null)
+        ?: ExternalResourcesChecker.reportUnavailability<Nothing>(
+            KotlinArtifactsDownloader::downloadArtifactForIdeFromSources.name + ": $artifactId-$version$suffix",
+            null
+        )
