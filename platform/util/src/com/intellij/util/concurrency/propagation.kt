@@ -236,7 +236,7 @@ internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V
   return callable
 }
 
-private fun isContextAwareComputation(runnable: Any): Boolean {
+fun isContextAwareComputation(runnable: Any): Boolean {
   return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*> || runnable is CancellationFutureTask<*>
 }
 
@@ -328,8 +328,8 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
 }
 
 @ApiStatus.Internal
-fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnable, Condition<*>> {
-  if (isContextAwareComputation(r)) {
+fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable: Runnable): JBPair<Runnable, Condition<*>> {
+  if (isContextAwareComputation(signalRunnable)) {
     return JBPair.create(r, expired)
   }
   var command = captureClientIdInRunnable(r)

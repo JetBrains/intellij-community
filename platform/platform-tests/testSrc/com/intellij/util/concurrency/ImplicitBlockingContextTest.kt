@@ -68,9 +68,8 @@ class ImplicitBlockingContextTest {
   @Test
   fun invokeLater(): Unit = runBlockingWithCatchingExceptions {
     withContext(E()) {
-      val currentContext = coroutineContext
       ApplicationManager.getApplication().invokeLater {
-        assertContextRemainsOnFreeThread(currentContext)
+        assertContextRemainsOnFreeThread()
       }
     }
   }
@@ -78,9 +77,8 @@ class ImplicitBlockingContextTest {
   @Test
   fun executeOnPooledThread(): Unit = runBlockingWithCatchingExceptions {
     withContext(E()) {
-      val currentContext = coroutineContext
       ApplicationManager.getApplication().executeOnPooledThread {
-        assertContextRemainsOnFreeThread(currentContext)
+        assertContextRemainsOnFreeThread()
       }
     }
   }
@@ -184,9 +182,9 @@ class ImplicitBlockingContextTest {
     assertEquals(context.minusKey(ContinuationInterceptor), currentThreadContext())
   }
 
-  private fun assertContextRemainsOnFreeThread(context: CoroutineContext) {
+  private fun assertContextRemainsOnFreeThread() {
     assertNull(IntellijCoroutines.currentThreadCoroutineContext())
-    val list = currentThreadContext().fold(ArrayList<CoroutineContext.Element>(), { list, elem -> list.apply { add(elem) } })
-    assertEquals(list.single().key, E)
+    val set = currentThreadContext().fold(HashSet<CoroutineContext.Key<*>>(), { list, elem -> list.apply { add(elem.key) } })
+    assertTrue(set.contains(E))
   }
 }
