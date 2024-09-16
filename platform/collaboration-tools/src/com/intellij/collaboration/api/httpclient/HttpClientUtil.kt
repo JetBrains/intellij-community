@@ -11,12 +11,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.future.await
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.*
 import java.nio.ByteBuffer
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import java.util.concurrent.Flow
 import java.util.zip.GZIPInputStream
 
@@ -128,12 +131,35 @@ class ByteArrayProducingBodyPublisher(
 
 @Deprecated("Should be replaced by a Ktor HTTP-client by 24.3")
 class LazyBodyHandler<T>(
-  private val delegate: BodyHandler<T>
-) : BodyHandler<() -> T> {
-  override fun apply(responseInfo: ResponseInfo?): BodySubscriber<(() -> T)?>? =
-    BodySubscribers.mapping(delegate.apply(responseInfo)) {
-      { it }
+  private val delegate: BodyHandler<T>,
+) : BodyHandler<suspend () -> T> {
+  override fun apply(responseInfo: ResponseInfo?): BodySubscriber<(suspend () -> T)?>? {
+    val delegateSubscriber = delegate.apply(responseInfo)
+
+    return object : BodySubscriber<(suspend () -> T)?> {
+      override fun getBody(): CompletionStage<(suspend () -> T)?>? {
+        return CompletableFuture.completedFuture {
+          delegateSubscriber.body.await()
+        }
+      }
+
+      override fun onSubscribe(subscription: Flow.Subscription?) {
+        delegateSubscriber.onSubscribe(subscription)
+      }
+
+      override fun onNext(item: List<ByteBuffer?>?) {
+        delegateSubscriber.onNext(item)
+      }
+
+      override fun onError(throwable: Throwable?) {
+        delegateSubscriber.onError(throwable)
+      }
+
+      override fun onComplete() {
+        delegateSubscriber.onComplete()
+      }
     }
+  }
 }
 
 class InflatedStreamReadingBodyHandler<T>(
