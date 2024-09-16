@@ -50,7 +50,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   ) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      outputDirectory = parent.contentRoot
+      setOutputDirectory(parent.contentRoot)
 
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())

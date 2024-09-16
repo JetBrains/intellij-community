@@ -9,13 +9,15 @@ import com.intellij.ide.starters.local.GeneratorEmptyDirectory
 import com.intellij.ide.starters.local.GeneratorResourceFile
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.setupProjectSafe
+import com.intellij.ide.wizard.whenProjectCreated
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
@@ -30,22 +32,11 @@ import java.nio.file.attribute.PosixFilePermission
 @ApiStatus.Experimental
 abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
 
-  private val outputDirectoryProperty = propertyGraph.lateinitProperty<String>()
-
-  var outputDirectory by outputDirectoryProperty
+  private var outputDirectory: String? = null
 
   private val assets = ArrayList<GeneratorAsset>()
   private val templateProperties = HashMap<String, Any>()
-  private val filesToOpen = HashSet<Path>()
-
-  init {
-    val baseData = baseData
-    if (baseData != null) {
-      outputDirectoryProperty.set(baseData.location)
-      outputDirectoryProperty.dependsOn(baseData.nameProperty) { baseData.location }
-      outputDirectoryProperty.dependsOn(baseData.pathProperty) { baseData.location }
-    }
-  }
+  private val filesToOpen = HashSet<String>()
 
   @ApiStatus.Internal
   internal fun getTemplateProperties(): Map<String, Any> {
@@ -91,7 +82,7 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   private fun addFilesToOpen(relativeCanonicalPaths: Iterable<String>) {
     for (relativePath in relativeCanonicalPaths) {
-      filesToOpen.add(Path.of(outputDirectory).getResolvedPath(relativePath))
+      filesToOpen.add(relativePath)
     }
   }
 
@@ -101,9 +92,12 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
     setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.sample.code", context.isCreatingNewProjectInt)) {
       setupAssets(project)
 
+      val outputDirectory = resolveOutputDirectory()
+      val filesToOpen = resolveFilesToOpen(outputDirectory)
+
       val generatedFiles = invokeAndWaitIfNeeded {
         runWriteAction {
-          AssetsProcessor.getInstance().generateSources(Path.of(outputDirectory), assets, templateProperties)
+          AssetsProcessor.getInstance().generateSources(outputDirectory, assets, templateProperties)
         }
       }
 
@@ -112,6 +106,24 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         openFilesInEditor(project, filesToOpen.mapNotNull { it.refreshAndFindVirtualFile() })
       }
     }
+  }
+
+  fun setOutputDirectory(outputDirectory: String) {
+    this.outputDirectory = outputDirectory
+  }
+
+  private fun resolveOutputDirectory(): Path {
+    if (outputDirectory != null) {
+      return Path.of(outputDirectory!!)
+    }
+    if (baseData != null) {
+      return Path.of(baseData!!.path, baseData!!.name)
+    }
+    throw UninitializedPropertyAccessException("Cannot generate project files: unspecified output directory")
+  }
+
+  private fun resolveFilesToOpen(outputDirectory: Path): List<Path> {
+    return filesToOpen.map { outputDirectory.resolve(it).normalize() }
   }
 
   private fun reformatCode(project: Project, files: List<VirtualFile>) {
@@ -128,11 +140,5 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       fileEditorManager.openFile(file, true)
       projectView.select(null, file, false)
     }
-  }
-
-  companion object {
-
-    private val NewProjectWizardBaseData.location: String
-      get() = "$path/$name"
   }
 }
