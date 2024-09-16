@@ -21,6 +21,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   CSS("CSS", listOf("css"), "CSS"),
   LESS("Less", listOf("less"), "LESS"),
   SCSS("SCSS", listOf("scss"), "SCSS"),
+  SASS("SASS", listOf("sass"), "SASS"),
   HTML("HTML", listOf("html"), "HTML"),
   TERRAFORM("Terraform", listOf("tf", "tfvars"), "HCL-Terraform"),
   ANOTHER("Another", listOf(), ""),
