@@ -65,14 +65,12 @@ private val defaultRequestConfigurer = CompoundRequestConfigurer(listOf(
 
 private class BlockingMappingBodyHttpResponse<T, R>(
   private val response: HttpResponse<T>,
-  private val mapper: (T) -> R
+  private val body: R
 ): HttpResponse<R> {
-  private val previousResponse: Optional<HttpResponse<R?>?> = response.previousResponse().map { BlockingMappingBodyHttpResponse(it, mapper) }
-  private val body: R = mapper(response.body())
-
   override fun statusCode(): Int = response.statusCode()
   override fun request(): HttpRequest? = response.request()
-  override fun previousResponse(): Optional<HttpResponse<R?>?> = previousResponse
+  @Suppress("UNCHECKED_CAST")
+  override fun previousResponse(): Optional<HttpResponse<R?>?> = Optional.empty<HttpResponse<R?>?>() as Optional<HttpResponse<R?>?>
   override fun headers(): HttpHeaders? = response.headers()
   override fun sslSession(): Optional<SSLSession?>? = response.sslSession()
   override fun uri(): URI? = response.uri()
@@ -99,7 +97,7 @@ private class HttpApiHelperImpl(
     return try {
       logger.debug(request.logName())
       val response = client.sendAsync(request, cancellableBodyHandler).await()
-      BlockingMappingBodyHttpResponse(response) { it() }
+      BlockingMappingBodyHttpResponse(response, response.body().invoke())
     }
     catch (ce: CancellationException) {
       cancellableBodyHandler.cancel()
