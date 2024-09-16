@@ -125,12 +125,12 @@ public class AnnotationUtil {
   private static final ParameterizedCachedValueProvider<Map<Collection<String>, List<PsiAnnotation>>, PsiModifierListOwner> NON_CODE_ANNOTATIONS_PROVIDER =
     (PsiModifierListOwner listOwner) -> {
       Map<Collection<String>, List<PsiAnnotation>> value = ConcurrentFactoryMap.createMap(
-        annotationNames1 -> {
+        annotationNames -> {
           PsiUtilCore.ensureValid(listOwner);
           final Project project = listOwner.getProject();
           List<PsiAnnotation> annotations = null;
           final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
-          for (String annotationName : annotationNames1) {
+          for (String annotationName : annotationNames) {
             List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
             if (!externalAnnotations.isEmpty()) {
               if (annotations == null) {
@@ -141,7 +141,7 @@ public class AnnotationUtil {
           }
 
           final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
-          for (String annotationName : annotationNames1) {
+          for (String annotationName : annotationNames) {
             final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
             if (annotation != null) {
               if (annotations == null) {
