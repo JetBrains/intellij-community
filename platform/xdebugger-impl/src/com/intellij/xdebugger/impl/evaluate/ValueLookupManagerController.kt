@@ -68,7 +68,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
     if (listeningStarted.get()) {
       return
     }
-    cs.launch(Dispatchers.Main) {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         change {
           val projectEntity = project.asEntity()
@@ -90,7 +90,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
    * Requests [ValueLookupManager] to hide current evaluation hints
    */
   fun hideHint() {
-    cs.launch(Dispatchers.Main) {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         change {
           val projectEntity = project.asEntity()

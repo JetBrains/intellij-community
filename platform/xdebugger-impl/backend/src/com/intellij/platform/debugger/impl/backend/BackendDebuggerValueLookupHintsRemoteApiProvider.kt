@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -38,7 +39,7 @@ private class BackendDebuggerValueLookupHintsRemoteApiProvider : RemoteApiProvid
 
 private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
   override suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean {
-    return withContext(Dispatchers.Main) {
+    return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
       val editor = editorId.findEditor()
       val point = editor.offsetToXY(offset)
@@ -49,7 +50,7 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
   }
 
   override suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint? {
-    return withContext(Dispatchers.Main) {
+    return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
       val editor = editorId.findEditor()
       val point = editor.offsetToXY(offset)
@@ -82,7 +83,7 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
     val project = projectId.findProject()
     val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId) ?: return emptyFlow()
     return callbackFlow {
-      withContext(Dispatchers.Main) {
+      withContext(Dispatchers.EDT) {
         hint.invokeHint {
           trySend(Unit)
           close()
@@ -96,7 +97,7 @@ private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHin
     val project = projectId.findProject()
     val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId) ?: return
     BackendDebuggerValueLookupHintsHolder.getInstance(project).removeHint(hintId)
-    withContext(Dispatchers.Main) {
+    withContext(Dispatchers.EDT) {
       hint.hideHint()
     }
   }
