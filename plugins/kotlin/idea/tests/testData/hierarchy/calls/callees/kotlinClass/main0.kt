@@ -4,11 +4,14 @@ class KA {
 }
 
 fun packageFun(s: String): String = s
+fun packageFunTwo(s: String): String = s
 
 val packageVal = ""
 
 open class KClientBase {
-
+    init {
+      packageFunTwo("")
+    }
 }
 
 class <caret>KClient(): KClientBase() {
