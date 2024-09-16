@@ -8,12 +8,18 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
   @Override
@@ -30,13 +36,27 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
 
   @ApiStatus.Internal
   static Result preProcessEnterImpl(@NotNull PsiFile file,
-                                           @NotNull Editor editor,
-                                           @NotNull Ref<Integer> caretOffset,
-                                           @NotNull Ref<Integer> caretAdvance,
-                                           @NotNull DataContext dataContext,
-                                           EditorActionHandler originalHandler) {
+                                    @NotNull Editor editor,
+                                    @NotNull Ref<Integer> caretOffset,
+                                    @NotNull Ref<Integer> caretAdvance,
+                                    @NotNull DataContext dataContext,
+                                    EditorActionHandler originalHandler) {
     PsiElement caretElement = file.findElementAt(caretOffset.get());
     if (caretElement == null) return Result.Continue;
+
+    if (caretElement.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+      TextRange textRange = caretElement.getTextRange();
+
+      if (textRange.getStartOffset() == caretOffset.get() &&
+          Objects.requireNonNull(PsiTreeUtil.getParentOfType(caretElement, PsiDocComment.class)).getTextOffset() == textRange.getStartOffset()) {
+        // Bail out if the caret is placed are before the start of the comment
+        return Result.Continue;
+      }
+
+      // Avoid breaking a comment by placing the caret beyond the leading token, taking into account a potential space
+      int newOffset = textRange.getEndOffset();
+      caretOffset.set(editor.getDocument().getCharsSequence().charAt(newOffset) == ' ' ? newOffset + 1 : newOffset);
+    }
 
     // EOL whitespace is not useful, we only need the tokens behind it
     if (caretElement instanceof PsiWhiteSpace) {
