@@ -178,19 +178,6 @@
             <arg value="${patchIconLoader}"/>
         </exec>
 
-        <property name="patchHideNewUIVideo"
-                  value="${basedir}/patches/HideNewUIVideo.patch"/>
-        <echo message="Applying ${patchHideNewUIVideo}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${patchHideNewUIVideo}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchHideNewUIVideo}"/>
-        </exec>
-
         <property name="patchInitComponentsBeforeEditorOpens"
                   value="${basedir}/patches/MPS-36060.patch"/>
         <echo message="Applying ${patchInitComponentsBeforeEditorOpens}"/>

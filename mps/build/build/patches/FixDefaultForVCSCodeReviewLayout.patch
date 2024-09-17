@@ -1,13 +1,13 @@
-Index: platform/collaboration-tools/resources/META-INF/collaboration-tools.xml
+Index: platform/collaboration-tools/resources/intellij.platform.collaborationTools.xml
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/collaboration-tools/resources/META-INF/collaboration-tools.xml b/platform/collaboration-tools/resources/META-INF/collaboration-tools.xml
---- a/platform/collaboration-tools/resources/META-INF/collaboration-tools.xml	(revision d1047e016c54cd0e78f7a280d1019399739a01f4)
-+++ b/platform/collaboration-tools/resources/META-INF/collaboration-tools.xml	(date 1720079570343)
-@@ -14,7 +14,7 @@
-       implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>
+diff --git a/platform/collaboration-tools/resources/intellij.platform.collaborationTools.xml b/platform/collaboration-tools/resources/intellij.platform.collaborationTools.xml
+--- a/platform/collaboration-tools/resources/intellij.platform.collaborationTools.xml	(revision fce47f00ab09add5f5df856501530672b9e7aa95)
++++ b/platform/collaboration-tools/resources/intellij.platform.collaborationTools.xml	(date 1726580902961)
+@@ -17,7 +17,7 @@
+       implementation="com.intellij.collaboration.ui.codereview.action.CodeReviewShowDiffActionProvider$Standalone"/>-->
 
      <advancedSetting id="enable.combined.diff.for.codereview"
 -                     default="true"

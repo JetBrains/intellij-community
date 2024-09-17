@@ -61,14 +61,15 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision 57d641cc1731bd145b2da90a6ad34dbf5566eaa9)
-+++ community/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision )
-@@ -26,7 +26,7 @@
-   public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
+diff --git a/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java b/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
+--- a/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(revision fce47f00ab09add5f5df856501530672b9e7aa95)
++++ b/jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java	(date 1726584055744)
+@@ -31,7 +31,7 @@
    public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
- 
+
+   @ApiStatus.Internal
 -  @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
 +  @NonNls public static final String DIRECTORY_STORE_NAME = ".mps";
+   @ApiStatus.Internal
    @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
-   @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
-   @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
+   @ApiStatus.Internal
