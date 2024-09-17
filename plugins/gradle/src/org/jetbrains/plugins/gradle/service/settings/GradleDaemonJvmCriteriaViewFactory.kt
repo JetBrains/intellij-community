@@ -1,0 +1,30 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.service.settings
+
+import org.gradle.internal.jvm.inspection.JvmVendor
+import org.gradle.util.GradleVersion
+import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
+import java.nio.file.Path
+
+object GradleDaemonJvmCriteriaViewFactory {
+
+  fun createView(externalProjectPath: Path, gradleVersion: GradleVersion): GradleDaemonJvmCriteriaView {
+    val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
+    return GradleDaemonJvmCriteriaView(
+      version = daemonJvmProperties?.version,
+      vendor = daemonJvmProperties?.vendor,
+      versionsDropdownList = getSuggestedVersions(),
+      vendorDropdownList = getSuggestedVendors(),
+      displayAdvancedSettings = GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(gradleVersion)
+    )
+  }
+
+  private fun getSuggestedVersions() =
+    LanguageLevel.JDK_1_8.toJavaVersion().feature..LanguageLevel.HIGHEST.toJavaVersion().feature
+
+  private fun getSuggestedVendors() =
+    JvmVendor.KnownJvmVendor.entries.filter { it != JvmVendor.KnownJvmVendor.UNKNOWN }.map { it.name }
+
+}
