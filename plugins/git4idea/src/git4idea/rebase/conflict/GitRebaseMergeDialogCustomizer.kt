@@ -102,10 +102,8 @@ private class GitRebaseMergeDialogCustomizer(
     GitMergeProvider.calcColumnName(true, basePresentable)
   )
 
-  override fun getTitleCustomizerList(file: FilePath) = DiffEditorTitleCustomizerList(
-    getLeftTitleCustomizer(file),
-    null,
-    getRightTitleCustomizer(file)
+  override fun getTitleCustomizerList(file: FilePath) = GitMergeDialogCustomizerHelper.getCustomizers(
+    repository.project, file, getLeftTitleCustomizer(file), getRightTitleCustomizer(file)
   )
 
   private fun getLeftTitleCustomizer(file: FilePath): DiffEditorTitleCustomizer? {
