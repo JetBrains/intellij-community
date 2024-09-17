@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.util.serviceGet
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManager
 import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
 import git4idea.remote.hosting.ValidatingHostedGitRepositoryConnectionFactory
@@ -23,19 +26,40 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 @Service(Service.Level.PROJECT)
 internal class GHRepositoryConnectionManager(project: Project, parentCs: CoroutineScope) :
   SingleHostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection> {
+  private val cs = parentCs.childScope(this.classAsCoroutineName().name)
 
   private val dataContextRepository = project.serviceGet<GHPRDataContextRepository>()
 
+  private val repositoriesManager = project.service<GHHostedRepositoriesManager>()
+  private val accountManager = service<GHAccountManager>()
+
   private val connectionFactory =
-    ValidatingHostedGitRepositoryConnectionFactory(project.serviceGet<GHHostedRepositoriesManager>(),
-                                                   serviceGet<GHAccountManager>()) { repo, account, tokenState ->
+    ValidatingHostedGitRepositoryConnectionFactory({ repositoriesManager }, { accountManager }) { repo, account, tokenState ->
       createConnection(this, tokenState, repo, account)
     }
 
-  private suspend fun createConnection(connectionScope: CoroutineScope,
-                                       tokenState: StateFlow<String>,
-                                       repo: GHGitRepositoryMapping,
-                                       account: GithubAccount): GHRepositoryConnection {
+  private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(parentCs, connectionFactory)
+
+  override val connectionState: StateFlow<GHRepositoryConnection?>
+    get() = delegate.connectionState
+
+  init {
+    cs.launch {
+      accountManager.accountsState.collect {
+        val currentAccount = connectionState.value?.account
+        if (currentAccount != null && !it.contains(currentAccount)) {
+          closeConnection()
+        }
+      }
+    }
+  }
+
+  private suspend fun createConnection(
+    connectionScope: CoroutineScope,
+    tokenState: StateFlow<String>,
+    repo: GHGitRepositoryMapping,
+    account: GithubAccount,
+  ): GHRepositoryConnection {
     val tokenSupplier = GithubApiRequestExecutor.MutableTokenSupplier(account.server, tokenState.value)
     connectionScope.launch {
       tokenState.collect {
@@ -55,11 +79,6 @@ internal class GHRepositoryConnectionManager(project: Project, parentCs: Corouti
     }
     return GHRepositoryConnection(connectionScope, repo, account, dataContext)
   }
-
-  private val delegate = SingleHostedGitRepositoryConnectionManagerImpl(parentCs, connectionFactory)
-
-  override val connectionState: StateFlow<GHRepositoryConnection?>
-    get() = delegate.connectionState
 
   override suspend fun openConnection(repo: GHGitRepositoryMapping, account: GithubAccount): GHRepositoryConnection? =
     delegate.openConnection(repo, account)
