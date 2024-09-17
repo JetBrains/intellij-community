@@ -32,7 +32,7 @@ internal class XmlTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.XML
       override fun formatText() =
-        prettify(xml!!) // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
+        prettify(xml)
       override val fileType
         get() =
           // Right now we don't want to have an explicit static dependency here.

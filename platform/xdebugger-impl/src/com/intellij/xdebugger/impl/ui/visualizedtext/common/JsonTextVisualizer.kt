@@ -33,7 +33,7 @@ internal class JsonTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.JSON
       override fun formatText() =
-        JsonEncodingUtil.prettifyJson(json!!) // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
+        JsonEncodingUtil.prettifyJson(json)
       override val fileType
         get() =
           // Right now we don't want to have an explicit static dependency here.

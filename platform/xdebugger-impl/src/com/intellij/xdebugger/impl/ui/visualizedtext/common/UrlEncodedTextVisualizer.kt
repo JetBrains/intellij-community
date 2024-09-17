@@ -24,7 +24,7 @@ internal class UrlEncodedTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.URLEncoded
       override fun formatText() =
-        decoded!! // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
+        decoded
       override val fileType
         get() = FileTypes.PLAIN_TEXT
     })
