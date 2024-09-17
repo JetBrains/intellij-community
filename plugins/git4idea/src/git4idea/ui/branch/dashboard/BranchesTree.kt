@@ -202,14 +202,20 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       .mapNotNull { it as? BranchTreeNode }
       .filter {
         val nodeDescriptor = it.getNodeDescriptor()
-        val parent = nodeDescriptor.parent
-        val isUnderRemoteNode = parent is BranchNodeDescriptor.TopLevelGroup && parent.refType == GitBranchType.REMOTE
-        val isUnderRepoNode = parent is BranchNodeDescriptor.Repository
-        nodeDescriptor is BranchNodeDescriptor.Group && (isUnderRepoNode || (isUnderRemoteNode))
+        if (nodeDescriptor is BranchNodeDescriptor.Branch) {
+          val parent = nodeDescriptor.parent
+          val isDirectlyUnderRemoteNode = isRemoteGroupingNode(parent)
+          val isUnderRepoUnderRemoteNode = parent is BranchNodeDescriptor.Repository && isRemoteGroupingNode(parent.parent)
+          isDirectlyUnderRemoteNode || isUnderRepoUnderRemoteNode
+        }
+        else false
       }
       .map { with(it.getNodeDescriptor()) { RemoteInfo(displayName!!, (parent as? BranchNodeDescriptor.Repository)?.repository) } }
       .toSet()
   }
+
+  private fun isRemoteGroupingNode(node: BranchNodeDescriptor?): Boolean =
+    node is BranchNodeDescriptor.TopLevelGroup && node.refType == GitBranchType.REMOTE
 
   fun getSelectedRepositories(descriptor: BranchNodeDescriptor.Branch): List<GitRepository> {
     var parent = descriptor.parent
