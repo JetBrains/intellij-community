@@ -54,6 +54,8 @@ internal class CertificateWarningDialog(
   private val authType: String,
   private val selectedCerts: MutableSet<X509Certificate>,
 ) : DialogWrapper(false) {
+  private val statisticsCollector = CertificateWarningStatisticsCollector()
+  private var expandedByButton = false
   private var currentCertificate = CertificateWrapper(certificates.first())
   private val certificateErrorsMap = getCertificateErrorsMap()
 
@@ -116,6 +118,10 @@ internal class CertificateWarningDialog(
         }
       }.apply {
         addExpandedListener {
+          if (it) {
+            statisticsCollector.detailsShown(expandedByButton)
+            expandedByButton = false
+          }
           if (it && !isDetailsShown) {
             setOKButtonText(IdeBundle.message("trust.certificate"))
             isDetailsShown = true
@@ -135,11 +141,18 @@ internal class CertificateWarningDialog(
 
   override fun doOKAction() {
     if (!isDetailsShown) {
+      expandedByButton = true
       detailsCollapsibleRow.expanded = true
     }
     else {
       super.doOKAction()
+      statisticsCollector.certificateAccepted(selectedCerts.count())
     }
+  }
+
+  override fun doCancelAction() {
+    super.doCancelAction()
+    statisticsCollector.certificateRejected()
   }
 
   private fun createCertificateTree(): JTree {
