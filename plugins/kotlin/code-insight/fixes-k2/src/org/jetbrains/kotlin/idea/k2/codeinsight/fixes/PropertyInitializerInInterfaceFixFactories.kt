@@ -9,28 +9,25 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.convertPropertyInitializerToGetter
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-internal object ExtensionPropertyWithBackingFieldFixFactories {
+internal object PropertyInitializerInInterfaceFixFactories {
 
-    val convertToGetterFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExtensionPropertyWithBackingField ->
-        val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
-        val property = expression.getParentOfType<KtProperty>(true)?.takeIf { it.getter == null } ?: return@ModCommandBased emptyList()
-        val elementContext = CallableReturnTypeUpdaterUtils.getTypeInfo(property)
+    val convertPropertyInitializerToGetterFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.PropertyInitializerInInterface ->
+        val element = diagnostic.psi.parent as? KtProperty ?: return@ModCommandBased emptyList()
+        val elementContext = CallableReturnTypeUpdaterUtils.getTypeInfo(element)
 
         listOf(
-            ConvertExtensionPropertyInitializerToGetterFix(property, elementContext)
+            ConvertPropertyInitializerToGetterFix(element, elementContext)
         )
     }
 
-    private class ConvertExtensionPropertyInitializerToGetterFix(
+    private class ConvertPropertyInitializerToGetterFix(
         element: KtProperty,
         elementContext: CallableReturnTypeUpdaterUtils.TypeInfo,
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, CallableReturnTypeUpdaterUtils.TypeInfo>(element, elementContext) {
 
-        override fun getFamilyName(): String = KotlinBundle.message("convert.extension.property.initializer.to.getter")
+        override fun getFamilyName(): String = KotlinBundle.message("convert.property.initializer.to.getter")
 
         override fun invoke(
             actionContext: ActionContext,

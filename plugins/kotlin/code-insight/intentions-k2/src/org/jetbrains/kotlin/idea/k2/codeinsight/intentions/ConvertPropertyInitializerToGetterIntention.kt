@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.canConvertPropertyInitializerToGetterByPsi
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.convertPropertyInitializerToGetterInner
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.convertPropertyInitializerToGetter
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.hasReferenceToPrimaryConstructorParameter
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -39,10 +39,6 @@ internal class ConvertPropertyInitializerToGetterIntention :
         elementContext: CallableReturnTypeUpdaterUtils.TypeInfo,
         updater: ModPsiUpdater,
     ) {
-        convertPropertyInitializerToGetterInner(element) {
-            if (!elementContext.defaultType.isUnit) {
-                CallableReturnTypeUpdaterUtils.updateType(element, elementContext, actionContext.project, updater = updater)
-            }
-        }
+        convertPropertyInitializerToGetter(actionContext.project, element, elementContext, updater)
     }
 }

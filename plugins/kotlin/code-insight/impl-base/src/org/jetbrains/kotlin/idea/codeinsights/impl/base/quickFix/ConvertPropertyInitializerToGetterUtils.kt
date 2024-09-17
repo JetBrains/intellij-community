@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -29,6 +32,19 @@ fun KtExpression.hasReferenceToPrimaryConstructorParameter(): Boolean {
     return anyDescendantOfType<KtNameReferenceExpression> {
         val parameter = primaryConstructorParameters[it.text]
         parameter != null && parameter == it.mainReference.resolve()
+    }
+}
+
+fun convertPropertyInitializerToGetter(
+    project: Project,
+    element: KtProperty,
+    typeInfo: CallableReturnTypeUpdaterUtils.TypeInfo,
+    updater: ModPsiUpdater,
+) {
+    convertPropertyInitializerToGetterInner(element) {
+        if (!typeInfo.defaultType.isUnit) {
+            CallableReturnTypeUpdaterUtils.updateType(element, typeInfo, project, updater = updater)
+        }
     }
 }
 

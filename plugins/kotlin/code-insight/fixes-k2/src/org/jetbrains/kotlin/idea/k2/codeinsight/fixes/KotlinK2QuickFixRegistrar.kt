@@ -179,6 +179,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConvertKClassToClassFixFactories.assignmentTypeMismatchFixFactory)
         registerFactory(ConvertKClassToClassFixFactories.initializerTypeMismatchFixFactory)
         registerFactory(ConvertKClassToClassFixFactories.returnTypeMismatchFixFactory)
+        registerFactory(PropertyInitializerInInterfaceFixFactories.convertPropertyInitializerToGetterFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
