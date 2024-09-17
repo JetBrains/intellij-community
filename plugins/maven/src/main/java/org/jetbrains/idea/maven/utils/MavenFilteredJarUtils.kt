@@ -15,14 +15,29 @@ class MavenFilteredJarUtils {
     fun getAllFilteredConfigurations(mavenProjectsManager: MavenProjectsManager, mavenProject: MavenProject): List<MavenFilteredJarConfiguration> {
       if ("pom".equals(mavenProject.packaging)) return emptyList()
 
-      val result = ArrayList<MavenFilteredJarConfiguration>()
+      val result = HashMap<String, MavenFilteredJarConfiguration>()
+      val plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-jar-plugin");
+      if (plugin == null) return emptyList()
       for (e in GOALS) {
-        val element = mavenProject.getPluginGoalConfiguration("org.apache.maven.plugins", "maven-jar-plugin", e.key) ?: continue
-        loadConfiguration(mavenProjectsManager, mavenProject, element, e.key)?.also {
-          result.add(it)
+        var configuration = plugin.getGoalConfiguration(e.key)
+        if (configuration != null) {
+          loadConfiguration(mavenProjectsManager, mavenProject, configuration, e.key)?.also {
+            result[it.name] = it
+          }
         }
       }
-      return result
+      plugin.executions.forEach { exec ->
+        exec.goals.forEach { g ->
+          val configuration = exec.configurationElement
+          if (configuration != null) {
+            loadConfiguration(mavenProjectsManager, mavenProject, configuration, g)?.also {
+              result[it.name] = it
+            }
+          }
+
+        }
+      }
+      return result.values.toList()
     }
 
     private fun loadConfiguration(mavenProjectsManager: MavenProjectsManager, mavenProject: MavenProject, element: Element, goal: String): MavenFilteredJarConfiguration? {
