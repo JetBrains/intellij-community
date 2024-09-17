@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
-import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.EelPath
 import java.time.ZonedDateTime
 
 sealed interface IjentFileInfo {
@@ -52,7 +52,7 @@ interface IjentPosixFileInfo : IjentFileInfo {
     sealed interface Symlink : Type {
       interface Unresolved : Symlink
       interface Resolved : Symlink {
-        val result: IjentPath.Absolute
+        val result: EelPath.Absolute
       }
     }
   }

@@ -185,7 +185,7 @@ class IjentWslNioFileSystemProvider(
                 IjentNioPosixFileAttributesWithDosAdapter(
                   ijentPath.fileSystem.ijentFs.user as IjentPosixInfo.User,
                   cachedAttrs,
-                  nameStartsWithDot = ijentPath.ijentPath.fileName.startsWith("."),
+                  nameStartsWithDot = ijentPath.eelPath.fileName.startsWith("."),
                 )
               else null
 

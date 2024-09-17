@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
-import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.fs.IjentFileInfo
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import java.time.ZonedDateTime
@@ -17,7 +17,7 @@ data class IjentPosixFileInfoImpl(
 ) : IjentPosixFileInfo {
   data class Directory(override val sensitivity: IjentFileInfo.CaseSensitivity) : IjentFileInfo.Type.Directory
   data class Regular(override val size: Long) : IjentFileInfo.Type.Regular
-  data class SymlinkResolved(override val result: IjentPath.Absolute) : IjentPosixFileInfo.Type.Symlink.Resolved
+  data class SymlinkResolved(override val result: EelPath.Absolute) : IjentPosixFileInfo.Type.Symlink.Resolved
   data object SymlinkUnresolved : IjentPosixFileInfo.Type.Symlink.Unresolved
   data object Other : IjentFileInfo.Type.Other
 

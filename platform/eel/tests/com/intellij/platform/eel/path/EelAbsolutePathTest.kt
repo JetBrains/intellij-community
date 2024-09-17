@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
 
-class IjentAbsolutePathTest {
+class EelAbsolutePathTest {
   @TestFactory
   fun `toString returns the same path as parsed`(): List<DynamicTest> = buildList {
     val unixPaths = listOf(
@@ -34,9 +34,9 @@ class IjentAbsolutePathTest {
 
     for (rawPath in (unixPaths + windowsPaths)) {
       add(dynamicTest(rawPath) {
-        val eelPath = IjentPath.Absolute
+        val eelPath = EelPath.Absolute
           .parse(rawPath, null)
-          .shouldBeTypeOf<IjentPathResult.Ok<IjentPath.Absolute>>()
+          .shouldBeTypeOf<EelPathResult.Ok<EelPath.Absolute>>()
           .path
         eelPath.toString() shouldBe rawPath
       })

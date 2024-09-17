@@ -3,13 +3,17 @@
 
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
-import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFsError
+import com.intellij.platform.ijent.fs.IjentFsResult
+import com.intellij.platform.ijent.fs.IjentOpenedFile
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
 import java.nio.file.*
+import kotlin.Throws
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
@@ -45,13 +49,13 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
   }
 }
 
-internal fun Path.toIjentPath(isWindows: Boolean): IjentPath =
+internal fun Path.toEelPath(isWindows: Boolean): EelPath =
   when {
-    this is IjentNioPath -> ijentPath
+    this is IjentNioPath -> eelPath
 
     isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
 
-    else -> IjentPath.Relative.parse(toString()).getOrThrow()
+    else -> EelPath.Relative.parse(toString()).getOrThrow()
   }
 
 internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)

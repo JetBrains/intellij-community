@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.fs.*
 import org.jetbrains.annotations.ApiStatus
@@ -62,12 +62,12 @@ class IjentNioFileSystem internal constructor(
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
     val os = when (ijentFs) {
-      is IjentFileSystemPosixApi -> IjentPath.Absolute.OS.UNIX
-      is IjentFileSystemWindowsApi -> IjentPath.Absolute.OS.WINDOWS
+      is IjentFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
+      is IjentFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
     }
-    return IjentPath.parse(first, os)
+    return EelPath.parse(first, os)
       .getOrThrow()
-      .resolve(IjentPath.Relative.build(*more).getOrThrow())
+      .resolve(EelPath.Relative.build(*more).getOrThrow())
       .getOrThrow()
       .toNioPath()
   }
@@ -84,9 +84,9 @@ class IjentNioFileSystem internal constructor(
     TODO("Not yet implemented")
   }
 
-  private fun IjentPath.toNioPath(): IjentNioPath =
+  private fun EelPath.toNioPath(): IjentNioPath =
     IjentNioPath(
-      ijentPath = this,
+      eelPath = this,
       nioFs = this@IjentNioFileSystem,
       cachedAttributes = null,
     )

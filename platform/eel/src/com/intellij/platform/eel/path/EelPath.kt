@@ -2,13 +2,13 @@
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.IjentPath.Absolute.OS
+import com.intellij.platform.eel.path.EelPath.Absolute.OS
 import java.nio.file.InvalidPathException
 import kotlin.Throws
 
-sealed interface IjentPathResult<P : IjentPath> {
-  data class Ok<P : IjentPath>(val path: P) : IjentPathResult<P>
-  data class Err<P : IjentPath>(val raw: String, val reason: String) : IjentPathResult<P>
+sealed interface EelPathResult<P : EelPath> {
+  data class Ok<P : EelPath>(val path: P) : EelPathResult<P>
+  data class Err<P : EelPath>(val raw: String, val reason: String) : EelPathResult<P>
 }
 
 /**
@@ -19,13 +19,13 @@ sealed interface IjentPathResult<P : IjentPath> {
  *
  * It consists of all methods of nio.Path which don't require any I/O.
  */
-sealed interface IjentPath {
+sealed interface EelPath {
   companion object {
     @JvmStatic
-    fun parse(raw: String, os: Absolute.OS?): IjentPathResult<out IjentPath> =
+    fun parse(raw: String, os: Absolute.OS?): EelPathResult<out EelPath> =
       when (val absoluteResult = Absolute.parse(raw, os)) {
-        is IjentPathResult.Ok -> absoluteResult
-        is IjentPathResult.Err -> Relative.parse(raw)
+        is EelPathResult.Ok -> absoluteResult
+        is EelPathResult.Err -> Relative.parse(raw)
       }
   }
 
@@ -76,7 +76,7 @@ sealed interface IjentPath {
    * IjentRelativePath.parse("a/b/c", false).parent == IjentRelativePath.parse("a/b", false)
    * ```
    */
-  val parent: IjentPath?
+  val parent: EelPath?
 
   /**
    * ```kotlin
@@ -98,7 +98,7 @@ sealed interface IjentPath {
    * // TODO Wouldn't it be better to return different types for relative and absolute paths?
    * It should fail in cases like Absolute("/").resolve(Relative("..")).
    */
-  fun resolve(other: Relative): IjentPathResult<out IjentPath>
+  fun resolve(other: Relative): EelPathResult<out EelPath>
 
   /**
    * ```kotlin
@@ -110,32 +110,32 @@ sealed interface IjentPath {
    * IjentRelativePath.parse("abc", false).getChild("") == Err(...)
    * ```
    */
-  fun getChild(name: String): IjentPathResult<out IjentPath>
+  fun getChild(name: String): EelPathResult<out EelPath>
 
   override fun toString(): String
 
-  interface Relative : IjentPath, Comparable<Relative> {
+  interface Relative : EelPath, Comparable<Relative> {
     companion object {
       @JvmStatic
-      fun parse(raw: String): IjentPathResult<out Relative> =
-        ArrayListIjentRelativePath.parse(raw)
+      fun parse(raw: String): EelPathResult<out Relative> =
+        ArrayListEelRelativePath.parse(raw)
 
       /**
        * The parts of the path must not contain / or \.
        */
       @JvmStatic
-      fun build(vararg parts: String): IjentPathResult<out Relative> =
+      fun build(vararg parts: String): EelPathResult<out Relative> =
         build(listOf(*parts))
 
       /**
        * The parts of the path must not contain / or \.
        */
       @JvmStatic
-      fun build(parts: List<String>): IjentPathResult<out Relative> =
-        ArrayListIjentRelativePath.build(parts)
+      fun build(parts: List<String>): EelPathResult<out Relative> =
+        ArrayListEelRelativePath.build(parts)
 
       @JvmField
-      val EMPTY: Relative = ArrayListIjentRelativePath.EMPTY
+      val EMPTY: Relative = ArrayListEelRelativePath.EMPTY
     }
 
     override val parent: Relative?
@@ -143,9 +143,9 @@ sealed interface IjentPath {
     /** See [java.nio.file.Path.startsWith] */
     fun startsWith(other: Relative): Boolean
 
-    override fun resolve(other: Relative): IjentPathResult<out Relative>
+    override fun resolve(other: Relative): EelPathResult<out Relative>
 
-    override fun getChild(name: String): IjentPathResult<out Relative>
+    override fun getChild(name: String): EelPathResult<out Relative>
 
     override fun compareTo(other: Relative): Int
 
@@ -170,19 +170,19 @@ sealed interface IjentPath {
    *
    * It consists of all methods of nio.Path which don't require any I/O.
    */
-  interface Absolute : IjentPath, Comparable<Absolute> {
+  interface Absolute : EelPath, Comparable<Absolute> {
     companion object {
       @JvmStatic
-      fun parse(raw: String, os: OS?): IjentPathResult<out Absolute> =
-        ArrayListIjentAbsolutePath.parse(raw, os)
+      fun parse(raw: String, os: OS?): EelPathResult<out Absolute> =
+        ArrayListEelAbsolutePath.parse(raw, os)
 
       @JvmStatic
-      fun build(vararg parts: String): IjentPathResult<out Absolute> =
+      fun build(vararg parts: String): EelPathResult<out Absolute> =
         build(listOf(*parts), null)
 
       @JvmStatic
-      fun build(parts: List<String>, os: OS?): IjentPathResult<out Absolute> =
-        ArrayListIjentAbsolutePath.build(parts, os)
+      fun build(parts: List<String>, os: OS?): EelPathResult<out Absolute> =
+        ArrayListEelAbsolutePath.build(parts, os)
     }
 
     enum class OS {
@@ -200,10 +200,10 @@ sealed interface IjentPath {
     fun startsWith(other: Absolute): Boolean
 
     /** See [java.nio.file.Path.normalize] */
-    fun normalize(): IjentPathResult<out Absolute>
+    fun normalize(): EelPathResult<out Absolute>
 
     /** See [java.nio.file.Path.resolve] */
-    override fun resolve(other: Relative): IjentPathResult<out Absolute>
+    override fun resolve(other: Relative): EelPathResult<out Absolute>
 
     /**
      * See [java.nio.file.Path.relativize].
@@ -213,9 +213,9 @@ sealed interface IjentPath {
      *   == IjentPathAbsolute.parse("..\..\oops", isWindows = true)
      * ```
      */
-    fun relativize(other: Absolute): IjentPathResult<out Relative>
+    fun relativize(other: Absolute): EelPathResult<out Relative>
 
-    override fun getChild(name: String): IjentPathResult<out Absolute>
+    override fun getChild(name: String): EelPathResult<out Absolute>
 
     fun scan(): Sequence<Absolute>
 
@@ -228,10 +228,10 @@ sealed interface IjentPath {
 }
 
 @Throws(InvalidPathException::class)
-fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
+fun <P : EelPath> EelPathResult<P>.getOrThrow(): P =
   when (this) {
-    is IjentPathResult.Ok -> path
-    is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
+    is EelPathResult.Ok -> path
+    is EelPathResult.Err -> throw InvalidPathException(raw, reason)
   }
 
 val EelPlatform.pathOs: OS

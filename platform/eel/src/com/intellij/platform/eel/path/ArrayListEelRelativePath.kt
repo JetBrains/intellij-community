@@ -1,20 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
-internal class ArrayListIjentRelativePath private constructor(
+internal class ArrayListEelRelativePath private constructor(
   private val parts: List<String>,
-) : IjentPath.Relative {
+) : EelPath.Relative {
   init {
     // TODO To be removed when the class is thoroughly covered with unit tests.
     require(parts.all(String::isNotEmpty)) { "An empty string in the path parts: $parts" }
   }
 
-  override val parent: IjentPath.Relative?
+  override val parent: EelPath.Relative?
     get() =
       if (parts.size < 2) null
-      else ArrayListIjentRelativePath(parts.dropLast(1))
+      else ArrayListEelRelativePath(parts.dropLast(1))
 
-  override fun startsWith(other: IjentPath.Relative): Boolean {
+  override fun startsWith(other: EelPath.Relative): Boolean {
     if (nameCount < other.nameCount) return false
     for ((index, part) in parts.withIndex()) {
       if (part != other.getName(index).fileName) {
@@ -24,7 +24,7 @@ internal class ArrayListIjentRelativePath private constructor(
     return true
   }
 
-  override fun resolve(other: IjentPath.Relative): IjentPathResult<ArrayListIjentRelativePath> {
+  override fun resolve(other: EelPath.Relative): EelPathResult<ArrayListEelRelativePath> {
     val result = mutableListOf<String>()
     result += parts
     if (other != EMPTY) {
@@ -33,17 +33,17 @@ internal class ArrayListIjentRelativePath private constructor(
         result += fileName
       }
     }
-    return IjentPathResult.Ok(ArrayListIjentRelativePath(result))
+    return EelPathResult.Ok(ArrayListEelRelativePath(result))
   }
 
-  override fun getChild(name: String): IjentPathResult<ArrayListIjentRelativePath> =
+  override fun getChild(name: String): EelPathResult<ArrayListEelRelativePath> =
     when {
-      name.isEmpty() -> IjentPathResult.Err(name, "Empty child name is not allowed")
-      "/" in name -> IjentPathResult.Err(name, "Invalid symbol in child name: /")
-      else -> IjentPathResult.Ok(ArrayListIjentRelativePath(parts + name))
+      name.isEmpty() -> EelPathResult.Err(name, "Empty child name is not allowed")
+      "/" in name -> EelPathResult.Err(name, "Invalid symbol in child name: /")
+      else -> EelPathResult.Ok(ArrayListEelRelativePath(parts + name))
     }
 
-  override fun compareTo(other: IjentPath.Relative): Int {
+  override fun compareTo(other: EelPath.Relative): Int {
     for (i in 0..<nameCount.coerceAtMost(other.nameCount)) {
       val comparison = getName(i).fileName.compareTo(other.getName(i).fileName)
       if (comparison != 0) return comparison
@@ -51,7 +51,7 @@ internal class ArrayListIjentRelativePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override fun normalize(): IjentPath.Relative {
+  override fun normalize(): EelPath.Relative {
     val result = mutableListOf<String>()
     for (part in parts) {
       when (part) {
@@ -68,7 +68,7 @@ internal class ArrayListIjentRelativePath private constructor(
         }
       }
     }
-    return ArrayListIjentRelativePath(result)
+    return ArrayListEelRelativePath(result)
   }
 
   override val fileName: String
@@ -77,14 +77,14 @@ internal class ArrayListIjentRelativePath private constructor(
   override val nameCount: Int
     get() = parts.count().coerceAtLeast(1)
 
-  override fun getName(index: Int): IjentPath.Relative {
+  override fun getName(index: Int): EelPath.Relative {
     val newParts =
       if (parts.isEmpty()) listOf()
       else listOf(parts.getOrNull(index) ?: throw IllegalArgumentException("$index !in 0..<${parts.size}"))
-    return ArrayListIjentRelativePath(newParts)
+    return ArrayListEelRelativePath(newParts)
   }
 
-  override fun endsWith(other: IjentPath.Relative): Boolean {
+  override fun endsWith(other: EelPath.Relative): Boolean {
     if (nameCount < other.nameCount) return false
     var otherIndex = other.nameCount - 1
     for (part in parts.asReversed()) {
@@ -99,31 +99,31 @@ internal class ArrayListIjentRelativePath private constructor(
   override fun toString(): String = parts.joinToString("/")
 
   override fun equals(other: Any?): Boolean =
-    other is IjentPath.Relative && other.compareTo(this) == 0
+    other is EelPath.Relative && other.compareTo(this) == 0
 
   override fun hashCode(): Int =
     parts.hashCode()
 
   companion object {
-    val EMPTY = ArrayListIjentRelativePath(listOf())
+    val EMPTY = ArrayListEelRelativePath(listOf())
     private val REGEX = Regex("""[/\\]""")
 
-    fun parse(raw: String): IjentPathResult<ArrayListIjentRelativePath> =
+    fun parse(raw: String): EelPathResult<ArrayListEelRelativePath> =
       build(raw.splitToSequence(REGEX).filter(String::isNotEmpty).iterator())
 
-    fun build(parts: List<String>): IjentPathResult<ArrayListIjentRelativePath> =
+    fun build(parts: List<String>): EelPathResult<ArrayListEelRelativePath> =
       build(parts.iterator())
 
-    private fun build(parts: Iterator<String>): IjentPathResult<ArrayListIjentRelativePath> {
+    private fun build(parts: Iterator<String>): EelPathResult<ArrayListEelRelativePath> {
       // Not optimal, but DRY.
-      var result = ArrayListIjentRelativePath(listOf())
+      var result = ArrayListEelRelativePath(listOf())
       for (part in parts) {
         result = when (val r = result.getChild(part)) {
-          is IjentPathResult.Ok -> r.path
-          is IjentPathResult.Err -> return r
+          is EelPathResult.Ok -> r.path
+          is EelPathResult.Err -> return r
         }
       }
-      return IjentPathResult.Ok(result)
+      return EelPathResult.Ok(result)
     }
   }
 }

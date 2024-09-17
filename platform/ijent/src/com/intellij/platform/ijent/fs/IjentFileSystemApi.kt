@@ -2,7 +2,7 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentInfo
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentUnavailableException
@@ -28,13 +28,13 @@ sealed interface IjentFileSystemApi {
    * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun userHome(): IjentPath.Absolute?
+  suspend fun userHome(): EelPath.Absolute?
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun listDirectory(path: IjentPath.Absolute): IjentFsResult<
+  suspend fun listDirectory(path: EelPath.Absolute): IjentFsResult<
     Collection<String>,
     ListDirectoryError>
 
@@ -48,7 +48,7 @@ sealed interface IjentFileSystemApi {
    */
   @Throws(IjentUnavailableException::class)
   suspend fun listDirectoryWithAttrs(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
     symlinkPolicy: SymlinkPolicy,
   ): IjentFsResult<
     out Collection<Pair<String, IjentFileInfo>>,
@@ -66,8 +66,8 @@ sealed interface IjentFileSystemApi {
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun canonicalize(path: IjentPath.Absolute): IjentFsResult<
-    IjentPath.Absolute,
+  suspend fun canonicalize(path: EelPath.Absolute): IjentFsResult<
+    EelPath.Absolute,
     CanonicalizeError>
 
   sealed interface CanonicalizeError : IjentFsError {
@@ -82,7 +82,7 @@ sealed interface IjentFileSystemApi {
    * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun stat(path: IjentPath.Absolute, symlinkPolicy: SymlinkPolicy): IjentFsResult<out IjentFileInfo, StatError>
+  suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): IjentFsResult<out IjentFileInfo, StatError>
 
   /**
    * Defines the behavior of FS operations on symbolic links
@@ -119,7 +119,7 @@ sealed interface IjentFileSystemApi {
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun sameFile(source: IjentPath.Absolute, target: IjentPath.Absolute): IjentFsResult<
+  suspend fun sameFile(source: EelPath.Absolute, target: EelPath.Absolute): IjentFsResult<
     Boolean,
     SameFileError>
 
@@ -135,7 +135,7 @@ sealed interface IjentFileSystemApi {
    * Opens file only for reading
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun openForReading(path: IjentPath.Absolute): IjentFsResult<
+  suspend fun openForReading(path: EelPath.Absolute): IjentFsResult<
     IjentOpenedFile.Reader,
     FileReaderError>
 
@@ -159,7 +159,7 @@ sealed interface IjentFileSystemApi {
     FileWriterError>
 
   sealed interface WriteOptions {
-    val path: IjentPath.Absolute
+    val path: EelPath.Absolute
 
     /**
      * Whether to append new data to the end of file.
@@ -201,21 +201,21 @@ sealed interface IjentFileSystemApi {
 
 
   @Throws(DeleteException::class, IjentUnavailableException::class)
-  suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean)
+  suspend fun delete(path: EelPath.Absolute, removeContent: Boolean)
 
   sealed class DeleteException(
-    where: IjentPath.Absolute,
+    where: EelPath.Absolute,
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
-    class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DoesNotExist
-    class DirNotEmpty(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DirNotEmpty
-    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.PermissionDenied
+    class DoesNotExist(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DoesNotExist
+    class DirNotEmpty(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DirNotEmpty
+    class PermissionDenied(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.PermissionDenied
 
     /**
      * Thrown only when `followLinks` is specified for [delete]
      */
-    class UnresolvedLink(where: IjentPath.Absolute): DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+    class UnresolvedLink(where: EelPath.Absolute): DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
+    class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String)
       : DeleteException(where, additionalMessage), IjentFsError.Other
   }
 
@@ -223,8 +223,8 @@ sealed interface IjentFileSystemApi {
   suspend fun copy(options: CopyOptions)
 
   sealed interface CopyOptions {
-    val source: IjentPath.Absolute
-    val target: IjentPath.Absolute
+    val source: EelPath.Absolute
+    val target: EelPath.Absolute
 
     /**
      * Relevant for copying directories.
@@ -247,53 +247,53 @@ sealed interface IjentFileSystemApi {
     val followLinks: Boolean
   }
 
-  sealed class CopyException(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: IjentPath.Absolute) : CopyException(where, "Source does not exist"), IjentFsError.DoesNotExist
-    class TargetAlreadyExists(where: IjentPath.Absolute) : CopyException(where, "Target already exists"), IjentFsError.AlreadyExists
-    class PermissionDenied(where: IjentPath.Absolute) : CopyException(where, "Permission denied"), IjentFsError.PermissionDenied
-    class NotEnoughSpace(where: IjentPath.Absolute) : CopyException(where, "Not enough space"), IjentFsError.NotEnoughSpace
-    class NameTooLong(where: IjentPath.Absolute) : CopyException(where, "Name too long"), IjentFsError.NameTooLong
-    class ReadOnlyFileSystem(where: IjentPath.Absolute) : CopyException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
-    class FileSystemError(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
-    class TargetDirNotEmpty(where: IjentPath.Absolute) : CopyException(where, "Target directory is not empty"), IjentFsError.DirNotEmpty
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
+  sealed class CopyException(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
+    class SourceDoesNotExist(where: EelPath.Absolute) : CopyException(where, "Source does not exist"), IjentFsError.DoesNotExist
+    class TargetAlreadyExists(where: EelPath.Absolute) : CopyException(where, "Target already exists"), IjentFsError.AlreadyExists
+    class PermissionDenied(where: EelPath.Absolute) : CopyException(where, "Permission denied"), IjentFsError.PermissionDenied
+    class NotEnoughSpace(where: EelPath.Absolute) : CopyException(where, "Not enough space"), IjentFsError.NotEnoughSpace
+    class NameTooLong(where: EelPath.Absolute) : CopyException(where, "Name too long"), IjentFsError.NameTooLong
+    class ReadOnlyFileSystem(where: EelPath.Absolute) : CopyException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
+    class FileSystemError(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
+    class TargetDirNotEmpty(where: EelPath.Absolute) : CopyException(where, "Target directory is not empty"), IjentFsError.DirNotEmpty
+    class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
   }
 
   @Throws(MoveException::class)
-  suspend fun move(source: IjentPath.Absolute, target: IjentPath.Absolute, replaceExisting: Boolean, followLinks: Boolean)
+  suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: Boolean, followLinks: Boolean)
 
-  sealed class MoveException(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: IjentPath.Absolute) : MoveException(where, "Source does not exist"), IjentFsError.DoesNotExist
-    class TargetAlreadyExists(where: IjentPath.Absolute) : MoveException(where, "Target already exists"), IjentFsError.AlreadyExists
-    class PermissionDenied(where: IjentPath.Absolute) : MoveException(where, "Permission denied"), IjentFsError.PermissionDenied
-    class NameTooLong(where: IjentPath.Absolute) : MoveException(where, "Name too long"), IjentFsError.NameTooLong
-    class ReadOnlyFileSystem(where: IjentPath.Absolute) : MoveException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
-    class FileSystemError(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
+  sealed class MoveException(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
+    class SourceDoesNotExist(where: EelPath.Absolute) : MoveException(where, "Source does not exist"), IjentFsError.DoesNotExist
+    class TargetAlreadyExists(where: EelPath.Absolute) : MoveException(where, "Target already exists"), IjentFsError.AlreadyExists
+    class PermissionDenied(where: EelPath.Absolute) : MoveException(where, "Permission denied"), IjentFsError.PermissionDenied
+    class NameTooLong(where: EelPath.Absolute) : MoveException(where, "Name too long"), IjentFsError.NameTooLong
+    class ReadOnlyFileSystem(where: EelPath.Absolute) : MoveException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
+    class FileSystemError(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
+    class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
   }
 
   companion object Arguments {
     @JvmStatic
-    fun writeOptionsBuilder(path: IjentPath.Absolute): WriteOptions =
+    fun writeOptionsBuilder(path: EelPath.Absolute): WriteOptions =
       WriteOptionsImpl(path)
 
     @JvmStatic
-    fun copyOptionsBuilder(source: IjentPath.Absolute, target: IjentPath.Absolute): CopyOptions =
+    fun copyOptionsBuilder(source: EelPath.Absolute, target: EelPath.Absolute): CopyOptions =
       CopyOptionsImpl(source, target)
   }
 }
 
 sealed interface IjentOpenedFile {
-  val path: IjentPath.Absolute
+  val path: EelPath.Absolute
 
   @Throws(CloseException::class, IjentUnavailableException::class)
   suspend fun close()
 
   sealed class CloseException(
-    where: IjentPath.Absolute,
+    where: EelPath.Absolute,
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+    class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String)
       : CloseException(where, additionalMessage), IjentFsError.Other
   }
 
@@ -407,10 +407,10 @@ sealed interface IjentOpenedFile {
     suspend fun flush()
 
     sealed class FlushException(
-      where: IjentPath.Absolute,
+      where: EelPath.Absolute,
       additionalMessage: @NlsSafe String,
     ) : IjentFsIOException(where, additionalMessage) {
-      class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String)
         : FlushException(where, additionalMessage), IjentFsError.Other
     }
 
@@ -418,14 +418,14 @@ sealed interface IjentOpenedFile {
     suspend fun truncate(size: Long)
 
     sealed class TruncateException(
-      where: IjentPath.Absolute,
+      where: EelPath.Absolute,
       additionalMessage: @NlsSafe String,
     ) : IjentFsIOException(where, additionalMessage) {
-      class UnknownFile(where: IjentPath.Absolute) : TruncateException(where, "Could not find opened file"), IjentFsError.UnknownFile
-      class NegativeOffset(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
-      class OffsetTooBig(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
-      class ReadOnlyFs(where: IjentPath.Absolute) : TruncateException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
-      class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
+      class UnknownFile(where: EelPath.Absolute) : TruncateException(where, "Could not find opened file"), IjentFsError.UnknownFile
+      class NegativeOffset(where: EelPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
+      class OffsetTooBig(where: EelPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
+      class ReadOnlyFs(where: EelPath.Absolute) : TruncateException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
+      class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String)
         : TruncateException(where, additionalMessage), IjentFsError.Other
     }
   }
@@ -441,29 +441,29 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   }
 
   @Throws(CreateDirectoryException::class, IjentUnavailableException::class)
-  suspend fun createDirectory(path: IjentPath.Absolute, attributes: List<CreateDirAttributePosix>)
+  suspend fun createDirectory(path: EelPath.Absolute, attributes: List<CreateDirAttributePosix>)
 
   sealed class CreateDirectoryException(
-    where: IjentPath.Absolute,
+    where: EelPath.Absolute,
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
-    class DirAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
-    class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
-    class ParentNotFound(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.DoesNotExist
-    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.PermissionDenied
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.Other
+    class DirAlreadyExists(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
+    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.AlreadyExists
+    class ParentNotFound(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.DoesNotExist
+    class PermissionDenied(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.PermissionDenied
+    class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.Other
   }
 
   @Throws(IjentUnavailableException::class)
   override suspend fun listDirectoryWithAttrs(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
     symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<
     Collection<Pair<String, IjentPosixFileInfo>>,
     IjentFileSystemApi.ListDirectoryError>
 
   @Throws(IjentUnavailableException::class)
-  override suspend fun stat(path: IjentPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
+  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentPosixFileInfo,
     IjentFileSystemApi.StatError>
 
@@ -473,34 +473,34 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
    * like in `ln -s` tool, like in `symlink(2)` from LibC, but opposite to `java.nio.file.spi.FileSystemProvider.createSymbolicLink`.
    */
   @Throws(CreateSymbolicLinkException::class, IjentUnavailableException::class)
-  suspend fun createSymbolicLink(target: IjentPath, linkPath: IjentPath.Absolute)
+  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute)
 
   sealed class CreateSymbolicLinkException(
-    where: IjentPath.Absolute,
+    where: EelPath.Absolute,
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
     /**
      * Example: `createSymbolicLink("anywhere", "/directory_that_does_not_exist")`
      */
-    class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.DoesNotExist
+    class DoesNotExist(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.DoesNotExist
 
     /**
      * Examples:
      * * `createSymbolicLink("anywhere", "/etc/passwd")`
      * * `createSymbolicLink("anywhere", "/home")`
      */
-    class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.AlreadyExists
+    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.AlreadyExists
 
     /**
      * Example: `createSymbolicLink("anywhere", "/etc/passwd/oops")`
      */
-    class NotDirectory(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.NotDirectory
+    class NotDirectory(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.NotDirectory
 
     /**
      * Example:
      * * With non-root permissions: `createSymbolicLink("anywhere", "/root/oops")`
      */
-    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.PermissionDenied
+    class PermissionDenied(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.PermissionDenied
 
     /**
      * Everything else, including `ELOOP`.
@@ -511,7 +511,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
      * createSymbolicLink("anywhere", "/tmp/foobar/oops") // Other("something about ELOOP")
      * ```
      */
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.Other
+    class Other(where: EelPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.Other
   }
 }
 
@@ -519,18 +519,18 @@ interface IjentFileSystemWindowsApi : IjentFileSystemApi {
   override val user: IjentWindowsInfo.User
 
   @Throws(IjentUnavailableException::class)
-  suspend fun getRootDirectories(): Collection<IjentPath.Absolute>
+  suspend fun getRootDirectories(): Collection<EelPath.Absolute>
 
   @Throws(IjentUnavailableException::class)
   override suspend fun listDirectoryWithAttrs(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
     symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<
     Collection<Pair<String, IjentWindowsFileInfo>>,
     IjentFileSystemApi.ListDirectoryError>
 
   @Throws(IjentUnavailableException::class)
-  override suspend fun stat(path: IjentPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
+  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentWindowsFileInfo,
     IjentFileSystemApi.StatError>
 }

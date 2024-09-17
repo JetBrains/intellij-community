@@ -1,40 +1,40 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
-import com.intellij.platform.eel.path.IjentPathResult.Err
-import com.intellij.platform.eel.path.IjentPathResult.Ok
+import com.intellij.platform.eel.path.EelPathResult.Err
+import com.intellij.platform.eel.path.EelPathResult.Ok
 
-internal class ArrayListIjentAbsolutePath private constructor(
+internal class ArrayListEelAbsolutePath private constructor(
   private val _root: Root,
   private val parts: List<String>,
-) : IjentPath.Absolute {
+) : EelPath.Absolute {
   init {
     // TODO To be removed when the class is thoroughly covered with unit tests.
     require(parts.all(String::isNotEmpty)) { "An empty string in the path parts: $parts" }
   }
 
-  override val os: IjentPath.Absolute.OS
+  override val os: EelPath.Absolute.OS
     get() = when (_root) {
-      Root.Unix -> IjentPath.Absolute.OS.UNIX
-      is Root.Windows -> IjentPath.Absolute.OS.WINDOWS
+      Root.Unix -> EelPath.Absolute.OS.UNIX
+      is Root.Windows -> EelPath.Absolute.OS.WINDOWS
     }
 
-  override val root: IjentPath.Absolute by lazy {
+  override val root: EelPath.Absolute by lazy {
     if (parts.isEmpty()) this
-    else ArrayListIjentAbsolutePath(_root, listOf())
+    else ArrayListEelAbsolutePath(_root, listOf())
   }
 
-  override val parent: IjentPath.Absolute?
+  override val parent: EelPath.Absolute?
     get() =
       if (parts.isEmpty()) null
-      else ArrayListIjentAbsolutePath(_root, parts.dropLast(1))
+      else ArrayListEelAbsolutePath(_root, parts.dropLast(1))
 
-  override fun startsWith(other: IjentPath.Absolute): Boolean =
+  override fun startsWith(other: EelPath.Absolute): Boolean =
     nameCount >= other.nameCount &&
     root.fileName == other.root.fileName &&
     (0..<other.nameCount).all { getName(it) == other.getName(it) }
 
-  override fun normalize(): IjentPathResult<out IjentPath.Absolute> {
+  override fun normalize(): EelPathResult<out EelPath.Absolute> {
     val result = mutableListOf<String>()
     for (part in parts) {
       when (part) {
@@ -50,10 +50,10 @@ internal class ArrayListIjentAbsolutePath private constructor(
           result += part
       }
     }
-    return Ok(ArrayListIjentAbsolutePath(_root, result))
+    return Ok(ArrayListEelAbsolutePath(_root, result))
   }
 
-  override fun resolve(other: IjentPath.Relative): IjentPathResult<out IjentPath.Absolute> {
+  override fun resolve(other: EelPath.Relative): EelPathResult<out EelPath.Absolute> {
     val result = parts.toMutableList()
     for (index in 0..<other.nameCount) {
       val name = other.getName(index).fileName
@@ -63,20 +63,20 @@ internal class ArrayListIjentAbsolutePath private constructor(
         result += name
       }
     }
-    return Ok(ArrayListIjentAbsolutePath(_root, result))
+    return Ok(ArrayListEelAbsolutePath(_root, result))
   }
 
-  override fun getChild(name: String): IjentPathResult<out IjentPath.Absolute> {
+  override fun getChild(name: String): EelPathResult<out EelPath.Absolute> {
     val error = checkFileName(name)
     return if (error == null)
-      Ok(ArrayListIjentAbsolutePath(_root, parts + name))
+      Ok(ArrayListEelAbsolutePath(_root, parts + name))
     else
       Err(name, error)
   }
 
-  override fun scan(): Sequence<IjentPath.Absolute> =
-    parts.asSequence().scan(ArrayListIjentAbsolutePath(_root, listOf())) { parent, name ->
-      ArrayListIjentAbsolutePath(_root, parent.parts + name)
+  override fun scan(): Sequence<EelPath.Absolute> =
+    parts.asSequence().scan(ArrayListEelAbsolutePath(_root, listOf())) { parent, name ->
+      ArrayListEelAbsolutePath(_root, parent.parts + name)
     }
 
   override fun toString(): String =
@@ -101,19 +101,19 @@ internal class ArrayListIjentAbsolutePath private constructor(
   override val nameCount: Int
     get() = parts.size
 
-  override fun getName(index: Int): IjentPath.Relative {
-    if (parts.isEmpty()) return IjentPath.Relative.EMPTY
+  override fun getName(index: Int): EelPath.Relative {
+    if (parts.isEmpty()) return EelPath.Relative.EMPTY
 
     require(index in parts.indices) { "$index !in ${parts.indices}" }
-    return IjentPath.Relative.build(parts[index]).getOrThrow()
+    return EelPath.Relative.build(parts[index]).getOrThrow()
   }
 
-  override fun endsWith(other: IjentPath.Relative): Boolean {
+  override fun endsWith(other: EelPath.Relative): Boolean {
     val diff = nameCount - other.nameCount
     return diff >= 0 && (0..<other.nameCount).all { getName(it + diff) == other.getName(it) }
   }
 
-  override fun compareTo(other: IjentPath.Absolute): Int {
+  override fun compareTo(other: EelPath.Absolute): Int {
     run {
       val cmp = root.fileName.compareTo(other.root.fileName)
       if (cmp != 0) {
@@ -131,7 +131,7 @@ internal class ArrayListIjentAbsolutePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override fun relativize(other: IjentPath.Absolute): IjentPathResult<out IjentPath.Relative> {
+  override fun relativize(other: EelPath.Absolute): EelPathResult<out EelPath.Relative> {
     if (root != other.root) {
       return Err(other.root.toString(), "The other path has a different root")
     }
@@ -152,11 +152,11 @@ internal class ArrayListIjentAbsolutePath private constructor(
       result += other.getName(index).fileName
     }
 
-    return IjentPath.Relative.build(result)
+    return EelPath.Relative.build(result)
   }
 
   override fun equals(other: Any?): Boolean =
-    other is IjentPath.Absolute &&
+    other is EelPath.Absolute &&
     nameCount == other.nameCount &&
     root.fileName == other.root.fileName &&
     (0..<nameCount).all { getName(it) == other.getName(it) }
@@ -171,12 +171,12 @@ internal class ArrayListIjentAbsolutePath private constructor(
     })
 
   companion object {
-    fun build(parts: List<String>, os: IjentPath.Absolute.OS?): IjentPathResult<out IjentPath.Absolute> {
+    fun build(parts: List<String>, os: EelPath.Absolute.OS?): EelPathResult<out EelPath.Absolute> {
       require(parts.isNotEmpty()) { "Can't build an absolute path from no path parts" }
 
       val windowsRoot = when (os) {
-        IjentPath.Absolute.OS.WINDOWS, null -> findAbsoluteUncPath(parts.first()) ?: findAbsoluteTraditionalDosPath(parts.first())
-        IjentPath.Absolute.OS.UNIX -> null
+        EelPath.Absolute.OS.WINDOWS, null -> findAbsoluteUncPath(parts.first()) ?: findAbsoluteTraditionalDosPath(parts.first())
+        EelPath.Absolute.OS.UNIX -> null
       }
       when (windowsRoot) {
         null -> {
@@ -190,7 +190,7 @@ internal class ArrayListIjentAbsolutePath private constructor(
             val error = checkFileName(part, isWindows = false)
             if (error != null) return Err(part, error)
           }
-          return Ok(ArrayListIjentAbsolutePath(Root.Unix, parts))
+          return Ok(ArrayListEelAbsolutePath(Root.Unix, parts))
         }
 
         is Ok -> {
@@ -199,21 +199,21 @@ internal class ArrayListIjentAbsolutePath private constructor(
             val error = checkFileName(part, isWindows = true)
             if (error != null) return Err(part, error)
           }
-          return Ok(ArrayListIjentAbsolutePath(windowsRoot.path._root, parts))
+          return Ok(ArrayListEelAbsolutePath(windowsRoot.path._root, parts))
         }
 
         is Err -> return windowsRoot
       }
     }
 
-    fun parse(raw: String, os: IjentPath.Absolute.OS?): IjentPathResult<ArrayListIjentAbsolutePath> =
+    fun parse(raw: String, os: EelPath.Absolute.OS?): EelPathResult<ArrayListEelAbsolutePath> =
       when (os) {
-        IjentPath.Absolute.OS.WINDOWS ->
+        EelPath.Absolute.OS.WINDOWS ->
           findAbsoluteUncPath(raw)
           ?: findAbsoluteTraditionalDosPath(raw)
           ?: reportError(raw)
 
-        IjentPath.Absolute.OS.UNIX ->
+        EelPath.Absolute.OS.UNIX ->
           findAbsoluteUnixPath(raw)
           ?: reportError(raw)
 
@@ -225,7 +225,7 @@ internal class ArrayListIjentAbsolutePath private constructor(
       }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths */
-    private fun findAbsoluteUncPath(raw: String): IjentPathResult<ArrayListIjentAbsolutePath>? {
+    private fun findAbsoluteUncPath(raw: String): EelPathResult<ArrayListEelAbsolutePath>? {
       if (raw.length < 3) return null
       if (raw.getOrNull(0) != raw.getOrNull(1)) return null
 
@@ -264,11 +264,11 @@ internal class ArrayListIjentAbsolutePath private constructor(
         if (error != null) return Err(raw, error)
       }
 
-      return Ok(ArrayListIjentAbsolutePath(Root.Windows(raw.substring(0, index).replace("/", "\\")), parts))
+      return Ok(ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, index).replace("/", "\\")), parts))
     }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#traditional-dos-paths */
-    private fun findAbsoluteTraditionalDosPath(raw: String): IjentPathResult<ArrayListIjentAbsolutePath>? {
+    private fun findAbsoluteTraditionalDosPath(raw: String): EelPathResult<ArrayListEelAbsolutePath>? {
       if (raw.length < 3) return null
       if (!raw[0].isLetter()) return null
       if (raw[1] != ':') return null
@@ -284,10 +284,10 @@ internal class ArrayListIjentAbsolutePath private constructor(
         if (error != null) return Err(raw, error)
       }
 
-      return Ok(ArrayListIjentAbsolutePath(Root.Windows(raw.substring(0, 3)), parts))
+      return Ok(ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, 3)), parts))
     }
 
-    private fun findAbsoluteUnixPath(raw: String): IjentPathResult<ArrayListIjentAbsolutePath>? {
+    private fun findAbsoluteUnixPath(raw: String): EelPathResult<ArrayListEelAbsolutePath>? {
       if (raw.getOrNull(0) != '/') return null
 
       val parts = raw
@@ -300,10 +300,10 @@ internal class ArrayListIjentAbsolutePath private constructor(
         if (error != null) return Err(raw, error)
       }
 
-      return Ok(ArrayListIjentAbsolutePath(Root.Unix, parts))
+      return Ok(ArrayListEelAbsolutePath(Root.Unix, parts))
     }
 
-    private fun reportError(raw: String): Err<ArrayListIjentAbsolutePath> =
+    private fun reportError(raw: String): Err<ArrayListEelAbsolutePath> =
       Err(
         raw = raw,
         reason = run {

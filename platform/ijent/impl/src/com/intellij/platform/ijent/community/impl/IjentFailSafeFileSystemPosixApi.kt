@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
-import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentPosixInfo
@@ -95,20 +95,20 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   override val user: IjentPosixInfo.User,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
-  override suspend fun userHome(): IjentPath.Absolute? =
+  override suspend fun userHome(): EelPath.Absolute? =
     holder.withDelegateRetrying {
       userHome()
     }
 
   override suspend fun listDirectory(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
   ): IjentFsResult<Collection<String>, IjentFileSystemApi.ListDirectoryError> =
     holder.withDelegateRetrying {
       listDirectory(path)
     }
 
   override suspend fun createDirectory(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
     attributes: List<IjentFileSystemPosixApi.CreateDirAttributePosix>,
   ) {
     holder.withDelegateRetrying {
@@ -117,7 +117,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   }
 
   override suspend fun listDirectoryWithAttrs(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
     symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<Collection<Pair<String, IjentPosixFileInfo>>, IjentFileSystemApi.ListDirectoryError> {
     return holder.withDelegateRetrying {
@@ -126,14 +126,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   }
 
   override suspend fun canonicalize(
-    path: IjentPath.Absolute,
-  ): IjentFsResult<IjentPath.Absolute, IjentFileSystemApi.CanonicalizeError> =
+    path: EelPath.Absolute,
+  ): IjentFsResult<EelPath.Absolute, IjentFileSystemApi.CanonicalizeError> =
     holder.withDelegateRetrying {
       canonicalize(path)
     }
 
   override suspend fun stat(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
     symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<IjentPosixFileInfo, IjentFileSystemApi.StatError> =
     holder.withDelegateRetrying {
@@ -141,15 +141,15 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun sameFile(
-    source: IjentPath.Absolute,
-    target: IjentPath.Absolute,
+    source: EelPath.Absolute,
+    target: EelPath.Absolute,
   ): IjentFsResult<Boolean, IjentFileSystemApi.SameFileError> =
     holder.withDelegateRetrying {
       sameFile(source, target)
     }
 
   override suspend fun openForReading(
-    path: IjentPath.Absolute,
+    path: EelPath.Absolute,
   ): IjentFsResult<IjentOpenedFile.Reader, IjentFileSystemApi.FileReaderError> =
     holder.withDelegateRetrying {
       openForReading(path)
@@ -169,7 +169,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       openForReadingAndWriting(options)
     }
 
-  override suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean) {
+  override suspend fun delete(path: EelPath.Absolute, removeContent: Boolean) {
     holder.withDelegateRetrying {
       delete(path, removeContent)
     }
@@ -181,13 +181,13 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
-  override suspend fun move(source: IjentPath.Absolute, target: IjentPath.Absolute, replaceExisting: Boolean, followLinks: Boolean) {
+  override suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: Boolean, followLinks: Boolean) {
     holder.withDelegateRetrying {
       move(source, target, replaceExisting, followLinks)
     }
   }
 
-  override suspend fun createSymbolicLink(target: IjentPath, linkPath: IjentPath.Absolute) {
+  override suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) {
     holder.withDelegateRetrying {
       createSymbolicLink(target, linkPath)
     }
