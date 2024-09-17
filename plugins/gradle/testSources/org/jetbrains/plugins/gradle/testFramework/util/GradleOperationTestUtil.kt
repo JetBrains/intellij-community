@@ -5,8 +5,6 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputParser
-import com.intellij.diagnostic.ThreadDumper
-import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -26,14 +24,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.observation.ActivityKey
-import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
 import com.intellij.testFramework.withProjectAsync
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -43,41 +39,21 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 private val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
+private val LOG = Logger.getInstance(TestGradleProjectConfigurationActivityKey::class.java)
 
 private object TestGradleProjectConfigurationActivityKey: ActivityKey {
   override val presentableName: @Nls String
     get() = "The test Gradle project configuration"
 }
-val LOG = Logger.getInstance(TestGradleProjectConfigurationActivityKey::class.java)
+
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
   return openProject()
-    .withProjectAsync { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, LOG::debug) }
+    .withProjectAsync { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, LOG::debug) }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
   return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, LOG::debug) }
-}
-
-suspend fun awaitConfiguration(timeout: Duration, project: Project, messageCallback: ((String) -> Unit)? = null) {
-  try {
-    withTimeout(timeout) {
-      Observation.awaitConfiguration(project, messageCallback)
-    }
-  }
-  catch (e: TimeoutCancellationException) {
-    val coroutineDump = dumpCoroutines()
-    val threadDump = ThreadDumper.dumpThreadsToString()
-    throw AssertionError("""
-      |The waiting takes too long
-      |------- Thread dump begin -------
-      |$threadDump
-      |-------- Thread dump end --------
-      |------ Coroutine dump begin -----
-      |$coroutineDump
-      |------- Coroutine dump end ------
-    """.trimMargin())
-  }
+    .also { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, LOG::debug) }
 }
 
 fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>): R {
