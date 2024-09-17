@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
@@ -12,6 +13,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.util.xmlb.Constants.NAME
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Attribute
 import org.jdom.Element
@@ -53,7 +55,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   : JpsFileEntitiesSerializer<ModuleEntity> {
   private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
   private val sourceRootTypes = ConcurrentFactoryMap.createMap<String, SourceRootTypeId> { SourceRootTypeId(it) }
-  protected open val internalStorage: Boolean = true
+  protected open val externalStorage: Boolean = false
   protected open val facetManagerComponentName: String = JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME
 
   override val mainEntityClass: Class<ModuleEntity>
@@ -80,7 +82,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
       if (moduleLoadedInfo != null) {
         runCatchingXmlIssues(exceptionsCollector) {
-          createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
+          val facetTag = reader.loadComponent(fileUrl.url, facetManagerComponentName, getBaseDirPath())
+          if (facetTag != null) {
+            createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, facetTag)
+          }
         }
 
         newModuleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
@@ -119,8 +124,18 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
       if (moduleEntity != null) {
         runCatchingXmlIssues(exceptionsCollector) {
-          createFacetSerializer().loadFacetEntities(moduleEntity, reader)
-          externalSerializer?.createFacetSerializer()?.loadFacetEntities(moduleEntity, reader)
+          val internalFacetTag = reader.loadComponent(fileUrl.url, facetManagerComponentName, getBaseDirPath())
+          if (internalFacetTag != null) {
+            createFacetSerializer().loadFacetEntities(moduleEntity, internalFacetTag)
+          }
+
+          if (externalSerializer != null) {
+            val externalFacetTag = reader.loadComponent(externalSerializer.fileUrl.url, externalSerializer.facetManagerComponentName,
+                                                        externalSerializer.getBaseDirPath())
+            if (externalFacetTag != null) {
+              externalSerializer.createFacetSerializer().loadFacetEntities(moduleEntity, externalFacetTag)
+            }
+          }
         }
         newModuleEntity = moduleEntity
       }
@@ -600,6 +615,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                             storage: EntityStorage,
                             writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTime {
 
+    if (externalStorage && FileUtil.extensionEquals(fileUrl.url, "iml")) {
+      // Trying to catch https://ea.jetbrains.com/browser/ea_problems/239676
+      logger<FacetsSerializer>().error("""Incorrect file for the serializer
+        |externalStorage: true
+        |file path: $fileUrl
+      """.trimMargin())
+    }
+
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
       saveModuleEntities(module, entities, storage, writer)
@@ -663,11 +686,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
     }
 
-    createFacetSerializer().saveFacetEntities(module, entities, writer, this::acceptsSource)
+    val componentTag = createFacetSerializer().saveFacetEntities(module, entities, this::acceptsSource)
+    componentTag?.setAttribute(NAME, facetManagerComponentName);
+    writer.saveComponent(fileUrl.url, facetManagerComponentName, componentTag)
   }
 
   private fun createFacetSerializer(): FacetsSerializer {
-    return FacetsSerializer(fileUrl, internalEntitySource, facetManagerComponentName, getBaseDirPath(), internalStorage, context)
+    return FacetsSerializer(internalEntitySource, externalStorage, context)
   }
 
   protected open fun acceptsSource(entitySource: EntitySource): Boolean {

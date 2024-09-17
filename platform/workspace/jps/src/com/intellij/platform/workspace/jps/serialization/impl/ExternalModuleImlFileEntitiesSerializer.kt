@@ -33,7 +33,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
-  override val internalStorage: Boolean = false
+  override val externalStorage: Boolean = true
 
   override val facetManagerComponentName: String = "ExternalFacetManager"
 
