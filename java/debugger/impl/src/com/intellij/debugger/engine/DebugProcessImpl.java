@@ -1509,7 +1509,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
            !BitUtil.isSet(invocationOptions, ObjectReference.INVOKE_NONVIRTUAL) &&
            !DebuggerUtils.isPrimitiveType(method.returnTypeName()) &&
            !DebuggerUtilsEx.isVoid(method) &&
-           method.isPublic();
+           !"clone".equals(method.name());
   }
 
   private static @Nullable Value invokeWithHelper(@NotNull ReferenceType type,
