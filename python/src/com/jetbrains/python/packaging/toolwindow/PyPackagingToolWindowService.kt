@@ -122,6 +122,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   internal suspend fun initForSdk(sdk: Sdk?) {
+    if (sdk == null) {
+      toolWindowPanel?.packageListController?.setLoadingState(false)
+    }
     if (sdk == currentSdk)
       return
 

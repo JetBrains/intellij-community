@@ -49,7 +49,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     Disposer.register(this, it)
   }
 
-  private val packageListController = PyPackagesListController(project, controller = this).also {
+  internal val packageListController = PyPackagesListController(project, controller = this).also {
     Disposer.register(this, it)
   }
 

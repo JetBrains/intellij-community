@@ -41,7 +41,7 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
   }
 
   init {
-    setLoadingState(true)
+    setLoadingState(false)
   }
 
   override fun dispose() {}
@@ -72,7 +72,7 @@ class PyPackagesListController(val project: Project, val controller: PyPackaging
     tablesView.collapseAll()
   }
 
-  private fun setLoadingState(isLoading: Boolean) {
+   internal fun setLoadingState(isLoading: Boolean) {
     val newPanel = if (isLoading) loadingPanel else scrollingPackageListComponent
 
     val currentComponent = component.components.firstOrNull()
