@@ -26,6 +26,7 @@ import com.intellij.ui.treeStructure.TreeSwingModel
 import com.intellij.ui.treeStructure.TreeViewModel
 import com.intellij.util.SmartList
 import kotlinx.coroutines.*
+import org.jetbrains.concurrency.await
 import javax.swing.JTree
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
@@ -142,7 +143,7 @@ internal class CoroutineProjectViewSupport(
       return false
     }
     selectLogger.debug("Collecting paths to select")
-    viewModel.accept(visitor, true)
+    swingModel.accept(visitor, true).await()
     selectLogger.debug { "Collected paths to select: $pathsToSelect" }
     return selectPaths(tree, pathsToSelect, visitor)
   }
