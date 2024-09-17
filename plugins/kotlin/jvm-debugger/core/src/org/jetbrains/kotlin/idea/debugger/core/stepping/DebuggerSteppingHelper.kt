@@ -146,6 +146,8 @@ object DebuggerSteppingHelper {
       object : DebugProcessImpl.RunToCursorCommand(suspendContext, position, ignoreBreakpoints) {
         val myThreadFilter = lazy { extractJobInfo(suspendContext) ?: super.getThreadFilterFromContext(suspendContext) }
 
+        override fun shouldExecuteRegardlessOfRequestWarnings() = true
+
         override fun contextAction(context: SuspendContextImpl) {
           // clear stepping through to allow switching threads in case of suspend thread context
           if (myThreadFilter.value !is RealThreadInfo) {

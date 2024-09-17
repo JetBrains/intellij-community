@@ -2106,6 +2106,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         .addRunToCursorBreakpoint(position, ignoreBreakpoints);
     }
 
+    protected boolean shouldExecuteRegardlessOfRequestWarnings() { return false; }
+
     @Override
     protected void resumeAction() {
       project.getMessageBus().syncPublisher(DebuggerActionListener.TOPIC).onRunToCursor(getSuspendContext());
@@ -2134,7 +2136,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, breakpointSuspendPolicy);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
-      if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
+      if (shouldExecuteRegardlessOfRequestWarnings() || debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
         super.contextAction(context);
       }
       else {
