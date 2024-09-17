@@ -24,8 +24,8 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
+@Suppress("SpellCheckingInspection")
 internal class DevKitApplicationPatcher : RunConfigurationExtension() {
-  @Suppress("SpellCheckingInspection")
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(
     configuration: T,
     javaParameters: JavaParameters,
@@ -46,7 +46,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     passDataAboutBuiltInServer(javaParameters, project)
     val vmParameters = javaParameters.vmParametersList
-    val module = configuration.configurationModule.module
+    val module = configuration.configurationModule.module ?: return
     val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
     if (!vmParameters.getPropertyValue("intellij.devkit.skip.automatic.add.opens").toBoolean()) {
       JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
@@ -154,7 +154,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       val files = try {
         Files.readAllLines(runDir.resolve("core-classpath.txt"))
       }
-      catch (ignore: NoSuchFileException) {
+      catch (_: NoSuchFileException) {
         null
       }
 
