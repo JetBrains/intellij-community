@@ -83,8 +83,6 @@
     <inline.completion.provider implementation="org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletionProvider"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey"/>
 
-    <fileType name="Terminal Prompt" language="Terminal Prompt" extensions="prompt" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType"/>
     <lang.fileViewProviderFactory language="Terminal Prompt"
                                   implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
     <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>
