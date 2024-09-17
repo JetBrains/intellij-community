@@ -735,6 +735,15 @@ object PluginManagerCore {
       thirdPartyPluginsNoteAccepted = true
     }
   }
+  
+  @Internal
+  @JvmStatic
+  fun giveConsentToSpecificThirdPartyPlugins(acceptedPlugins: Set<PluginId>) {
+    val notAcceptedThirdPartyPluginIds = get3rdPartyPluginIds() - acceptedPlugins
+    if (notAcceptedThirdPartyPluginIds.isNotEmpty()) {
+      writeThirdPartyPluginIds(notAcceptedThirdPartyPluginIds.asSequence())
+    }
+  }
 
   @Internal
   fun isThirdPartyPluginsNoteAccepted(): Boolean? {
@@ -746,10 +755,14 @@ object PluginManagerCore {
   @Internal
   @Synchronized
   fun write3rdPartyPlugins(descriptors: Collection<IdeaPluginDescriptor>) {
+    writeThirdPartyPluginIds(descriptors.asSequence().map { it.getPluginId() })
+  }
+
+  private fun writeThirdPartyPluginIds(pluginIds: Sequence<PluginId>) {
     val path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
     try {
       writePluginIdsToFile(path = path,
-                           pluginIds = descriptors.asSequence().map { it.getPluginId() },
+                           pluginIds = pluginIds,
                            openOptions = arrayOf(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
     }
     catch (e: IOException) {
