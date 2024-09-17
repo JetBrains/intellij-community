@@ -303,12 +303,12 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
+  public static Path getPluginSystemDir(@NotNull String folder) {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
   @NotNull
-  public static java.nio.file.Path getBaseDir(@NotNull VirtualFile file) {
+  public static Path getBaseDir(@NotNull VirtualFile file) {
     VirtualFile virtualBaseDir = getVFileBaseDir(file);
     return virtualBaseDir.toNioPath();
   }
@@ -620,14 +620,14 @@ public class MavenUtil {
 
   /**
    * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
-   * use {@link MavenUtil#getMavenHomeFile(org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
+   * use {@link MavenUtil#getMavenHomeFile(StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
    */
   @Nullable
   @Deprecated(forRemoval = true)
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
       //noinspection HardCodedStringLiteral
-      return MavenUtil.getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
+      return getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -803,7 +803,7 @@ public class MavenUtil {
   }
 
   public static boolean isEmptyOrSpaces(@Nullable String str) {
-    return str == null || str.length() == 0 || str.trim().length() == 0;
+    return str == null || str.isBlank();
   }
 
 
@@ -1038,7 +1038,7 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static java.nio.file.Path getArtifactPath(@NotNull java.nio.file.Path localRepository,
+  public static Path getArtifactPath(@NotNull Path localRepository,
                                                    @NotNull MavenId id,
                                                    @NotNull String extension,
                                                    @Nullable String classifier) {
@@ -1061,7 +1061,7 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static java.nio.file.Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+  public static Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -1069,10 +1069,10 @@ public class MavenUtil {
     return getParentFile(id, projectsManager.getLocalRepository());
   }
 
-  private static java.nio.file.Path getParentFile(@NotNull MavenId id, File localRepository) {
+  private static Path getParentFile(@NotNull MavenId id, File localRepository) {
     assert id.getGroupId() != null;
     String[] pathParts = id.getGroupId().split("\\.");
-    java.nio.file.Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
+    Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
     path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
     return path;
   }
