@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.fs
+package com.intellij.platform.eel.path
 
-import com.intellij.platform.ijent.fs.IjentPathResult.Err
-import com.intellij.platform.ijent.fs.IjentPathResult.Ok
+import com.intellij.platform.eel.path.IjentPathResult.Err
+import com.intellij.platform.eel.path.IjentPathResult.Ok
 
 internal class ArrayListIjentAbsolutePath private constructor(
   private val _root: Root,

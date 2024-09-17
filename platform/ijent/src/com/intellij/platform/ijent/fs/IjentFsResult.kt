@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.path.IjentPath
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 

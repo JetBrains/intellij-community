@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.path.IjentPath
 import com.intellij.platform.ijent.IjentInfo
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentUnavailableException

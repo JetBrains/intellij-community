@@ -2,10 +2,10 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.getOrThrow
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes

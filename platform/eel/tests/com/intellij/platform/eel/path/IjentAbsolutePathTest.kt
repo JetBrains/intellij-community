@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.community.impl.nio
+package com.intellij.platform.eel.path
 
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.IjentPathResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
 import org.junit.jupiter.api.DynamicTest
@@ -36,11 +34,11 @@ class IjentAbsolutePathTest {
 
     for (rawPath in (unixPaths + windowsPaths)) {
       add(dynamicTest(rawPath) {
-        val ijentPath = IjentPath.Absolute
+        val eelPath = IjentPath.Absolute
           .parse(rawPath, null)
           .shouldBeTypeOf<IjentPathResult.Ok<IjentPath.Absolute>>()
           .path
-        ijentPath.toString() shouldBe rawPath
+        eelPath.toString() shouldBe rawPath
       })
     }
   }

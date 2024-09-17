@@ -3,8 +3,9 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
+import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
-import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*

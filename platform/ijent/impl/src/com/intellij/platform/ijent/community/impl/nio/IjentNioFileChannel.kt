@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.eel.path.IjentPath
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
 import java.io.IOException

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.fs.*
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI

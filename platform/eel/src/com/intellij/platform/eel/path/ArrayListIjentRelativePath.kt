@@ -1,8 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.fs
-
-import com.intellij.util.SmartList
-import com.intellij.util.asSafely
+package com.intellij.platform.eel.path
 
 internal class ArrayListIjentRelativePath private constructor(
   private val parts: List<String>,
@@ -28,7 +25,7 @@ internal class ArrayListIjentRelativePath private constructor(
   }
 
   override fun resolve(other: IjentPath.Relative): IjentPathResult<ArrayListIjentRelativePath> {
-    val result = SmartList<String>()
+    val result = mutableListOf<String>()
     result += parts
     if (other != EMPTY) {
       for (i in 0..<other.nameCount) {
@@ -55,7 +52,7 @@ internal class ArrayListIjentRelativePath private constructor(
   }
 
   override fun normalize(): IjentPath.Relative {
-    val result = SmartList<String>()
+    val result = mutableListOf<String>()
     for (part in parts) {
       when (part) {
         "." -> Unit
@@ -102,7 +99,7 @@ internal class ArrayListIjentRelativePath private constructor(
   override fun toString(): String = parts.joinToString("/")
 
   override fun equals(other: Any?): Boolean =
-    other?.asSafely<IjentPath.Relative>()?.compareTo(this) == 0
+    other is IjentPath.Relative && other.compareTo(this) == 0
 
   override fun hashCode(): Int =
     parts.hashCode()

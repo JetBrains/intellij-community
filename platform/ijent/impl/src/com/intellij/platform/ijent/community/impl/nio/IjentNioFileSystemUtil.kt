@@ -3,6 +3,8 @@
 
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.platform.eel.path.IjentPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.fs.*
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
