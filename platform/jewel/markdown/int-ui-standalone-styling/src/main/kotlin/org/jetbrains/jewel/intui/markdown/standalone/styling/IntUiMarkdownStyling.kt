@@ -597,11 +597,10 @@ public fun InlinesStyling.Companion.light(
         defaultEditorTextStyle
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
             .toSpanStyle(),
-    link: SpanStyle =
-        textStyle.copy(color = IntUiLightTheme.colors.blue(2), textDecoration = TextDecoration.Underline).toSpanStyle(),
+    link: SpanStyle = textStyle.copy(color = IntUiLightTheme.colors.blue(2)).toSpanStyle(),
     linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.gray(8)),
-    linkHovered: SpanStyle = link,
-    linkFocused: SpanStyle = link.copy(background = Color(0x12000000)),
+    linkHovered: SpanStyle = link.copy(textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = link.copy(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
     linkPressed: SpanStyle = link.copy(background = Color(0x1D000000)),
     linkVisited: SpanStyle = link,
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
@@ -630,11 +629,10 @@ public fun InlinesStyling.Companion.dark(
         defaultEditorTextStyle
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
             .toSpanStyle(),
-    link: SpanStyle =
-        textStyle.copy(color = IntUiDarkTheme.colors.blue(9), textDecoration = TextDecoration.Underline).toSpanStyle(),
+    link: SpanStyle = textStyle.copy(color = IntUiDarkTheme.colors.blue(9)).toSpanStyle(),
     linkDisabled: SpanStyle = link.copy(color = IntUiDarkTheme.colors.gray(8)),
-    linkHovered: SpanStyle = link,
-    linkFocused: SpanStyle = link.copy(background = Color(0x16FFFFFF)),
+    linkHovered: SpanStyle = link.copy(textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = link.copy(background = Color(0x16FFFFFF), textDecoration = TextDecoration.Underline),
     linkPressed: SpanStyle = link.copy(background = Color(0x26FFFFFF)),
     linkVisited: SpanStyle = link,
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
