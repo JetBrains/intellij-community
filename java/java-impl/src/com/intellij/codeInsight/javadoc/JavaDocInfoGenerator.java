@@ -2296,7 +2296,7 @@ public class JavaDocInfoGenerator {
         if (pos > 0) {
           switch (text.charAt(pos - 1)) {
             case '<' -> {
-              if(!strict || text.endsWith("pre>")){
+              if(!strict || text.trim().endsWith("pre>")){
                 return true;
               }
             }
