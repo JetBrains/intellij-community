@@ -8,7 +8,7 @@ class Main {
    *    # @highlight regex="[0-9]+" :
    *    local.zip=94123
    *    local.area-code=415
-   *
+   *           <caret>
    * }
    */
   void f() {}
