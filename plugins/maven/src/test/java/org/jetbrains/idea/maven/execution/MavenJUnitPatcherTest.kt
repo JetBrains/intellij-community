@@ -19,6 +19,8 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
@@ -572,6 +574,114 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
     assertEquals(mutableListOf("-ea", "-Dfoo=bar"),
                  javaParameters.vmParametersList.getList())
+  }
+
+  @Test
+  fun `should replace test dependency on dependency with classifier`() = runBlocking {
+    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
+    val lib = createModulePom("library", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>library</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>some-classifier</classifier>
+                            <skipIfEmpty>true</skipIfEmpty>
+                            <includes>
+                                <include>included/**</include>
+                            </includes>
+                            <excludes>
+                                <exclude>excluded/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+""")
+
+    val app = createModulePom("application", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>application</artifactId>
+    <packaging>jar</packaging>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>test</groupId>
+            <artifactId>library</artifactId>
+            <classifier>some-classifier</classifier>
+            <type>test-jar</type>
+            <scope>compile</scope>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+""")
+
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <packaging>pom</packaging>
+      <modules>
+          <module>library</module>
+          <module>application</module>
+      </modules>
+""")
+
+    val module = getModule("application")
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    javaParameters.classPath.add(buildDir("application/target/classes"))
+    javaParameters.classPath.add(buildDir("application/target/test-classes"))
+    javaParameters.classPath.add(buildDir("library/target/classes"))
+    javaParameters.classPath.add(buildDir("library/target/test-classes"))
+    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+
+    val pathList = javaParameters.classPath.pathList.mapNotNull {
+      FileUtil.getRelativePath(File(projectPath), File(it))
+    }
+    assertOrderedEquals(
+      pathList,
+      "application/target/classes",
+      "application/target/test-classes",
+      "library/target/classes",
+      "library/target/test-classes-jar-some-classifier"
+    )
+  }
+
+  private fun buildDir(path: String): File {
+    return File(File(projectPath), path)
   }
 
   private suspend fun patchJavaParameters(mavenJUnitPatcher: MavenJUnitPatcher, module: Module, javaParameters: JavaParameters) {
