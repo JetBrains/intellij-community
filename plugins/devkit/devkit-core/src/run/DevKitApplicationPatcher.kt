@@ -6,6 +6,7 @@ import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.*
+import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -37,6 +38,10 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (configuration !is JavaRunConfigurationBase) {
       return
     }
+    if (configuration is JavaScratchConfiguration) {
+      return
+    }
+
     val mainClass = configuration.runClass ?: return
 
     passDataAboutBuiltInServer(javaParameters, project)
