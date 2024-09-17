@@ -78,6 +78,20 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     fun <T : UiComponent> T.assertNotFound() {
       assert(!present()) { "Component '$this' should not be found" }
     }
+
+    fun <T : UiComponent> T.waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
+      waitFor("Component '$this' is focus owner", timeout = timeout) {
+        component.isFocusOwner()
+      }
+      return this
+    }
+
+    fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
+      waitFor("Component '$this' is visible", timeout = timeout) {
+        component.isVisible()
+      }
+      return this
+    }
   }
 
   override fun toString(): String {
@@ -445,7 +459,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
         LOG.info("Move mouse to $this: $point")
       }
       robot.moveMouse(component, point)
-    } else {
+    }
+    else {
       if (!silent) {
         LOG.info("Move mouse to $this")
       }
@@ -470,16 +485,4 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun getBackgroundColor() = Color(component.getBackground().getRGB())
 
   fun getForegroundColor() = Color(component.getForeground().getRGB())
-
-  fun waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor("Component '$this' is focus owner", timeout = timeout) {
-      component.isFocusOwner()
-    }
-  }
-
-  fun waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor("Component '$this' is visible", timeout = timeout) {
-      component.isVisible()
-    }
-  }
 }
