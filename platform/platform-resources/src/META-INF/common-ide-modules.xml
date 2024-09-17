@@ -8,6 +8,9 @@
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.libraries.skiko"/>
+    <module name="intellij.libraries.compose.desktop"/>
+    <module name="intellij.platform.compose"/>
   </content>
 
   <xi:include href="/META-INF/vcs-modules.xml"/>
