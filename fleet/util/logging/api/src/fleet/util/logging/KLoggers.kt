@@ -2,10 +2,12 @@
 package fleet.util.logging
 
 import fleet.util.logging.slf4j.Slf4jKLoggerFactory
+import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
 object KLoggers {
-  private val customFactory = Slf4jKLoggerFactory()
+  private val customFactory = ServiceLoader.load(KLoggerFactory::class.java, KLoggerFactory::class.java.classLoader).firstOrNull()
+                              ?: Slf4jKLoggerFactory()
   fun logger(owner: KClass<*>) = customFactory.logger(owner)
   fun logger(owner: Class<*>) = customFactory.logger(owner)
   fun logger(owner: Any) = customFactory.logger(owner)

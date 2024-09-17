@@ -12,4 +12,5 @@ module fleet.util.logging.api {
 
   provides SLF4JServiceProvider with FleetSlf4jServiceProvider;
   uses SLF4JServiceProvider;
+  uses fleet.util.logging.KLoggerFactory;
 }
