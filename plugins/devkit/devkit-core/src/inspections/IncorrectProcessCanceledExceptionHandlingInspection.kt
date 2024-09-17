@@ -25,9 +25,9 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
 
       override fun visitCatchClause(node: UCatchClause): Boolean {
         val catchParameters = node.parameters
-        val (caughtCeParam, isCeInheritorCaught) = findSuspiciousCeCaughtParam(catchParameters)
-        if (caughtCeParam != null) {
-          inspectIncorrectCeHandling(node, caughtCeParam, isCeInheritorCaught)
+        val caughtCeInfo = findSuspiciousCeCaughtParam(catchParameters)
+        if (caughtCeInfo != null) {
+          inspectIncorrectCeHandling(node, caughtCeInfo)
         }
         else {
           inspectGenericThrowableIfAnyOfTryStatementsThrowsCe(node, catchParameters)
@@ -35,18 +35,21 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
         return super.visitCatchClause(node)
       }
 
-      private fun findSuspiciousCeCaughtParam(catchParameters: List<UParameter>): Pair<UParameter?, Boolean> {
-        val ceClasses = findCeClasses(holder.file.resolveScope) ?: return Pair(null, false)
+      private fun findSuspiciousCeCaughtParam(catchParameters: List<UParameter>): CaughtCeInfo? {
+        val ceClasses = findCeClasses(holder.file.resolveScope) ?: return null
         for (catchParameter in catchParameters) {
           val type = catchParameter.type
           val caughtExceptionTypes = if (type is PsiDisjunctionType) type.disjunctions else listOf(type)
-            for (caughtExceptionType in caughtExceptionTypes) {
-              if (ceClasses.any { caughtExceptionType.isInheritorOrSelf(it) }) {
-                return Pair(catchParameter, caughtExceptionType.isCancellationExceptionClass())
-              }
+          for (caughtExceptionType in caughtExceptionTypes) {
+            if (ceClasses.any { caughtExceptionType.isInheritorOrSelf(it) }) {
+              return CaughtCeInfo(
+                catchParameter,
+                caughtExceptionType.isCancellationExceptionClass()
+              )
             }
+          }
         }
-        return Pair(null, false)
+        return null
       }
 
       private fun findCeClasses(resolveScope: GlobalSearchScope): List<PsiClass>? {
@@ -65,17 +68,17 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
         return InheritanceUtil.isInheritorOrSelf(psiClass, ceClass, true)
       }
 
-      private fun inspectIncorrectCeHandling(node: UCatchClause, caughtParam: UParameter, isCeInheritorCaught: Boolean) {
+      private fun inspectIncorrectCeHandling(node: UCatchClause, caughtCeInfo: CaughtCeInfo) {
         val catchBody = node.body
-        if (!ceIsRethrown(catchBody, caughtParam)) {
-          val message = if (isCeInheritorCaught)
+        if (!ceIsRethrown(catchBody, caughtCeInfo.parameter)) {
+          val message = if (caughtCeInfo.isInheritor)
             DevKitBundle.message("inspections.incorrect.process.canceled.exception.inheritor.handling.name.not.rethrown")
           else DevKitBundle.message("inspections.incorrect.process.canceled.exception.handling.name.not.rethrown")
-          holder.registerUProblem(caughtParam, message)
+          holder.registerUProblem(caughtCeInfo.parameter, message)
         }
-        val loggingExpression = findCeLoggingExpression(catchBody, caughtParam)
+        val loggingExpression = findCeLoggingExpression(catchBody, caughtCeInfo.parameter)
         if (loggingExpression != null) {
-          val message = if (isCeInheritorCaught)
+          val message = if (caughtCeInfo.isInheritor)
             DevKitBundle.message("inspections.incorrect.process.canceled.exception.inheritor.handling.name.logged")
           else DevKitBundle.message("inspections.incorrect.process.canceled.exception.handling.name.logged")
           holder.registerUProblem(loggingExpression, message)
@@ -231,4 +234,9 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
 
     }, arrayOf(UCatchClause::class.java))
   }
+
+  private class CaughtCeInfo(
+    val parameter: UParameter,
+    val isInheritor: Boolean,
+  )
 }
