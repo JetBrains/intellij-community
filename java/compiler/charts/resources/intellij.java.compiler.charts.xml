@@ -8,4 +8,18 @@
     <registryKey key="compilation.charts" defaultValue="false"
                  description="Show compilation charts" restartRequired="false"/>
   </extensions>
+  <actions resource-bundle="messages.CompilationChartsBundle">
+    <group id="CompilationChartsActionGroup" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
+      <separator/>
+      <action id="CompilationChartsZoomResetAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomResetAction"
+              icon="AllIcons.Graph.ActualZoom">
+        <keyboard-shortcut first-keystroke="meta 0" keymap="Mac OS X"/>
+        <keyboard-shortcut first-keystroke="ctrl shift 0" keymap="$default"/>
+      </action>
+      <action id="CompilationChartsZoomOutAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomOutAction"
+              icon="AllIcons.Graph.ZoomOut" use-shortcut-of="CollapseAll"/>
+      <action id="CompilationChartsZoomInAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomInAction"
+              icon="AllIcons.Graph.ZoomIn" use-shortcut-of="ExpandAll"/>
+    </group>
+  </actions>
 </idea-plugin>

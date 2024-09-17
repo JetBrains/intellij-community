@@ -62,20 +62,15 @@ internal class RightAdhesionScrollBarListener(
     shouldScroll.stop()
   }
 
-  fun increase() {
-    disableShouldScroll()
-    zoom.adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER)
-    scheduleUpdateShouldScroll()
-  }
+  fun increase() = applyZoomTransformation { adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER) }
 
-  fun decrease() {
-    disableShouldScroll()
-    zoom.adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER)
-    scheduleUpdateShouldScroll()
-  }
+  fun decrease() = applyZoomTransformation { adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER) }
 
-  fun reset() {
-    zoom.reset(viewport, viewport.getMiddlePoint())
+  fun reset() = applyZoomTransformation { reset(viewport, viewport.getMiddlePoint()) }
+
+  private fun applyZoomTransformation(transformation: Zoom.() -> Unit) {
+    disableShouldScroll()
+    zoom.transformation()
     scheduleUpdateShouldScroll()
   }
 

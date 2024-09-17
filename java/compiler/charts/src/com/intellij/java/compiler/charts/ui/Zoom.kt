@@ -29,8 +29,9 @@ class Zoom {
   }
 
   fun reset(viewport: JViewport, xPosition: Int) {
+    val delta = INITIAL_SCALE / scale
+    adjust(viewport, xPosition, delta)
     scale = INITIAL_SCALE
-    adjust(viewport, xPosition, 1.0)
   }
 
   private fun toPixels(duration: Double, scale: Double): Double = nanosToSeconds(duration * scale)
