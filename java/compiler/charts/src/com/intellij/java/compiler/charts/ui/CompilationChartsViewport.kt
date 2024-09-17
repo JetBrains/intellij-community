@@ -9,10 +9,10 @@ import java.awt.Point
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
-class CompilationChartsViewport() : JBViewport() {
-  override fun createZooming(): ZoomingDelegate = CompilationChartsZoomingDelegate(view as JComponent, this)
+class CompilationChartsViewport(private val scrollType: AutoScrollingType) : JBViewport() {
+  override fun createZooming(): ZoomingDelegate = CompilationChartsZoomingDelegate(view as JComponent, this, scrollType)
 
-  private class CompilationChartsZoomingDelegate(private val component: JComponent, private val viewport: JBViewport) : ZoomingDelegate(component, viewport) {
+  private class CompilationChartsZoomingDelegate(private val component: JComponent, private val viewport: JBViewport, private val scrollType: AutoScrollingType) : ZoomingDelegate(component, viewport) {
     private var magnificationPoint: Point? = null
     private var localX: Int = 0
     private val magnification: MagnificationCounter = MagnificationCounter(0.0)
@@ -23,12 +23,14 @@ class CompilationChartsViewport() : JBViewport() {
     }
 
     override fun magnificationStarted(at: Point) {
+      scrollType.disable()
       magnificationPoint = viewport.viewPosition
       if (component is CompilationChartsDiagramsComponent) component.offset = -viewport.viewPosition.x
       localX = at.x
     }
 
     override fun magnificationFinished(magnification: Double) {
+      scrollType.enable()
       if (component is CompilationChartsDiagramsComponent) component.offset = 0
       magnificationPoint = null
       localX = 0

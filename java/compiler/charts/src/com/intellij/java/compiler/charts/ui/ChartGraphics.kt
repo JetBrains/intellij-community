@@ -15,7 +15,6 @@ import kotlin.math.roundToInt
 class ChartGraphics(val graphics: Graphics2D, val offsetX: Double, val offsetY: Double) {
   constructor(graphics: Graphics2D, offsetX: Int, offsetY: Int) : this(graphics, offsetX.toDouble(), offsetY.toDouble())
 
-  // moved
   fun fill(s: Shape) = graphics.fill(move(s))
   fun draw(s: Shape) = graphics.draw(move(s))
   fun clip(s: Shape) = graphics.clip(move(s))

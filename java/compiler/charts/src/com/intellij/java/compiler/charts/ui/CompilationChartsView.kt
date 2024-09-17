@@ -15,9 +15,10 @@ import javax.swing.ScrollPaneConstants
 class CompilationChartsView(project: Project, private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
   init {
     val zoom = Zoom()
+    val scrollType = AutoScrollingType()
 
     val scroll = object : JBScrollPane() {
-      override fun createViewport(): JViewport = CompilationChartsViewport()
+      override fun createViewport(): JViewport = CompilationChartsViewport(scrollType)
     }.apply {
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
@@ -25,7 +26,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
       name = "compilation-charts-scroll-pane"
     }
-    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport, zoom)
+    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport, zoom, scrollType)
     scroll.horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
       addMouseWheelListener(rightAdhesionScrollBarListener)

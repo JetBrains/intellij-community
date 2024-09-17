@@ -13,9 +13,9 @@ import javax.swing.JViewport
 
 internal class RightAdhesionScrollBarListener(
   private val viewport: JViewport,
-  private val zoom: Zoom
+  private val zoom: Zoom,
+  private val shouldScroll: AutoScrollingType
 ) : AdjustmentListener, MouseWheelListener {
-  private var shouldScroll = true
   private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts adjust value listener", 1)
   private var updateShouldScrollTask: ScheduledFuture<*>? = null
   override fun adjustmentValueChanged(e: AdjustmentEvent) {
@@ -27,7 +27,7 @@ internal class RightAdhesionScrollBarListener(
 
   override fun mouseWheelMoved(e: MouseWheelEvent) {
     if (e.isControlDown) {
-      shouldScroll = false
+      shouldScroll.stop()
       scheduleUpdateShouldScroll()
     } else {
       updateShouldScroll(e.unitsToScroll)
@@ -40,22 +40,26 @@ internal class RightAdhesionScrollBarListener(
   }
 
   private fun adjustHorizontalScrollToRightIfNeeded() {
-    if (shouldScroll) {
+    if (shouldScroll.isActive()) {
       viewport.viewPosition = Point(viewport.viewSize.width - viewport.width, viewport.viewPosition.y)
     }
   }
 
   private fun updateShouldScroll(additionalValue: Int = 0) {
-    shouldScroll = viewport.viewPosition.x + viewport.width + additionalValue >= viewport.viewSize.width
+    if (!shouldScroll.isEnabled()) return
+    if (viewport.viewPosition.x + viewport.width + additionalValue >= viewport.viewSize.width)
+      shouldScroll.start()
+    else
+      shouldScroll.stop()
   }
 
   internal fun scrollToEnd() {
-    shouldScroll = true
+    shouldScroll.start()
     adjustHorizontalScrollToRightIfNeeded()
   }
 
   private fun disableShouldScroll() {
-    shouldScroll = false
+    shouldScroll.stop()
   }
 
   fun increase() {
