@@ -94,6 +94,11 @@ class LocalGradleExecutionAware : GradleExecutionAware {
   ): SdkInfo? {
     val settings = project.lock { GradleSettings.getInstance(it) }
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
+
+    // Projects using Daemon JVM criteria with a compatible Gradle version will skip any
+    // Gradle JDK configuration validation since this will be delegated to Gradle
+    if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return null
+
     val sdkInfo = resolveGradleJvmInfo(project, projectSettings, task, taskNotificationListener)
     checkGradleJvmInfo(projectSettings, task, sdkInfo)
     return sdkInfo
