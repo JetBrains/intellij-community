@@ -117,6 +117,7 @@ internal open class WebSymbolMatchImpl private constructor(
     if (nameSegments.size == 1)
       nameSegments[0].symbols.asSequence()
         .flatMap { it.getNavigationTargets(project) }
+        .distinct()
         .toList()
     else emptyList()
 
