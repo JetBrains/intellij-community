@@ -19,9 +19,12 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import kotlin.io.path.div
 
 @Serializable
@@ -30,6 +33,8 @@ internal data class BuildProcessSatisfactionDialogData(
     @NlsSafe val kotlinVersion: String,
     val groovyBuildFileCount: Int,
     val ktsBuildFileCount: Int,
+    val monthsOfIdeaUsage: Int,
+    val monthsOfKotlinUsage: Int,
     val commonData: CommonFeedbackSystemData
 ) : SystemDataJsonSerializable {
     override fun serializeToJson(json: Json): JsonElement = json.encodeToJsonElement(this)
@@ -63,6 +68,10 @@ internal class BuildProcessSatisfactionDialog(
         return project.modules.mapNotNull { it.getGradleKotlinVersion() }.distinct()
     }
 
+    private fun LocalDate.monthsSinceDate(): Int {
+        return ChronoUnit.MONTHS.between(this, LocalDate.now()).toInt()
+    }
+
     private fun collectData(): BuildProcessSatisfactionDialogData {
         val allExternalModulePaths = project.modules.mapNotNullTo(mutableSetOf()) {
             ExternalSystemApiUtil.getExternalProjectPath(it)?.toNioPathOrNull()
@@ -77,12 +86,17 @@ internal class BuildProcessSatisfactionDialog(
         val gradleVersion = getGradleVersion()?.version ?: "UNKNOWN"
         val kotlinVersion = getKotlinVersions().maxOrNull() ?: "UNKNOWN"
 
+        val monthsOfIdeaUsage = KotlinNewUserTracker.getInstance().getInstallationDate()?.monthsSinceDate() ?: 0
+        val monthsOfKotlinUsage = KotlinNewUserTracker.getInstance().getFirstKotlinUsageDate()?.monthsSinceDate() ?: 0
+
         return BuildProcessSatisfactionDialogData(
             gradleVersion,
             kotlinVersion,
             groovyCount,
             ktsCount,
-            CommonFeedbackSystemData.getCurrentData()
+            monthsOfIdeaUsage,
+            monthsOfKotlinUsage,
+            CommonFeedbackSystemData.getCurrentData(),
         )
     }
 
@@ -108,6 +122,12 @@ internal class BuildProcessSatisfactionDialog(
             }
             row(GradleFeedbackBundle.message("build.process.info.kts.build.file.count")) {
                 label(mySystemInfoData.ktsBuildFileCount.toString())
+            }
+            row(GradleFeedbackBundle.message("build.process.info.months.of.kotlin.usage")) {
+                label(mySystemInfoData.monthsOfKotlinUsage.toString())
+            }
+            row(GradleFeedbackBundle.message("build.process.info.months.of.idea.usage")) {
+                label(mySystemInfoData.monthsOfIdeaUsage.toString())
             }
         }
     }
