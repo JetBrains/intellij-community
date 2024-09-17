@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -15,7 +14,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,15 +71,8 @@ public final class ShelvedChange {
 
   public boolean isConflictingChange() {
     ContentRevision afterRevision = getChange().getAfterRevision();
-    if (afterRevision == null) return false;
-    try {
-      // PatchedContentRevision
-      afterRevision.getContent();
-    }
-    catch (VcsException e) {
-      if (e.getCause() instanceof ApplyPatchException) {
-        return true;
-      }
+    if (afterRevision instanceof PatchedContentRevision patchedRevision) {
+      return patchedRevision.isConflictingChange();
     }
     return false;
   }
@@ -150,16 +145,6 @@ public final class ShelvedChange {
     return file;
   }
 
-  @Nullable
-  private static TextFilePatch loadFilePatch(@NotNull Project project,
-                                             @NotNull Path patchPath,
-                                             @NotNull String beforePath,
-                                             @Nullable CommitContext commitContext)
-    throws IOException, PatchSyntaxException {
-    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, patchPath, commitContext);
-    return ContainerUtil.find(filePatches, patch -> beforePath.equals(patch.getBeforeName()));
-  }
-
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -214,29 +199,46 @@ public final class ShelvedChange {
 
     @Nullable
     private String loadContent() throws IOException, PatchSyntaxException, VcsException {
-      TextFilePatch patch = loadFilePatch(myProject, myPatchPath, myBeforePath, null);
-      if (patch != null) {
-        return loadContent(patch);
-      }
-      return null;
-    }
+      TextFilePatch patch = loadFilePatch();
+      if (patch == null) return null;
 
-    private String loadContent(final TextFilePatch patch) throws VcsException {
       if (patch.isNewFile()) {
         return patch.getSingleHunkPatchText();
       }
       if (patch.isDeletedFile()) {
         return null;
       }
-      GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(getBaseContent(), patch.getHunks());
+
+      String localContent = loadLocalContent();
+      GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(localContent, patch.getHunks());
       if (appliedPatch != null) {
         return appliedPatch.patchedText;
       }
-      throw new VcsException(new ApplyPatchException(VcsBundle.message("patch.apply.error.conflict")));
+      throw new VcsException(VcsBundle.message("patch.apply.error.conflict"));
+    }
+
+    public boolean isConflictingChange() {
+      try {
+        TextFilePatch patch = loadFilePatch();
+        if (patch == null) return false;
+        if (patch.isNewFile() || patch.isDeletedFile()) return false;
+
+        String localContent = loadLocalContent();
+        GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(localContent, patch.getHunks());
+        return appliedPatch == null;
+      }
+      catch (IOException | PatchSyntaxException | VcsException ignore) {
+        return false;
+      }
+    }
+
+    private @Nullable TextFilePatch loadFilePatch() throws IOException, PatchSyntaxException {
+      List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(myProject, myPatchPath, null);
+      return ContainerUtil.find(filePatches, filePatch -> myBeforePath.equals(filePatch.getBeforeName()));
     }
 
     @NotNull
-    private String getBaseContent() throws VcsException {
+    private String loadLocalContent() throws VcsException {
       return ReadAction.compute(() -> {
         VirtualFile file = myBeforeFilePath.getVirtualFile();
         if (file == null) throw new VcsException(VcsBundle.message("patch.apply.error.file.not.found", myBeforeFilePath));

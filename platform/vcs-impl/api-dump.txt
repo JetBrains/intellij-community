@@ -117,9 +117,6 @@ f:com.intellij.openapi.diff.impl.patch.ApplyPatchContext
 - isAllowRename():Z
 - isCreateDirectories():Z
 - registerBeforeRename(com.intellij.openapi.vfs.VirtualFile):V
-f:com.intellij.openapi.diff.impl.patch.ApplyPatchException
-- java.lang.Exception
-- <init>(java.lang.String):V
 e:com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
 - java.lang.Enum
 - sf:ABORT:com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
