@@ -261,16 +261,16 @@ class EditorCellOutputs(
       }
     }
 
+    outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable)
+
     innerComponent.add(
       collapsingComponent,
       InnerComponent.Constraint(newComponent.widthStretching, newComponent.limitHeight),
       pos,
     )
 
-    outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable).apply {
-      folding.visible = foldingsVisible
-      folding.selected = foldingsSelected
-    }
+    outputComponent.folding.visible = foldingsVisible
+    outputComponent.folding.selected = foldingsSelected
 
     _outputs.add(if (pos == -1) _outputs.size else pos, outputComponent)
     add(outputComponent)
