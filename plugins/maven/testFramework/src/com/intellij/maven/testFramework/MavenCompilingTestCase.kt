@@ -114,6 +114,14 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
     assertTrue(File(projectPom.parent.path, path).exists())
   }
 
+  protected fun assertExists(path: String) {
+    assertCopied(path)
+  }
+
+  protected fun assertDoesNotExist(path: String) {
+    assertNotCopied(path)
+  }
+
   @Throws(IOException::class)
   protected fun assertCopied(path: String, content: String?) {
     val file = File(projectPom.parent.path, path)
