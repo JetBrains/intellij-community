@@ -279,17 +279,22 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathLinkedSet() {
     return SystemInfoRt.isFileSystemCaseSensitive
-           ? new ObjectLinkedOpenHashSet<>()
+           ? new LinkedHashSet<>()
            : new ObjectLinkedOpenCustomHashSet<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
+  }
+
+  public static @NotNull Set<String> createFilePathLinkedSet(@NotNull Set<String> source) {
+    return SystemInfoRt.isFileSystemCaseSensitive
+           ? new LinkedHashSet<>(source)
+           : new ObjectLinkedOpenCustomHashSet<>(source, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   /**
    * Create a linked map with key hash strategy according to file system path case sensitivity.
    */
   public static @NotNull <V> Map<String, V> createFilePathLinkedMap() {
-    //noinspection SSBasedInspection
     return SystemInfoRt.isFileSystemCaseSensitive
-           ? new Object2ObjectLinkedOpenHashMap<>()
+           ? new LinkedHashMap<>()
            : new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 

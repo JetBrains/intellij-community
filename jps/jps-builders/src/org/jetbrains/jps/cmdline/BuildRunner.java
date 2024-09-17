@@ -101,7 +101,8 @@ public final class BuildRunner {
       storageManager = createStorageManager(dataStorageRoot);
       fileStampService = initProjectStampStorage(dataStorageRoot, targetsState);
 
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, fileStampService, storageManager);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
+      dataManager.fileStampService = fileStampService;
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
@@ -129,20 +130,20 @@ public final class BuildRunner {
       storageManager = createStorageManager(dataStorageRoot);
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       fileStampService = initProjectStampStorage(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, fileStampService, storageManager);
+      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
       // the second attempt succeeded
       msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
                                                     JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
     return new ProjectDescriptor(
-      jpsModel, fsState, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+      jpsModel, fsState, fileStampService, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
     );
   }
 
   private static @Nullable StorageManager createStorageManager(@NotNull Path dataStorageRoot) {
     if (USE_EXPERIMENTAL_STORAGE || ProjectStamps.PORTABLE_CACHES) {
-      StorageManager manager = new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"), 10_000);
+      StorageManager manager = new StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"));
       manager.open();
       return manager;
     }

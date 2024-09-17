@@ -19,7 +19,7 @@ private val MV_STORE_CACHE_SIZE_IN_MB = System.getProperty("jps.new.storage.cach
 private val LOG = logger<StorageManager>()
 
 @ApiStatus.Internal
-class StorageManager(@JvmField val file: Path, private val allowedCompactionTimeOnClose: Int) {
+class StorageManager constructor(@JvmField val file: Path) {
   private val storeValue = SynchronizedClearableLazy {
     LOG.debug { "Opening storage $file" }
     createOrResetMvStore(file = file, readOnly = false, logSupplier = { LOG })
@@ -61,8 +61,8 @@ class StorageManager(@JvmField val file: Path, private val allowedCompactionTime
 
     storeValue.valueIfInitialized?.let {
       storeValue.drop()
-      val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "true").toBoolean()
-      it.close(if (isCompactOnClose) 0 else allowedCompactionTimeOnClose)
+      val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "false").toBoolean()
+      it.close()
       if (isCompactOnClose && Files.exists(file)) {
         val time = measureTime {
           MVStoreTool.compact(file.toString(), false)
@@ -94,10 +94,10 @@ class StorageManager(@JvmField val file: Path, private val allowedCompactionTime
     }
   }
 
-  fun removeMaps(targetId: String, typeId: String) {
+  fun removeMaps(targetId: String, targetTypeId: String) {
     val store = storeValue.value
     for (mapName in store.mapNames) {
-      if (mapName.startsWith(getMapName(targetId = targetId, targetTypeId = typeId, suffix = ""))) {
+      if (mapName.startsWith(getMapName(targetId = targetId, targetTypeId = targetTypeId, suffix = ""))) {
         store.removeMap(mapName)
       }
     }
@@ -166,20 +166,29 @@ private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Lo
   val store = MVStore.Builder()
     .fileName(file?.toAbsolutePath()?.toString())
     .backgroundExceptionHandler(storeErrorHandler)
-    // We do not disable auto-commit as JPS doesn't use Kotlin coroutines, so it's okay to use a separate daemon thread.
-    // Additionally, we ensure that the write operation will not slow down any tasks,
-    // as the actual save will be done in a background thread.
-    // Use an 8MB threshold for auto-commit instead of the default 1MB -
-    // if writes are performed too often, do not save intermediate B-Tree pages to disk.
-    .autoCommitBufferSize(8192)
     .cacheSize(MV_STORE_CACHE_SIZE_IN_MB)
     .let {
       if (readOnly) it.readOnly() else it
     }
+    // We do not disable auto-commit as JPS doesn't use Kotlin coroutines, so it's okay to use a separate daemon thread.
+    // Additionally, we ensure that the write operation will not slow down any tasks,
+    // as the actual save will be done in a background thread.
+    // Use a 16MB BUFFER for auto-commit instead of the default 1MB -
+    // if writes are performed too often, do not save intermediate B-Tree pages to disk.
+    // Or... just disable auto-commit based on the size of unsaved data and save once in 1 minute
+    .autoCommitBufferSize(0)
     .open()
   storeErrorHandler.isStoreOpened = true
   // versioning isn't required, otherwise the file size will be larger than needed
   store.setVersionsToKeep(0)
+
+  // We do not disable auto-commit as JPS doesn't use Kotlin coroutines, so it's okay to use a separate daemon thread.
+  // Additionally, we ensure that the write operation will not slow down any tasks,
+  // as the actual save will be done in a background thread.
+  // Use a 16MB BUFFER for auto-commit instead of the default 1MB -
+  // if writes are performed too often, do not save intermediate B-Tree pages to disk.
+  // Or... just disable auto-commit based on the size of unsaved data and save once in 1 minute
+  store.autoCommitDelay = 60_000
   return store
 }
 

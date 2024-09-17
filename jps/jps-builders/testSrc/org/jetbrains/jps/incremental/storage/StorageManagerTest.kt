@@ -33,19 +33,20 @@ class StorageManagerTest {
   @Test
   fun staleMap(@TempDir tempDir: Path) {
     val file = tempDir.resolve("jps-cache.db")
-    val storageManager = StorageManager(file, 0)
+    val storageManager = StorageManager(file)
     try {
       val mapping = ExperimentalSourceToOutputMapping.createSourceToOutputMap(
         storageManager = storageManager,
         relativizer = PathRelativizerService(),
         targetId = "test-module",
-        targetTypeId = "java"
+        targetTypeId = "java",
+        outputToTargetMapping = null,
       )
 
       mapping.appendOutput("foo/bar/Baz.java", "out/bar/Baz.class")
       assertThat(mapping.getOutputs("foo/bar/Baz.java")).containsExactly("out/bar/Baz.class")
 
-      storageManager.removeMaps(targetId = "test-module", typeId = "java")
+      storageManager.removeMaps(targetId = "test-module", targetTypeId = "java")
       assertThat(mapping.getOutputs("foo/bar/Baz.java")).isNull()
     }
     finally {

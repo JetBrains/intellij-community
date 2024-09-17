@@ -420,6 +420,7 @@ f:com.intellij.util.containers.CollectionFactory
 - s:createCustomHashingStrategySet(com.intellij.util.containers.HashingStrategy):java.util.Set
 - s:createFilePathLinkedMap():java.util.Map
 - s:createFilePathLinkedSet():java.util.Set
+- s:createFilePathLinkedSet(java.util.Set):java.util.Set
 - s:createFilePathMap():java.util.Map
 - s:createFilePathMap(I):java.util.Map
 - s:createFilePathMap(I,Z):java.util.Map

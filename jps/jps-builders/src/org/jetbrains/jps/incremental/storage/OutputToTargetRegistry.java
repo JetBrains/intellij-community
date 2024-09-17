@@ -10,7 +10,9 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.DataInput;
@@ -21,10 +23,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, IntSet> {
+@ApiStatus.Internal
+public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, IntSet> implements OutputToTargetMapping {
   private static final DataExternalizer<IntSet> DATA_EXTERNALIZER = new DataExternalizer<>() {
     @Override
     public void save(@NotNull DataOutput out, IntSet value) throws IOException {
@@ -56,27 +58,25 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     appendData(pathHashCode(outputPath), IntSets.singleton(buildTargetId));
   }
 
-  void addMapping(@NotNull Collection<String> outputPaths, int buildTargetId) throws IOException {
+  void addMappings(@NotNull Collection<String> outputPaths, int buildTargetId) throws IOException {
     IntSet set = IntSets.singleton(buildTargetId);
     for (String outputPath : outputPaths) {
       appendData(pathHashCode(outputPath), set);
     }
   }
 
-  public void removeMapping(String outputPath, int buildTargetId) throws IOException {
-    removeMapping(Collections.singleton(outputPath), buildTargetId);
-  }
-
-  public void removeMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
+  @Override
+  public void removeMappings(@NotNull Collection<String> outputPaths, int buildTargetId, @NotNull SourceToOutputMapping srcToOut) throws IOException {
     if (outputPaths.isEmpty()) {
       return;
     }
+
     for (String outputPath : outputPaths) {
-      final int key = pathHashCode(outputPath);
+      int key = pathHashCode(outputPath);
       synchronized (dataLock) {
-        final IntSet state = getState(key);
+        IntSet state = getState(key);
         if (state != null) {
-          final boolean removed = state.remove(buildTargetId);
+          boolean removed = state.remove(buildTargetId);
           if (state.isEmpty()) {
             remove(key);
           }
@@ -88,7 +88,10 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     }
   }
 
-  public @NotNull Collection<String> getSafeToDeleteOutputs(Collection<String> outputPaths, int currentTargetId) throws IOException {
+  @Override
+  public @NotNull Collection<String> removeTargetAndGetSafeToDeleteOutputs(Collection<String> outputPaths,
+                                                                           int currentTargetId,
+                                                                           @NotNull SourceToOutputMapping srcToOut) throws IOException {
     int size = outputPaths.size();
     if (size == 0) {
       return outputPaths;
@@ -98,11 +101,22 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     for (String outputPath : outputPaths) {
       int key = pathHashCode(outputPath);
       synchronized (dataLock) {
-        IntSet associatedTargets = getState(key);
-        if (associatedTargets == null || associatedTargets.size() != 1) {
-          continue;
+        IntSet state = getState(key);
+        boolean isSafeToDelete = false;
+        if (state == null) {
+          isSafeToDelete = true;
         }
-        if (associatedTargets.contains(currentTargetId)) {
+        else {
+          boolean removed = state.remove(currentTargetId);
+          if (state.isEmpty()) {
+            remove(key);
+            isSafeToDelete = true;
+          }
+          else if (removed) {
+            update(key, state);
+          }
+        }
+        if (isSafeToDelete) {
           result.add(outputPath);
         }
       }

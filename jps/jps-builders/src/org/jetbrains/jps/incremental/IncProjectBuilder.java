@@ -712,29 +712,96 @@ public final class IncProjectBuilder {
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
   }
 
-  private static void clearOutputFiles(CompileContext context,
-                                       SourceToOutputMapping mapping,
-                                       BuildTargetType<?> targetType,
-                                       int targetId) throws IOException {
-    Set<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalFileSet() : null;
-    OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
-    for (SourceToOutputMappingCursor cursor = mapping.cursor(); cursor.hasNext(); ) {
-      cursor.next();
-      String [] outs = cursor.getOutputPaths();
-      if (outs.length > 0) {
-        List<String> deletedPaths = new ArrayList<>();
-        for (String out : outs) {
-          BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
+  private boolean processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
+    boolean doneSomething = false;
+    try {
+      // cleanup outputs
+      final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
+
+      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
+      for (BuildTarget<?> target : targets) {
+        Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
+        if (deletedPaths.isEmpty()) {
+          continue;
         }
-        outputToTargetRegistry.removeMapping(Arrays.asList(outs), targetId);
-        if (!deletedPaths.isEmpty()) {
-          context.processMessage(new FileDeletedEvent(deletedPaths));
+
+        targetToRemovedSources.put(target, deletedPaths);
+        if (isTargetOutputCleared(context, target)) {
+          continue;
+        }
+        final int buildTargetId = context.getProjectDescriptor().getTargetsState().getBuildTargetId(target);
+        final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
+        BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+        final SourceToOutputMapping sourceToOutputStorage = dataManager.getSourceToOutputMap(target);
+        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+        // actually delete outputs associated with removed paths
+        final Collection<String> pathsForIteration;
+        if (myIsTestMode) {
+          // ensure predictable order in test logs
+          pathsForIteration = new ArrayList<>(deletedPaths);
+          Collections.sort((List<String>)pathsForIteration);
+        }
+        else {
+          pathsForIteration = deletedPaths;
+        }
+        for (String deletedSource : pathsForIteration) {
+          // deleting outputs corresponding to a non-existing source
+          Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
+          if (outputs != null && !outputs.isEmpty()) {
+            List<String> deletedOutputPaths = new ArrayList<>();
+            OutputToTargetMapping outputToSourceRegistry = dataManager.getOutputToTargetMapping();
+            for (String output : outputToSourceRegistry.removeTargetAndGetSafeToDeleteOutputs(outputs, buildTargetId, sourceToOutputStorage)) {
+              final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
+              if (deleted) {
+                doneSomething = true;
+              }
+            }
+            if (!deletedOutputPaths.isEmpty()) {
+              if (logger.isEnabled()) {
+                logger.logDeletedFiles(deletedOutputPaths);
+              }
+              context.processMessage(new FileDeletedEvent(deletedOutputPaths));
+            }
+          }
+
+          if (target instanceof ModuleBuildTarget) {
+            // check if the deleted source was associated with a form
+            OneToManyPathMapping sourceToFormMap = dataManager.getSourceToFormMap(target);
+            Collection<String> boundForms = sourceToFormMap.getOutputs(deletedSource);
+            if (boundForms != null) {
+              for (String formPath : boundForms) {
+                final File formFile = new File(formPath);
+                if (formFile.exists()) {
+                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
+                }
+              }
+              sourceToFormMap.remove(deletedSource);
+            }
+          }
         }
       }
-    }
-    if (dirsToDelete != null) {
+      if (!targetToRemovedSources.isEmpty()) {
+        final Map<BuildTarget<?>, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
+        if (existing != null) {
+          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : existing.entrySet()) {
+            final Collection<String> paths = targetToRemovedSources.get(entry.getKey());
+            if (paths != null) {
+              paths.addAll(entry.getValue());
+            }
+            else {
+              targetToRemovedSources.put(entry.getKey(), entry.getValue());
+            }
+          }
+        }
+        Utils.REMOVED_SOURCES_KEY.set(context, targetToRemovedSources);
+      }
+
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
+    catch (IOException e) {
+      throw new ProjectBuildException(e);
+    }
+    return doneSomething;
   }
 
   private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
@@ -1458,98 +1525,29 @@ public final class IncProjectBuilder {
     myMessageDispatcher.processMessage(new BuildingTargetProgressMessage(targets, event));
   }
 
-  private boolean processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
-    boolean doneSomething = false;
-    try {
-      // cleanup outputs
-      final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
-
-      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
-      for (BuildTarget<?> target : targets) {
-        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
-        if (deletedPaths.isEmpty()) {
-          continue;
+  private static void clearOutputFiles(CompileContext context,
+                                       SourceToOutputMapping mapping,
+                                       BuildTargetType<?> targetType,
+                                       int targetId) throws IOException {
+    Set<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalFileSet() : null;
+    OutputToTargetMapping outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetMapping();
+    for (SourceToOutputMappingCursor cursor = mapping.cursor(); cursor.hasNext(); ) {
+      cursor.next();
+      String [] outs = cursor.getOutputPaths();
+      if (outs.length > 0) {
+        List<String> deletedPaths = new ArrayList<>();
+        for (String out : outs) {
+          BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
-        targetToRemovedSources.put(target, deletedPaths);
-        if (isTargetOutputCleared(context, target)) {
-          continue;
-        }
-        final int buildTargetId = context.getProjectDescriptor().getTargetsState().getBuildTargetId(target);
-        final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
-        BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-        final SourceToOutputMapping sourceToOutputStorage = dataManager.getSourceToOutputMap(target);
-        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-        // actually delete outputs associated with removed paths
-        final Collection<String> pathsForIteration;
-        if (myIsTestMode) {
-          // ensure predictable order in test logs
-          pathsForIteration = new ArrayList<>(deletedPaths);
-          Collections.sort((List<String>)pathsForIteration);
-        }
-        else {
-          pathsForIteration = deletedPaths;
-        }
-        for (String deletedSource : pathsForIteration) {
-          // deleting outputs corresponding to non-existing source
-          final Collection<String> outputs = sourceToOutputStorage.getOutputs(deletedSource);
-          if (outputs != null && !outputs.isEmpty()) {
-            List<String> deletedOutputPaths = new ArrayList<>();
-            final OutputToTargetRegistry outputToSourceRegistry = dataManager.getOutputToTargetRegistry();
-            for (String output : outputToSourceRegistry.getSafeToDeleteOutputs(outputs, buildTargetId)) {
-              final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
-              if (deleted) {
-                doneSomething = true;
-              }
-            }
-            for (String outputPath : outputs) {
-              outputToSourceRegistry.removeMapping(outputPath, buildTargetId);
-            }
-            if (!deletedOutputPaths.isEmpty()) {
-              if (logger.isEnabled()) {
-                logger.logDeletedFiles(deletedOutputPaths);
-              }
-              context.processMessage(new FileDeletedEvent(deletedOutputPaths));
-            }
-          }
-
-          if (target instanceof ModuleBuildTarget) {
-            // check if the deleted source was associated with a form
-            OneToManyPathMapping sourceToFormMap = dataManager.getSourceToFormMap(target);
-            Collection<String> boundForms = sourceToFormMap.getOutputs(deletedSource);
-            if (boundForms != null) {
-              for (String formPath : boundForms) {
-                final File formFile = new File(formPath);
-                if (formFile.exists()) {
-                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
-                }
-              }
-              sourceToFormMap.remove(deletedSource);
-            }
-          }
+        outputToTargetRegistry.removeMappings(Arrays.asList(outs), targetId, mapping);
+        if (!deletedPaths.isEmpty()) {
+          context.processMessage(new FileDeletedEvent(deletedPaths));
         }
       }
-      if (!targetToRemovedSources.isEmpty()) {
-        final Map<BuildTarget<?>, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
-        if (existing != null) {
-          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : existing.entrySet()) {
-            final Collection<String> paths = targetToRemovedSources.get(entry.getKey());
-            if (paths != null) {
-              paths.addAll(entry.getValue());
-            }
-            else {
-              targetToRemovedSources.put(entry.getKey(), entry.getValue());
-            }
-          }
-        }
-        Utils.REMOVED_SOURCES_KEY.set(context, targetToRemovedSources);
-      }
-
+    }
+    if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
-    catch (IOException e) {
-      throw new ProjectBuildException(e);
-    }
-    return doneSomething;
   }
 
   // return true if changed something, false otherwise

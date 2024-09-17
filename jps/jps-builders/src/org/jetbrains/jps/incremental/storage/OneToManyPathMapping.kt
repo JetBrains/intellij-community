@@ -2,6 +2,7 @@
 package org.jetbrains.jps.incremental.storage
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import java.io.IOException
 
 internal interface OneToManyPathMapping {
@@ -19,4 +20,17 @@ internal interface OneToManyPathMapping {
 interface SourceToOutputMappingCursor : Iterator<String> {
   /** [next] must be called beforehand */
   val outputPaths: Array<String>
+}
+
+@ApiStatus.Internal
+interface OutputToTargetMapping {
+  @Throws(IOException::class)
+  fun removeTargetAndGetSafeToDeleteOutputs(
+    outputPaths: Collection<String>,
+    currentTargetId: Int,
+    srcToOut: SourceToOutputMapping,
+  ): Collection<String>
+
+  @Throws(IOException::class)
+  fun removeMappings(outputPaths: Collection<String>, buildTargetId: Int, srcToOut: SourceToOutputMapping)
 }

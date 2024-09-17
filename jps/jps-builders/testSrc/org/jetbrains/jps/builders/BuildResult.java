@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -81,19 +80,24 @@ public final class BuildResult implements MessageHandler {
     }
 
 
-    OutputToTargetRegistry registry = pd.dataManager.getOutputToTargetRegistry();
-    List<Integer> keys = new IntArrayList(registry.getKeysIterator());
-    Collections.sort(keys);
+    OutputToTargetRegistry registry = (OutputToTargetRegistry)pd.dataManager.getOutputToTargetMapping();
+    List<Integer> keys = registry.getAllKeys();
+    if (keys.size() > 1) {
+      keys.sort(null);
+    }
     stream.println("Begin Of OutputToTarget");
     for (Integer key : keys) {
       IntSet targetsIds = registry.getState(key);
-      if (targetsIds == null) continue;
-      final List<String> targetsNames = new ArrayList<>();
+      if (targetsIds == null) {
+        continue;
+      }
+
+      List<String> targetsNames = new ArrayList<>();
       targetsIds.forEach(value -> {
         BuildTarget<?> target = id2Target.get(value);
         targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
       });
-      Collections.sort(targetsNames);
+      targetsNames.sort(null);
       stream.println(hashCodeToOutputPath.get(key.intValue()) + " -> " + targetsNames);
     }
     stream.println("End Of OutputToTarget");

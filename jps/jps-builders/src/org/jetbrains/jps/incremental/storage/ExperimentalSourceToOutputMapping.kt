@@ -7,7 +7,6 @@ import org.h2.mvstore.MVMap.DecisionMaker
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
@@ -18,25 +17,14 @@ import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
 class ExperimentalSourceToOutputMapping private constructor(
   mapHandle: MapHandle<LongArray, Array<String>>,
   relativizer: PathRelativizerService,
+  private val outputToTargetMapping: ExperimentalOutputToTargetMapping?,
+  @JvmField internal val targetHashId: Long,
 ) : SourceToOutputMapping, ExperimentalOneToManyPathMapping(mapHandle = mapHandle, relativizer = relativizer, valueOffset = 1) {
   companion object {
     // we have a lot of targets - reduce GC and reuse map builder
     private val mapBuilder = MVMap.Builder<LongArray, Array<String>>().also {
       it.setKeyType(LongPairKeyDataType)
       it.setValueType(StringListDataType)
-    }
-
-    fun createSourceToOutputMap(
-      storageManager: StorageManager,
-      relativizer: PathRelativizerService,
-      target: BuildTarget<*>,
-    ): ExperimentalSourceToOutputMapping {
-      return createSourceToOutputMap(
-        storageManager = storageManager,
-        relativizer = relativizer,
-        targetId = target.id,
-        targetTypeId = target.targetType.typeId,
-      )
     }
 
     @VisibleForTesting
@@ -46,6 +34,7 @@ class ExperimentalSourceToOutputMapping private constructor(
       relativizer: PathRelativizerService,
       targetId: String,
       targetTypeId: String,
+      outputToTargetMapping: ExperimentalOutputToTargetMapping?,
     ): ExperimentalSourceToOutputMapping {
       // we can use composite key and sort by target id, but as we compile targets in parallel:
       // * avoid blocking - in-memory lock per map root,
@@ -54,32 +43,39 @@ class ExperimentalSourceToOutputMapping private constructor(
       return ExperimentalSourceToOutputMapping(
         mapHandle = storageManager.openMap(mapName, mapBuilder),
         relativizer = relativizer,
+        outputToTargetMapping = outputToTargetMapping,
+        targetHashId = targetToHash(targetId, targetTypeId),
       )
     }
   }
 
-  //override fun getKey(sourcePath: String): LongArray {
-  //  val stringKey = relativizer.toRelative(sourcePath).toByteArray()
-  //
-  //  // We should sort by target id for data locality -
-  //  // the high integer (high) is shifted to the higher 32 bits of the long value,
-  //  // while the low integer (low) occupies the lower 32 bits.
-  //  // When we do compare two long values, the higher 32 bits (which contain the high integer) dictate the order.
-  //  val low = Hashing.komihash5_0().hashBytesToInt(stringKey)
-  //  val high = targetId
-  //  return longArrayOf((high.toLong() shl 32) or (low.toLong() and 0xFFFFFFFFL), Hashing.xxh3_64().hashBytesToLong(stringKey))
-  //}
+  override fun setOutputs(path: String, outPaths: List<String>) {
+    val relativeSourcePath = super.relativizer.toRelative(path)
+    val key = stringTo128BitHash(relativeSourcePath)
+    val normalizeOutputPaths = super.normalizeOutputPaths(outPaths, relativeSourcePath)
+    if (normalizeOutputPaths == null) {
+      mapHandle.map.remove(key)
+    }
+    else {
+      mapHandle.map.put(key, normalizeOutputPaths)
+      outputToTargetMapping?.addMappings(normalizeOutputPaths, targetHashId)
+    }
+  }
 
   override fun setOutput(sourcePath: String, outputPath: String) {
     val relativeSourcePath = relativizer.toRelative(sourcePath)
-    mapHandle.map.put(stringTo128BitHash(relativeSourcePath), arrayOf(relativeSourcePath, relativizer.toRelative(outputPath)))
+    val relativeOutputPath = relativizer.toRelative(outputPath)
+    mapHandle.map.put(stringTo128BitHash(relativeSourcePath), arrayOf(relativeSourcePath, relativeOutputPath))
+    outputToTargetMapping?.addMapping(relativeOutputPath, targetHashId)
   }
 
   override fun appendOutput(sourcePath: String, outputPath: String) {
     val relativeSourcePath = relativizer.toRelative(sourcePath)
+    val relativeOutputPath = relativizer.toRelative(outputPath)
     mapHandle.map.operate(stringTo128BitHash(relativeSourcePath),
                           null,
-                          AddItemDecisionMaker(sourcePath = relativeSourcePath, toAdd = relativizer.toRelative(outputPath)))
+                          AddItemDecisionMaker(sourcePath = relativeSourcePath, toAdd = relativeOutputPath))
+    outputToTargetMapping?.addMapping(relativeOutputPath, targetHashId)
   }
 
   override fun removeOutput(sourcePath: String, outputPath: String) {
@@ -157,6 +153,10 @@ private class AddItemDecisionMaker(private val sourcePath: String, private val t
 private class RemoveItemDecisionMaker(private val toRemove: String) : DecisionMaker<Array<String>>() {
   private var indexToRemove: Int = -1
 
+  override fun reset() {
+    indexToRemove = -1
+  }
+
   override fun decide(existingValue: Array<String>?, ignore: Array<String>?): Decision {
     return when {
       existingValue == null -> Decision.ABORT
@@ -197,8 +197,8 @@ private fun removeElementAtIndex(old: Array<String>, index: Int): Array<String?>
 }
 
 private fun addElementToEnd(old: Array<String>, element: String): Array<String?> {
-    val result = arrayOfNulls<String>(old.size + 1)
-    System.arraycopy(old, 0, result, 0, old.size)
-    result[old.size] = element
-    return result
+  val result = arrayOfNulls<String>(old.size + 1)
+  System.arraycopy(old, 0, result, 0, old.size)
+  result[old.size] = element
+  return result
 }

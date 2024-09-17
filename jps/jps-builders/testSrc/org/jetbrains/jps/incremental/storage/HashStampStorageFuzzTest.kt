@@ -25,7 +25,7 @@ class HashStampStorageFuzzTest {
   @BeforeProperty
   fun setUp() {
     file = Files.createTempFile("mvstore", ".db")
-    storageManager = StorageManager(file!!, 0)
+    storageManager = StorageManager(file!!)
     hashStampStorage = HashStampStorage.createSourceToStampMap(
       storageManager = storageManager,
       relativizer = PathRelativizerService(),

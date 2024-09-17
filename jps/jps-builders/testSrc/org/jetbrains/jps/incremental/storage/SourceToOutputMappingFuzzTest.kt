@@ -18,18 +18,21 @@ class SourceToOutputMappingFuzzTest {
   }
 
   private lateinit var mapping: ExperimentalSourceToOutputMapping
+  private lateinit var targetMapping: ExperimentalOutputToTargetMapping
   private lateinit var storageManager: StorageManager
   private var file: Path? = null
 
   @BeforeProperty
   fun setUp() {
     file = Files.createTempFile("mvstore", ".db")
-    storageManager = StorageManager(file!!, 0)
+    storageManager = StorageManager(file!!)
+    targetMapping = ExperimentalOutputToTargetMapping(storageManager)
     mapping = ExperimentalSourceToOutputMapping.createSourceToOutputMap(
       storageManager = storageManager,
       relativizer = PathRelativizerService(),
       targetId = "test-module",
-      targetTypeId = "java"
+      targetTypeId = "java",
+      outputToTargetMapping = targetMapping,
     )
   }
 
@@ -118,6 +121,9 @@ class SourceToOutputMappingFuzzTest {
     }
 
     assertThat(actualMap).isEqualTo(expectedMap)
+    for (outputPaths in actualMap.values) {
+      assertThat(targetMapping.removeTargetAndGetSafeToDeleteOutputs(outputPaths, -1, mapping)).isEqualTo(outputPaths)
+    }
   }
 
   private fun checkCursorAndSourceIterator(source: String, outputs: List<String>) {

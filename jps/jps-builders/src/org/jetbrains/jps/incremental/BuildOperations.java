@@ -116,17 +116,17 @@ public final class BuildOperations {
   }
 
   private static boolean dropRemovedPaths(CompileContext context, BuildTargetChunk chunk) throws IOException {
-    final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     boolean dropped = false;
     if (map != null) {
       for (BuildTarget<?> target : chunk.getTargets()) {
-        final Collection<String> paths = map.remove(target);
+        Collection<String> paths = map.remove(target);
         if (paths != null) {
-          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+          SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
           for (String path : paths) {
             storage.remove(path);
-            dropped = true;
           }
+          dropped = true;
         }
       }
     }
@@ -161,26 +161,28 @@ public final class BuildOperations {
           else {
             targetId = idsCache.getInt(target);
           }
-          final String srcPath = file.getPath();
-          final Collection<String> outputs = srcToOut.getOutputs(srcPath);
-          if (outputs != null) {
-            final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
-            final List<String> deletedForThisSource = new ArrayList<>(outputs.size());
-            for (String output : outputs) {
-              deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
-            }
-            deletedPaths.addAll(deletedForThisSource);
-            dataManager.getOutputToTargetRegistry().removeMapping(deletedForThisSource, targetId);
-            Set<File> cleaned = cleanedSources.get(target);
-            if (cleaned == null) {
-              cleaned = FileCollectionFactory.createCanonicalFileSet();
-              cleanedSources.put(target, cleaned);
-            }
-            cleaned.add(file);
+
+          Collection<String> outputs = srcToOut.getOutputs(file.getPath());
+          if (outputs == null) {
+            return true;
           }
+
+          boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
+          List<String> deletedForThisSource = new ArrayList<>(outputs.size());
+          for (String output : outputs) {
+            deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
+          }
+
+          deletedPaths.addAll(deletedForThisSource);
+          dataManager.getOutputToTargetMapping().removeMappings(deletedForThisSource, targetId, srcToOut);
+          Set<File> cleaned = cleanedSources.get(target);
+          if (cleaned == null) {
+            cleaned = FileCollectionFactory.createCanonicalFileSet();
+            cleanedSources.put(target, cleaned);
+          }
+          cleaned.add(file);
           return true;
         }
-
       });
 
       if (!deletedPaths.isEmpty()) {

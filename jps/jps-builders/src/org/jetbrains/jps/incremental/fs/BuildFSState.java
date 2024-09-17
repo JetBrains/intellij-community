@@ -194,11 +194,8 @@ public final class BuildFSState {
   }
 
   public Collection<String> getAndClearDeletedPaths(BuildTarget<?> target) {
-    final FilesDelta delta = myDeltas.get(target);
-    if (delta != null) {
-      return delta.getAndClearDeletedPaths();
-    }
-    return Collections.emptyList();
+    FilesDelta delta = myDeltas.get(target);
+    return delta == null ? List.of() : delta.getAndClearDeletedPaths();
   }
 
   private @NotNull FilesDelta getDelta(BuildTarget<?> buildTarget) {
@@ -238,10 +235,10 @@ public final class BuildFSState {
    */
   public boolean markDirty(@Nullable CompileContext context,
                            File file,
-                           final BuildRootDescriptor rd,
+                           BuildRootDescriptor buildRootDescriptor,
                            @Nullable StampsStorage<?> stampStorage,
                            boolean saveEventStamp) throws IOException {
-    return markDirty(context, CompilationRound.NEXT, file, rd, stampStorage, saveEventStamp);
+    return markDirty(context, CompilationRound.NEXT, file, buildRootDescriptor, stampStorage, saveEventStamp);
   }
 
   public boolean markDirty(@Nullable CompileContext context,
@@ -384,7 +381,7 @@ public final class BuildFSState {
    */
   public boolean markAllUpToDate(@NotNull CompileContext context,
                                  @NotNull BuildRootDescriptor buildRootDescriptor,
-                                 @NotNull StampsStorage<?> stampStorage,
+                                 @Nullable StampsStorage<?> stampStorage,
                                  long targetBuildStartStamp) throws IOException {
     boolean marked = false;
     final BuildTarget<?> target = buildRootDescriptor.getTarget();
@@ -415,7 +412,9 @@ public final class BuildFSState {
           }
           else {
             marked = true;
-            stampStorage.updateStamp(nioFile, target, currentFileTimestamp);
+            if (stampStorage != null) {
+              stampStorage.updateStamp(nioFile, target, currentFileTimestamp);
+            }
           }
         }
         else {

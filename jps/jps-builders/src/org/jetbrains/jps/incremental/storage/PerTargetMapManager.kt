@@ -6,13 +6,13 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.StringListDataType
-import java.util.function.UnaryOperator
+import java.util.function.Supplier
 
 internal class PerTargetMapManager(
   storageManager: StorageManager,
   relativizer: PathRelativizerService,
   target: BuildTarget<*>,
-  sourceToOutputMappingWrapper: UnaryOperator<SourceToOutputMapping>,
+  outputToTargetMapping: Supplier<ExperimentalOutputToTargetMapping>,
 ) {
   @JvmField
   val stamp: StampsStorage<*> = if (ProjectStamps.PORTABLE_CACHES) {
@@ -33,11 +33,13 @@ internal class PerTargetMapManager(
   }
 
   val sourceToOutputMapping: SourceToOutputMapping by lazy {
-    sourceToOutputMappingWrapper.apply(ExperimentalSourceToOutputMapping.createSourceToOutputMap(
+    ExperimentalSourceToOutputMapping.createSourceToOutputMap(
       storageManager = storageManager,
       relativizer = relativizer,
-      target = target,
-    ))
+      targetId = target.id,
+      targetTypeId = target.targetType.typeId,
+      outputToTargetMapping = outputToTargetMapping.get(),
+    )
   }
 
   val sourceToForm: ExperimentalOneToManyPathMapping by lazy {

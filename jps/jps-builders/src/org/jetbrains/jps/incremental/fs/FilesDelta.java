@@ -244,13 +244,15 @@ public final class FilesDelta {
     }
   }
 
-  public Set<String> getAndClearDeletedPaths() {
+  public @NotNull Set<String> getAndClearDeletedPaths() {
     lockData();
     try {
+      if (myDeletedPaths.isEmpty()) {
+        return Set.of();
+      }
+
       try {
-        Set<String> result = CollectionFactory.createFilePathLinkedSet();
-        result.addAll(myDeletedPaths);
-        return result;
+        return CollectionFactory.createFilePathLinkedSet(myDeletedPaths);
       }
       finally {
         myDeletedPaths.clear();

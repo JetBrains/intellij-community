@@ -10,7 +10,7 @@ import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
 @ApiStatus.Internal
 open class ExperimentalOneToManyPathMapping(
   @JvmField protected val mapHandle: MapHandle<LongArray, Array<String>>,
-  @JvmField protected val relativizer: PathRelativizerService,
+  @JvmField internal val relativizer: PathRelativizerService,
   private val valueOffset: Int = 0,
 ) : OneToManyPathMapping {
   protected fun getKey(path: String): LongArray = stringTo128BitHash(relativizer.toRelative(path))
@@ -22,23 +22,31 @@ open class ExperimentalOneToManyPathMapping(
     return Array<String>(list.size - valueOffset) { relativizer.toFull(list.get(it + valueOffset)) }.asList()
   }
 
-  final override fun setOutputs(path: String, outPaths: List<String>) {
+  protected fun normalizeOutputPaths(outPaths: List<String>, relativeSourcePath: String?): Array<String>? {
+    return when {
+      outPaths.isEmpty() -> null
+      relativeSourcePath != null -> {
+        Array(outPaths.size + 1) {
+          if (it == 0) relativeSourcePath else relativizer.toRelative(outPaths.get(it - 1))
+        }
+      }
+      else -> {
+        Array(outPaths.size) {
+          relativizer.toRelative(outPaths.get(it))
+        }
+      }
+    }
+  }
+
+  override fun setOutputs(path: String, outPaths: List<String>) {
     val relativeSourcePath = relativizer.toRelative(path)
     val key = stringTo128BitHash(relativeSourcePath)
-    if (outPaths.isEmpty()) {
+    val normalizeOutputPaths = normalizeOutputPaths(outPaths, null)
+    if (normalizeOutputPaths == null) {
       mapHandle.map.remove(key)
     }
-    else if (valueOffset == 1) {
-      val listWithRelativePaths = Array(outPaths.size + 1) {
-        if (it == 0) relativeSourcePath else relativizer.toRelative(outPaths.get(it - 1))
-      }
-      mapHandle.map.put(key, listWithRelativePaths)
-    }
     else {
-      val listWithRelativePaths = Array(outPaths.size) {
-        relativizer.toRelative(outPaths.get(it))
-      }
-      mapHandle.map.put(key, listWithRelativePaths)
+      mapHandle.map.put(key, normalizeOutputPaths)
     }
   }
 

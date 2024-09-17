@@ -1883,7 +1883,7 @@ f:org.jetbrains.jps.cmdline.PreloadedData
 f:org.jetbrains.jps.cmdline.ProjectDescriptor
 - f:dataManager:org.jetbrains.jps.incremental.storage.BuildDataManager
 - f:fsState:org.jetbrains.jps.incremental.fs.BuildFSState
-- <init>(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.incremental.fs.BuildFSState,org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.logging.BuildLoggingManager,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.builders.BuildTargetIndex,org.jetbrains.jps.builders.BuildRootIndex,org.jetbrains.jps.indices.IgnoredFileIndex):V
+- <init>(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.incremental.fs.BuildFSState,org.jetbrains.jps.incremental.storage.ProjectStamps,org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.logging.BuildLoggingManager,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.builders.BuildTargetIndex,org.jetbrains.jps.builders.BuildRootIndex,org.jetbrains.jps.indices.IgnoredFileIndex):V
 - getBuildRootIndex():org.jetbrains.jps.builders.BuildRootIndex
 - getBuildTargetIndex():org.jetbrains.jps.builders.BuildTargetIndex
 - getEncodingConfiguration():org.jetbrains.jps.incremental.CompilerEncodingConfiguration
@@ -2608,7 +2608,7 @@ a:org.jetbrains.jps.incremental.storage.AbstractStateStorage
 - appendData(java.lang.Object,java.lang.Object):V
 - f:clean():V
 - f:close():V
-- flush(Z):V
+- f:flush(Z):V
 - f:force():V
 - pf:getKeyIterator(java.util.function.Function):java.util.Iterator
 - getKeysIterator():java.util.Iterator
@@ -2623,14 +2623,13 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - cleanTargetStorages(org.jetbrains.jps.builders.BuildTarget):V
 - close():V
 - closeSourceToOutputStorages(org.jetbrains.jps.builders.impl.BuildTargetChunk):V
-- createDependencyGraph(java.io.File,Z):V
+- createDependencyGraph(java.nio.file.Path,Z):V
 - flush(Z):V
 - getDataPaths():org.jetbrains.jps.builders.storage.BuildDataPaths
 - getDependencyGraph():org.jetbrains.jps.dependency.GraphConfiguration
 - getFileStampService():org.jetbrains.jps.incremental.storage.ProjectStamps
 - getFileStampStorage(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage
-- s:getMappingsRoot(java.io.File):java.io.File
-- getOutputToTargetRegistry():org.jetbrains.jps.incremental.storage.OutputToTargetRegistry
+- s:getMappingsRoot(java.nio.file.Path):java.nio.file.Path
 - getRelativizer():org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - getSourceToOutputMap(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - getStorage(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.builders.storage.StorageProvider):org.jetbrains.jps.incremental.storage.StorageOwner
@@ -2695,11 +2694,6 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - remove(java.lang.String):V
 - removeData(java.lang.String,java.lang.String):V
 - setOutputs(java.lang.String,java.util.List):V
-f:org.jetbrains.jps.incremental.storage.OutputToTargetRegistry
-- org.jetbrains.jps.incremental.storage.AbstractStateStorage
-- getSafeToDeleteOutputs(java.util.Collection,I):java.util.Collection
-- removeMapping(java.lang.String,I):V
-- removeMapping(java.util.Collection,I):V
 f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - sf:PORTABLE_CACHES:Z
 - sf:PORTABLE_CACHES_PROPERTY:java.lang.String

@@ -6,15 +6,13 @@ import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
@@ -107,11 +105,28 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
     }
   }
 
+  /**
+   * @deprecated Use {@link #getKeysIterator()}
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public final Collection<Key> getKeys() throws IOException {
+    return getAllKeys();
+  }
+
   public @NotNull Iterator<Key> getKeysIterator() throws IOException {
+    //noinspection TestOnlyProblems
+    return getAllKeys().iterator();
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public final @NotNull List<Key> getAllKeys() throws IOException {
     synchronized (dataLock) {
       List<Key> result = new ArrayList<>();
       map.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
-      return result.iterator();
+      return result.isEmpty() ? List.of() : result;
     }
   }
 
@@ -132,7 +147,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   }
 
   @Override
-  public void flush(boolean memoryCachesOnly) {
+  public final void flush(boolean memoryCachesOnly) {
     if (!memoryCachesOnly) {
       force();
     }
