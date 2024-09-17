@@ -353,13 +353,20 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun isAnnotationConstructorCall(ktCallElement: KtCallElement): Boolean {
+        when (ktCallElement) {
+            is KtAnnotationEntry -> return true
+            is KtSuperTypeCallEntry, is KtConstructorDelegationCall -> return false
+            is KtCallExpression -> {}
+            else -> errorWithAttachment("Unexpected element: ${ktCallElement::class.simpleName}") {
+                withPsiEntry("callElement", ktCallElement)
+            }
+        }
+
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveToCall()?.singleConstructorCallOrNull()?.symbol ?: return false
-            val ktType = resolvedAnnotationConstructorSymbol.returnType
-            val context = containingKtClass(resolvedAnnotationConstructorSymbol) ?: ktCallElement
-            val psiClass = toPsiClass(ktType, null, context, ktCallElement.typeOwnerKind) ?: return false
-            return psiClass.isAnnotationType
+            val classSymbol = resolvedAnnotationConstructorSymbol.containingDeclaration as? KaNamedClassSymbol ?: return false
+            return classSymbol.classKind == KaClassKind.ANNOTATION_CLASS
         }
     }
 
