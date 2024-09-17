@@ -81,7 +81,7 @@ public final class CodeCleanupOnSaveActionInfo extends ActionOnSaveInfoBase {
       separators.put(projectProfiles.get(0), IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.project")));
     }
     if (!ideProfiles.isEmpty()) {
-      separators.put(ideProfiles.get(0), IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.project")));
+      separators.put(ideProfiles.get(0), IdeBundle.message("separator.scheme.stored.in", IdeBundle.message("scheme.ide")));
     }
 
     var selectedOption = getSelectedProfile(profiles);
