@@ -1178,6 +1178,10 @@
               class="com.intellij.openapi.editor.impl.stickyLines.actions.StickyLinesShowToggleAction"/>
     </group>
 
+    <group id="JourneyAction" searchable="false">
+      <action id="JourneyToggleAction" class="com.intellij.openapi.editor.journey.JourneyToggleAction"/>
+    </group>
+
     <group id="EditorGutterPopupMenu">
       <reference ref="EditorToggleUseSoftWraps"/>
       <action id="ConfigureSoftWraps" class="com.intellij.openapi.editor.actions.ConfigureSoftWrapsAction"/>

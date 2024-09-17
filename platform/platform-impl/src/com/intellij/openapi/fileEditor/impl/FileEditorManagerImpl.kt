@@ -1419,6 +1419,7 @@ open class FileEditorManagerImpl(
       usePreviewTab = effectiveDescriptor.isUsePreviewTab,
       requestFocus = focusEditor,
       openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
+      selectAsCurrent = false,
     )
 
     val composite: FileEditorComposite = openFile(file = file, window = null, options = openOptions)

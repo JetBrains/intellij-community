@@ -41,7 +41,7 @@ data class LazyTargetWithPresentation internal constructor(
 @Internal
 fun interface NavigationRequestor {
 
-  @RequiresReadLock
-  @RequiresBackgroundThread
+  //@RequiresReadLock
+  //@RequiresBackgroundThread
   fun navigationRequest(): NavigationRequest?
 }

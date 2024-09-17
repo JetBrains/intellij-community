@@ -50,6 +50,16 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
   private val lastDivider: Divider
   private var dividerDispatcher: EventDispatcher<ComponentListener>? = null
 
+  override fun paint(g: Graphics?) {
+    // for debug
+    super.paint(g)
+  }
+
+  override fun repaint(x: Int, y: Int, width: Int, height: Int) {
+    // for debug
+    super.repaint(x, y, width, height)
+  }
+
   var firstComponent: JComponent? = null
     /**
      * Sets component which is located as the "first" split area. The method doesn't validate and

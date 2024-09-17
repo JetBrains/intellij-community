@@ -3,9 +3,13 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.*;
+
+import java.util.function.BiConsumer;
 
 /**
  * An object representing an IntelliJ project.
@@ -19,6 +23,8 @@ import org.jetbrains.annotations.*;
  */
 public interface Project extends ComponentManager, AreaInstance {
   String DIRECTORY_STORE_FOLDER = ".idea";
+  public static final Key<BiConsumer<PsiElement, PsiElement>> JOURNEY_ADD_EDGE = Key.create("journey.add.edge");
+  public static final Key<PsiElement> JOURNEY_CURRENT_NODE = Key.create("journey.current.node");
 
   /**
    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation

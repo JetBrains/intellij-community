@@ -7,6 +7,8 @@ import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.Companion.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.find.FindUsagesSettings
+import com.intellij.find.FindSettings
+import com.intellij.find.actions.EditorToPsiMethod
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -21,6 +23,7 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.Project.JOURNEY_CURRENT_NODE
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -64,6 +67,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
   override fun startInWriteAction(): Boolean = false
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    project.putUserData(JOURNEY_CURRENT_NODE, EditorToPsiMethod(project, editor))
     if (navigateToLookupItem(project)) {
       return
     }

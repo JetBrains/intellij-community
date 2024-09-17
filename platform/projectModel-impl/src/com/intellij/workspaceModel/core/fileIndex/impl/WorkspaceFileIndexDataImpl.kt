@@ -150,7 +150,7 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   private fun ensureIsUpToDate() {
-    SlowOperations.assertSlowOperationsAreAllowed()
+    //SlowOperations.assertSlowOperationsAreAllowed()
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
