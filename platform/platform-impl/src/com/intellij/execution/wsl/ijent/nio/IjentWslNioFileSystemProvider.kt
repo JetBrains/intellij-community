@@ -9,11 +9,11 @@ import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.ijent.IjentPosixInfo
+import com.intellij.platform.eel.EelPosixInfo
+import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
+import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
-import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
-import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.VisibleForTesting
@@ -183,7 +183,7 @@ class IjentWslNioFileSystemProvider(
             val dosAttributes =
               if (cachedAttrs != null)
                 IjentNioPosixFileAttributesWithDosAdapter(
-                  ijentPath.fileSystem.ijentFs.user as IjentPosixInfo.User,
+                  ijentPath.fileSystem.ijentFs.user as EelPosixInfo.User,
                   cachedAttrs,
                   nameStartsWithDot = ijentPath.eelPath.fileName.startsWith("."),
                 )
@@ -276,7 +276,7 @@ class IjentWslNioFileSystemProvider(
 
       is PosixFileAttributes ->
         IjentNioPosixFileAttributesWithDosAdapter(
-          ijentNioPath.fileSystem.ijentFs.user as IjentPosixInfo.User,
+          ijentNioPath.fileSystem.ijentFs.user as EelPosixInfo.User,
           actualAttrs, path.name.startsWith("."),
         )
 
@@ -369,7 +369,7 @@ class IjentWslNioFileSystemProvider(
 
 @VisibleForTesting
 class IjentNioPosixFileAttributesWithDosAdapter(
-  private val userInfo: IjentPosixInfo.User,
+  private val userInfo: EelPosixInfo.User,
   private val fileInfo: PosixFileAttributes,
   private val nameStartsWithDot: Boolean,
 ) : CaseSensitivityAttribute, PosixFileAttributes by fileInfo, DosFileAttributes {
@@ -381,10 +381,10 @@ class IjentNioPosixFileAttributesWithDosAdapter(
     val owner = owner()
     val group = group()
     return when {
-      owner is IjentPosixUserPrincipal && owner.uid == userInfo.uid ->
+      owner is EelPosixUserPrincipal && owner.uid == userInfo.uid ->
         OWNER_WRITE !in permissions() || (isDirectory && OWNER_EXECUTE !in permissions())
 
-      group is IjentPosixGroupPrincipal && group.gid == userInfo.gid ->
+      group is EelPosixGroupPrincipal && group.gid == userInfo.gid ->
         GROUP_WRITE !in permissions() || (isDirectory && GROUP_EXECUTE !in permissions())
 
       else ->

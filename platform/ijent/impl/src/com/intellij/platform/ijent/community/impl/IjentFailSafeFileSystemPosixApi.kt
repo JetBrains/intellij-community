@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
+import com.intellij.platform.eel.EelPosixInfo
+import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
-import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentUnavailableException
-import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -92,7 +94,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  * so implementing a similar class for Windows will require a full copy-paste of this class.
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
-  override val user: IjentPosixInfo.User,
+  override val user: EelPosixInfo.User,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
   override suspend fun userHome(): EelPath.Absolute? =
@@ -102,14 +104,14 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun listDirectory(
     path: EelPath.Absolute,
-  ): IjentFsResult<Collection<String>, IjentFileSystemApi.ListDirectoryError> =
+  ): EelFsResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
     holder.withDelegateRetrying {
       listDirectory(path)
     }
 
   override suspend fun createDirectory(
     path: EelPath.Absolute,
-    attributes: List<IjentFileSystemPosixApi.CreateDirAttributePosix>,
+    attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
   ) {
     holder.withDelegateRetrying {
       createDirectory(path, attributes)
@@ -118,8 +120,8 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
-    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
-  ): IjentFsResult<Collection<Pair<String, IjentPosixFileInfo>>, IjentFileSystemApi.ListDirectoryError> {
+    symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
+  ): EelFsResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError> {
     return holder.withDelegateRetrying {
       listDirectoryWithAttrs(path, symlinkPolicy)
     }
@@ -127,15 +129,15 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun canonicalize(
     path: EelPath.Absolute,
-  ): IjentFsResult<EelPath.Absolute, IjentFileSystemApi.CanonicalizeError> =
+  ): EelFsResult<EelPath.Absolute, EelFileSystemApi.CanonicalizeError> =
     holder.withDelegateRetrying {
       canonicalize(path)
     }
 
   override suspend fun stat(
     path: EelPath.Absolute,
-    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
-  ): IjentFsResult<IjentPosixFileInfo, IjentFileSystemApi.StatError> =
+    symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
+  ): EelFsResult<EelPosixFileInfo, EelFileSystemApi.StatError> =
     holder.withDelegateRetrying {
       stat(path, symlinkPolicy)
     }
@@ -143,28 +145,28 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   override suspend fun sameFile(
     source: EelPath.Absolute,
     target: EelPath.Absolute,
-  ): IjentFsResult<Boolean, IjentFileSystemApi.SameFileError> =
+  ): EelFsResult<Boolean, EelFileSystemApi.SameFileError> =
     holder.withDelegateRetrying {
       sameFile(source, target)
     }
 
   override suspend fun openForReading(
     path: EelPath.Absolute,
-  ): IjentFsResult<IjentOpenedFile.Reader, IjentFileSystemApi.FileReaderError> =
+  ): EelFsResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
     holder.withDelegateRetrying {
       openForReading(path)
     }
 
   override suspend fun openForWriting(
-    options: IjentFileSystemApi.WriteOptions,
-  ): IjentFsResult<IjentOpenedFile.Writer, IjentFileSystemApi.FileWriterError> =
+    options: EelFileSystemApi.WriteOptions,
+  ): EelFsResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> =
     holder.withDelegateRetrying {
       openForWriting(options)
     }
 
   override suspend fun openForReadingAndWriting(
-    options: IjentFileSystemApi.WriteOptions,
-  ): IjentFsResult<IjentOpenedFile.ReaderWriter, IjentFileSystemApi.FileWriterError> =
+    options: EelFileSystemApi.WriteOptions,
+  ): EelFsResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError> =
     holder.withDelegateRetrying {
       openForReadingAndWriting(options)
     }
@@ -175,7 +177,7 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
-  override suspend fun copy(options: IjentFileSystemApi.CopyOptions) {
+  override suspend fun copy(options: EelFileSystemApi.CopyOptions) {
     holder.withDelegateRetrying {
       copy(options)
     }

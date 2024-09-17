@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.EelPosixApi
-import com.intellij.platform.eel.EelTunnelsApi
-import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -31,7 +28,7 @@ sealed interface IjentApi : AutoCloseable {
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.
    */
-  val info: IjentInfo
+  val info: EelInfo
 
   /**
    * Explicitly terminates the process on the remote machine.
@@ -55,13 +52,13 @@ sealed interface IjentApi : AutoCloseable {
 }
 
 interface IjentPosixApi : IjentApi, EelPosixApi {
-  override val info: IjentPosixInfo
+  override val info: EelPosixInfo
   override val fs: IjentFileSystemPosixApi
   override val tunnels: IjentTunnelsPosixApi
 }
 
 interface IjentWindowsApi : IjentApi, EelWindowsApi {
-  override val info: IjentWindowsInfo
+  override val info: EelWindowsInfo
   override val fs: IjentFileSystemWindowsApi
   override val tunnels: IjentTunnelsWindowsApi
 }

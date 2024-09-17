@@ -16,9 +16,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelPosixInfo
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentPosixApi
-import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentTunnelsPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
@@ -513,7 +513,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override val isRunning: Boolean get() = true
 
-  override val info: IjentPosixInfo get() = throw UnsupportedOperationException()
+  override val info: EelPosixInfo get() = throw UnsupportedOperationException()
 
   override fun close(): Unit = Unit
 

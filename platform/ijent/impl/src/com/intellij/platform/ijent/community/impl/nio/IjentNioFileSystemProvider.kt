@@ -3,16 +3,22 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
+import com.intellij.platform.eel.fs.EelFileInfo.Type.*
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryException
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
+import com.intellij.platform.eel.fs.EelFsError
+import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
+import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
-import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.eel.provider.EelFsResultImpl
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
-import com.intellij.platform.ijent.fs.*
-import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
-import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateDirectoryException
-import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateSymbolicLinkException
-import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import com.intellij.util.text.nullize
 import com.sun.nio.file.ExtendedCopyOption
 import java.io.IOException
@@ -148,13 +154,13 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
 
-      val writeOptions = IjentFileSystemApi.writeOptionsBuilder(path.eelPath)
+      val writeOptions = EelFileSystemApi.writeOptionsBuilder(path.eelPath)
         .append(APPEND in options)
         .truncateExisting(TRUNCATE_EXISTING in options)
         .creationMode(when {
-                        CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
-                        CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
-                        else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
+                        CREATE_NEW in options -> EelFileSystemApi.FileWriterCreationMode.ONLY_CREATE
+                        CREATE in options -> EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
+                        else -> EelFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
                       })
 
       fsBlocking {
@@ -186,14 +192,14 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       val notFilteredPaths =
         if (pathFilter is FetchAttributesFilter) {
           nioFs.ijentFs
-            .listDirectoryWithAttrs(ensurePathIsAbsolute(dir.eelPath), IjentFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
+            .listDirectoryWithAttrs(ensurePathIsAbsolute(dir.eelPath), EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
             .getOrThrowFileSystemException()
             .asSequence()
             .map { (childName, childStat) ->
               val childIjentPath = dir.eelPath.getChild(childName).getOrThrow()
               val childAttrs = when (childStat) {
-                is IjentPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
-                is IjentWindowsFileInfo -> TODO()
+                is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
+                is EelWindowsFileInfo -> TODO()
               }
               IjentNioPath(childIjentPath, nioFs, childAttrs)
             }
@@ -257,7 +263,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       try {
         path.nioFs.ijentFs.delete(path.eelPath, false)
       }
-      catch (e: IjentFileSystemApi.DeleteException) {
+      catch (e: EelFileSystemApi.DeleteException) {
         e.throwFileSystemException()
       }
     }
@@ -276,7 +282,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     val fs = source.nioFs.ijentFs
 
-    val copyOptions = IjentFileSystemApi.copyOptionsBuilder(sourcePath, targetPath)
+    val copyOptions = EelFileSystemApi.copyOptionsBuilder(sourcePath, targetPath)
     copyOptions.followLinks(true)
 
     for (option in options) {
@@ -295,7 +301,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       try {
         fs.copy(copyOptions)
       }
-      catch (e: IjentFileSystemApi.CopyException) {
+      catch (e: EelFileSystemApi.CopyException) {
         e.throwFileSystemException()
       }
     }
@@ -318,7 +324,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
           followLinks = false)
       }
-      catch (e: IjentFileSystemApi.MoveException) {
+      catch (e: EelFileSystemApi.MoveException) {
         e.throwFileSystemException()
       }
     }
@@ -351,7 +357,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         is IjentFileSystemPosixApi -> {
           val fileInfo = ijentFs
             // According to the Javadoc, this method must follow symlinks.
-            .stat(ensurePathIsAbsolute(path.eelPath), IjentFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
+            .stat(ensurePathIsAbsolute(path.eelPath), EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
             .getOrThrowFileSystemException()
           // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
           val filePermissionBranch = when {
@@ -367,7 +373,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
               OTHER -> fileInfo.permissions.otherCanRead
             }
             if (!canRead) {
-              (IjentFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: read") as IjentFsError).throwFileSystemException()
+              (EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: read") as EelFsError).throwFileSystemException()
             }
           }
           if (AccessMode.WRITE in modes) {
@@ -377,7 +383,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
               OTHER -> fileInfo.permissions.otherCanWrite
             }
             if (!canWrite) {
-              (IjentFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: write") as IjentFsError).throwFileSystemException()
+              (EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: write") as EelFsError).throwFileSystemException()
             }
           }
           if (AccessMode.EXECUTE in modes) {
@@ -387,7 +393,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
               OTHER -> fileInfo.permissions.otherCanExecute
             }
             if (!canExecute) {
-              (IjentFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: execute") as IjentFsError).throwFileSystemException()
+              (EelFsResultImpl.PermissionDenied(path.eelPath, "Permission denied: execute") as EelFsError).throwFileSystemException()
             }
           }
         }
@@ -404,10 +410,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val fs = ensureIjentNioPath(path).nioFs
 
     val linkPolicy = if (LinkOption.NOFOLLOW_LINKS in options) {
-      IjentFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
+      EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
     }
     else {
-      IjentFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW
+      EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW
     }
 
     val result = when (val ijentFs = fs.ijentFs) {
@@ -475,7 +481,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val absolutePath = ensurePathIsAbsolute(link.eelPath)
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
-        is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath, IjentFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrThrowFileSystemException().type) {
+        is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath, EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrThrowFileSystemException().type) {
           is Symlink.Resolved -> IjentNioPath(type.result, link.nioFs, null)
           is Directory, is Regular, is Other -> throw NotLinkException(link.toString())
           is Symlink.Unresolved -> error("Impossible, the link should be resolved")

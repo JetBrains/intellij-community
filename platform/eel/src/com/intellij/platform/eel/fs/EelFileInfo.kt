@@ -4,7 +4,7 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.path.EelPath
 import java.time.ZonedDateTime
 
-sealed interface IjentFileInfo {
+sealed interface EelFileInfo {
   val type: Type
   val permissions: Permissions
 
@@ -18,15 +18,15 @@ sealed interface IjentFileInfo {
   val creationTime: ZonedDateTime?
 
   sealed interface Type {
-    interface Directory : Type, IjentPosixFileInfo.Type {
+    interface Directory : Type, EelPosixFileInfo.Type {
       val sensitivity: CaseSensitivity
     }
 
-    interface Regular : Type, IjentPosixFileInfo.Type {
+    interface Regular : Type, EelPosixFileInfo.Type {
       val size: Long
     }
 
-    interface Other : Type, IjentPosixFileInfo.Type
+    interface Other : Type, EelPosixFileInfo.Type
   }
 
   sealed interface Permissions
@@ -38,7 +38,7 @@ sealed interface IjentFileInfo {
   }
 }
 
-interface IjentPosixFileInfo : IjentFileInfo {
+interface EelPosixFileInfo : EelFileInfo {
   override val type: Type
   override val permissions: Permissions
 
@@ -48,7 +48,7 @@ interface IjentPosixFileInfo : IjentFileInfo {
   /** The inode number. */
   val inodeIno: Long
 
-  sealed interface Type : IjentFileInfo.Type {
+  sealed interface Type : EelFileInfo.Type {
     sealed interface Symlink : Type {
       interface Unresolved : Symlink
       interface Resolved : Symlink {
@@ -57,7 +57,7 @@ interface IjentPosixFileInfo : IjentFileInfo {
     }
   }
 
-  interface Permissions : IjentFileInfo.Permissions {
+  interface Permissions : EelFileInfo.Permissions {
     /** TODO */
     val owner: Int
     val group: Int
@@ -80,10 +80,10 @@ interface IjentPosixFileInfo : IjentFileInfo {
   }
 }
 
-interface IjentWindowsFileInfo : IjentFileInfo {
+interface EelWindowsFileInfo : EelFileInfo {
   override val permissions: Permissions
 
-  interface Permissions : IjentFileInfo.Permissions {
+  interface Permissions : EelFileInfo.Permissions {
     val isReadOnly: Boolean
     val isHidden: Boolean
     val isArchive: Boolean

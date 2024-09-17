@@ -1,31 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.community.impl
+package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.ijent.fs.IjentFileInfo
-import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import java.time.ZonedDateTime
 
-data class IjentPosixFileInfoImpl(
-  override val type: IjentPosixFileInfo.Type,
-  override val permissions: IjentPosixFileInfo.Permissions,
+data class EelPosixFileInfoImpl(
+  override val type: EelPosixFileInfo.Type,
+  override val permissions: EelPosixFileInfo.Permissions,
   override val creationTime: ZonedDateTime?,
   override val lastModifiedTime: ZonedDateTime?,
   override val lastAccessTime: ZonedDateTime?,
   override val inodeDev: Long,
   override val inodeIno: Long,
-) : IjentPosixFileInfo {
-  data class Directory(override val sensitivity: IjentFileInfo.CaseSensitivity) : IjentFileInfo.Type.Directory
-  data class Regular(override val size: Long) : IjentFileInfo.Type.Regular
-  data class SymlinkResolved(override val result: EelPath.Absolute) : IjentPosixFileInfo.Type.Symlink.Resolved
-  data object SymlinkUnresolved : IjentPosixFileInfo.Type.Symlink.Unresolved
-  data object Other : IjentFileInfo.Type.Other
+) : EelPosixFileInfo {
+  data class Directory(override val sensitivity: EelFileInfo.CaseSensitivity) : EelFileInfo.Type.Directory
+  data class Regular(override val size: Long) : EelFileInfo.Type.Regular
+  data class SymlinkResolved(override val result: EelPath.Absolute) : EelPosixFileInfo.Type.Symlink.Resolved
+  data object SymlinkUnresolved : EelPosixFileInfo.Type.Symlink.Unresolved
+  data object Other : EelFileInfo.Type.Other
 
   data class Permissions(
     override val owner: Int,
     override val group: Int,
     val mask: Int,
-  ) : IjentPosixFileInfo.Permissions {
+  ) : EelPosixFileInfo.Permissions {
     override val otherCanExecute: Boolean get() = (mask and 0x1) != 0 // (00001) execute/search by others
     override val otherCanWrite: Boolean get() = (mask and 0x2) != 0 // (00002) write by others
     override val otherCanRead: Boolean get() = (mask and 0x4) != 0 // (00004) read by others
