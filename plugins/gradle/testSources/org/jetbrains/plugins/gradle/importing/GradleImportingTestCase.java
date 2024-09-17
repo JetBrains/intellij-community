@@ -116,7 +116,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
     WriteAction.runAndWait(this::configureJdkTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
-    applyGradleVmOptions();
+    setUpGradleVmOptions();
 
     ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestDisposable());
     setRegistryPropertyForTest("unknown.sdk.auto", "false");
@@ -160,19 +160,18 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected void configureGradleVmOptions(@NotNull Set<String> options) {
-
+    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
+      options.add("-Dorg.gradle.warning.mode=fail");
+    }
   }
 
   private @NotNull Set<String> getGradleVmOptions() {
     Set<String> options = new HashSet<>();
     configureGradleVmOptions(options);
-    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
-      options.add("-Dorg.gradle.warning.mode=fail");
-    }
     return options;
   }
 
-  private void applyGradleVmOptions() {
+  private void setUpGradleVmOptions() {
     GradleSystemSettings settings = GradleSystemSettings.getInstance();
     String defaultVmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
 
@@ -180,6 +179,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     String effectiveVmOptions = String.format("%s %s", defaultVmOptions, Strings.join(requiredVmOptions, " ")).trim();
 
     settings.setGradleVmOptions(effectiveVmOptions);
+  }
+
+  private static void tearDownGradleVmOptions() {
+    GradleSystemSettings settings = GradleSystemSettings.getInstance();
+    settings.setGradleVmOptions("");
   }
 
   private Sdk createJdkFromJavaHome() {
@@ -327,10 +331,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         TestDialogManager.setTestDialog(TestDialog.DEFAULT);
         CompilerTestUtil.deleteBuildSystemDirectory(myProject);
       },
-      () -> {
-        deprecationError.set(null);
-        GradleSystemSettings.getInstance().setGradleVmOptions("");
-      },
+      () -> deprecationError.set(null),
+      () -> tearDownGradleVmOptions(),
       () -> Disposer.dispose(getTestDisposable()),
       () -> super.tearDown()
     );
