@@ -49,7 +49,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       scope,
       historyModel,
       emptySearch = GitLabMergeRequestsFiltersValue.EMPTY,
-      defaultQuickFilter = defaultQuickFilter(currentUser)
+      defaultFilter = defaultQuickFilter(currentUser).filter
     ) {
   override fun GitLabMergeRequestsFiltersValue.withQuery(query: String?): GitLabMergeRequestsFiltersValue {
     return copy(searchQuery = query)

@@ -10,10 +10,10 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue, Q: 
   private val scope: CoroutineScope,
   private val historyModel: ReviewListSearchHistoryModel<S>,
   final override val emptySearch: S,
-  final override val defaultQuickFilter: Q
+  final override val defaultFilter: S,
 ) : ReviewListSearchPanelViewModel<S, Q> {
 
-  final override val searchState = MutableStateFlow(historyModel.lastFilter ?: defaultQuickFilter.filter)
+  final override val searchState = MutableStateFlow(historyModel.lastFilter ?: defaultFilter)
 
   final override val queryState = searchState.partialState(ReviewListSearchValue::searchQuery) {
     withQuery(it)
@@ -35,7 +35,7 @@ abstract class ReviewListSearchPanelViewModelBase<S : ReviewListSearchValue, Q: 
           return@collectLatestWithPrevious
         }
 
-        if (new.filterCount == 0 || new == defaultQuickFilter.filter) {
+        if (new.filterCount == 0 || new == defaultFilter) {
           return@collectLatestWithPrevious
         }
 

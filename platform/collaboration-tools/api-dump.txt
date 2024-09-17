@@ -1641,7 +1641,7 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - pf:getVm():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 *f:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory$Companion
 *:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
-- a:getDefaultQuickFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
+- a:getDefaultFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - a:getEmptySearch():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - a:getQueryState():kotlinx.coroutines.flow.MutableStateFlow
 - a:getQuickFilters():java.util.List
@@ -1649,8 +1649,8 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - a:getSearchState():kotlinx.coroutines.flow.MutableStateFlow
 *a:com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
 - com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
-- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel,com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue,com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter):V
-- f:getDefaultQuickFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
+- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel,com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue,com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue):V
+- f:getDefaultFilter():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - f:getEmptySearch():com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 - f:getQueryState():kotlinx.coroutines.flow.MutableStateFlow
 - f:getSearchHistory():java.util.List
