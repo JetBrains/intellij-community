@@ -253,7 +253,7 @@ fun serveStream(origin: UID,
           val wrapped = wrapThrowable(e)
           descriptor.channel.cancel(CancellationException("cancelled with reason", wrapped))
 
-          if (e is CancellationException && coroutineContext.job.isActive) {
+          if (e is CancellationException) {
             sendAsync(transportMessage(RpcMessage.StreamClosed(streamId = descriptor.uid, error = FailureInfo(
               producerCancelled = "stream to remote is cancelled due to ${e.stackTraceToString()}"))), null)
             throw e
