@@ -75,4 +75,9 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   @ApiStatus.Internal
   protected abstract @NotNull <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function);
+
+  @ApiStatus.Internal
+  public @Nullable NewVirtualFile findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs, boolean pathCanonicallyCased) {
+    return findRoot(path, fs);
+  }
 }

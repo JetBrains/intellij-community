@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -77,6 +78,12 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return isValid(path) ? VfsImplUtil.refreshAndFindFileByPath(this, path) : null;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileByCanonicallyCasedPath(@NotNull String path) {
+    return isValid(path) ? VfsImplUtil.findFileByCanonicallyCasedPath(this, path) : null;
   }
 
   private static boolean isValid(String path) {

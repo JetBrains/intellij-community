@@ -64,6 +64,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
+  @Override
+  public @Nullable VirtualFile findFileByCanonicallyCasedPath(@NotNull String path) {
+    return VfsImplUtil.findFileByCanonicallyCasedPath(this, path);
+  }
+
   protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
     var path = file.getPath();
     if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {

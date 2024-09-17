@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,5 +176,20 @@ public abstract class VirtualFileSystem {
    */
   public @Nullable Path getNioPath(@NotNull VirtualFile file) {
     return null;
+  }
+
+  /**
+   * Searches for a file specified by the given path.
+   * The caller guarantees that the path is canonically cased if the filesystem is case-insensitive.
+   * The path is a string that uniquely identifies file within given {@link VirtualFileSystem}.
+   * Format of the path depends on the concrete file system.
+   * For {@code LocalFileSystem} it is an absolute path (both Unix- and Windows-style separator chars are allowed).
+   *
+   * @param path the path to find file by
+   * @return a virtual file if found, {@code null} otherwise
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileByCanonicallyCasedPath(@NotNull @NonNls String path) {
+    return findFileByPath(path);
   }
 }

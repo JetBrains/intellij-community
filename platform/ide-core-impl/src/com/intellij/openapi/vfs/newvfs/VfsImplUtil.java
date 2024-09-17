@@ -37,7 +37,18 @@ public final class VfsImplUtil {
   private VfsImplUtil() { }
 
   public static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path);
+    return findFileByPath(vfs, path, false);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable NewVirtualFile findFileByCanonicallyCasedPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return findFileByPath(vfs, path, true);
+  }
+
+  private static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem vfs,
+                                                         @NotNull String path,
+                                                         boolean pathCanonicallyCased) {
+    Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path, pathCanonicallyCased);
     if (rootAndPath == null) return null;
 
     NewVirtualFile file = rootAndPath.first;
@@ -53,7 +64,7 @@ public final class VfsImplUtil {
         }
       }
       else {
-        file = file.findChild(pathElement);
+        file = pathCanonicallyCased ? file.findChildByCanonicallyCasedName(pathElement) : file.findChild(pathElement);
       }
 
       if (file == null) return null;
@@ -67,7 +78,7 @@ public final class VfsImplUtil {
   }
 
   public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path);
+    Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path, false);
     if (rootAndPath == null) return Pair.empty();
 
     NewVirtualFile file = rootAndPath.first;
@@ -98,7 +109,7 @@ public final class VfsImplUtil {
   }
 
   public static @Nullable NewVirtualFile refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path);
+    Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path, false);
     if (rootAndPath == null) return null;
 
     NewVirtualFile file = rootAndPath.first;
@@ -128,7 +139,7 @@ public final class VfsImplUtil {
   @ApiStatus.Experimental
   public static void refreshAndFindFileByPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path, @NotNull Consumer<? super @Nullable NewVirtualFile> consumer) {
     ProcessIOExecutorService.INSTANCE.execute(() -> {
-      Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path);
+      Pair<NewVirtualFile, Iterable<String>> rootAndPath = prepare(vfs, path, false);
       if (rootAndPath == null) {
         consumer.accept(null);
       }
@@ -175,8 +186,10 @@ public final class VfsImplUtil {
     }
   }
 
-  private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    PathFromRoot pair = extractRootFromPath(vfs, path);
+  private static @Nullable Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs,
+                                                                          @NotNull String path,
+                                                                          boolean pathCanonicallyCased) {
+    PathFromRoot pair = extractRootFromPath(vfs, path, pathCanonicallyCased);
     if (pair == null) return null;
     Iterable<String> parts = StringUtil.tokenize(pair.pathFromRoot(), FILE_SEPARATORS);
     return Pair.create(pair.root(), parts);
@@ -189,6 +202,10 @@ public final class VfsImplUtil {
    * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
    */
   public static PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return extractRootFromPath(vfs, path, false);
+  }
+
+  private static PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path, boolean pathCanonicallyCased) {
     String normalizedPath = NewVirtualFileSystem.normalizePath(vfs, path);
     if (normalizedPath == null || normalizedPath.isBlank()) {
       return null;
@@ -200,7 +217,7 @@ public final class VfsImplUtil {
       return null;
     }
 
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs);
+    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs, pathCanonicallyCased);
     if (root == null || !root.exists()) {
       return null;
     }

@@ -9,7 +9,11 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
+class VirtualFileUrlBridge(
+  id: Int,
+  manager: VirtualFileUrlManagerImpl,
+  private val urlCanonicallyCased: Boolean = false,
+) :
   VirtualFileUrlImpl(id, manager), VirtualFilePointer {
   @Volatile
   private var file: VirtualFile? = null
@@ -38,7 +42,11 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl) :
     val cachedResults = file
     return if (timestamp == fileManager.modificationCount) cachedResults
     else {
-      file = fileManager.findFileByUrl(url)
+      file = if (urlCanonicallyCased) {
+        fileManager.findFileByCanonicallyCasedUrl(url)
+      } else {
+        fileManager.findFileByUrl(url)
+      }
       timestampOfCachedFiles = fileManager.modificationCount
       file
     }

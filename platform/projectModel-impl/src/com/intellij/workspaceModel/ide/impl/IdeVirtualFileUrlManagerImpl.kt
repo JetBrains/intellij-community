@@ -11,7 +11,7 @@ class IdeVirtualFileUrlManagerImpl : VirtualFileUrlManagerImpl() {
   override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
     get() = VirtualFileUrlBridge::class.java
 
-  override fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrlImpl {
-    return VirtualFileUrlBridge(id, manager)
+  override fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl, urlCanonicallyCased: Boolean): VirtualFileUrlImpl {
+    return VirtualFileUrlBridge(id, manager, urlCanonicallyCased)
   }
 }

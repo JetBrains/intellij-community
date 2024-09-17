@@ -108,4 +108,9 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }
+
+  @ApiStatus.Internal
+  public @Nullable NewVirtualFile findChildByCanonicallyCasedName(@NotNull @NonNls String name) {
+    return findChild(name);
+  }
 }
