@@ -109,7 +109,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     val actionGroup = ActionManager.getInstance().getAction("CompilationChartsActionGroup") as? DefaultActionGroup
     if (actionGroup != null) {
       actionGroup.addAction(CompilationChartsStatsActionHolder(vm), Constraints.FIRST)
-      val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_NAME, actionGroup, true).apply {
+      val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_ID, actionGroup, true).apply {
         targetComponent = this@ActionPanel
       }
       addToRight(toolbar.component)
@@ -259,6 +259,6 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
   }
 
   companion object {
-    private const val COMPILATION_CHARTS_TOOLBAR_NAME = "Compilation charts toolbar"
+    private const val COMPILATION_CHARTS_TOOLBAR_ID = "CompilationChartsToolbar"
   }
 }
