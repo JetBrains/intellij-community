@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
@@ -85,12 +86,14 @@ open class CodeReviewEditorGutterChangesRenderer(
       createCopyLineAction(range),
       createShowDiffAction(range),
       createToggleByWordDiffAction()
-    )
+    ) + customActions(project)
 
     val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
   }
 
+  @Internal
+  protected open fun customActions(project: Project?): List<AnAction> = emptyList()
   protected open fun createRevertAction(range: Range): AnAction? = null
   protected open fun createPrevChangeAction(range: Range): AnAction? = ShowPrevChangeMarkerAction(range)
   protected open fun createNextChangeAction(range: Range): AnAction? = ShowNextChangeMarkerAction(range)
