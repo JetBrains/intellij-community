@@ -24,6 +24,7 @@ import androidx.compose.ui.window.PopupPositionProviderAtPosition
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
@@ -39,7 +40,10 @@ public fun Tooltip(
 ) {
     TooltipArea(
         tooltip = {
-            CompositionLocalProvider(LocalContentColor provides style.colors.content) {
+            CompositionLocalProvider(
+                LocalContentColor provides style.colors.content,
+                LocalTextStyle provides LocalTextStyle.current.copy(color = style.colors.content),
+            ) {
                 Box(
                     modifier =
                         Modifier.shadow(
