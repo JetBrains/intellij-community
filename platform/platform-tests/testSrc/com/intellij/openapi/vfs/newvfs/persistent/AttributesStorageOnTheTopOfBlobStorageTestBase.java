@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
+import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;

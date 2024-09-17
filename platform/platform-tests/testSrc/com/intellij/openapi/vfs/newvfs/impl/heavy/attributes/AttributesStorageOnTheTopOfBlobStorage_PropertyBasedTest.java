@@ -5,8 +5,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlo
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.*;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;

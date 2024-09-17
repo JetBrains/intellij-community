@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
+package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords;
+import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
+import com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.OFFSET_BUCKET;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
@@ -518,7 +519,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   public static @NotNull BatchCallback setupReportingToOpenTelemetry(@NotNull Path fileName,
                                                                      @NotNull StreamlinedBlobStorageHelper storage) {
-    Meter meter = TelemetryManager.getInstance().getMeter(Storage);
+    Meter meter = TelemetryManager.getInstance().getMeter(PlatformScopesKt.Storage);
 
     var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();

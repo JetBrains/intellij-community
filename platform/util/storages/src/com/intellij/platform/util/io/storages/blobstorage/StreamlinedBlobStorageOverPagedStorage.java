@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
+package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
@@ -19,9 +19,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordLayoutForType;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.ActualRecords.recordSizeTypeByCapacity;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.OFFSET_BUCKET;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords.recordLayoutForType;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords.recordSizeTypeByCapacity;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.OFFSET_BUCKET;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
 
 

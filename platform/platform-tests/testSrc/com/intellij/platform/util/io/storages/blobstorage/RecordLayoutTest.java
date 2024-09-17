@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.impl.heavy.blobstorage;
+package com.intellij.platform.util.io.storages.blobstorage;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -9,7 +8,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordLayout.*;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.*;
 import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.assertEquals;
 
