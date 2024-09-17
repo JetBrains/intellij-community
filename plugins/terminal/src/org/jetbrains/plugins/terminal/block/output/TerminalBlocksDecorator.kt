@@ -133,7 +133,7 @@ internal class TerminalBlocksDecorator(
 
     // add additional empty space on top of the block if it is the first block
     val topRenderer = EmptyWidthInlayRenderer {
-      val additionalInset = if (outputModel.blocks[0] === block) TerminalUi.blocksGap else 0
+      val additionalInset = if (outputModel.blocks[0] === block) 0 else 1
       TerminalUi.blockTopInset + additionalInset
     }
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
@@ -255,7 +255,7 @@ internal class TerminalBlocksDecorator(
       val g2 = g.create()
       try {
         val visibleArea = inlay.editor.scrollingModel.visibleArea
-        val textX = visibleArea.x + visibleArea.width - targetRegion.width - JBUI.scale(TerminalUi.cornerToBlockInset + TerminalUi.exitCodeRightInset)
+        val textX = visibleArea.x + visibleArea.width - targetRegion.width - JBUI.scale(TerminalUi.cornerToBlockInset + TerminalUi.exitCodeRightInset + 3)
         val fontMetrics = g2.getFontMetrics(font)
         val baseLine = SimpleColoredComponent.getTextBaseLine(fontMetrics, targetRegion.height)
         g2.font = font
@@ -290,7 +290,7 @@ internal class TerminalBlocksDecorator(
   private class TerminalRightAreaRenderer : CustomHighlighterRenderer {
     override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
       val visibleArea = editor.scrollingModel.visibleArea
-      val width = JBUI.scale(TerminalUi.cornerToBlockInset)
+      val width = JBUI.scale(TerminalUi.cornerToBlockInset + 3)
       val oldColor = g.color
       try {
         g.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
