@@ -16,7 +16,7 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 3);
+        toggleBreakpoint(getFilePath(getScriptName()), 7);
         setWaitForTermination(false);
       }
 

@@ -73,8 +73,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 3);
-        XDebuggerTestUtil.setBreakpointCondition(getProject(), 3, "i == 1 or i == 11 or i == 111");
+        toggleBreakpoint(getFilePath(getScriptName()), 7);
+        XDebuggerTestUtil.setBreakpointCondition(getProject(), 7, "i == 1 or i == 11 or i == 111");
         setWaitForTermination(false);
       }
 
@@ -122,8 +122,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 3);
-        XDebuggerTestUtil.setBreakpointLogExpression(getProject(), 3, "'i = %d'%i");
+        toggleBreakpoint(getFilePath(getScriptName()), 7);
+        XDebuggerTestUtil.setBreakpointLogExpression(getProject(), 7, "'i = %d'%i");
         setWaitForTermination(false);
       }
 
@@ -709,7 +709,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getScriptName(), 2);
+        toggleBreakpoint(getScriptName(), 6);
       }
 
       @Override
@@ -717,16 +717,16 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("i").hasValue("0");
         // remove break on line 2
-        removeBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 6);
         resume();
         // add break on line 2
-        toggleBreakpoint(getScriptName(), 2);
+        toggleBreakpoint(getScriptName(), 6);
         // check if break on line 2 works
         waitForPause();
         // remove break on line 2 again
-        removeBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 6);
         // add break on line 3
-        toggleBreakpoint(getScriptName(), 3);
+        toggleBreakpoint(getScriptName(), 7);
         resume();
         // check if break on line 3 works
         waitForPause();
@@ -840,7 +840,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new BreakpointStopAndEvalTask("test1") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath("test1.py"), 3);
+        toggleBreakpoint(getFilePath("test1.py"), 7);
         setScriptName("test1");
         setWaitForTermination(false);
 
@@ -1492,7 +1492,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 2);
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
       }
 
       @Override
