@@ -938,6 +938,8 @@
     <applicationActivity implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
+    <statistics.applicationUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.ToolkitInfoCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
     <statistics.projectUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.project.IntelliJProjectUsageCollector"/>
