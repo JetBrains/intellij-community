@@ -92,6 +92,20 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
+  public @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner,
+                                                              @NotNull Collection<String> annotationFQNs) {
+    List<AnnotationData> result = collectExternalAnnotations(listOwner);
+    if (result.isEmpty()) return Collections.emptyList();
+    SmartList<PsiAnnotation> annotations = new SmartList<>();
+    for (AnnotationData data : result) {
+      if (annotationFQNs.contains(data.annotationClassFqName)) {
+        annotations.add(data.getAnnotation(this));
+      }
+    }
+    return annotations;
+  }
+
+  @Override
   public @Nullable List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass, @NotNull String annotationFQN) {
     if (aClass.getConstructors().length > 0) {
       return null;

@@ -128,29 +128,21 @@ public class AnnotationUtil {
         annotationNames -> {
           PsiUtilCore.ensureValid(listOwner);
           final Project project = listOwner.getProject();
-          List<PsiAnnotation> annotations = null;
           final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
-          for (String annotationName : annotationNames) {
-            List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
-            if (!externalAnnotations.isEmpty()) {
-              if (annotations == null) {
-                annotations = new SmartList<>();
-              }
-              annotations.addAll(externalAnnotations);
-            }
-          }
+          List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationNames);
 
           final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
+          List<PsiAnnotation> inferredAnnotations = null;
           for (String annotationName : annotationNames) {
             final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
             if (annotation != null) {
-              if (annotations == null) {
-                annotations = new SmartList<>();
+              if (inferredAnnotations == null) {
+                inferredAnnotations = new SmartList<>();
               }
-              annotations.add(annotation);
+              inferredAnnotations.add(annotation);
             }
           }
-          return annotations;
+          return inferredAnnotations == null ? externalAnnotations : ContainerUtil.concat(externalAnnotations, inferredAnnotations);
         }
       );
       return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);

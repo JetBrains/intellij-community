@@ -4,10 +4,13 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ExternalAnnotationsManager {
@@ -54,7 +57,7 @@ public abstract class ExternalAnnotationsManager {
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
    * associated with {@code listOwner}.
-   *
+   * <p>
    * Multiple results may be returned for repeatable annotations and annotations
    * from several external annotations roots.
    *
@@ -63,6 +66,25 @@ public abstract class ExternalAnnotationsManager {
    * @return external annotations of the {@code listOwner}
    */
   public abstract @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+
+  /**
+   * Returns external annotations with fully qualified names contained in {@code annotationFQNs}
+   * associated with {@code listOwner}.
+   * <p>
+   * Multiple results may be returned for repeatable annotations and annotations
+   * from several external annotations roots.
+   *
+   * @param listOwner API element to return external annotations of
+   * @param annotationFQNs collection of fully qualified names of the annotations to search for
+   * @return external annotations of the {@code listOwner}
+   */
+  public @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationFQNs) {
+    PsiAnnotation[] annotations = findExternalAnnotations(listOwner);
+    //There's an implementation in Kotlin tests which violates the new contract of findExternalAnnotations(listOwner) and returns null
+    //noinspection ConstantValue
+    return annotations == null ? Collections.emptyList() : 
+           ContainerUtil.filter(annotations, annotation -> annotationFQNs.contains(annotation.getQualifiedName()));
+  }
 
 
   // Method used in Kotlin plugin
