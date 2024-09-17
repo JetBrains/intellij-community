@@ -200,7 +200,7 @@ object DebuggerDiagnosticsUtil {
             add(createThreadsAttachment(process))
           }
           add(Attachment("IDE_thread_dump.txt", noErr { ThreadDumper.dumpThreadsToString() }))
-          addAll(process.suspendManager.eventContexts.map { it.toAttachment() })
+          add(Attachment("context_detailed_information.txt", process.suspendManager.eventContexts.joinToString("\n") { it.toAttachmentString() }))
         }
       }
       finally {
