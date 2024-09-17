@@ -250,7 +250,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     context.customModuleComponentSerializers.forEach {
-      it.loadComponent(moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
+      val componentTag = reader.loadComponent(fileUrl.url, it.componentName)
+      if (componentTag != null) {
+        it.loadComponent(moduleEntity, componentTag, errorReporter, virtualFileManager)
+      }
     }
 
     runCatchingXmlIssues(exceptionsCollector) {
@@ -695,7 +698,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       saveRootManagerElement(module, customImlData, entities, writer)
     }
     for (it in context.customModuleComponentSerializers) {
-      it.saveComponent(module, fileUrl, writer)
+      val componentTag = it.saveComponent(module)
+      if (componentTag != null) {
+        writer.saveComponent(fileUrl.url, it.componentName, componentTag)
+      }
     }
     saveTestModuleProperty(module, writer)
   }
