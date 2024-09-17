@@ -28,6 +28,7 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   val includeNonProjectItemsCheckBox = checkBox { byAccessibleName("Include non-project items") }
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
   val searchEverywhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
+  val openInRightSplitActionLink = x { byAccessibleName("Open In Right Split") }
 
   fun invokeSelectAction() {
     invokeActionWithShortcut("[pressed ENTER]")

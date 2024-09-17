@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
@@ -76,6 +77,10 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   fun hoverItemAtIndex(index: Int) {
     val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
     moveMouse(Point(cellBounds.getX().toInt(), cellBounds.getY().toInt()))
+  }
+
+  fun invokeSelectNextRowAction() {
+    driver.invokeAction("List-selectNextRow", component = component)
   }
 
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
