@@ -27,13 +27,10 @@ class MPSProperties : JetBrainsProductProperties() {
     init {
         platformPrefix = "Idea"
         applicationInfoModule = "intellij.mps.resources"
-        toolsJarRequired = true
         scrambleMainJar = false
         /* main module for JetBrains Client isn't available in the intellij-community project,
            so this property is set only when PyCharm Community is built from the intellij-ultimate project. */
         embeddedJetBrainsClientMainModule = null
-
-        productLayout.mainModules = listOf("intellij.idea.community.main")
 
         productLayout.productImplementationModules = listOf(
             "intellij.platform.main",
@@ -68,7 +65,7 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
 
-        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin() + CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community")
+        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin()
         productLayout.pluginLayouts = pluginLayouts.toPersistentList()
 
         productLayout.addPlatformSpec { layout, _ ->
@@ -122,9 +119,10 @@ class MPSProperties : JetBrainsProductProperties() {
 
         // copy mac executable
         Files.createDirectories(Path.of("$targetDirectory/build/resources"))
+        val (execPath, _) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, context.options.targetArch ?: JvmArchitecture.x64)
         Files.copy(
-            Path.of("$communityHome/platform/build-scripts/resources/mac/Contents/MacOS/executable"),
-            Path.of("$targetDirectory/build/resources/mps"),
+            execPath,
+            Path.of("$targetDirectory/build/resources/$baseFileName"),
             StandardCopyOption.COPY_ATTRIBUTES)
 
         // copy jre version
