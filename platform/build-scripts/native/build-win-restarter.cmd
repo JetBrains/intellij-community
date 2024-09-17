@@ -11,7 +11,7 @@ set BUILD_ID=%3
 set SCRIPT_DIR=%~dp0
 for %%F in ("%SCRIPT_DIR%..\..\..\..") do set TOP=%%~dpF
 
-set RUST_DIR=%TOP%prebuilts\rust\windows-x86\1.78.0
+set RUST_DIR=%TOP%prebuilts\rust\windows-x86\1.81.0
 set RUSTC=%RUST_DIR%\bin\rustc.exe
 set CARGO=%RUST_DIR%\bin\cargo.exe
 
