@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent.fs.copy
+package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.path.EelPath
@@ -466,7 +466,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentPosixFileInfo,
-    IjentFileSystemApi.StatError>
+    StatError>
 
 
   /**
@@ -533,5 +533,5 @@ interface IjentFileSystemWindowsApi : IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentWindowsFileInfo,
-    IjentFileSystemApi.StatError>
+    StatError>
 }
