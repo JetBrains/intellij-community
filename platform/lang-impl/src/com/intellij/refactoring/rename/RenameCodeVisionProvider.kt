@@ -7,6 +7,7 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
+import com.intellij.codeInsight.multiverse.EditorContextManager.Companion.getInstance
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.command.CommandProcessor
@@ -16,10 +17,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.*
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
@@ -70,8 +68,8 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
 
   @RequiresReadLock
   private fun getCodeVisionState(editor: Editor, project: Project): CodeVisionState {
-    val file = editor.virtualFile?.findPsiFile(project)
-
+    val context = getInstance(project).getEditorContexts(editor).mainContext
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document, context)
     if (file != null && !RefactoringCodeVisionSupport.isRenameCodeVisionEnabled(file.fileType)) {
       return CodeVisionState.READY_EMPTY
     }
