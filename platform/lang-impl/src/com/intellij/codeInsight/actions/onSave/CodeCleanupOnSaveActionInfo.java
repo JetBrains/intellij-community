@@ -8,6 +8,7 @@ import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.ui.components.ActionLink;
@@ -97,7 +98,9 @@ public final class CodeCleanupOnSaveActionInfo extends ActionOnSaveInfoBase {
       @Override
       protected @Nls @NotNull String itemToString(ProfileOption item) {
         if (item.profileName == null) return CodeInsightBundle.message("actions.on.save.page.code.cleanup.project.profile");
-        return CodeInsightBundle.message("actions.on.save.page.code.cleanup.profile", item.profileName);
+        return StringUtil.shortenTextWithEllipsis(
+          CodeInsightBundle.message("actions.on.save.page.code.cleanup.profile", item.profileName), 40, 0
+        );
       }
 
       @Override
