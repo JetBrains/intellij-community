@@ -30,4 +30,7 @@ public class MavenFilteredJarConfiguration {
 
   @Tag("jarOutput")
   public @NotNull String jarOutput;
+
+  @Tag("name")
+  public @NotNull String name;
 }
