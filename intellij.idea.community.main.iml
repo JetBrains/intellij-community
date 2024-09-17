@@ -224,5 +224,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.charts" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.split" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.terminal" scope="RUNTIME" />
   </component>
 </module>

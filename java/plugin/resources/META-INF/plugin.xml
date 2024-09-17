@@ -38,6 +38,7 @@
     <module name="intellij.java.unscramble"/>
     <module name="intellij.java.vcs"/>
     <module name="intellij.java.compiler.charts"/>
+    <module name="intellij.java.terminal"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>

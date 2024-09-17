@@ -60,6 +60,7 @@ object JavaPluginLayout {
       spec.withModules(listOf(
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
+        "intellij.java.terminal",
         "intellij.java.debugger.memory.agent",
         "intellij.java.execution.impl",
         "intellij.java.ui",

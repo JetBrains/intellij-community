@@ -68,6 +68,7 @@
   contentModules:
   - name: intellij.java.performancePlugin
   - name: intellij.java.compiler.charts
+  - name: intellij.java.terminal
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
