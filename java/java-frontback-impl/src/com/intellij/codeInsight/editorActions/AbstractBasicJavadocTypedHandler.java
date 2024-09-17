@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (isJavaFile(file)) {
       if (!insertClosingTagIfNecessary(c, project, editor, file)) {
-        adjustStartTagIndent(c, editor, file);
+        adjustStartIndent(c, editor, file);
       }
     }
     return Result.CONTINUE;
@@ -42,7 +43,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
 
   public abstract boolean isJavaFile(@Nullable PsiFile file);
 
-  private static void adjustStartTagIndent(char c, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static void adjustStartIndent(char c, @NotNull Editor editor, @NotNull PsiFile file) {
     if (c == '@') {
       final int offset = editor.getCaretModel().getOffset();
       PsiElement currElement = file.findElementAt(offset);
@@ -50,6 +51,21 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
         PsiElement prev = currElement.getPrevSibling();
         if (prev != null && prev.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
           editor.getDocument().replaceString(currElement.getTextRange().getStartOffset(), offset - 1, " ");
+        }
+      }
+      return;
+    }
+
+    if (c == '/') {
+      // Insert a single space when adding the initial leading slashes
+      final CaretModel caretModel = editor.getCaretModel();
+      final int caretOffset = caretModel.getOffset();
+      PsiElement currElement = file.findElementAt(caretOffset - 1);
+      if (currElement instanceof PsiWhiteSpace) {
+        PsiElement prev = currElement.getPrevSibling();
+        if (prev != null && prev.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT && prev.getText().equals("//")) {
+          editor.getDocument().insertString(prev.getTextRange().getEndOffset() + 1, " ");
+          caretModel.moveToOffset(caretOffset + 1);
         }
       }
     }
