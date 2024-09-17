@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.impl.heavy.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
@@ -370,10 +371,38 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
+  public void afterClose_storageAccessorsMustThrowException() throws IOException {
+    storage.close();
+    assertThrows("Storage must throw exception after close()",
+                 ClosedStorageException.class,
+                 () -> storage.sizeInBytes()
+    );
+    assertThrows("Storage must throw exception after close()",
+                 ClosedStorageException.class,
+                 () -> storage.getStorageVersion()
+    );
+    assertThrows("Storage must throw exception after close()",
+                 ClosedStorageException.class,
+                 () -> storage.getDataFormatVersion()
+    );
+    assertThrows("Storage must throw exception after close()",
+                 ClosedStorageException.class,
+                 () -> storage.liveRecordsCount()
+    );
+  }
+
+  @Test
+  public void afterClose_toStringIsStillSafeToCall() throws IOException {
+    storage.close();
+    assertNotNull("Ensure .toString() could be called after .close()",
+                  storage.toString());
+  }
+
+  @Test
   public void afterCloseAndClean_noFilesRemain() throws IOException {
     storage.closeAndClean();
     assertFalse(
-      "No ["+storagePath+"] must remain after .closeAndClean()",
+      "No [" + storagePath + "] must remain after .closeAndClean()",
       Files.exists(storagePath)
     );
   }

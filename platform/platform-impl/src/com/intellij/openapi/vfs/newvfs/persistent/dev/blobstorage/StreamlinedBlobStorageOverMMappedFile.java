@@ -3,9 +3,9 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
@@ -123,17 +123,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   }
 
   @Override
-  public int getStorageVersion() {
+  public int getStorageVersion() throws IOException {
     return readHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET);
   }
 
   @Override
-  public int getDataFormatVersion() {
+  public int getDataFormatVersion() throws IOException {
     return readHeaderInt(HeaderLayout.DATA_FORMAT_VERSION_OFFSET);
   }
 
   @Override
-  public void setDataFormatVersion(int expectedVersion) {
+  public void setDataFormatVersion(int expectedVersion) throws IOException {
     putHeaderInt(HeaderLayout.DATA_FORMAT_VERSION_OFFSET, expectedVersion);
   }
 
@@ -487,7 +487,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   }
 
   @Override
-  public long sizeInBytes() {
+  public long sizeInBytes() throws IOException {
     return actualLength();
   }
 
@@ -556,30 +556,30 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
   // === storage header accessors: ===
 
-  private int readHeaderInt(int offset) {
+  private int readHeaderInt(int offset) throws IOException {
     assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Integer.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Integer.BYTES) + "]";
-    return headerPage.rawPageBuffer().getInt(offset);
+    return headerPage().rawPageBuffer().getInt(offset);
   }
 
   private void putHeaderInt(int offset,
-                            int value) {
+                            int value) throws IOException {
     assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Integer.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Integer.BYTES) + "]";
-    headerPage.rawPageBuffer().putInt(offset, value);
+    headerPage().rawPageBuffer().putInt(offset, value);
   }
 
-  private long readHeaderLong(int offset) {
+  private long readHeaderLong(int offset) throws IOException {
     assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Long.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Long.BYTES) + "]";
-    return headerPage.rawPageBuffer().getLong(offset);
+    return headerPage().rawPageBuffer().getLong(offset);
   }
 
   private void putHeaderLong(int offset,
-                             long value) {
+                             long value) throws IOException {
     assert (0 <= offset && offset <= HeaderLayout.HEADER_SIZE - Long.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HeaderLayout.HEADER_SIZE - Long.BYTES) + "]";
-    headerPage.rawPageBuffer().putLong(offset, value);
+    headerPage().rawPageBuffer().putLong(offset, value);
   }
 
   /**
@@ -587,31 +587,34 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
    * File size is almost always larger than that because {@link MMappedFileStorage} pre-allocates each page
    * in advance.
    */
-  private long actualLength() {
+  private long actualLength() throws IOException {
     return idToOffset(nextRecordId());
   }
 
   @Override
-  protected int nextRecordId() {
-    if (headerPage == null) {
-      throw new AlreadyDisposedException("Storage is closed");
-    }
+  protected int nextRecordId() throws IOException {
+    Page headerPage = headerPage();
     ByteBuffer headerBuffer = headerPage.rawPageBuffer();
     return (int)INT_HANDLE.getVolatile(headerBuffer, HeaderLayout.NEXT_RECORD_ID_OFFSET);
   }
 
   //@GuardedBy(this)
   @Override
-  protected void updateNextRecordId(int nextRecordId) {
-    Page _headerPage = headerPage;
-    if (_headerPage == null) {
-      throw new AlreadyDisposedException("Storage is closed");
-    }
+  protected void updateNextRecordId(int nextRecordId) throws IOException {
     if (nextRecordId <= NULL_ID) {
       throw new IllegalArgumentException("nextRecordId(=" + nextRecordId + ") must be >0");
     }
-    ByteBuffer headerBuffer = _headerPage.rawPageBuffer();
+    Page headerPage = headerPage();
+    ByteBuffer headerBuffer = headerPage.rawPageBuffer();
     INT_HANDLE.setVolatile(headerBuffer, HeaderLayout.NEXT_RECORD_ID_OFFSET, nextRecordId);
+  }
+
+  private @NotNull Page headerPage() throws ClosedStorageException {
+    Page _headerPage = this.headerPage;
+    if (_headerPage == null) {
+      throw new ClosedStorageException("Storage is closed");
+    }
+    return _headerPage;
   }
 
   // === storage records accessors: ===

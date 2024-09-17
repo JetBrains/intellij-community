@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
@@ -583,7 +584,8 @@ public final class StreamlinedBlobStorageOverPagedStorage extends StreamlinedBlo
 
 
   @Override
-  public long sizeInBytes() {
+  public long sizeInBytes() throws ClosedStorageException {
+    checkNotClosed();
     return pagedStorage.length();
   }
 

@@ -113,6 +113,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     public static final int DATA_FORMAT_VERSION_OFFSET                  = 48;  //int32
 
 
+    @SuppressWarnings("unused")
     public static final int FIRST_UNUSED_FIELD_OFFSET                   = 52;
 
     //Bytes [52..64] is reserved for the generations to come:
@@ -233,39 +234,50 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   //monitoring:
 
   @Override
-  public int liveRecordsCount() {
+  public int liveRecordsCount() throws ClosedStorageException {
+    checkNotClosed();
     return recordsAllocated.get() - recordsDeleted.get() - recordsRelocated.get();
   }
 
   @Override
-  public int recordsAllocated() {
+  public int recordsAllocated() throws ClosedStorageException {
+    checkNotClosed();
     return recordsAllocated.get();
   }
 
   @Override
-  public int recordsRelocated() {
+  public int recordsRelocated() throws ClosedStorageException {
+    checkNotClosed();
     return recordsRelocated.get();
   }
 
   @Override
-  public int recordsDeleted() {
+  public int recordsDeleted() throws ClosedStorageException {
+    checkNotClosed();
     return recordsDeleted.get();
   }
 
   @Override
-  public long totalLiveRecordsPayloadBytes() {
+  public long totalLiveRecordsPayloadBytes() throws ClosedStorageException {
+    checkNotClosed();
     return totalLiveRecordsPayloadBytes.get();
   }
 
   @Override
-  public long totalLiveRecordsCapacityBytes() {
+  public long totalLiveRecordsCapacityBytes() throws ClosedStorageException {
+    checkNotClosed();
     return totalLiveRecordsCapacityBytes.get();
   }
 
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "[" + storagePath() + "]{nextRecordId: " + nextRecordId() + '}';
+    try {
+      return getClass().getSimpleName() + "[" + storagePath() + "]{nextRecordId: " + nextRecordId() + '}';
+    }
+    catch (IOException e) {
+      return getClass().getSimpleName() + "[" + storagePath() + "]{closed}";
+    }
   }
 
   //==================== implementation: ==========================================================================
@@ -314,14 +326,15 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     return Math.toIntExact(offsetInFile % pageSize);
   }
 
-  /** Field could be read as volatile, but writes are protected with this intrinsic lock */
-  protected int nextRecordId() {
+  /** @return first un-allocated id, next-to-be-allocated. Read operation: i.e. doesn't change anything. */
+  protected int nextRecordId() throws IOException {
+    //Field could be read as volatile, but writes are protected with this intrinsic lock
     return nextRecordId;
   }
 
   /** Must be called under 'this' lock */
   //@GuardedBy(this)
-  protected void updateNextRecordId(int nextRecordId) {
+  protected void updateNextRecordId(int nextRecordId) throws IOException {
     if (nextRecordId <= NULL_ID) {
       throw new IllegalArgumentException("nextRecordId(=" + nextRecordId + ") must be >0");
     }
@@ -374,7 +387,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
                                                int pageSize) throws IOException;
 
 
-  protected void checkRecordIdExists(int recordId) throws IllegalArgumentException {
+  protected void checkRecordIdExists(int recordId) throws IllegalArgumentException, IOException {
     if (!isExistingRecordId(recordId)) {
       throw new IllegalArgumentException("recordId(" + recordId + ") is not valid: allocated ids are in (0, " + nextRecordId() + ")");
     }
@@ -382,7 +395,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   protected void checkRedirectToId(int startingRecordId,
                                    int currentRecordId,
-                                   int redirectToId) throws RecordAlreadyDeletedException, CorruptedException {
+                                   int redirectToId) throws RecordAlreadyDeletedException, IOException {
     if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
       throw new RecordAlreadyDeletedException("Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted");
     }
@@ -397,7 +410,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
    * @return true if record with recordId is already allocated.
    * It doesn't mean the recordId is valid, though -- it could point to the middle of some record.
    */
-  protected boolean isRecordIdAllocated(int recordId) {
+  protected boolean isRecordIdAllocated(int recordId) throws IOException {
     return recordId < nextRecordId();
   }
 
@@ -405,7 +418,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
    * @return true if record with recordId is in the range of existing record ids.
    * It doesn't mean the recordId is valid, though -- it could point to the middle of some record.
    */
-  protected boolean isExistingRecordId(int recordId) {
+  protected boolean isExistingRecordId(int recordId) throws IOException {
     return isValidRecordId(recordId) && isRecordIdAllocated(recordId);
   }
 
@@ -517,11 +530,16 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
       .build();
     return meter.batchCallback(
       () -> {
-        recordsAllocated.record(storage.recordsAllocated(), attributes);
-        recordsRelocated.record(storage.recordsRelocated(), attributes);
-        recordsDeleted.record(storage.recordsDeleted(), attributes);
-        totalLiveRecordsPayloadBytes.record(storage.totalLiveRecordsPayloadBytes(), attributes);
-        totalLiveRecordsCapacityBytes.record(storage.totalLiveRecordsCapacityBytes(), attributes);
+        try {
+          recordsAllocated.record(storage.recordsAllocated(), attributes);
+          recordsRelocated.record(storage.recordsRelocated(), attributes);
+          recordsDeleted.record(storage.recordsDeleted(), attributes);
+          totalLiveRecordsPayloadBytes.record(storage.totalLiveRecordsPayloadBytes(), attributes);
+          totalLiveRecordsCapacityBytes.record(storage.totalLiveRecordsCapacityBytes(), attributes);
+        }
+        catch (ClosedStorageException e) {
+          //just skip
+        }
       },
       recordsAllocated, recordsRelocated, recordsDeleted,
       totalLiveRecordsPayloadBytes, totalLiveRecordsCapacityBytes

@@ -153,7 +153,7 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
 
   boolean isRecordActual(int recordActualLength);
 
-  int liveRecordsCount();
+  int liveRecordsCount() throws IOException;
 
   /**
    * Total size of data in a storage -- including metadata, reserved and deleted
@@ -161,7 +161,7 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    * Not guaranteed to be == actual file size on disk -- disk file could be pre-allocated
    * in advance.
    */
-  long sizeInBytes();
+  long sizeInBytes() throws IOException;
 
   @Override
   boolean isDirty();

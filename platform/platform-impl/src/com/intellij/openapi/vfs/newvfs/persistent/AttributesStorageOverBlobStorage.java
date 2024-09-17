@@ -224,7 +224,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
   }
 
   @Override
-  public boolean isEmpty() {
+  public boolean isEmpty() throws IOException {
     return storage.liveRecordsCount() == 0;
   }
 
