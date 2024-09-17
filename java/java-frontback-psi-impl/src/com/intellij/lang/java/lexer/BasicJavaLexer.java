@@ -145,16 +145,9 @@ public class BasicJavaLexer extends LexerBase {
           if (nextChar == '/') {
             int l2 = mySymbolLength;
             if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '/') {
-              int l3 = mySymbolLength;
-              if(myBufferIndex + l1 + l2 + l3 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2 + l3) == '/') {
-                // Long end of line comment
-                myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
-                myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + l2);
-              } else {
-                // Java 23 Markdown comments
-                myTokenType = myJavaDocElementTypeContainer.DOC_COMMENT;
-                myTokenEndOffset = getClosingMarkdownComment(myBufferIndex + l1 + l2);
-              }
+              // Java 23 Markdown comments
+              myTokenType = myJavaDocElementTypeContainer.DOC_COMMENT;
+              myTokenEndOffset = getClosingMarkdownComment(myBufferIndex + l1 + l2);
             } else {
               myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
               myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + l2);
