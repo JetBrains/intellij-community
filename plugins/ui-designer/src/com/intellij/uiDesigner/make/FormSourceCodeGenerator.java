@@ -977,11 +977,10 @@ public final class FormSourceCodeGenerator {
   }
 
   private void generateClientProperties(final LwComponent component, final String variable) throws CodeGenerationException {
-    HashMap props = component.getDelegeeClientProperties();
-    for (final Object o : props.entrySet()) {
-      Map.Entry e = (Map.Entry)o;
+    HashMap<String, Object> props = component.getDelegeeClientProperties();
+    for (final Map.Entry<String, Object> e : props.entrySet()) {
       startMethodCall(variable, "putClientProperty");
-      push((String) e.getKey());
+      push(e.getKey());
 
       Object value = e.getValue();
       if (value instanceof StringDescriptor) {

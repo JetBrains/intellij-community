@@ -10,7 +10,7 @@ public final class MethodInvoker {
   // TODO: may leak objects here
   static ThreadLocal<Object> returnValue = new ThreadLocal<>();
 
-  public static Object invoke(Class cls, Object obj, String name, Class[] parameterTypes, Object[] args)
+  public static Object invoke(Class<?> cls, Object obj, String name, Class<?>[] parameterTypes, Object[] args)
     throws Throwable {
     ArrayList<Method> methods = new ArrayList<>();
     // TODO: better collect methods lazily
@@ -40,17 +40,17 @@ public final class MethodInvoker {
   }
 
   //TODO: avoid recursion
-  private static void addMatchingMethods(List<Method> methods, Class cls, String name, Class[] parameterTypes) {
+  private static void addMatchingMethods(List<Method> methods, Class<?> cls, String name, Class<?>[] parameterTypes) {
     try {
       methods.add(cls.getDeclaredMethod(name, parameterTypes));
     }
     catch (NoSuchMethodException ignored) {
     }
-    Class superclass = cls.getSuperclass();
+    Class<?> superclass = cls.getSuperclass();
     if (superclass != null) {
       addMatchingMethods(methods, superclass, name, parameterTypes);
     }
-    for (Class anInterface : cls.getInterfaces()) {
+    for (Class<?> anInterface : cls.getInterfaces()) {
       addMatchingMethods(methods, anInterface, name, parameterTypes);
     }
   }

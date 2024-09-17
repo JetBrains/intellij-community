@@ -37,7 +37,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return myList;
   }
 
-  protected JList myList;
+  protected JList<Object> myList;
   protected JavaVisibilityPanel myVisibilityPanel;
   protected final @NlsContexts.DialogTitle String myRefactoringName;
 
@@ -73,8 +73,8 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return hBox;
   }
 
-  protected JList createTargetVariableChooser() {
-    final JList list = new JBList(new MyListModel());
+  protected JList<Object> createTargetVariableChooser() {
+    final JList<Object> list = new JBList<>(new MyListModel());
     list.setCellRenderer(new MyListCellRenderer());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
@@ -88,7 +88,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return list;
   }
 
-  protected void updateOnChanged(JList list) {
+  protected void updateOnChanged(JList<?> list) {
     getOKAction().setEnabled(!list.getSelectionModel().isSelectionEmpty());
   }
 
@@ -120,7 +120,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return true;
   }
 
-  private class MyListModel extends AbstractListModel {
+  private class MyListModel extends AbstractListModel<Object> {
     @Override
     public int getSize() {
       return myVariables.length;

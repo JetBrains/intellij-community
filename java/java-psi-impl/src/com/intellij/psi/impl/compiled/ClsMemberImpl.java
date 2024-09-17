@@ -12,7 +12,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ClsMemberImpl<T extends PsiMemberStub> extends ClsRepositoryPsiElement<T> implements PsiDocCommentOwner, PsiNameIdentifierOwner {
+public abstract class ClsMemberImpl<T extends PsiMemberStub<?>> extends ClsRepositoryPsiElement<T> implements PsiDocCommentOwner, PsiNameIdentifierOwner {
   private final NotNullLazyValue<PsiDocComment> myDocComment;
   private final NotNullLazyValue<PsiIdentifier> myNameIdentifier;
 
