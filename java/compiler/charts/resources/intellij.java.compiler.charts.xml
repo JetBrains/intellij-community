@@ -20,6 +20,8 @@
               icon="AllIcons.Graph.ZoomOut" use-shortcut-of="CollapseAll"/>
       <action id="CompilationChartsZoomInAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomInAction"
               icon="AllIcons.Graph.ZoomIn" use-shortcut-of="ExpandAll"/>
+      <action id="CompilationChartsScrollToEndAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ScrollToEndAction"
+              icon="AllIcons.Actions.Forward"/>
     </group>
   </actions>
 </idea-plugin>

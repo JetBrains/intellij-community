@@ -82,14 +82,14 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.cpuMemory = filter
       diagrams.smartDraw(true, false)
     }
-
-    vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
-      rightAdhesionScrollBarListener.scrollToEnd()
-    }
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[COMPILATION_CHARTS_VIEW_KEY] = this
+  }
+
+  internal fun scrollToEnd() {
+    rightAdhesionScrollBarListener.scrollToEnd()
   }
 
   internal fun zoom(zoomType: ZoomEvent) {

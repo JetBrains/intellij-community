@@ -109,7 +109,6 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     val actionGroup = ActionManager.getInstance().getAction("CompilationChartsActionGroup") as? DefaultActionGroup
     if (actionGroup != null) {
       actionGroup.addAction(CompilationChartsStatsActionHolder(vm), Constraints.FIRST)
-      actionGroup.addAction(ScrollToEndAction(vm), Constraints.LAST)
       val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_NAME, actionGroup, true).apply {
         targetComponent = this@ActionPanel
       }
@@ -139,11 +138,10 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     }
   }
 
-  private class ScrollToEndAction(private val vm: CompilationChartsViewModel) : DumbAwareAction(
-    CompilationChartsBundle.message("charts.scroll.to.end.action.title"),
-    CompilationChartsBundle.message("charts.scroll.to.end.action.description"),
-    AllIcons.Actions.Forward) {
-    override fun actionPerformed(e: AnActionEvent) = vm.requestScrollToEnd()
+  internal class ScrollToEndAction : CompilationChartsActionBase() {
+    override fun actionPerformed(e: AnActionEvent) {
+      e.getData(COMPILATION_CHARTS_VIEW_KEY)?.scrollToEnd()
+    }
   }
 
   internal abstract class CompilationChartsActionBase: DumbAwareAction() {
