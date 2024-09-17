@@ -46,6 +46,11 @@ public interface GradleProjectSettingsControlBuilder {
   GradleProjectSettingsControlBuilder addGradleJdkComponents(JPanel content, int indentLevel);
 
   /**
+   * Add Gradle Daemon JVM criteria component to the panel
+   */
+  GradleProjectSettingsControlBuilder addGradleDaemonJvmCriteriaComponents(JPanel content, int indentLevel);
+
+  /**
    * Add Gradle distribution chooser component to the panel
    */
   GradleProjectSettingsControlBuilder addGradleChooserComponents(JPanel content, int indentLevel);
@@ -53,6 +58,8 @@ public interface GradleProjectSettingsControlBuilder {
   boolean validate(GradleProjectSettings settings) throws ConfigurationException;
 
   void apply(GradleProjectSettings settings);
+
+  void applyDaemonJvmCriteria(Project project, String externalProjectPath, String version, String vendor);
 
   /**
    * check if something was changed against initial settings
