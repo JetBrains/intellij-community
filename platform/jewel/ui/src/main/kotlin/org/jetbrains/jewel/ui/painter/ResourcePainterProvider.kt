@@ -10,9 +10,6 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.loadImageBitmap
-import androidx.compose.ui.res.loadSvgPainter
-import androidx.compose.ui.res.loadXmlImageVector
 import androidx.compose.ui.unit.Density
 import java.io.IOException
 import java.io.InputStream
@@ -27,11 +24,14 @@ import javax.xml.transform.TransformerException
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.decodeToImageBitmap
+import org.jetbrains.compose.resources.decodeToImageVector
+import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.w3c.dom.Document
-import org.xml.sax.InputSource
 
 private val errorPainter = ColorPainter(Color.Magenta)
 
@@ -137,6 +137,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
         return null
     }
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     private fun createSvgPainter(scope: Scope, url: URL): Painter =
         tryLoadingResource(
@@ -144,7 +145,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
             loadingAction = { resourceUrl ->
                 patchSvg(scope, url.openStream(), scope.acceptedHints).use { inputStream ->
                     logger.debug("Loading icon $basePath(${scope.acceptedHints.joinToString()}) from $resourceUrl")
-                    loadSvgPainter(inputStream, scope)
+                    inputStream.readAllBytes().decodeToSvgPainter(scope)
                 }
             },
             paintAction = { it },
@@ -171,22 +172,24 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
         }
     }
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     private fun createVectorDrawablePainter(scope: Scope, url: URL): Painter =
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
-                resourceUrl.openStream().use { loadXmlImageVector(InputSource(it), scope) }
+                resourceUrl.openStream().use { inputStream -> inputStream.readAllBytes().decodeToImageVector(scope) }
             },
             paintAction = { rememberVectorPainter(it) },
         )
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     private fun createBitmapPainter(url: URL) =
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
-                val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
+                val bitmap = resourceUrl.openStream().use { it.readAllBytes().decodeToImageBitmap() }
                 BitmapPainter(bitmap)
             },
             paintAction = { it },

@@ -22,24 +22,22 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.ResourceLoader
-import androidx.compose.ui.res.loadImageBitmap
-import androidx.compose.ui.res.loadSvgPainter
-import androidx.compose.ui.res.loadXmlImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import java.io.InputStream
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.decodeToImageBitmap
+import org.jetbrains.compose.resources.decodeToImageVector
+import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.util.thenIf
-import org.xml.sax.InputSource
 
 @Deprecated(
     "Use the IconKey-based API instead",
@@ -310,37 +308,40 @@ public fun Icon(
 }
 
 @Composable
-public fun painterResource(resourcePath: String, loader: ResourceLoader): Painter =
+public fun painterResource(resourcePath: String): Painter =
     when (resourcePath.substringAfterLast(".").lowercase()) {
-        "svg" -> rememberSvgResource(resourcePath, loader)
-        "xml" -> rememberVectorXmlResource(resourcePath, loader)
-        else -> rememberBitmapResource(resourcePath, loader)
+        "svg" -> rememberSvgResource(resourcePath)
+        "xml" -> rememberVectorXmlResource(resourcePath)
+        else -> rememberBitmapResource(resourcePath)
     }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
-private fun rememberSvgResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter {
+private fun rememberSvgResource(path: String): Painter {
     val density = LocalDensity.current
-    return remember(resourcePath, density, loader) { useResource(resourcePath, loader) { loadSvgPainter(it, density) } }
+    return remember(density, path) { readResourceBytes(path).decodeToSvgPainter(density) }
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
-private fun rememberVectorXmlResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter {
+private fun rememberVectorXmlResource(path: String): Painter {
     val density = LocalDensity.current
-    val image =
-        remember(resourcePath, density, loader) {
-            useResource(resourcePath, loader) { loadXmlImageVector(InputSource(it), density) }
+    val imageVector = remember(density, path) { readResourceBytes(path).decodeToImageVector(density) }
+    return rememberVectorPainter(imageVector)
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun rememberBitmapResource(path: String): Painter =
+    remember(path) { BitmapPainter(readResourceBytes(path).decodeToImageBitmap()) }
+
+private object ResourceLoader
+
+private fun readResourceBytes(resourcePath: String) =
+    checkNotNull(ResourceLoader.javaClass.classLoader.getResourceAsStream(resourcePath)) {
+            "Could not load resource $resourcePath: it does not exist or can't be read."
         }
-    return rememberVectorPainter(image)
-}
-
-@Composable
-private fun rememberBitmapResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter {
-    val image = remember(resourcePath) { useResource(resourcePath, loader, ::loadImageBitmap) }
-    return BitmapPainter(image)
-}
-
-private inline fun <T> useResource(resourcePath: String, loader: ResourceLoader, block: (InputStream) -> T): T =
-    loader.load(resourcePath).use(block)
+        .readAllBytes()
 
 private fun Modifier.defaultSizeFor(painter: Painter) =
     thenIf(painter.intrinsicSize == Size.Unspecified || painter.intrinsicSize.isInfinite()) { DefaultIconSizeModifier }

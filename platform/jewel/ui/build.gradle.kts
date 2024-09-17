@@ -16,6 +16,7 @@ private val composeVersion
 
 dependencies {
     api(projects.foundation)
+    implementation(compose.components.resources)
     iconGeneration(libs.intellijPlatform.util.ui)
     iconGeneration(libs.intellijPlatform.icons)
     testImplementation(compose.desktop.uiTestJUnit4)

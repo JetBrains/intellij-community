@@ -7,12 +7,11 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.res.ResourceLoader
-import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
-import java.io.InputStream
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.Inter
@@ -113,5 +112,13 @@ private fun processKeyShortcuts(keyEvent: KeyEvent, onNavigateTo: (String) -> Un
     }
 }
 
-private fun svgResource(resourcePath: String, loader: ResourceLoader = ResourceLoader.Default): Painter =
-    loader.load(resourcePath).use { stream: InputStream -> loadSvgPainter(stream, Density(1f)) }
+@Suppress("SameParameterValue")
+@OptIn(ExperimentalResourceApi::class)
+private fun svgResource(resourcePath: String): Painter =
+    checkNotNull(ResourceLoader.javaClass.classLoader.getResourceAsStream(resourcePath)) {
+            "Could not load resource $resourcePath: it does not exist or can't be read."
+        }
+        .readAllBytes()
+        .decodeToSvgPainter(Density(1f))
+
+private object ResourceLoader

@@ -16,6 +16,7 @@ dependencies {
     implementation(projects.markdown.extension.gfmAlerts)
     implementation(projects.markdown.extension.autolink)
     implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
+    implementation(compose.components.resources)
     implementation(libs.intellijPlatform.icons)
 }
 

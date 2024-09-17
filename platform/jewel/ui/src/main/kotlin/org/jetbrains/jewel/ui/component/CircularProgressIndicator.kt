@@ -16,12 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.theme.circularProgressStyle
@@ -57,6 +58,7 @@ public fun CircularProgressIndicatorBig(
     )
 }
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun CircularProgressIndicatorImpl(
     modifier: Modifier = Modifier,
@@ -73,7 +75,7 @@ private fun CircularProgressIndicatorImpl(
             value =
                 withContext(dispatcher) {
                     frameRetriever(style.color.takeOrElse { defaultColor }).map {
-                        loadSvgPainter(it.byteInputStream(), density)
+                        it.toByteArray().decodeToSvgPainter(density)
                     }
                 }
         }
