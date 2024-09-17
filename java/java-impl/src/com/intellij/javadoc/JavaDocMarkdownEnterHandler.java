@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
+  private static final String JAVADOC_MARKDOWN_PREFIX = "/// ";
+
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,
@@ -74,7 +76,9 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
     }
     Document document = editor.getDocument();
 
-    document.insertString(caretOffset.get(), "/// ");
+    insertEndOfCodeBlock(file, document, caretOffset);
+
+    document.insertString(caretOffset.get(), JAVADOC_MARKDOWN_PREFIX);
     caretAdvance.set(4);
 
     return Result.DefaultForceIndent;
@@ -91,5 +95,37 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
     if (docComment == null || !docComment.isMarkdownComment()) return false;
 
     return !JavaDocUtil.isDanglingDocComment(docComment, true);
+  }
+
+  /// Insert the end fence for a code block if none exists.
+  private static void insertEndOfCodeBlock(@NotNull PsiFile file,
+                                           @NotNull Document document,
+                                           @NotNull Ref<Integer> caretOffset) {
+    PsiElement caretElement = file.findElementAt(caretOffset.get() - 1);
+    if (caretElement == null) return;
+
+    PsiMarkdownCodeBlock codeBlock = PsiTreeUtil.getParentOfType(caretElement, PsiMarkdownCodeBlock.class);
+    if (codeBlock == null || codeBlock.isInline()) return;
+
+    // if there is only one fence, add another one into the element
+    PsiElement firstChild = codeBlock.getFirstChild();
+    if(firstChild == null) return;
+    PsiElement lastChild = codeBlock.getLastChild();
+    if (lastChild == null) return;
+    if (firstChild == lastChild || lastChild.getNode().getElementType() != JavaDocTokenType.DOC_CODE_FENCE) {
+
+      TextRange textRange = firstChild.getTextRange();
+      if (textRange.containsOffset(caretOffset.get())) {
+        // Move the offset to the end of the fence to avoid breaking it
+        caretOffset.set(textRange.getEndOffset());
+      }
+
+      // compute the indent and insert the fence
+      final int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset.get(), document);
+      int firstNonWsLineOffset = CharArrayUtil.shiftForward(document.getCharsSequence(), lineStartOffset, " \t");
+      document.insertString(caretOffset.get(),
+                            String.format("\n%s%s%s", StringUtil.repeatSymbol(' ', firstNonWsLineOffset - lineStartOffset),
+                                          JAVADOC_MARKDOWN_PREFIX, firstChild.getText()));
+    }
   }
 }
