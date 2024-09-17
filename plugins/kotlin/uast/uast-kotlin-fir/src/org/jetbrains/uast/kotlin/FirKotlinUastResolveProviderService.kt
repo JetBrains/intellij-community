@@ -305,6 +305,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
+        when (ktCallElement) {
+            is KtSuperTypeCallEntry, is KtAnnotationEntry, is KtConstructorDelegationCall -> return false
+            is KtCallExpression -> {}
+            else -> errorWithAttachment("Unexpected element: ${ktCallElement::class.simpleName}") {
+                withPsiEntry("callElement", ktCallElement)
+            }
+        }
+
         analyzeForUast(ktCallElement) {
             val ktCall = ktCallElement.resolveToCall()?.singleFunctionCallOrNull() ?: return false
             return ktCall.symbol.isExtension
