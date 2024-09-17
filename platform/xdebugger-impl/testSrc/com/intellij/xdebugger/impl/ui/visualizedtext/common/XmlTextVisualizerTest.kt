@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
+import com.intellij.idea.TestFor
+
 class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer()) {
 
   fun testSomeValidXml() {
@@ -44,5 +46,19 @@ class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer(
 
   fun testNotStandaloneXml() {
     checkNegative("Hello, <b>world</b>!")
+  }
+
+  @TestFor(issues = ["EA-1461644"])
+  fun testWithoutNamespaceForPrefix() {
+    checkNegative(
+      """
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <spml:modifyRequest>   
+          <modification>
+            <valueObject xsi:type="halo">
+            </valueObject>   
+          </modification>
+        </spml:modifyRequest>
+      """.trimIndent())
   }
 }

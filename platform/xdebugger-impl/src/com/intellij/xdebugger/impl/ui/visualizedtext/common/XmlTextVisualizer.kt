@@ -9,7 +9,6 @@ import com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerContentType
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedContentTabWithStats
 import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
-import org.w3c.dom.Document
 import org.xml.sax.InputSource
 import java.io.StringReader
 import java.io.StringWriter
@@ -21,8 +20,8 @@ import javax.xml.transform.stream.StreamResult
 
 internal class XmlTextVisualizer : TextValueVisualizer {
   override fun visualize(value: @NlsSafe String): List<VisualizedContentTab> {
-    val xml = tryParse(value)
-    if (xml == null) return emptyList()
+    val prettified = tryParseAndPrettify(value)
+    if (prettified == null) return emptyList()
 
     return listOf(object : TextBasedContentTab(), VisualizedContentTabWithStats {
       override val name
@@ -32,7 +31,7 @@ internal class XmlTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.XML
       override fun formatText() =
-        prettify(xml)
+        prettified
       override val fileType
         get() =
           // Right now we don't want to have an explicit static dependency here.
@@ -41,24 +40,24 @@ internal class XmlTextVisualizer : TextValueVisualizer {
     })
   }
 
-  private fun tryParse(value: String): Document? =
+  private fun tryParseAndPrettify(value: String): String? =
     try {
       val src = InputSource(StringReader(value))
       val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
       builder.setErrorHandler(null) // suppress printing to stdout errors like "[Fatal Error] :1:1: Content is not allowed in prolog."
-      builder.parse(src)
+      val document = builder.parse(src)
+
+      // Transforming Document to String could also throw exception in case of invalid input (e.g., EA-1461644).
+      // So do everything in advance to catch all errors beforehand.
+      val transformerFactory = TransformerFactory.newInstance()
+      val transformer = transformerFactory.newTransformer()
+      transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+
+      val out = StringWriter()
+      transformer.transform(DOMSource(document), StreamResult(out))
+      out.toString()
     } catch (_: Exception) {
       null
     }
-
-  private fun prettify(document: Document): String {
-    val transformerFactory = TransformerFactory.newInstance()
-    val transformer = transformerFactory.newTransformer()
-    transformer.setOutputProperty(OutputKeys.INDENT, "yes")
-
-    val out = StringWriter()
-    transformer.transform(DOMSource(document), StreamResult(out))
-    return out.toString()
-  }
 
 }
