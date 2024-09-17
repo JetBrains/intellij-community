@@ -31,7 +31,7 @@ abstract class ProjectEntitiesStorage {
     LOG.info("Creating entity for project $projectId")
 
     change {
-      val projectEntity = shared {
+      shared {
         /*
         This check is added to ensure that only one ProjectEntity is going to be created in split mode.
         Two entities are possible due to a different flow in creating a project in split mode.
@@ -56,11 +56,6 @@ abstract class ProjectEntitiesStorage {
             it[ProjectEntity.ProjectIdValue] = projectId
           }
         }
-      }
-
-      LocalProjectEntity.new {
-        it[LocalProjectEntity.ProjectEntityValue] = projectEntity
-        it[LocalProjectEntity.ProjectValue] = project
       }
     }
 
