@@ -2,7 +2,7 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.ui.FilteringSpeedSearch
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
@@ -12,7 +12,7 @@ import git4idea.repo.GitRemote
 import git4idea.ui.branch.dashboard.*
 import junit.framework.TestCase.assertEquals
 
-class GitBranchesTreeTest: UsefulTestCase() {
+class GitBranchesTreeTest: LightPlatformTestCase() {
   fun `test another branch is not selected if current matches search field`() = branchesTreeTest {
     setState(localBranches = listOf("main-123", "main"), remoteBranches = listOf("main"))
     selectBranch("main-123")
