@@ -26,7 +26,9 @@
         <override-text place="CompilationChartsToolbar"/>
       </action>
       <action id="CompilationChartsScrollToEndAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ScrollToEndAction"
-              icon="AllIcons.Actions.Forward"/>
+              icon="AllIcons.Actions.Forward">
+        <override-text place="CompilationChartsToolbar"/>
+      </action>
     </group>
   </actions>
 </idea-plugin>
