@@ -4,25 +4,34 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/platform-impl/src/com/intellij/openapi/project/impl/ProjectManagerImpl.kt b/platform/platform-impl/src/com/intellij/openapi/project/impl/ProjectManagerImpl.kt
---- a/platform/platform-impl/src/com/intellij/openapi/project/impl/ProjectManagerImpl.kt	(revision 2009584ac1359e2f11097dd44cf6165c97df5d57)
-+++ b/platform/platform-impl/src/com/intellij/openapi/project/impl/ProjectManagerImpl.kt	(date 1696338647664)
-@@ -1223,16 +1223,15 @@
-         it.execute(project)
-       }
- 
+--- a/platform/platform-impl/src/com/intellij/openapi/project/impl/ProjectManagerImpl.kt	(revision fce47f00ab09add5f5df856501530672b9e7aa95)
++++ b/platform/platform-impl/src/com/intellij/openapi/project/impl/ProjectManagerImpl.kt	(date 1726580909726)
+@@ -1323,6 +1323,9 @@
+
+       val preInitJob = projectInitHelper?.launchPreInit(project)
+       val workspaceIndexReady = CompletableDeferred<Unit>()
++
 +      project.createComponentsNonBlocking()
 +
-       projectInitObserver?.rawProjectDeferred?.complete(project)
- 
-       if (preloadServices) {
-         schedulePreloadServices(project)
+       launch {
+         workspaceIndexReady.join()
+         projectInitHelper?.notifyInit(project)
+@@ -1330,16 +1333,14 @@
+           schedulePreloadServices(project)
+         }
        }
- 
++
+       projectInitListeners {
+         it.execute(project = project, workspaceIndexReady = { workspaceIndexReady.complete(Unit) })
+       }
+
+       workspaceIndexReady.complete(Unit)
+
 -      launch {
--        beforeComponentCreation?.join()
+-        preInitJob?.join()
 -        project.createComponentsNonBlocking()
 -      }
-+      beforeComponentCreation?.join()
++      preInitJob?.join()
  
        if (!isTrusted.await()) {
          throw CancellationException("not trusted")
