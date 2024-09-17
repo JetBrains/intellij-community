@@ -35,17 +35,6 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
         /* Setup 'after' directory: Ensure that we process it similar to the 'before', by also replacing test properties */
         afterDirectory = TemporaryDirectory.generateTemporaryPath("${testDataDirName()}.after")
-        afterTestDataDirectory.toPath().copyToRecursively(afterDirectory, followLinks = true, copyAction = { source, target ->
-            if (source.isDirectory()) {
-                target.createDirectory()
-            }
-
-            if (source.isRegularFile()) {
-                target.writeText(configureKotlinVersionAndProperties(source.readText()))
-            }
-
-            CopyActionResult.CONTINUE
-        })
 
         /* Some quick fix (e.g. AddKotlinLibraryQuickFix) will modify build scripts *and* re-sync the project */
         AutoImportProjectTracker.enableAutoReloadInTests(testRootDisposable)
@@ -61,6 +50,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
     protected fun doMultiFileQuickFixTest(
         ignoreChangesInBuildScriptFiles: Boolean = true,
+        afterDirectorySanitizer: (sourcePath: Path, text: String) -> String = { _, text -> text },
         additionalResultFileFilter: (VirtualFile) -> Boolean = { true },
     ) {
         configureByFiles()
@@ -74,6 +64,8 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             } ?: error("file with action is not found")
 
         importProject()
+
+        copyAfterDirectory(afterDirectorySanitizer)
 
         val ktFile = runReadAction {
             LocalFileSystem.getInstance().findFileByNioFile(mainFilePath)?.toPsiFile(myProject)
@@ -94,8 +86,8 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                 val expected = afterDirectory.refreshAndGetVirtualDirectory()
                 val projectVFile = projectPath.refreshAndGetVirtualDirectory()
 
-                UsefulTestCase.refreshRecursively(expected)
-                UsefulTestCase.refreshRecursively(projectVFile)
+                refreshRecursively(expected)
+                refreshRecursively(projectVFile)
 
                 withContext(Dispatchers.EDT) {
                     PlatformTestUtil.assertDirectoriesEqual(
@@ -125,5 +117,23 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                 DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
             }
         }
+    }
+
+    @OptIn(ExperimentalPathApi::class)
+    private fun copyAfterDirectory(afterDirectorySanitizer: (Path, String) -> String) {
+        afterTestDataDirectory.toPath().copyToRecursively(afterDirectory, followLinks = true, copyAction = { source, target ->
+
+            if (source.isDirectory()) {
+                target.createDirectory()
+            }
+
+            if (source.isRegularFile()) {
+                target.writeText(
+                    afterDirectorySanitizer(source, configureKotlinVersionAndProperties(source.readText()))
+                )
+            }
+
+            CopyActionResult.CONTINUE
+        })
     }
 }

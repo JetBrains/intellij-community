@@ -2,6 +2,11 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.modules
+import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityState
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
@@ -62,9 +67,27 @@ class GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     )
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.31+")
+    @PluginTargetVersions(pluginVersion = "1.9.20+")
     fun testAddKotlinTestLibraryKmp() = doMultiFileQuickFixTest(
         ignoreChangesInBuildScriptFiles = false,
         additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+    )
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20+")
+    fun testAddKotlinTestLibraryKmpNativeMain() = doMultiFileQuickFixTest(
+        ignoreChangesInBuildScriptFiles = false,
+        additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" },
+        afterDirectorySanitizer = { _, text ->
+            val nativeMain = ModuleManager.getInstance(project).findModuleByName("project.nativeMain")
+                ?: error("Missing 'nativeMain' module")
+
+            val version = KotlinLibraryVersionProvider.EP_NAME.extensionList
+                .firstNotNullOfOrNull { provider -> provider.getVersion(nativeMain, "org.jetbrains.kotlinx", "kotlinx-coroutines-core") }
+                ?: error("Not known compatible version for 'kotlinx-coroutines-core' library")
+
+            val coroutinesCoordinatesBase = "org.jetbrains.kotlinx:kotlinx-coroutines-core:"
+            text.replace("$coroutinesCoordinatesBase{{coroutines_version}}", coroutinesCoordinatesBase + version)
+        }
     )
 }

@@ -5,9 +5,6 @@ plugins {
 kotlin {
     jvm()
     linuxX64()
-    sourceSets.commonTest.dependencies {
-        implementation(kotlin("test"))
-    }
 }
 
 repositories {
