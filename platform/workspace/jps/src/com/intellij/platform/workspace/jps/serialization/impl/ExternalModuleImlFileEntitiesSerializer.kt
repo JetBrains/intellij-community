@@ -33,6 +33,10 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
+  override val internalStorage: Boolean = false
+
+  override val facetManagerComponentName: String = "ExternalFacetManager"
+
   override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> {
@@ -107,10 +111,6 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 
   override fun createExternalEntitySource(externalSystemId: String) =
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
-
-  override fun createFacetSerializer(): FacetsSerializer {
-    return FacetsSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true, context)
-  }
 
   override fun getBaseDirPath(): String {
     return modulePath.path

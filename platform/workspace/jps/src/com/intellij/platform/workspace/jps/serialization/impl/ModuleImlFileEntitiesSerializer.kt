@@ -53,6 +53,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   : JpsFileEntitiesSerializer<ModuleEntity> {
   private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
   private val sourceRootTypes = ConcurrentFactoryMap.createMap<String, SourceRootTypeId> { SourceRootTypeId(it) }
+  protected open val internalStorage: Boolean = true
+  protected open val facetManagerComponentName: String = JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME
 
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
@@ -664,8 +666,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     createFacetSerializer().saveFacetEntities(module, entities, writer, this::acceptsSource)
   }
 
-  protected open fun createFacetSerializer(): FacetsSerializer {
-    return FacetsSerializer(fileUrl, internalEntitySource, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, null, false, context)
+  private fun createFacetSerializer(): FacetsSerializer {
+    return FacetsSerializer(fileUrl, internalEntitySource, facetManagerComponentName, getBaseDirPath(), internalStorage, context)
   }
 
   protected open fun acceptsSource(entitySource: EntitySource): Boolean {
