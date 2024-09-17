@@ -47,14 +47,8 @@ abstract class ProjectEntitiesStorage {
         If it happens that the entity has not been found and the frontend creates a new one, Rhizome DB will perform a "rebase"
         which basically re-invokes the whole "change" block either on the backend or the frontend side.
         */
-        val existing = entity<ProjectEntity, ProjectId>(ProjectEntity.ProjectIdValue, projectId)
-        if (existing != null) {
-          existing
-        }
-        else {
-          ProjectEntity.new {
-            it[ProjectEntity.ProjectIdValue] = projectId
-          }
+        ProjectEntity.upsert(ProjectEntity.ProjectIdValue, projectId) {
+          it[ProjectEntity.ProjectIdValue] = projectId
         }
       }
     }
