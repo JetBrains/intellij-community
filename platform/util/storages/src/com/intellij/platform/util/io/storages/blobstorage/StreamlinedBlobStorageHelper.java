@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.OFFSET_BUCKET;
-import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
  * This is not so much a supertype, but just a place for common logic (this why it is 'Helper').
@@ -396,7 +395,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
 
   protected void checkRedirectToId(int startingRecordId,
                                    int currentRecordId,
-                                   int redirectToId) throws RecordAlreadyDeletedException, IOException {
+                                   int redirectToId) throws IOException {
     if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
       throw new RecordAlreadyDeletedException("Can't access record[" + startingRecordId + "/" + currentRecordId + "]: it was deleted");
     }
