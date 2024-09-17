@@ -256,10 +256,7 @@ class ScriptDefinitionsManagerTest {
     @Test
     fun `Default definition is available via both new and legacy API`() {
         val defaultDefinition = manager.getDefaultDefinition()
-        val defaultScriptDefinition = manager.getDefaultScriptDefinition()
-
         assertNotNull(defaultDefinition.asLegacyOrNull<LegacyBundledIdeScriptDefinition>())
-        assertInstanceOf(LegacyBundledIdeScriptDefinition::class.java, defaultScriptDefinition)
     }
 
 

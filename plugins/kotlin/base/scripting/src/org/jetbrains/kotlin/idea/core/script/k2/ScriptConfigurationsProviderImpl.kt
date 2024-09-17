@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.nio.file.Path
@@ -38,7 +38,7 @@ class ScriptDependenciesData(
     )
 }
 
-class ScriptConfigurationDataProvider(project: Project) : ScriptDependenciesProvider(project), ScriptDependencyAware {
+class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsProvider(project), ScriptDependencyAware {
     private val scriptDependenciesData = AtomicReference(ScriptDependenciesData())
 
     fun notifySourceUpdated() {
@@ -121,11 +121,11 @@ class ScriptConfigurationDataProvider(project: Project) : ScriptDependenciesProv
     private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
 
     companion object {
-        fun getInstance(project: Project): ScriptConfigurationDataProvider =
-            project.service<ScriptDependenciesProvider>() as ScriptConfigurationDataProvider
+        fun getInstance(project: Project): ScriptConfigurationsProviderImpl =
+            project.service<ScriptConfigurationsProvider>() as ScriptConfigurationsProviderImpl
 
-        fun getInstanceIfCreated(project: Project): ScriptConfigurationDataProvider? =
-            project.serviceIfCreated<ScriptDependenciesProvider>() as? ScriptConfigurationDataProvider
+        fun getInstanceIfCreated(project: Project): ScriptConfigurationsProviderImpl? =
+            project.serviceIfCreated<ScriptConfigurationsProvider>() as? ScriptConfigurationsProviderImpl
     }
 }
 

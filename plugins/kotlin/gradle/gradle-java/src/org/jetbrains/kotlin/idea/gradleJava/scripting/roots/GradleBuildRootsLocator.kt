@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationDataProvider
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import kotlin.script.experimental.api.valueOrNull
 
 /**
@@ -116,7 +116,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             get() {
                 if (KotlinPluginModeProvider.isK2Mode()) {
                     val virtualFile = StandardFileSystems.local()?.refreshAndFindFileByPath(filePath) ?: return false
-                    return ScriptConfigurationDataProvider.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
+                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
                 }
                 return script != null
             }

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.isEnabled
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
@@ -110,7 +110,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
     }
 
     private fun KtFile.isStandaloneScriptByDesign(project: Project, definition: ScriptDefinition): Boolean {
-        val configuration = ScriptDependenciesProvider.getInstance(project)?.getScriptConfiguration(this)?.configuration
+        val configuration = ScriptConfigurationsProvider.getInstance(project)?.getScriptConfiguration(this)?.configuration
             ?: definition.compilationConfiguration
         val isStandalone = configuration[ScriptCompilationConfiguration.isStandalone] == true
         debugLog { "standalone-by-design: $isStandalone" }

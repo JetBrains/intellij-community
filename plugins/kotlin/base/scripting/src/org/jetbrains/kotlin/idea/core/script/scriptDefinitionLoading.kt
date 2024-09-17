@@ -14,6 +14,9 @@ import com.intellij.util.PathUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition.FromLegacy
+import org.jetbrains.kotlin.scripting.definitions.getEnvironment
+import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.File
 import java.nio.file.Files
@@ -81,12 +84,20 @@ fun loadDefinitionsFromTemplatesByPaths(
             }
 
             when {
-                template.annotations.firstIsInstanceOrNull<kotlin.script.templates.ScriptTemplateDefinition>() != null -> {
-                    ScriptDefinition.FromLegacyTemplate(hostConfiguration, template, templateClasspathAsFiles, defaultCompilerOptions)
-                }
-
                 template.annotations.firstIsInstanceOrNull<kotlin.script.experimental.annotations.KotlinScript>() != null -> {
                     ScriptDefinition.FromTemplate(hostConfiguration, template, ScriptDefinition::class, defaultCompilerOptions)
+                }
+
+                template.annotations.firstIsInstanceOrNull<kotlin.script.templates.ScriptTemplateDefinition>() != null -> {
+                    FromLegacy(
+                        hostConfiguration,
+                        KotlinScriptDefinitionFromAnnotatedTemplate(
+                            template,
+                            hostConfiguration[ScriptingHostConfiguration.getEnvironment]?.invoke(),
+                            templateClasspathAsFiles
+                        ),
+                        defaultCompilerOptions
+                    )
                 }
 
                 else -> {
