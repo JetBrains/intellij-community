@@ -48,7 +48,12 @@ class CompilationChartsProjectActivity : ProjectActivity {
             handler.addState(chartEvent)
           }
         }
-        is FinishBuildEvent -> handler.removeState()
+        is FinishBuildEvent -> {
+          val title = event.message.lowercase()
+          if (title.contains("up-to-date") || title.startsWith("worksheet")) return@BuildProgressListener
+
+          handler.removeState()
+        }
       }
     }, disposable)
   }
