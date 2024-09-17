@@ -17,16 +17,18 @@ import java.awt.RenderingHints
 internal open class TerminalBlockLeftErrorRenderer : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val gutterWidth = (editor as EditorEx).gutterComponentEx.width
+    val offset = JBUI.scale(2)
     val x = gutterWidth - JBUI.scale(9)
+    val y = r.y + offset
     val width = JBUI.scale(3)
-    val height = r.height - JBUI.scale(TerminalUi.blockBottomInset)
+    val height = r.height - JBUI.scale(TerminalUi.blockBottomInset) - 2 * offset
     val arc = JBUI.scale(4)
 
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2d.color = editor.colorsScheme.getColor(BlockTerminalColors.ERROR_BLOCK_STROKE_COLOR)
-      g2d.fillRoundRect(x, r.y, width, height, arc, arc)
+      g2d.fillRoundRect(x, y, width, height, arc, arc)
     }
     finally {
       g2d.dispose()

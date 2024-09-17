@@ -103,6 +103,13 @@ internal class TerminalPromptView(
                                          0)
     val outerBorder = object : CustomLineBorder(TerminalUi.promptSeparatorColor(editor),
                                                 JBInsets(1, 0, 0, 0)) {
+      override fun getBorderInsets(c: Component): Insets {
+        if (c.y == 0) {
+          return JBInsets.emptyInsets()
+        }
+        return super.getBorderInsets(c)
+      }
+
       override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {
         // Paint the border only if the component is not on the top
         if (c.y != 0) {

@@ -30,7 +30,7 @@ internal class TerminalBlockBackgroundRenderer private constructor(
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
     val visibleArea = editor.scrollingModel.visibleArea
-    val width = visibleArea.width - JBUI.scale(TerminalUi.cornerToBlockInset)
+    val width = visibleArea.width - JBUI.scale(TerminalUi.cornerToBlockInset + 3)
     val topY = editor.offsetToXY(highlighter.startOffset).y.toFloat()
     val bottomY = editor.offsetToXY(highlighter.endOffset).y.toFloat() + editor.lineHeight
     val rect = Rectangle2D.Float(0f, topY, width.toFloat(), bottomY - topY)

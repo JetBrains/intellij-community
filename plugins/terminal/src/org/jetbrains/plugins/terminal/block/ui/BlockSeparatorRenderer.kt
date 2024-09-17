@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.ui.JBUI
 import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.geom.Rectangle2D
 
 /**
  * @author Alexander Lobas
@@ -17,10 +19,17 @@ internal class BlockSeparatorRenderer : CustomHighlighterRenderer {
     }
 
     val visibleArea = editor.scrollingModel.visibleArea
-    val rightX = visibleArea.width - JBUI.scale(TerminalUi.blockSeparatorRightOffset)
-    val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + JBUI.scale(TerminalUi.blockBottomInset + 1)
+    val rightX = visibleArea.width - JBUI.scale(TerminalUi.blockSeparatorRightOffset).toFloat()
+    val bottomY = editor.offsetToXY(highlighter.endOffset).y.toFloat() + editor.lineHeight + JBUI.scale(TerminalUi.blockBottomInset)
+    val rect = Rectangle2D.Float(0f, bottomY, rightX, 1f)
 
-    g.color = TerminalUi.promptSeparatorColor(editor)
-    g.drawLine(0, bottomY, rightX, bottomY)
+    val g2d = g.create() as Graphics2D
+    try {
+      g2d.color = TerminalUi.promptSeparatorColor(editor)
+      g2d.fill(rect)
+    }
+    finally {
+      g2d.dispose()
+    }
   }
 }
