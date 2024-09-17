@@ -20,6 +20,7 @@ import com.intellij.execution.target.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
@@ -28,7 +29,6 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
@@ -348,17 +348,18 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
     val contentFile = it.file
     contentFile != null && VfsUtil.isAncestor(contentFile, root, true)
   } ?: return
-  contentEntry.addExcludeFolder(root)
 
-  WriteAction.run<Throwable> {
-    model.commit()
+  contentEntry.addExcludeFolder(root)
+  invokeAndWaitIfNeeded {
+    WriteAction.run<Throwable> {
+      model.commit()
+    }
   }
 }
 
-fun Project?.excludeInnerVirtualEnv(sdk: Sdk) {
+fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
   val binary = sdk.homeDirectory ?: return
-  val possibleProjects = if (this != null) listOf(this) else ProjectManager.getInstance().openProjects.asList()
-  possibleProjects.firstNotNullOfOrNull { ModuleUtil.findModuleForFile(binary, it) }?.excludeInnerVirtualEnv(sdk)
+  ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
 }
 
 fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {

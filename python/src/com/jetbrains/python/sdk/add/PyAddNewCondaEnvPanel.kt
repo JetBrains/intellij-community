@@ -126,7 +126,7 @@ open class PyAddNewCondaEnvPanel(
     }
 
     PyCondaPackageService.onCondaEnvCreated(condaPath)
-    project.excludeInnerVirtualEnv(sdk)
+    project?.excludeInnerVirtualEnv(sdk)
 
     return sdk
   }

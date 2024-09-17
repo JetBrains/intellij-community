@@ -65,6 +65,7 @@ fun createVirtualEnvSynchronously(
       else {
         installedSdk
       }
+
       try {
         val packageManager = PyPackageManager.getInstance(sdk)
         return packageManager.createVirtualEnv(venvRoot, inheritSitePackages)
@@ -88,18 +89,19 @@ fun createVirtualEnvSynchronously(
 
   if (!makeShared) {
     when {
-      projectPath != null -> venvSdk.setAssociationToPath(projectPath)
       module != null -> venvSdk.setAssociationToModule(module)
+      projectPath != null -> venvSdk.setAssociationToPath(projectPath)
     }
   }
 
-  project.excludeInnerVirtualEnv(venvSdk)
+  project?.excludeInnerVirtualEnv(venvSdk)
   if (targetEnvironmentConfiguration.isLocal()) {
     // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
     // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
     // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
     PySdkSettings.instance.onVirtualEnvCreated(installedSdk.homePath, FileUtil.toSystemIndependentName(venvRoot), projectPath)
   }
+
   return venvSdk
 }
 
@@ -130,13 +132,13 @@ internal fun createSdkForTarget(
 
   val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
 
-  val name: String
-  if (!sdkName.isNullOrEmpty()) {
-    name = sdkName
+  val name = if (!sdkName.isNullOrEmpty()) {
+    sdkName
   }
   else {
-    name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, sdkVersion)
+    PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, sdkVersion)
   }
+
   val sdk = SdkConfigurationUtil.createSdk(existingSdks, interpreterPath, PythonSdkType.getInstance(), data, name)
   if (PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
     // FIXME: multi module project support
