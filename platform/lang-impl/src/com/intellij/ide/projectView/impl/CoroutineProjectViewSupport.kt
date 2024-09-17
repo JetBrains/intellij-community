@@ -10,7 +10,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
@@ -112,20 +111,20 @@ internal class CoroutineProjectViewSupport(
     myNodeUpdater.updateImmediately {
       selectLogger.debug("Updated nodes")
       val job = coroutineScope.launch(CoroutineName("Selecting $value in $file") + Dispatchers.EDT) {
-        thisLogger().debug("First attempt: trying to select the element or file")
+        selectLogger.debug("First attempt: trying to select the element or file")
         if (trySelect(tree, element, file)) {
-          thisLogger().debug("Selected paths at first attempt. Done")
+          selectLogger.debug("Selected paths at first attempt. Done")
           return@launch
         }
         if (!canTrySelectAgain(element, file)) return@launch
         // This silly second attempt is necessary because a file, when visited, may tell us it doesn't contain the element we're looking for.
         // Reportedly, it's the case with top-level Kotlin functions and Kotlin files.
-        thisLogger().debug("Second attempt: trying to select the file now")
+        selectLogger.debug("Second attempt: trying to select the file now")
         if (trySelect(tree, null, file)) {
-          thisLogger().debug("Selected successfully at the second attempt. Done")
+          selectLogger.debug("Selected successfully at the second attempt. Done")
         }
         else {
-          thisLogger().debug("Couldn't select at the second attempt. Done")
+          selectLogger.debug("Couldn't select at the second attempt. Done")
         }
       }
       job.invokeOnCompletion {
