@@ -34,7 +34,6 @@ import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.branch.GitBranchType
-import git4idea.branch.GitTagType
 import git4idea.branch.calcTooltip
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -46,7 +45,6 @@ import git4idea.ui.branch.tree.createIncomingLabel
 import git4idea.ui.branch.tree.createOutgoingLabel
 import git4idea.ui.branch.tree.updateIncomingCommitLabel
 import git4idea.ui.branch.tree.updateOutgoingCommitLabel
-import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Graphics
@@ -105,40 +103,37 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
           favorite = descriptor.branchInfo.isFavorite,
           selected = selected
         )
-        is BranchNodeDescriptor.Group -> iconProvider.forGroup()
+        is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> iconProvider.forGroup()
         is BranchNodeDescriptor.Repository -> iconProvider.forRepository(descriptor.repository)
         else -> null
       }
 
+      append(value.getNodeDescriptor().displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
+
       val branchInfo = (descriptor as? BranchNodeDescriptor.Branch)?.branchInfo
+      if (branchInfo != null) {
+        toolTipText =
+          if (branchInfo.isLocalBranch) BranchPresentation.getTooltip(getBranchesTooltipData(branchInfo.branchName, getSelectedRepositories(value)))
+          else null
 
-      toolTipText =
-        if (branchInfo != null && branchInfo.isLocalBranch)
-          BranchPresentation.getTooltip(getBranchesTooltipData(branchInfo.branchName, getSelectedRepositories(descriptor)))
-        else null
+        val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+        if (!repositoryGrouping && branchInfo.repositories.size < repositoryManager.repositories.size) {
+          append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        }
 
-      append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
-
-      val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
-      if (!repositoryGrouping && branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
-        append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
-
-      val incomingOutgoingState = branchInfo?.incomingOutgoingState
-      if (incomingOutgoingState != null) {
+        val incomingOutgoingState = branchInfo.incomingOutgoingState
         updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
         updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
-        val fontMetrics = incomingLabel.getFontMetrics(incomingLabel.font)
 
+        val fontMetrics = incomingLabel.getFontMetrics(incomingLabel.font)
         incomingLabel.size = Dimension(fontMetrics.stringWidth(incomingLabel.text) + JBUI.scale(1) + incomingLabel.icon.iconWidth, fontMetrics.height)
         outgoingLabel.size = Dimension(fontMetrics.stringWidth(outgoingLabel.text) + JBUI.scale(1) + outgoingLabel.icon.iconWidth, fontMetrics.height)
-      }
-      else {
+        tree.toolTipText = incomingOutgoingState.calcTooltip()
+      } else {
         incomingLabel.isVisible = false
         outgoingLabel.isVisible = false
+        tree.toolTipText = null
       }
-
-      tree.toolTipText = incomingOutgoingState?.calcTooltip()
     }
 
     override fun calcFocusedState() = super.calcFocusedState() || searchField?.textEditor?.hasFocus() ?: false
@@ -200,33 +195,29 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     return paths.asSequence()
       .map(TreePath::getLastPathComponent)
       .mapNotNull { it as? BranchTreeNode }
-      .filter {
-        val nodeDescriptor = it.getNodeDescriptor()
-        if (nodeDescriptor is BranchNodeDescriptor.Branch) {
-          val parent = nodeDescriptor.parent
-          val isDirectlyUnderRemoteNode = isRemoteGroupingNode(parent)
-          val isUnderRepoUnderRemoteNode = parent is BranchNodeDescriptor.Repository && isRemoteGroupingNode(parent.parent)
-          isDirectlyUnderRemoteNode || isUnderRepoUnderRemoteNode
-        }
-        else false
+      .mapNotNull {
+        val descriptor = it.getNodeDescriptor()
+        val parentDescriptor = it.parent?.getNodeDescriptor()
+        if (descriptor is BranchNodeDescriptor.RemoteGroup) {
+          RemoteInfo(descriptor.remote.name, (parentDescriptor as? BranchNodeDescriptor.Repository)?.repository)
+        } else null
       }
-      .map { with(it.getNodeDescriptor()) { RemoteInfo(displayName!!, (parent as? BranchNodeDescriptor.Repository)?.repository) } }
       .toSet()
   }
 
-  private fun isRemoteGroupingNode(node: BranchNodeDescriptor?): Boolean =
-    node is BranchNodeDescriptor.TopLevelGroup && node.refType == GitBranchType.REMOTE
-
-  fun getSelectedRepositories(descriptor: BranchNodeDescriptor.Branch): List<GitRepository> {
-    var parent = descriptor.parent
+  fun getSelectedRepositories(node: BranchTreeNode): List<GitRepository> {
+    var parent: BranchTreeNode? = node
 
     while (parent != null) {
-      if (parent is BranchNodeDescriptor.Repository) return listOf(parent.repository)
+      val descriptor = parent.getNodeDescriptor()
+      if (descriptor is BranchNodeDescriptor.Repository) return listOf(descriptor.repository)
       parent = parent.parent
     }
 
-    return descriptor.branchInfo.repositories
+    val nodeDescriptor = node.getNodeDescriptor()
+    return (nodeDescriptor as? BranchNodeDescriptor.Branch)?.branchInfo?.repositories ?: emptyList()
   }
+
 
   fun getSelectedRepositories(branchInfo: BranchInfo): Set<GitRepository> {
     return getSelectedRepositories(branchInfo, selectionPaths)
@@ -273,14 +264,9 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
 internal abstract class FilteringBranchesTreeBase(
   tree: Tree,
-  rootNode: BranchTreeNode,
-) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, rootNode) {
-  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor.TopLevelGroup(GitBranchType.LOCAL))
-  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor.TopLevelGroup(GitBranchType.REMOTE))
-  private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor.Head)
-
-  private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
-                                                          remoteBranchesNode.getNodeDescriptor())
+  protected val project: Project,
+) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, BranchTreeNode(BranchNodeDescriptor.Root())) {
+  private val nodeDescriptorsModel = NodeDescriptorsModel(root.getNodeDescriptor() as BranchNodeDescriptor.Root, project)
 
   protected abstract val groupingConfig: Map<GroupingKey, Boolean>
 
@@ -293,65 +279,40 @@ internal abstract class FilteringBranchesTreeBase(
       else -> null
     }
 
-  final override fun createNode(nodeDescriptor: BranchNodeDescriptor) =
-    when (nodeDescriptor) {
-      BranchNodeDescriptor.Head -> headBranchesNode
-      is BranchNodeDescriptor.TopLevelGroup -> when (nodeDescriptor.refType) {
-        GitBranchType.LOCAL -> localBranchesNode
-        GitBranchType.REMOTE -> remoteBranchesNode
-        GitBranchType.RECENT, GitTagType -> error("${nodeDescriptor.refType} is not supported")
-      }
-      else -> BranchTreeNode(nodeDescriptor)
-    }
+  override fun createNode(nodeDescriptor: BranchNodeDescriptor) = BranchTreeNode(nodeDescriptor)
 
-  final override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
-    when (nodeDescriptor) {
-      BranchNodeDescriptor.Root -> getRootNodeDescriptors()
-      is BranchNodeDescriptor.Branch, BranchNodeDescriptor.Head -> emptyList()
-      else -> nodeDescriptorsModel.getChildrenForParent(nodeDescriptor)
-    }
+  override fun getChildren(nodeDescriptor: BranchNodeDescriptor) = nodeDescriptor.children
 
   final override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply =
     BranchesFilteringSpeedSearch(this, searchTextField)
 
-  protected fun isEmptyModel() = searchModel.isLeaf(localBranchesNode) && searchModel.isLeaf(remoteBranchesNode)
+  fun isEmptyModel() = root.children().asSequence().all {
+    searchModel.isLeaf(it)
+  }
 
   internal fun refreshNodeDescriptorsModel(
     localBranches: Collection<BranchInfo>,
     remoteBranches: Collection<BranchInfo>,
     showOnlyMy: Boolean,
   ) {
-      nodeDescriptorsModel.reloadFrom(
-        localBranches = localBranches,
-        remoteBranches = remoteBranches,
-        filter = if (showOnlyMy) ::isMy else { _ -> true },
-        groupingConfig
-      )
+    nodeDescriptorsModel.rebuildFrom(
+      (localBranches.asSequence() + remoteBranches.asSequence())
+        .filter(if (showOnlyMy) ::isMy else { _ -> true })
+        .asIterable(),
+      groupingConfig,
+    )
   }
 
   private fun isMy(branch: BranchInfo) = branch.isMy == ThreeState.YES
-
-  private fun getRootNodeDescriptors(): List<BranchNodeDescriptor> = buildList {
-    listOf(localBranchesNode, remoteBranchesNode).forEach {
-      val rootNodeDescriptor = it.getNodeDescriptor()
-      if (getChildren(rootNodeDescriptor).isNotEmpty()) {
-        add(rootNodeDescriptor)
-      }
-    }
-    if (isNotEmpty()) {
-      add(0, headBranchesNode.getNodeDescriptor())
-    }
-  }
 }
 
 internal class FilteringBranchesTree(
-  val project: Project,
+  project: Project,
   val component: BranchesTreeComponent,
   private val uiController: BranchesDashboardController,
-  rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor.Root),
   place: @NonNls String,
   private val disposable: Disposable
-) : FilteringBranchesTreeBase(component, rootNode) {
+) : FilteringBranchesTreeBase(component, project) {
 
   private val expandedPaths = HashSet<TreePath>()
 

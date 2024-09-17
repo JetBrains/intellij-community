@@ -3,18 +3,19 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
-import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_REPOSITORY
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ThreeState
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.IncomingOutgoingState
 import git4idea.i18n.GitBundle.message
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import org.jetbrains.annotations.Nls
@@ -36,51 +37,66 @@ internal data class BranchInfo(val branch: GitBranch,
 }
 
 internal sealed class BranchNodeDescriptor {
-  open var parent: BranchNodeDescriptor? = null
-  abstract val displayName: String?
+  abstract val children: List<BranchNodeDescriptor>
+  abstract val displayName: String
 
-  internal object Root : BranchNodeDescriptor() {
-    override val displayName = null
+  internal class Root : BranchNodeDescriptor() {
+    override val displayName = "Root"
+    override var children: List<BranchNodeDescriptor> = emptyList()
 
     override fun toString() = "ROOT"
   }
 
   internal object Head : BranchNodeDescriptor() {
     override val displayName: @Nls String = message("group.Git.HEAD.Branch.Filter.title")
+    override val children: List<BranchNodeDescriptor>
+      get() = emptyList()
 
     override fun toString() = "HEAD"
   }
 
-  internal data class TopLevelGroup(val refType: GitRefType) : BranchNodeDescriptor() {
+  internal class TopLevelGroup(
+    val refType: GitRefType,
+    override val children: List<BranchNodeDescriptor>,
+  ) : BranchNodeDescriptor() {
     override val displayName: @Nls String = refType.getText()
 
     override fun toString() = refType.name
   }
 
-  internal data class Branch(
+  internal class RemoteGroup(val remote: GitRemote, override val children: List<BranchNodeDescriptor>) : BranchNodeDescriptor() {
+    override val displayName: String = remote.name
+
+    override fun toString(): String = "REMOTE:$displayName"
+  }
+
+  internal class Branch(
     val branchInfo: BranchInfo,
-    override var parent: BranchNodeDescriptor?,
     override val displayName: @NlsSafe String = branchInfo.branchName,
   ) : BranchNodeDescriptor() {
+    override val children: List<BranchNodeDescriptor>
+      get() = emptyList()
+
     override fun toString(): String = "BRANCH:${branchInfo.branchName}"
   }
 
-  internal data class Repository(val repository: GitRepository, override var parent: BranchNodeDescriptor?) : BranchNodeDescriptor() {
+  internal class Repository(val repository: GitRepository, override val children: List<BranchNodeDescriptor>) : BranchNodeDescriptor() {
     override val displayName: @NlsSafe String = DvcsUtil.getShortRepositoryName(repository)
 
     override fun toString(): String = "REPO:$displayName"
   }
 
-  internal data class Group(override val displayName: @NlsSafe String, override var parent: BranchNodeDescriptor?) : BranchNodeDescriptor() {
+  internal class Group(
+    override val displayName: @NlsSafe String,
+    override val children: List<BranchNodeDescriptor>,
+    val hasFavorites: Boolean,
+  ) : BranchNodeDescriptor() {
     override fun toString(): String = "GROUP:$displayName"
   }
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
-
-  fun getTextRepresentation(): @Nls String =
-    (userObject as? BranchNodeDescriptor)?.displayName
-           ?: super.toString() //NON-NLS
+  override fun getParent(): BranchTreeNode? = super.parent as BranchTreeNode?
 
   fun getNodeDescriptor() = userObject as BranchNodeDescriptor
 
@@ -95,103 +111,125 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal class NodeDescriptorsModel(
-  private val localRootNodeDescriptor: BranchNodeDescriptor,
-  private val remoteRootNodeDescriptor: BranchNodeDescriptor,
-) {
-  /**
-   * Parent node descriptor to direct children map
-   */
-  private val branchNodeDescriptors = hashMapOf<BranchNodeDescriptor, MutableSet<BranchNodeDescriptor>>()
+internal class NodeDescriptorsModel(private val rootNode: BranchNodeDescriptor.Root, project: Project) {
+  private val incomingOutgoingManager: GitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
 
+  fun rebuildFrom(branches: Iterable<BranchInfo>, groupingConfig: Map<GroupingKey, Boolean>) {
+    val (localBranches, remoteBranches) = branches.partition { it.isLocalBranch }
+    val groupByRepository = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY]!!
+    val groupByPrefix = groupingConfig[GroupingKey.GROUPING_BY_DIRECTORY]!!
 
-  fun getChildrenForParent(parent: BranchNodeDescriptor): Set<BranchNodeDescriptor> =
-    branchNodeDescriptors.getOrDefault(parent, emptySet())
-
-  fun reloadFrom(
-    localBranches: Collection<BranchInfo>,
-    remoteBranches: Collection<BranchInfo>,
-    filter: (BranchInfo) -> Boolean,
-    groupingConfig: Map<GroupingKey, Boolean>,
-  ) {
-    clear()
-
-    val branches = (localBranches.asSequence() + remoteBranches.asSequence()).filter(filter)
-
-    branches.forEach { branch -> populateFrom(branch, groupingConfig) }
-    branchNodeDescriptors.forEach { (parent, children) ->
-      children.forEach { it.parent = parent }
+    val topLevelGroups = mutableListOf<BranchNodeDescriptor>()
+    for ((branches, group) in listOf(localBranches to GitBranchType.LOCAL, remoteBranches to GitBranchType.REMOTE)) {
+      if (branches.isNotEmpty()) {
+        val tree = groupByRepoAndPrefixIfApplicable(branches, groupByRepository, groupByPrefix)
+        topLevelGroups += BranchNodeDescriptor.TopLevelGroup(group, tree)
+      }
     }
+    if (topLevelGroups.isNotEmpty()) {
+      topLevelGroups.add(0, BranchNodeDescriptor.Head)
+    }
+    rootNode.children = topLevelGroups
   }
 
-  private fun clear() = branchNodeDescriptors.clear()
+  private fun groupByRepoAndPrefixIfApplicable(
+    branchesInfo: Iterable<BranchInfo>,
+    groupByRepository: Boolean,
+    groupByPrefix: Boolean,
+  ): List<BranchNodeDescriptor> {
+    return if (groupByRepository) {
+      val repoToBranch = mutableMapOf<GitRepository, MutableList<BranchInfo>>()
+      for (branchInfo in branchesInfo) {
+        for (repository in branchInfo.repositories) {
+          val incomingOutgoingState =
+            if (branchInfo.branch is GitLocalBranch) incomingOutgoingManager.getIncomingOutgoingState(repository, branchInfo.branch)
+            else IncomingOutgoingState.EMPTY
 
-  private fun populateFrom(br: BranchInfo, groupingConfig: Map<GroupingKey, Boolean>) {
-    val curParent: BranchNodeDescriptor = if (br.isLocalBranch) localRootNodeDescriptor else remoteRootNodeDescriptor
-    val groupByDirectory = groupingConfig[GROUPING_BY_DIRECTORY]!!
-    val groupByRepository = groupingConfig[GROUPING_BY_REPOSITORY]!!
+          val repoBranch = branchInfo.copy(isCurrent = repository.isCurrentBranch(branchInfo.branchName),
+                                           isFavorite = repository.isFavorite(branchInfo),
+                                           incomingOutgoingState = incomingOutgoingState)
 
-    when {
-      groupByRepository && groupByDirectory -> {
-        applyGroupingByRepository(curParent, br) { branch, parent -> applyGroupingByDirectory(parent, branch) }
+          repoToBranch.computeIfAbsent(repository) { mutableListOf() }.add(repoBranch)
+        }
       }
-      groupByRepository -> applyGroupingByRepository(curParent, br)
-      groupByDirectory -> applyGroupingByDirectory(curParent, br.copy())
-      else -> addChild(curParent, BranchNodeDescriptor.Branch(br.copy(), parent = curParent))
+
+      val repoNodes = repoToBranch.map { (repository, repoBranches) ->
+        val repoChildren = groupByPrefixAndRemoteIfApplicable(repoBranches, groupByPrefix)
+        BranchNodeDescriptor.Repository(repository, repoChildren)
+      }
+
+      repoNodes.sortedWith(BranchTreeNodeComparator)
     }
+    else groupByPrefixAndRemoteIfApplicable(branchesInfo, groupByPrefix)
   }
 
-  private fun applyGroupingByRepository(
-    curParent: BranchNodeDescriptor,
-    br: BranchInfo,
-    additionalGrouping: ((BranchInfo, BranchNodeDescriptor) -> Unit)? = null,
-  ) {
-    val repositoryNodeDescriptors = hashMapOf<GitRepository, BranchNodeDescriptor>()
-    br.repositories.forEach { repository ->
-      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(repository.project)
+  private fun groupByPrefixAndRemoteIfApplicable(branchesInfo: Iterable<BranchInfo>,
+                                                 groupByPrefix: Boolean): List<BranchNodeDescriptor> {
+    val branchesByRemote = mutableMapOf<GitRemote, MutableList<BranchInfo>>()
+    val branchesWithoutRemote = mutableListOf<BranchInfo>()
 
-      val branch = br.copy(isCurrent = repository.isCurrentBranch(br.branchName),
-                           isFavorite = repository.isFavorite(br),
-                           incomingOutgoingState = incomingOutgoingManager.getIncomingOutgoingState(repository, GitLocalBranch(br.branchName)))
-
-      val repositoryNodeDescriptor = repositoryNodeDescriptors.computeIfAbsent(repository) {
-        val repositoryNodeDescriptor = BranchNodeDescriptor.Repository(repository = repository, parent = curParent)
-        addChild(curParent, repositoryNodeDescriptor)
-        repositoryNodeDescriptor
-      }
-
-      if (additionalGrouping != null) {
-        additionalGrouping.invoke(branch, repositoryNodeDescriptor)
+    for (branch in branchesInfo) {
+      val remote = (branch.branch as? GitRemoteBranch)?.remote
+      if (!groupByPrefix || remote == null) {
+        branchesWithoutRemote += branch
       }
       else {
-        val branchNodeDescriptor = BranchNodeDescriptor.Branch(branch, parent = repositoryNodeDescriptor)
-        addChild(repositoryNodeDescriptor, branchNodeDescriptor)
+        branchesByRemote.computeIfAbsent(remote) { mutableListOf() }.add(branch)
       }
     }
-  }
 
-  private fun applyGroupingByDirectory(parent: BranchNodeDescriptor, branch: BranchInfo) {
-    val iter = branch.branchName.split("/").iterator()
-    var curParent = parent
-
-    while (iter.hasNext()) {
-      @NlsSafe val branchNamePart = iter.next()
-      val groupNode = iter.hasNext()
-      val branchNodeDescriptor = if (groupNode) {
-        BranchNodeDescriptor.Group(parent = curParent, displayName = branchNamePart)
-      } else {
-        BranchNodeDescriptor.Branch(branch, parent = curParent, displayName = branchNamePart)
-      }
-
-      addChild(curParent, branchNodeDescriptor)
-      curParent = branchNodeDescriptor
+    val result = mutableListOf<BranchNodeDescriptor>()
+    result += groupByPrefixIfApplicable(branchesWithoutRemote, groupByPrefix)
+    result += branchesByRemote.map { (remote, remoteBranches) ->
+      val remoteChildren = groupByPrefixIfApplicable(remoteBranches, groupByPrefix)
+      BranchNodeDescriptor.RemoteGroup(remote, remoteChildren)
     }
+
+    return result.sortedWith(BranchTreeNodeComparator)
   }
 
-  private fun addChild(parent: BranchNodeDescriptor, child: BranchNodeDescriptor) {
-    val directChildren = branchNodeDescriptors.computeIfAbsent(parent) { sortedSetOf(BranchTreeNodeComparator) }
-    directChildren.add(child)
-    branchNodeDescriptors[parent] = directChildren
+  private fun groupByPrefixIfApplicable(branchesInfo: Iterable<BranchInfo>, groupByPrefix: Boolean): List<BranchNodeDescriptor> =
+    if (groupByPrefix) groupByPrefix(branchesInfo.map { RefNameSegment(it) })
+    else branchesInfo.map { BranchNodeDescriptor.Branch(it) }.sortedWith(BranchTreeNodeComparator)
+
+  private fun groupByPrefix(paths: Iterable<RefNameSegment>): List<BranchNodeDescriptor> {
+    val nodes = mutableListOf<BranchNodeDescriptor>()
+    val childGroups = mutableMapOf<String, MutableList<RefNameSegment>>()
+
+    for (path in paths) {
+      val currentSegment = path.currentSegment()
+      if (path.isLastSegment()) {
+        nodes.add(BranchNodeDescriptor.Branch(path.refInfo, currentSegment))
+      }
+      else {
+        childGroups.computeIfAbsent(currentSegment) { mutableListOf() }.add(path.apply { move() })
+      }
+    }
+
+    for ((groupName, childrenPaths) in childGroups) {
+      val childrenNodes = groupByPrefix(childrenPaths)
+      val hasFavorites = childrenNodes.any { node ->
+        node is BranchNodeDescriptor.Branch && node.branchInfo.isFavorite || node is BranchNodeDescriptor.Group && node.hasFavorites
+      }
+      nodes.add(BranchNodeDescriptor.Group(groupName, childrenNodes, hasFavorites))
+    }
+
+    return nodes.sortedWith(BranchTreeNodeComparator)
+  }
+
+  private class RefNameSegment(val refInfo: BranchInfo, private var offset: Int = 0) {
+    private val path: List<String>
+
+    init {
+      val name = if (refInfo.branch is GitRemoteBranch) refInfo.branch.nameForRemoteOperations else refInfo.branch.name
+      path = name.split("/")
+    }
+
+    fun isLastSegment() = offset == path.lastIndex
+    fun currentSegment() = path[offset]
+    fun move() {
+      offset++
+    }
   }
 
   private fun GitRepository.isCurrentBranch(branchName: String) = currentBranch?.name == branchName

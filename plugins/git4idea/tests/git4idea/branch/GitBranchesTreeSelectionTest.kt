@@ -2,6 +2,7 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.ui.FilteringSpeedSearch
 import com.intellij.ui.tree.TreeTestUtil
@@ -12,7 +13,7 @@ import git4idea.repo.GitRemote
 import git4idea.ui.branch.dashboard.*
 import junit.framework.TestCase.assertEquals
 
-class GitBranchesTreeTest: LightPlatformTestCase() {
+class GitBranchesTreeSelectionTest: LightPlatformTestCase() {
   fun `test another branch is not selected if current matches search field`() = branchesTreeTest {
     setState(localBranches = listOf("main-123", "main"), remoteBranches = listOf("main"))
     selectBranch("main-123")
@@ -36,7 +37,7 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
       |  BRANCH:main
       |  [BRANCH:main-123]
       | -REMOTE
-      |  -GROUP:origin
+      |  -REMOTE:origin
       |   BRANCH:origin/main
     """.trimMargin()
 
@@ -57,7 +58,7 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
       | -LOCAL
       |  [BRANCH:main]
       | -REMOTE
-      |  -GROUP:origin
+      |  -REMOTE:origin
       |   BRANCH:origin/main
     """.trimMargin())
   }
@@ -74,7 +75,7 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
       |  BRANCH:main
       |  [BRANCH:main-123]
       | -REMOTE
-      |  -GROUP:origin
+      |  -REMOTE:origin
       |   BRANCH:origin/main
     """.trimMargin()
     assertTree(expectedSelectionNotUpdated)
@@ -87,7 +88,7 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
       |  [BRANCH:main]
       |  BRANCH:main-123
       | -REMOTE
-      |  -GROUP:origin
+      |  -REMOTE:origin
       |   BRANCH:origin/main
     """.trimMargin()
     assertTree(expectedSelectionUpdated)
@@ -116,7 +117,7 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
       | HEAD
       | LOCAL
       | -REMOTE
-      |  -GROUP:origin
+      |  -REMOTE:origin
       |   -GROUP:242
       |    BRANCH:origin/242/fix
       |   -GROUP:a
@@ -143,13 +144,13 @@ class GitBranchesTreeTest: LightPlatformTestCase() {
      |  BRANCH:origin/ish/242
     """.trimMargin())
   }
+
+  private fun branchesTreeTest(groupByDirectories: Boolean = true, test: TestContext.() -> Unit) = with(TestContext(groupByDirectories, project)) { test() }
 }
 
-private fun branchesTreeTest(groupByDirectories: Boolean = true, test: TestContext.() -> Unit) = with(TestContext(groupByDirectories)) { test() }
-
-private class TestContext(groupByDirectories: Boolean) {
+private class TestContext(groupByDirectories: Boolean, project: Project) {
   val tree = Tree()
-  val branchesTree = GitBranchesTestTree(tree, groupByDirectories = groupByDirectories)
+  val branchesTree = GitBranchesTestTree(tree, groupByDirectories = groupByDirectories, project = project)
   val searchTextField = branchesTree.installSearchField()
 
   fun assertTree(expected: String) {
@@ -187,7 +188,8 @@ private class TestContext(groupByDirectories: Boolean) {
 internal class GitBranchesTestTree(
   tree: Tree,
   groupByDirectories: Boolean,
-): FilteringBranchesTreeBase(tree, BranchTreeNode(BranchNodeDescriptor.Root)) {
+  project: Project,
+): FilteringBranchesTreeBase(tree, project = project) {
   @Suppress("UNCHECKED_CAST")
   val speedSearch: FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
     get() = searchModel.speedSearch as FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
