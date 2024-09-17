@@ -4,6 +4,13 @@ package org.jetbrains.idea.maven.aether;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import org.apache.maven.model.Activation;
+import org.apache.maven.model.Profile;
+import org.apache.maven.model.building.DefaultModelBuilderFactory;
+import org.apache.maven.model.building.ModelBuilder;
+import org.apache.maven.model.building.ModelProblemCollector;
+import org.apache.maven.model.profile.ProfileActivationContext;
+import org.apache.maven.model.profile.activation.ProfileActivator;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.*;
 import org.eclipse.aether.artifact.Artifact;
@@ -63,6 +70,14 @@ public final class ArtifactRepositoryManager {
     locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
+    locator.setServices(ModelBuilder.class, new DefaultModelBuilderFactory() {
+      @Override
+      public ProfileActivator[] newProfileActivators() {
+        // allow pom profiles to make dependency resolution deterministic and predictable:
+        // consider all possible dependencies the artifact can potentially have.
+        return new ProfileActivator[] {new ProfileActivatorProxy(super.newProfileActivators())};
+      }
+    }.newInstance());
     locator.setErrorHandler(new DefaultServiceLocator.ErrorHandler() {
       @Override
       public void serviceCreationFailed(Class<?> type, Class<?> impl, Throwable exception) {
@@ -168,7 +183,9 @@ public final class ArtifactRepositoryManager {
     }
 
     private RepositorySystemSession createDefaultSession() {
-      return new DefaultRepositorySystemSession(sessionTemplate);
+      DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
+      session.setReadOnly();
+      return session;
     }
 
     /**
@@ -184,13 +201,12 @@ public final class ArtifactRepositoryManager {
 
     private RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
       DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
-      if (excludedDependencies.isEmpty()) {
-        return session;
+      if (!excludedDependencies.isEmpty()) {
+        session.setDependencySelector(new AndDependencySelector(
+          session.getDependencySelector(),
+          new ExclusionDependencySelector(exclusions(excludedDependencies)))
+        );
       }
-      session.setDependencySelector(new AndDependencySelector(
-        session.getDependencySelector(),
-        new ExclusionDependencySelector(exclusions(excludedDependencies)))
-      );
       session.setReadOnly();
       return session;
     }
@@ -223,6 +239,7 @@ public final class ArtifactRepositoryManager {
     private static RepositorySystemSession cloneSessionAndClearData(RepositorySystemSession session) {
       DefaultRepositorySystemSession newSession = new DefaultRepositorySystemSession(session);
       newSession.setData(new DefaultSessionData());
+      newSession.setReadOnly();
       return newSession;
     }
 
@@ -266,13 +283,16 @@ public final class ArtifactRepositoryManager {
       org.eclipse.aether.spi.connector.RepositoryConnector.class, //aether-spi
       org.eclipse.aether.util.ConfigUtils.class, //aether-util
       org.eclipse.aether.impl.ArtifactResolver.class, //aether-impl
+      org.eclipse.sisu.Nullable.class, // sisu.inject
       org.eclipse.aether.transport.file.FileTransporterFactory.class, //aether-transport-file
       org.eclipse.aether.transport.http.HttpTransporterFactory.class, //aether-transport-http
       org.apache.http.HttpConnection.class, //http-core
       org.apache.http.client.HttpClient.class, //http-client
+      org.apache.http.entity.mime.MIME.class, //http-mime
       org.apache.commons.logging.LogFactory.class, // commons-logging
       org.slf4j.Marker.class, // slf4j, - required for aether resolver at runtime
       org.slf4j.jul.JDK14LoggerFactory.class, // slf4j-jdk14 - required for aether resolver at runtime
+      org.eclipse.aether.named.providers.NoopNamedLockFactory.class, // resolver-named-locks
       org.apache.commons.codec.binary.Base64.class // commons-codec
     ));
     result.addAll(List.of(ClassPathUtil.getUtilClasses())); // intellij.platform.util module
@@ -546,8 +566,8 @@ public final class ArtifactRepositoryManager {
 
     // explicitly set UPDATE_POLICY_ALWAYS, because default setting is UPDATE_POLICY_DAILY, and 5xx resolution errors are cached
     // in local repository for one day and retry does not work
-    RepositoryPolicy enabledRepositoryPolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, null);
-    RepositoryPolicy disabledRepositoryPolicy = new RepositoryPolicy(false, null, null);
+    RepositoryPolicy enabledRepositoryPolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+    RepositoryPolicy disabledRepositoryPolicy = new RepositoryPolicy(false, null, RepositoryPolicy.CHECKSUM_POLICY_WARN);
     builder.setReleasePolicy(enabledRepositoryPolicy);
     builder.setSnapshotPolicy(allowSnapshots ? enabledRepositoryPolicy : disabledRepositoryPolicy);
 
@@ -754,6 +774,50 @@ public final class ArtifactRepositoryManager {
     public ArtifactDependencyNode getRoot() {
       List<ArtifactDependencyNode> rootNodes = myCurrentChildren.get(0);
       return rootNodes.isEmpty() ? null : rootNodes.get(0);
+    }
+  }
+
+  // Force certain activation kinds to be always active in order to include such dependencies in dependency resolution process
+  // Currently OS and JDK activations are always enabled for the purpose of transitive artifact discovery
+  private static class ProfileActivatorProxy implements ProfileActivator {
+
+    private final ProfileActivator[] myDelegates;
+
+    ProfileActivatorProxy(ProfileActivator[] delegates) {
+      myDelegates = delegates;
+    }
+
+    private static boolean isForceActivation(Profile profile) {
+      Activation activation = profile.getActivation();
+      return activation != null && (activation.getJdk() != null || activation.getOs() != null);
+    }
+
+    @Override
+    public boolean isActive(Profile profile, ProfileActivationContext context, ModelProblemCollector problems) {
+      if (isForceActivation(profile)) {
+        return true;
+      }
+      Boolean active = null;
+      for (ProfileActivator delegate : myDelegates) {
+        if (delegate.presentInConfig(profile, context, problems)) {
+          boolean activeValue = delegate.isActive(profile, context, problems);
+          active = active == null? activeValue : active && activeValue;
+        }
+      }
+      return Boolean.TRUE.equals(active);
+    }
+
+    @Override
+    public boolean presentInConfig(Profile profile, ProfileActivationContext context, ModelProblemCollector problems) {
+      if (isForceActivation(profile)) {
+        return true;
+      }
+      for (ProfileActivator delegate : myDelegates) {
+        if (delegate.presentInConfig(profile, context, problems)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

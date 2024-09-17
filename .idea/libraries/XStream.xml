@@ -12,6 +12,10 @@
           <sha256sum>34e08ee62116071cbb69c0ed70d15a7a5b208d62798c59f2120bb8929324cb63</sha256sum>
         </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="xml-apis:xml-apis" />
+        <dependency maven-id="xerces:xercesImpl" />
+      </exclude>
     </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar!/" />
