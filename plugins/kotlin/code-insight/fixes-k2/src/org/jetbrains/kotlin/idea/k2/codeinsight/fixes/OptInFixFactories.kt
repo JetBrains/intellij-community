@@ -36,6 +36,14 @@ internal object OptInFixFactories {
         createQuickFix(diagnostic)
     }
 
+    val optInToInheritanceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInToInheritance ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInToInheritanceErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInToInheritanceError ->
+        createQuickFix(diagnostic)
+    }
+
     val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverride ->
         createQuickFix(diagnostic)
     }

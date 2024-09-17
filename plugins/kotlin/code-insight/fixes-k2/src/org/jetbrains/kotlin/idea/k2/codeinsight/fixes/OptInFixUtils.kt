@@ -16,6 +16,8 @@ internal object OptInFixUtils {
     fun optInMarkerClassId(diagnostic: KaFirDiagnostic<PsiElement>): ClassId? = when (diagnostic) {
         is KaFirDiagnostic.OptInUsage -> diagnostic.optInMarkerClassId
         is KaFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerClassId
+        is KaFirDiagnostic.OptInToInheritance -> diagnostic.optInMarkerClassId
+        is KaFirDiagnostic.OptInToInheritanceError -> diagnostic.optInMarkerClassId
         is KaFirDiagnostic.OptInOverride -> diagnostic.optInMarkerClassId
         is KaFirDiagnostic.OptInOverrideError -> diagnostic.optInMarkerClassId
         else -> null

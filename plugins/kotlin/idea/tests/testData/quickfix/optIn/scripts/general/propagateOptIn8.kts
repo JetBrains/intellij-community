@@ -1,5 +1,5 @@
 // "Propagate 'SubclassOptInRequired(UnstableApi::class)' opt-in requirement to 'LocalClass'" "false"
-// ERROR: This declaration needs opt-in. Its usage must be marked with '@PropagateOptIn8.UnstableApi' or '@OptIn(PropagateOptIn8.UnstableApi::class)'
+// ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@PropagateOptIn8.UnstableApi', '@OptIn(PropagateOptIn8.UnstableApi::class)' or '@SubclassOptInRequired(PropagateOptIn8.UnstableApi::class)'
 // ACTION: Add full qualifier
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'UnstableApi' in containing file 'propagateOptIn8.kts'
