@@ -47,6 +47,10 @@ public final class MavenProjectConfiguration {
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "artifact", keyAttributeName = "name")
   public Map<String, MavenEjbClientConfiguration> ejbClientArtifactConfigs = new HashMap<>();
 
+  @Tag("jar-cfg")
+  @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "jars", keyAttributeName = "name")
+  public Map<String, MavenFilteredJarConfiguration> jarsConfiguration = new HashMap<>();
+
   @Nullable
   private MavenModuleResourceConfiguration findProject(MavenIdBean id) {
     return getModuleConfigurationMap().get(id);

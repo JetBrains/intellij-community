@@ -32,6 +32,19 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(Exception::class)
+  protected suspend fun rebuildProject() {
+    val tester = CompilerTester(project, listOf(), null)
+    try {
+      blockingContextScope {
+        tester.rebuild()
+      }
+    }
+    finally {
+      tester.tearDown()
+    }
+  }
+
+  @Throws(Exception::class)
   protected suspend fun compileFile(moduleName: String, file: VirtualFile) {
     val tester = CompilerTester(project, listOf(getModule(moduleName)), null)
     try {

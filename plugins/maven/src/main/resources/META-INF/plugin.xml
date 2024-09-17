@@ -405,6 +405,9 @@
     <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
                  description="Use IDEA confirming trust manager for maven importer"/>
 
+    <registryKey key="maven.build.additional.jars" defaultValue="true"
+                 description="Build additional jars with classifier"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

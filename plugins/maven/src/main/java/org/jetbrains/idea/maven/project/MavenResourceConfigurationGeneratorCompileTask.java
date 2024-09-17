@@ -23,6 +23,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
+import org.jetbrains.idea.maven.project.compilation.FilteredJarConfigGenerator;
 import org.jetbrains.idea.maven.project.compilation.ResourceConfigGenerator;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
@@ -91,6 +92,7 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
     MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
     for (MavenProject mavenProject : mavenProjectsManager.getProjects()) {
       new ResourceConfigGenerator(fileIndex, mavenProjectsManager, transformer, projectConfig, mavenProject).generateResourceConfig();
+      new FilteredJarConfigGenerator(fileIndex, mavenProjectsManager, transformer, projectConfig, mavenProject).generateAdditionalJars();
     }
     addNonMavenResources(transformer, projectConfig, mavenProjectsManager, project);
 
