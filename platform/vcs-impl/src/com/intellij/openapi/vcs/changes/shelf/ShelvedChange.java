@@ -71,6 +71,7 @@ public final class ShelvedChange {
     ContentRevision afterRevision = getChange().getAfterRevision();
     if (afterRevision == null) return false;
     try {
+      // PatchedContentRevision
       afterRevision.getContent();
     }
     catch (VcsException e) {
@@ -231,7 +232,7 @@ public final class ShelvedChange {
       if (appliedPatch != null) {
         return appliedPatch.patchedText;
       }
-      throw new VcsException(VcsBundle.message("patch.apply.error.conflict"));
+      throw new VcsException(new ApplyPatchException(VcsBundle.message("patch.apply.error.conflict")));
     }
 
     @NotNull
