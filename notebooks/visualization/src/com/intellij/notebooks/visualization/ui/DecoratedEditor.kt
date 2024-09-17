@@ -1,6 +1,5 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import com.intellij.notebooks.ui.editor.actions.command.mode.setMode
 import com.intellij.notebooks.visualization.*
@@ -14,38 +13,33 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
-import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.impl.text.TextEditorComponent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.ui.AncestorListenerAdapter
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.GraphicsEnvironment
+import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.JComponent
-import javax.swing.JLayer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import javax.swing.event.AncestorEvent
-import javax.swing.plaf.LayerUI
 import kotlin.math.max
 import kotlin.math.min
 
-class DecoratedEditor private constructor(private val editorImpl: EditorImpl, private val manager: NotebookCellInlayManager) : NotebookEditor {
+class DecoratedEditor private constructor(
+  private val editorImpl: EditorImpl,
+  private val manager: NotebookCellInlayManager,
+) : NotebookEditor {
 
   /** Used to hold current cell under mouse, to update the folding state and "run" button state. */
   private var mouseOverCell: EditorCellView? = null
 
   private val selectionModel = EditorCellSelectionModel(manager)
 
-  private var selectionUpdateScheduled: AtomicBoolean = AtomicBoolean(false)
-
-  /**
-   * Correct parent for the editor component - our special scroll-supporting layer.
-   * We cannot wrap editorComponent at creation, so we are changing its parent du
-   */
-  private var editorComponentParent: JLayer<JComponent>? = null
+  private var selectionUpdateScheduled = AtomicBoolean(false)
 
   init {
     if (!GraphicsEnvironment.isHeadless()) {
@@ -79,17 +73,9 @@ class DecoratedEditor private constructor(private val editorImpl: EditorImpl, pr
     }, editorImpl.disposable)
 
     editorImpl.caretModel.addCaretListener(object : CaretListener {
-      override fun caretAdded(event: CaretEvent) {
-        scheduleSelectionUpdate()
-      }
-
-      override fun caretPositionChanged(event: CaretEvent) {
-        scheduleSelectionUpdate()
-      }
-
-      override fun caretRemoved(event: CaretEvent) {
-        scheduleSelectionUpdate()
-      }
+      override fun caretAdded(event: CaretEvent) = scheduleSelectionUpdate()
+      override fun caretPositionChanged(event: CaretEvent) = scheduleSelectionUpdate()
+      override fun caretRemoved(event: CaretEvent) = scheduleSelectionUpdate()
     })
 
     updateSelectionByCarets()
@@ -98,46 +84,36 @@ class DecoratedEditor private constructor(private val editorImpl: EditorImpl, pr
   }
 
   private fun wrapEditorComponent(editor: EditorImpl) {
-    val parent = editor.component.parent
-    if (parent == null || parent == editorComponentParent) {
+    val nestedScrollingSupport = NestedScrollingSupportImpl()
 
-      editorImpl.component.addAncestorListener(object : AncestorListenerAdapter() {
-        override fun ancestorAdded(event: AncestorEvent?) {
-          wrapEditorComponent(editorImpl)
+    NotebookAWTMouseDispatcher(editor.scrollPane).apply {
+
+      eventDispatcher.addListener { event ->
+        if (event is MouseEvent) {
+          getEditorPoint(event)?.let { (_, point) ->
+            updateMouseOverCell(point)
+          }
         }
-      })
+      }
 
-      return
+      eventDispatcher.addListener { event ->
+        if (event is MouseWheelEvent) {
+          nestedScrollingSupport.processMouseWheelEvent(event)
+        }
+        else if (event is MouseEvent) {
+          if (event.id == MouseEvent.MOUSE_CLICKED || event.id == MouseEvent.MOUSE_RELEASED || event.id == MouseEvent.MOUSE_PRESSED) {
+            nestedScrollingSupport.processMouseEvent(event, editor.scrollPane)
+          }
+          else if (event.id == MouseEvent.MOUSE_MOVED) {
+            nestedScrollingSupport.processMouseMotionEvent(event)
+          }
+        }
+      }
+
+      Disposer.register(editor.disposable, this)
     }
 
-    if(parent is LanguageConsoleImpl.ConsoleEditorsPanel) return
-
-    val view = editorImpl.scrollPane.viewport.view
-    if (view is EditorComponentImpl) {
-      editorImpl.scrollPane.viewport.view = EditorComponentWrapper(editorImpl, view)
-    }
-
-    editorComponentParent = createCellUnderMouseSupportLayer(editorImpl.component)
-    val secondLayer = NestedScrollingSupport.addNestedScrollingSupport(editorComponentParent!!)
-
-    parent.remove(editor.component)
-    val newComponent = secondLayer
-
-    if (parent is TextEditorComponent) {
-      parent.__add(newComponent, GridBagConstraints().also {
-        it.gridx = 0
-        it.gridy = 0
-        it.weightx = 1.0
-        it.weighty = 1.0
-        it.fill = GridBagConstraints.BOTH
-      })
-    }
-    else if (parent is LanguageConsoleImpl.ConsoleEditorsPanel) {
-      parent.add(newComponent)
-    }
-    else {
-      parent.add(newComponent, BorderLayout.CENTER)
-    }
+    editor.scrollPane.viewport.view = EditorComponentWrapper(editor, editor.contentComponent)
   }
 
   /** The main thing while we need it - to perform updating of underlying components within keepScrollingPositionWhile. */
@@ -192,27 +168,6 @@ class DecoratedEditor private constructor(private val editorImpl: EditorImpl, pr
       }
     }
   }
-
-  private fun createCellUnderMouseSupportLayer(view: JComponent) = JLayer(view, object : LayerUI<JComponent>() {
-
-    override fun installUI(c: JComponent) {
-      super.installUI(c)
-      (c as JLayer<*>).layerEventMask = AWTEvent.MOUSE_MOTION_EVENT_MASK
-    }
-
-    override fun uninstallUI(c: JComponent) {
-      super.uninstallUI(c)
-      (c as JLayer<*>).layerEventMask = 0
-    }
-
-    override fun eventDispatched(e: AWTEvent, l: JLayer<out JComponent?>?) {
-      if (e is MouseEvent) {
-        getEditorPoint(e)?.let { (_, point) ->
-          updateMouseOverCell(point)
-        }
-      }
-    }
-  })
 
   private fun getEditorPoint(e: MouseEvent): Pair<Component, Point>? {
     val component = if (SwingUtilities.isDescendingFrom(e.component, editorImpl.contentComponent)) {

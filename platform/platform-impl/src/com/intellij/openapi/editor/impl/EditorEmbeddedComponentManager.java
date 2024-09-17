@@ -334,7 +334,7 @@ public final class EditorEmbeddedComponentManager {
         }
       });
 
-      renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
+     // renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
       renderer.setInlay(inlay);
       myEditor.getContentComponent().add(renderer);
