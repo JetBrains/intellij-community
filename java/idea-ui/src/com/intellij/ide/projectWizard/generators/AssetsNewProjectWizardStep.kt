@@ -16,6 +16,7 @@ import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -169,10 +170,12 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
           .filter { it.isFile }
       }
     }
-    withEdtAndReadContext {
-      val fileEditorManager = FileEditorManager.getInstance(project)
-      for (file in virtualFiles) {
-        fileEditorManager.openFile(file, true)
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        for (file in virtualFiles) {
+          fileEditorManager.openFile(file, true)
+        }
       }
     }
     withContext(Dispatchers.EDT) {
@@ -180,16 +183,6 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
         val projectView = ProjectView.getInstance(project)
         for (file in virtualFiles) {
           projectView.select(null, file, false)
-        }
-      }
-    }
-  }
-
-  private suspend fun withEdtAndReadContext(action: () -> Unit) {
-    withContext(Dispatchers.IO) {
-      blockingContext {
-        invokeAndWaitIfNeeded {
-          action()
         }
       }
     }
