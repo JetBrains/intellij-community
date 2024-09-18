@@ -2,8 +2,8 @@
 package com.intellij.testFramework.junit5
 
 import com.intellij.openapi.util.registry.Registry
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 /**
@@ -17,17 +17,18 @@ import org.junit.jupiter.api.extension.ExtensionContext
 class RegistryKeyExtension(
   key: String,
   private val value: Boolean,
-) : BeforeAllCallback,
-    AfterAllCallback {
+) : BeforeEachCallback,
+    AfterEachCallback {
 
   private val registryValue = Registry.get(key)
-  private val previous = registryValue.asBoolean()
+  private var previous: Boolean = false
 
-  override fun beforeAll(context: ExtensionContext?) {
+  override fun beforeEach(context: ExtensionContext?) {
+    previous = registryValue.asBoolean()
     registryValue.setValue(value)
   }
 
-  override fun afterAll(context: ExtensionContext?) {
+  override fun afterEach(context: ExtensionContext?) {
     registryValue.setValue(previous)
   }
 }
