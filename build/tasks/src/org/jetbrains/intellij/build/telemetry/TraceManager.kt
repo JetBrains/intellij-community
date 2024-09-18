@@ -4,10 +4,10 @@
 package org.jetbrains.intellij.build.telemetry
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
-import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder
@@ -129,7 +129,7 @@ object JaegerJsonSpanExporterManager {
           jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
         }
       })
-      val otlpEndPoint = normalizeOtlpEndPoint(System.getenv("OTLP_ENDPOINT"))
+      val otlpEndPoint = getTraceEndpoint()
       if (otlpEndPoint != null) {
         add(OtlpSpanExporter(otlpEndPoint))
       }

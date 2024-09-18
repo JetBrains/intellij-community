@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
@@ -233,7 +234,7 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
     ))
   }
 
-  getOtlpEndPoint()?.let {
+  getTraceEndpoint()?.let {
     spanExporters.add(OtlpSpanExporter(it))
   }
 
@@ -267,7 +268,7 @@ private fun createOpenTelemetryConfigurator(
     serviceNamespace = serviceNamespace,
     customResourceBuilder = {
       // don't write username to file - it maybe private information
-      if (getOtlpEndPoint() != null) {
+      if (getTraceEndpoint() != null) {
         it.put(AttributeKey.stringKey("process.owner"), System.getProperty("user.name") ?: "unknown")
       }
     },

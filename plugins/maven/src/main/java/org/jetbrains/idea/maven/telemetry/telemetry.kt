@@ -4,12 +4,12 @@ package org.jetbrains.idea.maven.telemetry
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.openapi.project.Project
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
 import com.intellij.platform.diagnostic.telemetry.impl.computeSpanId
 import com.intellij.platform.diagnostic.telemetry.impl.computeTraceId
-import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -50,7 +50,7 @@ private fun bytesToHex(bytes: ByteArray): String {
 internal fun scheduleExportTelemetryTrace(project: Project, binaryTrace: ByteArray) {
   if (binaryTrace.isEmpty()) return
 
-  val telemetryHost = getOtlpEndPoint()
+  val telemetryHost = getTraceEndpoint()
   if (null == telemetryHost) return
 
   val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)

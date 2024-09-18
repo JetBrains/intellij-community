@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.registry.Registry.Companion.stringValue
-import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -54,7 +54,7 @@ object GradleDaemonOpenTelemetryUtil {
   @JvmStatic
   fun getTargetEndpoint(settings: GradleExecutionSettings): URI? {
     return settings.providedOrElse(DAEMON_TELEMETRY_TARGET_ENDPOINT_KEY) {
-      val uri = getOtlpEndPoint() ?: return@providedOrElse null
+      val uri = getTraceEndpoint() ?: return@providedOrElse null
       URI.create(uri)
     }
   }
