@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-internal class CertificateWarningStatisticsCollector: CounterUsagesCollector() {
+internal object CertificateWarningStatisticsCollector: CounterUsagesCollector() {
   private val certificateWarningGroup = EventLogGroup("certificate.warning.info", 1)
   
   private val certificateCount = EventFields.Int("certificate_count")
