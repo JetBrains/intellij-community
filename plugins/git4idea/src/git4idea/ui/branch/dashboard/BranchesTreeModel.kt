@@ -120,14 +120,12 @@ internal class NodeDescriptorsModel(private val rootNode: BranchNodeDescriptor.R
     val groupByPrefix = groupingConfig[GroupingKey.GROUPING_BY_DIRECTORY]!!
 
     val topLevelGroups = mutableListOf<BranchNodeDescriptor>()
+    topLevelGroups += BranchNodeDescriptor.Head
     for ((branches, group) in listOf(localBranches to GitBranchType.LOCAL, remoteBranches to GitBranchType.REMOTE)) {
       if (branches.isNotEmpty()) {
         val tree = groupByRepoAndPrefixIfApplicable(branches, groupByRepository, groupByPrefix)
         topLevelGroups += BranchNodeDescriptor.TopLevelGroup(group, tree)
       }
-    }
-    if (topLevelGroups.isNotEmpty()) {
-      topLevelGroups.add(0, BranchNodeDescriptor.Head)
     }
     rootNode.children = topLevelGroups
   }
