@@ -25,8 +25,8 @@ public interface PluginRepositoryAuthProvider {
    *
    * @return {@link Collections#emptyMap()} if URL should not be handled or no credentials are available
    */
-  @NotNull Map<String, String> getAuthHeaders(String url);
+  @NotNull Map<@NotNull String, @NotNull String> getAuthHeaders(@NotNull String url);
 
 
-  boolean canHandle(String url);
+  boolean canHandle(@NotNull String url);
 }
