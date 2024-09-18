@@ -9,7 +9,7 @@ public fun IntelliJIconKey.Companion.fromPlatformIcon(
     iconClass: Class<*> = icon::class.java,
 ): IconKey {
     check(icon is IconPathProvider) {
-        "Only icons implementing IconPathsProvider are supported (e.g., coming from AllIcons)"
+        "Only icons implementing IconPathProvider are supported (e.g., coming from AllIcons)"
     }
 
     val oldUiPath =
