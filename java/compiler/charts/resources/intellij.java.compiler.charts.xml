@@ -13,8 +13,8 @@
       <separator/>
       <action id="CompilationChartsZoomResetAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomResetAction"
               icon="AllIcons.Graph.ActualZoom">
-        <keyboard-shortcut first-keystroke="meta 0" keymap="Mac OS X"/>
-        <keyboard-shortcut first-keystroke="ctrl shift 0" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="shift meta EQUALS" keymap="Mac OS X"/>
+        <keyboard-shortcut first-keystroke="shift ctrl EQUALS" keymap="$default"/>
         <override-text place="CompilationChartsToolbar"/>
       </action>
       <action id="CompilationChartsZoomOutAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomOutAction"

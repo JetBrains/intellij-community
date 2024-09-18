@@ -162,6 +162,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
       {"ctrl BACK_SLASH",          "AIAssistant.Editor.AskAiAssistantInEditor", "FileChooser.GoToRoot"},
       {"alt BACK_SLASH",           "CallInlineCompletionAction", "MainMenuButton.ShowMenu"},
+      {"shift ctrl EQUALS",        "CompilationChartsZoomResetAction", "ExpandAllRegions"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
@@ -534,6 +535,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl M",             "EditorSelectWord", "RInsertPipeAction"},
       {"shift ctrl T",             "ReopenClosedTab", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift ctrl V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
+      {"shift ctrl EQUALS",        "CompilationChartsZoomResetAction", "EditorDecreaseFontSize"},
     }),
     Map.entry("Sublime Text (Mac OS X)", new String[][]{
       {"F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch",
