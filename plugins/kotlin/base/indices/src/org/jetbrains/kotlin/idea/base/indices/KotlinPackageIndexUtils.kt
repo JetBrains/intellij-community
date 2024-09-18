@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 
 object KotlinPackageIndexUtils {
+    private val falseValueProcessor = FileBasedIndex.ValueProcessor<Name?> { _, _ -> false }
+
     fun getSubPackageFqNames(
         packageFqName: FqName,
         scope: GlobalSearchScope,
@@ -35,13 +37,15 @@ object KotlinPackageIndexUtils {
     fun packageExists(
         packageFqName: FqName,
         searchScope: GlobalSearchScope
-    ): Boolean = !FileBasedIndex.getInstance().processValues(
-        KotlinPartialPackageNamesIndex.NAME,
-        packageFqName,
-        null,
-        FileBasedIndex.ValueProcessor { _, _ -> false },
-        searchScope
-    )
+    ): Boolean {
+        return !FileBasedIndex.getInstance().processValues(
+            KotlinPartialPackageNamesIndex.NAME,
+            packageFqName,
+            null,
+            falseValueProcessor,
+            searchScope
+        )
+    }
 
     /**
      * Return all direct subpackages of package [fqName].
