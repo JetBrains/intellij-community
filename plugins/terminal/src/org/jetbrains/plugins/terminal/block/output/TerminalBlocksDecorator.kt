@@ -255,7 +255,7 @@ internal class TerminalBlocksDecorator(
       val g2 = g.create()
       try {
         val visibleArea = inlay.editor.scrollingModel.visibleArea
-        val textX = visibleArea.x + visibleArea.width - targetRegion.width - JBUI.scale(TerminalUi.cornerToBlockInset + TerminalUi.exitCodeRightInset + 3)
+        val textX = visibleArea.x + visibleArea.width - targetRegion.width - JBUI.scale(TerminalUi.cornerToBlockInset + TerminalUi.exitCodeRightInset)
         val fontMetrics = g2.getFontMetrics(font)
         val baseLine = SimpleColoredComponent.getTextBaseLine(fontMetrics, targetRegion.height)
         g2.font = font
@@ -290,7 +290,7 @@ internal class TerminalBlocksDecorator(
   private class TerminalRightAreaRenderer : CustomHighlighterRenderer {
     override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
       val visibleArea = editor.scrollingModel.visibleArea
-      val width = JBUI.scale(TerminalUi.cornerToBlockInset + 3)
+      val width = JBUI.scale(TerminalUi.cornerToBlockInset)
       val oldColor = g.color
       try {
         g.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)

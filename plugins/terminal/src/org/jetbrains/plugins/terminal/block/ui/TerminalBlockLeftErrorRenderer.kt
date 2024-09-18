@@ -17,12 +17,12 @@ import java.awt.RenderingHints
 internal open class TerminalBlockLeftErrorRenderer : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val gutterWidth = (editor as EditorEx).gutterComponentEx.width
-    val offset = JBUI.scale(2)
-    val x = gutterWidth - JBUI.scale(9)
+    val offset = JBUI.scale(TerminalUi.errorLineYOffset)
+    val x = gutterWidth - JBUI.scale(TerminalUi.errorLineRightOffset)
     val y = r.y + offset
-    val width = JBUI.scale(3)
+    val width = JBUI.scale(TerminalUi.errorLineWidth)
     val height = r.height - JBUI.scale(TerminalUi.blockBottomInset) - 2 * offset
-    val arc = JBUI.scale(4)
+    val arc = JBUI.scale(TerminalUi.errorLineArc)
 
     val g2d = g.create() as Graphics2D
     try {

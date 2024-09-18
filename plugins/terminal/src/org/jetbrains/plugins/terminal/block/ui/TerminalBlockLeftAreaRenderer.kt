@@ -29,11 +29,12 @@ internal class TerminalBlockLeftAreaRenderer(
     val blocksGap = toFloatAndScale(TerminalUi.blocksGap)
     val width = toFloatAndScale(TerminalUi.blockLeftInset)
     val arc = toFloatAndScale(TerminalUi.blockArc)
+    val selectionGap = JBUI.scale(TerminalUi.blockSelectionSeparatorGap)
 
     val gutterWidth = (editor as EditorEx).gutterComponentEx.width
     // r.height includes the height of the block text and the height of the inlays below the last line
     // so, to get the full block height, we need to add top inset and remove the gap between blocks
-    val rect = Rectangle2D.Float(gutterWidth - width, r.y - topIns + JBUI.scale(1), width, r.height + topIns - blocksGap - JBUI.scale(2))
+    val rect = Rectangle2D.Float(gutterWidth - width, r.y - topIns + selectionGap, width, r.height + topIns - blocksGap - selectionGap * 2)
 
     // from right bottom corner to the right top corner
     val outerPath = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {

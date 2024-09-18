@@ -51,14 +51,15 @@ internal class TerminalBlockCornersRenderer private constructor(
     val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
     // it is used to calculate the width, so it should not contain the fractional part
     // because the width will be used to check that cached gradient is still valid
-    val cornerToBlock = JBUI.scale(TerminalUi.cornerToBlockInset + 3).toFloat()
+    val cornerToBlock = JBUI.scale(TerminalUi.cornerToBlockInset).toFloat()
     val gap = toFloatAndScale(TerminalUi.blocksGap)
     val arc = toFloatAndScale(TerminalUi.blockArc)
+    val selectionGap = JBUI.scale(TerminalUi.blockSelectionSeparatorGap)
 
     val visibleArea = editor.scrollingModel.visibleArea
     val width = visibleArea.width - cornerToBlock
-    val topY = editor.offsetToXY(highlighter.startOffset).y - topIns + JBUI.scale(1)
-    val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + bottomIns - JBUI.scale(1)
+    val topY = editor.offsetToXY(highlighter.startOffset).y - topIns + selectionGap
+    val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + bottomIns - selectionGap
 
     val topRect = Rectangle2D.Float(0f, topY, width, topIns)
     val bottomRect = Rectangle2D.Float(0f, bottomY - bottomIns, width, bottomIns + gap)
