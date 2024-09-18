@@ -7,6 +7,7 @@
  * String fullLine = "";
  * }
  * </pre>
+ * <pre> {@code String secondFullLine = ""; }</pre>
  */
 class Test {
   public String field = null;
