@@ -242,7 +242,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
         null
       }
 
-      MavenArtifact(it.id.groupId, it.id.artifactId, it.id.version, null, MavenConstants.TYPE_JAR, it.classifier, it.scope, false, MavenConstants.TYPE_JAR,
+      MavenArtifact(it.id.groupId, it.id.artifactId, it.id.version, it.id.version, MavenConstants.TYPE_JAR, it.classifier, it.scope, false, MavenConstants.TYPE_JAR,
                     file, localRepo, true, false)
 
 

@@ -393,6 +393,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
         model.setProperties(new ImportedLibraryProperties(new MavenCoordinates(artifact.getGroupId(),
                                                                                artifact.getArtifactId(),
                                                                                artifact.getVersion(),
+                                                                               artifact.getBaseVersion(),
                                                                                artifact.getPackaging(),
                                                                                artifact.getClassifier())));
       }
