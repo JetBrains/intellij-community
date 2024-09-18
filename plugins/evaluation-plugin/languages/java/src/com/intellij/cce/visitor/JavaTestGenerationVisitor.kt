@@ -2,16 +2,10 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.codeInsight.TestFrameworks
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
-import com.intellij.psi.impl.source.PsiJavaFileImpl
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.descendantsOfType
-import java.nio.file.Paths
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 
 
 class JavaTestGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
@@ -23,11 +17,14 @@ class JavaTestGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
 
   override fun visitJavaFile(file: PsiJavaFile) {
     codeFragment = CodeFragment(file.textOffset, file.textLength)
-
+    
     super.visitJavaFile(file)
   }
 
   override fun visitMethod(method: PsiMethod) {
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC) || method.body == null || method.isConstructor) {
+      return
+    }
     codeFragment?.addChild(CodeToken(method.text, method.textRange.startOffset, getMethodProperties()))
   }
 
