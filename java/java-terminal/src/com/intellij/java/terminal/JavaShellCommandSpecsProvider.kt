@@ -13,9 +13,42 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   }
 }
 
-private fun getSpecs() : ShellCommandSpec = ShellCommandSpec("java") {
+private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
   description(JavaTerminalBundle.message("java.command.terminal.description"))
   option("--help", "-help", "-h") {
     description(JavaTerminalBundle.message("java.command.terminal.help.option.description"))
+  }
+  option("-jar") {
+    argument {
+      displayName(JavaTerminalBundle.message("java.command.terminal.jar.option.argument.jar.file.text"))
+    }
+    description(JavaTerminalBundle.message("java.command.terminal.jar.option.description"))
+  }
+  option("-D") {
+    description(JavaTerminalBundle.message("java.command.terminal.D.option.description"))
+    repeatTimes = 0
+    separator = ""
+    argument {
+      displayName(JavaTerminalBundle.message("java.command.terminal.D.option.argument.key.text"))
+    }
+  }
+  option("--version", "-version") {
+    description(JavaTerminalBundle.message("java.command.terminal.version.option.description"))
+  }
+  option("-classpath", "-cp") {
+    description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
+    argument {
+      displayName(JavaTerminalBundle.message("java.command.terminal.classpath.option.argument.path.text"))
+    }
+  }
+  option("-showversion", "--show-version") {
+    description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description"))
+  }
+  option("--dry-run") {
+    description(JavaTerminalBundle.message("java.command.terminal.dry.run.option.description"))
+  }
+
+  argument {
+    displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
   }
 }
