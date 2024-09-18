@@ -228,8 +228,8 @@
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
-      <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
+      <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
       <action class="git4idea.actions.branch.GitDeleteBranchAction"/>
