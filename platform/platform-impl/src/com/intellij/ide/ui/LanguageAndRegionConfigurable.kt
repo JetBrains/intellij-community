@@ -52,7 +52,6 @@ import javax.swing.event.PopupMenuEvent
 @Internal
 object LanguageAndRegionUi {
   fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?, source: EventSource) {
-    val statistics = LocalizationActionsStatistics().apply { setSource(source) }
     val comboGroup = "language_and_region_combo"
 
     panel.row(IdeBundle.message("combobox.language")) {
@@ -98,17 +97,17 @@ object LanguageAndRegionUi {
       languageComponent.whenItemSelectedFromUi {
         if (it === ITEM_MORE_LANGUAGES) {
           model.selectedItem = lastSelectedItem
-          statistics.moreLanguagesSelected()
+          LocalizationActionsStatistics.moreLanguagesSelected(source)
           showMoreLanguages(languageComponent)
           return@whenItemSelectedFromUi
         }
         if (lastSelectedItem == it) return@whenItemSelectedFromUi
-        statistics.languageSelected(it, lastSelectedItem)
+        LocalizationActionsStatistics.languageSelected(it, lastSelectedItem, source)
         lastSelectedItem = it
       }
       languageComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-          statistics.languageExpanded()
+          LocalizationActionsStatistics.languageExpanded(source)
         }
       })
 
@@ -168,7 +167,7 @@ object LanguageAndRegionUi {
 
         regionBox.comment?.addHyperlinkListener { e ->
           if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-            statistics.hyperLinkActivated()
+            LocalizationActionsStatistics.hyperLinkActivated(source)
           }
         }
       }
@@ -185,12 +184,12 @@ object LanguageAndRegionUi {
       var lastSelectedItem = regionComponent.selectedItem as Region
       regionComponent.whenItemSelectedFromUi {
         if (lastSelectedItem == it) return@whenItemSelectedFromUi
-        statistics.regionSelected(it, lastSelectedItem)
+        LocalizationActionsStatistics.regionSelected(it, lastSelectedItem, source)
         lastSelectedItem = it
       }
       regionComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-          statistics.regionExpanded()
+          LocalizationActionsStatistics.regionExpanded(source)
         }
       })
     }
@@ -249,7 +248,7 @@ internal class LanguageAndRegionConfigurable :
     val selectedRegion = RegionSettings.getRegion()
     if (initSelectionLanguage.toLanguageTag() != selectedLocale.toLanguageTag() ||
         initSelectionRegion != selectedRegion) {
-      LocalizationActionsStatistics().apply { setSource(eventSource) }.settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion)
+      LocalizationActionsStatistics.settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion, eventSource)
       LanguageAndRegionUi.showRestartDialog()
     }
   }

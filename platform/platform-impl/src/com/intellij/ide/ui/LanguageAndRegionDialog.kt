@@ -45,11 +45,11 @@ private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"), 
 private val regionMapping = mapOf(Region.CHINA to "CN")
 
 private class LanguageAndRegionDialog(private var selectedLanguage: Locale, private var selectedRegion: Region, osLocale: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
-  private val localizationStatistics = LocalizationActionsStatistics().apply { setSource(EventSource.PRE_EUA_DIALOG) }
+  val source = EventSource.PRE_EUA_DIALOG
 
   init {
     isResizable = false
-    localizationStatistics.dialogInitializationStarted(osLocale, selectedLanguage, selectedRegion)
+    LocalizationActionsStatistics.dialogInitializationStarted(osLocale, selectedLanguage, selectedRegion, source)
     init()
   }
 
@@ -74,7 +74,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       }
       row {
         text(getMessageBundle().getString("description.language.and.region")).apply {
-          component.addHyperlinkListener { e -> if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) localizationStatistics.hyperLinkActivated() }
+          component.addHyperlinkListener { e -> if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) LocalizationActionsStatistics.hyperLinkActivated(source) }
         }
       }
     }.withPreferredWidth(350), VerticalLayout.CENTER)
@@ -112,13 +112,13 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       .setResizable(false)
       .setCancelOnClickOutside(true)
       .setItemChosenCallback {
-        localizationStatistics.regionSelected(it, selectedRegion)
+        LocalizationActionsStatistics.regionSelected(it, selectedRegion, source)
         selectedRegion = it
         button.text = getRegionLabel(it)
       }
       .createPopup()
     popup.show(RelativePoint.getSouthWestOf(button))
-    localizationStatistics.regionExpanded()
+    LocalizationActionsStatistics.regionExpanded(source)
   }
 
   private fun createLanguagePopup(button: JButton) {
@@ -134,7 +134,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       .setResizable(false)
       .setCancelOnClickOutside(true)
       .setItemChosenCallback {
-        localizationStatistics.languageSelected(it, selectedLanguage)
+        LocalizationActionsStatistics.languageSelected(it, selectedLanguage, source)
         selectedLanguage = it
         contentPanel.removeAll()
         val panel = createCenterPanel()
@@ -145,7 +145,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       }
       .createPopup()
     popup.show(RelativePoint.getSouthWestOf(button))
-    localizationStatistics.languageExpanded()
+    LocalizationActionsStatistics.languageExpanded(source)
   }
 
   private fun createRendererComponent(@Nls value: String, list: JComponent, selected: Boolean): JComponent {
@@ -175,7 +175,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
 
 
   override fun doOKAction() {
-    localizationStatistics.nextButtonPressed(selectedLanguage, selectedRegion)
+    LocalizationActionsStatistics.nextButtonPressed(selectedLanguage, selectedRegion, source)
     LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag(), true)
     RegionSettings.setRegion(selectedRegion)
     clearCache()
@@ -188,7 +188,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
   }
   
   override fun doCancelAction() {
-    localizationStatistics.dialogClosedWithoutConfirmation(selectedLanguage, selectedRegion)
+    LocalizationActionsStatistics.dialogClosedWithoutConfirmation(selectedLanguage, selectedRegion, source)
     super.doCancelAction()
   }
 
