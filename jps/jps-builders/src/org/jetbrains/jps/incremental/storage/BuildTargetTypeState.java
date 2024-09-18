@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -25,7 +26,7 @@ public final class BuildTargetTypeState {
   @SuppressWarnings("SSBasedInspection")
   private final Object2IntOpenHashMap<BuildTarget<?>> targetIds = new Object2IntOpenHashMap<>();
   private final List<Pair<String, Integer>> myStaleTargetIds;
-  private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> myConfigurations;
+  private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> configurations;
   private final BuildTargetType<?> myTargetType;
   private final BuildTargetsState targetState;
   private final Path myTargetsFile;
@@ -37,14 +38,14 @@ public final class BuildTargetTypeState {
     myTargetType = targetType;
     targetState = state;
     myTargetsFile = state.getDataPaths().getTargetTypeDataRoot(targetType).toPath().resolve( "targets.dat");
-    myConfigurations = new ConcurrentHashMap<>();
+    configurations = new ConcurrentHashMap<>();
     myStaleTargetIds = new ArrayList<>();
     load();
   }
 
-  private boolean load() {
+  private void load() {
     if (Files.notExists(myTargetsFile)) {
-      return false;
+      return;
     }
 
     try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(myTargetsFile)))) {
@@ -66,11 +67,9 @@ public final class BuildTargetTypeState {
       if (version >= 1) {
         myAverageTargetBuildTimeMs = input.readLong();
       }
-      return true;
     }
     catch (IOException e) {
       LOG.info("Cannot load " + myTargetType.getTypeId() + " targets data: " + e.getMessage(), e);
-      return false;
     }
   }
 
@@ -100,7 +99,7 @@ public final class BuildTargetTypeState {
     }
   }
 
-  public synchronized List<Pair<String, Integer>> getStaleTargetIds() {
+  public synchronized @NotNull List<Pair<String, Integer>> getStaleTargetIds() {
     return new ArrayList<>(myStaleTargetIds);
   }
 
@@ -128,15 +127,14 @@ public final class BuildTargetTypeState {
     return myAverageTargetBuildTimeMs;
   }
 
-  public BuildTargetConfiguration getConfiguration(BuildTarget<?> target) {
-    BuildTargetConfiguration configuration = myConfigurations.get(target);
-    if (configuration == null) {
-      configuration = new BuildTargetConfiguration(target, targetState);
-      final BuildTargetConfiguration existing = myConfigurations.putIfAbsent(target, configuration);
-      if (existing != null) {
-        configuration = existing;
-      }
+  public @NotNull BuildTargetConfiguration getConfiguration(@NotNull BuildTarget<?> target) {
+    BuildTargetConfiguration configuration = configurations.get(target);
+    if (configuration != null) {
+      return configuration;
     }
-    return configuration;
+
+    configuration = new BuildTargetConfiguration(target, targetState);
+    BuildTargetConfiguration existing = configurations.putIfAbsent(target, configuration);
+    return existing == null ? configuration : existing;
   }
 }

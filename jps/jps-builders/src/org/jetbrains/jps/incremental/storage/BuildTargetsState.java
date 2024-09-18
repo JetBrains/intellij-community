@@ -25,7 +25,7 @@ public final class BuildTargetsState {
   private final BuildDataPaths myDataPaths;
   private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
   private long myLastSuccessfulRebuildDuration = -1;
-  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> typeToState = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final JpsModel myModel;
   private final BuildRootIndex myBuildRootIndex;
 
@@ -72,7 +72,7 @@ public final class BuildTargetsState {
     catch (IOException e) {
       LOG.info("Cannot save targets info: " + e.getMessage(), e);
     }
-    for (BuildTargetTypeState state : myTypeStates.values()) {
+    for (BuildTargetTypeState state : typeToState.values()) {
       state.save();
     }
   }
@@ -112,8 +112,8 @@ public final class BuildTargetsState {
     return getTypeState(type).getAverageTargetBuildTime();
   }
 
-  private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
-    return myTypeStates.computeIfAbsent(type, it -> new BuildTargetTypeState(it, this));
+  private @NotNull BuildTargetTypeState getTypeState(@NotNull BuildTargetType<?> type) {
+    return typeToState.computeIfAbsent(type, it -> new BuildTargetTypeState(it, this));
   }
 
   public void markUsedId(int id) {

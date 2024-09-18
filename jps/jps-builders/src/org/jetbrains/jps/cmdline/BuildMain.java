@@ -116,13 +116,13 @@ public final class BuildMain {
 
             final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);
             final BuildFSState fsState = new BuildFSState(false);
-            final ProjectDescriptor pd = runner.load(new MessageHandler() {
+            final ProjectDescriptor projectDescriptor = runner.load(new MessageHandler() {
               @Override
               public void processMessage(BuildMessage msg) {
                 data.addMessage(msg);
               }
             }, dataStorageRoot.toPath(), fsState);
-            data.setProjectDescriptor(pd);
+            data.setProjectDescriptor(projectDescriptor);
 
             final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
             try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)))) {
@@ -130,7 +130,7 @@ public final class BuildMain {
               if (version == BuildFSState.VERSION) {
                 final long savedOrdinal = in.readLong();
                 final boolean hasWorkToDo = in.readBoolean();
-                fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
+                fsState.load(in, projectDescriptor.getModel(), projectDescriptor.getBuildRootIndex());
                 data.setFsEventOrdinal(savedOrdinal);
                 data.setHasHasWorkToDo(hasWorkToDo);
               }
@@ -143,9 +143,9 @@ public final class BuildMain {
             }
 
             // preloading target configurations and pre-calculating target dirty state
-            final BuildTargetsState targetsState = pd.getTargetsState();
-            for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-              targetsState.getTargetConfiguration(target).isTargetDirty(pd);
+            BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+            for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+              targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor);
             }
 
             //noinspection ResultOfMethodCallIgnored

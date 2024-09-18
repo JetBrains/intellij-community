@@ -369,7 +369,7 @@ public final class IncProjectBuilder {
       if (!targetIndex.isDummy(target)) {
         final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
         if (avgTimeToBuild > 0) {
-          // 1. in general case this time should include dependency analysis and cache update times
+          // 1. in general case, this time should include dependency analysis and cache update times
           // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
           if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
             estimatedBuildTime += avgTimeToBuild;

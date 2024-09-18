@@ -37,13 +37,13 @@ public final class BuildTargetConfiguration {
   private static final String DIRTY_MARK = "$dirty_mark$";
 
   private final BuildTarget<?> target;
-  private final BuildTargetsState myTargetsState;
+  private final BuildTargetsState targetState;
   private @NotNull String configuration;
   private volatile String currentState;
 
-  public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
+  public BuildTargetConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildTargetsState targetState) {
     this.target = target;
-    myTargetsState = targetsState;
+    this.targetState = targetState;
     configuration = load();
   }
 
@@ -115,12 +115,12 @@ public final class BuildTargetConfiguration {
     }
   }
 
-  private Path getConfigFile() {
-    return myTargetsState.getDataPaths().getTargetDataRootDir(target).resolve("config.dat");
+  private @NotNull Path getConfigFile() {
+    return targetState.getDataPaths().getTargetDataRootDir(target).resolve("config.dat");
   }
 
-  private Path getNonexistentOutputsFile() {
-    return myTargetsState.getDataPaths().getTargetDataRootDir(target).resolve("nonexistent-outputs.dat");
+  private @NotNull Path getNonexistentOutputsFile() {
+    return targetState.getDataPaths().getTargetDataRootDir(target).resolve("nonexistent-outputs.dat");
   }
 
   private @NotNull String getCurrentState(@NotNull ProjectDescriptor projectDescriptor) {
@@ -143,7 +143,7 @@ public final class BuildTargetConfiguration {
     return state;
   }
 
-  public void storeNonexistentOutputRoots(CompileContext context) throws IOException {
+  public void storeNonexistentOutputRoots(@NotNull CompileContext context) throws IOException {
     PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
     Collection<File> outputRoots = target.getOutputRoots(context);
     List<String> nonexistentOutputRoots = new ArrayList<>();
