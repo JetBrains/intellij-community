@@ -31,7 +31,7 @@ private class XDebuggerValueLookupEntityTypesProvider : EntityTypeProvider {
 }
 
 @ApiStatus.Internal
-class XDebuggerValueLookupListeningStartedEntity(override val eid: EID) : Entity {
+data class XDebuggerValueLookupListeningStartedEntity(override val eid: EID) : Entity {
   val projectEntity by Project
 
   companion object : DurableEntityType<XDebuggerValueLookupListeningStartedEntity>(
@@ -44,7 +44,7 @@ class XDebuggerValueLookupListeningStartedEntity(override val eid: EID) : Entity
 }
 
 @ApiStatus.Internal
-class XDebuggerValueLookupHideHintsRequestEntity(override val eid: EID) : Entity {
+data class XDebuggerValueLookupHideHintsRequestEntity(override val eid: EID) : Entity {
   val projectEntity by Project
 
   companion object : DurableEntityType<XDebuggerValueLookupHideHintsRequestEntity>(
