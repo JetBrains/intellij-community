@@ -10,6 +10,7 @@ import com.intellij.ide.starters.local.GeneratorResourceFile
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardActivityKey
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectSafe
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.CoroutineScope
@@ -110,12 +112,14 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
       }
 
       StartupManager.getInstance(project).runAfterOpened { // IDEA-244863
-        val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
-        coroutineScope.launchTracked {
-          reformatCode(project, filesToReformat)
-        }
-        coroutineScope.launchTracked {
-          openFilesInEditor(project, filesToOpen)
+        project.trackActivityBlocking(NewProjectWizardActivityKey) {
+          val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
+          coroutineScope.launchTracked {
+            reformatCode(project, filesToReformat)
+          }
+          coroutineScope.launchTracked {
+            openFilesInEditor(project, filesToOpen)
+          }
         }
       }
     }
