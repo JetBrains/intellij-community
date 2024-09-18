@@ -91,7 +91,9 @@ internal class CoroutineProjectViewSupport(
 
   override fun acceptAndUpdate(visitor: TreeVisitor, presentations: List<TreePath?>?, structures: List<TreePath?>?) {
     coroutineScope.launch(CoroutineName("Updating ${presentations?.size} presentations and ${structures?.size} structures after accepting $visitor")) {
-      viewModel.accept(visitor, false)
+      swingModel.accept(visitor, false).await()
+      if (presentations != null) update(presentations, false)
+      if (structures != null) update(structures, true)
     }
   }
 
