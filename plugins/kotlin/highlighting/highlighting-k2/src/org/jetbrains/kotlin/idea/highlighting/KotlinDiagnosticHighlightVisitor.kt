@@ -11,16 +11,23 @@ import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
@@ -31,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactor
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
 import org.jetbrains.kotlin.idea.highlighter.clearAllKotlinUnresolvedReferenceKinds
@@ -39,7 +47,9 @@ import org.jetbrains.kotlin.idea.highlighting.highlighters.ignoreIncompleteModeD
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 
@@ -48,6 +58,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     // we have to extract diags from this map according to the range of the current element being visited, to avoid flickers
     private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder?>>
     private var holder: HighlightInfoHolder? = null
+    private var coroutineScope: CoroutineScope? = null
     override fun suitableForFile(file: PsiFile): Boolean {
         val viewProvider = file.viewProvider
         val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
@@ -64,6 +75,10 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             return true
         }
         this.holder = holder
+        this.coroutineScope = KotlinPluginDisposable.getInstance(file.project)
+            .coroutineScope
+            .childScope(name = file.name,)
+
         val contextFile = holder.contextFile as? KtFile ?: error("KtFile files expected but got ${holder.contextFile}")
         diagnosticRanges = analyzeFile(contextFile)
         try {
@@ -74,13 +89,19 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             throw e
         } finally {
             // do not leak Editor, since KotlinDiagnosticHighlightVisitor is an app-level extension
-            this.holder = null
             diagnosticRanges.clear()
+
+            this.coroutineScope?.cancel() // TODO
+            this.coroutineScope = null
+            this.holder = null
         }
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder?>> {
+        triggerCollectingDiagnostics(file)
+
         analyze(file) {
 
             //remove filtering when KTIJ-29195 is fixed
@@ -107,6 +128,26 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             )
             return diagnostics
         }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun triggerCollectingDiagnostics(element: KtElement) {
+        val pointer = element.createSmartPointer()
+        coroutineScope!!.launch {
+            readAction {
+                val declaration = pointer.element ?: return@readAction
+                analyze(declaration) {
+                    declaration.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                }
+            }
+        }
+
+        val declarations = when (element) {
+            is KtFile -> element.declarations
+            is KtClassOrObject -> element.declarations
+            else -> null
+        }
+        declarations?.forEach(::triggerCollectingDiagnostics)
     }
 
     private fun <PSI : PsiElement> Collection<KaDiagnosticWithPsi<PSI>>.filterOutCodeFragmentVisibilityErrors(file: KtFile): Collection<KaDiagnosticWithPsi<PSI>> {
