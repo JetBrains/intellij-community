@@ -118,7 +118,7 @@ suspend fun transactor(): Transactor {
  *
  */
 @Deprecated("use Kernel.log")
-suspend fun Transactor.subscribe(capacity: Int = Channel.RENDEZVOUS, body: Subscriber) {
+suspend fun <T> Transactor.subscribe(capacity: Int = Channel.RENDEZVOUS, body: Subscriber<T>): T =
   coroutineScope {
     val (send, receive) = channels<Change>(capacity)
     // trick: use channel in place of deferred, cause the latter one would hold the firstDB for the lifetime of the entire subscription
@@ -154,13 +154,12 @@ suspend fun Transactor.subscribe(capacity: Int = Channel.RENDEZVOUS, body: Subsc
       send.close(e)
     }
   }
-}
 
-fun interface Subscriber {
+fun interface Subscriber<T> {
   /**
    * Changes in the [changes] channel are guaranteed to be sequential, starting from the change applied to [initial].
    * */
-  suspend fun CoroutineScope.subscribed(initial: DB, changes: ReceiveChannel<Change>)
+  suspend fun CoroutineScope.subscribed(initial: DB, changes: ReceiveChannel<Change>): T
 }
 
 val Transactor.lastKnownDb: DB get() = dbState.value
@@ -258,12 +257,12 @@ sealed interface SubscriptionEvent {
  * [middleware] is applied to every change fn synchronously, being able to supply meta to the change, or alter the behavior of fn in other ways
  * Consider adding KernelMiddleware if additional routine has to be performed on every [Transactor.changeAsync]
  */
-suspend fun withTransactor(
+suspend fun<T> withTransactor(
   entityClasses: List<EntityTypeDefinition>,
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   defaultPart: Int = CommonPart,
-  body: suspend CoroutineScope.(Transactor) -> Unit,
-): Unit =
+  body: suspend CoroutineScope.(Transactor) -> T,
+): T =
   spannedScope("withKernel") {
     val kernelId: UID = UID.random()
     val initialDb = span("emptyDB") { DB.empty() }

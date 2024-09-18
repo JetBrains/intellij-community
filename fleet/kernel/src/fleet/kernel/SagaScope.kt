@@ -25,7 +25,7 @@ data class SagaScopeEntity(override val eid: EID) : Entity {
   val transactor by KernelAttr
 }
 
-suspend fun sagaScope(body: suspend CoroutineScope.(CoroutineScope) -> Unit) {
+suspend fun<T> sagaScope(body: suspend CoroutineScope.(CoroutineScope) -> T): T =
   coroutineScope {
     resource { cc ->
       spannedScope("sagaScope") {
@@ -61,4 +61,3 @@ suspend fun sagaScope(body: suspend CoroutineScope.(CoroutineScope) -> Unit) {
       }
     }
   }
-}

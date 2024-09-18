@@ -19,18 +19,18 @@ internal fun attr(ident: String, schema: Schema): Attribute<*> =
  * - [Optional]
  * - [Many]
  */
-sealed class Attributes<in E : Entity>(
+sealed class Attributes<E : Entity>(
   val namespace: String,
   val module: String,
-  initial: Map<String, EntityAttribute<E, *>>
+  initial: Map<String, EntityAttribute<in E, *>>
 ) {
 
-  private val mutableAttrInfos: MutableMap<String, EntityAttribute<E, *>> = HashMap(initial)
+  private val mutableAttrInfos: MutableMap<String, EntityAttribute<in E, *>> = HashMap(initial)
 
   /**
    * [EntityAttribute]s defined by this [Attributes] by their ident: namespace/name
    * */
-  internal val entityAttributes: Map<String, EntityAttribute<E, *>> get() = mutableAttrInfos
+  internal val entityAttributes: Map<String, EntityAttribute<in E, *>> get() = mutableAttrInfos
 
   val attrs: List<Attribute<*>>
     get() = entityAttributes.values.map { it.attr }
@@ -365,7 +365,7 @@ enum class RefFlags {
   CASCADE_DELETE_BY
 }
 
-internal fun<E: Entity> merge(attrs: List<Attributes<E>>): Map<String, EntityAttribute<E, *>> =
+internal fun<E: Entity> merge(attrs: List<Attributes<in E>>): Map<String, EntityAttribute<in E, *>> =
   buildMap {
     attrs.forEach { m ->
       m.entityAttributes.forEach { (k, v) ->

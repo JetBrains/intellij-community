@@ -184,9 +184,9 @@ interface ChangeScope {
     let { entity ->
       context.run {
         builder.build(object : EntityBuilder.Target<E> {
-          override fun <V : Any> set(attribute: Attributes<E>.Required<V>, value: V) = entity.set(attribute, value)
-          override fun <V : Any> set(attribute: Attributes<E>.Optional<V>, value: V?) = entity.set(attribute, value)
-          override fun <V : Any> set(attribute: Attributes<E>.Many<V>, values: Set<V>) = entity.set(attribute, values)
+          override fun <V : Any> set(attribute: Attributes<in E>.Required<V>, value: V) = entity.set(attribute, value)
+          override fun <V : Any> set(attribute: Attributes<in E>.Optional<V>, value: V?) = entity.set(attribute, value)
+          override fun <V : Any> set(attribute: Attributes<in E>.Many<V>, values: Set<V>) = entity.set(attribute, values)
         })
       }
     }

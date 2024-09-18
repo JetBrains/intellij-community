@@ -64,11 +64,10 @@ interface HandleScope : CoroutineScope {
   fun <T> handle(launcher: Launcher<T>): Handle<T>
 }
 
-suspend fun handleScope(body: suspend HandleScope.() -> Unit) {
+suspend fun<T> handleScope(body: suspend HandleScope.() -> T): T =
   supervisorScope {
     handleScopeImpl(this, body)
   }
-}
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.testlib"])
 suspend fun handleScopeNonSupervising(body: suspend HandleScope.() -> Unit) {
@@ -77,9 +76,9 @@ suspend fun handleScopeNonSupervising(body: suspend HandleScope.() -> Unit) {
   }
 }
 
-private suspend fun handleScopeImpl(outerScope: CoroutineScope, body: suspend HandleScope.() -> Unit) {
+private suspend fun<T> handleScopeImpl(outerScope: CoroutineScope, body: suspend HandleScope.() -> T): T {
   val handles = AtomicRef(BifurcanSet<Handle<*>>())
-  try {
+  return try {
     coroutineScope {
       val context = coroutineContext
       object : HandleScope {

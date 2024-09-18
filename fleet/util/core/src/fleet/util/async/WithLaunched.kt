@@ -35,10 +35,10 @@ suspend fun <T> withSupervisor(body: suspend CoroutineScope.(scope: CoroutineSco
   }
 }
 
-suspend fun withCoroutineScope(body: suspend CoroutineScope.(scope: CoroutineScope) -> Unit) {
+suspend fun<T> withCoroutineScope(body: suspend CoroutineScope.(scope: CoroutineScope) -> T): T {
   val context = currentCoroutineContext()
   val job = Job(context.job)
-  try {
+  return try {
     coroutineScope { body(CoroutineScope(context + job)) }
   }
   finally {

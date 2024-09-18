@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
+import kotlin.coroutines.cancellation.CancellationException
+
 //fun getStack(): Throwable = Throwable("dbcontext creation stack")
 
 /**
@@ -17,7 +19,8 @@ class DbContext<out QQ : Q>(
     get() {
       val q = _private_value
       return when {
-        q is Throwable -> throw q
+        q is CancellationException -> throw CancellationException("DBContext is poisoned", q)
+        q is Throwable -> throw RuntimeException("DBContext is poisoned", q)
         else -> q as QQ
       }
     }

@@ -12,7 +12,7 @@ import kotlinx.serialization.builtins.serializer
  * It's [EntityType] is [EntityAttribute.Companion]
  * [EntityAttribute] is an [Entity.EntityObject] of [EntityAttribute] entity.
  * */
-sealed class EntityAttribute<in E : Entity, T : Any>(
+sealed class EntityAttribute<E : Entity, T : Any>(
   val ident: String,
   val attr: Attribute<*>,
   internal val serializerLazy: Lazy<KSerializer<T>>?,

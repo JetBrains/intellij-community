@@ -56,9 +56,9 @@ class ReteEntity(override val eid: EID): Entity {
  * Sets up [Rete] for use inside [body]
  * Runs a coroutine which consumes changes made in db and commands to add or remove [QueryObserver]s
  * */
-suspend fun withRete(failWhenPropagationFailed: Boolean = false, body: suspend CoroutineScope.() -> Unit) {
+suspend fun<T> withRete(failWhenPropagationFailed: Boolean = false, body: suspend CoroutineScope.() -> T): T {
   val (commandsSender, commandsReceiver) = channels<Rete.Command>(Channel.UNLIMITED)
-  spannedScope("withRete") {
+  return spannedScope("withRete") {
     val kernel = transactor()
     kernel.subscribe { db, changes ->
       val lastKnownDb = MutableStateFlow(db)
@@ -107,9 +107,10 @@ suspend fun withRete(failWhenPropagationFailed: Boolean = false, body: suspend C
         }
         withContext(rete) {
           body()
-        }
-        change {
-          reteEntity.delete()
+        }.also {
+          change {
+            reteEntity.delete()
+          }
         }
       }
     }

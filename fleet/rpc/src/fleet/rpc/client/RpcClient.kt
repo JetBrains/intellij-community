@@ -43,13 +43,13 @@ private data class OutgoingRequest(
 private data class OngoingRequest(val request: OutgoingRequest, val span: Span)
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-suspend fun rpcClient(
+suspend fun<T> rpcClient(
   transport: Transport<TransportMessage>,
   serialization: () -> Serialization,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
-  body: suspend CoroutineScope.(RpcClient) -> Unit,
-) {
+  body: suspend CoroutineScope.(RpcClient) -> T,
+): T =
   newSingleThreadContext("rpc-client-$origin").use { executor ->
     withSupervisor { supervisor ->
       val client = RpcClient(coroutineScope = supervisor + supervisor.coroutineNameAppended("RpcClient"),
@@ -63,7 +63,6 @@ suspend fun rpcClient(
         }
     }
   }
-}
 
 class RpcClient internal constructor(
   private val coroutineScope: CoroutineScope,

@@ -27,13 +27,15 @@ object Storage {
 const val DbSnapshotVersion: String = "11"
 
 @OptIn(FlowPreview::class)
-suspend fun withStorage(storageKey: StorageKey,
-                        autoSaveDebounceMs: Long,
-                        loadSnapshot: suspend CoroutineScope.() -> DurableSnapshotWithPartitions, // reads snapshot from file
-                        saveSnapshot: suspend CoroutineScope.(DurableSnapshotWithPartitions) -> Unit, // writes snapshot to file
-                        serializationRestrictions: Set<KClass<*>> = emptySet(),
-                        serialization: ISerialization,
-                        body: suspend CoroutineScope.() -> Unit) {
+suspend fun <T> withStorage(
+  storageKey: StorageKey,
+  autoSaveDebounceMs: Long,
+  loadSnapshot: suspend CoroutineScope.() -> DurableSnapshotWithPartitions, // reads snapshot from file
+  saveSnapshot: suspend CoroutineScope.(DurableSnapshotWithPartitions) -> Unit, // writes snapshot to file
+  serializationRestrictions: Set<KClass<*>> = emptySet(),
+  serialization: ISerialization,
+  body: suspend CoroutineScope.() -> T,
+): T =
   coroutineScope {
     catching {
       Storage.logger.info { "loading snapshot $storageKey" }
@@ -108,13 +110,13 @@ suspend fun withStorage(storageKey: StorageKey,
         }
     }.use {
       body()
+    }.also {
+      Storage.logger.info { "last save for $storageKey " }
+      saveSnapshot(asOf(transactor().lastKnownDb) {
+        durableSnapshotWithPartitions(serialization, storageKey, serializationRestrictions)
+      })
     }
-    Storage.logger.info { "last save for $storageKey " }
-    saveSnapshot(asOf(transactor().lastKnownDb) {
-      durableSnapshotWithPartitions(serialization, storageKey, serializationRestrictions)
-    })
   }
-}
 
 @Suppress("UNCHECKED_CAST")
 private fun storageKeyAttr(): Attribute<StorageKey> {
@@ -122,8 +124,10 @@ private fun storageKeyAttr(): Attribute<StorageKey> {
 }
 
 @Serializable
-data class DurableSnapshotWithPartitions(val snapshot: DurableSnapshot,
-                                         val partitions: Map<UID, Int>) {
+data class DurableSnapshotWithPartitions(
+  val snapshot: DurableSnapshot,
+  val partitions: Map<UID, Int>,
+) {
   companion object {
     val Empty = DurableSnapshotWithPartitions(DurableSnapshot.Empty, emptyMap())
   }
@@ -161,9 +165,11 @@ private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(serialization: ISe
   }
 }
 
-private fun durableSnapshotWithPartitions(serialization: ISerialization,
-                                          storageKey: StorageKey,
-                                          serializationRestrictions: Set<KClass<*>>): DurableSnapshotWithPartitions {
+private fun durableSnapshotWithPartitions(
+  serialization: ISerialization,
+  storageKey: StorageKey,
+  serializationRestrictions: Set<KClass<*>>,
+): DurableSnapshotWithPartitions {
   return with(DbContext.threadBound) {
     val storageKeyAttr = storageKeyAttr()
     val uidAttribute = uidAttribute()
