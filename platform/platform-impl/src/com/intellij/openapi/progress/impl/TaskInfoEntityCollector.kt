@@ -20,13 +20,13 @@ import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal class TaskInfoEntityCollector(cs: CoroutineScope) {
+private class TaskInfoEntityCollector(cs: CoroutineScope) {
   init {
     collectActiveTasks(cs, project = null)
   }
 }
 
-internal class PerProjectTaskInfoEntityCollector(project: Project, cs: CoroutineScope) {
+private class PerProjectTaskInfoEntityCollector(project: Project, cs: CoroutineScope) {
   init {
     collectActiveTasks(cs, project)
   }
