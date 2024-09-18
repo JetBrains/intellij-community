@@ -67,7 +67,7 @@ internal class JwtTextVisualizer : TextValueVisualizer {
   @OptIn(ExperimentalEncodingApi::class)
   private fun tryDecodeBase64(s: String): String? {
     val decoded = try {
-      Base64.decode(s)
+      Base64.withPadding(Base64.PaddingOption.ABSENT_OPTIONAL).decode(s)
     } catch (_: IllegalArgumentException) {
       return null
     }
