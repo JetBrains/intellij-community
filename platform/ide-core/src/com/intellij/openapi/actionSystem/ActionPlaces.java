@@ -144,6 +144,7 @@ public abstract class ActionPlaces {
 
   public static final String DATABASE_VIEW_TOOLBAR = "DatabaseViewToolbar";
   public static final String DATABASE_VIEW_POPUP = "DatabaseViewPopup";
+  public static final String GRID_FLOATING_PAGING_TOOLBAR = "GridFloatingPagingToolbar";
 
   public static final String REMOTE_HOST_VIEW_POPUP = "RemoteHostPopup";
   public static final String REMOTE_HOST_DIALOG_POPUP = "RemoteHostDialogPopup";

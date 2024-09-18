@@ -966,6 +966,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:FILEVIEW_POPUP:java.lang.String
 - sf:FILE_STRUCTURE_POPUP:java.lang.String
 - sf:FORCE_TOUCH:java.lang.String
+- sf:GRID_FLOATING_PAGING_TOOLBAR:java.lang.String
 - sf:GUI_DESIGNER_COMPONENT_TREE_POPUP:java.lang.String
 - sf:GUI_DESIGNER_EDITOR_POPUP:java.lang.String
 - sf:GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP:java.lang.String
