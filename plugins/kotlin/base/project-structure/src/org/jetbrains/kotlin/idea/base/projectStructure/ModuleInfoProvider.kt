@@ -254,13 +254,14 @@ class ModuleInfoProvider(private val project: Project) {
             collectSourceRelatedByFile(virtualFile, config)
 
             val visited = hashSetOf<IdeaModuleInfo>()
+            val collectionRequest = VirtualFileCollectionRequest(virtualFile, isLibrarySource, config, visited, project)
 
             yield {
                 // Several libraries may include the same JAR files.
                 // Below, we use an index for getting order entries for a file, but entries come in an arbitrary order.
                 // So if we are already inside a library, we scan it first.
 
-                val contextualModuleResult = contextByContextualBinaryModule(virtualFile, isLibrarySource, visited, config)
+                val contextualModuleResult = contextByContextualBinaryModule(collectionRequest)
                 contextualModuleResult?.let(Result.Companion::success)
             }
 
@@ -269,20 +270,31 @@ class ModuleInfoProvider(private val project: Project) {
                     val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
                     val iterator = orderEntries.iterator()
                     return MappingIterator(iterator) { orderEntry ->
-                        collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited, config)?.let(Result.Companion::success)
+                        collectByOrderEntry(collectionRequest, orderEntry)?.let(Result.Companion::success)
                     }
                 }
             })
         }
     }
 
-    private fun contextByContextualBinaryModule(
-        virtualFile: VirtualFile,
-        isLibrarySource: Boolean,
-        visited: HashSet<IdeaModuleInfo>,
-        config: Configuration
-    ): IdeaModuleInfo? {
-        val contextualModuleInfo = config.contextualModuleInfo ?: return null
+    private class VirtualFileCollectionRequest(
+        val virtualFile: VirtualFile,
+        val isLibrarySource: Boolean,
+        val config: Configuration,
+        val visited: HashSet<IdeaModuleInfo>,
+        val project: Project,
+    ) {
+        val hasLibraryClassesRootKind: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            RootKindFilter.libraryClasses.matches(project, virtualFile)
+        }
+
+        val hasLibraryFilesRootKind: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            RootKindFilter.libraryFiles.matches(project, virtualFile)
+        }
+    }
+
+    private fun contextByContextualBinaryModule(collectionRequest: VirtualFileCollectionRequest): IdeaModuleInfo? {
+        val contextualModuleInfo = collectionRequest.config.contextualModuleInfo ?: return null
 
         val contentScope = when (contextualModuleInfo) {
             is LibraryInfo, is SdkInfo -> contextualModuleInfo.contentScope
@@ -290,14 +302,15 @@ class ModuleInfoProvider(private val project: Project) {
             else -> null
         }
 
+        val virtualFile = collectionRequest.virtualFile
         if (contentScope == null || virtualFile !in contentScope) {
             return null
         }
 
         return when (contextualModuleInfo) {
-            is LibraryInfo -> collectByLibrary(virtualFile, contextualModuleInfo.library, isLibrarySource, visited, config)
-            is LibrarySourceInfo -> collectByLibrary(virtualFile, contextualModuleInfo.library, isLibrarySource, visited, config)
-            is SdkInfo -> collectBySdk(contextualModuleInfo.sdk, visited)
+            is LibraryInfo -> collectByLibrary(collectionRequest, contextualModuleInfo.library)
+            is LibrarySourceInfo -> collectByLibrary(collectionRequest, contextualModuleInfo.library)
+            is SdkInfo -> collectBySdk(collectionRequest, contextualModuleInfo.sdk)
             else -> null
         }
     }
@@ -333,11 +346,8 @@ class ModuleInfoProvider(private val project: Project) {
     }
 
     private fun collectByOrderEntry(
-        virtualFile: VirtualFile,
+        collectionRequest: VirtualFileCollectionRequest,
         orderEntry: OrderEntry,
-        isLibrarySource: Boolean,
-        visited: HashSet<IdeaModuleInfo>,
-        config: Configuration,
     ): IdeaModuleInfo? {
         if (orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'
@@ -353,19 +363,19 @@ class ModuleInfoProvider(private val project: Project) {
         if (orderEntry is LibraryOrderEntry) {
             val library = orderEntry.library
             if (library != null) {
-                return collectByLibrary(virtualFile, library, isLibrarySource, visited, config)
+                return collectByLibrary(collectionRequest, library)
             }
         }
 
         if (orderEntry is JdkOrderEntry) {
             val sdk = orderEntry.jdk
             if (sdk != null) {
-                val contextSdk = config.contextualModuleInfo?.sdk()
+                val contextSdk = collectionRequest.config.contextualModuleInfo?.sdk()
                 if (contextSdk != null && contextSdk != sdk) {
                     // don't yield sdk which is absent in the dependencies
                     return null
                 }
-                return collectBySdk(sdk, visited)
+                return collectBySdk(collectionRequest, sdk)
             }
         }
 
@@ -373,29 +383,26 @@ class ModuleInfoProvider(private val project: Project) {
     }
 
     private fun collectByLibrary(
-        virtualFile: VirtualFile,
+        collectionRequest: VirtualFileCollectionRequest,
         library: Library,
-        isLibrarySource: Boolean,
-        visited: HashSet<IdeaModuleInfo>,
-        config: Configuration,
     ): IdeaModuleInfo? {
+        val config = collectionRequest.config
         val sourceContext = config.contextualModuleInfo as? ModuleSourceInfo
-        val useLibrarySource = isLibrarySource || (config.contextualModuleInfo as? LibrarySourceInfo)?.library == library
-        if (!useLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
+        val useLibrarySource = collectionRequest.isLibrarySource || (config.contextualModuleInfo as? LibrarySourceInfo)?.library == library
+
+        if (!useLibrarySource && collectionRequest.hasLibraryClassesRootKind) {
             for (libraryInfo in libraryInfoCache[library]) {
-                if (visited.add(libraryInfo)) {
-                    if (libraryInfo.isApplicable(sourceContext)) {
-                        return libraryInfo
-                    }
+                val isNew = collectionRequest.visited.add(libraryInfo)
+                if (isNew && libraryInfo.isApplicable(sourceContext)) {
+                    return libraryInfo
                 }
             }
-        } else if (useLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
+        } else if (useLibrarySource || collectionRequest.hasLibraryFilesRootKind) {
             for (libraryInfo in libraryInfoCache[library]) {
-                val moduleInfo = libraryInfo.sourcesModuleInfo
-                if (visited.add(moduleInfo)) {
-                    if (libraryInfo.isApplicable(sourceContext)) {
-                        return moduleInfo
-                    }
+                val sourceInfo = libraryInfo.sourcesModuleInfo
+                val isNew = collectionRequest.visited.add(sourceInfo)
+                if (isNew && libraryInfo.isApplicable(sourceContext)) {
+                    return sourceInfo
                 }
             }
         }
@@ -403,9 +410,9 @@ class ModuleInfoProvider(private val project: Project) {
         return null
     }
 
-    private fun collectBySdk(sdk: Sdk, visited: HashSet<IdeaModuleInfo>): IdeaModuleInfo? {
+    private fun collectBySdk(collectionRequest: VirtualFileCollectionRequest, sdk: Sdk): IdeaModuleInfo? {
         val moduleInfo = SdkInfo(project, sdk)
-        if (visited.add(moduleInfo)) {
+        if (collectionRequest.visited.add(moduleInfo)) {
             return moduleInfo
         }
 
