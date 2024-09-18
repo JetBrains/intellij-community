@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -569,7 +570,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       return targets;
     }
     catch (Exception e) {
-      LOG.error(e);
+      DebuggerUtilsImpl.logError(e);
       DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INTERNAL_ERROR);
       return Collections.emptyList();
     }
