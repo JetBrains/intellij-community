@@ -2,25 +2,20 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -31,19 +26,20 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.*
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
-import org.jetbrains.idea.maven.statistics.MavenNotificationDisplayIds
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -57,9 +53,6 @@ internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportCo
 @TestOnly
 @Internal
 var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
-
-@Internal
-val NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY = Key.create<Boolean>("NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY")
 
 internal open class WorkspaceProjectImporter(
   protected val myProjectsTree: MavenProjectsTree,
@@ -117,8 +110,6 @@ internal open class WorkspaceProjectImporter(
 
     stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
 
-    notifyUserAboutWorkspaceImport(storageBeforeImport, postTasks)
-
     addAfterImportTask(postTasks, contextData, appliedProjectsWithModules)
 
     return postTasks
@@ -131,23 +122,6 @@ internal open class WorkspaceProjectImporter(
     appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
   ) {
     postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
-  }
-
-  private fun notifyUserAboutWorkspaceImport(
-    storageBeforeImport: ImmutableEntityStorage,
-    postTasks: ArrayList<MavenProjectsProcessorTask>,
-  ) {
-    var notifyUserAboutWorkspaceImport = false
-    if (NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY[myProject] == true) {
-      notifyUserAboutWorkspaceImport = true
-      myProject.removeUserData(NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY)
-    }
-
-    if (notifyUserAboutWorkspaceImport
-        || (!ExternalSystemUtil.isNewProject(myProject) && hasLegacyImportedModules(storageBeforeImport))
-    ) {
-      postTasks.add(NotifyUserAboutWorkspaceImportTask())
-    }
   }
 
   private fun migrateToExternalStorageIfNeeded(): Boolean {
@@ -710,38 +684,6 @@ private class AfterImportConfiguratorsTask(
         logErrorIfNotControlFlow("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
       }
     }
-  }
-}
-
-private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
-  override fun perform(
-    project: Project,
-    embeddersManager: MavenEmbeddersManager,
-    indicator: ProgressIndicator,
-  ) {
-    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
-
-    val showNotification = {
-      val notification = notificationGroup
-        .createNotification(
-          SyncBundle.message("maven.workspace.first.import.notification.title"),
-          SyncBundle.message("maven.workspace.first.import.notification.text"),
-          NotificationType.INFORMATION)
-        .setDisplayId(MavenNotificationDisplayIds.FIRST_IMPORT_NOTIFICATION)
-
-      notification.addAction(object : AnAction(
-        SyncBundle.message("maven.sync.quickfixes.open.settings")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          notification.expire()
-          ShowSettingsUtil.getInstance().showSettingsDialog(project,
-                                                            MavenProjectBundle.message(
-                                                              "maven.tab.importing"))
-        }
-      })
-      notification.notify(project)
-    }
-
-    ApplicationManager.getApplication().invokeLater(showNotification, project.disposed)
   }
 }
 
