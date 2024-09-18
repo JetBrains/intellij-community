@@ -187,7 +187,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         }
 
         HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
-        if (modifiedClasses.keySet().size() == 1) {
+        if (modifiedClasses.size() == 1) {
           progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
         }
         progress.addProgressListener(delegatingTo(statusListener, sessions, progress));

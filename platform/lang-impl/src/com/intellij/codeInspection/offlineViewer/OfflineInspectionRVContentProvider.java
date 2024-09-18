@@ -29,7 +29,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
   public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,
                                        final @NotNull InspectionToolWrapper toolWrapper) {
     final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(context, toolWrapper);
-    return content != null && !content.values().isEmpty();
+    return content != null && !content.isEmpty();
   }
 
   @Override
@@ -62,7 +62,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
                                     @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, wrapper);
     InspectionResultsView view = context.getView();
-    if (filteredContent != null && !filteredContent.values().isEmpty()) {
+    if (filteredContent != null && !filteredContent.isEmpty()) {
       buildTree(context, filteredContent, wrapper, descriptor -> {
                   final RefEntity element = descriptor.getRefElement(context.getRefManager());
                   return new RefEntityContainer<OfflineProblemDescriptor>(element, new OfflineProblemDescriptor[] {descriptor}) {

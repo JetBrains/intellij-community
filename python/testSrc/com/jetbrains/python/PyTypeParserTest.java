@@ -108,7 +108,7 @@ public class PyTypeParserTest extends PyTestCase {
     myFixture.configureByFile("typeParser/typeParser.py");
     final String s = "list of (MyObject, collections.Iterable of MyObject, int) or None";
     PyTypeParser.ParseResult result = PyTypeParser.parse(myFixture.getFile(), s);
-    assertEquals(7, result.getTypes().values().size());
+    assertEquals(7, result.getTypes().size());
   }
 
   public void testGenericType() {

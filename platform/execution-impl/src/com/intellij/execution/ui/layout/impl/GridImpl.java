@@ -167,7 +167,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
   }
 
   public ActionCallback restoreLastUiState() {
-    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.values().size());
+    final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.size());
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.restoreLastUiState().notifyWhenDone(result);
     }

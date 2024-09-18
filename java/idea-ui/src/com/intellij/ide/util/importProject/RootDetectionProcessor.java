@@ -215,7 +215,7 @@ public class RootDetectionProcessor {
   private List<DetectedRootData> detectRoots() {
     Map<ProjectStructureDetector, List<DetectedProjectRoot>> roots = runDetectors();
     if (myProgressIndicator != null) {
-      myProgressIndicator.setText2(JavaUiBundle.message("progress.text.processing.0.project.roots", roots.values().size()));
+      myProgressIndicator.setText2(JavaUiBundle.message("progress.text.processing.0.project.roots", roots.size()));
     }
 
     Map<File, DetectedRootData> rootData = new LinkedHashMap<>();

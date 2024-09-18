@@ -86,7 +86,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
       }
     });
 
-    if (suppressedScopes.values().isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
+    if (suppressedScopes.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
     // have to visit all file from scratch since inspections can be written in any pervasive way including checkFile() overriding
     Map<InspectionToolWrapper<?, ?>, String> suppressedTools = new HashMap<>();
     List<InspectionToolWrapper<?, ?>> toolWrappers = getInspectionTools(psiFile, profile);

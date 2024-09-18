@@ -217,8 +217,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
       } while (feeler != null);
       String top_name = top_qualifier.getName();
       Collection<PsiReference> possible_targets = references.keySet();
-      if (star_references.size() > 0) {
-        possible_targets = new ArrayList<>(references.keySet().size() + star_references.size());
+      if (!star_references.isEmpty()) {
+        possible_targets = new ArrayList<>(references.size() + star_references.size());
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }
