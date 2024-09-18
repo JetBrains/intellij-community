@@ -434,8 +434,15 @@ public final class DfTypes {
     if (constraint.isSingleton() && nullability == Nullability.NOT_NULL) {
       return new DfReferenceConstantType(constraint, constraint, false);
     }
+    Mutability mutability = Mutability.UNKNOWN;
+    if (type.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION)) {
+      mutability = Mutability.UNMODIFIABLE;
+    }
+    else if (type.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
+      mutability = Mutability.UNMODIFIABLE_VIEW;
+    }
     return new DfGenericObjectType(Set.of(), constraint,
-                                   DfaNullability.fromNullability(nullability), Mutability.UNKNOWN, null, DfType.BOTTOM, false);
+                                   DfaNullability.fromNullability(nullability), mutability, null, DfType.BOTTOM, false);
   }
 
   /**

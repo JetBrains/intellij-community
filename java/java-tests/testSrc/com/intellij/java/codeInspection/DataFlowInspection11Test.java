@@ -24,4 +24,8 @@ public class DataFlowInspection11Test extends DataFlowInspectionTestCase {
   public void testAvoidWarningAtNotInferredType() { doTest();}
 
   public void testSameArguments() { doTest(); }
+  
+  public void testMethodReturnTypeUnmodifiableAnnotation() { 
+    doTest();
+  }
 }
