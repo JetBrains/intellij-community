@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,4 +149,8 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * and to perform them through the VCS tool.
    */
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
+
+  static {
+    ApplicationManager.registerCleaner(() -> ourInstance = null);
+  }
 }

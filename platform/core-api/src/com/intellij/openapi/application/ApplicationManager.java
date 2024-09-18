@@ -26,9 +26,7 @@ public class ApplicationManager {
   @ApiStatus.Internal
   public static void setApplication(@Nullable Application instance) {
     ourApplication = instance;
-    for (Runnable cleaner : cleaners) {
-      cleaner.run();
-    }
+    runCleaners();
   }
 
   public static void setApplication(@NotNull Application instance, @NotNull Disposable parent) {
@@ -66,5 +64,12 @@ public class ApplicationManager {
   @ApiStatus.Internal
   public static void registerCleaner(Runnable cleaner) {
     cleaners.add(cleaner);
+  }
+
+  @ApiStatus.Internal
+  public static void runCleaners() {
+    for (Runnable cleaner : cleaners) {
+      cleaner.run();
+    }
   }
 }
