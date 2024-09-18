@@ -101,7 +101,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
     override fun update(e: AnActionEvent) {
       super.update(e)
-      e.presentation.isVisible = buttonState.isPinned(toolWindowId)
+      e.presentation.isVisible = e.presentation.isEnabled && buttonState.isPinned(toolWindowId)
       Toggleable.setSelected(e.presentation, isSelected(e))
     }
 
@@ -175,6 +175,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
           override fun update(e: AnActionEvent) {
             super.update(e)
+            e.presentation.isVisible = e.presentation.isVisible && e.presentation.isEnabled
             e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
           }
         }
