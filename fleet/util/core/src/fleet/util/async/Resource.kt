@@ -3,6 +3,7 @@
 
 package fleet.util.async
 
+import fleet.tracing.SpanInfoBuilder
 import fleet.tracing.spannedScope
 import kotlinx.coroutines.*
 import java.lang.RuntimeException
@@ -123,6 +124,17 @@ fun <T> Resource<Deferred<T>>.track(displayName: String): Resource<Deferred<T>> 
     }
   }
 
+fun <T> Resource<T>.span(name: String, info: SpanInfoBuilder.() -> Unit = {}): Resource<T> =
+  let { source ->
+    resource { cc ->
+      spannedScope(name, info) {
+        source.use { t ->
+          cc(t)
+        }
+      }
+    }
+  }
+
 fun <T> Resource<T>.catch(): Resource<Result<T>> =
   let { source ->
     object : Resource<Result<T>> {
@@ -184,7 +196,7 @@ fun <T> Deferred<T>.track(displayName: String): Deferred<T> =
   }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun<T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
+fun <T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
   val deferred = CompletableDeferred<T>()
   coroutineScope.launch(start = CoroutineStart.ATOMIC) {
     use { t ->
