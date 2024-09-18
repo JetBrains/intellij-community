@@ -47,7 +47,13 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             KOTLIN_AWARE_SOURCE_ROOT_TYPES
         }
 
-        if (virtualFile !is VirtualFileWindow && fileIndex.isUnderSourceRootOfType(virtualFile, rootType)) {
+        val nameSequence = virtualFile.nameSequence
+        val hasBinaryFileExtension =
+            nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION) ||
+                nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION) ||
+                nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION)
+
+        if (virtualFile !is VirtualFileWindow && !hasBinaryFileExtension && fileIndex.isUnderSourceRootOfType(virtualFile, rootType)) {
             return filter.includeProjectSourceFiles
         }
 
@@ -96,17 +102,12 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             canContainClassFiles = true
             isBinary = false
         } else {
-            val nameSequence = virtualFile.nameSequence
             if (nameSequence.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION) ||
                 nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)
             ) {
                 canContainClassFiles = false
                 isBinary = false
-            } else if (
-                nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION) ||
-                nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION) ||
-                nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION)
-            ) {
+            } else if (hasBinaryFileExtension) {
                 canContainClassFiles = false
                 isBinary = true
             } else {
