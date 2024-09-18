@@ -77,8 +77,8 @@ interface Driver : AutoCloseable {
 
   /**
    * Forcefully exits the application.
-   * Don't use directly in tests, instead use [com.intellij.ide.starter.driver.engine.BackgroundRun.closeIdeAndWait], otherwise
-   * test on RemDev won't work since client and not host will be closed.
+   * Don't use directly in tests, instead use `com.intellij.ide.starter.driver.engine.BackgroundRun.closeIdeAndWait`,
+   * otherwise remote dev tests won't work since the client and not the host will be closed.
    */
   fun exitApplication()
 
@@ -111,9 +111,7 @@ interface Driver : AutoCloseable {
   /**
    * @return proxy reference for a newly created remote object
    */
-  fun <T : Any> new(clazz: KClass<T>, vararg args: Any?): T {
-    return new(clazz, *args, rdTarget = RdTarget.DEFAULT)
-  }
+  fun <T : Any> new(clazz: KClass<T>, vararg args: Any?): T = new(clazz, *args, rdTarget = RdTarget.DEFAULT)
 
   fun <T : Any> new(clazz: KClass<T>, vararg args: Any?, rdTarget: RdTarget = RdTarget.DEFAULT): T
 
@@ -125,15 +123,16 @@ interface Driver : AutoCloseable {
   /**
    * Runs the block with the specified dispatcher and lock semantics.
    */
-  fun <T> withContext(dispatcher: OnDispatcher = OnDispatcher.DEFAULT,
-                      semantics: LockSemantics = LockSemantics.NO_LOCK,
-                      code: Driver.() -> T): T
+  fun <T> withContext(
+    dispatcher: OnDispatcher = OnDispatcher.DEFAULT,
+    semantics: LockSemantics = LockSemantics.NO_LOCK,
+    code: Driver.() -> T
+  ): T
 
   /**
    * Runs the block that requires a read action with the specified dispatcher.
    */
-  fun <T> withReadAction(dispatcher: OnDispatcher = OnDispatcher.DEFAULT,
-                         code: Driver.() -> T): T
+  fun <T> withReadAction(dispatcher: OnDispatcher = OnDispatcher.DEFAULT, code: Driver.() -> T): T
 
   /**
    * Runs the block that requires a write action.
@@ -147,34 +146,27 @@ interface Driver : AutoCloseable {
      */
     @JvmStatic
     @Contract(pure = true)
-    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777"), isRemoteIdeMode: Boolean = false): Driver {
-      return DriverImpl(host, isRemoteIdeMode)
-    }
+    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777"), isRemoteIdeMode: Boolean = false): Driver =
+      DriverImpl(host, isRemoteIdeMode)
   }
 }
 
 /**
- * Remote reference to a Project.
+ * Remote reference to a project.
  */
 interface ProjectRef : PolymorphRef
 
 /**
  * @return new remote proxy for a [Remote] application service interface
  */
-inline fun <reified T : Any> Driver.service(rdTarget: RdTarget = RdTarget.DEFAULT): T {
-  return service(T::class, rdTarget)
-}
+inline fun <reified T : Any> Driver.service(rdTarget: RdTarget = RdTarget.DEFAULT): T = service(T::class, rdTarget)
 
 /**
  * @return new remote proxy for a [Remote] application service interface
  */
-inline fun <reified T : Any> Driver.service(project: ProjectRef, rdTarget: RdTarget = RdTarget.DEFAULT): T {
-  return service(T::class, project, rdTarget)
-}
+inline fun <reified T : Any> Driver.service(project: ProjectRef, rdTarget: RdTarget = RdTarget.DEFAULT): T = service(T::class, project, rdTarget)
 
 /**
  * @return new remote proxy for a utility class or a class with static methods
  */
-inline fun <reified T : Any> Driver.utility(rdTarget: RdTarget = RdTarget.DEFAULT): T {
-  return utility(T::class, rdTarget)
-}
+inline fun <reified T : Any> Driver.utility(rdTarget: RdTarget = RdTarget.DEFAULT): T = utility(T::class, rdTarget)

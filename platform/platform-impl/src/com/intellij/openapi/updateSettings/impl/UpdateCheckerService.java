@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -41,9 +40,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
+import static java.util.concurrent.TimeUnit.*;
 
 @ApiStatus.Internal
 class UpdateCheckerService {
@@ -55,9 +54,7 @@ class UpdateCheckerService {
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
-  private static final long CHECK_INTERVAL_MS = TimeUnit.MINUTES.toMillis(
-    SystemProperties.getLongProperty("ide.updates.check.interval.minutes", TimeUnit.DAYS.toMinutes(1))
-  );
+  private static final long CHECK_INTERVAL_MS = MINUTES.toMillis(Long.getLong("ide.updates.check.interval.minutes", DAYS.toMinutes(1)));
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
@@ -142,7 +139,7 @@ class UpdateCheckerService {
   }
 
   private void queueNextCheck(long delay) {
-    myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> checkUpdates(), delay, TimeUnit.MILLISECONDS);
+    myScheduledCheck = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> checkUpdates(), delay, MILLISECONDS);
   }
 
   private void checkUpdates() {
@@ -333,7 +330,7 @@ class UpdateCheckerService {
   static void deleteOldApplicationDirectories() {
     PropertiesComponent propertyService = PropertiesComponent.getInstance();
     if (ConfigImportHelper.isConfigImported()) {
-      long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+      long scheduledAt = System.currentTimeMillis() + DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
       LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
       propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
       OldDirectoryCleaner.Stats.scheduled();
@@ -341,9 +338,9 @@ class UpdateCheckerService {
     else {
       long scheduledAt = propertyService.getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L), now;
       if (scheduledAt != 0 && (now = System.currentTimeMillis()) >= scheduledAt) {
-        OldDirectoryCleaner.Stats.started((int)TimeUnit.MILLISECONDS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+        OldDirectoryCleaner.Stats.started((int)MILLISECONDS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
         LOG.info("starting old directories scan");
-        long expireAfter = now - TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
+        long expireAfter = now - DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
 
         new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null);
         propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);

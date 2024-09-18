@@ -150,11 +150,8 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
       onApply {
         val isEnabled = settings.isCheckNeeded || settings.isPluginsCheckNeeded
         if (isEnabled != wasEnabled) {
-          if (isEnabled) {
-            UpdateCheckerService.getInstance().queueNextCheck()
-          }
-          else {
-            UpdateCheckerService.getInstance().cancelChecks()
+          UpdateCheckerService.getInstance().apply {
+            if (isEnabled) queueNextCheck() else cancelChecks()
           }
           wasEnabled = isEnabled
         }

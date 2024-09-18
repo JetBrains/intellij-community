@@ -21,7 +21,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   abstract val basePatchDownloadUrl: Url
 
   /**
-   * Returns ID of YouTrack Project which will be used by the "Submit a Bug Report" action.
+   * Returns ID of YouTrack project which will be used by the "Submit a Bug Report" action.
    */
   abstract val youtrackProjectId: String
 
