@@ -1506,9 +1506,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private static boolean shouldInvokeWithHandler(@NotNull Method method, int invocationOptions) {
     return Registry.is("debugger.evaluate.method.helper") &&
-           !BitUtil.isSet(invocationOptions, ObjectReference.INVOKE_NONVIRTUAL) &&
+           !BitUtil.isSet(invocationOptions, ObjectReference.INVOKE_NONVIRTUAL) && // TODO: support
            !DebuggerUtils.isPrimitiveType(method.returnTypeName()) &&
-           !DebuggerUtilsEx.isVoid(method) &&
+           (!DebuggerUtilsEx.isVoid(method) || method.isConstructor()) &&
            !"clone".equals(method.name());
   }
 
@@ -1517,38 +1517,34 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                   @NotNull Method method,
                                                   @NotNull List<? extends Value> args,
                                                   @NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
-    try {
-      DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-      VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    ArrayList<Value> invokerArgs = new ArrayList<>();
 
-      ArrayList<Value> invokerArgs = new ArrayList<>();
-      invokerArgs.add(type.classObject()); // class
-      invokerArgs.add(objRef); // object
-      invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name(), virtualMachineProxy, evaluationContext)); // method name
-      // argument types
-      List<ClassObjectReference> types = mapArgumentTypes(method, evaluationContext);
-      ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
-        evaluationContext,
-        CommonClassNames.JAVA_LANG_OBJECT + "[]",
-        evaluationContext.getClassLoader());
-      ArrayReference arrayTypes = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, types, evaluationContext);
-      invokerArgs.add(arrayTypes);
-      // argument values
-      List<Value> boxedArgs = new ArrayList<>(args.size());
-      for (Value arg : args) {
-        boxedArgs.add((Value)BoxingEvaluator.box(arg, evaluationContext));
-      }
-      if (method.isVarArgs() /*|| (method.isBridge() && ContainerUtil.getLastItem(method.argumentTypes()) instanceof ArrayType)*/) {
-        MethodImpl.handleVarArgs(method, boxedArgs);
-      }
-      ArrayReference arrayArgs = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext);
-      invokerArgs.add(arrayArgs);
+    ReferenceType lookupClass =
+      debugProcess.findClass(evaluationContext, "java.lang.invoke.MethodHandles$Lookup", evaluationContext.getClassLoader());
+    ObjectReference implLookup = (ObjectReference)lookupClass.getValue(lookupClass.fieldByName("IMPL_LOOKUP"));
 
-      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
+    invokerArgs.add(implLookup); // lookup
+    invokerArgs.add(type.classObject()); // class
+    invokerArgs.add(objRef); // object
+    invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name(), virtualMachineProxy, evaluationContext)); // method name
+    invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.signature(), virtualMachineProxy, evaluationContext)); // method descriptor
+
+    // argument values
+    List<Value> boxedArgs = new ArrayList<>(args.size());
+    for (Value arg : args) {
+      boxedArgs.add((Value)BoxingEvaluator.box(arg, evaluationContext));
     }
-    catch (ClassNotLoadedException | InvalidTypeException e) {
-      throw new EvaluateException(e.getMessage(), e);
-    }
+    ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
+      evaluationContext,
+      CommonClassNames.JAVA_LANG_OBJECT + "[]",
+      evaluationContext.getClassLoader());
+
+    ArrayReference arrayArgs = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext);
+    invokerArgs.add(arrayArgs);
+    invokerArgs.add(evaluationContext.getClassLoader()); // class laoder
+    return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
   }
 
   private static List<ClassObjectReference> mapArgumentTypes(@NotNull Method method, @NotNull EvaluationContextImpl evaluationContext)
@@ -1679,17 +1675,22 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull List<? extends Value> args,
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
-      @Override
-      protected ObjectReference invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
-        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("New instance " + classType.name() + "." + method.name());
+    if (!internalEvaluate && shouldInvokeWithHandler(method, invocationOptions)) {
+      return (ObjectReference)invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
+    }
+    else {
+      InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
+        @Override
+        protected ObjectReference invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+          throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("New instance " + classType.name() + "." + method.name());
+          }
+          return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
         }
-        return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
-      }
-    };
-    return invokeCommand.start(internalEvaluate);
+      };
+      return invokeCommand.start(internalEvaluate);
+    }
   }
 
   public void clearCashes(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
