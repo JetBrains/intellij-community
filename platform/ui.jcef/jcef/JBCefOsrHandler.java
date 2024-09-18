@@ -292,6 +292,15 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private VolatileImage createVolatileImage(Graphics2D g, int width, int height) {
     VolatileImage image = g.getDeviceConfiguration().createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
+
+    {// clear image
+      Graphics2D gimg = (Graphics2D)image.getGraphics().create();
+      gimg.setBackground(Gray.TRANSPARENT);
+      gimg.setComposite(AlphaComposite.Src);
+      gimg.clearRect(0, 0, image.getWidth(), image.getHeight());
+      gimg.dispose();
+    }
+
     drawVolatileImage(image);
     return image;
   }
