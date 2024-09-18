@@ -1930,7 +1930,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       addInstruction(new WrapDerivedVariableInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
-    else if (actualType != expectedType &&
+    else if (!Objects.equals(actualType, expectedType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(actualType) &&
