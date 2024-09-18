@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
+import com.intellij.platform.diagnostic.telemetry.exporters.IdeaOtlpMeterProvider
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import com.intellij.platform.util.coroutines.childScope
@@ -68,7 +69,7 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
       createOpenTelemetryConfigurator(serviceName = "", serviceVersion = "", serviceNamespace = "")
     }
 
-    aggregatedMetricExporter = configurator.aggregatedMetricExporter
+    aggregatedMetricExporter = AggregatedMetricExporter()
     otlpService = OtlpService.getInstance()
 
     var otlJob: Job? = null
@@ -108,9 +109,10 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
                                  batchSpanProcessor = batchSpanProcessor,
                                  opentelemetrySdkResource = configurator.resource)
 
-    // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
-    sdk = configurator.getConfiguredSdkBuilder()
+    sdk = configurator.sdkBuilder
+      // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+      .setMeterProvider(IdeaOtlpMeterProvider.get(configurator.resource, aggregatedMetricExporter))
       .buildAndRegisterGlobal()
   }
 
