@@ -12,6 +12,6 @@ internal class EnvironmentVariablePluginRepositoryAuthProvider : PluginRepositor
   }
 
   override fun canHandle(url: String): Boolean {
-    return url.startsWith(repositoryUrl) && hasRepositoryAuth
+    return repositoryUrl != null && url.startsWith(repositoryUrl) && hasRepositoryAuth
   }
 }
