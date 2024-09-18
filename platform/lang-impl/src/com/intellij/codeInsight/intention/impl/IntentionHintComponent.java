@@ -575,6 +575,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         myIconLabel.setIcon(myInactiveIcon);
         setBorder(LightBulbUtil.createInactiveBorder(myEditor));
       }
+      if (UISettings.isIdeHelpTooltipEnabled()) {
+        HelpTooltip.dispose(myIconLabel);
+      }
     }
 
     private void onMouseEnter() {
