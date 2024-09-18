@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -52,7 +53,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     myParent = parent;
     myTypeText = TypeInfo.internFrequentType(typeText);
     myVariance = variance;
-    myAnnotations = annotations;
+    myAnnotations = annotations == TypeAnnotationContainer.EMPTY && parent instanceof PsiModifierListOwner ? 
+                    ExternalTypeAnnotationContainer.create((PsiModifierListOwner)parent) : annotations;
     myChild = atomicLazyNullable(() -> calculateChild());
     myCachedType = atomicLazy(() -> calculateType());
   }

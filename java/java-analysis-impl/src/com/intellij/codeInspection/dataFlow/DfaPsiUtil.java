@@ -41,7 +41,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -280,59 +279,17 @@ public final class DfaPsiUtil {
    */
   @NotNull
   public static Nullability getFunctionalParameterNullability(PsiFunctionalExpression function, int index) {
-    Nullability nullability = inferLambdaParameterNullability(function, index);
-    if(nullability != Nullability.UNKNOWN) {
-      return nullability;
-    }
-    PsiClassType type = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
+    PsiClassType type = tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (sam != null) {
       PsiParameter parameter = sam.getParameterList().getParameter(index);
       if (parameter != null) {
-        nullability = getElementNullability(null, parameter);
+        Nullability nullability = getElementNullability(null, parameter);
         if (nullability != Nullability.UNKNOWN) {
           return nullability;
         }
         PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
         return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
-      }
-    }
-    return Nullability.UNKNOWN;
-  }
-
-  @NotNull
-  private static Nullability inferLambdaParameterNullability(PsiFunctionalExpression lambda, int parameterIndex) {
-    PsiElement expression = lambda;
-    PsiElement expressionParent = lambda.getParent();
-    while(expressionParent instanceof PsiConditionalExpression || expressionParent instanceof PsiParenthesizedExpression) {
-      expression = expressionParent;
-      expressionParent = expressionParent.getParent();
-    }
-    if (expressionParent instanceof PsiExpressionList list && list.getParent() instanceof PsiMethodCallExpression call) {
-      PsiMethod method = call.resolveMethod();
-      if (method != null) {
-        int expressionIndex = ArrayUtil.find(list.getExpressions(), expression);
-        return getLambdaParameterNullability(method, expressionIndex, parameterIndex);
-      }
-    }
-    return Nullability.UNKNOWN;
-  }
-
-  private static final CallMatcher OPTIONAL_FUNCTIONS =
-    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map", "filter", "ifPresent", "flatMap", "ifPresentOrElse");
-  private static final CallMatcher MAP_COMPUTE =
-    CallMatcher.instanceCall(JAVA_UTIL_MAP, "compute").parameterTypes("K", JAVA_UTIL_FUNCTION_BI_FUNCTION);
-
-  @NotNull
-  private static Nullability getLambdaParameterNullability(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
-    if (OPTIONAL_FUNCTIONS.methodMatches(method)) {
-      if (parameterIndex == 0 && lambdaParameterIndex == 0) {
-        return Nullability.NOT_NULL;
-      }
-    }
-    else if (MAP_COMPUTE.methodMatches(method)) {
-      if (parameterIndex == 1 && lambdaParameterIndex == 1) {
-        return Nullability.NULLABLE;
       }
     }
     return Nullability.UNKNOWN;

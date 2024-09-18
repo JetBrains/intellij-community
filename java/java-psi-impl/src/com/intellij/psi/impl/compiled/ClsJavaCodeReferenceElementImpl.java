@@ -50,7 +50,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myAnnotations = annotations;
     String prefix = PsiNameHelper.getOuterClassReference(canonicalText);
     TypeAnnotationContainer container = prefix.isEmpty() ? TypeAnnotationContainer.EMPTY : annotations.forEnclosingClass();
-    myQualifier = container.isEmpty() ? null : new ClsJavaCodeReferenceElementImpl(this, prefix, container);
+    myQualifier = container == TypeAnnotationContainer.EMPTY ? null : new ClsJavaCodeReferenceElementImpl(this, prefix, container);
   }
 
   @Override

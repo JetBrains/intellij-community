@@ -241,6 +241,8 @@
   <item
     name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenComplete(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="0;*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="1;*"/>
   </item>
   <item
     name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;)'>
@@ -249,6 +251,8 @@
   <item
     name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="0;*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="1;*"/>
   </item>
   <item
     name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor)'>
@@ -257,6 +261,8 @@
   <item
     name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="0;*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="1;*"/>
   </item>
   <item
     name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;)'>
@@ -707,6 +713,8 @@
   <item
     name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenComplete(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="0;*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="1;*"/>
   </item>
   <item
     name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;)'>
@@ -715,6 +723,8 @@
   <item
     name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="0;*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="1;*"/>
   </item>
   <item
     name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor)'>
@@ -723,6 +733,8 @@
   <item
     name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="0;*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="1;*"/>
   </item>
   <item
     name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;)'>

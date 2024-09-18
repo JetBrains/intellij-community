@@ -401,4 +401,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testConsumedStreamWithoutInline()  { doTest(); }
   public void testLocalityAndConditionalExpression() { doTest(); }
   public void testParallelStreamThreadId() { doTest(); }
+  public void testCompletableFutureWhenComplete() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest(); 
+  }
 }

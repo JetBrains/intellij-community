@@ -417,15 +417,15 @@ public /*sealed*/ abstract class TypeInfo {
       typeInfo = typeInfo.arrayOf();
     }
     byte[] prefix = new byte[arrayCount];
-    Arrays.fill(prefix, TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
-    TypeAnnotationContainer.Collector collector = new TypeAnnotationContainer.Collector(typeInfo);
+    Arrays.fill(prefix, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+    ExplicitTypeAnnotationContainer.Collector collector = new ExplicitTypeAnnotationContainer.Collector(typeInfo);
     collectAnnotations(typeInfo, collector, tree, typeElement, prefix);
     collector.install();
     return typeInfo;
   }
 
   private static void collectAnnotations(@NotNull TypeInfo info,
-                                         @NotNull TypeAnnotationContainer.Collector collector,
+                                         @NotNull ExplicitTypeAnnotationContainer.Collector collector,
                                          @NotNull LighterAST tree,
                                          @NotNull LighterASTNode element,
                                          byte @NotNull [] prefix) {
@@ -451,10 +451,10 @@ public /*sealed*/ abstract class TypeInfo {
         byte[] newPrefix;
         if (bound) {
           newPrefix = Arrays.copyOf(prefix, prefix.length + 1);
-          newPrefix[prefix.length] = TypeAnnotationContainer.Collector.WILDCARD_BOUND;
+          newPrefix[prefix.length] = ExplicitTypeAnnotationContainer.Collector.WILDCARD_BOUND;
         } else {
           newPrefix = Arrays.copyOf(prefix, prefix.length + arrayCount);
-          Arrays.fill(newPrefix, prefix.length, newPrefix.length, TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+          Arrays.fill(newPrefix, prefix.length, newPrefix.length, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
         }
         collectAnnotations(((DerivedTypeInfo)info).child(), collector, tree, child, newPrefix);
       }
@@ -464,14 +464,14 @@ public /*sealed*/ abstract class TypeInfo {
       else if (tokenType == JavaElementType.ANNOTATION) {
         String anno = LightTreeUtil.toFilteredString(tree, child, null);
         byte[] typePath = Arrays.copyOf(prefix, prefix.length + nestingLevel);
-        Arrays.fill(typePath, prefix.length, typePath.length, TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+        Arrays.fill(typePath, prefix.length, typePath.length, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
         collector.add(typePath, anno);
       }
     }
   }
 
   private static void collectAnnotationsFromReference(@NotNull RefTypeInfo info,
-                                                      TypeAnnotationContainer.@NotNull Collector collector,
+                                                      ExplicitTypeAnnotationContainer.@NotNull Collector collector,
                                                       @NotNull LighterAST tree,
                                                       @NotNull LighterASTNode child,
                                                       byte @NotNull [] prefix) {
@@ -482,7 +482,7 @@ public /*sealed*/ abstract class TypeInfo {
         RefTypeInfo outerType = info.outerType();
         if (outerType != null) {
           byte[] newPrefix = Arrays.copyOf(prefix, prefix.length + 1);
-          newPrefix[prefix.length] = TypeAnnotationContainer.Collector.ENCLOSING_CLASS;
+          newPrefix[prefix.length] = ExplicitTypeAnnotationContainer.Collector.ENCLOSING_CLASS;
           collectAnnotationsFromReference(outerType, collector, tree, refChild, newPrefix);
         }
       }
@@ -493,7 +493,7 @@ public /*sealed*/ abstract class TypeInfo {
             TypeInfo componentInfo = info.genericComponent(i);
             if (componentInfo != null) {
               byte[] newPrefix = Arrays.copyOf(prefix, prefix.length + 2);
-              newPrefix[prefix.length] = TypeAnnotationContainer.Collector.TYPE_ARGUMENT;
+              newPrefix[prefix.length] = ExplicitTypeAnnotationContainer.Collector.TYPE_ARGUMENT;
               newPrefix[prefix.length + 1] = (byte)i;
               collectAnnotations(componentInfo, collector, tree, subTypes.get(i), newPrefix);
             }
@@ -700,12 +700,12 @@ public /*sealed*/ abstract class TypeInfo {
       default:
         info = kind.isReference() ? new RefTypeInfo(Objects.requireNonNull(kind.text)) : new SimpleTypeInfo(kind);
     }
-    info.setTypeAnnotations(hasTypeAnnotations ? TypeAnnotationContainer.readTypeAnnotations(record) : TypeAnnotationContainer.EMPTY);
+    info.setTypeAnnotations(hasTypeAnnotations ? ExplicitTypeAnnotationContainer.readTypeAnnotations(record) : TypeAnnotationContainer.EMPTY);
     return info;
   }
 
   public static void writeTYPE(@NotNull StubOutputStream dataStream, @NotNull TypeInfo typeInfo) throws IOException {
-    boolean hasTypeAnnotations = typeInfo.myTypeAnnotations != null && !typeInfo.myTypeAnnotations.isEmpty();
+    boolean hasTypeAnnotations = typeInfo.myTypeAnnotations instanceof ExplicitTypeAnnotationContainer;
     dataStream.writeByte(typeInfo.kind.ordinal() | (hasTypeAnnotations ? HAS_TYPE_ANNOTATIONS : 0));
 
     if (typeInfo instanceof DerivedTypeInfo) {
@@ -728,7 +728,7 @@ public /*sealed*/ abstract class TypeInfo {
       }
     }
     if (hasTypeAnnotations) {
-      TypeAnnotationContainer.writeTypeAnnotations(dataStream, typeInfo.myTypeAnnotations);
+      ExplicitTypeAnnotationContainer.writeTypeAnnotations(dataStream, (ExplicitTypeAnnotationContainer)typeInfo.myTypeAnnotations);
     }
   }
 

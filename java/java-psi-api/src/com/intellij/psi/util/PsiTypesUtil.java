@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -711,6 +712,63 @@ public final class PsiTypesUtil {
       return classTypes;
     }
     return Collections.emptyList();
+  }
+
+  /**
+   * @param type input type
+   * @return type with removed external annotations (if any); on any level of depth
+   */
+  public static @NotNull PsiType removeExternalAnnotations(@NotNull PsiType type) {
+    PsiAnnotation[] annotations = type.getAnnotations();
+    if (annotations.length > 0) {
+      List<PsiAnnotation> newAnnotations = ContainerUtil.filter(
+        annotations, annotation -> !ExternalAnnotationsManager.getInstance(annotation.getProject()).isExternalAnnotation(annotation));
+      if (newAnnotations.size() < annotations.length) {
+        type = type.annotate(TypeAnnotationProvider.Static.create(newAnnotations.toArray(PsiAnnotation.EMPTY_ARRAY)));
+      }
+    }
+    if (type instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType)type;
+      PsiClass psiClass = classType.resolve();
+      if (psiClass != null) {
+        PsiType[] parameters = classType.getParameters();
+        boolean changed = false;
+        for (int i = 0; i < parameters.length; i++) {
+          PsiType parameter = parameters[i];
+          PsiType updatedParameter = removeExternalAnnotations(parameter);
+          parameters[i] = updatedParameter;
+          changed |= updatedParameter != parameter;
+        }
+        if (changed) {
+          return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, parameters);
+        }
+      }
+      return type;
+    }
+    else if (type instanceof PsiArrayType) {
+      PsiArrayType arrayType = (PsiArrayType)type;
+      PsiType origComponentType = arrayType.getComponentType();
+      PsiType componentType = removeExternalAnnotations(origComponentType);
+      return componentType == origComponentType ? type : componentType.createArrayType();
+    }
+    else if (type instanceof PsiWildcardType) {
+      PsiWildcardType wildcardType = (PsiWildcardType)type;
+      PsiType bound = wildcardType.getBound();
+      return bound == null ? wildcardType : 
+             wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), removeExternalAnnotations(bound)) :
+             wildcardType.isSuper() ? PsiWildcardType.createSuper(wildcardType.getManager(), removeExternalAnnotations(bound)) : 
+             wildcardType;
+    }
+    else if (type instanceof PsiIntersectionType) {
+      PsiIntersectionType intersectionType = (PsiIntersectionType)type;
+      PsiType[] conjuncts = intersectionType.getConjuncts();
+      PsiType[] newConjuncts = new PsiType[conjuncts.length];
+      for (int i = 0; i < conjuncts.length; i++) {
+        newConjuncts[i] = removeExternalAnnotations(conjuncts[i]);
+      }
+      return PsiIntersectionType.createIntersection(newConjuncts);
+    }
+    return type;
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

@@ -93,6 +93,15 @@ public abstract class ExternalAnnotationsManager {
   public abstract @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
 
   /**
+   * @param parent a type owner (field, method, or parameter)
+   * @param typePath a type path. See {@code ExternalTypeAnnotationContainer} for syntax
+   * @return external type annotations for a given type path
+   */
+  public @NotNull PsiAnnotation @NotNull [] findExternalTypeAnnotations(@NotNull PsiModifierListOwner parent, @NotNull String typePath) {
+    return PsiAnnotation.EMPTY_ARRAY;
+  }
+
+  /**
    * Returns external annotations associated with default
    * constructor of the {@code aClass}, if the constructor exists.
    * <p>
@@ -115,7 +124,7 @@ public abstract class ExternalAnnotationsManager {
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
    * associated with default constructor of the {@code aClass}, if the constructor exists.
-   *
+   * <p>
    * Multiple annotations may be returned since there may be repeatable annotations
    * or annotations from several external annotations roots.
    *

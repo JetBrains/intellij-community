@@ -3703,6 +3703,7 @@
   </item>
   <item name='java.util.Optional java.util.Optional&lt;T&gt; filter(java.util.function.Predicate&lt;? super T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="0;*"/>
   </item>
   <item name='java.util.Optional java.util.Optional&lt;T&gt; of(T) 0'>
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -3717,15 +3718,19 @@
   <item
     name='java.util.Optional java.util.Optional&lt;U&gt; flatMap(java.util.function.Function&lt;? super T,? extends java.util.Optional&lt;? extends U&gt;&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="0;*"/>
   </item>
   <item name='java.util.Optional java.util.Optional&lt;U&gt; map(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="0;*"/>
   </item>
   <item name='java.util.Optional void ifPresent(java.util.function.Consumer&lt;? super T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="0;*"/>
   </item>
   <item name='java.util.Optional void ifPresentOrElse(java.util.function.Consumer&lt;? super T&gt;, java.lang.Runnable) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="0;*"/>
   </item>
   <item name='java.util.Properties java.lang.String getProperty(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>

@@ -110,8 +110,44 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
         PsiAnnotation annotation = annotationData.getAnnotation(manager);
         String nameText = annotation.getNameReferenceElement().getText();
         assertClassFqn(nameText, psiFile, externalName, null);
+
+        String typePath = annotationData.getTypePath();
+        if (typePath != null) {
+          String error = validatePath(typePath);
+          if (error != null) {
+            fail("Invalid typePath: " + error, psiFile, externalName);
+          }
+        }
       }
     }
+  }
+
+  private static String validatePath(String pathString) {
+    if (pathString.isEmpty()) {
+      return "Empty path";
+    }
+    for (int i = 0; i < pathString.length(); i++) {
+      char c = pathString.charAt(i);
+      switch (c) {
+        case '[', '*', '.':
+          break;
+        default:
+          if (c >= '0' && c <= '9') {
+            int j = i;
+            while (j < pathString.length() && pathString.charAt(j) >= '0' && pathString.charAt(j) <= '9') {
+              j++;
+            }
+            int result = Integer.parseInt(pathString.substring(i, j));
+            if (result >= 0 && result <= 255 && j < pathString.length() && pathString.charAt(j) == ';') {
+              //noinspection AssignmentToForLoopParameter
+              i = j; // Skip the ';' character
+              break;
+            }
+          }
+          return "Invalid path: " + pathString;
+      }
+    }
+    return null;
   }
 
   private PsiClass assertClassFqn(@NotNull String text,
