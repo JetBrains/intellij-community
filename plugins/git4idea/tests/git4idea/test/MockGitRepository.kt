@@ -28,7 +28,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 
 class MockGitRepository(private val project: Project, private val root: VirtualFile) : GitRepository {
-  var branch: GitLocalBranch? = null
+  var currentBranch: GitLocalBranch? = null
+    @JvmName("currentBranch_") get
+  var state: Repository.State = Repository.State.NORMAL
+    @JvmName("state_") get
 
   override fun getGitDir(): VirtualFile {
     throw UnsupportedOperationException()
@@ -50,7 +53,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     throw UnsupportedOperationException()
   }
 
-  override fun getCurrentBranch(): GitLocalBranch? = branch
+  override fun getCurrentBranch(): GitLocalBranch? = currentBranch
 
   override fun getBranches(): GitBranchesCollection {
     throw UnsupportedOperationException()
@@ -88,9 +91,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     return project
   }
 
-  override fun getState(): Repository.State {
-    throw UnsupportedOperationException()
-  }
+  override fun getState(): Repository.State = state
 
   override fun getCurrentBranchName(): String? = currentBranch?.name
 

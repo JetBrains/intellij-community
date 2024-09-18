@@ -2,6 +2,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -11,6 +12,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
+import git4idea.GitTag;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -130,6 +132,14 @@ public final class GitRefUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static GitTag getCurrentTag(GitRepository repository) {
+    if (repository.getState() != Repository.State.DETACHED) return null;
+
+    GitReference currentRef = getCurrentReference(repository);
+    return currentRef instanceof GitTag ? (GitTag)currentRef : null;
   }
 
   public static void readFromRefsFiles(final @NotNull File refsRootDir,

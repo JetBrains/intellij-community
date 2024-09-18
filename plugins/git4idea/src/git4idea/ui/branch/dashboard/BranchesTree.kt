@@ -73,7 +73,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     initDnD()
   }
 
-  private inner class BranchTreeCellRenderer(private val project: Project) : ColoredTreeCellRenderer() {
+  private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val branchManager = project.service<GitBranchManager>()
 
@@ -95,10 +95,10 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val descriptor = value.getNodeDescriptor()
 
       icon = when(descriptor) {
-        is BranchNodeDescriptor.Branch -> iconProvider.forRef(
-          descriptor.branchInfo.branch,
-          current = descriptor.branchInfo.isCurrent,
-          favorite = descriptor.branchInfo.isFavorite,
+        is BranchNodeDescriptor.Ref -> iconProvider.forRef(
+          descriptor.refInfo.ref,
+          current = descriptor.refInfo.isCurrent,
+          favorite = descriptor.refInfo.isFavorite,
           selected = selected
         )
         is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> iconProvider.forGroup()
@@ -108,18 +108,20 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
       append(value.getNodeDescriptor().displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
-      val branchInfo = (descriptor as? BranchNodeDescriptor.Branch)?.branchInfo
-      if (branchInfo != null) {
+      val refInfo = (descriptor as? BranchNodeDescriptor.Ref)?.refInfo
+      if (refInfo != null) {
+        val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+        if (!repositoryGrouping && refInfo.repositories.size < repositoryManager.repositories.size) {
+          append(" (${DvcsUtil.getShortNames(refInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        }
+      }
+      
+      if (refInfo is BranchInfo) {
         toolTipText =
-          if (branchInfo.isLocalBranch) BranchPresentation.getTooltip(getBranchesTooltipData(branchInfo.branchName, getSelectedRepositories(value)))
+          if (refInfo.isLocalBranch) BranchPresentation.getTooltip(getBranchesTooltipData(refInfo.branchName, getSelectedRepositories(value)))
           else null
 
-        val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
-        if (!repositoryGrouping && branchInfo.repositories.size < repositoryManager.repositories.size) {
-          append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        }
-
-        val incomingOutgoingState = branchInfo.incomingOutgoingState
+        val incomingOutgoingState = refInfo.incomingOutgoingState
         updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
         updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
 
@@ -127,7 +129,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
         incomingLabel.size = Dimension(fontMetrics.stringWidth(incomingLabel.text) + JBUI.scale(1) + incomingLabel.icon.iconWidth, fontMetrics.height)
         outgoingLabel.size = Dimension(fontMetrics.stringWidth(outgoingLabel.text) + JBUI.scale(1) + outgoingLabel.icon.iconWidth, fontMetrics.height)
         tree.toolTipText = incomingOutgoingState.calcTooltip()
-      } else {
+      }
+      else {
         incomingLabel.isVisible = false
         outgoingLabel.isVisible = false
         tree.toolTipText = null
@@ -272,7 +275,7 @@ internal abstract class FilteringBranchesTreeBase(
 
   public final override fun getText(nodeDescriptor: BranchNodeDescriptor?) =
     when (nodeDescriptor) {
-      is BranchNodeDescriptor.Branch -> nodeDescriptor.branchInfo.branchName
+      is BranchNodeDescriptor.Ref -> nodeDescriptor.refInfo.refName
       is BranchNodeDescriptor.Repository -> nodeDescriptor.displayName
       is BranchNodeDescriptor.RemoteGroup -> nodeDescriptor.remote.name
       is BranchNodeDescriptor.Group -> nodeDescriptor.displayName
@@ -290,20 +293,13 @@ internal abstract class FilteringBranchesTreeBase(
     searchModel.isLeaf(it)
   }
 
-  internal fun refreshNodeDescriptorsModel(
-    localBranches: Collection<BranchInfo>,
-    remoteBranches: Collection<BranchInfo>,
-    showOnlyMy: Boolean,
-  ) {
+  internal fun refreshNodeDescriptorsModel(refs: RefsCollection, showOnlyMy: Boolean) {
     nodeDescriptorsModel.rebuildFrom(
-      (localBranches.asSequence() + remoteBranches.asSequence())
-        .filter(if (showOnlyMy) ::isMy else { _ -> true })
-        .asIterable(),
+      refs,
+      if (showOnlyMy) { ref -> (ref as? BranchInfo)?.isMy == ThreeState.YES } else { _ -> true },
       groupingConfig,
     )
   }
-
-  private fun isMy(branch: BranchInfo) = branch.isMy == ThreeState.YES
 }
 
 internal class FilteringBranchesTree(
@@ -460,11 +456,7 @@ internal class FilteringBranchesTree(
   }
 
   fun refreshNodeDescriptorsModel() {
-    refreshNodeDescriptorsModel(
-      localBranches = uiController.localBranches,
-      remoteBranches = uiController.remoteBranches,
-      showOnlyMy = uiController.showOnlyMy,
-    )
+    refreshNodeDescriptorsModel(uiController.refs, uiController.showOnlyMy, )
   }
 }
 

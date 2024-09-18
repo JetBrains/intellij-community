@@ -160,4 +160,20 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     searchTextField.text = ""
     assertFalse(branchesTree.isEmptyModel())
   }
+
+  fun `test tag can be matched`() = branchesTreeTest(groupByDirectories = false) {
+    setState(localBranches = listOf("main"), remoteBranches = listOf("main"), tags = listOf("ma"))
+
+    searchTextField.text = "ma"
+    assertTree("""
+      |-ROOT
+      | HEAD
+      | -LOCAL
+      |  BRANCH:main
+      | -REMOTE
+      |  BRANCH:origin/main
+      | -TAG
+      |  [TAG:ma]
+    """.trimMargin())
+  }
 }

@@ -11,21 +11,23 @@ import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitTag
 import git4idea.branch.GitBranchIncomingOutgoingManager
-import git4idea.branch.GitBranchType
+import git4idea.branch.GitRefType
 import git4idea.branch.IncomingOutgoingState
+import git4idea.repo.GitRefUtil.getCurrentTag
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.tree.tags
 import it.unimi.dsi.fastutil.ints.IntSet
 
 internal object BranchesDashboardUtil {
 
   fun getLocalBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val localMap = mutableMapOf<GitLocalBranch, MutableSet<GitRepository>>()
-    for (repo in GitRepositoryManager.getInstance(project).repositories) {
-      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
-
+    forEachRepo(project, rootsToFilter) { repo ->
       for (branch in repo.branches.localBranches) {
         localMap.computeIfAbsent(branch) { hashSetOf() }.add(repo)
       }
@@ -38,8 +40,8 @@ internal object BranchesDashboardUtil {
     val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
     val local = localMap.map { (branch, repos) ->
       BranchInfo(branch, repos.any { it.currentBranch == branch },
-                 repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branch.name) },
-                 incomingOutgoingManager.getIncomingOutgoingState(repos, branch as GitLocalBranch),
+                 isFavoriteInAnyRepo(repos, gitBranchManager, branch),
+                 incomingOutgoingManager.getIncomingOutgoingState(repos, branch),
                  repos.toList())
     }.toHashSet()
 
@@ -48,9 +50,7 @@ internal object BranchesDashboardUtil {
 
   fun getRemoteBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val remoteMap = mutableMapOf<GitBranch, MutableList<GitRepository>>()
-    for (repo in GitRepositoryManager.getInstance(project).repositories) {
-      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
-
+    forEachRepo(project, rootsToFilter) { repo ->
       for (remoteBranch in repo.branches.remoteBranches) {
         remoteMap.computeIfAbsent(remoteBranch) { mutableListOf() }.add(repo)
       }
@@ -58,10 +58,35 @@ internal object BranchesDashboardUtil {
     val gitBranchManager = project.service<GitBranchManager>()
     return remoteMap.map { (branch, repos) ->
       BranchInfo(branch, false,
-                 repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branch.name) },
+                 isFavoriteInAnyRepo(repos, gitBranchManager, branch),
                  IncomingOutgoingState.EMPTY,
                  repos)
     }.toHashSet()
+  }
+
+  fun getTags(project: Project, rootsToFilter: Set<VirtualFile>?): Set<TagInfo> {
+    val tags = mutableMapOf<GitTag, MutableList<GitRepository>>()
+    forEachRepo(project, rootsToFilter) { repo ->
+      for (tag in repo.tags) {
+        tags.computeIfAbsent(tag.key) { mutableListOf() }.add(repo)
+      }
+    }
+    val gitBranchManager = project.service<GitBranchManager>()
+    return tags.mapTo(mutableSetOf()) { (tag, repos) ->
+      TagInfo(tag, isCurrent = repos.any { getCurrentTag(it) == tag }, isFavorite = isFavoriteInAnyRepo(repos, gitBranchManager, tag), repos)
+    }
+  }
+
+  private fun isFavoriteInAnyRepo(repos: Collection<GitRepository>, gitBranchManager: GitBranchManager, ref: GitReference): Boolean {
+    val refType = GitRefType.of(ref)
+    return repos.any { gitBranchManager.isFavorite(refType, it, ref.name) }
+  }
+
+  private fun forEachRepo(project: Project, rootsToFilter: Set<VirtualFile>?, consumer: (GitRepository) -> Unit) {
+    for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+      consumer(repo)
+    }
   }
 
   fun checkIsMyBranchesSynchronously(log: VcsProjectLog,
