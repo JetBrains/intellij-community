@@ -56,7 +56,6 @@
     <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
-    <orderEntry type="module" module-name="intellij.tools.jps.antTasks" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
