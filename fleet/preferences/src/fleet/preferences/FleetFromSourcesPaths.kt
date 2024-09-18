@@ -62,13 +62,15 @@ object FleetFromSourcesPaths {
   private fun findRepositoryRoot(): Path? {
     var directory: Path? = findFleetRootByClass()
     while (directory != null) {
-      try {
-        val children = Files.list(directory).use { it.map(Path::name).collect(Collectors.toSet()) }
-        if (children.contains(".idea") && children.contains("fleet")) {
-          return directory
+      if (directory.name != "community") {
+        try {
+          val children = Files.list(directory).use { it.map(Path::name).collect(Collectors.toSet()) }
+          if (children.contains(".idea") && children.contains("fleet")) {
+            return directory
+          }
         }
-      }
-      catch (ignore: IOException) {
+        catch (ignore: IOException) {
+        }
       }
       directory = directory.parent
     }
