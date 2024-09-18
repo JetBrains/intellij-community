@@ -104,8 +104,9 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
       try {
         progressBarPanel.updateProgressBar(0.0)
         val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(JB_ACADEMY_PLUGIN_ID))
-        val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
-                                                                                                                     emptyList(), true))
+        val customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator)
+        val descriptors: MutableList<IdeaPluginDescriptor> =
+          RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, customPlugins, true).toMutableList()
         PluginManagerCore.plugins.filterTo(descriptors) {
           !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagementPolicy.getInstance().canInstallPlugin(it)
         }
