@@ -38,7 +38,7 @@ private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
   option("-classpath", "-cp") {
     description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
     argument {
-      displayName(JavaTerminalBundle.message("java.command.terminal.classpath.option.argument.path.text"))
+      displayName(JavaTerminalBundle.message("java.command.terminal.classpath.option.argument.path.text", ShellCommandUtils.getClassPathSeparator()))
     }
   }
   option("-showversion", "--show-version") {
