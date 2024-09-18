@@ -265,7 +265,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
       """
         import java.util.Collections;
         import java.util.List;
-         
+        
          /** @noinspection ALL*/
          class SomeClass {
              public static void main(String[] args) {
@@ -864,7 +864,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
         /** @noinspection ALL*/
          class Test {
              int length;
-         
+        
              public static void main(String[] args) {
                  int[] arr = new int[0];
                  Test test = null, test2 = new Test();
@@ -1199,7 +1199,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testVarHandle() {
     myFixture.addClass("""
                          package java.lang.invoke;
-                                                  
+                         
                          interface VarHandle{
                           void set(Object... objects);
                          }
@@ -1210,9 +1210,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
         import java.lang.foreign.MemoryLayout;
         import java.lang.foreign.MemorySegment;
         import java.lang.invoke.VarHandle;
-               
+        
         import static java.lang.foreign.ValueLayout.JAVA_BYTE;
-               
+        
         final class SomeClass {
             public static void main(String[] args) {
                 var layout = MemoryLayout.structLayout(
@@ -1223,11 +1223,11 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                         JAVA_BYTE.withName("b"),
                         JAVA_BYTE.withName("a")
                 ).withName("b");
-               
+        
                 VarHandle flags = layout.varHandle(
                         MemoryLayout.PathElement.groupElement("a")
                 );
-               
+        
                 try (Arena arena = Arena.ofConfined()) {
                     MemorySegment memorySegment = arena.allocate(layout);
                     flags.set(memorySegment, 0x1);
@@ -1270,6 +1270,39 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
         "Caused by: java.lang.IndexOutOfBoundsException: Index 0 out of bounds for length 0", null, null),
       new LogItem("\tat java.base/java.util.ArrayList.remove(ArrayList.java:504)\n", null, null),
       new LogItem("\tat deployment.WebTest.war//com.example.SomeClass.throwException(SomeClass.java:9)\n", 9, 19));
+
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testHprofOutput() {
+    @Language("JAVA") String classText =
+      """
+      package org.example;
+      
+      import java.util.concurrent.ScheduledThreadPoolExecutor;
+      
+      public class CustomThreadPoolExecutorImpl extends ScheduledThreadPoolExecutor implements CustomThreadPoolExecutor  {
+      
+          public CustomThreadPoolExecutorImpl(int corePoolSize) {
+              super(corePoolSize);
+          }
+      
+          public CustomThreadPoolExecutorImpl() {
+              super(1);
+          }
+      
+          @Override
+          public long getTaskCount() {
+              return getQueue().size();
+          }
+      }
+      """;
+
+    List<LogItem> traceAndPositions = Arrays.asList(
+      new LogItem(
+        "Thread 'main' with ID = 1", null, null),
+      new LogItem("\tjava.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.size(ScheduledThreadPoolExecutor.java:1069)\n", null, null),
+      new LogItem("\torg.example.CustomThreadPoolExecutorImpl.getTaskCount(CustomThreadPoolExecutorImpl.java:17)\n", 17, 27));
 
     checkColumnFinder(classText, traceAndPositions);
   }

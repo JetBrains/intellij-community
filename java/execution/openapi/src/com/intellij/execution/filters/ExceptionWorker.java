@@ -2,6 +2,8 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +106,7 @@ public class ExceptionWorker {
   @Nullable
   private static ParsedLine parseStackTraceLine(@NotNull String line, boolean searchForRParenOnlyAfterAt) {
     int startIdx = findAtPrefix(line);
-    int rParenIdx = findRParenAfterLocation(line, searchForRParenOnlyAfterAt  ? startIdx : 0);
+    int rParenIdx = findRParenAfterLocation(line, searchForRParenOnlyAfterAt ? startIdx : 0);
     if (rParenIdx < 0) return null;
 
     TextRange methodName = findMethodNameCandidateBefore(line, startIdx, rParenIdx);
@@ -126,7 +128,9 @@ public class ExceptionWorker {
         // consider STANDALONE_AT here
         classNameIdx = startIdx + 1 + AT.length() + (line.charAt(startIdx) == 'a' ? 0 : 1);
       } else {
-        classNameIdx = 0;
+        //sometimes stacktrace can start with some whitespaces (for example, for hprof -> \t), let's eat them
+        classNameIdx = StringUtil.findFirst(line, CharFilter.NOT_WHITESPACE_FILTER);
+        if (classNameIdx < 0) classNameIdx = 0; //let's keep it safe
       }
     }
 
