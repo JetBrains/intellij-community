@@ -30,8 +30,6 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        internalEntitySource: JpsFileEntitySource,
                                                        internalModuleListSerializer: JpsModuleListSerializer)
   : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, context, internalModuleListSerializer) {
-  override val skipLoadingIfFileDoesNotExist: Boolean
-    get() = true
 
   override val externalStorage: Boolean = true
 
@@ -47,15 +45,15 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return entitySource is JpsImportedEntitySource && entitySource.storedExternally
   }
 
-  override fun readExternalSystemOptions(reader: JpsFileContentReader,
+  override fun readExternalSystemOptions(content: JpsFileContent,
                                          moduleOptions: Map<String?, String?>): Pair<Map<String?, String?>, String?> {
-    val componentTag = reader.loadComponent(fileUrl.url, "ExternalSystem", getBaseDirPath()) ?: return Pair(emptyMap(), null)
+    val componentTag = content.loadComponent("ExternalSystem") ?: return Pair(emptyMap(), null)
     val options = componentTag.attributes.associateBy({ it.name }, { it.value })
     return Pair(options, options["externalSystem"])
   }
 
   override fun loadExternalSystemOptions(module: ModuleEntity.Builder,
-                                         reader: JpsFileContentReader,
+                                         content: JpsFileContent,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,
                                          entitySource: EntitySource) {
