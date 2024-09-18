@@ -4,16 +4,17 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.outputs.statistic.NotebookOutputKeyType
+import kotlinx.serialization.Polymorphic
 
 /** Merely a marker for data that can be represented via some Swing component. */
+@Polymorphic
 interface NotebookOutputDataKey {
   /**
       Get content that can be used for building diff for outputs.
    */
   fun getContentForDiffing(): Any
 
-  val statisticKey: NotebookOutputKeyType
-    get() = NotebookOutputKeyType.UNKNOWN
+  fun getStatisticKey() = NotebookOutputKeyType.UNKNOWN
 }
 
 interface NotebookOutputDataKeyExtractor {

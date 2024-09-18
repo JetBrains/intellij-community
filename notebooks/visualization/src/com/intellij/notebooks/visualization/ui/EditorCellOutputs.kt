@@ -97,7 +97,7 @@ class EditorCellOutputs(
     onViewportChange()
   }
 
-  private fun updateView(newDataKeys: List<NotebookOutputDataKey>) = runInEdt {
+  fun updateView(newDataKeys: Collection<NotebookOutputDataKey>) = runInEdt {
     updateData(newDataKeys)
     recreateInlayIfNecessary()
   }
@@ -125,7 +125,7 @@ class EditorCellOutputs(
   }
 
   @RequiresEdt
-  private fun updateData(newDataKeys: List<NotebookOutputDataKey>): Boolean {
+  private fun updateData(newDataKeys: Collection<NotebookOutputDataKey>): Boolean {
     val newDataKeyIterator = newDataKeys.iterator()
     val oldComponentsWithFactories = getComponentsWithFactories().iterator()
     var isFilled = false

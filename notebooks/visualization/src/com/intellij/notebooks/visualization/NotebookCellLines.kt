@@ -54,7 +54,6 @@ interface NotebookCellLines {
     val contentLines: IntRange
       get() = firstContentLine..lastContentLine
 
-
     operator fun <V> get(key: Key<V>): V? = data.get(key)
 
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
@@ -86,7 +85,6 @@ interface NotebookCellLines {
       val range = getContentRange(document)
       return document.getText(range)
     }
-
 
     fun getTopMarker(document: Document): String? =
       if (markers.hasTopLine) document.getLineText(lines.first) else null
