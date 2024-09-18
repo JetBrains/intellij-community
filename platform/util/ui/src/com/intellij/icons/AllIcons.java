@@ -793,7 +793,7 @@ public class AllIcons {
   }
 
   public static final class Language {
-    /** 16x16 */ public static final @NotNull Icon GO = load("language/go.svg", 683936688, 2);
+    /** 16x16 */ public static final @NotNull Icon GO = load("language/go.svg", -1894540570, 2);
     /** 16x16 */ public static final @NotNull Icon Php = load("expui/language/php.svg", "language/php.svg", 185644961, 0);
     /** 16x16 */ public static final @NotNull Icon Python = load("language/python.svg", -543505712, 2);
     /** 16x16 */ public static final @NotNull Icon Ruby = load("language/ruby.svg", -1736610380, 2);
