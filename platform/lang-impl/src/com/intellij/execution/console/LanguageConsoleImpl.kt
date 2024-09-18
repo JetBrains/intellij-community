@@ -228,7 +228,7 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
     }
   }
 
-  override var isConsoleEditorEnabled: Boolean = false
+  override var isConsoleEditorEnabled: Boolean = true
     get() = consoleExecutionEditor.isConsoleEditorEnabled
     set(consoleEditorEnabled) {
       if (field == consoleEditorEnabled) {
