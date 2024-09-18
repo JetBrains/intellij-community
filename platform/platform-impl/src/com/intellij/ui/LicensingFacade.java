@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.Gson;
@@ -26,7 +26,7 @@ public final class LicensingFacade {
   public Map<String, String> confirmationStamps;
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
-  public boolean ai_enabled;
+  @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnusedSignalled;
 
   /**
@@ -34,6 +34,7 @@ public final class LicensingFacade {
    */
   @Deprecated
   public static volatile LicensingFacade INSTANCE;
+  public String subType;
 
   public static @Nullable LicensingFacade getInstance() {
     return INSTANCE;
@@ -115,6 +116,12 @@ public final class LicensingFacade {
   public @Nullable String getConfirmationStamp(String productCode) {
     final Map<String, String> result = confirmationStamps;
     return result != null? result.get(productCode) : null;
+  }
+
+  @ApiStatus.Internal
+  public static void setInstance(@Nullable LicensingFacade instance) {
+    INSTANCE = instance;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(LicenseStateListener.TOPIC).licenseStateChanged(instance);
   }
 
   private static @NotNull Gson createGson() {

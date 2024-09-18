@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -29,6 +29,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -44,7 +45,8 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
 
-final class UpdateCheckerService {
+@ApiStatus.Internal
+class UpdateCheckerService {
   public static UpdateCheckerService getInstance() {
     return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
   }
@@ -126,7 +128,7 @@ final class UpdateCheckerService {
     }
   }
 
-  private void scheduleFirstCheck(UpdateSettings settings) {
+  void scheduleFirstCheck(UpdateSettings settings) {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
