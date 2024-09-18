@@ -154,77 +154,56 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val newModuleEntity: ModuleEntity.Builder?
     val exceptionsCollector = ArrayList<Throwable>()
 
-    val internalContent = JpsFileContent.createFromImlFile(reader, fileUrl.url, getBaseDirPath(), exceptionsCollector)
-
-    if (!context.isExternalStorageEnabled) {
-      // Loading data if the external storage is disabled
-      val moduleLoadedInfo = loadModuleEntity(internalContent, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
-      if (moduleLoadedInfo != null) {
-        runCatchingXmlIssues(exceptionsCollector) {
-          val facetTag = reader.loadComponent(fileUrl.url, facetManagerComponentName, getBaseDirPath())
-          if (facetTag != null) {
-            createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, facetTag)
-          }
-        }
-
-        newModuleEntity = loadAdditionalContents(internalContent, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
-      }
-      else newModuleEntity = null
+    val externalSerializer = if (context.isExternalStorageEnabled) {
+      externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
     }
-    else {
-      // Loading module from two files - external and local
-      // Here we load BOTH external and internal iml file. This is done to load module once and attach all the information to it
-      // It's a bit dirty, but we'll get rid of this logic when we'll remove external iml storage
-      val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl,
-                                                                              modulePath.group) as ModuleImlFileEntitiesSerializer?
+    else null
 
-      val externalContent: JpsFileContent? = if (externalSerializer != null) {
-        JpsFileContent.createFromXmlFile(reader, externalSerializer.fileUrl.url, externalSerializer.getBaseDirPath(), exceptionsCollector)
-      }
-      else null
+    val internalContent = getImlFileContent(reader, exceptionsCollector)
+    val externalContent = getExternalXmlFileContent(reader, externalSerializer, exceptionsCollector)
 
-      val moduleLoadedInfo = externalSerializer?.loadModuleEntity(externalContent, errorReporter, virtualFileManager, moduleLibrariesCollector,
+
+    val moduleLoadedInfo = externalSerializer?.loadModuleEntity(externalContent, errorReporter, virtualFileManager, moduleLibrariesCollector,
                                                                   exceptionsCollector)
 
-      val moduleEntity: ModuleEntity.Builder?
-      if (moduleLoadedInfo != null) {
-        val entitySource = getOtherEntitiesEntitySource(internalContent)
-        runCatchingXmlIssues(exceptionsCollector) {
-          loadContentRoots(moduleLoadedInfo.customRootsSerializer, moduleLoadedInfo.moduleEntity, internalContent,
-                           moduleLoadedInfo.customDir, errorReporter, virtualFileManager, entitySource,
-                           true, moduleLibrariesCollector)
-        }
-
-        moduleEntity = loadAdditionalContents(internalContent, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
+    val moduleEntity: ModuleEntity.Builder?
+    if (moduleLoadedInfo != null) {
+      val entitySource = getOtherEntitiesEntitySource(internalContent)
+      runCatchingXmlIssues(exceptionsCollector) {
+        loadContentRoots(moduleLoadedInfo.customRootsSerializer, moduleLoadedInfo.moduleEntity, internalContent,
+                         moduleLoadedInfo.customDir, errorReporter, virtualFileManager, entitySource,
+                         true, moduleLibrariesCollector)
       }
-      else {
-        val localModule = loadModuleEntity(internalContent, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
 
-        var tmpModule = localModule?.moduleEntity
-
-        if (tmpModule != null) {
-          tmpModule = loadAdditionalContents(internalContent, virtualFileManager, tmpModule, exceptionsCollector)
-        }
-        moduleEntity = tmpModule
-      }
-      if (moduleEntity != null) {
-        runCatchingXmlIssues(exceptionsCollector) {
-          val internalFacetTag = internalContent.loadComponent(facetManagerComponentName)
-          if (internalFacetTag != null) {
-            createFacetSerializer().loadFacetEntities(moduleEntity, internalFacetTag)
-          }
-
-          if (externalSerializer != null) {
-            val externalFacetTag = externalContent?.loadComponent(externalSerializer.facetManagerComponentName)
-            if (externalFacetTag != null) {
-              externalSerializer.createFacetSerializer().loadFacetEntities(moduleEntity, externalFacetTag)
-            }
-          }
-        }
-        newModuleEntity = moduleEntity
-      }
-      else newModuleEntity = null
+      moduleEntity = loadAdditionalContents(internalContent, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
     }
+    else {
+      val localModule = loadModuleEntity(internalContent, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
+
+      var tmpModule = localModule?.moduleEntity
+
+      if (tmpModule != null) {
+        tmpModule = loadAdditionalContents(internalContent, virtualFileManager, tmpModule, exceptionsCollector)
+      }
+      moduleEntity = tmpModule
+    }
+    if (moduleEntity != null) {
+      runCatchingXmlIssues(exceptionsCollector) {
+        val internalFacetTag = internalContent.loadComponent(facetManagerComponentName)
+        if (internalFacetTag != null) {
+          createFacetSerializer().loadFacetEntities(moduleEntity, internalFacetTag)
+        }
+
+        if (externalSerializer != null) {
+          val externalFacetTag = externalContent?.loadComponent(externalSerializer.facetManagerComponentName)
+          if (externalFacetTag != null) {
+            externalSerializer.createFacetSerializer().loadFacetEntities(moduleEntity, externalFacetTag)
+          }
+        }
+      }
+      newModuleEntity = moduleEntity
+    }
+    else newModuleEntity = null
 
     return@addMeasuredTime LoadingResult(
       mapOf(
@@ -233,6 +212,32 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       ),
       exceptionsCollector.firstOrNull(),
     )
+  }
+
+  private fun getImlFileContent(
+    reader: JpsFileContentReader,
+    exceptionsCollector: MutableList<Throwable>,
+  ): JpsFileContent {
+    if (!fileUrl.url.endsWith(".iml")) {
+      LOG.error("Should be an iml file: ${fileUrl.url}")
+    }
+    return JpsFileContent.createFromImlFile(reader, fileUrl.url, getBaseDirPath(), exceptionsCollector)
+  }
+
+  private fun getExternalXmlFileContent(
+    reader: JpsFileContentReader,
+    externalSerializer: ModuleImlFileEntitiesSerializer?,
+    exceptionsCollector: MutableList<Throwable>,
+  ): JpsFileContent? {
+    val externalFileUrl = externalSerializer?.fileUrl?.url
+
+    return if (externalFileUrl != null) {
+      if (!externalFileUrl.endsWith(".xml")) {
+        LOG.error("Should be an xml file: ${fileUrl.url}")
+      }
+      JpsFileContent.createFromXmlFile(reader, externalFileUrl, externalSerializer.getBaseDirPath(), exceptionsCollector)
+    }
+    else null
   }
 
   private fun loadAdditionalContents(
