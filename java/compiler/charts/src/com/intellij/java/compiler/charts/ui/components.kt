@@ -228,7 +228,7 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
       fill(bracket)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(bracket.x, bracket.y, bracket.width, bracket.y))
+      draw(Line2D.Double(bracket.x, bracket.y, bracket.x + bracket.width, bracket.y))
     }
   }
 

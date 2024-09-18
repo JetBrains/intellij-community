@@ -130,7 +130,7 @@ class CompilationChartsDiagramsComponent(
     })
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
-      .scheduleWithFixedDelay({ smartDraw() }, 0, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      .scheduleWithFixedDelay({ if (hasNewData()) smartDraw() }, 0, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
   }
 
   internal fun cleanCache() {
@@ -199,7 +199,7 @@ class CompilationChartsDiagramsComponent(
 
     for (index in start..end) {
       charts.clips(Rectangle2D.Double((index * BUFFERED_IMAGE_WIDTH_PX).toDouble(), viewport.y.toDouble(),
-                                      BUFFERED_IMAGE_WIDTH_PX.toDouble(), this.height.toDouble()))
+                                      BUFFERED_IMAGE_WIDTH_PX.toDouble(), viewport.height.toDouble()))
 
       val area = Rectangle2D.Double((index * BUFFERED_IMAGE_WIDTH_PX).toDouble(), viewport.y.toDouble(),
                                     BUFFERED_IMAGE_WIDTH_PX.toDouble(), charts.height())
@@ -227,6 +227,13 @@ class CompilationChartsDiagramsComponent(
         }
       }
     }
+  }
+
+  private fun hasNewData(): Boolean {
+    if (!flush) return false
+    if (modules.data.isNotEmpty()) return true
+    if (stats[cpuMemory]!!.isNotEmpty()) return true
+    return false
   }
 
   private class IDESettings {
