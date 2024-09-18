@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
@@ -44,7 +45,7 @@ class CompilationChartsDiagramsComponent(
   private val charts: Charts
   private val images: MutableMap<Int, BufferedImage> = HashMap()
   private val imageRequestCount: MutableMap<Int, Int> = HashMap()
-  private var colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme()
+  private val ideSettings: IDESettings = IDESettings()
   private var flush: Boolean = true
 
 
@@ -135,18 +136,14 @@ class CompilationChartsDiagramsComponent(
   internal fun cleanCache() {
     images.clear()
     imageRequestCount.clear()
+    charts.settings.mouse.clear()
   }
 
   internal fun smartDraw(clean: Boolean = false, flush: Boolean = true) {
     if (this.flush) this.flush = flush
-    if (clean) {
+    if (clean || ideSettings.isChanged()) {
+      ideSettings.update()
       cleanCache()
-      charts.settings.mouse.clear()
-    }
-    val currentGlobalScheme = EditorColorsManager.getInstance().getGlobalScheme()
-    if (colorScheme != currentGlobalScheme) {
-      cleanCache()
-      colorScheme = currentGlobalScheme
     }
     viewport.revalidate()
     viewport.repaint()
@@ -230,5 +227,19 @@ class CompilationChartsDiagramsComponent(
         }
       }
     }
+  }
+
+  private class IDESettings {
+    private var scale: Float = scale()
+    private var color: EditorColorsScheme = color()
+
+    fun isChanged(): Boolean = scale != scale() || color != color()
+    fun update() {
+      scale = scale()
+      color = color()
+    }
+
+    private fun scale() = UISettings.getInstance().ideScale
+    private fun color() = EditorColorsManager.getInstance().globalScheme
   }
 }
