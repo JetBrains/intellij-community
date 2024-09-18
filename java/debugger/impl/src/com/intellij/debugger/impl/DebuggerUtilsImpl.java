@@ -356,7 +356,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
     @NotNull VirtualMachineProxy proxy) throws EvaluateException {
-    int retries = 10;
+    int retries = 1;
     while (true) {
       T result = valueComputable.compute();
       try {
