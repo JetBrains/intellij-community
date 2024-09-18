@@ -64,7 +64,6 @@ import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.debugger.MethodInvoker;
 import com.intellij.ui.awt.AnchoredPoint;
@@ -1545,24 +1544,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     invokerArgs.add(arrayArgs);
     invokerArgs.add(evaluationContext.getClassLoader()); // class laoder
     return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
-  }
-
-  private static List<ClassObjectReference> mapArgumentTypes(@NotNull Method method, @NotNull EvaluationContextImpl evaluationContext)
-    throws ClassNotLoadedException, EvaluateException {
-    List<ClassObjectReference> res = new ArrayList<>();
-    for (Type type : method.argumentTypes()) {
-      if (type instanceof PrimitiveType) {
-        String boxedName = PsiJavaParserFacadeImpl.getPrimitiveType(type.name()).getBoxedTypeName();
-        ReferenceType boxedClass =
-          evaluationContext.getDebugProcess().findClass(evaluationContext, boxedName, method.declaringType().classLoader());
-        Value primitiveClass = boxedClass.getValue(boxedClass.fieldByName("TYPE"));
-        res.add((ClassObjectReference)primitiveClass);
-      }
-      else {
-        res.add(((ReferenceType)type).classObject());
-      }
-    }
-    return res;
   }
 
   private static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
