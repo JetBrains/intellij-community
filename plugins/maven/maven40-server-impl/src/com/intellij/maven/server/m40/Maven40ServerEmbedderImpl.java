@@ -12,6 +12,7 @@ import org.apache.maven.*;
 import org.apache.maven.api.*;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
+import org.apache.maven.api.services.TypeRegistry;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -582,7 +583,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
 
     IdeaMavenSessionBuilderSupplier sessionBuilderSupplier =
-      new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request);
+      new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request, getComponent(TypeRegistry.class));
     try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionBuilderSupplier.get().build()) {
       MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
       InternalSession internalSession = factory.newSession(mavenSession);

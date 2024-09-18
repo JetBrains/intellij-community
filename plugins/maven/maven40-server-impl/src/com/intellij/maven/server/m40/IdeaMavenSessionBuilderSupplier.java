@@ -3,10 +3,16 @@ package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.utils.Maven40TransferListenerAdapter;
 import com.intellij.maven.server.m40.utils.Maven40WorkspaceMapReader;
+import org.apache.maven.api.PathType;
+import org.apache.maven.api.Type;
+import org.apache.maven.api.services.TypeRegistry;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.repository.internal.MavenSessionBuilderSupplier;
+import org.apache.maven.repository.internal.type.DefaultType;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.ArtifactType;
+import org.eclipse.aether.artifact.ArtifactTypeRegistry;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
@@ -25,6 +31,7 @@ public class IdeaMavenSessionBuilderSupplier extends MavenSessionBuilderSupplier
   private final MavenWorkspaceMap myWorkspaceMap;
   private final MavenServerConsoleIndicatorImpl myIndicator;
   private final Path myLocalRepoPath;
+  @NotNull private final TypeRegistry myTypeRegistry;
   private final Map<String, String> mySystemProperties = new HashMap<>();
   private final Map<String, String> myUserProperties = new HashMap<>();
   private final boolean myUpdateSnapshots;
@@ -32,11 +39,13 @@ public class IdeaMavenSessionBuilderSupplier extends MavenSessionBuilderSupplier
   public IdeaMavenSessionBuilderSupplier(RepositorySystem repositorySystem,
                                          MavenWorkspaceMap map,
                                          MavenServerConsoleIndicatorImpl indicator,
-                                         @NotNull MavenExecutionRequest request) {
+                                         @NotNull MavenExecutionRequest request,
+                                         @NotNull TypeRegistry typeRegistry) {
     super(repositorySystem);
     myWorkspaceMap = map;
     myIndicator = indicator;
     myLocalRepoPath = request.getLocalRepositoryPath().toPath();
+    myTypeRegistry = typeRegistry;
     putAll(request.getSystemProperties(), mySystemProperties);
     putAll(request.getUserProperties(), myUserProperties);
     myUpdateSnapshots = request.isUpdateSnapshots();
@@ -60,6 +69,32 @@ public class IdeaMavenSessionBuilderSupplier extends MavenSessionBuilderSupplier
     if (myUpdateSnapshots) {
       session.setArtifactUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
       session.setMetadataUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
+    }
+  }
+
+  @Override
+  protected ArtifactTypeRegistry getArtifactTypeRegistry() {
+    return new TypeRegistryWrapper();
+  }
+
+  private class TypeRegistryWrapper implements ArtifactTypeRegistry {
+
+    @Override
+    public ArtifactType get(String typeId) {
+      Type type = myTypeRegistry.require(typeId);
+      if (type instanceof ArtifactType) {
+        return (ArtifactType)type;
+      }
+      if (type != null) {
+        return new DefaultType(
+          type.id(),
+          type.getLanguage(),
+          type.getExtension(),
+          type.getClassifier(),
+          type.isIncludesDependencies(),
+          type.getPathTypes().toArray(new PathType[0]));
+      }
+      return null;
     }
   }
 }
