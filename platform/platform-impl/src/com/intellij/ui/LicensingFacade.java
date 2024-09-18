@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.Gson;
@@ -27,6 +27,9 @@ public final class LicensingFacade {
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
   public boolean ai_enabled;
+  public String subType;
+
+  @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnusedSignalled;
 
   /**

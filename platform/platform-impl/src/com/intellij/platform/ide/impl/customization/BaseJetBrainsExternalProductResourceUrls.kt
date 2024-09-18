@@ -64,8 +64,9 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
     get() = false
 
   override val updateMetadataUrl: Url
-    get() = System.getProperty("idea.updates.url")?.let { Urls.newFromEncoded(it) }
-            ?: UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
+    get() = System.getProperty("idea.updates.url", "https://www.jetbrains.com/updates/updates.xml")
+      .let { Urls.newFromEncoded(it) }
+      .let { UpdateRequestParameters.amendUpdateRequest(it) }
 
   final override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url =
     computeCustomPatchDownloadUrl(from, to)
