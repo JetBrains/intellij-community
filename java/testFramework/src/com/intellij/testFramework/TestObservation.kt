@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.ThreadDumper.dumpThreadsToString
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -41,14 +41,9 @@ object TestObservation {
       }
     }
     catch (_: TimeoutCancellationException) {
-      throwWaitingTimoutError(timeout)
-    }
-  }
-
-  private fun throwWaitingTimoutError(timeout: Duration): Nothing {
-    val coroutineDump = dumpCoroutines()
-    val threadDump = ThreadDumper.dumpThreadsToString()
-    throw AssertionError("""
+      val coroutineDump = dumpCoroutines()
+      val threadDump = dumpThreadsToString()
+      System.err.println("""
         |The waiting takes too long. Expected to take no more than $timeout ms.
         |------- Thread dump begin -------
         |$threadDump
@@ -57,6 +52,8 @@ object TestObservation {
         |$coroutineDump
         |------- Coroutine dump end ------
       """.trimMargin())
+      throw AssertionError("The waiting takes too long. Expected to take no more than $timeout ms.")
+    }
   }
 
   @Service(Service.Level.PROJECT)
