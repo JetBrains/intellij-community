@@ -1,12 +1,12 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version suffix="" major="2024" minor="1" eap="true"/>
+  <version suffix="" major="2024" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE" copyrightStart="2009"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffae00" progressY="396" progressHeight="4" />
   <about url="/idea_community_about.png" foreground="ffffff" copyrightForeground="ffffff" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
-  <icon ico="idea_CE.ico"/>
+  <icon ico="idea_CE.ico" svg="/mps.svg" svg-small="/mps_16.svg"/>
   <names product="MPS" fullname="JetBrains MPS" script="mps"/>
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>

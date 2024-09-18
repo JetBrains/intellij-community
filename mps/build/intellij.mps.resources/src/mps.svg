@@ -1,0 +1,30 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="90" height="90" viewBox="0 0 90 90">
+  <defs>
+    <linearGradient id="linear-gradient" x1="65.55967" y1="111.3348" x2="-10.56798" y2="13.82298" gradientUnits="userSpaceOnUse">
+      <stop offset="0.0914" stop-color="#0b8fff"/>
+      <stop offset="0.2077" stop-color="#0d94f6"/>
+      <stop offset="0.39603" stop-color="#11a3de"/>
+      <stop offset="0.63282" stop-color="#18bbb7"/>
+      <stop offset="0.87097" stop-color="#21d789"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient-2" x1="107.06027" y1="78.9352" x2="30.93262" y2="-18.57662" xlink:href="#linear-gradient"/>
+    <linearGradient id="linear-gradient-3" x1="49.90661" y1="65.29524" x2="77.17031" y2="-8.02199" gradientUnits="userSpaceOnUse">
+      <stop offset="0.12297" stop-color="#21d789"/>
+      <stop offset="0.13191" stop-color="#27d788"/>
+      <stop offset="0.21553" stop-color="#59d87b"/>
+      <stop offset="0.30328" stop-color="#85d970"/>
+      <stop offset="0.39353" stop-color="#abda67"/>
+      <stop offset="0.487" stop-color="#cadb5f"/>
+      <stop offset="0.58469" stop-color="#e1db59"/>
+      <stop offset="0.68842" stop-color="#f2dc55"/>
+      <stop offset="0.80231" stop-color="#fcdc53"/>
+      <stop offset="0.94595" stop-color="#ffdc52"/>
+    </linearGradient>
+  </defs>
+  <title>MPS2</title>
+  <g>
+    <polygon points="5 85 85 85 44.822 44.892 5 5 5 85" fill="url(#linear-gradient)"/>
+    <polygon id="_Path_" data-name="&lt;Path&gt;" points="85 85 44.822 44.892 85 5 85 85" fill="url(#linear-gradient-2)"/>
+    <polygon id="_Path_2" data-name="&lt;Path&gt;" points="63.153 63.153 44.822 44.892 85 5 63.153 63.153" fill="url(#linear-gradient-3)"/>
+  </g>
+</svg>

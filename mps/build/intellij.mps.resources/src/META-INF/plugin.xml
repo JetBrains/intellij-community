@@ -1,0 +1,7 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" >
+  <id>intellij.mps.resources</id>
+  <name>MPS Application descriptor</name>
+  <module value="com.intellij.modules.java-capable"/>
+  <xi:include href="/META-INF/common-ide-modules.xml"/>
+  <xi:include href="/META-INF/PlatformLangXmlPlugin.xml"/>
+</idea-plugin>
