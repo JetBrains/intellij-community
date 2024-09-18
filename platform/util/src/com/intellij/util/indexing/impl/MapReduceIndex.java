@@ -150,9 +150,9 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       //         its current implementation persists all the changes in those containers, AND
       //         invalidates the cache entirely, i.e. remove all the cached content. So flush()
       //         strongly tops .clearCaches() in its effect on occupied heap space.
-      ConcurrencyUtil.withLock(myLock.readLock(), () -> {
-        myStorage.clearCaches();
-      });
+      ConcurrencyUtil.withLock(myLock.readLock(),
+                               () -> myStorage.clearCaches()
+      );
 
       flush();
     }
@@ -313,7 +313,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       inputId,
       indexId(),
 
-      (changedEntriesProcessor) -> {
+      changedEntriesProcessor -> {
         try {
           InputDataDiffBuilder<Key, Value> diffBuilder = getKeysDiffBuilder(inputId);
           Map<Key, Value> newData = inputData.getKeyValues();

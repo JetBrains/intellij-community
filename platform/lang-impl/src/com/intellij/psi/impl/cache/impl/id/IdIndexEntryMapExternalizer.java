@@ -57,6 +57,8 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
       return true;
     });
 
+    //MAYBE RC: use IntArrayList() instead of IntOpenHashSet() -- we sort the resulting set anyway, so we could
+    //          very well skip duplicates after the sort, in O(N)
     for (int scopeMask : scopeMaskToHashes.keySet()) {
       out.writeByte(scopeMask & UsageSearchContext.ANY);
 

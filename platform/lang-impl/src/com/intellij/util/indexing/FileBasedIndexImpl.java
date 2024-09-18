@@ -101,7 +101,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1692,9 +1691,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   boolean runUpdateForPersistentData(StorageUpdate storageUpdate) {
-    return myStorageBufferingHandler.runUpdate(false, () -> {
-      return ProgressManager.getInstance().computeInNonCancelableSection(() -> storageUpdate.update());
-    });
+    return myStorageBufferingHandler.runUpdate(
+      /*transientInMemoryIndices: */ false,
+      () -> ProgressManager.getInstance().computeInNonCancelableSection(() -> storageUpdate.update())
+    );
   }
 
   public static void markFileIndexed(@Nullable VirtualFile file,
