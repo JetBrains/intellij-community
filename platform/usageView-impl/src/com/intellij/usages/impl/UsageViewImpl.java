@@ -77,6 +77,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,6 +122,7 @@ public class UsageViewImpl implements UsageViewEx {
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
   private @Nullable GroupNode myAutoSelectedGroupNode;
+  private final AtomicReference<@NotNull Set<UsageInfo>> myNonDisposableUsageInfos = new AtomicReference<>(Collections.emptySet());
 
   public static final Comparator<Usage> USAGE_COMPARATOR_BY_FILE_AND_OFFSET = (o1, o2) -> {
     if (o1 == o2) return 0;
@@ -1624,12 +1626,33 @@ public class UsageViewImpl implements UsageViewEx {
     disposeSmartPointers();
   }
 
+  /**
+   * Prevents the specified usage infos from being disposed on view dispose
+   * <p>
+   *   Used by Show Usages, as navigation to the selected usage happens after the popup is disposed.
+   *   Not disposing usage infos is leak-safe, as disposing only involves getting rid of smart pointers,
+   *   which is not mandatory.
+   *   Still, when we have hundreds or thousands of usages, it's beneficial to dispose not needed ones,
+   *   which means not selected ones, which in most cases is all of them but one.
+   *   Therefore, this method is called to specify the selected usages (usually one), which then may
+   *   (but not have to) be used to navigate to the usage(s).
+   * </p>
+   * @param usageInfos the set of usage infos which won't be disposed with the vew
+   */
+  @ApiStatus.Internal
+  public void setNonDisposableUsageInfos(@NotNull Set<UsageInfo> usageInfos) {
+    myNonDisposableUsageInfos.set(usageInfos);
+  }
+
   private void disposeSmartPointers() {
+    var nonDisposableUsageInfos = myNonDisposableUsageInfos.get();
     List<SmartPsiElementPointer<?>> smartPointers = new ArrayList<>();
     for (Usage usage : myUsageNodes.keySet()) {
       if (usage instanceof UsageInfo2UsageAdapter) {
-        SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
-        smartPointers.add(pointer);
+        var usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+        if (!nonDisposableUsageInfos.contains(usageInfo)) {
+          smartPointers.add(usageInfo.getSmartPointer());
+        }
       }
     }
 
