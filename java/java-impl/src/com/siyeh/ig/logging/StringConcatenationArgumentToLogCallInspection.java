@@ -142,6 +142,20 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
       if (qualifierExpression != null) {
         boolean isFormatted = true;
+        if (qualifierExpression instanceof PsiMethodCallExpression callExpression) {
+          PsiMethod method = callExpression.resolveMethod();
+          if (method != null &&
+              method.getContainingFile() == qualifierExpression.getContainingFile() &&
+              (method.hasModifierProperty(PsiModifier.PRIVATE) ||
+               method.hasModifierProperty(PsiModifier.STATIC))) {
+            PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
+            if (statements.length == 1) {
+              PsiReturnStatement statement = statements[0];
+              qualifierExpression = statement.getReturnValue();
+            }
+          }
+        }
+
         if (qualifierExpression instanceof PsiReferenceExpression referenceExpression &&
             referenceExpression.resolve() instanceof PsiVariable loggerVariable) {
           if (!loggerVariable.isPhysical() ||

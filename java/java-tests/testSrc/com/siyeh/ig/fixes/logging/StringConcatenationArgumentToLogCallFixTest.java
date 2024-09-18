@@ -40,10 +40,10 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testUseOfConstant() { doTest(); }
   public void testCharLiteral() { doTest(); }
   public void testQuoteCharLiteral() { doTest(); }
-  public void testLog4JLogBuilder() { doTest(); }
   public void testLog4jFormatted() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix"));
   }
+  public void testLog4JLogBuilder() { doTest(); }
   public void testTextBlocks() {
     doTest(
     InspectionsBundle.message("fix.all.inspection.problems.in.file",
@@ -54,6 +54,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testMessageFormatMissingParameter() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
   public void testMessageFormatMoreArguments() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
   public void testMessageFormatFormatter() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
+  public void testSimpleConcatenationInsideMethod() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix")); }
 
   public void testSimpleStringFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testStringFormatWithWidth() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
