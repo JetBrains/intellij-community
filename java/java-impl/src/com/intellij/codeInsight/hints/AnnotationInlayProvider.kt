@@ -48,7 +48,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
           if (settings.showExternal) {
-            annotations += ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element).orEmpty()
+            annotations += ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element)
           }
           if (settings.showInferred) {
             annotations += InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)

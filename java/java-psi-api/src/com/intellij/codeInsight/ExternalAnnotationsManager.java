@@ -90,7 +90,7 @@ public abstract class ExternalAnnotationsManager {
   // Method used in Kotlin plugin
   public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
-  public abstract PsiAnnotation @Nullable [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
+  public abstract @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
 
   /**
    * Returns external annotations associated with default

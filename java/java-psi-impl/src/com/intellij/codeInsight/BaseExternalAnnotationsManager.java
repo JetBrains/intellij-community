@@ -21,6 +21,7 @@ import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.text.CharSequenceReader;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
@@ -146,10 +147,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
-  public PsiAnnotation @Nullable [] findExternalAnnotations(final @NotNull PsiModifierListOwner listOwner) {
+  public @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(final @NotNull PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
-    return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY,
-                                                             data -> data.getAnnotation(this));
+    return result.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : StreamEx.of(result)
+      .map(data -> data.getAnnotation(this))
+      .toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<>(1);

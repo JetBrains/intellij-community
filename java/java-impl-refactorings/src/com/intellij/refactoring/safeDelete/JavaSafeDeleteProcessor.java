@@ -1084,12 +1084,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (!referencedElement.isValid()) return;
       ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(referencedElement.getProject());
       PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations((PsiModifierListOwner)referencedElement);
-      if (externalAnnotations != null) {
-        for (PsiAnnotation annotation : externalAnnotations) {
-          String qualifiedName = annotation.getQualifiedName();
-          if (qualifiedName == null) continue;
-          annotationsManager.deannotate((PsiModifierListOwner)referencedElement, qualifiedName);
-        }
+      for (PsiAnnotation annotation : externalAnnotations) {
+        String qualifiedName = annotation.getQualifiedName();
+        if (qualifiedName == null) continue;
+        annotationsManager.deannotate((PsiModifierListOwner)referencedElement, qualifiedName);
       }
     }
   }
