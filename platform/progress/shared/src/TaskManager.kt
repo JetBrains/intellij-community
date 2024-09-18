@@ -61,18 +61,22 @@ object TaskManager {
   private suspend fun TaskInfoEntity.setTaskStatus(newStatus: TaskStatus) {
     // If a task is shared, it should be updated in shared scope, otherwise it should be update in local
     change {
-      if (!canChangeStatus(from = taskStatus, to = newStatus)) {
-        LOG.info("Task status cannot be changed from ${taskStatus} to $newStatus")
-        return@change
-      }
-
       if (isShared) {
-        shared { taskStatus = newStatus }
+        shared { trySetTaskStatus(newStatus) }
       }
       else {
-        taskStatus = newStatus
+        trySetTaskStatus(newStatus)
       }
     }
+  }
+
+  private fun TaskInfoEntity.trySetTaskStatus(newStatus: TaskStatus) {
+    if (!canChangeStatus(from = taskStatus, to = newStatus)) {
+      LOG.info("Task status cannot be changed from ${taskStatus} to $newStatus")
+      return
+    }
+
+    taskStatus = newStatus
   }
 
   private fun canChangeStatus(from: TaskStatus, to: TaskStatus): Boolean {
