@@ -126,7 +126,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
     UIUtil.dispatchAllInvocationEvents();
     IndexingTestUtil.waitUntilIndexesAreReady(myCreatedProject);
-    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), myCreatedProject, LOG::debug);
+    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), myCreatedProject);
 
     return myCreatedProject;
   }
@@ -140,7 +140,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
     UIUtil.dispatchAllInvocationEvents();
     IndexingTestUtil.waitUntilIndexesAreReady(project);
-    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), project, LOG::debug);
+    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), project);
 
     return createdModule;
   }

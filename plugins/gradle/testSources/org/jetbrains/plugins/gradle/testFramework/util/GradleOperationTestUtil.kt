@@ -10,7 +10,6 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 import com.intellij.openapi.observable.operation.OperationExecutionContext
@@ -39,7 +38,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 private val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
-private val LOG = Logger.getInstance(TestGradleProjectConfigurationActivityKey::class.java)
 
 private object TestGradleProjectConfigurationActivityKey: ActivityKey {
   override val presentableName: @Nls String
@@ -48,12 +46,12 @@ private object TestGradleProjectConfigurationActivityKey: ActivityKey {
 
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
   return openProject()
-    .withProjectAsync { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, LOG::debug) }
+    .withProjectAsync { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it) }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
   return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, LOG::debug) }
+    .also { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project) }
 }
 
 fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>): R {

@@ -13,31 +13,31 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.concurrency.asPromise
-import java.util.function.Consumer
+import java.util.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 object TestObservation {
 
   @JvmStatic
-  @JvmOverloads
-  fun waitForConfiguration(timeout: Long, project: Project, messageCallback: Consumer<String>? = null) {
-    waitForConfiguration(timeout.milliseconds, project, messageCallback?.let { it::accept })
+  fun waitForConfiguration(timeout: Long, project: Project) {
+    waitForConfiguration(timeout.milliseconds, project)
   }
 
-  fun waitForConfiguration(timeout: Duration, project: Project, messageCallback: ((String) -> Unit)? = null) {
+  fun waitForConfiguration(timeout: Duration, project: Project) {
     val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     val job = coroutineScope.launch {
-      awaitConfiguration(timeout, project, messageCallback)
+      awaitConfiguration(timeout, project)
     }
     val promise = job.asPromise()
     promise.waitForPromiseAndPumpEdt(Duration.INFINITE)
   }
 
-  suspend fun awaitConfiguration(timeout: Duration, project: Project, messageCallback: ((String) -> Unit)? = null) {
+  suspend fun awaitConfiguration(timeout: Duration, project: Project) {
+    val operationLog = StringJoiner("\n")
     try {
       withTimeout(timeout) {
-        Observation.awaitConfiguration(project, messageCallback)
+        Observation.awaitConfiguration(project, operationLog::add)
       }
     }
     catch (_: TimeoutCancellationException) {
@@ -45,6 +45,9 @@ object TestObservation {
       val threadDump = dumpThreadsToString()
       System.err.println("""
         |The waiting takes too long. Expected to take no more than $timeout ms.
+        |------ Operation log begin ------
+        |$operationLog
+        |------- Operation log end -------
         |------- Thread dump begin -------
         |$threadDump
         |-------- Thread dump end --------
