@@ -176,7 +176,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       return TaintValue.UNKNOWN
     }
     val annotationsManager = ExternalAnnotationsManager.getInstance(owner.project)
-    val annotations = annotationsManager.findExternalAnnotations(owner) ?: return TaintValue.UNKNOWN
+    val annotations = annotationsManager.findExternalAnnotations(owner)
     return annotations.asSequence()
              .map { fromAnnotation(it) }
              .filterNotNull()
