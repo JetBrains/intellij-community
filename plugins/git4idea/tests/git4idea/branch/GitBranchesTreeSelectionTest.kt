@@ -1,19 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
-import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.openapi.project.Project
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.ui.FilteringSpeedSearch
-import com.intellij.ui.tree.TreeTestUtil
-import com.intellij.ui.treeStructure.Tree
-import git4idea.GitLocalBranch
-import git4idea.GitStandardRemoteBranch
-import git4idea.repo.GitRemote
-import git4idea.ui.branch.dashboard.*
-import junit.framework.TestCase.assertEquals
-
-class GitBranchesTreeSelectionTest: LightPlatformTestCase() {
+class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
   fun `test another branch is not selected if current matches search field`() = branchesTreeTest {
     setState(localBranches = listOf("main-123", "main"), remoteBranches = listOf("main"))
     selectBranch("main-123")
@@ -145,57 +133,19 @@ class GitBranchesTreeSelectionTest: LightPlatformTestCase() {
     """.trimMargin())
   }
 
-  private fun branchesTreeTest(groupByDirectories: Boolean = true, test: TestContext.() -> Unit) = with(TestContext(groupByDirectories, project)) { test() }
-}
+  fun `test no selection when no match`() = branchesTreeTest(groupByDirectories = false) {
+    setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
-private class TestContext(groupByDirectories: Boolean, project: Project) {
-  val tree = Tree()
-  val branchesTree = GitBranchesTestTree(tree, groupByDirectories = groupByDirectories, project = project)
-  val searchTextField = branchesTree.installSearchField()
+    searchTextField.text = "not-main"
+    assertTrue(branchesTree.isEmptyModel())
+    assertTree("""
+     |-ROOT
+     | HEAD
+     | LOCAL
+     | REMOTE
+    """.trimMargin())
 
-  fun assertTree(expected: String) {
-    assertEquals("Search field - ${searchTextField.text}", expected.trim(), TreeTestUtil(tree).setSelection(true).toString().trim())
-  }
-
-  fun setState(localBranches: Collection<String>, remoteBranches: Collection<String>) {
-    val local = localBranches.map {
-      BranchInfo(GitLocalBranch(it), isCurrent = false, isFavorite = false, repositories = emptyList())
-    }
-    val remote = remoteBranches.map {
-      BranchInfo(GitStandardRemoteBranch(ORIGIN, it), isCurrent = false, isFavorite = false, repositories = emptyList())
-    }
-    branchesTree.refreshNodeDescriptorsModel(localBranches = local, remoteBranches = remote, showOnlyMy = false)
-    branchesTree.searchModel.updateStructure()
-  }
-
-  fun selectBranch(branch: String) {
-    val speedSearch = branchesTree.speedSearch
-    speedSearch.iterate(null, true).forEach { node ->
-      if (branchesTree.getText(node.getNodeDescriptor()) == branch) {
-        speedSearch.select(node)
-        return
-      }
-    }
-    throw AssertionError("Node with text $branch not found")
-  }
-
-  companion object {
-    private val ORIGIN_URLS = listOf("ssh://origin")
-    private val ORIGIN = GitRemote(GitRemote.ORIGIN, ORIGIN_URLS, ORIGIN_URLS, listOf(), listOf())
-  }
-}
-
-internal class GitBranchesTestTree(
-  tree: Tree,
-  groupByDirectories: Boolean,
-  project: Project,
-): FilteringBranchesTreeBase(tree, project = project) {
-  @Suppress("UNCHECKED_CAST")
-  val speedSearch: FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
-    get() = searchModel.speedSearch as FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>
-
-  override val groupingConfig: Map<GroupingKey, Boolean> = buildMap {
-    this[GroupingKey.GROUPING_BY_REPOSITORY] = false
-    this[GroupingKey.GROUPING_BY_DIRECTORY] = groupByDirectories
+    searchTextField.text = ""
+    assertFalse(branchesTree.isEmptyModel())
   }
 }
