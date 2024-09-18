@@ -33,7 +33,7 @@ class MPSProperties : JetBrainsProductProperties() {
         embeddedJetBrainsClientMainModule = null
 
         productLayout.productImplementationModules = listOf(
-            "intellij.platform.main",
+            "intellij.platform.starter",
             "intellij.idea.community.customization",
             "intellij.java.ide.resources",
             "intellij.xml.dom",
