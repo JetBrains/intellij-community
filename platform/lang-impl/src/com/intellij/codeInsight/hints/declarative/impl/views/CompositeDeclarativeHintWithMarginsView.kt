@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl.views
 
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintViewWithMargins
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
@@ -9,13 +10,18 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.LightweightHint
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
+import java.util.Collections
 
-internal abstract class DeclarativeHintMarginWrapperView(private val ignoreInitialMargin: Boolean) : DeclarativeHintView {
-  protected abstract fun getSubView(index: Int): InlayPresentationList
+@ApiStatus.Internal
+abstract class CompositeDeclarativeHintWithMarginsView<Model, SubView>(private val ignoreInitialMargin: Boolean)
+  : DeclarativeHintView<Model>
+  where SubView : DeclarativeHintViewWithMargins {
+  protected abstract fun getSubView(index: Int): SubView
 
   protected abstract val subViewCount: Int
 
@@ -68,11 +74,11 @@ internal abstract class DeclarativeHintMarginWrapperView(private val ignoreIniti
   private inline fun forSubViewAtPoint(
     pointInsideInlay: Point,
     fontMetricsStorage: InlayTextMetricsStorage,
-    action: (InlayPresentationList, Point) -> Unit,
+    action: (SubView, Point) -> Unit,
   ) {
     val x = pointInsideInlay.x.toInt()
     forEachSubViewBounds(fontMetricsStorage) { subView, leftBound, rightBound ->
-      if (x in leftBound..rightBound) {
+      if (x in leftBound..<rightBound) {
         action(subView, Point(x - leftBound, pointInsideInlay.y))
         return
       }
@@ -81,7 +87,7 @@ internal abstract class DeclarativeHintMarginWrapperView(private val ignoreIniti
 
   private inline fun forEachSubViewBounds(
     fontMetricsStorage: InlayTextMetricsStorage,
-    action: (InlayPresentationList, Int, Int) -> Unit,
+    action: (SubView, Int, Int) -> Unit,
   ) {
     val sortedBounds = getSubViewMetrics(fontMetricsStorage).sortedBounds
     for (index in 0..<subViewCount) {
@@ -118,21 +124,81 @@ internal abstract class DeclarativeHintMarginWrapperView(private val ignoreIniti
     return SubViewMetrics(sortedBounds, sortedBounds.last() + previousMargin)
   }
 
-  private fun invalidateComputedSubViewMetrics() {
+  internal fun invalidateComputedSubViewMetrics() {
     computedSubViewMetrics = null
-  }
-
-  protected fun createPresentationList(inlayData: InlayData): InlayPresentationList {
-    return InlayPresentationList(inlayData, this::invalidateComputedSubViewMetrics)
   }
 }
 
-internal class SubViewMetrics(val sortedBounds: IntArray, val fullWidth: Int)
+private fun CompositeDeclarativeHintWithMarginsView<*, *>.createPresentationList(inlayData: InlayData): InlayPresentationList {
+  return InlayPresentationList(inlayData, this::invalidateComputedSubViewMetrics)
+}
 
-internal class SingleDeclarativeHintView(inlayData: InlayData) : DeclarativeHintMarginWrapperView(false) {
+@ApiStatus.Internal
+class SubViewMetrics(val sortedBounds: IntArray, val fullWidth: Int)
+
+internal class SingleDeclarativeHintView(inlayData: InlayData)
+  : CompositeDeclarativeHintWithMarginsView<InlayData, InlayPresentationList>(false) {
   val presentationList = createPresentationList(inlayData)
 
   override val subViewCount: Int get() = 1
   override fun getSubView(index: Int): InlayPresentationList = presentationList
   override fun updateModel(newModel: InlayData) = presentationList.updateModel(newModel)
+}
+
+internal class MultipleDeclarativeHintsView(inlayData: List<InlayData>)
+  : CompositeDeclarativeHintWithMarginsView<List<InlayData>, InlayPresentationList>(true) {
+  var presentationLists: List<InlayPresentationList> =
+    if (inlayData.size == 1) {
+      Collections.singletonList(createPresentationList(inlayData[0]))
+    }
+    else {
+      inlayData.map { createPresentationList(it) }
+    }
+    private set
+
+  override val subViewCount: Int get() = presentationLists.size
+  override fun getSubView(index: Int): InlayPresentationList = presentationLists[index]
+  override fun updateModel(newModel: List<InlayData>) {
+    /*
+    We have no reliable way to tell if the new hints are the same hints as the ones being updated or not.
+    It is a trade-off between correctness and efficiency.
+    Being incorrect means user CollapseState information is not preserved between DeclarativeInlayHintPasses.
+    (See InlayPresentationList#toggleTreeState)
+    */
+
+    if (newModel.size == presentationLists.size) {
+      // Assume same hints
+      presentationLists.forEachIndexed { index, presentationList -> presentationList.updateModel(newModel[index]) }
+      return
+    }
+    // Different set of hints from the same provider -- try distinguishing hints using their priorities (assuming those are stable).
+    var oldIndex = 0
+    var newIndex = 0
+    val newPresentationLists = ArrayList<InlayPresentationList>(newModel.size)
+    while (oldIndex < presentationLists.size && newIndex < newModel.size) {
+      val oldPrio = presentationLists[oldIndex].model.position.priority
+      val newPrio = newModel[newIndex].position.priority
+      when {
+        oldPrio == newPrio -> {
+          newPresentationLists.add(presentationLists[oldIndex].also { it.updateModel(newModel[newIndex]) })
+          oldIndex++
+          newIndex++
+        }
+        oldPrio < newPrio -> {
+          // assume it's more likely a hint was removed rather than some priority would change
+          oldIndex++
+        }
+        else /* oldPrio > newPrio */ -> {
+          // assume it's more likely a hint was added
+          newPresentationLists.add(createPresentationList(newModel[newIndex]))
+          newIndex++
+        }
+      }
+    }
+    while (newIndex < newModel.size) {
+      newPresentationLists.add(createPresentationList(newModel[newIndex]))
+      newIndex++
+    }
+    presentationLists = newPresentationLists
+  }
 }

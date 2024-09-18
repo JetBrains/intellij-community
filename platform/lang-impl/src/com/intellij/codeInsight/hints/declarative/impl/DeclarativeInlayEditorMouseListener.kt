@@ -20,7 +20,7 @@ class DeclarativeInlayEditorMouseListener : EditorMouseListener {
     if (e.area != EditorMouseEventArea.EDITING_AREA) return
     val inlay = e.inlay ?: return
     val renderer = inlay.renderer
-    if (renderer !is DeclarativeInlayRendererBase) return
+    if (renderer !is DeclarativeInlayRendererBase<*>) return
     val bounds = inlay.bounds ?: return
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)

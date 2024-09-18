@@ -184,12 +184,11 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
     val editor = myFixture.editor
-    val event = MouseEvent(editor.getContentComponent(), 0, 0, 0, 0, 0, 0, false, 0)
     var occurence = 0
     for (beforeClickEntry in beforeClickEntries) {
       if ((beforeClickEntry as TextInlayPresentationEntry).text == clickPlace) {
         if (occurence == occurenceIndex) {
-          beforeClickEntry.handleClick(EditorMouseEvent(editor, event, editor.getMouseEventArea(event)), presentationList, true)
+          beforeClickEntry.simulateClick(editor, presentationList)
           break
         }
         occurence++

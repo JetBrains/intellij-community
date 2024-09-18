@@ -26,15 +26,16 @@ import java.awt.geom.Rectangle2D
  * More correct approach would be to calculate and update it in [com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass],
  * however, that creates a noticeable delay between when, e.g., user increases the indent of the line and the time the indent of the hint
  * updates.
- * - [Inlay.getOffset] will not return the correct value during inlay construction, 
+ * - [Inlay.getOffset] will not return the correct value during inlay construction,
  * which is when `calcWidthInPixels` will be called for the first time. `initialIndentAnchorOffset` is used as a work-around.
  */
-internal class IndentedDeclarativeHintView<View: DeclarativeHintView>(val view: View, private val initialIndentAnchorOffset: Int)
-  : DeclarativeHintView {
+internal class IndentedDeclarativeHintView<View, Model>(val view: View, private val initialIndentAnchorOffset: Int)
+  : DeclarativeHintView<Model>
+  where View : DeclarativeHintView<Model> {
 
-  internal lateinit var inlay: Inlay<*>
+  lateinit var inlay: Inlay<*>
 
-  override fun updateModel(newModel: InlayData) {
+  override fun updateModel(newModel: Model) {
     view.updateModel(newModel)
   }
 

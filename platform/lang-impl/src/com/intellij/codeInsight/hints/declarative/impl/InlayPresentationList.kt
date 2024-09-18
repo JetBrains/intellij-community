@@ -32,6 +32,12 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.geom.Rectangle2D
 
+@ApiStatus.Internal
+interface DeclarativeHintViewWithMargins: DeclarativeHintView<InlayData> {
+  val margin: Int
+  fun getBoxWidth(storage: InlayTextMetricsStorage): Int
+}
+
 /**
  * @see PresentationTreeBuilderImpl
  */
@@ -39,7 +45,7 @@ import java.awt.geom.Rectangle2D
 class InlayPresentationList(
   @ApiStatus.Internal var model: InlayData,
   private val onStateUpdated: () -> Unit
-) : DeclarativeHintView {
+) : DeclarativeHintViewWithMargins {
   private var entries: Array<InlayPresentationEntry> = model.tree.buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
   private var size: Float = Float.MAX_VALUE
@@ -115,12 +121,12 @@ class InlayPresentationList(
   }
 
   private val marginAndPadding: Pair<Int, Int> get() = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!
-  internal val margin: Int get() = marginAndPadding.first
+  @get:ApiStatus.Internal
+  override val margin: Int get() = marginAndPadding.first
   private val padding: Int get() = marginAndPadding.second
   private fun getTextWidth(storage: InlayTextMetricsStorage): Int = getPartialWidthSums(storage).lastOrNull() ?: 0
-
-  // content and padding
-  internal fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
+  @ApiStatus.Internal
+  override fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
     return 2 * padding + getTextWidth(storage)
   }
 

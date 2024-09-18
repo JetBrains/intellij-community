@@ -96,9 +96,9 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
 
   private fun isControlDown(e: InputEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
-  private fun getRenderer(inlay: Inlay<*>): DeclarativeInlayRendererBase? {
+  private fun getRenderer(inlay: Inlay<*>): DeclarativeInlayRendererBase<*>? {
     val renderer = inlay.renderer
-    if (renderer !is DeclarativeInlayRendererBase) return null
+    if (renderer !is DeclarativeInlayRendererBase<*>) return null
     return renderer
   }
 
@@ -108,7 +108,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     return e.inlay
   }
 
-  private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRendererBase, event: MouseEvent): InlayMouseArea? {
+  private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRendererBase<*>, event: MouseEvent): InlayMouseArea? {
     val bounds = inlay.bounds ?: return null
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)

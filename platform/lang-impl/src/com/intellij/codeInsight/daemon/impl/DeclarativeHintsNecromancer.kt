@@ -55,10 +55,10 @@ private class DeclarativeHintsNecromancer(
         recipe.editor.getDocument().textLength,
         DeclarativeIndentedBlockInlayRenderer::class.java,
       )
-      val inlayDataList = ArrayList<InlayData>(inlineHints.size + eolHints.size + blockHints.size)
-      inlineHints.mapTo(inlayDataList) { it.renderer.toInlayData() }
-      eolHints.mapTo(inlayDataList) { it.renderer.toInlayData() }
-      blockHints.mapTo(inlayDataList) { it.renderer.toInlayData() }
+      val inlayDataList = ArrayList<InlayData>()
+      inlineHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
+      eolHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
+      blockHints.flatMapTo(inlayDataList) { it.renderer.toInlayData() }
       return DeclarativeHintsZombie(inlayDataList)
     } else {
       return null

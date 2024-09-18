@@ -23,24 +23,23 @@ import java.awt.Point
 import java.awt.geom.Rectangle2D
 
 @ApiStatus.Internal
-abstract class DeclarativeInlayRendererBase(
+abstract class DeclarativeInlayRendererBase<Model>(
   val providerId: String,
   val sourceId: String,
   val fontMetricsStorage: InlayTextMetricsStorage,
 ) : EditorCustomElementRenderer {
-  lateinit var inlay: Inlay<out DeclarativeInlayRendererBase> private set
+  lateinit var inlay: Inlay<out DeclarativeInlayRendererBase<Model>> private set
 
-  open fun initInlay(inlay: Inlay<out DeclarativeInlayRendererBase>) {
+  open fun initInlay(inlay: Inlay<out DeclarativeInlayRendererBase<Model>>) {
     this.inlay = inlay
   }
 
-  internal abstract val view: DeclarativeHintView
+  internal abstract val view: DeclarativeHintView<Model>
 
-  @get:TestOnly
-  abstract val presentationList: InlayPresentationList
+  abstract val presentationLists: List<InlayPresentationList>
 
   @RequiresEdt
-  internal fun updateModel(newModel: InlayData) {
+  internal fun updateModel(newModel: Model) {
     view.updateModel(newModel)
   }
 
@@ -56,7 +55,8 @@ abstract class DeclarativeInlayRendererBase(
     view.handleLeftClick(e, pointInsideInlay, fontMetricsStorage, controlDown)
   }
 
-  internal fun handleHover(e: EditorMouseEvent, pointInsideInlay: Point): LightweightHint? {
+  @ApiStatus.Internal
+  fun handleHover(e: EditorMouseEvent, pointInsideInlay: Point): LightweightHint? {
     return view.handleHover(e, pointInsideInlay, fontMetricsStorage)
   }
 
@@ -73,10 +73,9 @@ abstract class DeclarativeInlayRendererBase(
     return "DummyActionGroup"
   }
 
-  internal fun toInlayData(): InlayData {
+  internal fun toInlayData(): List<InlayData> {
     val inlay = this.inlay // will be initialized here because this method is called only on the renderer got from the inlay instance
-    @Suppress("TestOnlyProblems")
-    return presentationList.model.copyAndUpdatePosition(inlay)
+    return presentationLists.map { it.model.copyAndUpdatePosition(inlay) }
   }
 }
 

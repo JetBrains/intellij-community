@@ -13,10 +13,12 @@ class DeclarativeInlayRenderer(
   fontMetricsStorage: InlayTextMetricsStorage,
   providerId: String,
   sourceId: String,
-) : DeclarativeInlayRendererBase(providerId, sourceId, fontMetricsStorage) {
+) : DeclarativeInlayRendererBase<InlayData>(providerId, sourceId, fontMetricsStorage) {
 
   override val view = SingleDeclarativeHintView(inlayData)
+  @get:TestOnly
+  override val presentationLists get() = listOf(presentationList)
 
   @get:TestOnly
-  override val presentationList: InlayPresentationList get() = view.presentationList
+  val presentationList: InlayPresentationList get() = view.presentationList
 }
