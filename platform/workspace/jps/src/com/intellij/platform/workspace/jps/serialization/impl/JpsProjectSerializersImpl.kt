@@ -27,6 +27,7 @@ import kotlinx.coroutines.coroutineScope
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.nio.file.Files
@@ -292,6 +293,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     when (newEntities.exception) {
       is JDOMException -> reportError(newEntities.exception, serializer.fileUrl)
       is IOException -> reportError(newEntities.exception, serializer.fileUrl)
+      is CannotLoadJpsModelException -> reportError(newEntities.exception, serializer.fileUrl)
       else -> newEntities.exception?.let { throw it }
     }
   }
