@@ -30,20 +30,15 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.LocalProjectEntity
-import com.intellij.platform.project.ProjectEntity
-import com.intellij.platform.project.asEntity
-import com.intellij.platform.project.asProjectOrNull
+import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
-import com.jetbrains.rhizomedb.entities
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
-import fleet.kernel.rete.first
-import fleet.kernel.rete.queryNotNull
+import fleet.kernel.rete.filter
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -52,10 +47,12 @@ import java.awt.*
 import java.io.Closeable
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
-import kotlin.collections.singleOrNull
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+
+internal val isRhizomeProgressEnabled
+  get() = Registry.`is`("rhizome.progress")
 
 @Internal
 class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
@@ -69,58 +66,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   private val _progressStarted: MutableSharedFlow<ProgressStartedEvent> = MutableSharedFlow()
 
   val progressStarted: SharedFlow<ProgressStartedEvent> = _progressStarted.asSharedFlow()
-
-  private val isRhizomeProgressEnabled
-    get() = Registry.`is`("rhizome.progress")
-
-  init {
-    cs.launch {
-      withKernel {
-        collectActiveTasks()
-      }
-    }
-  }
-
-  private suspend fun collectActiveTasks() {
-    activeTasks.collect { task ->
-      if (!isRhizomeProgressEnabled) return@collect
-
-      cs.launch {
-        withKernel {
-          tryWithEntities(task) {
-            val project = task.projectEntity?.waitForProject()
-                          ?: serviceAsync<ProjectManager>().defaultProject
-            showIndicator(
-              project,
-              taskCancellingIndicator(this, task),
-              taskInfo(task.title, task.cancellation),
-              task.updates.asValuesFlow()
-            )
-          }
-        }
-      }
-    }
-  }
-
-  private suspend fun ProjectEntity.waitForProject(): Project {
-    val project = asProjectOrNull()
-    if (project != null) return project
-
-    /*
-    Some tasks are created very early on project opening (e.g., updating indexes)
-    It might happen that `TaskInfoEntity` is received earlier than a corresponding project on fronted is opened,
-    because `PlatformTaskSupport` is an application level service.
-    In this case, we should wait till `LocalProjectEntity` is created (which means that the project is open).
-
-    This is a temporary solution, ideally the status bar should subscribe on `TaskInfoEntity`.
-    This way we won't have to wait for `LocalProjectEntity`
-    because we can be sure that a project is already created (status bar belongs to a project)
-    */
-    val localProjectEntity = queryNotNull {
-      entities(LocalProjectEntity.ProjectEntityValue, this).singleOrNull()
-    }
-    return localProjectEntity.first().project
-  }
 
   private suspend fun progressStarted(title: @ProgressTitle String, cancellation: TaskCancellation, updates: Flow<ProgressState>) {
     val context = coroutineContext
@@ -310,7 +255,7 @@ private val progressManagerTracer by lazy {
   TelemetryManager.getInstance().getSimpleTracer(ProgressManagerScope)
 }
 
-private fun CoroutineScope.showIndicator(
+internal fun CoroutineScope.showIndicator(
   project: Project,
   indicator: ProgressIndicatorEx,
   taskInfo: TaskInfo,
@@ -340,19 +285,6 @@ private fun CoroutineScope.showIndicator(
       }
     }
   }
-}
-
-private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity): ProgressIndicatorEx {
-  val indicator = ProgressIndicatorBase()
-  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-    override fun cancel() {
-      cs.launch {
-        TaskManager.cancelTask(taskInfo)
-      }
-      super.cancel()
-    }
-  })
-  return indicator
 }
 
 /**
@@ -394,7 +326,7 @@ private fun showIndicatorInUI(project: Project, taskInfo: TaskInfo, indicator: P
   return true
 }
 
-private fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellation): TaskInfo = object : TaskInfo {
+internal fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellation): TaskInfo = object : TaskInfo {
   override fun getTitle(): String = title
   override fun isCancellable(): Boolean = cancellation is CancellableTaskCancellation
   override fun getCancelText(): String? = (cancellation as? CancellableTaskCancellation)?.buttonText
