@@ -59,6 +59,11 @@ class DiffFilePathLabelWrapper(val displayedPath: String, val fullPath: String) 
     wrappedLabel.doLayout()
   }
 
+  override fun updateUI() {
+    super.updateUI()
+    invalidate()
+  }
+
   override fun getMinimumSize(): Dimension = wrappedLabel.minimumSize
   override fun getPreferredSize(): Dimension = wrappedLabel.preferredSize
   override fun getMaximumSize(): Dimension = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
