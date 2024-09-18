@@ -3349,6 +3349,7 @@
   </item>
   <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="1;*"/>
   </item>
   <item name='java.util.Map V computeIfAbsent(K, java.util.function.Function&lt;? super K,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
