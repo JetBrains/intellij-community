@@ -6,6 +6,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class IncorrectMessageFormatInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
@@ -18,12 +20,19 @@ public class IncorrectMessageFormatInspectionTest extends LightJavaCodeInsightFi
     return JAVA_21;
   }
 
-  private void doTest() {
-    myFixture.enableInspections(new IncorrectMessageFormatInspection());
+  private void doTest(List<String> classes, List<String> methods) {
+    IncorrectMessageFormatInspection inspection = new IncorrectMessageFormatInspection();
+    inspection.customClasses.addAll(classes);
+    inspection.customMethods.addAll(methods);
+    myFixture.enableInspections(inspection);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
   public void testIncorrectMessageFormat() {
-    doTest();
+    doTest(List.of(), List.of());
+  }
+
+  public void testIncorrectMessageFormatWithCustomMethods() {
+    doTest(List.of("org.example.util.Formatter"), List.of("formatNew"));
   }
 }
