@@ -2,17 +2,19 @@
 package com.intellij.ide.structureView.logical
 
 import com.intellij.ide.structureView.StructureView
-import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.ide.structureView.StructureViewModel
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService.Companion.getInstance
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
 class PhysicalAndLogicalStructureViewBuilder(
-  private val physicalBuilder: StructureViewBuilder,
+  private val physicalBuilder: TreeBasedStructureViewBuilder,
   private val psiFile: PsiFile,
-): StructureViewBuilder {
+): TreeBasedStructureViewBuilder() {
 
   override fun createStructureView(fileEditor: FileEditor?, project: Project): StructureView {
     val logicalBuilder = getInstance(project).getLogicalStructureBuilder(psiFile)
@@ -22,6 +24,10 @@ class PhysicalAndLogicalStructureViewBuilder(
       StructureViewComposite.StructureViewDescriptor("Logical", logicalBuilder.createStructureView(fileEditor, project), null),
       StructureViewComposite.StructureViewDescriptor("Physical", physicalBuilder.createStructureView(fileEditor, project), null)
     )
+  }
+
+  override fun createStructureViewModel(editor: Editor?): StructureViewModel {
+    return physicalBuilder.createStructureViewModel(editor)
   }
 
   fun createPhysicalStructureView(fileEditor: FileEditor?, project: Project): StructureView {

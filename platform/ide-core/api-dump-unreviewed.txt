@@ -1029,6 +1029,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:SHOW_USAGES_POPUP_TOOLBAR:java.lang.String
 - sf:SIMILAR_USAGES_PREVIEW_TOOLBAR:java.lang.String
 - sf:STATUS_BAR_PLACE:java.lang.String
+- sf:STRUCTURE_VIEW_FLOATING_TOOLBAR:java.lang.String
 - sf:STRUCTURE_VIEW_POPUP:java.lang.String
 - sf:STRUCTURE_VIEW_TOOLBAR:java.lang.String
 - sf:TABS_MORE_TOOLBAR:java.lang.String

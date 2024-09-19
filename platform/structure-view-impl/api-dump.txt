@@ -58,6 +58,9 @@ f:com.intellij.ide.structureView.logical.ConvertElementsProvider$Companion
 - f:convert(java.lang.Object):kotlin.sequences.Sequence
 com.intellij.ide.structureView.logical.ExternalElementsProvider
 - com.intellij.ide.structureView.logical.ContainerElementsProvider
+c:com.intellij.ide.structureView.logical.LogicalStructureDataKeys
+- sf:STRUCTURE_TREE_ELEMENT:com.intellij.openapi.actionSystem.DataKey
+- <init>():V
 *:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 - *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
 - a:getElements(java.lang.Object):java.util.List
@@ -70,6 +73,12 @@ com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 - a:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
 f:com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider$Companion
 - f:getTreeElement(java.lang.Object):com.intellij.ide.structureView.StructureViewTreeElement
+f:com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder
+- com.intellij.ide.structureView.TreeBasedStructureViewBuilder
+- <init>(com.intellij.ide.structureView.TreeBasedStructureViewBuilder,com.intellij.psi.PsiFile):V
+- f:createPhysicalStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
+- createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
+- createStructureViewModel(com.intellij.openapi.editor.Editor):com.intellij.ide.structureView.StructureViewModel
 com.intellij.ide.structureView.logical.PropertyElementProvider
 - com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 - a:getPropertyName():java.lang.String
@@ -82,6 +91,15 @@ f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Compan
 com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement
 - com.intellij.ide.structureView.StructureViewTreeElement
 - a:getLogicalAssembledModel():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+a:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
+- com.intellij.ide.presentation.PresentationProvider
+- sf:Companion:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
+- <init>():V
+- getColoredText(java.lang.Object):java.util.List
+- handleClick(java.lang.Object,I):Z
+- isAutoExpand(java.lang.Object):Z
+f:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
+- f:getForObject(java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
 f:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 - sf:Companion:com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel$Companion
 - equals(java.lang.Object):Z

@@ -149,6 +149,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     }
 
     override fun hideComponent() {
+      if (!isVisible) return
       isVisible = false
       toolbar.updateActionsImmediately(false)
     }

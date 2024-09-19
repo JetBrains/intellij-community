@@ -186,7 +186,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       (ActionGroup) ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR),
       this
     );
-    floatingToolbar.setAlignmentX(Component.RIGHT_ALIGNMENT);
     floatingToolbar.setShowingTime(150);
     floatingToolbar.setHidingTime(50);
     layeredPane.add(content, JLayeredPane.DEFAULT_LAYER);
@@ -236,12 +235,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private void setupTree() {
-    if (myTreeModel instanceof StructureViewModel.ElementRendererProvider rendererProvider) {
-      myTree.setCellRenderer(rendererProvider.getRenderer());
-    }
-    else {
-      myTree.setCellRenderer(new NodeRenderer());
-    }
+    myTree.setCellRenderer(new NodeRenderer());
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
     registerPsiListener(myProject, this, this::queueUpdate);
@@ -994,8 +988,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
-      if (myTreeModel instanceof StructureViewModel.ElementRendererProvider elementRendererProvider) {
-        boolean handled = processCustomEventHandler(elementRendererProvider, event);
+      if (myTreeModel instanceof StructureViewModel.ActionHandler actionHandler) {
+        updateFloatingToolbar(event);
+        boolean handled = processCustomEventHandler(actionHandler, event);
         if (handled) {
           event.consume();
           return;
@@ -1004,30 +999,35 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       super.processMouseEvent(event);
     }
 
-    private boolean processCustomEventHandler(StructureViewModel.ElementRendererProvider rendererProvider, MouseEvent event) {
-      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return false;
-      TreePath pathTmp = getPathForLocation(event.getX(), event.getY());
-      if (pathTmp == null) return false;
-      final TreePath path = pathTmp;
+    private void updateFloatingToolbar(MouseEvent event) {
+      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return;
+      Optional.ofNullable(getClosestPathForLocation(event.getX(), event.getY()))
+        .map(path -> getPathBounds(path))
+        .ifPresent(pathBounds -> {
+          floatingToolbar.hideImmediately();
+          floatingToolbar.setBounds(getBounds().width - 70, pathBounds.y - 5, 60, pathBounds.height + 5);
+          floatingToolbar.scheduleShow();
+        });
+    }
 
+    private boolean processCustomEventHandler(StructureViewModel.ActionHandler actionHandler, MouseEvent event) {
+      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return false;
+      TreePath path = getPathForLocation(event.getX(), event.getY());
+      if (path == null) return false;
       Object lastPathComponent = path.getLastPathComponent();
       StructureViewTreeElement treeElement = getStructureTreeElement(lastPathComponent);
       if (treeElement == null) return false;
+
       Rectangle pathBounds = getPathBounds(path);
       if (pathBounds == null) return false;
-
-      floatingToolbar.hideImmediately();
-      Rectangle toolWindowBounds = getBounds();
-      floatingToolbar.setBounds(toolWindowBounds.width - 70, pathBounds.y - 5, 60, pathBounds.height + 5);
-      floatingToolbar.scheduleShow();
-
-      int dx = event.getX();
-      dx -= pathBounds.getX();
+      int dx = event.getX() - (int) pathBounds.getX();
       if (dx < 0 || dx > pathBounds.width) return false;
 
-      Supplier<Component> componentSupplier = () ->
-        this.cellRenderer.getTreeCellRendererComponent(this, lastPathComponent, false, false, true, getRowForPath(path), false);
-      return rendererProvider.handleClick(dx, treeElement, componentSupplier);
+      Component component = this.cellRenderer.getTreeCellRendererComponent(this, lastPathComponent, false, false, true, getRowForPath(path), false);
+      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) return false;
+      int fragmentIndex = simpleColoredComponent.findFragmentAt(dx);
+      if (fragmentIndex >= 0) return actionHandler.handleClick(treeElement, fragmentIndex);
+      return false;
     }
 
     @Override
@@ -1047,29 +1047,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       return true;
     }
-  }
-
-  private static class MyAction extends AnAction {
-
-    MyAction(String text, Icon icon) {
-      super(text, null, icon);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      System.out.println();
-    }
-
   }
 
   private static final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {

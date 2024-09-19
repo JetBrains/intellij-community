@@ -213,6 +213,8 @@ com.intellij.ide.structureView.StructureViewModel
 - a:removeEditorPositionListener(com.intellij.ide.structureView.FileEditorPositionListener):V
 - a:removeModelListener(com.intellij.ide.structureView.ModelListener):V
 - a:shouldEnterElement(java.lang.Object):Z
+com.intellij.ide.structureView.StructureViewModel$ActionHandler
+- a:handleClick(com.intellij.ide.structureView.StructureViewTreeElement,I):Z
 com.intellij.ide.structureView.StructureViewModel$ElementInfoProvider
 - com.intellij.ide.structureView.StructureViewModel
 - a:isAlwaysLeaf(com.intellij.ide.structureView.StructureViewTreeElement):Z

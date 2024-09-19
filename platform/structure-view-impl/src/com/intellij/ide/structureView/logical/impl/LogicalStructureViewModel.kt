@@ -18,19 +18,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import java.awt.Component
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.Icon
-import javax.swing.tree.TreeCellRenderer
 
 internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
   : StructureViewModelBase(psiFile, editor, elementBuilder.createViewTreeElement(assembledModel)),
-    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ElementRendererProvider {
-
-  private val nodeRenderer = LogicalStructureNodeRenderer()
+    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ActionHandler {
 
   constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>):
     this(psiFile, editor, assembledModel, ElementsBuilder())
@@ -45,20 +41,23 @@ internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, e
   }
 
   override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
-    val model = when (element) {
-      is LogicalStructureViewTreeElement<*> -> element.getLogicalAssembledModel().model
-      is ElementsBuilder.LogicalGroupStructureElement -> element.grouper
-      else -> return false
-    }
+    val model = getModel(element) ?: return false
     return LogicalModelPresentationProvider.getForObject(model)?.isAutoExpand(model) ?: false
   }
 
   override fun isSmartExpand(): Boolean = false
 
-  override fun getRenderer(): TreeCellRenderer = nodeRenderer
+  override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int): Boolean {
+    val model = getModel(element) ?: return false
+    return LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
+  }
 
-  override fun handleClick(dx: Int, treeElement: StructureViewTreeElement, componentSupplier: Supplier<Component>?): Boolean {
-    return nodeRenderer.handleClick(dx, treeElement, componentSupplier)
+  private fun getModel(element: StructureViewTreeElement): Any? {
+    return when (element) {
+      is LogicalStructureViewTreeElement<*> -> element.getLogicalAssembledModel().model
+      is ElementsBuilder.LogicalGroupStructureElement -> element.grouper
+      else -> null
+    }
   }
 
 }

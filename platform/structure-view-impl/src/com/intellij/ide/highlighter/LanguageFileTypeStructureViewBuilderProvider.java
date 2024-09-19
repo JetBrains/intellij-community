@@ -21,9 +21,11 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -47,8 +49,9 @@ public class LanguageFileTypeStructureViewBuilderProvider implements StructureVi
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
     if (factory == null) return null;
     StructureViewBuilder physicalBuilder = factory.getStructureViewBuilder(psiFile);
-    if (physicalBuilder == null) return null;
+    if (!(physicalBuilder instanceof TreeBasedStructureViewBuilder treeBasedStructureViewBuilder)) return physicalBuilder;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return physicalBuilder;
 
-    return new PhysicalAndLogicalStructureViewBuilder(physicalBuilder, psiFile);
+    return new PhysicalAndLogicalStructureViewBuilder(treeBasedStructureViewBuilder, psiFile);
   }
 }

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.util.function.Supplier;
 
@@ -109,11 +108,9 @@ public interface StructureViewModel extends TreeModel, Disposable {
     }
   }
 
-  interface ElementRendererProvider {
+  interface ActionHandler {
 
-    TreeCellRenderer getRenderer();
-
-    boolean handleClick(int dx, StructureViewTreeElement treeElement, Supplier<Component> componentSupplier);
+    boolean handleClick(StructureViewTreeElement element, int fragmentIndex);
 
   }
 }
