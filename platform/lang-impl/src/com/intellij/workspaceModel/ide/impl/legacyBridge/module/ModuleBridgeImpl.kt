@@ -94,7 +94,7 @@ internal class ModuleBridgeImpl(
     }
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     val imlPath = newModuleFileUrl.toPath()
-    (store.storageManager as RenameableStateStorageManager).pathRenamed(imlPath, null)
+    (store.storageManager as? RenameableStateStorageManager)?.pathRenamed(imlPath, null)
     store.setPath(imlPath)
     (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
   }
