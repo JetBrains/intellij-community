@@ -782,9 +782,11 @@ public class FoldingModelSupport {
   private FoldingCache getFoldingCache(@NotNull Settings settings) {
     //noinspection unchecked
     List<FoldedGroupState>[] result = new List[myCount];
-    for (int i = 0; i < myCount; i++) {
-      result[i] = collectFoldedGroupsStates(i);
-    }
+    ReadAction.run(() -> {
+      for (int i = 0; i < myCount; i++) {
+        result[i] = collectFoldedGroupsStates(i);
+      }
+    });
     return new FoldingCache(result, settings.defaultExpanded);
   }
 
