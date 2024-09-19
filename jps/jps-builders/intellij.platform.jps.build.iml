@@ -73,6 +73,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="netty-codec-protobuf" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="mvstore" level="project" />
   </component>
 </module>
