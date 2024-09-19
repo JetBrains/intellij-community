@@ -80,9 +80,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
-    <orderEntry type="module" module-name="intellij.ml.llm.core" />
-    <orderEntry type="module" module-name="intellij.ml.llm.core.privacy" />
-    <orderEntry type="module" module-name="intellij.ml.llm.privacy" />
+    <orderEntry type="library" scope="TEST" name="io.mockk" level="project" />
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
   </component>
 </module>
