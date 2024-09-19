@@ -12,9 +12,15 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class JavaCommandCompletionTest : BasePlatformTestCase() {
   @Test
-  fun runCustomTest() = runBlocking {
+  fun `default options are present`() = runBlocking {
     val fixture = ShellCompletionTestFixture.builder(project).build()
     val actual: List<ShellCompletionSuggestion> = fixture.getCompletions("java ")
-    assertSameElements(actual.map { it.name }, listOf("--help", "-help", "-h"))
+    assertSameElements(actual.map { it.name }, listOf("--help", "-help", "-h",
+                                                      "-jar",
+                                                      "-D",
+                                                      "--version", "-version",
+                                                      "-classpath", "-cp",
+                                                      "-showversion", "--show-version",
+                                                      "--dry-run"))
   }
 }
