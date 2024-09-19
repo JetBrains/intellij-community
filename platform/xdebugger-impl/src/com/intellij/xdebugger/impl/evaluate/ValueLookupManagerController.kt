@@ -65,7 +65,7 @@ class ValueLookupManagerController(private val project: Project, private val cs:
    * Starts [ValueLookupManager] listening for events (e.g. mouse movement) to trigger evaluation popups
    */
   fun startListening() {
-    if (listeningStarted.get()) {
+    if (!listeningStarted.compareAndSet(false, true)) {
       return
     }
     cs.launch(Dispatchers.IO) {
@@ -82,7 +82,6 @@ class ValueLookupManagerController(private val project: Project, private val cs:
           }
         }
       }
-      listeningStarted.set(true)
     }
   }
 
