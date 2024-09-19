@@ -60,11 +60,13 @@ fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineConte
   val tracker = currentThreadContext()[PlatformActivityTrackerService.ObservationTracker]
   // since the `launch` is executed with the Job of `this`, we need to mimic the awaiting for the execution of `block` for `ObservationTracker`
   val childJob = Job(tracker?.currentJob)
+  traceObservedComputation(childJob)
   launch(context + (tracker ?: EmptyCoroutineContext), CoroutineStart.DEFAULT) {
     try {
       block()
     }
     finally {
+      removeObservedComputation(childJob)
       childJob.complete()
     }
   }

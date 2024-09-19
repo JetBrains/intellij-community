@@ -116,14 +116,12 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement {
       // we would like to know about all child computations, regardless of their relation to the current process
       val newJob = Job(mainJob)
-      if (Registry.`is`("ide.activity.tracking.enable.debug", false)) {
-        computationMap[newJob] = Throwable()
-      }
+      traceObservedComputation(newJob)
       return ObservationTracker(mainJob, newJob)
     }
 
     override fun afterChildCompleted(context: CoroutineContext) {
-      computationMap.remove(currentJob)
+      removeObservedComputation(currentJob)
       currentJob.complete()
     }
   }
@@ -217,4 +215,14 @@ private val computationMap : MutableMap<Job, Throwable?> = ConcurrentHashMap()
 
 internal fun dumpCurrentlyObservedComputations(): Set<Throwable> {
   return computationMap.values.mapNotNullTo(HashSet()) { it }
+}
+
+internal fun traceObservedComputation(job: Job) {
+  if (Registry.`is`("ide.activity.tracking.enable.debug", false)) {
+    computationMap[job] = Throwable()
+  }
+}
+
+internal fun removeObservedComputation(job: Job) {
+  computationMap.remove(job)
 }
