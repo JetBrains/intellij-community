@@ -5,7 +5,7 @@ UFile (package = test.pkg) [package test.pkg...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return UIdentifier (Identifier (getSystemService))(java.lang.String.java)]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(java.lang.String.java)] : <ErrorType>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(java.lang.String.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         UQualifiedReferenceExpression [java.lang.String.java] : @org.jetbrains.annotations.NotNull() java.lang.Class<@org.jetbrains.annotations.NotNull() java.lang.String>
                             UClassLiteralExpression [java.lang.String] : @org.jetbrains.annotations.NotNull() kotlin.reflect.KClass<@org.jetbrains.annotations.NotNull() java.lang.String>
@@ -16,7 +16,7 @@ UFile (package = test.pkg) [package test.pkg...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return UIdentifier (Identifier (getSystemService))(T.java)]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(T.java)] : <ErrorType>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(T.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         UQualifiedReferenceExpression [T.java] : @org.jetbrains.annotations.NotNull() java.lang.Class<T>
                             UClassLiteralExpression [T] : @org.jetbrains.annotations.NotNull() kotlin.reflect.KClass<T>
@@ -26,7 +26,7 @@ UFile (package = test.pkg) [package test.pkg...]
         UMethod (name = ownSystemService2) [public final fun ownSystemService2() : error.NonExistentClass {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return UIdentifier (Identifier (getSystemService))(java.lang.String.java)]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(java.lang.String.java)] : <ErrorType>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(java.lang.String.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         UQualifiedReferenceExpression [java.lang.String.java] : @org.jetbrains.annotations.NotNull() java.lang.Class<@org.jetbrains.annotations.NotNull() java.lang.String>
                             UClassLiteralExpression [java.lang.String] : @org.jetbrains.annotations.NotNull() kotlin.reflect.KClass<@org.jetbrains.annotations.NotNull() java.lang.String>
@@ -36,7 +36,7 @@ UFile (package = test.pkg) [package test.pkg...]
         UMethod (name = ownSystemService1) [public final fun ownSystemService1() : <ErrorType> {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return UIdentifier (Identifier (getSystemService))(T.java)]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(T.java)] : <ErrorType>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (getSystemService))(T.java)]
                         UIdentifier (Identifier (getSystemService)) [UIdentifier (Identifier (getSystemService))]
                         UQualifiedReferenceExpression [T.java] : @org.jetbrains.annotations.NotNull() java.lang.Class<T>
                             UClassLiteralExpression [T] : @org.jetbrains.annotations.NotNull() kotlin.reflect.KClass<T>

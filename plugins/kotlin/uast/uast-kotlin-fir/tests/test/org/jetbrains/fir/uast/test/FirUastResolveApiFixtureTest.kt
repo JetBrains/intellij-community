@@ -22,10 +22,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private val whitelist : Set<String> = setOf(
-        // TODO: return type for ambiguous call
-        "MultiResolveJavaAmbiguous",
-        // TODO: return type for ambiguous call
-        "MultiConstructorResolve",
         // TODO: multiResolve
         "MultiInvokableObjectResolve",
         // TODO: resolve annotation param to annotation ctor ??
@@ -83,7 +79,7 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testMultiResolveJavaAmbiguous() {
-        doCheck("MultiResolveJavaAmbiguous", ::checkMultiResolveJavaAmbiguous)
+        checkMultiResolveJavaAmbiguous(myFixture)
     }
 
     fun testResolveFromBaseJava() {
@@ -99,7 +95,7 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testMultiConstructorResolve() {
-        doCheck("MultiConstructorResolve", ::checkMultiConstructorResolve)
+        checkMultiConstructorResolve(myFixture, project)
     }
 
     fun testMultiInvokableObjectResolve() {

@@ -48,19 +48,19 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                     ULocalVariable (name = ia) [var ia: java.lang.Integer[] = simpleIntArray()]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleIntArray()] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (simpleIntArray)) [UIdentifier (Identifier (simpleIntArray))]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(0, ia[0])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(0, ia[0])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     ULiteralExpression (value = 0) [0] : int
                     UArrayAccessExpression [ia[0]] : int
                         USimpleNameReferenceExpression (identifier = ia) [ia] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 0) [0] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(1, ia[1])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(1, ia[1])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     ULiteralExpression (value = 1) [1] : int
                     UArrayAccessExpression [ia[1]] : int
                         USimpleNameReferenceExpression (identifier = ia) [ia] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 1) [1] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(2, ia[2])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(2, ia[2])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     ULiteralExpression (value = 2) [2] : int
                     UArrayAccessExpression [ia[2]] : int
@@ -70,19 +70,19 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                     ULocalVariable (name = da) [var da: java.lang.Double[] = simpleDoubleArray()]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleDoubleArray()] : @org.jetbrains.annotations.NotNull() java.lang.Double @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (simpleDoubleArray)) [UIdentifier (Identifier (simpleDoubleArray))]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(0.1, da[0])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(0.1, da[0])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     ULiteralExpression (value = 0.1) [0.1] : double
                     UArrayAccessExpression [da[0]] : double
                         USimpleNameReferenceExpression (identifier = da) [da] : @org.jetbrains.annotations.NotNull() java.lang.Double @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 0) [0] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(1.1, da[1])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(1.1, da[1])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     ULiteralExpression (value = 1.1) [1.1] : double
                     UArrayAccessExpression [da[1]] : double
                         USimpleNameReferenceExpression (identifier = da) [da] : @org.jetbrains.annotations.NotNull() java.lang.Double @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 1) [1] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(2.1, da[2])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))(2.1, da[2])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     ULiteralExpression (value = 2.1) [2.1] : double
                     UArrayAccessExpression [da[2]] : double
@@ -92,21 +92,21 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                     ULocalVariable (name = sa) [var sa: java.lang.String[] = simpleStringArray()]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleStringArray()] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (simpleStringArray)) [UIdentifier (Identifier (simpleStringArray))]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))("0", sa[0])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))("0", sa[0])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     UPolyadicExpression (operator = +) ["0"] : java.lang.String
                         ULiteralExpression (value = "0") ["0"] : java.lang.String
                     UArrayAccessExpression [sa[0]] : java.lang.String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 0) [0] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))("1", sa[1])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))("1", sa[1])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     UPolyadicExpression (operator = +) ["1"] : java.lang.String
                         ULiteralExpression (value = "1") ["1"] : java.lang.String
                     UArrayAccessExpression [sa[1]] : java.lang.String
                         USimpleNameReferenceExpression (identifier = sa) [sa] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                         ULiteralExpression (value = 1) [1] : int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))("2", sa[2])] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (assertEquals))("2", sa[2])]
                     UIdentifier (Identifier (assertEquals)) [UIdentifier (Identifier (assertEquals))]
                     UPolyadicExpression (operator = +) ["2"] : java.lang.String
                         ULiteralExpression (value = "2") ["2"] : java.lang.String

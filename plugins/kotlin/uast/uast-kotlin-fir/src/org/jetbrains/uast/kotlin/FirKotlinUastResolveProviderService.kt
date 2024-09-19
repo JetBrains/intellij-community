@@ -653,7 +653,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return null
 
         analyzeForUast(ktExpression) {
-            val ktType = ktExpression.expressionType ?: return null
+            val ktType = ktExpression.expressionType.takeUnless { it is KaErrorType } ?: return null
             // Again, Analysis API returns [Unit] for statements, so we need to filter out
             // some cases that are not actually expression's return type.
             if (ktType.isUnitType) {
