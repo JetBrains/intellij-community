@@ -4,7 +4,7 @@ abstract class A : List<String> {
 }
 
 // MEMBER_K2: "forEach(action: Consumer<in String>?): Unit"
-// MEMBER_K2: "<T : Any?> toArray(generator: IntFunction<Array<out T?>?>?): Array<out T?>?"
+// MEMBER_K2: "<T : Any?> toArray(generator: IntFunction<Array<out T?>?>): Array<out T?>?"
 // MEMBER_K2: "spliterator(): Spliterator<String?>"
 
 // MEMBER_K1: "forEach(action: Consumer<in String!>!): Unit"

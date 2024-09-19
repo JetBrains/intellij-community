@@ -1907,6 +1907,9 @@
   <item name="java.util.Collection T[] toArray(T[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name='java.util.Collection T[] toArray(java.util.function.IntFunction&lt;T[]&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Collection boolean add(E)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -1950,6 +1953,9 @@
   <item name="java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name='java.util.Collection boolean removeIf(java.util.function.Predicate&lt;? super E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt;)">
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -1980,16 +1986,19 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Collection java.util.stream.Stream&lt;E&gt; parallelStream()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Collection java.util.stream.Stream&lt;E&gt; stream()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Collection void clear()'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -3352,6 +3361,9 @@
   <item name="java.util.List java.util.ListIterator&lt;E&gt; listIterator(int)">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name='java.util.List java.util.Spliterator&lt;E&gt; spliterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.List void add(int, E)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -3367,10 +3379,16 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.List void replaceAll(java.util.function.UnaryOperator&lt;E&gt;) 0'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.List void sort(java.util.Comparator&lt;? super E&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+  </item>
+  <item name='java.util.List void sort(java.util.Comparator&lt;? super E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
