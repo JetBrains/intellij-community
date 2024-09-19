@@ -154,6 +154,8 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
   open fun addInterpreter(path: String): PythonSelectableInterpreter = TODO()
 
+  abstract fun addInterpreter(sdk: Sdk)
+
   open fun suggestVenvPath(): String? = ""
 }
 
@@ -218,6 +220,10 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
     if (interpreterToSelect != null) {
       state.baseInterpreter.set(interpreterToSelect)
     }
+  }
+
+  override fun addInterpreter(sdk: Sdk) {
+    manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
   }
 
   override fun createBrowseAction(): () -> String? {

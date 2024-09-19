@@ -61,11 +61,12 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     }
     val newSdk = setupEnvSdk(moduleOrProject.project,
                              module,
-                             model.baseSdks,
+                             model.existingSdks,
                              model.projectPath.value.toString(),
                              homePath,
                              false)!!
     addSdk(newSdk)
+    model.addInterpreter(newSdk)
     return Result.success(newSdk)
   }
 
