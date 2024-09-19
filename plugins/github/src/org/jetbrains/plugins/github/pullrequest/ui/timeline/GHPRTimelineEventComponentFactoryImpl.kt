@@ -254,7 +254,7 @@ class GHPRTimelineEventComponentFactoryImpl(
 
       val iconChunk = HtmlChunk
         .tag("icon-inline")
-        .attr("src", "icons.CollaborationToolsIcons.Review.Branch")
+        .attr("src", "icons.DvcsImplIcons.BranchLabel")
       return HtmlChunk.span("color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}")
         .child(HtmlChunk.nbsp())
         .child(iconChunk)

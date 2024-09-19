@@ -624,10 +624,12 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getCONTENT_TOOLTIP():com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - f:getIMAGES_EXTENSION():com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - f:getINLINE_ICON_EXTENSION():com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
+- f:inlineIconExtension(java.lang.Class):com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
+- bs:inlineIconExtension$default(com.intellij.collaboration.ui.HtmlEditorPaneUtil,java.lang.Class,I,java.lang.Object):com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 *f:com.intellij.collaboration.ui.HtmlEditorPaneUtilKt
 - sf:SimpleHtmlPane(java.lang.String):javax.swing.JEditorPane
-- sf:SimpleHtmlPane(javax.swing.text.html.StyleSheet,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL):javax.swing.JEditorPane
-- bs:SimpleHtmlPane$default(javax.swing.text.html.StyleSheet,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,I,java.lang.Object):javax.swing.JEditorPane
+- sf:SimpleHtmlPane(javax.swing.text.html.StyleSheet,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,java.lang.Class):javax.swing.JEditorPane
+- bs:SimpleHtmlPane$default(javax.swing.text.html.StyleSheet,Z,com.intellij.collaboration.ui.html.AsyncHtmlImageLoader,java.net.URL,java.lang.Class,I,java.lang.Object):javax.swing.JEditorPane
 - sf:onHyperlinkActivated(javax.swing.JEditorPane,kotlin.jvm.functions.Function1):V
 - sf:setHtmlBody(javax.swing.JEditorPane,java.lang.String):V
 *c:com.intellij.collaboration.ui.JPanelWithBackground
