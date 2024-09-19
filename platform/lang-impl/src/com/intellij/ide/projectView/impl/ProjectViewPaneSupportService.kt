@@ -25,7 +25,7 @@ internal class ProjectViewPaneSupportService(
     if (Registry.`is`("ide.project.view.coroutines", false)) {
       val scope = coroutineScope.childScope("ProjectViewPaneSupport id=${pane.id}, subId=${pane.subId}")
       Disposer.register(pane, Disposable { scope.cancel() })
-      CoroutineProjectViewSupport(pane, project, scope, treeStructure)
+      CoroutineProjectViewSupport(pane, project, scope, treeStructure, comparator)
     }
     else {
       AsyncProjectViewSupport(pane, project, treeStructure, comparator)

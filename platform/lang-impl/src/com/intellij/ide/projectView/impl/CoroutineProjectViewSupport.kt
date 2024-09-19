@@ -36,6 +36,7 @@ internal class CoroutineProjectViewSupport(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
   treeStructure: AbstractTreeStructure,
+  comparator: Comparator<NodeDescriptor<*>>,
 ) : ProjectViewPaneSupport() {
 
   private val domainModel = TreeDomainModel(treeStructure, true, 1)
@@ -48,6 +49,7 @@ internal class CoroutineProjectViewSupport(
     })
     myNodeUpdater = Updater(project, coroutineScope)
     setupListeners(pane, project, treeStructure)
+    setComparator(comparator)
   }
 
   override fun setModelTo(tree: JTree) {
