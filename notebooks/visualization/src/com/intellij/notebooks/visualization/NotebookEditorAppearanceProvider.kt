@@ -5,9 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 
-
 private const val ID = "org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
-
 
 interface NotebookEditorAppearanceProvider {
   fun create(editor: Editor): NotebookEditorAppearance?
