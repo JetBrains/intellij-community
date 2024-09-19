@@ -1,7 +1,6 @@
 <idea-plugin package="org.jetbrains.plugins.github">
 
   <content>
-    <module name="intellij.vcs.github/ai"/>
     <module name="intellij.vcs.github/tracker"/>
   </content>
 
@@ -14,6 +13,10 @@
     <extensionPoint qualifiedName="intellij.vcs.github.commentViewModelProvider"
                     interface="org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRAICommentViewModelProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="intellij.vcs.github.commentComponentFactory"
+                    interface="org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRAICommentComponentFactory"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.vcs.github.gistContentsCollector"
                     interface="org.jetbrains.plugins.github.GithubGistContentsCollector"
                     dynamic="true"/>

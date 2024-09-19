@@ -2,20 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.CommonBundle
-import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.inverted
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewAIUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
@@ -24,23 +20,19 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.util.*
-import com.intellij.ml.llm.MLLlmIcons
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.components.ActionLink
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
 import javax.swing.AbstractAction
 import javax.swing.Action
-import javax.swing.Icon
 import javax.swing.JComponent
 
 internal object GHPRReviewEditorComponentsFactory {
@@ -173,100 +165,5 @@ internal object GHPRReviewEditorComponentsFactory {
         isEnabled = false
       }
     }
-  }
-
-  fun createAICommentIn(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel): JComponent {
-    val textPane = SimpleHtmlPane().apply {
-      bindTextHtmlIn(cs, vm.textHtml)
-    }
-    val actions = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-      add(CodeReviewCommentUIUtil.createDeleteCommentIconButton {
-        vm.reject()
-      }.apply {
-        bindDisabledIn(cs, vm.isBusy)
-      })
-    }
-    val title = CodeReviewTimelineUIUtil.createTitleTextPane("AI Assistant", null, null)
-    val commentPanel = CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.COMPACT,
-                                                      { IconUtil.resizeSquared(MLLlmIcons.AiAssistantColored, it) },
-                                                      textPane) {
-      iconTooltip = "AI Assistant"
-      maxContentWidth = null
-      withHeader(title, actions)
-    }
-
-    val doneAction = swingAction("Done") {
-      vm.accept()
-    }
-    val buttonsPanel = HorizontalListPanel(10).apply {
-      border = JBUI.Borders.empty(8, CodeReviewChatItemUIUtil.ComponentType.COMPACT.fullLeftShift)
-      ActionLink("Chat") {
-        vm.startChat()
-      }.apply {
-        isFocusPainted = false
-        bindDisabledIn(cs, vm.isBusy)
-        autoHideOnDisable = false
-      }.also(::add)
-      ActionLink(doneAction).apply {
-        isFocusPainted = false
-        bindDisabledIn(cs, vm.isBusy)
-        autoHideOnDisable = false
-      }.also(::add)
-    }
-    cs.launchNow {
-      vm.chatVm.collect {
-        buttonsPanel.isVisible = it == null
-      }
-    }
-
-    val chatPanel = VerticalListPanel(gap = 5).apply {
-      border = JBUI.Borders.empty(10)
-    }
-    cs.launchNow {
-      vm.chatVm.collectScoped { chatVm ->
-        chatPanel.isVisible = chatVm != null
-
-        val messagesPanel = VerticalListPanel(10)
-        if (chatVm != null) {
-          launchNow {
-            chatVm.messages.collect { comment ->
-              val commentPanel = CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.SUPER_COMPACT,
-                                                                {
-                                                                  if (comment.isResponse) IconUtil.resizeSquared(MLLlmIcons.AiAssistantColored, it)
-                                                                  else userIcon
-                                                                },
-                                                                SimpleHtmlPane(comment.message)) {
-                maxContentWidth = null
-              }
-              messagesPanel.add(commentPanel)
-            }
-          }
-          chatPanel.add(messagesPanel)
-          val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
-
-          val summarizeAction = swingAction("Summarize") {
-            chatVm.summarize()
-          }
-
-          val input = CodeReviewCommentTextFieldFactory.createIn(cs, chatVm.newMessageVm, CommentInputActionsComponentFactory.Config(
-            primaryAction = MutableStateFlow(chatVm.newMessageVm.submitActionIn(cs, "Submit") {
-              chatVm.newMessageVm.submit()
-            }),
-            additionalActions = MutableStateFlow(listOf(doneAction, summarizeAction)),
-            submitHint = MutableStateFlow("$submitShortcutText to submit")
-          ))
-
-          chatPanel.add(input)
-        }
-      }
-    }
-
-    val panel = VerticalListPanel().apply {
-      border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
-      add(commentPanel)
-      add(chatPanel)
-      add(buttonsPanel)
-    }
-    return CodeReviewCommentUIUtil.createEditorInlayPanel(panel, CodeReviewAIUIUtil.AI_COLOR)
   }
 }
