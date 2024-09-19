@@ -5,7 +5,6 @@ import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
-import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -153,5 +152,5 @@ private fun Int.shrinkTo99(): @NlsSafe String = if (this > 99) "99+" else this.t
 @ApiStatus.Internal
 internal object GitMainToolbar {
   val showIncomingOutgoing: Boolean // todo: registry, setting or something else
-    get() = !AppMode.isRemoteDevHost()
+    get() = false
 }
