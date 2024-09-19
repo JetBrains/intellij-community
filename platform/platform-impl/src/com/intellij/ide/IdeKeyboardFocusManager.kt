@@ -2,21 +2,15 @@
 package com.intellij.ide
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
-import com.intellij.ide.ui.APPEARANCE_ID
 import com.intellij.ide.ui.ShowingContainer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport
-import com.intellij.openapi.application.isCoroutineWILEnabled
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
