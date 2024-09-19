@@ -133,7 +133,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
       // [com.intellij.openapi.editor.impl.FoldingModelImpl.onCustomFoldRegionPropertiesChange] fires listeners
       // before make model consistent.
       // Here we have to call it once again to get correct bounds.
-      JupyterBoundsChangeHandler.get(customFoldRegion.editor)!!.boundsChanged()
+      JupyterBoundsChangeHandler.get(customFoldRegion.editor).boundsChanged()
     }
 
     override val order: Int

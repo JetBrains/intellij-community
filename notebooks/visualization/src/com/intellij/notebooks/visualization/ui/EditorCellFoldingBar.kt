@@ -42,7 +42,7 @@ class EditorCellFoldingBar(
         val panel = createFoldingBar()
         editor.gutterComponentEx.add(panel)
         this.panel = panel
-        JupyterBoundsChangeHandler.get(editor)?.subscribe(boundsChangeListener)
+        JupyterBoundsChangeHandler.get(editor).subscribe(boundsChangeListener)
         updateBounds()
       }
       else {
@@ -64,7 +64,7 @@ class EditorCellFoldingBar(
         remove(it)
         repaint()
       }
-      JupyterBoundsChangeHandler.get(editor)?.unsubscribe(boundsChangeListener)
+      JupyterBoundsChangeHandler.get(editor).unsubscribe(boundsChangeListener)
       panel = null
     }
   }

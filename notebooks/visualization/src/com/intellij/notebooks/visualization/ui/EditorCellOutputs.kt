@@ -76,7 +76,7 @@ class EditorCellOutputs(
       field = value
 
       if (shouldUpdate) {
-        JupyterBoundsChangeHandler.get(editor)?.boundsChanged()
+        JupyterBoundsChangeHandler.get(editor).boundsChanged()
       }
     }
 

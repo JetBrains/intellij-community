@@ -125,9 +125,9 @@ class DecoratedEditor private constructor(
 
     override fun validateTree() {
       keepScrollingPositionWhile(editor) {
-        JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()
+        JupyterBoundsChangeHandler.get(editor).postponeUpdates()
         super.validateTree()
-        JupyterBoundsChangeHandler.get(editor)?.performPostponed()
+        JupyterBoundsChangeHandler.get(editor).performPostponed()
       }
     }
   }

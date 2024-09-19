@@ -120,6 +120,6 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
       editor.putUserData(INSTANCE_KEY, updater)
     }
 
-    fun get(editor: Editor): JupyterBoundsChangeHandler? = INSTANCE_KEY.get(editor)
+    fun get(editor: Editor): JupyterBoundsChangeHandler = INSTANCE_KEY.get(editor)
   }
 }
