@@ -32,11 +32,13 @@ class ToolWindowStateListener(private val project: Project) : ToolWindowManagerL
 @Service(Service.Level.PROJECT)
 private class ToolWindowStateCollector(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val windowsSize = ConcurrentHashMap<String, Int>()
-  private val collectors = mutableMapOf<String, Collector>()
+  private val collectors = ConcurrentHashMap<String, Collector>()
 
   private fun reportResizeEvent(toolWindowManager: ToolWindowManager, toolWindow: ToolWindowImpl) {
     val size = if (toolWindow.anchor.isHorizontal) toolWindow.component.height else toolWindow.component.width
-    if (!windowsSize.containsKey(toolWindow.id) || windowsSize[toolWindow.id] != size) { //we don't care about the changed height of vertical windows or the width of horizontal ones
+    val oldSize = windowsSize[toolWindow.id]
+    // The == null check isn't really necessary; it's simply to clearly state our intent here.
+    if (oldSize == null || oldSize != size) { //we don't care about the changed height of vertical windows or the width of horizontal ones
       val windowInfo = toolWindow.windowInfo as? WindowInfoImpl ?: return
       ToolWindowCollector.getInstance().recordResized(project, windowInfo, toolWindowManager.isMaximized(toolWindow))
       windowsSize[toolWindow.id] = size
@@ -45,7 +47,10 @@ private class ToolWindowStateCollector(private val project: Project, private val
 
   fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
     if (changeType == ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized && toolWindow.type == ToolWindowType.DOCKED && toolWindow is ToolWindowImpl) {
-      collectors.getOrPut(toolWindow.id) { Collector(toolWindowManager, toolWindow) }.ping()
+      // Do not use getOrPut here, as it may check for the existing value, not find one,
+      // create a new collector and then check again.
+      // If a new value appears in the meantime, then the created collector will be dropped and ignored.
+      collectors.computeIfAbsent(toolWindow.id) { Collector(toolWindowManager, toolWindow) }.ping()
     }
   }
 
