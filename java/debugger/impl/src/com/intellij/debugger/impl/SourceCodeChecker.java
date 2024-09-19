@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -125,20 +125,22 @@ public final class SourceCodeChecker {
           }
           if (!res) {
             VirtualFile virtualFile = position.getFile().getVirtualFile();
-            AppUIUtil.invokeOnEdt(() -> {
-              if (!project.isDisposed()) {
-                FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-                if (editor instanceof TextEditor) {
-                  HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
-                                                          JavaDebuggerBundle.message("warning.source.code.not.match"));
+            if (virtualFile != null) {
+              AppUIUtil.invokeOnEdt(() -> {
+                if (!project.isDisposed()) {
+                  FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+                  if (editor instanceof TextEditor) {
+                    HintManager.getInstance().showErrorHint(((TextEditor)editor).getEditor(),
+                                                            JavaDebuggerBundle.message("warning.source.code.not.match"));
+                  }
+                  else {
+                    XDebuggerManagerImpl.getNotificationGroup()
+                      .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
+                      .notify(project);
+                  }
                 }
-                else {
-                  XDebuggerManagerImpl.getNotificationGroup()
-                    .createNotification(JavaDebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
-                    .notify(project);
-                }
-              }
-            });
+              });
+            }
             return ThreeState.NO;
           }
           return ThreeState.YES;
