@@ -128,9 +128,9 @@
             <substitution expression="\1community/"/>
         </replaceregexp>
         <replaceregexp file="${basedir}/../.idea/modules.xml">
-            <regexp pattern="&lt;modules&gt;${line.separator}"/>
+            <regexp pattern="&lt;/modules>"/>
             <substitution
-                expression="\0      &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}      &lt;module fileurl=&quot;file://$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; filepath=&quot;$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; /&gt;${line.separator}"/>
+                expression="  &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}      &lt;module fileurl=&quot;file://$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; filepath=&quot;$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; /&gt;${line.separator}&lt;/modules>"/>
         </replaceregexp>
     </target>
 
