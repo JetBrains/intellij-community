@@ -42,7 +42,7 @@ import java.util.List;
 public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
-  private int myJdkVersion = 7;
+  private int myJdkVersion = 21;
 
   @NotNull
   @Override
@@ -119,8 +119,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testHtmlLinkWithRef() { verifyJavaDoc(getTestClass()); }
   public void testMultipleSpacesInLiteral() { useJava8(); verifyJavaDoc(getTestClass()); }
   public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
-  public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { doTestAtCaret(); }
-  public void testDocumentationForUncheckedExceptionsInSupers() { doTestAtCaret(); }
+  public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
+  public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
   public void testParamInJavadoc() { doTestAtCaret(); }
   public void testParamInMethod() { doTestAtCaret(); }
@@ -137,7 +137,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testTypeAnnotationArray() { useJava8(); doTestAtCaret(); }
   public void testTypeAnnotationClass() { useJava8(); doTestClass(); }
   public void testInlineTagIndex() { useJava9(); doTestClass(); }
-  public void testInlineTagSummary() { useJava10(); doTestClass(); }
+  public void testInlineTagSummary() { doTestClass(); }
   public void testLeadingSpacesInPre() { doTestClass(); }
   public void testBlockquotePre() { doTestAtCaret(); }
   public void testPreInDeprecated() { doTestClass(); }
@@ -183,7 +183,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testUnknownInlineMultilineTag() { doTestClass(); }
   public void testUnknownTag() { doTestMethod(); }
   public void testUnknownClassTag() { doTestClass(); }
-  public void testReflectConstructor() { useJava10(); doTestAtCaret(); }
+  public void testReflectConstructor() { doTestAtCaret(); }
   public void testMarkdownGeneralFeatures() { doTestClass(); }
   public void testMarkdownCodeBlock(){ doTestClass(); }
   public void testMarkdownReferenceLink(){ doTestClass(); }
@@ -318,6 +318,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testDocumentationForJdkClassWhenExternalDocIsNotAvailable() {
+    useJava7();
     PsiClass aClass = myJavaFacade.findClass("java.lang.String");
     assertNotNull(aClass);
     verifyJavaDoc(aClass, Collections.singletonList("dummyUrl"));
@@ -327,6 +328,14 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       doTestAtCaret();
     });
+  }
+  
+  public void testExternalTypeAnnotations() {
+    PsiClass aClass = myJavaFacade.findClass("java.util.concurrent.CompletableFuture");
+    assertNotNull(aClass);
+    PsiMethod[] whenComplete = aClass.findMethodsByName("whenComplete", false);
+    assertEquals(1, whenComplete.length);
+    verifyJavaDoc(whenComplete[0]);
   }
 
   public void testLibraryPackageDocumentation() {
@@ -486,11 +495,6 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   private void useJava9() {
     myJdkVersion = 9;
-    setUpJdk();
-  }
-
-  private void useJava10() {
-    myJdkVersion = 10;
     setUpJdk();
   }
 
