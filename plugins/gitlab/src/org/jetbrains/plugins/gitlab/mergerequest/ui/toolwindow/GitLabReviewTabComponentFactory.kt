@@ -46,7 +46,7 @@ internal class GitLabReviewTabComponentFactory(
 
   override fun createReviewListComponent(
     cs: CoroutineScope,
-    projectVm: GitLabToolWindowProjectViewModel
+    projectVm: GitLabToolWindowProjectViewModel,
   ): JComponent {
     GitLabStatistics.logTwTabOpened(project, ToolWindowTabType.LIST, ToolWindowOpenTabActionPlace.TOOLWINDOW)
     return GitLabMergeRequestsPanelFactory().create(cs, projectVm.accountVm, projectVm.listVm)

@@ -12,14 +12,39 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 class ReviewListComponentFactory<T>(private val listModel: ListModel<T>) {
-  fun create(itemPresenter: (T) -> ReviewListItemPresentation): JBList<T> {
-    val listCellRenderer = ReviewListCellRenderer(itemPresenter)
+  fun create(
+    itemPresenter: (T) -> ReviewListItemPresentation,
+  ): JBList<T> {
+    return createList(itemPresenter).also {
+      JListHoveredRowMaterialiser.install(it, ReviewListCellRenderer(itemPresenter))
+    }
+  }
+
+  @ApiStatus.Internal
+  fun create(
+    itemPresenter: (T) -> ReviewListItemPresentation,
+    options: ReviewListCellUiOptions,
+  ): JBList<T> {
+    return createList(itemPresenter, options).also {
+      JListHoveredRowMaterialiser.install(it, ReviewListCellRenderer(itemPresenter, options)).also {
+        it.resetCellBoundsOnHover = options.bordered
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  private fun createList(
+    itemPresenter: (T) -> ReviewListItemPresentation,
+    options: ReviewListCellUiOptions = ReviewListCellUiOptions(),
+  ): JBList<T> {
+    val listCellRenderer = ReviewListCellRenderer(itemPresenter, options)
     return JBList(listModel).apply {
       emptyText.clear()
       selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -31,8 +56,6 @@ class ReviewListComponentFactory<T>(private val listModel: ListModel<T>) {
       ListUiUtil.Selection.installSelectionOnFocus(it)
       ListUiUtil.Selection.installSelectionOnRightClick(it)
       UIUtil.addNotInHierarchyComponents(it, listOf(listCellRenderer))
-
-      JListHoveredRowMaterialiser.install(it, ReviewListCellRenderer(itemPresenter))
     }
   }
 }

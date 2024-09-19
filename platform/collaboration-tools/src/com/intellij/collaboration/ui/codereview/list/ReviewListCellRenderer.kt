@@ -29,7 +29,16 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
 
-internal class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPresentation)
+@ApiStatus.Internal
+data class ReviewListCellUiOptions(
+  val bordered: Boolean = true,
+)
+
+@ApiStatus.Internal
+internal class ReviewListCellRenderer<T>(
+  private val presenter: (T) -> ReviewListItemPresentation,
+  private val options: ReviewListCellUiOptions = ReviewListCellUiOptions(),
+)
   : ListCellRenderer<T>, SelectablePanel(null) {
 
   private val toolTipManager
@@ -88,14 +97,21 @@ internal class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewLis
   }
 
   private fun updateRendering() {
+    val hSelectionInsets = if (!options.bordered) 0 else 13
+    val hBorder = when {
+      !options.bordered -> 6
+      isNewUI -> 19
+      else -> 13
+    }
+
     if (isNewUI) {
-      border = JBUI.Borders.empty(4, 19, 5, 19)
+      border = JBUI.Borders.empty(4, hBorder, 5, hBorder)
       selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
       selectionArcCorners = SelectionArcCorners.ALL
-      selectionInsets = JBInsets(0, 13, 0, 13)
+      selectionInsets = JBInsets(0, hSelectionInsets, 0, hSelectionInsets)
     }
     else {
-      border = JBUI.Borders.empty(4, 13, 5, 13)
+      border = JBUI.Borders.empty(4, hBorder, 5, hBorder)
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
       selectionInsets = JBInsets(0)

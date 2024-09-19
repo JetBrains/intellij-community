@@ -3,7 +3,6 @@ package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
@@ -86,13 +85,13 @@ private class ReviewToolwindowTabsManager<
   }
 
   private suspend fun manageProjectTabs(projectVm: PVM) {
-    val listContent = createReviewListContent(projectVm)
+    val mainContent = createMainTabContent(projectVm)
     withContext(NonCancellable) {
-      contentManager.addContent(listContent)
-      contentManager.setSelectedContent(listContent)
+      contentManager.addContent(mainContent)
+      contentManager.setSelectedContent(mainContent)
     }
-    refreshReviewListOnTabSelection(projectVm.listVm, contentManager, listContent)
-    refreshListOnToolwindowShow(projectVm.listVm, toolwindow, listContent)
+    refreshReviewListOnTabSelection(projectVm, contentManager, mainContent)
+    refreshListOnToolwindowShow(projectVm, toolwindow, mainContent)
 
     currentCoroutineContext().ensureActive()
 
@@ -116,7 +115,7 @@ private class ReviewToolwindowTabsManager<
     projectVm.tabs.collect { tabsState ->
       contentManager.removeContentManagerListener(syncListener)
       contentManager.contents.forEach { content ->
-        if (content !== listContent) {
+        if (content !== mainContent) {
           val tab = content.getUserData(REVIEW_TAB_KEY)
           if (tab == null || !tabsState.tabs.containsKey(tab)) {
             contentManager.removeContent(content, true)
@@ -131,7 +130,7 @@ private class ReviewToolwindowTabsManager<
         }
       }
 
-      val contentToSelect = tabsState.selectedTab?.let(::findTabContent) ?: listContent
+      val contentToSelect = tabsState.selectedTab?.let(::findTabContent) ?: mainContent
       contentManager.setSelectedContent(contentToSelect, true)
       contentManager.addContentManagerListener(syncListener)
     }
@@ -149,7 +148,7 @@ private class ReviewToolwindowTabsManager<
     contentManager.addContent(content)
   }
 
-  private fun createReviewListContent(projectVm: PVM): Content =
+  private fun createMainTabContent(projectVm: PVM): Content =
     createDisposableContent(createTabDebugName(projectVm.projectName)) { content, contentCs ->
       content.isCloseable = false
       content.displayName = projectVm.projectName
@@ -180,35 +179,36 @@ private class ReviewToolwindowTabsManager<
 
   private val REVIEW_TAB_KEY: Key<T> = Key.create("com.intellij.collaboration.toolwindow.review.tab")
   private val REVIEW_TAB_VM_KEY: Key<TVM> = Key.create("com.intellij.collaboration.toolwindow.review.tab.vm")
+
+  private fun refreshReviewListOnTabSelection(projectVm: PVM, contentManager: ContentManager, content: Content) {
+    val listener = object : ContentManagerListener {
+      override fun selectionChanged(event: ContentManagerEvent) {
+        if (event.operation == ContentManagerEvent.ContentOperation.add && event.content === content) {
+          // tab selected
+          projectVm.refresh()
+        }
+      }
+    }
+    contentManager.addContentManagerListener(listener)
+    Disposer.register(content) {
+      contentManager.removeContentManagerListener(listener)
+    }
+  }
+
+  private fun refreshListOnToolwindowShow(projectVm: PVM, toolwindow: ToolWindow, content: Content) {
+    toolwindow.project.messageBus.connect(content)
+      .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun toolWindowShown(shownToolwindow: ToolWindow) {
+          if (shownToolwindow.id == toolwindow.id) {
+            val selectedContent = shownToolwindow.contentManager.selectedContent
+            if (selectedContent === content) {
+              projectVm.refresh()
+            }
+          }
+        }
+      })
+  }
 }
 
 private fun createTabDebugName(name: String) = "Review Toolwindow Tab [$name]"
 
-private fun refreshReviewListOnTabSelection(listVm: ReviewListViewModel, contentManager: ContentManager, content: Content) {
-  val listener = object : ContentManagerListener {
-    override fun selectionChanged(event: ContentManagerEvent) {
-      if (event.operation == ContentManagerEvent.ContentOperation.add && event.content === content) {
-        // tab selected
-        listVm.refresh()
-      }
-    }
-  }
-  contentManager.addContentManagerListener(listener)
-  Disposer.register(content) {
-    contentManager.removeContentManagerListener(listener)
-  }
-}
-
-private fun refreshListOnToolwindowShow(listVm: ReviewListViewModel, toolwindow: ToolWindow, content: Content) {
-  toolwindow.project.messageBus.connect(content)
-    .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun toolWindowShown(shownToolwindow: ToolWindow) {
-        if (shownToolwindow.id == toolwindow.id) {
-          val selectedContent = shownToolwindow.contentManager.selectedContent
-          if (selectedContent === content) {
-            listVm.refresh()
-          }
-        }
-      }
-    })
-}

@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -25,6 +26,14 @@ interface ReviewToolwindowProjectViewModel<T : ReviewTab, TVM : ReviewTabViewMod
    * ViewModel of the review list view.
    */
   val listVm: ReviewListViewModel
+
+  /**
+   * Refresh the toolwindow of the currently opened tab
+   */
+  @ApiStatus.Internal
+  fun refresh() {
+    listVm.refresh()
+  }
 
   /**
    * State of displayed review tabs besides the list

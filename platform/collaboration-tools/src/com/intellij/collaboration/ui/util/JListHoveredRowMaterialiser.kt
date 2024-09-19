@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.util
 
 import com.intellij.ui.ExpandedItemListCellRendererWrapper
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.*
 import javax.swing.JList
@@ -77,6 +78,9 @@ class JListHoveredRowMaterialiser<T> private constructor(private val list: JList
     override fun componentResized(e: ComponentEvent) = materialiseRendererAt(hoveredIndex)
   }
 
+  @ApiStatus.Internal
+  var resetCellBoundsOnHover = true
+
   private fun materialiseRendererAt(index: Int) {
     if (index < 0 || index > list.model.size - 1) {
       rendererComponent = null
@@ -88,7 +92,9 @@ class JListHoveredRowMaterialiser<T> private constructor(private val list: JList
     val focused = list.hasFocus() && selected
 
     rendererComponent = cellRenderer.getListCellRendererComponent(list, cellValue, index, selected, focused).apply {
-      bounds = list.getCellBounds(index, index)
+      if (resetCellBoundsOnHover) {
+        bounds = list.getCellBounds(index, index)
+      }
     }
   }
 
