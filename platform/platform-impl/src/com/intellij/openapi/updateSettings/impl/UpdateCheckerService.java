@@ -146,10 +146,12 @@ class UpdateCheckerService {
   }
 
   private void checkUpdates() {
-    UpdateSettings settings = UpdateSettings.getInstance();
-    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
-      UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck());
-    }
+    UpdateChecker.updateAndShowResult().doWhenProcessed(() -> {
+      var settings = UpdateSettings.getInstance();
+      if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
+        queueNextCheck();
+      }
+    });
   }
 
   static void checkIfPreviousUpdateFailed(BuildNumber current) {
