@@ -2,17 +2,13 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import org.junit.Assert.*
-import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 
 class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
-  @JvmField
-  @Rule
-  var tempDir = TempDirectory()
 
   @Test
   fun `test empty set`() {
@@ -256,8 +252,6 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     assertEquals(set.toHashSet(), target.toHashSet())
   }
 
-  private val counter = AtomicInteger()
-
   private val smallSetSize: Int
     get() {
       val size = 5
@@ -284,19 +278,29 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   private val veryBigSetSize: Int
     get() {
-      val size = 13000
+      val size = 5500
       assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
       assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
+      assertTrue(size * 5 > CompactVirtualFileSet.PARTITION_BIT_SET_LIMIT)
       return size
     }
 
   private fun generateCVFSet(size: Int): CompactVirtualFileSet {
     val set = VfsUtilCore.createCompactVirtualFileSet()
-    repeat(size) { set.add(createFile()) }
+    repeat(size) {
+      repeat(4) { createFile() } // ensure ids are spread
+      set.add(createFile())
+    }
     return set as CompactVirtualFileSet
   }
 
-  private fun createFile(): VirtualFile = tempDir.newVirtualFile("file${counter.incrementAndGet()}.txt")
+  private val counter = AtomicInteger()
+  private val tempDir = LightTempDirTestFixtureImpl()
+
+  private fun createFile(): VirtualFile {
+    val fileName = "file${counter.incrementAndGet()}.txt"
+    return tempDir.getFile(fileName) ?: tempDir.createFile(fileName)
+  }
 
   @Test
   fun testFrozenMustNotBeModifiable() {
@@ -304,7 +308,7 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     assertThrows(IllegalStateException::class.java) { set.clear() }
     assertThrows(IllegalStateException::class.java) { set.add(createFile()) }
     assertThrows(IllegalStateException::class.java) { set.remove(createFile()) }
-    assertThrows(IllegalStateException::class.java) { set.addAll(listOf(createFile (), createFile())) }
-    assertThrows(IllegalStateException::class.java) { set.retainAll(listOf(createFile (), createFile())) }
+    assertThrows(IllegalStateException::class.java) { set.addAll(listOf(createFile(), createFile())) }
+    assertThrows(IllegalStateException::class.java) { set.retainAll(listOf(createFile(), createFile())) }
   }
 }
