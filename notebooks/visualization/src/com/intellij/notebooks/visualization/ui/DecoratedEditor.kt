@@ -7,7 +7,7 @@ import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -262,7 +262,7 @@ class DecoratedEditor private constructor(
 }
 
 internal fun <T> keepScrollingPositionWhile(editor: Editor, task: () -> T): T {
-  return ReadAction.compute<T, Nothing> {
+  return WriteIntentReadAction.compute<T, Nothing> {
     EditorScrollingPositionKeeper(editor).use { keeper ->
       if (editor.isDisposed) {
         return@compute task()
