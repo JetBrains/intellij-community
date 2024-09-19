@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.util.ExceptionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,25 +49,36 @@ public abstract class ApplicationCommandLineState<T extends
     }
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-    ReadAction.nonBlocking((Callable<Void>)() -> {
-      final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
-      if (module.getModule() != null) {
-        DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          if (mainClass == null) {
-            throw new CantRunException(ExecutionBundle.message("no.main.class.defined.error.message"));
-          }
-          int classPathType = JavaParametersUtil.getClasspathType(module, mainClass, false,
-                                                                  isProvidedScopeIncluded());
-          JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
-        });
+    try {
+      ReadAction.nonBlocking((Callable<Void>)() -> {
+        final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+        if (module.getModule() != null) {
+          DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
+            if (mainClass == null) {
+              throw new CantRunException(ExecutionBundle.message("no.main.class.defined.error.message"));
+            }
+            int classPathType = JavaParametersUtil.getClasspathType(module, mainClass, false,
+                                                                    isProvidedScopeIncluded());
+            JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+          });
+        }
+        else {
+          JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+        }
+        return null;
+      })
+        .expireWith(configuration.getProject())
+        .executeSynchronously();
+    }
+    catch (Exception e) {
+      ExecutionException executionException = ExceptionUtil.findCause(e, ExecutionException.class);
+      if (executionException != null) {
+        throw executionException;
       }
       else {
-        JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+        throw e;
       }
-      return null;
-    })
-      .expireWith(configuration.getProject())
-      .executeSynchronously();
+    }
 
     setupModulePath(params, module);
 
