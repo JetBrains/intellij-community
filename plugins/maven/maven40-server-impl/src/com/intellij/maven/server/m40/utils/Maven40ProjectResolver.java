@@ -173,23 +173,23 @@ public class Maven40ProjectResolver {
         buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
 
         myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
-
-        Collection<Maven40ExecutionResult> execResults =
-          myTelemetry.executeWithSpan("resolveBuildingResults",
-                                      runInParallel,
-                                      buildingResultInfos, br -> {
-              if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-              Maven40ExecutionResult result = myTelemetry.callWithSpan(
-                "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
-                  resolveBuildingResult(session.getRepositorySession(), br.buildingResult, br.exceptions));
-              result.setDependencyHash(br.dependencyHash);
-              myLongRunningTask.incrementFinishedRequests();
-              return result;
-            }
-          );
-
-        executionResults.addAll(execResults);
       }
+
+      Collection<Maven40ExecutionResult> execResults =
+        myTelemetry.executeWithSpan("resolveBuildingResults",
+                                    runInParallel,
+                                    buildingResultInfos, br -> {
+            if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
+            Maven40ExecutionResult result = myTelemetry.callWithSpan(
+              "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
+                resolveBuildingResult(session.getRepositorySession(), br.buildingResult, br.exceptions));
+            result.setDependencyHash(br.dependencyHash);
+            myLongRunningTask.incrementFinishedRequests();
+            return result;
+          }
+        );
+
+      executionResults.addAll(execResults);
     }
     catch (Exception e) {
       executionResults.add(handleException(e));
