@@ -26,6 +26,10 @@ class ToolWindowStateListener(private val project: Project) : ToolWindowManagerL
   override fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
     project.service<ToolWindowStateCollector>().stateChanged(toolWindowManager, toolWindow, changeType)
   }
+
+  override fun toolWindowUnregistered(id: String, toolWindow: ToolWindow) {
+    project.service<ToolWindowStateCollector>().toolWindowUnregistered(id)
+  }
 }
 
 
@@ -54,18 +58,25 @@ private class ToolWindowStateCollector(private val project: Project, private val
     }
   }
 
+  fun toolWindowUnregistered(id: String) {
+    collectors.remove(id)?.cancel()
+  }
+
   @OptIn(FlowPreview::class)
   private inner class Collector(toolWindowManager: ToolWindowManager, toolWindow: ToolWindowImpl) {
-    private val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
-      coroutineScope.launch(CoroutineName("Tool window resize collector for ${toolWindow.id}") + Dispatchers.EDT) {
-        debounce(DEBOUNCE_TIMEOUT_MS).collect {
-          reportResizeEvent(toolWindowManager, toolWindow)
-        }
+    private val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val job = coroutineScope.launch(CoroutineName("Tool window resize collector for ${toolWindow.id}") + Dispatchers.EDT) {
+      flow.debounce(DEBOUNCE_TIMEOUT_MS).collect {
+        reportResizeEvent(toolWindowManager, toolWindow)
       }
     }
 
     fun ping() {
       flow.tryEmit(Unit)
+    }
+
+    fun cancel() {
+      job.cancel()
     }
   }
 }
