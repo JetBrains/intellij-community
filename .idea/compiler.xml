@@ -7,7 +7,7 @@
     <project-library name="devkit.runtime.module.repository.jps" />
   </component>
   <component name="CompilerConfiguration">
-    <option name="BUILD_PROCESS_HEAP_SIZE" value="2000" />
+    <option name="BUILD_PROCESS_HEAP_SIZE" value="4096" />
     <option name="BUILD_PROCESS_ADDITIONAL_VM_OPTIONS" value="-Dgroovyc.in.process=true -Dgroovyc.asm.resolving.only=false" />
     <excludeFromCompile>
       <file url="file://$PROJECT_DIR$/java/execution/jshell-frontend/src/com/intellij/execution/jshell/frontend/Main.java" />
