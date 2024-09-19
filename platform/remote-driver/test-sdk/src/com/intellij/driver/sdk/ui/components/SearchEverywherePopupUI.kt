@@ -46,6 +46,10 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
     invokeActionWithShortcut("[shift pressed TAB]")
   }
 
+  fun invokeAssignShortcutAction() {
+    invokeActionWithShortcut("[alt pressed ENTER]")
+  }
+
   fun getSelectedTab(): SearchEverywhereTab = SearchEverywhereTab.entries.single { it.id == searchEverywhereUi.getSelectedTabID() }
 
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
@@ -62,6 +66,10 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   fun closePopup() {
     searchEverywhereUi.closePopup()
     waitFor("Popup is closed") { notPresent() }
+  }
+
+  fun printActions() {
+    println(driver.utility(ActionUtils::class).getActions(searchEverywhereUi.component).map { it.getShortcutSet().getShortcuts().contentToString() })
   }
 
   private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
