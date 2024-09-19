@@ -41,7 +41,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.zip.CRC32
-import kotlin.concurrent.Volatile
 
 class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
@@ -1058,10 +1057,11 @@ class MavenProjectsTree(val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
 
-    private val STORAGE_VERSION = MavenProjectsTree::class.java.simpleName + ".9"
+    private val STORAGE_VERSION = MavenProjectsTree::class.java.simpleName + ".10"
 
     @JvmStatic
     @Throws(IOException::class)
+    @ApiStatus.Internal
     fun read(project: Project, file: Path): MavenProjectsTree? {
       val result = MavenProjectsTree(project)
 
