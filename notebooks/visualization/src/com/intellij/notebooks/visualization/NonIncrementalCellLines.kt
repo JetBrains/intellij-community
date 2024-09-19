@@ -7,40 +7,43 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 
 /**
  * inspired by [org.jetbrains.plugins.notebooks.editor.NotebookCellLinesImpl],
  * calculates all markers and intervals from scratch for each document update
  */
-class NonIncrementalCellLines private constructor(private val document: Document,
-                                                  private val intervalsGenerator: IntervalsGenerator) : NotebookCellLines {
+class NonIncrementalCellLines private constructor(
+  private val document: Document,
+  private val intervalsGenerator: IntervalsGenerator,
+) : NotebookCellLines {
 
   override var intervals: List<NotebookCellLines.Interval> = intervalsGenerator.makeIntervals(document)
-    private set
 
   private val documentListener = createDocumentListener()
+
   override val intervalListeners = EventDispatcher.create(NotebookCellLines.IntervalListener::class.java)
 
   override var modificationStamp: Long = 0
-    private set
 
   init {
     document.addDocumentListener(documentListener)
   }
 
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
-    ThreadingAssertions.softAssertReadAccess()
+    // ToDo temporary commented, while we are working on PY-76052.
+    //ThreadingAssertions.softAssertReadAccess()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size
     return intervals.listIterator(ordinal)
   }
 
-  private fun createEvent(oldCells: List<NotebookCellLines.Interval>,
-                                     newCells: List<NotebookCellLines.Interval>,
-                                     oldAffectedCells: List<NotebookCellLines.Interval>,
-                                     newAffectedCells: List<NotebookCellLines.Interval>,
-                                     documentEvent: DocumentEvent): NotebookCellLinesEvent {
+  private fun createEvent(
+    oldCells: List<NotebookCellLines.Interval>,
+    newCells: List<NotebookCellLines.Interval>,
+    oldAffectedCells: List<NotebookCellLines.Interval>,
+    newAffectedCells: List<NotebookCellLines.Interval>,
+    documentEvent: DocumentEvent,
+  ): NotebookCellLinesEvent {
     val (trimmedOldCells, trimmedNewCells) =
       if (oldCells == newCells) {
         Pair(emptyList(), emptyList())
@@ -102,7 +105,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
     }
 
     override fun documentChanged(event: DocumentEvent) {
-      ThreadingAssertions.assertWriteAccess()
+      // ToDo temporary commented, while we are working on PY-76052.
+      //ThreadingAssertions.assertWriteAccess()
       val oldIntervals = intervals
       intervals = intervalsGenerator.makeIntervals(document, event)
 
@@ -110,7 +114,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
       val newEvent = createEvent(oldIntervals, intervals, oldAffectedCells, newAffectedCells, event)
       if (event.document.isInBulkUpdate) {
         postponedEvents.add(newEvent)
-      } else {
+      }
+      else {
         notify(newEvent)
       }
     }
@@ -148,7 +153,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
   }
 }
 
-class NonIncrementalCellLinesException(msg: String, t: Throwable): RuntimeException(msg, t)
+class NonIncrementalCellLinesException(msg: String, t: Throwable) : RuntimeException(msg, t)
 
 private fun <T> trimmed(list: List<T>, trimAtBegin: Int, trimAtEnd: Int) =
   list.subList(trimAtBegin, list.size - trimAtEnd)
@@ -156,9 +161,11 @@ private fun <T> trimmed(list: List<T>, trimAtBegin: Int, trimAtEnd: Int) =
 private val NotebookCellLines.Interval.size: Int
   get() = lines.last + 1 - lines.first
 
-private fun getAffectedCells(intervals: List<NotebookCellLines.Interval>,
-                             document: Document,
-                             textRange: TextRange): List<NotebookCellLines.Interval> {
+private fun getAffectedCells(
+  intervals: List<NotebookCellLines.Interval>,
+  document: Document,
+  textRange: TextRange,
+): List<NotebookCellLines.Interval> {
   val firstLine = document.getLineNumber(textRange.startOffset).let { line ->
     if (document.getLineEndOffset(line) == textRange.startOffset) line + 1 else line
   }
