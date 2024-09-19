@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
@@ -186,6 +187,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                             : DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
 
             XValuePresentation presentation = createPresentation(myValueDescriptor);
+            node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
+            scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(suspendContext) {
+              @Override
+              public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+                initFullValueEvaluator();
+              }
+            });
+          }
+
+          private void initFullValueEvaluator() {
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
             boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
             if (!fullEvaluatorSet && lastRenderer instanceof CompoundReferenceRenderer) {
@@ -216,7 +227,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                 });
               }
             }
-            node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
           }
 
           private boolean setFullValueEvaluator(Renderer renderer) {
@@ -416,9 +426,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
   }
 
-  protected static boolean scheduleCommand(EvaluationContextImpl evaluationContext,
-                                           @NotNull final XCompositeNode node,
-                                           final SuspendContextCommandImpl command) {
+  protected static boolean scheduleCommand(@NotNull EvaluationContextImpl evaluationContext,
+                                           @NotNull final Obsolescent node,
+                                           @NotNull SuspendContextCommandImpl command) {
     if (node.isObsolete()) {
       return false;
     }
@@ -433,7 +443,15 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
       @Override
       protected void commandCancelled() {
-        node.setErrorMessage(JavaDebuggerBundle.message("error.context.has.changed"));
+        if (node instanceof XCompositeNode compositeNode) {
+          compositeNode.setErrorMessage(JavaDebuggerBundle.message("error.context.has.changed"));
+        }
+        else if (node instanceof XValueNode valueNode) {
+          valueNode.setPresentation(null, new XErrorValuePresentation(JavaDebuggerBundle.message("error.context.has.changed")), false);
+        }
+        else {
+          LOG.error("Unknown node type: " + node);
+        }
       }
     });
     return true;
