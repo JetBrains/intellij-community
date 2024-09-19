@@ -8,9 +8,7 @@ import com.intellij.util.ui.showingScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JToggleButton
 import javax.swing.text.JTextComponent
 
@@ -36,18 +34,6 @@ fun Cell<JTextComponent>.bindText(flow: Flow<String>) = apply {
 @ApiStatus.Experimental
 fun Cell<JTextComponent>.bindText(flow: MutableStateFlow<String>) = apply {
   bindImpl(flow, { text(it) }, Pair({ component.text }, flow))
-}
-
-/**
- * Same as [bindText] but for r/o labels:
- * ```kotlin
- *  val f:Flow<String>
- *  label("..").bindLabelText(f)
- * ```
- */
-@ApiStatus.Experimental
-fun Cell<JLabel>.bindLabelText(flow: Flow<@Nls String>) = apply {
-  bindImpl(flow, { component.text = it })
 }
 
 /**

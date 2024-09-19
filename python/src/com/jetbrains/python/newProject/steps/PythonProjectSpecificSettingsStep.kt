@@ -2,13 +2,10 @@
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.ProjectUtil.getUserHomeProjectDir
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.ide.util.projectWizard.WebProjectSettingsStepWrapper
 import com.intellij.ide.util.projectWizard.WebProjectTemplate
 import com.intellij.openapi.GitRepositoryInitializer
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -27,7 +24,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
@@ -39,7 +35,6 @@ import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.flow.MutableStateFlow
-import java.io.File
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JPanel
@@ -168,14 +163,6 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
     return mainPanel
   }
 
-
-
-  private fun getBaseDir(): File {
-    if (PlatformUtils.isDataSpell() && Path.of(ProjectUtil.getBaseDir()).startsWith(PathManager.getConfigDir())) {
-      return File(getUserHomeProjectDir())
-    }
-    return File(ProjectUtil.getBaseDir())
-  }
 
   private fun updateHint(): String =
     try {

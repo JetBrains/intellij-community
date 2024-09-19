@@ -30,7 +30,7 @@ object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535 P
 
   enum class ActiveFileType { PY, IPYNB }
   enum class ModelChoiceEntryPointType { CONTEXT_MENU }  // will be extended later
-  enum class ModelChoiceDialogClosedResultType { USE_MODEL, CANCEL, CLOSE }
+  enum class ModelChoiceDialogClosedResultType { USE_MODEL, CLOSE }
   enum class CacheManagementActionSource { CONTEXT_MENU, TOOLBAR }
   enum class DialogWindowResult { OK, CANCEL }
 

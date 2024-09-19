@@ -30,7 +30,6 @@ private val arch: String = System.getProperty("os.arch").lowercase().let { arch 
 
 private const val pyEnvUrl = "https://github.com/pyenv/pyenv/archive/master.zip"
 private const val pyEnvWinUrl = "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1"
-private val spaceUrl = "https://jetbrains.team/p/pyqa/packages/files/pythons"
 private val pipOptions = arrayOf("--trusted-host", "pypi.python.org", "--trusted-host", "pypi.org", "--trusted-host", "files.pythonhosted.org")
 val Python.directoryName: String
   get() = "$pyenvDefinition-$name-$revision-$os-$arch"

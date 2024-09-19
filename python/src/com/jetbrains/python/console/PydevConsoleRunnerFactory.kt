@@ -167,23 +167,6 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       return SystemProperties.getUserHome()
     }
 
-    fun createSetupFragment(module: Module?,
-                            workingDir: String?,
-                            pathMapper: PathMapper?,
-                            settingsProvider: PyConsoleSettings): Array<String> {
-      var customStartScript = settingsProvider.customStartScript
-      if (customStartScript.isNotBlank()) {
-        customStartScript = "\n" + customStartScript
-      }
-      var pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
-                                                                settingsProvider.shouldAddSourceRoots())
-      if (pathMapper != null) {
-        pythonPath = pathMapper.convertToRemote(pythonPath)
-      }
-      val selfPathAppend = constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript)
-      return arrayOf(selfPathAppend)
-    }
-
     private fun makeStartWithEmptyLine(line: String): String {
       if (line.startsWith("\n") || line.isBlank()) return line
       return "\n" + line

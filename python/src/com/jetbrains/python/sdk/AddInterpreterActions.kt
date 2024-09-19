@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
@@ -21,7 +20,6 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
-import com.jetbrains.python.sdk.add.PyAddSdkDialog
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
@@ -90,27 +88,6 @@ private class AddInterpreterOnTargetAction(
         }
       }
     }
-  }
-}
-
-class AddInterpreterAction(val project: Project, val module: Module, private val currentSdk: Sdk?)
-  : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val model = PyConfigurableInterpreterList.getInstance(project).model
-
-    PyAddSdkDialog.show(
-      project,
-      module,
-      model.sdks.asList(),
-      Consumer {
-        if (it != null && model.findSdk(it.name) == null) {
-          model.addSdk(it)
-          model.apply()
-          switchToSdk(module, it, currentSdk)
-        }
-      }
-    )
   }
 }
 

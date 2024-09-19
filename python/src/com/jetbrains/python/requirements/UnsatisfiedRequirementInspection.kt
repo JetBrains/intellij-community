@@ -51,7 +51,7 @@ class UnsatisfiedRequirementInspection : LocalInspectionTool() {
 private class UnsatisfiedRequirementInspectionVisitor(holder: ProblemsHolder,
                                                       onTheFly: Boolean,
                                                       session: LocalInspectionToolSession) : RequirementsInspectionVisitor(
-  holder, onTheFly, session) {
+  holder, session) {
   override fun visitRequirementsFile(element: RequirementsFile) {
     val module = ModuleUtilCore.findModuleForPsiElement(element)
     val requirementsPath = PyPackageRequirementsSettings.getInstance(module).requirementsPath
