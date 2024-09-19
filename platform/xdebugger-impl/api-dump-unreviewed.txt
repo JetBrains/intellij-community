@@ -2787,6 +2787,7 @@ a:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$C
 - com.intellij.xdebugger.frame.XValueNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode
 - <init>():V
+- setFullValueEvaluator(com.intellij.xdebugger.frame.XFullValueEvaluator):V
 - setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
 - setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
