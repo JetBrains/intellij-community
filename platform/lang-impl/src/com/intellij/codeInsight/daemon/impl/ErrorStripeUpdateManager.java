@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
@@ -32,6 +33,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return project.getService(ErrorStripeUpdateManager.class);
   }
 
+  private static final Logger LOG = Logger.getInstance(ErrorStripeUpdateManager.class);
   private final Project myProject;
 
   public ErrorStripeUpdateManager(@NotNull Project project) {
@@ -87,8 +89,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     ModalityState modality = ModalityState.defaultModalityState();
     TrafficLightRenderer.setTrafficLightOnEditor(myProject, editorMarkupModel, modality, () -> {
       Editor editor = editorMarkupModel.getEditor();
-      if (ReadAction.compute(() -> editor.isDisposed() || !file.isValid() ||
-                                   !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file))) {
+      if (isEditorEligible(editor, file)) {
         return null;
       }
       return createRenderer(editor, file);
@@ -103,7 +104,23 @@ public final class ErrorStripeUpdateManager implements Disposable {
     }
     return new TrafficLightRenderer(myProject, editor);
   }
-  
+
+  private boolean isEditorEligible(Editor editor, PsiFile psiFile) {
+    return ReadAction.compute(() -> {
+      boolean isHighlightingAvailable = DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(psiFile);
+      boolean isPsiValid = psiFile.isValid();
+      boolean isEditorDispose = editor.isDisposed();
+
+      LOG.debug(
+        "Editor params for rendering traffic light: isEditorDispose ", isEditorDispose,
+        " isPsiValid ", isPsiValid,
+        " isEditorDispose ", isHighlightingAvailable);
+      return isEditorDispose
+             || !isPsiValid
+             || !isHighlightingAvailable;
+    });
+  }
+
   static final class EssentialHighlightingModeListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
