@@ -156,6 +156,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
 
+  final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
+
   // These 2 fields are needs to switching from found suspend-thread context to user-friendly suspend-all context.
   // The main related logic is in [SuspendOtherThreadsRequestor].
   volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
@@ -197,6 +199,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DebuggerStatistics.logProcessStatistics(process);
       }
     });
+    mySteppingProgressTracker.installListeners();
   }
 
   private DebuggerManagerThreadImpl createManagerThread() {
@@ -2262,7 +2265,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private class PauseCommand extends DebuggerCommandImpl {
-    PauseCommand() {
+    @Nullable private final ThreadReferenceProxyImpl myPredefinedThread;
+
+    PauseCommand(@Nullable ThreadReferenceProxyImpl thread) {
+      myPredefinedThread = thread;
     }
 
     @Override
@@ -2274,6 +2280,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       getVirtualMachineProxy().suspend();
       logThreads();
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
+      if (myPredefinedThread != null) {
+        suspendContext.setThread(myPredefinedThread.getThreadReference());
+      }
       myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
 
       myDebuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
@@ -2697,8 +2706,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  public DebuggerCommandImpl createPauseCommand() {
-    return new PauseCommand();
+  public DebuggerCommandImpl createPauseCommand(@Nullable ThreadReferenceProxyImpl threadProxy) {
+    return new PauseCommand(threadProxy);
   }
 
   @NotNull

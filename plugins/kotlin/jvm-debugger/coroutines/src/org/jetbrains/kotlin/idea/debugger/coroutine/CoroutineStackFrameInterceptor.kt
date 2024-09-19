@@ -21,11 +21,15 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackFrameLight
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 
 
@@ -254,6 +258,14 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
         override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
             (nextCoroutineFilter is CoroutineIdFilter && coroutinesRunningOnCurrentThread.intersect(nextCoroutineFilter.coroutinesRunningOnCurrentThread).isNotEmpty())
+
+        override val coroutineFilterName: String get() {
+            coroutinesRunningOnCurrentThread.singleOrNull()?.let {
+                return KotlinDebuggerCoreBundle.message("stepping.filter.coroutine.name", "#$it")
+            }
+            val ids = coroutinesRunningOnCurrentThread.toList().sortedBy { it }.joinToString(", ") { "#$it" }
+            return KotlinDebuggerCoreBundle.message("stepping.filter.several.coroutines.name", ids)
+        }
     }
 
     /**
@@ -262,5 +274,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     private data class ContinuationObjectFilter(val reference: ObjectReference) : CoroutineFilter {
         override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
             this == nextCoroutineFilter
+
+        override val coroutineFilterName: String get() = reference.toString()
     }
 }

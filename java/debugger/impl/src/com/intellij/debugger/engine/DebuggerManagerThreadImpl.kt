@@ -7,11 +7,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand
-import com.intellij.debugger.impl.DebuggerCompletableFuture
-import com.intellij.debugger.impl.DebuggerUtilsAsync
-import com.intellij.debugger.impl.InvokeAndWaitThread
-import com.intellij.debugger.impl.InvokeThread
-import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.impl.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
@@ -21,16 +17,19 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.Volatile
 
 class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: CoroutineScope) :
   InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
@@ -51,6 +50,24 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
   override fun dispose() {
     myDisposed = true
+  }
+
+  @ApiStatus.Internal
+  fun makeCancelable(project: Project, progressTitle: @ProgressTitle String, progressText: @Nls String, howToCancel: () -> Unit): CompletableDeferred<Unit> {
+    val deferred = CompletableDeferred<Unit>()
+    coroutineScope.launch {
+      withBackgroundProgress(project, progressTitle) {
+        withProgressText(progressText) {
+          try {
+            deferred.await()
+          } catch (e: CancellationException) {
+            howToCancel()
+            throw e
+          }
+        }
+      }
+    }
+    return deferred
   }
 
   private fun createScope() = parentScope.childScope("DebuggerManagerThreadImpl")

@@ -2883,6 +2883,8 @@
   </extensions>
 
   <applicationListeners>
+    <listener class="com.intellij.debugger.engine.CancelingSteppingListener"
+              topic="com.intellij.debugger.engine.SteppingListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     <listener class="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexRegistryValueListener"
