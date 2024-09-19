@@ -123,29 +123,24 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   private static String validatePath(String pathString) {
-    if (pathString.isEmpty()) {
-      return "Empty path";
+    if (!pathString.startsWith("/")) {
+      return "Must start with '/'";
     }
-    for (int i = 0; i < pathString.length(); i++) {
-      char c = pathString.charAt(i);
-      switch (c) {
-        case '[', '*', '.':
-          break;
-        default:
-          if (c >= '0' && c <= '9') {
-            int j = i;
-            while (j < pathString.length() && pathString.charAt(j) >= '0' && pathString.charAt(j) <= '9') {
-              j++;
-            }
-            int result = Integer.parseInt(pathString.substring(i, j));
-            if (result >= 0 && result <= 255 && j < pathString.length() && pathString.charAt(j) == ';') {
-              //noinspection AssignmentToForLoopParameter
-              i = j; // Skip the ';' character
-              break;
-            }
-          }
-          return "Invalid path: " + pathString;
+    String[] components = pathString.split("/", -1);
+    // The first component is always empty
+    for (int i = 1; i < components.length; i++) {
+      String component = components[i];
+      if (component.equals("[]") || component.equals("*") || component.equals(".")) {
+        continue;
       }
+      try {
+        int number = Integer.parseInt(component);
+        if (number >= 1 && number <= 255) {
+          continue;
+        }
+      }
+      catch (NumberFormatException ignored) { }
+      return "Invalid path: " + pathString + "; invalid component: " + component;
     }
     return null;
   }

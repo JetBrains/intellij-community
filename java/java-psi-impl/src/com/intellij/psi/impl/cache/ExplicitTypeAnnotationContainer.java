@@ -249,16 +249,16 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
     while (pos < path.length) {
       switch (path[pos]) {
         case Collector.ARRAY_ELEMENT:
-          result.append('[');
+          result.append("/[]");
           break;
         case Collector.ENCLOSING_CLASS:
-          result.append('.');
+          result.append("/.");
           break;
         case Collector.WILDCARD_BOUND:
-          result.append('*');
+          result.append("/*");
           break;
         case Collector.TYPE_ARGUMENT:
-          result.append(path[++pos]).append(';');
+          result.append('/').append(path[++pos] + 1);
           break;
       }
       pos++;

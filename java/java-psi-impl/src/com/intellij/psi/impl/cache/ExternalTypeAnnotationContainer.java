@@ -7,14 +7,15 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A container that reports external type annotations. External type annotations are described in annotation.xml files
- * with additional {@code typePath} attribute. The attribute syntax is the following:
+ * with additional {@code typePath} attribute. The attribute contains several components starting with '/' and separated with '/'
+ * (no ending '/' is allowed). The allowed components are the following:
  * <ul>
- *   <li>{@code digit;} - zero-based type argument
+ *   <li>{@code number} - one-based type argument index (1-255)
  *   <li>{@code *} (asterisk) - bound of a wildcard type
- *   <li>{@code [} (left bracket) - array element
+ *   <li>{@code []} (square brackets) - array element (also works for varargs)
  *   <li>{@code .} (dot) - enclosing type of inner type
  * </ul>
- * E.g., for type {@code Consumer<? super T>} the typePath {@code 0;*} points to {@code T}
+ * E.g., for type {@code Entry<? extends K, ? extends V>[]} the typePath {@code /[]/2/*} points to {@code V}
  */
 public final class ExternalTypeAnnotationContainer implements TypeAnnotationContainer {
   @NotNull private final String myTypePath;
@@ -27,24 +28,24 @@ public final class ExternalTypeAnnotationContainer implements TypeAnnotationCont
   
   @Override
   public @NotNull TypeAnnotationContainer forArrayElement() {
-    return new ExternalTypeAnnotationContainer(myTypePath + "[", myOwner);
+    return new ExternalTypeAnnotationContainer(myTypePath + "/[]", myOwner);
   }
 
   @Override
   public @NotNull TypeAnnotationContainer forEnclosingClass() {
-    return new ExternalTypeAnnotationContainer(myTypePath + ".", myOwner);
+    return new ExternalTypeAnnotationContainer(myTypePath + "/.", myOwner);
   }
 
   @Override
   public @NotNull TypeAnnotationContainer forBound() {
-    return new ExternalTypeAnnotationContainer(myTypePath + "*", myOwner);
+    return new ExternalTypeAnnotationContainer(myTypePath + "/*", myOwner);
   }
 
   @Override
   public @NotNull TypeAnnotationContainer forTypeArgument(int index) {
-    return new ExternalTypeAnnotationContainer(myTypePath + index + ";", myOwner);
+    return new ExternalTypeAnnotationContainer(myTypePath + "/" + (index + 1), myOwner);
   }
-
+  
   @Override
   public @NotNull TypeAnnotationProvider getProvider(PsiElement parent) {
     // We don't expect any top-level type annotations: they will be stored as element (method/field/parameter) annotations,

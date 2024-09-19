@@ -824,8 +824,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     assertEquals("Container<Container<E>>", typeInfo.text());
     TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
     assertEquals("""
-                   0;->@NotNull
-                   0;0;->@NotNull""", annotations.toString());
+                   /1->@NotNull
+                   /1/1->@NotNull""", annotations.toString());
   }
 
   public void testSOEProof() {
