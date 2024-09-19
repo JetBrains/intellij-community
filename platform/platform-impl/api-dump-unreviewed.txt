@@ -19615,10 +19615,6 @@ f:com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantStat
 f:com.intellij.platform.ide.impl.presentationAssistant.WinKeyStrokePresentationKt
 - sf:getWinKeyText(I):java.lang.String
 - sf:getWinModifiersText(I):java.lang.String
-f:com.intellij.platform.ide.impl.statistic.ToolWindowStateListener
-- com.intellij.openapi.wm.ex.ToolWindowManagerListener
-- <init>(com.intellij.openapi.project.Project):V
-- stateChanged(com.intellij.openapi.wm.ToolWindowManager,com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.wm.ex.ToolWindowManagerListener$ToolWindowManagerEventType):V
 c:com.intellij.platform.ide.menu.IdeJMenuBar
 - javax.swing.JMenuBar
 - add(javax.swing.JMenu):javax.swing.JMenu

@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-class ToolWindowStateListener(private val project: Project) : ToolWindowManagerListener {
+internal class ToolWindowStateListener(private val project: Project) : ToolWindowManagerListener {
   override fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
     project.service<ToolWindowStateCollector>().stateChanged(toolWindowManager, toolWindow, changeType)
   }
@@ -64,7 +64,7 @@ private class ToolWindowStateCollector(private val project: Project, private val
 
   @OptIn(FlowPreview::class)
   private inner class Collector(toolWindowManager: ToolWindowManager, toolWindow: ToolWindowImpl) {
-    private val flow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val job = coroutineScope.launch(CoroutineName("Tool window resize collector for ${toolWindow.id}") + Dispatchers.EDT) {
       flow.debounce(DEBOUNCE_TIMEOUT_MS).collect {
         reportResizeEvent(toolWindowManager, toolWindow)
