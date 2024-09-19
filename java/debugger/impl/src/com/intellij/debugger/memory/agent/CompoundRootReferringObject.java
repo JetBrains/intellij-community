@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -75,10 +74,6 @@ public class CompoundRootReferringObject implements ReferringObject {
             renderer.renderValue(Arrays.stream(myKinds).map(kind -> kind.toString() + " reference").collect(Collectors.joining(", ")));
           }
         }, hasChildren);
-      }
-
-      @Override
-      public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
       }
     };
   }
