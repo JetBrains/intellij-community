@@ -32,6 +32,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
@@ -217,7 +218,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     int fileId = getFileId(virtualFile);
 
     if (getAccessibleFileIdFilter(project).test(fileId)) {
-      Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> {
+      Map<K, V> map = readIndexAndProcessExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> {
 
         if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
             !((FileBasedIndexExtension<K, V>)index.getExtension()).needsForwardIndexWhenSharing()) {
@@ -272,7 +273,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       IdFilter filter = extractIdFilter(scope, project);
       IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
 
-      IntSet fileIds = processExceptions(indexId, null, scope, index -> {
+      IntSet fileIds = readIndexAndProcessExceptions(indexId, null, scope, index -> {
         IntSet fileIdsInner = new IntOpenHashSet();
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         index.getData(dataKey).forEach((id, value) -> {
@@ -316,13 +317,17 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return index.getModificationStamp();
   }
 
-  private @Nullable <K, V, R> R processExceptions(final @NotNull ID<K, V> indexId,
-                                                  final @Nullable VirtualFile restrictToFile,
-                                                  final @NotNull GlobalSearchScope filter,
-  private @Nullable <K, V, R> R processExceptions(@NotNull ID<K, V> indexId,
-                                                  @Nullable VirtualFile restrictToFile,
-                                                  @NotNull GlobalSearchScope filter,
-                                                  @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
+  /**
+   * Reads the index with 'computable' function (index -> R) and returns a result of a computation (R).
+   * Method takes care of all the gory details: ensuring index is initialized and up-to-date, locking, processing
+   * (possible) exceptions.
+   * Only read access is allowed inside 'computable' function: even though index argument is {@link UpdatableIndex}, computable
+   * must not call modification methods, like {@link UpdatableIndex#updateWith(UpdateData)} ot alike
+   */
+  private @Nullable <K, V, R> R readIndexAndProcessExceptions(@NotNull ID<K, V> indexId,
+                                                              @Nullable VirtualFile restrictToFile,
+                                                              @NotNull GlobalSearchScope filter,
+                                                              @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
     try {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, V, FileContent, ?> index = getIndex(indexId);
@@ -341,7 +346,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       requestRebuild(indexId, e);
     }
     catch (RuntimeException e) {
-      Throwable cause = getCauseToRebuildIndex(e);
+      Throwable cause = extractCauseToRebuildIndex(e);
       if (cause != null) {
         requestRebuild(indexId, cause);
       }
@@ -418,12 +423,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       trace.keysWithAND(1)
         .withProject(scope.getProject());
       //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
-      final ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, Boolean, StorageException> convertor = index -> {
+      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, Boolean, StorageException> convertor = index -> {
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         var valuesIterator = (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator();
         return valueProcessor.process(valuesIterator);
       };
-      final Boolean result = processExceptions(indexId, restrictToFile, scope, convertor);
+      Boolean result = readIndexAndProcessExceptions(indexId, restrictToFile, scope, convertor);
       return result == null || result.booleanValue();
     }
   }
@@ -567,7 +572,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         }
       };
 
-      final IntSet ids = processExceptions(indexId, null, scope, convertor);
+      IntSet ids = readIndexAndProcessExceptions(indexId, null, scope, convertor);
 
       trace.lookupResultSize(ids != null ? ids.size() : 0);
       return ids;
@@ -595,7 +600,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         }
       };
 
-      final IntSet ids = processExceptions(indexId, null, filter, convertor);
+      IntSet ids = readIndexAndProcessExceptions(indexId, null, filter, convertor);
       trace.lookupResultSize(ids != null ? ids.size() : 0);
       return ids;
     }
@@ -692,7 +697,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   public abstract @NotNull Logger getLogger();
 
-  public static @Nullable Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
+  /**
+   * Inspect the exception e, and if it is a plausible reason for index rebuild -- return non-null cause for a rebuild
+   * (which could be e itself, or some other exception in its cause/suppressed chains), otherwise return null
+   */
+  public static @Nullable Throwable extractCauseToRebuildIndex(@NotNull RuntimeException e) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // avoid rebuilding index in tests since we do it synchronously in requestRebuild, and we can have readAction at hand
       return null;

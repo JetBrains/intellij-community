@@ -206,7 +206,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void updateWithMap(@NotNull UpdateData<FileType, Void> updateData) {
+  public void updateWith(@NotNull UpdateData<FileType, Void> updateData) {
     throw new UnsupportedOperationException();
   }
 

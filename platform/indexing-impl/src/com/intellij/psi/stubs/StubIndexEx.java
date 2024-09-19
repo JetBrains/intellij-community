@@ -88,7 +88,7 @@ public abstract class StubIndexEx extends StubIndex {
         UpdatableIndex<K, Void, FileContent, ?> index = getIndex(stubIndexKey);
         if (index == null) return;
 
-        index.updateWithMap(new UpdateData<>(
+        index.updateWith(new UpdateData<>(
           fileId,
           index.getExtension().getName(),
 
@@ -215,7 +215,7 @@ public abstract class StubIndexEx extends StubIndex {
       }
       catch (RuntimeException e) {
         trace.lookupFailed();
-        final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+        Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
         if (cause != null) {
           forceRebuild(cause);
         }
@@ -411,7 +411,7 @@ public abstract class StubIndexEx extends StubIndex {
     }
     catch (RuntimeException e) {
       trace.lookupFailed();
-      Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+      Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);
       }

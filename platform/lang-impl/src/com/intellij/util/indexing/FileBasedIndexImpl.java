@@ -1561,7 +1561,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void requestIndexRebuildOnException(RuntimeException exception, ID<?, ?> indexId) {
-    Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
+    Throwable causeToRebuildIndex = extractCauseToRebuildIndex(exception);
     if (causeToRebuildIndex != null) {
       requestRebuild(indexId, causeToRebuildIndex);
     }

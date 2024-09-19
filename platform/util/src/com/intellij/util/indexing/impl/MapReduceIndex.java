@@ -408,8 +408,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     myModificationStamp.incrementAndGet();
   }
 
-  //MAYBE RC: rename to updateWith()? There is no map anymore
-  public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
+  public void updateWith(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
     ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
@@ -459,7 +458,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     public boolean update() {
       checkNonCancellableSection();
       try {
-        MapReduceIndex.this.updateWithMap(updateData);
+        MapReduceIndex.this.updateWith(updateData);
       }
       catch (StorageException | CancellationException ex) {
         logStorageUpdateException(ex);

@@ -77,7 +77,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   @NotNull
   IndexExtension<Key, Value, Input> getExtension();
 
-  void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException;
+  void updateWith(@NotNull UpdateData<Key, Value> updateData) throws StorageException;
 
   void setBufferingEnabled(boolean enabled);
 

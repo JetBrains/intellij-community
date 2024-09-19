@@ -84,7 +84,7 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) {
+  public void updateWith(@NotNull UpdateData<Key, Value> updateData) {
   }
 
   @Override

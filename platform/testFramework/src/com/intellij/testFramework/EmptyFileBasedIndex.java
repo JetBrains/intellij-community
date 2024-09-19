@@ -263,7 +263,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) {
+    public void updateWith(@NotNull UpdateData<Key, Value> updateData) {
       throw new UnsupportedOperationException();
     }
 

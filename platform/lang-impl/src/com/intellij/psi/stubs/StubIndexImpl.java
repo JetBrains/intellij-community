@@ -169,7 +169,7 @@ public final class StubIndexImpl extends StubIndexEx {
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+        Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
         if (cause == null) {
           throw e;
         }
