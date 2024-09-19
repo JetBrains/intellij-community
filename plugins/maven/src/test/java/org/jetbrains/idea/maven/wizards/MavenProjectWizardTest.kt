@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,8 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   override fun runInDispatchThread() = false
 
   fun `test when module is created then its pom is unignored`() = runBlocking {
+    Registry.get("ide.activity.tracking.enable.debug").setValue(true, testRootDisposable)
+
     // create project
     waitForProjectCreation {
       createProjectFromTemplate(JAVA) {
