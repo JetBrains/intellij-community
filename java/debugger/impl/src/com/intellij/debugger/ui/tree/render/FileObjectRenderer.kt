@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.tree.render
 import com.intellij.debugger.JavaDebuggerBundle.message
 import com.intellij.debugger.engine.FullValueEvaluatorProvider
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.settings.NodeRendererSettings
@@ -29,20 +30,25 @@ class FileObjectRenderer : CompoundRendererProvider() {
   override fun getFullValueEvaluatorProvider(): FullValueEvaluatorProvider? {
     return object : FullValueEvaluatorProvider {
       override fun getFullValueEvaluator(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptorImpl): XFullValueEvaluator? {
-        val isFile = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, valueDescriptor.value as ObjectReference, "isFile", "()Z")
-        if ((isFile as? BooleanValue)?.value() == true) {
-          return object : JavaValue.JavaFullValueEvaluator(message("message.node.open"), evaluationContext) {
-            override fun isShowValuePopup(): Boolean = false
+        val value = valueDescriptor.value as? ObjectReference ?: return null
+        try {
+          val isFile = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "isFile", "()Z")
+          if ((isFile as? BooleanValue)?.value() == true) {
+            return object : JavaValue.JavaFullValueEvaluator(message("message.node.open"), evaluationContext) {
+              override fun isShowValuePopup(): Boolean = false
 
-            override fun evaluate(callback: XFullValueEvaluationCallback) {
-              val path = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, valueDescriptor.value as ObjectReference, "getAbsolutePath", "()Ljava/lang/String;")
-              if (path is StringReference) {
-                callback.evaluated("")
-                val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.value()) ?: return
-                DebuggerUIUtil.invokeLater { PsiNavigationSupport.getInstance().createNavigatable(evaluationContext.project, vFile, -1).navigate(true) }
+              override fun evaluate(callback: XFullValueEvaluationCallback) {
+                val path = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "getAbsolutePath", "()Ljava/lang/String;")
+                if (path is StringReference) {
+                  callback.evaluated("")
+                  val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.value()) ?: return
+                  DebuggerUIUtil.invokeLater { PsiNavigationSupport.getInstance().createNavigatable(evaluationContext.project, vFile, -1).navigate(true) }
+                }
               }
             }
           }
+        }
+        catch (_: EvaluateException) {
         }
         return null
       }
