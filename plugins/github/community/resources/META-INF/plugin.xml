@@ -21,7 +21,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
-    <plugin id="com.intellij.ml.llm"/>
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 

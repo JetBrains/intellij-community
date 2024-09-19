@@ -19,6 +19,7 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.net.URI
 
@@ -98,7 +99,8 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
   }
 }
 
-internal fun String.convertToHtml(project: Project): @NlsSafe String {
+@ApiStatus.Internal
+fun String.convertToHtml(project: Project): @NlsSafe String {
   val processedText = processIssueIdsMarkdown(project, this)
   return GHMarkdownToHtmlConverter(project).convertMarkdown(processedText)
 }
