@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
@@ -247,29 +246,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
     myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
     myPackagesPanel.updateNotifications(sdk);
-  }
-
-  private void onShowDetailsClicked(@NotNull JButton detailsButton) {
-    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), buildAllSdksDialog(), myMainPanel,
-                              detailsButton.getLocationOnScreen(), new SdkAddedCallback());
-  }
-
-  /**
-   * To be deprecated.
-   * <p>
-   * The part of the legacy implementation for editing SDKs based on {@link com.jetbrains.python.remote.PyRemoteSdkAdditionalData}.
-   */
-  private @NotNull PythonSdkDetailsDialog buildAllSdksDialog() {
-    return new PythonSdkDetailsDialog(
-      myProject,
-      myModule,
-      this::onShowAllInterpretersDialogClosed,
-      reset -> {
-        // data is invalidated on `model` resetting so we need to reload sdks to not stuck with outdated ones
-        // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to resetting
-        if (reset) updateSdkListAndSelect(getEditableSelectedSdk());
-      }
-    );
   }
 
   private static JComponent buildToolWindowAdvertisement(Project project) {
