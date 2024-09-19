@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class JavaCommandCompletionTest : BasePlatformTestCase() {
+class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
   @Test
   fun `default options are present`() = runBlocking {
     val fixture = ShellCompletionTestFixture.builder(project).build()
