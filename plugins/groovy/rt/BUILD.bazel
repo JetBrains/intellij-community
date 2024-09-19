@@ -1,0 +1,15 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.groovy.rt",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:groovy",
+    "@libraries//:annotations-java5",
+    "@community//plugins/groovy/rt-constants:intellij.groovy.constants.rt"
+  ]
+)

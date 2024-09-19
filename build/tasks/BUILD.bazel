@@ -1,0 +1,38 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.idea.community.build.tasks",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java','resources/**/*.kt', 'resources/**/*.java']),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//platform/util/zip:intellij.platform.util.zip",
+    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:jackson-jr-objects",
+    "@libraries//:jackson-core",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util/rt-java8:intellij.platform.util.rt.java8",
+    "@community//java/java-runtime:intellij.java.rt",
+    "@community//platform/util-rt:intellij.platform.util.rt",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters",
+    "@libraries//:slf4j-api",
+    "@libraries//:slf4j-jdk14",
+    "@libraries//:bcpkix-jdk18on",
+    "@community//platform/build-scripts/downloader:intellij.platform.buildScripts.downloader",
+    "@libraries//:annotations",
+    "@community//platform/util/base:intellij.platform.util.base",
+    "@libraries//:hash4j",
+    "@libraries//:serviceMessages",
+    "@libraries//:opentelemetry-extension-kotlin",
+    "@libraries//:netty-buffer"
+  ]
+)

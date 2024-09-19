@@ -1,0 +1,22 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.util.progress",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@libraries//:guava",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm"
+  ]
+)

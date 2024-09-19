@@ -1,0 +1,24 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.workspace.storage",
+  srcs = glob(['gen/**/*.kt', 'gen/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:guava",
+    "@libraries//:kotlin-reflect",
+    "@community//platform/util:intellij.platform.util",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:caffeine",
+    "@libraries//:kryo5",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@libraries//:kotlinx-collections-immutable-jvm"
+  ]
+)

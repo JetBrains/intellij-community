@@ -1,0 +1,26 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.diagnostic.telemetry.exporters",
+  srcs = glob(['resources/**/*.kt', 'resources/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:annotations",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:opentelemetry-exporter-otlp-common",
+    "@community//platform/util/http:intellij.platform.util.http",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util:intellij.platform.util",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-protobuf-jvm"
+  ]
+)

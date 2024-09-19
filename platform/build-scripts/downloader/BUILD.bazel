@@ -1,0 +1,29 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.buildScripts.downloader",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:commons-compress",
+    "@libraries//:serviceMessages",
+    "@libraries//:guava",
+    "@libraries//:zstd-jni",
+    "@libraries//:commons-io",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:ktor-client-auth-jvm",
+    "@libraries//:ktor-client-encoding-jvm",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:opentelemetry-extension-kotlin",
+    "@libraries//:ktor-client-okhttp-jvm",
+    "@libraries//:okhttp",
+    "@libraries//:ktor-client-core-jvm",
+    "@libraries//:hash4j"
+  ]
+)

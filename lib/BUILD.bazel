@@ -1,0 +1,9 @@
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+  name = "eclipse",
+  jars = [
+    "ecj-4.25.jar"
+  ],
+  visibility = ["//visibility:public"]
+)

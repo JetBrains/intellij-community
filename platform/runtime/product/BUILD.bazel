@@ -1,0 +1,16 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.runtime.product",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:annotations",
+    "@community//platform/runtime/repository:intellij.platform.runtime.repository",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/base:intellij.platform.util.base"
+  ]
+)

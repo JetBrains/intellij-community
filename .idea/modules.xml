@@ -590,6 +590,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/coroutine/intellij.platform.bootstrap.coroutine.iml" filepath="$PROJECT_DIR$/platform/bootstrap/coroutine/intellij.platform.bootstrap.coroutine.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/dev/intellij.platform.bootstrap.dev.iml" filepath="$PROJECT_DIR$/platform/bootstrap/dev/intellij.platform.bootstrap.dev.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/intellij.platform.buildScripts.iml" filepath="$PROJECT_DIR$/platform/build-scripts/intellij.platform.buildScripts.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/bazel/intellij.platform.buildScripts.bazel.iml" filepath="$PROJECT_DIR$/platform/build-scripts/bazel/intellij.platform.buildScripts.bazel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/codeOptimizer/intellij.platform.buildScripts.codeOptimizer.iml" filepath="$PROJECT_DIR$/platform/build-scripts/codeOptimizer/intellij.platform.buildScripts.codeOptimizer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/dev-server/intellij.platform.buildScripts.devBuildServer.iml" filepath="$PROJECT_DIR$/platform/build-scripts/dev-server/intellij.platform.buildScripts.devBuildServer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/build-scripts/downloader/intellij.platform.buildScripts.downloader.iml" filepath="$PROJECT_DIR$/platform/build-scripts/downloader/intellij.platform.buildScripts.downloader.iml" />

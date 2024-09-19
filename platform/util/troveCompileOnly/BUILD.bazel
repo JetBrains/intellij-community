@@ -1,0 +1,13 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.util.troveCompileOnly",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:annotations"
+  ]
+)

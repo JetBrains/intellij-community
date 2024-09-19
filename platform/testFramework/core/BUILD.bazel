@@ -1,0 +1,26 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.testFramework.core",
+  srcs = glob(['resources/**/*.kt', 'resources/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@community//platform/boot:intellij.platform.boot",
+    "@community//platform/testFramework/bootstrap:intellij.tools.testsBootstrap",
+    "@libraries//:opentest4j",
+    "@libraries//:junit",
+    "@libraries//:junit-jupiter-api.provided",
+    "@community//java/java-runtime:intellij.java.rt",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:httpmime"
+  ]
+)

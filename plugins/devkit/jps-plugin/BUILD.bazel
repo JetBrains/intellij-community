@@ -1,0 +1,18 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.devkit.jps",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java','resources/**/*.kt', 'resources/**/*.java']),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//jps/model-api:intellij.platform.jps.model",
+    "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
+    "@community//jps/jps-builders:intellij.platform.jps.build",
+    "@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil",
+    "@libraries//:asm-all",
+    "@community//platform/util/jdom:intellij.platform.util.jdom"
+  ]
+)

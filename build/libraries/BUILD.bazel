@@ -1,0 +1,618 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
+
+kt_compiler_plugin(
+  name = "serialization_plugin",
+  id = "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin",
+  deps = [
+    "@maven//:org_jetbrains_kotlin_kotlin_serialization_compiler_plugin"
+  ],
+  visibility = ["//visibility:public"]
+)
+
+### auto-generated section `maven-libraries` start
+java_library(
+  name = "commons-cli",
+  exports = ["@maven//:commons_cli_commons_cli"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "commons-compress",
+  exports = ["@maven//:org_apache_commons_commons_compress"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-sdk",
+  exports = ["@maven//:io_opentelemetry_opentelemetry_sdk"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-semconv",
+  exports = ["@maven//:io_opentelemetry_semconv_opentelemetry_semconv"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlin-stdlib",
+  exports = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jackson-core",
+  exports = ["@maven//:com_fasterxml_jackson_core_jackson_core"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jackson-jr-objects",
+  exports = ["@maven//:com_fasterxml_jackson_jr_jackson_jr_objects"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "intellij-deps-fastutil",
+  exports = ["@maven//:org_jetbrains_intellij_deps_fastutil_intellij_deps_fastutil"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "gson",
+  exports = ["@maven//:com_google_code_gson_gson"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "protobuf-java",
+  exports = ["@maven//:com_google_protobuf_protobuf_java"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "devkit-runtime-module-repository-jps",
+  exports = ["@maven//:com_jetbrains_intellij_devkit_devkit_runtime_module_repository_jps"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jackson-databind",
+  exports = ["@maven//:com_fasterxml_jackson_core_jackson_databind"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "json-schema-validator",
+  exports = ["@maven//:com_networknt_json_schema_validator"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-serialization-json-jvm",
+  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-serialization-core-jvm",
+  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_core_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "okhttp",
+  exports = ["@maven//:com_squareup_okhttp3_okhttp"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "zstd-jni",
+  exports = ["@maven//:com_github_luben_zstd_jni"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-collections-immutable-jvm",
+  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-coroutines-core-jvm",
+  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_core_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-extension-kotlin",
+  exports = ["@maven//:io_opentelemetry_opentelemetry_extension_kotlin"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "blockmap",
+  exports = ["@maven//:org_jetbrains_intellij_blockmap"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "commons-io",
+  exports = ["@maven//:commons_io_commons_io"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-client-auth-jvm",
+  exports = ["@maven//:io_ktor_ktor_client_auth_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "bcpkix-jdk18on",
+  exports = ["@maven//:org_bouncycastle_bcpkix_jdk18on"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "format-ripper",
+  exports = ["@maven//:com_jetbrains_format_ripper_format_ripper"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jackson-datatype-joda",
+  exports = ["@maven//:com_fasterxml_jackson_datatype_jackson_datatype_joda"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "httpmime",
+  exports = ["@maven//:org_apache_httpcomponents_httpmime"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-serialization-kotlinx-json-jvm",
+  exports = ["@maven//:io_ktor_ktor_serialization_kotlinx_json_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-coroutines-slf4j",
+  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_slf4j"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-client-content-negotiation-jvm",
+  exports = ["@maven//:io_ktor_ktor_client_content_negotiation_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "slf4j-api",
+  exports = ["@maven//:org_slf4j_slf4j_api"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "apple-notary-api-kotlin-client",
+  exports = ["@maven//:org_jetbrains_apple_notary_api_kotlin_client"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "structure-intellij",
+  exports = ["@maven//:org_jetbrains_intellij_plugins_structure_intellij"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jaxb-api",
+  exports = ["@maven//:javax_xml_bind_jaxb_api"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jaxb-runtime",
+  exports = ["@maven//:org_glassfish_jaxb_jaxb_runtime"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "javax.activation",
+  exports = ["@maven//:com_sun_activation_javax_activation"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "serviceMessages",
+  exports = ["@maven//:org_jetbrains_teamcity_serviceMessages"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlin-reflect",
+  exports = ["@maven//:org_jetbrains_kotlin_kotlin_reflect"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jsoup",
+  exports = ["@maven//:org_jsoup_jsoup"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "asm-all",
+  exports = ["@maven//:org_jetbrains_intellij_deps_asm_all"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "tools-java",
+  exports = ["@maven//:org_spdx_tools_java"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "hash4j",
+  exports = ["@maven//:com_dynatrace_hash4j_hash4j"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jbr-api",
+  exports = ["@maven//:com_jetbrains_jbr_api"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-serialization-protobuf-jvm",
+  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_protobuf_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jackson-module-kotlin",
+  exports = ["@maven//:com_fasterxml_jackson_module_jackson_module_kotlin"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jackson-dataformat-yaml",
+  exports = ["@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ion-java",
+  exports = ["@maven//:com_amazon_ion_ion_java"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-client-core-jvm",
+  exports = ["@maven//:io_ktor_ktor_client_core_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "snakeyaml",
+  exports = ["@maven//:org_yaml_snakeyaml"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "netty-all",
+  exports = ["@maven//:io_netty_netty_all"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "netty-tcnative-boringssl-static",
+  exports = ["@maven//:io_netty_netty_tcnative_boringssl_static"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "annotations",
+  exports = ["@maven//:org_jetbrains_annotations"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "guava",
+  exports = ["@maven//:com_google_guava_guava"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-client-encoding-jvm",
+  exports = ["@maven//:io_ktor_ktor_client_encoding_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-client-okhttp-jvm",
+  exports = ["@maven//:io_ktor_ktor_client_okhttp_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "log4j-over-slf4j",
+  exports = ["@maven//:org_slf4j_log4j_over_slf4j"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jna-platform",
+  exports = ["@maven//:net_java_dev_jna_jna_platform"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "oro",
+  exports = ["@maven//:oro_oro"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "lz4-java",
+  exports = ["@maven//:org_lz4_lz4_java"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "commons-codec",
+  exports = ["@maven//:commons_codec_commons_codec"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "aalto-xml",
+  exports = ["@maven//:com_fasterxml_aalto_xml"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "caffeine",
+  exports = ["@maven//:com_github_ben_manes_caffeine_caffeine"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "groovy",
+  exports = ["@maven//:org_codehaus_groovy_groovy"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "cli-parser",
+  exports = ["@maven//:com_github_spullara_cli_parser_cli_parser"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "commons-logging",
+  exports = ["@maven//:commons_logging_commons_logging"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "slf4j-jdk14",
+  exports = ["@maven//:org_slf4j_slf4j_jdk14"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-resolver-provider",
+  exports = ["@maven//:org_apache_maven_maven_resolver_provider"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-resolver-transport-file",
+  exports = ["@maven//:org_apache_maven_resolver_maven_resolver_transport_file"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-resolver-transport-http",
+  exports = ["@maven//:org_apache_maven_resolver_maven_resolver_transport_http"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-resolver-connector-basic",
+  exports = ["@maven//:org_apache_maven_resolver_maven_resolver_connector_basic"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "commons-lang3",
+  exports = ["@maven//:org_apache_commons_commons_lang3"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "plexus-utils",
+  exports = ["@maven//:org_codehaus_plexus_plexus_utils"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentest4j",
+  exports = ["@maven//:org_opentest4j_opentest4j"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit",
+  exports = ["@maven//:junit_junit"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit-jupiter-api.provided",
+  exports = ["@maven//:org_junit_jupiter_junit_jupiter_api"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "annotations-java5",
+  exports = ["@maven//:org_jetbrains_annotations_java5"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "netty-buffer",
+  exports = ["@maven//:io_netty_netty_buffer"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jaxen",
+  exports = ["@maven//:jaxen_jaxen"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-coroutines-debug",
+  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_debug"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "forms",
+  exports = ["@maven//:com_jgoodies_forms"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "netty-codec-http2",
+  exports = ["@maven//:io_netty_netty_codec_http2"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "javax.annotation-api",
+  exports = ["@maven//:javax_annotation_javax_annotation_api"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "qdox",
+  exports = ["@maven//:com_thoughtworks_qdox_qdox"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "jps-javac-extension",
+  exports = ["@maven//:org_jetbrains_jps_jps_javac_extension"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-metadata-jvm",
+  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlin-stdlib.provided",
+  exports = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "netty-codec-protobuf",
+  exports = ["@maven//:io_netty_netty_codec_protobuf"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "h2-mvstore",
+  exports = ["@maven//:com_h2database_h2_mvstore"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit-platform-launcher.provided",
+  exports = ["@maven//:org_junit_platform_junit_platform_launcher"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit-vintage-engine.provided",
+  exports = ["@maven//:org_junit_vintage_junit_vintage_engine"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "junit-jupiter-engine.provided",
+  exports = ["@maven//:org_junit_jupiter_junit_jupiter_engine"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ant.provided",
+  exports = ["@maven//:org_apache_ant_ant"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-coroutines-core-jvm.provided",
+  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_core_jvm"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-sdk.provided",
+  exports = ["@maven//:io_opentelemetry_opentelemetry_sdk"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-semconv.provided",
+  exports = ["@maven//:io_opentelemetry_semconv_opentelemetry_semconv"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-extension-kotlin.provided",
+  exports = ["@maven//:io_opentelemetry_opentelemetry_extension_kotlin"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "opentelemetry-exporter-otlp-common",
+  exports = ["@maven//:io_opentelemetry_opentelemetry_exporter_otlp_common"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kryo5",
+  exports = ["@maven//:com_esotericsoftware_kryo5"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "ktor-client-java-jvm",
+  exports = ["@maven//:io_ktor_ktor_client_java_jvm"],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `maven-libraries` end

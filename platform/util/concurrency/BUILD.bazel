@@ -1,0 +1,19 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  visibility = ["//visibility:public"],
+  name = "intellij.platform.concurrency",
+  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/core-api:intellij.platform.core",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ]
+)
