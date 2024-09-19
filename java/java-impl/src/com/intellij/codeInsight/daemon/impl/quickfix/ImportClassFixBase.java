@@ -194,8 +194,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
                                   facade.arePackagesTheSame(aClass, myReferenceElement) ||
                                   PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) &&
                                  !isAccessible(aClass, myReferenceElement));
-
-    filterByRequiredMemberName(classList);
+    boolean needsStatic = !(parent instanceof PsiMethodReferenceExpression);
+    filterByRequiredMemberName(classList, needsStatic);
 
     Collection<PsiClass> filtered = filterByContext(classList, myReferenceElement);
     if (!filtered.isEmpty()) {
@@ -248,18 +248,20 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return true;
   }
 
-  private void filterByRequiredMemberName(@NotNull List<PsiClass> classList) {
+  private void filterByRequiredMemberName(@NotNull List<PsiClass> classList, boolean needsStatic) {
     String memberName = getRequiredMemberName(myReferenceElement);
     if (memberName != null) {
       classList.removeIf(psiClass -> {
         PsiField field = psiClass.findFieldByName(memberName, true);
-        if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && isAccessible(field, myReferenceElement)) return false;
+        if (field != null && (!needsStatic || field.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(field, myReferenceElement)) {
+          return false;
+        }
 
         PsiClass inner = psiClass.findInnerClassByName(memberName, true);
         if (inner != null && isAccessible(inner, myReferenceElement)) return false;
 
         for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
-          if (method.hasModifierProperty(PsiModifier.STATIC) && isAccessible(method, myReferenceElement)) return false;
+          if ((!needsStatic || method.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(method, myReferenceElement)) return false;
         }
         return true;
       });
