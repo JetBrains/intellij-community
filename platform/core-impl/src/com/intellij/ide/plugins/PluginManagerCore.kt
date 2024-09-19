@@ -614,6 +614,13 @@ object PluginManagerCore {
     if (missing != null && PlatformUtils.isAndroidStudio() && (isUnitTestMode || GraphicsEnvironment.isHeadless())) {
       missing = null
     }
+    // Android Studio (b/365493089, b/202048599): it is too easy to break Android Studio by disabling a dependency of the Android plugin.
+    // The following is a last-ditch recovery mechanism until JetBrains fixes https://youtrack.jetbrains.com/issue/IJPL-6075 upstream.
+    // Users will still see the "missing essential plugins" error, but the next launch afterward should succeed.
+    if (missing != null && PlatformUtils.isAndroidStudio()) {
+      logger.warn("Android Studio (b/365493089, b/202048599): resetting the list of disabled plugins to recover from EssentialPluginMissingException")
+      DisabledPluginsState.saveDisabledPluginsAndInvalidate(emptySet())
+    }
     if (missing != null) {
       throw EssentialPluginMissingException(missing)
     }
