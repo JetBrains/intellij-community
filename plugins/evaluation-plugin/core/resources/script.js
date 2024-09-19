@@ -142,7 +142,10 @@ function updatePopup(sessionDiv) {
   }
   else {
     if (isCodeGeneration) {
-      addDiffView(sessionDiv, popup, lookup, codeElement.innerText);
+      const originalCode  = "aia_original_content" in lookup["additionalInfo"]
+        ? lookup["additionalInfo"]["aia_original_content"]
+        : codeElement.innerText
+      addDiffView(sessionDiv, popup, lookup, originalCode)
     } else {
       addSuggestions(sessionDiv, popup, lookup);
     }
