@@ -3,15 +3,12 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
@@ -19,12 +16,15 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHint
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
+import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.asCancellablePromise
+import org.jetbrains.concurrency.asPromise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.Point
+
+private val LOG = logger<ValueLookupManagerQuickEvaluateHandler>()
 
 /**
  * Bridge between [QuickEvaluateHandler]s provided by [DebuggerSupport]s and [ValueLookupManager]
@@ -45,34 +45,50 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
     if (type == null) {
       return CancellableHint(resolvedPromise(), null)
     }
-    val offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point))
-    val coroutineScope = editor.childCoroutineScope("ValueLookupManagerEditorScope")
-    val hintCoroutineScope = editor.childCoroutineScope("ValueLookupManagerValueHintParentScope")
-
-    val hint: Deferred<AbstractValueHint?> = coroutineScope.async(Dispatchers.IO) {
+    val offset = AbstractValueHint.calculateOffset(editor, point)
+    val document = editor.getDocument()
+    val documentCoroutineScope = editor.childCoroutineScope("ValueLookupManagerQuickEvaluateHandler#valueHint")
+    val projectId = project.projectId()
+    val editorId = editor.editorId()
+    val canShowHint = documentCoroutineScope.async(Dispatchers.IO) {
+      withKernel {
+        val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
+        remoteApi.canShowHint(projectId, editorId, offset, type)
+      }
+    }
+    val expressionInfoDeferred = documentCoroutineScope.async(Dispatchers.IO) {
+      if (!canShowHint.await()) {
+        return@async null
+      }
       withKernel {
         val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
         val projectId = project.projectId()
         val editorId = editor.editorId()
-        val canShowHint = remoteApi.canShowHint(projectId, editorId, offset, type)
-        if (!canShowHint) {
-          return@withKernel null
-        }
-        val hint = ValueLookupManagerValueHint(hintCoroutineScope, project, projectId, editor, point, type, offset)
-        return@withKernel hint
+        remoteApi.getExpressionInfo(projectId, editorId, offset, type)
       }
     }
-    val hintPromise = hint.asCompletableFuture().asCancellablePromise()
-    hintPromise.onProcessed {
-      coroutineScope.cancel()
-    }
-    hintPromise.onError {
-      if (it is java.util.concurrent.CancellationException) {
-        hintCoroutineScope.cancel()
+    val hintDeferred: Deferred<AbstractValueHint?> = documentCoroutineScope.async(Dispatchers.IO) {
+      if (!canShowHint.await()) {
+        return@async null
       }
+      val expressionInfo = expressionInfoDeferred.await()
+      val textLength = document.textLength
+      if (expressionInfo == null) {
+        return@async null
+      }
+      val range = expressionInfo.textRange
+      if (range.startOffset > range.endOffset || range.startOffset < 0 || range.endOffset > textLength) {
+        LOG.error("invalid range: $range, text length = $textLength")
+        return@async null
+      }
+      val hint = ValueLookupManagerValueHint(project, projectId, editor, point, type, offset, expressionInfo)
+      return@async hint
+    }
+    hintDeferred.invokeOnCompletion {
+      documentCoroutineScope.cancel()
     }
 
-    return CancellableHint(hintPromise, null)
+    return CancellableHint(hintDeferred.asCompletableFuture().asPromise(), expressionInfoDeferred)
   }
 
   override fun canShowHint(project: Project): Boolean {
@@ -85,18 +101,19 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
 }
 
 private class ValueLookupManagerValueHint(
-  private val parentCoroutineScope: CoroutineScope,
   project: Project, private val projectId: ProjectId,
   private val editor: Editor,
   point: Point,
   private val type: ValueHintType,
   private val offset: Int,
-) : AbstractValueHint(project, editor, point, type, TextRange(offset, offset)) {
+  expressionInfo: ExpressionInfo,
+) : AbstractValueHint(project, editor, point, type, expressionInfo.textRange) {
   private var remoteHint: Deferred<RemoteValueHint?>? = null
   private var hintCoroutineScope: CoroutineScope? = null
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun evaluateAndShowHint() {
-    hintCoroutineScope = parentCoroutineScope.childScope("ValueLookupManagerValueHintScope")
+    hintCoroutineScope = editor.childCoroutineScope("ValueLookupManagerValueHintScope")
     val remoteHint = hintCoroutineScope!!.async(Dispatchers.IO) {
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
       remoteApi.createHint(projectId, editor.editorId(), offset, type)

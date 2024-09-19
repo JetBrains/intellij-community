@@ -9,11 +9,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Please use this function only when really needed.
+ * Please use this function only when really needed. Since returned [CoroutineScope] should be manually closed.
  * In 99.9% of cases CoroutineScope should be provided from top, instead of manual creation based on Editor, Project etc.
  */
+@ApiStatus.Internal
 @DelicateCoroutinesApi
 fun Editor.childCoroutineScope(name: String): CoroutineScope {
   val coroutineScope = GlobalScope.childScope(name)

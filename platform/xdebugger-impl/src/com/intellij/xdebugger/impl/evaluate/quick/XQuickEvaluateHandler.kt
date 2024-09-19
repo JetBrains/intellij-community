@@ -20,7 +20,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.asPromise
 import org.jetbrains.concurrency.await
 import java.awt.Point
@@ -84,7 +86,8 @@ class XQuickEvaluateHandler : QuickEvaluateHandler() {
   companion object {
     private data class EditorEvaluateExpressionData(val adjustedOffset: Int, val hasSelection: Boolean, val selectionStart: Int, val selectionEnd: Int)
 
-    private suspend fun getExpressionInfo(
+    @ApiStatus.Internal
+    suspend fun getExpressionInfo(
       evaluator: XDebuggerEvaluator, project: Project,
       type: ValueHintType?, editor: Editor, offset: Int,
     ): ExpressionInfo? {

@@ -417,15 +417,27 @@ e:com.intellij.xdebugger.evaluation.EvaluationMode
 - sf:EXPRESSION:com.intellij.xdebugger.evaluation.EvaluationMode
 - s:valueOf(java.lang.String):com.intellij.xdebugger.evaluation.EvaluationMode
 - s:values():com.intellij.xdebugger.evaluation.EvaluationMode[]
-c:com.intellij.xdebugger.evaluation.ExpressionInfo
+f:com.intellij.xdebugger.evaluation.ExpressionInfo
+- sf:Companion:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
 - <init>(com.intellij.openapi.util.TextRange):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement):V
-- getDisplayText():java.lang.String
-- getElement():com.intellij.psi.PsiElement
-- getExpressionText():java.lang.String
-- getTextRange():com.intellij.openapi.util.TextRange
+- b:<init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getDisplayText():java.lang.String
+- f:getElement():com.intellij.psi.PsiElement
+- f:getExpressionText():java.lang.String
+- f:getTextRange():com.intellij.openapi.util.TextRange
+bc:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.xdebugger.evaluation.ExpressionInfo
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.xdebugger.evaluation.ExpressionInfo):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 a:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 - sf:DEFAULT:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 - <init>():V

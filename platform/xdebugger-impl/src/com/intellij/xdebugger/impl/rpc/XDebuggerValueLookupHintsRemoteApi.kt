@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
+  suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo?
+
   suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean
 
   suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint?

@@ -1022,14 +1022,16 @@ c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 - createDescriptorByNode(java.lang.Object,com.intellij.concurrency.ResultConsumer):V
 - createTree(com.intellij.openapi.util.Pair):com.intellij.ui.treeStructure.Tree
 - getTitle(com.intellij.openapi.util.Pair):java.lang.String
-c:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler
+f:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler
 - com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
+- sf:Companion:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler$Companion
 - <init>():V
 - canShowHint(com.intellij.openapi.project.Project):Z
 - createValueHint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - createValueHintAsync(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
 - getValueLookupDelay(com.intellij.openapi.project.Project):I
 - isEnabled(com.intellij.openapi.project.Project):Z
+f:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler$Companion
 c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 - com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.xdebugger.XDebugSession,Z):V
@@ -1091,11 +1093,11 @@ a:com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 - isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
 f:com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
 - java.lang.Record
-- <init>(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Promise):V
+- <init>(org.jetbrains.concurrency.Promise,kotlinx.coroutines.Deferred):V
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - hintPromise():org.jetbrains.concurrency.Promise
-- infoPromise():org.jetbrains.concurrency.Promise
+- infoDeferred():kotlinx.coroutines.Deferred
 - s:resolved(com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint):com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
 - tryCancel():V
 e:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
@@ -1522,6 +1524,7 @@ f:com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApiClientStub
 - <init>(kotlin.jvm.functions.Function3):V
 - f:canShowHint(com.intellij.platform.project.ProjectId,com.intellij.openapi.editor.impl.EditorId,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
 - f:createHint(com.intellij.platform.project.ProjectId,com.intellij.openapi.editor.impl.EditorId,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
+- f:getExpressionInfo(com.intellij.platform.project.ProjectId,com.intellij.openapi.editor.impl.EditorId,I,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInvocationHandler():kotlin.jvm.functions.Function3
 - f:removeHint(com.intellij.platform.project.ProjectId,I,kotlin.coroutines.Continuation):java.lang.Object
 - f:showHint(com.intellij.platform.project.ProjectId,I,kotlin.coroutines.Continuation):java.lang.Object

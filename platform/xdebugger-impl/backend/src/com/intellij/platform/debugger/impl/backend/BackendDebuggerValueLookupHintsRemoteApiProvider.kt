@@ -11,7 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.DebuggerSupport
+import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHint
@@ -38,6 +41,18 @@ private class BackendDebuggerValueLookupHintsRemoteApiProvider : RemoteApiProvid
 }
 
 private class BackendDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
+  override suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo? {
+    return withContext(Dispatchers.EDT) {
+      val project = projectId.findProject()
+      val editor = editorId.findEditor()
+      val evaluator = XDebuggerManager.getInstance(project).getCurrentSession()?.debugProcess?.evaluator ?: return@withContext null
+      val expressionInfo = XQuickEvaluateHandler.getExpressionInfo(evaluator, project, hintType, editor, offset)
+
+      return@withContext expressionInfo
+    }
+  }
+
+
   override suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean {
     return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
