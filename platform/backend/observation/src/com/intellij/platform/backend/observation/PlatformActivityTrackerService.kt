@@ -213,8 +213,16 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
 
 private val computationMap : MutableMap<Job, Throwable?> = ConcurrentHashMap()
 
-internal fun dumpCurrentlyObservedComputations(): Set<Throwable> {
+private fun dumpObservedComputations(): Set<Throwable> {
   return computationMap.values.mapNotNullTo(HashSet()) { it }
+}
+
+internal fun dumpObservedComputationsToString(): String {
+  if (!Registry.`is`("ide.activity.tracking.enable.debug")) {
+    return "Enable 'ide.activity.tracking.enable.debug' registry option to collect activity traces"
+  }
+  return dumpObservedComputations()
+    .joinToString("\n") { it.stackTraceToString() }
 }
 
 internal fun traceObservedComputation(job: Job) {

@@ -45,14 +45,10 @@ private fun CoroutineScope.launchActivityLogger(): Job {
   return launch {
     while (true) {
       delay(10.minutes)
-      val currentComputations = Observation.getAllAwaitedActivities()
-      buildString {
+      WarmupLogger.logInfo(buildString {
         appendLine("Currently awaited activities:")
-        for (trace in currentComputations) {
-          appendLine(trace.stackTraceToString())
-        }
-      }
-      WarmupLogger.logInfo(currentComputations.toString())
+        appendLine(Observation.dumpAwaitedActivitiesToString())
+      })
     }
   }
 }

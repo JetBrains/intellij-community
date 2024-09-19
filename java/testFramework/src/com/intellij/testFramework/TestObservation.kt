@@ -41,13 +41,18 @@ object TestObservation {
       }
     }
     catch (_: TimeoutCancellationException) {
+      val activityDump = Observation.dumpAwaitedActivitiesToString()
       val coroutineDump = dumpCoroutines()
       val threadDump = dumpThreadsToString()
+
       System.err.println("""
         |The waiting takes too long. Expected to take no more than $timeout ms.
         |------ Operation log begin ------
         |$operationLog
         |------- Operation log end -------
+        |------ Activity dump begin ------
+        |$activityDump
+        |------- Activity dump end -------
         |------- Thread dump begin -------
         |$threadDump
         |-------- Thread dump end --------

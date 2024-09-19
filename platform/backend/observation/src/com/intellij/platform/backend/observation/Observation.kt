@@ -2,6 +2,7 @@
 package com.intellij.platform.backend.observation
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.observation.Observation.awaitConfiguration
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
@@ -59,8 +60,8 @@ object Observation {
    * This method affects only those computations that use [ActivityKey], whereas [ActivityTracker] is out of reach for the platform.
    */
   @ApiStatus.Internal
-  fun getAllAwaitedActivities(): Set<Throwable> {
-    return dumpCurrentlyObservedComputations()
+  fun dumpAwaitedActivitiesToString(): String {
+    return dumpObservedComputationsToString()
   }
 
   private interface GenericActivityTracker {
