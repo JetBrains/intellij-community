@@ -3359,8 +3359,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
         };
-        myCommandProcessor.executeCommand(myProject, command, EditorBundle.message("move.cursor.command.name"),
-                                          DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
+        WriteIntentReadAction.run((Runnable)() ->
+          myCommandProcessor.executeCommand(myProject, command, EditorBundle.message("move.cursor.command.name"),
+                                            DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument())
+        );
       });
       myTimer.start();
     }
