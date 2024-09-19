@@ -68,9 +68,7 @@ public final class SingleIndexValueRemover {
         if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
           FileBasedIndexImpl.LOG.info("index " + indexId + " deletion finished for " + fileInfo);
         }
-        ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> {
-          index.setUnindexedStateForFile(inputId);
-        });
+        ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> index.setUnindexedStateForFile(inputId));
       }
       return true;
     }

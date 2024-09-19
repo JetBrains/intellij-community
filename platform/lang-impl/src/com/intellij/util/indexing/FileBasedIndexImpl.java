@@ -282,8 +282,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
 
-    LOG.info("indexes cleared: " + clearedIndexes.stream().map(id -> id.getName()).collect(Collectors.joining(", ")) + "\n" +
-             "survived indexes: " + survivedIndexes.stream().map(id -> id.getName()).collect(Collectors.joining(", ")));
+    LOG.info("indexes cleared: " + clearedIndexes.stream().map(IndexId::getName).collect(Collectors.joining(", ")) + "\n" +
+             "survived indexes: " + survivedIndexes.stream().map(IndexId::getName).collect(Collectors.joining(", ")));
   }
 
   @Override
@@ -623,9 +623,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return; // already shut down
     }
 
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      registeredIndexes.waitUntilAllIndicesAreInitialized();
-    });
+    ProgressManager.getInstance().executeNonCancelableSection(registeredIndexes::waitUntilAllIndicesAreInitialized);
     try {
       if (myShutDownTask != null) {
         ShutDownTracker.getInstance().unregisterShutdownTask(myShutDownTask);
@@ -723,9 +721,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void removeDataFromIndicesForFile(int fileId, @NotNull VirtualFile file, @NotNull String cause) {
-    VfsEventsMerger.tryLog("REMOVE", file, () -> {
-      return "cause=" + cause;
-    });
+    VfsEventsMerger.tryLog("REMOVE", file, () -> "cause=" + cause);
 
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 

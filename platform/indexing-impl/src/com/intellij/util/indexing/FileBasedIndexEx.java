@@ -319,6 +319,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private @Nullable <K, V, R> R processExceptions(final @NotNull ID<K, V> indexId,
                                                   final @Nullable VirtualFile restrictToFile,
                                                   final @NotNull GlobalSearchScope filter,
+  private @Nullable <K, V, R> R processExceptions(@NotNull ID<K, V> indexId,
+                                                  @Nullable VirtualFile restrictToFile,
+                                                  @NotNull GlobalSearchScope filter,
                                                   @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
     try {
       waitUntilIndicesAreInitialized();
@@ -338,7 +341,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       requestRebuild(indexId, e);
     }
     catch (RuntimeException e) {
-      final Throwable cause = getCauseToRebuildIndex(e);
+      Throwable cause = getCauseToRebuildIndex(e);
       if (cause != null) {
         requestRebuild(indexId, cause);
       }
