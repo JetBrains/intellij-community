@@ -1221,8 +1221,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     tab.setDragOutDelegate(tabs.getTabs().size() > 1 || !isOriginal() ? myDragOutDelegate : null);
 
+    String tooltip = contents.size() == 1 ? contents.get(0).getDescription() : null;
+
     Tab gridTab = grid.getTab();
-    tab.setText(title).setIcon(gridTab != null && gridTab.isDefault() && contents.size() > 1 ? null : icon);
+    tab
+      .setText(title)
+      .setIcon(gridTab != null && gridTab.isDefault() && contents.size() > 1 ? null : icon)
+      .setTooltipText(tooltip);
 
     return hasToolbarContent;
   }
